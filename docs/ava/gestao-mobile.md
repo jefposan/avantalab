@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.10 -->
+<!-- ava-version: 3.0.0.11 -->
+
+> Revisão 3.0.0.11: histórico e classificação operacional de Anunciados no
+> Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa/AvantaPreços.
 
 > Revisão 3.0.0.10: situações do header Marketplaces Web ordenadas por
 > quantidade. Sem impacto operacional na Gestão Mobile nativa ou AvantaPreços.

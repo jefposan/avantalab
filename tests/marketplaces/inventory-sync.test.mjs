@@ -52,7 +52,7 @@ async function fixture() {
     create table usuarios_empresa(user_id uuid,empresa_id uuid,status text,perfil text);
     create table empresa_modulos(empresa_id uuid,modulo_id text,ativo boolean,expira_em timestamptz);
     create table marketplace_connections(id uuid primary key,empresa_id uuid,provider text,status text,seller_name text);
-    create table marketplace_listings(id uuid primary key default gen_random_uuid(),empresa_id uuid,connection_id uuid,provider_listing_id text,snapshot jsonb,synced_at timestamptz default now());`);
+    create table marketplace_listings(id uuid primary key default gen_random_uuid(),empresa_id uuid,connection_id uuid,provider_listing_id text,search_text text,status text,snapshot jsonb,synced_at timestamptz default now());`);
   await db.exec(read('supabase/migrations/20261007230000_marketplace_sales_notifications.sql'));
   await db.exec(read('supabase/migrations/20261011200000_marketplace_local_products.sql'));
   const company=crypto.randomUUID(),other=crypto.randomUUID(),actor=crypto.randomUUID(),second=crypto.randomUUID(),conn=crypto.randomUUID(),conn2=crypto.randomUUID(),wrong=crypto.randomUUID();
@@ -61,6 +61,7 @@ async function fixture() {
   await db.query("insert into empresa_modulos values($1,'marketplaces',true,null)",[company]);
   await db.query("insert into marketplace_connections values($1,$2,'mercado_livre','connected','Conta A'),($3,$2,'mercado_livre','connected','Conta B'),($4,$5,'mercado_livre','connected','Outra empresa')",[conn,company,conn2,wrong,other]);
   await db.exec(read('supabase/migrations/20261012010000_marketplace_inventory_sync.sql'));
+  await db.exec(read('supabase/migrations/20261012230000_marketplace_sales_history.sql'));
   await db.query("update marketplace_inventory_settings set activated_at=now()-interval '2 days'");
   const command=async(action,data)=>(await db.query('select marketplace_product_command($1,$2,$3,$4,$5) as r',[company,actor,action,JSON.stringify(data),crypto.randomUUID()])).rows[0].r;
   const product=async(name='Produto',stock=8)=>{
@@ -101,6 +102,37 @@ test('SQL real: histórico, saldo desconhecido, falta de vínculo e variações 
     await f.save('4',f.conn,[{listingId:'MLB123456',variationId:'42',quantity:1,title:'Variação'}]);assert.equal(await f.stock(p),8);
     const issues=(await f.db.query("select issue from marketplace_inventory_events where state='pending' order by order_id")).rows.map(row=>row.issue);
     assert.deepEqual(issues,['stock_not_confirmed','product_not_linked','variation_not_linked']);
+  }finally{await f.db.close();}
+});
+test('SQL real: anúncio sem saldo fica ativo operacionalmente enquanto a venda antiga aguarda envio, sem nova baixa ou popup',async()=>{
+  const f=await fixture();try{
+    const p=await f.product('Purificador',8);await f.link(p);
+    await f.db.query("insert into marketplace_listings(empresa_id,connection_id,provider_listing_id,status,snapshot) values($1,$2,'MLB123456','paused','{\"stock\":0}')",[f.company,f.conn]);
+    await f.save('2000000000000101',f.conn,undefined,{confirmedAt:new Date(Date.now()-3*86400000).toISOString()});
+    await f.db.query("update marketplace_sales set shipment_status='ready_to_ship' where provider_order_id='2000000000000101'");
+    const row=(await f.db.query('select status,operational_status,operations from marketplace_listing_operations where empresa_id=$1',[f.company])).rows[0];
+    assert.equal(row.status,'paused');assert.equal(row.operational_status,'active');assert.deepEqual(row.operations,{count:1,labels:['Aguardando envio']});
+    assert.equal(await f.stock(p),8);assert.equal((await f.feed()).alerts.length,0);
+    await f.save('2000000000000101',f.conn,undefined,{confirmedAt:new Date(Date.now()-3*86400000).toISOString()});
+    assert.equal(await f.stock(p),8);
+    await f.db.query("update marketplace_sales set shipment_status='delivered' where provider_order_id='2000000000000101'");
+    assert.equal((await f.db.query('select operational_status from marketplace_listing_operations')).rows[0].operational_status,'paused');
+    const rights=(await f.db.query("select has_table_privilege('authenticated','marketplace_listing_operations','SELECT') as listing,has_table_privilege('authenticated','marketplace_pending_sales','SELECT') as sale")).rows[0];
+    assert.deepEqual(rights,{listing:false,sale:false});
+  }finally{await f.db.close();}
+});
+test('SQL real: cancelamento/devolução não encerrados permanecem ativos; conclusão confirmada sai dos ativos',async()=>{
+  const f=await fixture();try{
+    await f.db.query("insert into marketplace_listings(empresa_id,connection_id,provider_listing_id,status,snapshot) values($1,$2,'MLB123456','paused','{\"stock\":0}')",[f.company,f.conn]);
+    await f.save('100',f.conn,undefined,{status:'pending_cancel'});
+    const state=async()=>(await f.db.query('select operational_status,operations from marketplace_listing_operations')).rows[0];
+    assert.deepEqual((await state()).operations.labels,['Cancelamento em processamento']);
+    for(const progress of ['open','unknown','closed']) {
+      await f.save('100',f.conn,undefined,{status:'cancelled',postSaleProgress:{state:progress,checkedAt:new Date().toISOString()}});
+      assert.equal((await state()).operational_status,progress==='closed'?'paused':'active');
+    }
+    await f.db.query("update marketplace_listings set status='active'");
+    assert.equal((await state()).operational_status,'inactive');
   }finally{await f.db.close();}
 });
 test('SQL real: cancelamento não repõe estoque, quantidade alterada gera pendência e saldo insuficiente não fica negativo',async()=>{

@@ -22,9 +22,10 @@ import { scrollMarketplaceRow } from './scroll-panel-row';
 import type { MarketplaceId } from '@/app/modules/marketplaces/types';
 import { accountsForMarketplace } from './marketplace-scope';
 import { accountDisplayName, accountReferenceDetail, preserveNewerAccountLabel } from './account-identification';
+import type { ListingOperation } from '@/app/modules/marketplaces/listing-operations';
 
 export type MarketplaceAccount = { id: string; provider?: MarketplaceId; local_label?: string | null; local_label_updated_at?: string | null; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
-type Row = { snapshot: ListingSnapshot; status: string; connectionId: string };
+type Row = { snapshot: ListingSnapshot; status: string; operationalStatus?: string; operations?: ListingOperation; connectionId: string };
 type Confirmation = { action: ListingAction; id: string; name: string; connectionId: string };
 const statusNames: Record<string, string> = { connected: 'Conectada', expired: 'Reconectar', attention: 'Requer atenção', connecting: 'Conectando', active: 'Ativo', paused: 'Pausado', closed: 'Encerrado', deleted: 'Excluído', under_review: 'Em revisão', inactive: 'Inativo' };
 const actionNames = { pause: 'Pausar', resume: 'Reativar', close: 'Encerrar', delete: 'Excluir definitivamente' };
@@ -203,13 +204,13 @@ export default function Anunciados({ companyId, marketplace = 'mercado_livre', a
     <div id="announced-content" hidden={!panelExpanded}>
     <div className={styles.listingFilters}>
       <label>Pesquisar<CampoBusca disabled={!!expanded} aria-label="Pesquisar por nome, código, EAN ou SKU" value={query} onChange={(value) => { if (expanded) return; setQuery(value); setPage(1); }} placeholder="Nome, código, EAN ou SKU" /></label>
-      <MarketplaceSelect label="Situação" value={status} options={[{ value: '', label: 'Todas' }, ...['active', 'paused', 'closed', 'under_review', 'inactive', 'deleted'].map((value) => ({ value, label: statusNames[value] }))]} placeholder="Todas" disabled={!!expanded} onChange={(value) => { setStatus(value); setPage(1); }} />
+      <MarketplaceSelect label="Situação" value={status} options={[{ value: '', label: 'Todas' }, ...['active', 'paused', 'closed', 'under_review', 'inactive', 'deleted'].map((value) => ({ value, label: value === 'active' ? 'Ativos / em andamento' : statusNames[value] }))]} placeholder="Todas" disabled={!!expanded} onChange={(value) => { setStatus(value); setPage(1); }} />
     </div>
     {error && <p role="alert" className={styles.connectionMessage}>{error}</p>}
     <p role="status" className={styles.help}>{(marketplace === 'mercado_livre' ? syncNotice : '') || (loading ? 'Carregando anúncios…' : `${displayedTotal} anúncio(s) nesta seleção.`)}</p>
     <div ref={tableScroll} className={styles.tableScroll} tabIndex={0} aria-label="Tabela de anúncios, role horizontalmente para ver todas as colunas" aria-busy={loading || syncing}>
       <table className={styles.listingTable}><caption className={styles.srOnly}>Produtos anunciados na conta selecionada</caption><colgroup><col style={{ width: '23%' }} /><col style={{ width: '9%' }} /><col style={{ width: '10%' }} /><col style={{ width: '11%' }} /><col style={{ width: '10%' }} /><col style={{ width: '7%' }} /><col style={{ width: '7%' }} /><col /><col style={{ width: 64 }} /></colgroup><thead><tr>{['Anúncio', 'Situação', 'Preço', 'Frete vendedor estimado', 'Taxa estimada', 'Estoque', 'Vendidos', 'Envio', 'Ações'].map((name) => <th key={name} scope="col" className={name === 'Ações' ? styles.listingActions : undefined}>{name}</th>)}</tr></thead>
-        <tbody>{visibleRows.map(({ snapshot: item, status: rowStatus, connectionId }) => {
+        <tbody>{visibleRows.map(({ snapshot: item, status: rowStatus, operationalStatus, operations, connectionId }) => {
           const sourceAccountId = connectionId || accountId;
           const sourceAccount = scopedAccounts.find(candidate => candidate.id === sourceAccountId);
           const shipping = shippingLabels(item.shipping);
@@ -218,7 +219,7 @@ export default function Anunciados({ companyId, marketplace = 'mercado_livre', a
           </div>;
           return <Fragment key={item.id}><tr className={styles.listingRow}>
           <th scope="row" title={item.title} className={expanded === item.id && editing ? styles.editingListingTitle : undefined}>{expanded === item.id && editing && <small className={styles.editingListingLabel}>Em edição</small>}<strong>{item.title}</strong><small>{accountDisplayName(sourceAccount)} · {item.id}{item.sku ? ` · SKU ${item.sku}` : ''}</small></th>
-          <td>{statusNames[rowStatus] || rowStatus}</td><td>{money(item.price, item.currency)}</td><td>{money(item.freightEstimate)}</td><td>{money(item.feeEstimate)}{item.feePercent != null && <small>{item.feePercent}%</small>}</td><td>{item.stock ?? 'Indisponível'}</td><td>{item.sold ?? 'Indisponível'}</td><td>{shipping.freight}<small>{shipping.method}</small></td>
+          <td>{operations?.count ? <><strong>Ativo · {operations.labels.join(' / ')}</strong><small>{operations.count} pedido(s) em andamento</small><small>No Mercado Livre: {statusNames[rowStatus] || rowStatus}{item.stock === 0 ? ' · Sem estoque' : ''}</small></> : <>{statusNames[operationalStatus || rowStatus] || rowStatus}{operationalStatus && operationalStatus !== rowStatus && <small>No Mercado Livre: {statusNames[rowStatus] || rowStatus} · Sem estoque</small>}</>}</td><td>{money(item.price, item.currency)}</td><td>{money(item.freightEstimate)}</td><td>{money(item.feeEstimate)}{item.feePercent != null && <small>{item.feePercent}%</small>}</td><td>{item.stock ?? 'Indisponível'}</td><td>{item.sold ?? 'Indisponível'}</td><td>{shipping.freight}<small>{shipping.method}</small></td>
           <td className={styles.listingActions}><button type="button" ref={(button) => { if (button) editButtons.current.set(item.id, button); else editButtons.current.delete(item.id); }} className={styles.editListing} aria-label={`Editar anúncio: ${item.title}`} title="Editar anúncio" aria-expanded={expanded === item.id} aria-controls={`details-${item.id}`} disabled={acting || editing || (!!expanded && expanded !== item.id) || !!copyingListing} onClick={() => openEditing(item.id)}><Icon name="edit" size={18} /></button></td>
         </tr>{expanded === item.id && <tr id={`details-${item.id}`}><td colSpan={9}><div className={styles.listingDetails}>
           {editing ? <>{copyingListing?.id === item.id && <div id={`listing-copy-${item.id}`} className={styles.listingCopy}>

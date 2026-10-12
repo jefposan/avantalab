@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.10 -->
+<!-- ava-version: 3.0.0.11 -->
+
+> Revisão 3.0.0.11: após migração/publicação, a rotina recupera vendas anteriores
+> à ativação, mais recentes primeiro, sem nova baixa das que já integram o saldo
+> inicial. Vendas novas têm prioridade na fila durante a recuperação do histórico.
+> Anunciados inicia em **Ativos / em andamento**: anúncio pausado,
+> encerrado ou sem estoque continua ativo operacionalmente se tiver pedido em
+> curso. A linha mostra a pendência e, separadamente, o estado real no ML.
+> Saldo zero sem pendência não entra nos ativos. Cancelamento/devolução/reclamação
+> só sai após encerramento confirmado; consulta negada ou incompleta mantém
+> **Pós-venda a confirmar**, não inventa conclusão. Pedidos em aberto são
+> reconsultados periodicamente. Atualizações continuam ocultas: aplicar novidades
+> por Atualizar/filtros, sem perder a edição. Classificar não reativa anúncios,
+> repõe estoque ou executa devoluções/reembolsos. Código ainda sem publicação.
 
 > Revisão 3.0.0.10: **Situação das vendas** ordena automaticamente da maior
 > para a menor quantidade no período escolhido, com **Todas** no início e

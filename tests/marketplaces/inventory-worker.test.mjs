@@ -9,7 +9,7 @@ const hooks=registerHooks({resolve(specifier,context,next){
   if(specifier==='server-only')return{url:'data:text/javascript,export {}',shortCircuit:true};
   if(specifier==='./management-access')return{url:'data:text/javascript,export class MarketplaceError extends Error {constructor(status,code,message){super(message);this.status=status;this.code=code;}}',shortCircuit:true};
   if(specifier==='./mercadolivre-management')return{url:'data:text/javascript,export async function loadConnection(db,company,id){if(company!==db.company||id!==db.connection.id)throw new Error("wrong_connection");return db.connection;} export async function mlRequest(db,c,path,method="GET",body){return db.read(path,method,body);} export async function saveListing(db,c,item){db.saved.push(structuredClone(item));}',shortCircuit:true};
-  if(specifier==='./mercadolivre-sales')return{url:'data:text/javascript,export async function processSaleNotifications(){throw new Error("Not used");}',shortCircuit:true};
+  if(specifier==='./mercadolivre-sales')return{url:'data:text/javascript,export async function processSaleNotifications(){throw new Error("Not used");} export async function syncOrder(){throw new Error("Not used");}',shortCircuit:true};
   let candidate;if(specifier.startsWith('@/'))candidate=resolve(root,specifier.slice(2));else if(specifier.startsWith('.')&&context.parentURL?.startsWith('file:'))candidate=resolve(dirname(new URL(context.parentURL).pathname),specifier);
   if(candidate&&existsSync(`${candidate}.ts`))return next(pathToFileURL(`${candidate}.ts`).href,context);return next(specifier,context);
 }});
@@ -97,4 +97,10 @@ test('varredura valida vendedor, pagina e guarda cursor apenas depois da fila pe
 test('falha ao guardar fila não avança cursor e permite revarredura segura',async()=>{
   const f=fixture();f.db.override=async()=>({results:[{id:'200',seller:{id:123}}],paging:{total:1}});f.db.dbFail='marketplace_sale_notifications';
   await assert.rejects(reconcileOrders(f.db,f.db.connection,'2026-10-11T00:00:00Z'),/registrar/);assert.equal(f.db.tables.marketplace_inventory_reconciliation,undefined);
+});
+test('varredura recorrente consulta canceladas mesmo sem webhook e sem duplicar pedido das duas buscas',async()=>{
+  const f=fixture();f.db.override=async()=>({results:[{id:'200',seller:{id:123}}],paging:{total:1}});
+  await reconcileOrders(f.db,f.db.connection,'2026-10-11T00:00:00Z');
+  assert.ok(f.db.calls.some(call=>new URL(call.path,'https://ml.test').searchParams.get('order.status')==='cancelled'));
+  assert.equal(f.db.tables.marketplace_sale_notifications.length,1);
 });

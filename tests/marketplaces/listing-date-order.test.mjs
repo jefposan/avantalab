@@ -28,14 +28,14 @@ const company = '11111111-1111-4111-8111-111111111111';
 const account = '22222222-2222-4222-8222-222222222222';
 const accountB = '33333333-3333-4333-8333-333333333333';
 function database({ all = false, empty = false } = {}) {
-  const rows = Array.from({ length: 57 }, (_, i) => ({ empresa_id: company, connection_id: account, provider_listing_id: `MLB${100000 + i}`, status: 'active', search_text: 'produto', snapshot: { createdAt: new Date(Date.UTC(2026, 8, i + 1)).toISOString() } }));
+  const rows = Array.from({ length: 57 }, (_, i) => ({ empresa_id: company, connection_id: account, provider_listing_id: `MLB${100000 + i}`, status: 'active', operational_status: 'active', search_text: 'produto', snapshot: { createdAt: new Date(Date.UTC(2026, 8, i + 1)).toISOString() } }));
   rows.push({ ...rows[0], empresa_id: 'outra-empresa', provider_listing_id: 'MLB999999', snapshot: { createdAt: '2099-01-01T00:00:00Z' } });
   rows.push({ ...rows[0], connection_id: 'outra-conta', provider_listing_id: 'MLB999998', snapshot: { createdAt: '2099-01-01T00:00:00Z' } });
   if (all) rows.push({ ...rows[0], connection_id: accountB, provider_listing_id: 'MLB222222', snapshot: { createdAt: '2026-10-10T00:00:00Z' } });
   const connections = empty ? [] : [{ id: account, empresa_id: company, provider: 'mercado_livre', status: 'connected' }, { id: accountB, empresa_id: company, provider: 'mercado_livre', status: 'connected' }, { id: 'outra-conta', empresa_id: company, provider: 'mercado_livre', status: 'expired' }, { id: 'estranha', empresa_id: 'outra-empresa', provider: 'mercado_livre', status: 'connected' }];
   const calls = [];
   return { calls, from(table) {
-    assert.ok(['marketplace_listings', 'marketplace_connections'].includes(table));
+    assert.ok(['marketplace_listing_operations', 'marketplace_connections'].includes(table));
     const filters = [], orders = [];
     let range;
     const query = {

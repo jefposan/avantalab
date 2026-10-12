@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.0.0.11 - 2026-10-12
+
+- Recuperação das vendas anteriores à ativação, com cursor próprio, páginas
+  semanais mais recentes primeiro e rodízio independente entre contas. Não
+  recua a varredura das novas movimentações nem gera baixa duplicada de estoque.
+  Vendas novas têm prioridade na fila; buscas recorrentes incluem canceladas
+  explicitamente e consultas pela página respeitam o tempo disponível.
+- Anunciados inicia em **Ativos / em andamento**: inclui anúncio sem saldo com
+  pedido não finalizado ou pós-venda pendente. Sem pedido pendente, saldo zero
+  não entra nos ativos. Estado original do ML aparece separado e nunca é
+  alterado/reposto por esta classificação local.
+- Cancelamentos, reclamações e devoluções só deixam de ser pendentes após
+  consulta completa confirmar o encerramento. Falha/permissão negada mantém
+  **Pós-venda a confirmar**. Pedidos pendentes são reconsultados periodicamente.
+- Falha na consulta do envio preserva o estado conhecido e bloqueia etiqueta
+  não revalidada. Histórico é relido no ML; nunca deduz estado pela imagem.
+- Migração aditiva aplicada no Supabase, com controle de histórico e visões
+  privadas, mantendo RLS, isolamento e regras de saldo inicial. Venda sinalizada
+  de ADRIANO recuperada pela rotina já publicada: paga, envio pendente, etiqueta
+  indisponível, evento de estoque marcado como baseline e nenhuma nova baixa.
+  Nova classificação e recuperação geral do histórico ainda sem publicação.
+
 ## 3.0.0.10 - 2026-10-12
 
 - Testes OAuth Magalu isolam o ambiente das fixtures locais no build da Vercel;

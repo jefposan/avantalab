@@ -3,6 +3,7 @@ import { safeMarketplaceLink } from './services/inventory-model.ts';
 export type SaleAlert = { id: string; connection_id: string; provider: string; listing_id: string; title: string; quantity: number; sold_at: string; order_id: string; account_name: string; permalink: string | null };
 export type MarketplaceLiveFeed = { alerts: SaleAlert[]; pendingStock: number; pendingSales: number; issues: Array<{ issue: string; total: number }>; updatedAt: string | null; workerFinishedAt: string | null; workerHealthy: boolean; enabled: boolean };
 const messages: Record<string, string> = {
+  sales_history_setup: 'A recuperação das vendas anteriores precisa ser ativada no banco pelo administrador do sistema.',
   product_not_linked: 'Há venda sem produto local vinculado. Vincule o anúncio em Produtos e estoque.',
   stock_not_confirmed: 'Há produto vendido sem estoque inicial confirmado. Confira o saldo local.',
   variation_not_linked: 'Há venda com variação ainda sem estoque próprio vinculado.',

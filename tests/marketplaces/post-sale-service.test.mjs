@@ -56,6 +56,8 @@ test('detalhes revalidam pedido/conta e salvam somente o retrato atual da venda'
   assert.equal(result.sale.soldAt, '2026-09-01T12:00:00Z');
   assert.equal(result.postSale.claimsComplete, true);
   assert.equal(db.rows[0].snapshot.status, 'cancelled');
+  assert.equal(db.rows[0].snapshot.postSaleProgress.state, 'closed');
+  assert.ok(db.rows[0].operation_checked_at);
   assert.ok(db.reads.every((path) => !/\/refund|\/actions/.test(path)));
 });
 

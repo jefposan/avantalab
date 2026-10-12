@@ -5,6 +5,7 @@ import { loadConnection, mlBinaryRequest, mlRequest, type SellerConnection } fro
 import { objectValue, uuidIsValid } from './listing-model';
 import { readPostSale } from '../post-sale';
 import { inventoryLines } from './inventory-model';
+import type { PostSaleProgress } from '../listing-operations';
 
 export type SaleNotification = { id: string; seller: string; topic: 'orders_v2' | 'orders' | 'shipments' | 'items'; resource: string; orderId?: string; shipmentId?: string; listingId?: string };
 export type MarketplaceSale = { id: string; connectionId: string; orderId: string; soldAt: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: Array<{ title: string; quantity: number; unitPrice: number | null }> };
@@ -44,6 +45,7 @@ function saleSnapshot(order: Record<string, unknown>, shipment: Record<string, u
     confirmedAt: text(order.date_closed, 80) || null,
     providerUpdatedAt: text(order.last_updated || order.date_last_updated, 80) || null,
     inventoryLines: inventoryLines(order.order_items),
+    postSaleProgress: undefined as PostSaleProgress | undefined,
   };
 }
 
@@ -56,18 +58,46 @@ function publicSale(row: Record<string, unknown>): MarketplaceSale {
     total: amount(snapshot.total), currency: text(snapshot.currency, 12) || 'BRL', items: (Array.isArray(snapshot.items) ? snapshot.items : []).map(objectValue).map((item) => ({ title: text(item.title) || 'Produto', quantity: Math.max(1, Math.floor(amount(item.quantity) || 1)), unitPrice: amount(item.unitPrice) })).slice(0, 100) };
 }
 
-export async function syncOrder(db: SupabaseClient, connection: SellerConnection, id: string) {
+export async function syncOrder(db: SupabaseClient, connection: SellerConnection, id: string, deadline = Infinity) {
   const order = objectValue(await mlRequest(db, connection, `/orders/${id}`));
   if (orderId(order.id) !== id || orderId(objectValue(order.seller).id) !== connection.seller_reference) throw new MarketplaceError(503, 'invalid_order', 'O Mercado Livre não confirmou a venda desta conta.');
   if (['paid', 'partially_refunded'].includes(String(order.status)) && (!Array.isArray(order.order_items) || !order.order_items.length)) throw new MarketplaceError(503, 'invalid_order', 'Os itens da venda não foram confirmados.');
   const shipping = objectValue(order.shipping); const idShipment = shipmentId(shipping.id);
   let shipment: Record<string, unknown> | null = null;
   if (idShipment) {
-    try { shipment = objectValue(await mlRequest(db, connection, `/shipments/${idShipment}`)); } catch { /* Venda continua visível; etiqueta será reavaliada na abertura. */ }
+    try {
+      const received = objectValue(await mlRequest(db, connection, `/shipments/${idShipment}`));
+      if (shipmentId(received.id) !== idShipment) throw new Error('invalid_shipment');
+      shipment = received;
+    } catch { /* Venda continua visível; etiqueta será reavaliada na abertura. */ }
   }
   const snapshot = saleSnapshot(order, shipment);
+  const previous = await db.from('marketplace_sales').select('shipment_id,shipment_status,shipment_substatus,label_status,snapshot')
+    .eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider_order_id', id).maybeSingle();
+  if (previous.error) throw new MarketplaceError(503, 'database', 'Não foi possível conferir o envio salvo desta venda.');
+  if (idShipment && !shipment) {
+    // Uma falha não apaga o envio conhecido nem libera uma etiqueta sem revalidação.
+    if (previous.data?.shipment_id === idShipment) {
+      snapshot.shipmentStatus = previous.data.shipment_status;
+      snapshot.shipmentSubstatus = previous.data.shipment_substatus;
+      snapshot.labelStatus = previous.data.label_status === 'fulfilled' ? 'fulfilled' : 'unavailable';
+    }
+  }
+  const previousProgress = objectValue(objectValue(previous.data?.snapshot).postSaleProgress);
+  const needsPostSale = ['cancelled', 'pending_cancel', 'refunded', 'partially_refunded'].includes(snapshot.status)
+    || (Array.isArray(order.mediations) && order.mediations.length > 0) || objectValue(order.order_request).return != null
+    || ['open', 'unknown'].includes(String(previousProgress.state));
+  if (needsPostSale) {
+    const details = await readPostSale(order, connection.seller_reference, path => {
+      if (Date.now() > deadline - 8_000) throw new MarketplaceError(503, 'worker_time_limit', 'O pós-venda continuará em conferência.');
+      return mlRequest(db, connection, path);
+    });
+    snapshot.postSaleProgress = { state: details.processState || 'unknown', checkedAt: details.checkedAt };
+  } else if (previousProgress.state === 'closed' && typeof previousProgress.checkedAt === 'string') {
+    snapshot.postSaleProgress = { state: 'closed', checkedAt: previousProgress.checkedAt };
+  }
   const { error } = await db.from('marketplace_sales').upsert({ empresa_id: connection.empresa_id, connection_id: connection.id, provider: 'mercado_livre', provider_order_id: id,
-    status: snapshot.status, shipment_id: snapshot.shipmentId, shipment_status: snapshot.shipmentStatus, shipment_substatus: snapshot.shipmentSubstatus, label_status: snapshot.labelStatus, snapshot, updated_at: new Date().toISOString() }, { onConflict: 'connection_id,provider_order_id' });
+    status: snapshot.status, shipment_id: snapshot.shipmentId, shipment_status: snapshot.shipmentStatus, shipment_substatus: snapshot.shipmentSubstatus, label_status: snapshot.labelStatus, snapshot, operation_checked_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: 'connection_id,provider_order_id' });
   if (error) throw new MarketplaceError(503, 'database', 'Não foi possível salvar a venda recebida.');
 }
 
@@ -81,7 +111,7 @@ export async function queueSaleNotification(db: SupabaseClient, notification: Sa
 }
 
 export async function processSaleNotifications(db: SupabaseClient, connection: SellerConnection, limit = 12, deadline = Infinity) {
-  const { data, error } = await db.from('marketplace_sale_notifications').select('id,topic,resource,attempts').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).is('processed_at', null).lte('next_attempt_at', new Date().toISOString()).order('created_at').limit(limit);
+  const { data, error } = await db.from('marketplace_sale_notifications').select('id,topic,resource,attempts').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).is('processed_at', null).lte('next_attempt_at', new Date().toISOString()).order('priority').order('created_at').limit(limit);
   if (error) throw new MarketplaceError(503, 'database', 'Não foi possível consultar as vendas recebidas.');
   for (const event of data || []) {
     if (Date.now() > deadline) break;
@@ -94,7 +124,7 @@ export async function processSaleNotifications(db: SupabaseClient, connection: S
       if (event.topic === 'items') await (await import('./inventory-listings')).observeInventoryListing(db, connection, id);
       else {
         if (!orderId(id)) throw new Error('invalid_resource');
-        await syncOrder(db, connection, id);
+        await syncOrder(db, connection, id, deadline);
       }
       await db.from('marketplace_sale_notifications').update({ processed_at: new Date().toISOString(), error_code: null }).eq('id', event.id);
     } catch (error) {
@@ -141,6 +171,7 @@ export async function postSaleForSale(db: SupabaseClient, companyId: string, con
     })(),
   ]);
   const snapshot = saleSnapshot(order, shipmentResult.shipment);
+  snapshot.postSaleProgress = { state: postSale.processState || 'unknown', checkedAt: postSale.checkedAt };
   if (!shipmentResult.complete) {
     // Não transformar indisponibilidade de consulta em alteração logística.
     const sameShipment = shippingId === saved.shipment_id;
@@ -149,7 +180,7 @@ export async function postSaleForSale(db: SupabaseClient, companyId: string, con
     snapshot.labelStatus = sameShipment && saved.label_status === 'fulfilled' ? 'fulfilled' : 'unavailable';
     postSale.warnings.push(sameShipment ? 'O envio original não pôde ser atualizado. Sua situação é a do último registro salvo; a etiqueta não foi revalidada.' : 'O envio do pedido mudou e sua situação atual não pôde ser confirmada. A situação do envio anterior não será atribuída ao novo.');
   }
-  const updated = { status: snapshot.status, shipment_id: snapshot.shipmentId, shipment_status: snapshot.shipmentStatus, shipment_substatus: snapshot.shipmentSubstatus, label_status: snapshot.labelStatus, snapshot, updated_at: new Date().toISOString() };
+  const updated = { status: snapshot.status, shipment_id: snapshot.shipmentId, shipment_status: snapshot.shipmentStatus, shipment_substatus: snapshot.shipmentSubstatus, label_status: snapshot.labelStatus, snapshot, operation_checked_at: new Date().toISOString(), updated_at: new Date().toISOString() };
   const { data: persisted, error: saveError } = await db.from('marketplace_sales').update(updated).eq('empresa_id', companyId).eq('connection_id', connection.id).eq('id', saleId).eq('updated_at', saved.updated_at).select('id').maybeSingle();
   if (saveError) throw new MarketplaceError(503, 'database', 'Os dados chegaram, mas não foram salvos. Atualize os detalhes novamente.');
   if (!persisted) throw new MarketplaceError(409, 'sale_changed', 'Outra atualização deste pedido chegou durante a consulta. Atualize o pós-venda novamente para ver a situação mais recente.');

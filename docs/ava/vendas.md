@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.10 -->
+<!-- ava-version: 3.0.0.11 -->
+
+> Revisão 3.0.0.11: recuperação de histórico e pendências do Marketplaces Web;
+> sem impacto operacional no AvantaVendas. Estoques continuam separados.
 
 > Revisão 3.0.0.10: ordenação por quantidade no seletor de situações do
 > Marketplaces Web. Sem impacto operacional no AvantaVendas.

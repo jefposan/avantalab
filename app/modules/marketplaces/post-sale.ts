@@ -3,10 +3,12 @@
  * Apenas campos permitidos chegam à tela; conversa, anexos e endereços brutos não.
  */
 export type ReturnDetails = {
+  processState: 'open' | 'closed' | 'unknown';
   id: string; statusText: string; moneyText: string; refundRuleText: string | null;
   physicalReturn: boolean; shipments: Array<{ id: string; statusText: string; destinationText: string; tracking: string | null }>;
 };
 export type ClaimDetails = {
+  processState: 'open' | 'closed' | 'unknown';
   id: string; statusText: string; typeText: string; reasonText: string;
   resolutionText: string | null; actions: Array<{ text: string; dueAt: string | null; required: boolean }>;
   stageText: string; responsibleText: string | null; dueAt: string | null;
@@ -15,6 +17,7 @@ export type ClaimDetails = {
   returnDetails: ReturnDetails | null;
 };
 export type PostSaleDetails = {
+  processState?: 'open' | 'closed' | 'unknown';
   checkedAt: string; cancellation: { reasonText: string; requestedByText: string; date: string | null } | null;
   refundText: string; refundedAmount: number | null; currency: string;
   claims: ClaimDetails[]; claimsComplete: boolean; returnsComplete: boolean; warnings: string[];
@@ -113,8 +116,12 @@ export function normalizeReturn(value: unknown, claimId: string, orderId: string
     throw new Error('invalid_return');
   }
   const physicalReturn = data.subtype !== 'low_cost';
+  const processState = data.status_money === 'retained' ? 'open' : !physicalReturn && data.status_money === 'refunded' ? 'closed'
+    : ['delivered', 'cancelled', 'expired'].includes(text(data.status)) ? Object.hasOwn(moneyStates, text(data.status_money)) ? 'closed' : 'unknown'
+    : Object.hasOwn(returnStates, text(data.status)) ? 'open' : 'unknown';
   return {
     id: id(data.id), physicalReturn,
+    processState,
     statusText: physicalReturn ? returnStates[text(data.status)] || 'Situação da devolução ainda não traduzida — confira no Mercado Livre' : 'Caso sem devolução física do produto',
     moneyText: moneyStates[text(data.status_money)] || 'Situação do dinheiro não informada',
     // É uma condição do reembolso, não a confirmação de que ele aconteceu.
@@ -169,6 +176,7 @@ export async function readPostSale(order: Record<string, unknown>, sellerId: str
         if (id(claim.id) !== id(entry.id) || claim.resource !== 'order' || id(claim.resource_id) !== orderId || !sellers.some((seller) => id(seller.user_id) === sellerId)) throw new Error('invalid_claim_owner');
         const typeText = ({ mediations: 'Reclamação', return: 'Devolução', fulfillment: 'Reclamação de envio Full', ml_case: 'Caso do Mercado Livre', cancel_sale: 'Cancelamento pelo vendedor', cancel_purchase: 'Cancelamento pelo comprador', change: 'Troca', service: 'Caso de serviço' } as Record<string, string>)[text(claim.type)] || 'Caso de pós-venda';
         const detail: ClaimDetails = {
+          processState: claim.status === 'closed' ? 'closed' : claim.status === 'opened' ? 'open' : 'unknown',
           id: id(claim.id), typeText, statusText: claim.status === 'closed' ? 'Encerrada' : claim.status === 'opened' ? claim.stage === 'dispute' ? 'Em mediação com o Mercado Livre' : 'Aberta' : 'Situação não informada',
           reasonText: 'Motivo específico não disponibilizado em português pelo Mercado Livre',
           stageText: stages[text(claim.stage)] || 'Etapa não informada pelo Mercado Livre', responsibleText: null, dueAt: null,
@@ -219,5 +227,7 @@ export async function readPostSale(order: Record<string, unknown>, sellerId: str
   }
   result.warnings = [...new Set(result.warnings)];
   result.checkedAt = new Date().toISOString();
+  result.processState = result.claims.some(claim => claim.processState === 'open' || claim.returnDetails?.processState === 'open') ? 'open'
+    : !result.claimsComplete || !result.returnsComplete || result.claims.some(claim => claim.processState !== 'closed' || claim.returnDetails?.processState === 'unknown') ? 'unknown' : 'closed';
   return result;
 }

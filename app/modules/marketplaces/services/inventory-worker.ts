@@ -3,7 +3,8 @@ import { randomUUID } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MarketplaceError } from './management-access';
 import { loadConnection, mlRequest, saveListing, type SellerConnection } from './mercadolivre-management';
-import { processSaleNotifications } from './mercadolivre-sales';
+import { processSaleNotifications, syncOrder } from './mercadolivre-sales';
+import { readOrderSearchPages, reconcileSalesHistory } from './mercadolivre-sales-history';
 import { listingStockPolicy } from './inventory-model';
 import { objectValue } from './listing-model';
 import { stockModelFromResponse } from './mercadolivre-edit-policy';
@@ -78,22 +79,17 @@ export async function reconcileOrders(db: SupabaseClient, connection: SellerConn
   const checkpoint = existing?.checkpoint || activatedAt, end = existing?.window_end || new Date().toISOString(), offset = existing?.scan_offset || 0;
   const query = new URLSearchParams({ seller: connection.seller_reference, 'order.date_last_updated.from': new Date(new Date(checkpoint).getTime() - 3_600_000).toISOString(),
     'order.date_last_updated.to': new Date(Math.ceil(new Date(end).getTime() / 3_600_000) * 3_600_000).toISOString(), offset: String(offset), limit: '50', sort: 'date_asc' });
-  const response = objectValue(await mlRequest(db, connection, `/orders/search?${query}`));
-  const paging = objectValue(response.paging);
-  if (!Array.isArray(response.results) || typeof paging.total !== 'number' || !Number.isSafeInteger(paging.total) || paging.total < 0 || response.results.length > 50) throw new MarketplaceError(503, 'invalid_orders_page', 'Consulta incompleta de vendas.');
-  for (const raw of response.results) {
-    const order = objectValue(raw), id = String(order.id);
-    if (!/^\d{1,24}$/.test(id) || String(objectValue(order.seller).id) !== connection.seller_reference) throw new MarketplaceError(503, 'invalid_order', 'A conta do pedido não foi confirmada.');
+  const { orders, more, nextOffset } = await readOrderSearchPages(db, connection, query);
+  for (const order of orders) {
+    const id = String(order.id);
     // O payload público nunca é confiado para baixar estoque: o processador relê /orders/id.
     const stamp = typeof order.last_updated === 'string' ? order.last_updated : end;
     const queued = await db.from('marketplace_sale_notifications').upsert({ id: `reconcile:${connection.id}:${id}:${stamp}`, empresa_id: connection.empresa_id,
       connection_id: connection.id, provider: 'mercado_livre', topic: 'orders_v2', resource: `/orders/${id}` }, { onConflict: 'id', ignoreDuplicates: true });
     assertDatabase(queued.error);
   }
-  if (!response.results.length && offset < paging.total) throw new MarketplaceError(503, 'invalid_orders_page', 'A consulta de vendas ficou incompleta.');
-  const more = offset + response.results.length < paging.total;
   const saved = await db.from('marketplace_inventory_reconciliation').upsert({ connection_id: connection.id, empresa_id: connection.empresa_id,
-    checkpoint: more ? checkpoint : end, window_end: more ? end : null, scan_offset: more ? offset + response.results.length : 0, checked_at: new Date().toISOString(), issue: null });
+    checkpoint: more ? checkpoint : end, window_end: more ? end : null, scan_offset: nextOffset, checked_at: new Date().toISOString(), issue: null });
   assertDatabase(saved.error);
 }
 
@@ -116,6 +112,26 @@ export async function runMarketplaceWorker(db: SupabaseClient) {
     const worker = await db.from('marketplace_inventory_worker').select('turn').eq('id', 1).maybeSingle();
     assertDatabase(worker.error);
     const turn = Number(worker.data?.turn || 0) % 3;
+    const refreshPending = async () => {
+      if (Date.now() > deadline - 24_000) return;
+      const accounts = await db.from('marketplace_connections').select('id').in('empresa_id', enabled).eq('provider', 'mercado_livre').eq('status', 'connected');
+      assertDatabase(accounts.error);
+      if (!accounts.data?.length) return;
+      const sale = await db.from('marketplace_pending_sales').select('*').in('empresa_id', enabled)
+        .in('connection_id', accounts.data.map(row => row.id)).eq('provider', 'mercado_livre')
+        .lte('checked_at', new Date(Date.now() - 5 * 60_000).toISOString()).order('checked_at').order('provider_order_id').limit(1).maybeSingle();
+      assertDatabase(sale.error);
+      if (sale.data) {
+        try { await syncOrder(db, await loadConnection(db, sale.data.empresa_id, sale.data.connection_id), sale.data.provider_order_id, deadline - 5_000); }
+        catch (error) {
+          issue = failureCode(error);
+          // Falha não torna o retrato atual; apenas adia a tentativa para dar vez aos demais pedidos.
+          const delayed = await db.from('marketplace_sales').update({ operation_checked_at: new Date().toISOString() })
+            .eq('empresa_id', sale.data.empresa_id).eq('connection_id', sale.data.connection_id).eq('provider_order_id', sale.data.provider_order_id);
+          assertDatabase(delayed.error);
+        }
+      }
+    };
     let delivered = false;
     const deliver = async () => {
       if (delivered || Date.now() > deadline - 30_000) return;
@@ -126,29 +142,40 @@ export async function runMarketplaceWorker(db: SupabaseClient) {
         delivered = true; await deliverStockJob(db, job, deadline);
       }
     };
-    const reconcile = async () => {
+    const reconcile = async (history = false) => {
       if (Date.now() > deadline - 8_000) return;
       const connections = await db.from('marketplace_connections').select('id,empresa_id').in('empresa_id', enabled).eq('provider', 'mercado_livre').eq('status', 'connected');
       assertDatabase(connections.error);
-      const cursors = await db.from('marketplace_inventory_reconciliation').select('connection_id,checked_at').in('empresa_id', enabled);
+      const cursors = await db.from('marketplace_inventory_reconciliation').select('*').in('empresa_id', enabled);
       assertDatabase(cursors.error);
-      const checked = new Map((cursors.data || []).map(row => [row.connection_id, row.checked_at || '']));
-      const candidate = (connections.data || []).sort((a, b) => String(checked.get(a.id) || '').localeCompare(String(checked.get(b.id) || '')))[0];
+      const cursorByAccount = new Map((cursors.data || []).map(row => [row.connection_id, row]));
+      const eligible = (connections.data || []).filter(row => !history || !cursorByAccount.get(row.id)?.history_completed_at);
+      const checkedAt = (id: string) => { const cursor = cursorByAccount.get(id); return String((history ? cursor?.history_checked_at : cursor?.checked_at) || ''); };
+      const candidate = eligible.sort((a, b) => checkedAt(a.id).localeCompare(checkedAt(b.id)) || a.id.localeCompare(b.id))[0];
       if (!candidate) return;
-      try { await reconcileOrders(db, await loadConnection(db, candidate.empresa_id, candidate.id), settings.data!.find(row => row.empresa_id === candidate.empresa_id)!.activated_at); }
+      const activatedAt = settings.data!.find(row => row.empresa_id === candidate.empresa_id)!.activated_at;
+      try {
+        const connection = await loadConnection(db, candidate.empresa_id, candidate.id);
+        if (history) await reconcileSalesHistory(db, connection, activatedAt);
+        else await reconcileOrders(db, connection, activatedAt);
+      }
       catch (error) {
         issue = failureCode(error);
         const current = await db.from('marketplace_inventory_reconciliation').select('checkpoint').eq('connection_id', candidate.id).maybeSingle();
         assertDatabase(current.error);
         const saved = await db.from('marketplace_inventory_reconciliation').upsert({ connection_id: candidate.id, empresa_id: candidate.empresa_id,
-          checkpoint: current.data?.checkpoint || settings.data!.find(row => row.empresa_id === candidate.empresa_id)!.activated_at, checked_at: new Date().toISOString(), issue }, { onConflict: 'connection_id' });
+          checkpoint: current.data?.checkpoint || activatedAt,
+          ...(history && issue !== 'sales_history_setup' ? { history_checked_at: new Date().toISOString() } : { checked_at: new Date().toISOString() }), issue }, { onConflict: 'connection_id' });
         assertDatabase(saved.error);
       }
     };
     // Alterna a prioridade: fila de vendas não pode impedir indefinidamente envio de estoque/varredura.
     if (turn === 0) await deliver();
-    if (turn === 2) await reconcile();
-    const queued = await db.from('marketplace_sale_notifications').select('empresa_id,connection_id').in('empresa_id', enabled).is('processed_at', null).lte('next_attempt_at', new Date().toISOString()).order('created_at').limit(100);
+    // Histórico usa rodada própria e rodízio próprio; não ocupa a janela de vendas novas.
+    if (turn === 2) await reconcile(true);
+    // Reconfere pedidos e pós-vendas ainda abertos mesmo sem novo webhook.
+    if (turn === 1) await refreshPending();
+    const queued = await db.from('marketplace_sale_notifications').select('empresa_id,connection_id').in('empresa_id', enabled).is('processed_at', null).lte('next_attempt_at', new Date().toISOString()).order('priority').order('created_at').limit(100);
     assertDatabase(queued.error);
     for (const row of [...new Map((queued.data || []).map(row => [row.connection_id, row])).values()]) {
       if (Date.now() > deadline - 16_000) break;

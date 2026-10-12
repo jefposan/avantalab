@@ -24,8 +24,9 @@ export async function GET(request: Request) {
     const { data: queued, error: queueError } = await db.from('marketplace_sale_notifications').select('connection_id').eq('empresa_id', empresaId).is('processed_at', null).lte('next_attempt_at', new Date().toISOString());
     if (queueError) throw new MarketplaceError(503, 'database', 'Não foi possível atualizar os avisos de vendas.');
     const pending = new Set((queued || []).map((row) => row.connection_id));
+    const deadline = Date.now() + 40_000;
     await Promise.all(ids.filter((id) => pending.has(id)).map(async (id) => {
-      await processSaleNotifications(db, await loadConnection(db, empresaId, id));
+      await processSaleNotifications(db, await loadConnection(db, empresaId, id), 12, deadline);
     }));
     const sales = await listSales(db, empresaId, ids);
     const { count: awaitingUpdates, error: countError } = await db.from('marketplace_sale_notifications').select('id', { count: 'exact', head: true }).eq('empresa_id', empresaId).in('connection_id', ids).is('processed_at', null);

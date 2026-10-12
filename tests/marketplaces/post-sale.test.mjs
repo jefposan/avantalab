@@ -207,3 +207,13 @@ test('categorias oficiais de motivo desconhecido são traduzidas sem inventar te
   assert.equal(result.claims[0].reasonText, 'Categoria informada: Produto com defeito; Produto incompleto');
   assert.ok(!JSON.stringify(result).includes('Spanish PRIVATE'));
 });
+
+test('estado operacional distingue caso aberto, retorno pendente, dinheiro retido e conclusão confirmada', async () => {
+  assert.equal((await readPostSale(order(), '123', provider())).processState, 'open');
+  assert.equal((await readPostSale(order(), '123', provider([claim({status:'closed'})], returned({status:'shipped'})))).processState, 'open');
+  assert.equal((await readPostSale(order(), '123', provider([claim({status:'closed'})], returned({status:'delivered',status_money:'retained'})))).processState, 'open');
+  assert.equal((await readPostSale(order(), '123', provider([claim({status:'closed'})], returned({status:'delivered',status_money:'refunded'})))).processState, 'closed');
+  assert.equal((await readPostSale(order(), '123', provider([claim({status:'closed'})], returned({status:'delivered',status_money:'future_money'})))).processState, 'unknown');
+  assert.equal((await readPostSale(order(), '123', async()=>{throw Error('forbidden');})).processState, 'unknown');
+  assert.equal((await readPostSale(order(), '123', provider([]))).processState, 'closed');
+});
