@@ -117,6 +117,7 @@ export default function ProductsStock(props: Props) {
   const [detailId, setDetailId] = useState('');
   const [creating, setCreating] = useState(false);
   const [stockLoadOpen, setStockLoadOpen] = useState(false);
+  const [stockLoadConfirmation, setStockLoadConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -165,7 +166,7 @@ export default function ProductsStock(props: Props) {
     <div id="products-content" hidden={!expanded}>
       <p className={styles.help}>Um estoque físico por produto, compartilhado pelos anúncios vinculados. Após a ativação, novas vendas baixam o saldo e ajustes de estoque são enviados aos anúncios compatíveis. Confira as pendências de sincronização acima.</p>
       <div className={styles.localToolbar}><div className={styles.form}><CampoBusca id="local-product-search" aria-label="Buscar produtos locais" value={query} onChange={value => { setQuery(value); setPage(1); setDetailId(''); }} placeholder="Nome, código interno ou EAN" /></div>{canManage && <><Tooltip texto="Criar um cadastro local sem publicar"><button type="button" disabled={busy} onClick={() => setCreating(value => !value)} aria-expanded={creating}>Novo produto</button></Tooltip><Tooltip texto="Importar anúncios já sincronizados, sem somar estoques"><button type="button" disabled={busy || loading} onClick={() => onCommand({ action: 'import' }, 'Importar os anúncios já sincronizados de todas as contas desta empresa? Os produtos novos ficarão com estoque a confirmar. Anúncios do mesmo produto poderão ser vinculados por você depois, sem somar quantidades.')}>{busy ? 'Aguarde…' : 'Importar anúncios existentes'}</button></Tooltip></>}</div>
-      {canManage && <div className={styles.actionBar}><Tooltip texto="Revisar as quantidades atuais dos anúncios ativos para a carga inicial local"><button id="load-listing-stock-button" className={styles.initialStockTrigger} type="button" disabled={busy || loading || stockLoadOpen} aria-expanded={stockLoadOpen} aria-controls="initial-stock-load" onClick={() => setStockLoadOpen(true)}>Carregar estoque dos anúncios</button></Tooltip></div>}
+      {canManage && <div className={styles.actionBar}><Tooltip texto="Revisar as quantidades atuais dos anúncios ativos para a carga inicial local"><button id="load-listing-stock-button" className={styles.initialStockTrigger} type="button" disabled={busy || loading || stockLoadOpen} aria-expanded={stockLoadOpen} aria-controls="initial-stock-load" onClick={() => setStockLoadConfirmation(true)}>Carregar estoque dos anúncios</button></Tooltip></div>}
       {stockLoadOpen && canManage && <div id="initial-stock-load" className={styles.localStockLoad}><InitialStockLoad companyId={companyId} dark={dark} brand={brand} onBusyChange={setBusy} onUpdated={load} onClose={() => {
         setStockLoadOpen(false); requestAnimationFrame(() => document.getElementById('load-listing-stock-button')?.focus({ preventScroll: true }));
       }} /></div>}
@@ -180,6 +181,11 @@ export default function ProductsStock(props: Props) {
       <div className={`${styles.panelHeadingActions} ${styles.panelFooterActions}`}><BotaoExpandirCard variante="painel" modo="lista" contexto="produtos e estoque" controlsId="products-content" expandido={expanded} corPrimaria={brand} darkMode={dark} onClick={() => collapseMarketplacePanel('products-content', () => setExpanded(false))} /></div>
     </div>
     {message && <p className={styles.catalogSuccess} role="status">{message}</p>}{error && <p className={styles.connectionMessage} role="alert">{error}</p>}
+    {canManage && <ModalConfirmacao aberto={stockLoadConfirmation} titulo="Revisar estoque dos anúncios?"
+      mensagem={'Vamos consultar os anúncios ativos e mostrar as quantidades para sua revisão.\n\nSó produtos sem estoque definido poderão receber um saldo. Estoques já definidos, inclusive zero, serão mantidos.\n\nNada será salvo nesta consulta.'}
+      textoConfirmar="Revisar anúncios" variante="alerta" carregando={busy} corPrimaria={brand} darkMode={dark}
+      aoCancelar={() => { if (!busy) setStockLoadConfirmation(false); }}
+      aoConfirmar={() => { if (!busy) { setStockLoadConfirmation(false); setStockLoadOpen(true); } }} />}
     <ModalConfirmacao aberto={!!confirmation} titulo={confirmation?.command.action === 'import' ? 'Importar anúncios?' : confirmation?.command.action === 'merge' ? 'Vincular cadastros?' : 'Confirmar estoque físico?'} mensagem={confirmation?.message || ''} textoConfirmar="Confirmar" variante="primaria" carregando={busy} corPrimaria={brand} darkMode={dark} aoCancelar={() => { if (!busy) setConfirmation(null); }} aoConfirmar={() => { if (confirmation) void execute(confirmation.command); }} />
   </section>;
 }

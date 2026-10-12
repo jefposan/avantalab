@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 2.0.0.02 -->
+<!-- ava-version: 2.0.0.03 -->
+
+> Revisão 2.0.0.03: **Carregar estoque dos anúncios** pede confirmação antes
+> da consulta. **Revisar anúncios** só mostra as quantidades, sem salvar saldos.
+> Depois de revisar a lista, **Carregar saldos no local** pede outra confirmação
+> antes de gravar. Estoques já definidos, inclusive zero, não são substituídos.
+> O saldo confirmado alimenta a sincronização dos anúncios vinculados compatíveis.
 
 > Revisão 2.0.0.02: na carga inicial de estoque, **Carregar saldos no local**,
 > **Consultar novamente** e **Fechar** ficam no topo dos resultados.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.0.03 - 2026-10-11
+
+- Confirmação padrão antes de consultar anúncios para a carga inicial.
+  Consulta não grava estoque; após revisar, outra confirmação autoriza a carga.
+  Avisos reforçam a proteção de saldos já definidos, inclusive zero, e explicam
+  que o saldo confirmado alimentará a sincronização dos anúncios compatíveis.
+
 ## 2.0.0.02 - 2026-10-11
 
 - Carga inicial de estoque: Carregar saldos no local, Consultar novamente e

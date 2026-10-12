@@ -72,7 +72,7 @@ export default function InitialStockLoad({ companyId, dark, brand, onBusyChange,
       }
       if (current.signal.aborted) return;
       setRows(previous => previous.filter(row => !completed.has(row.productId))); setErrors(failures);
-      setResult(`${loaded} saldos carregados no local.${preserved ? ` ${preserved} saldos já definidos foram mantidos.` : ''}${Object.keys(failures).length ? ' Alguns produtos não foram carregados; confira os avisos abaixo.' : ''} Nenhum anúncio foi alterado.`);
+      setResult(`${loaded} saldos carregados no local.${preserved ? ` ${preserved} saldos já definidos foram mantidos.` : ''}${Object.keys(failures).length ? ' Alguns produtos não foram carregados; confira os avisos abaixo.' : ''} Confira a sincronização dos anúncios vinculados.`);
       await onUpdated();
     } finally {
       if (!current.signal.aborted) { working.current = false; setConfirming(false); setPhase('review'); onBusyChange(false); }
@@ -106,7 +106,7 @@ export default function InitialStockLoad({ companyId, dark, brand, onBusyChange,
         {errors[row.productId] && <p className={styles.connectionMessage} role="alert">{errors[row.productId]}</p>}
       </div>)}
     </>}
-    <ModalConfirmacao aberto={confirming} titulo="Carregar estoque local?" mensagem={`Usar as quantidades dos ${selected.length} anúncios selecionados como saldo inicial? Apenas cadastros sem saldo serão preenchidos. Não soma contas e não altera anúncios no Mercado Livre.`}
+    <ModalConfirmacao aberto={confirming} titulo="Confirmar carga inicial?" mensagem={`Carregar os saldos dos ${selected.length} produtos selecionados?\n\nApenas produtos sem estoque definido serão preenchidos. Saldos já definidos, inclusive zero, não serão substituídos. Não somamos quantidades das contas.\n\nApós confirmar, a sincronização automática usará esses saldos nos anúncios vinculados compatíveis.`}
       textoConfirmar="Carregar estoque" variante="primaria" carregando={phase === 'saving'} corPrimaria={brand} darkMode={dark} aoCancelar={() => { if (phase !== 'saving') setConfirming(false); }} aoConfirmar={() => { void apply(); }} />
   </section>;
 }

@@ -159,11 +159,24 @@ test('endpoint exige gestão, usa empresa/ator autorizados; interface exige revi
   const route=readFileSync(new URL('../../app/api/modulos/marketplaces/produtos/estoque-anuncios/route.ts',import.meta.url),'utf8');
   assert.match(route,/authorizeMarketplace\(request, body.empresaId, 'manage'\)/); assert.match(route,/applyInitialStock\(db, empresaId, usuario.id, body\)/); assert.match(route,/'Cache-Control': 'no-store'/);
   const ui=readFileSync(new URL('../../app/marketplaces/InitialStockLoad.tsx',import.meta.url),'utf8');
-  assert.match(ui,/defaultInitialStockSelections\(collected\)/); assert.match(ui,/ModalConfirmacao/); assert.match(ui,/confirmation: true/); assert.match(ui,/Nenhum anúncio foi alterado/);
+  assert.match(ui,/defaultInitialStockSelections\(collected\)/); assert.match(ui,/ModalConfirmacao/); assert.match(ui,/confirmation: true/); assert.match(ui,/Saldos já definidos, inclusive zero, não serão substituídos/);
+  assert.match(ui,/sincronização automática usará esses saldos nos anúncios vinculados compatíveis/);
   assert.doesNotMatch(ui,/setTimeout\([^\n]*apply\(/);
   const css=readFileSync(new URL('../../app/marketplaces/marketplaces.module.css',import.meta.url),'utf8');
   assert.match(css,/\.localStockLoad \{ margin-bottom: 24px; \}/);
   assert.match(css,/\.localStockLoad button, \.initialStockTrigger \{ min-height: 48px !important; \}/);
+});
+
+test('confirmação inicial precede a consulta; confirmação final permanece obrigatória antes da gravação',()=>{
+  const products=readFileSync(new URL('../../app/marketplaces/ProductsStock.tsx',import.meta.url),'utf8');
+  assert.match(products,/onClick=\{\(\) => setStockLoadConfirmation\(true\)\}>Carregar estoque dos anúncios/);
+  assert.doesNotMatch(products,/onClick=\{\(\) => setStockLoadOpen\(true\)\}>Carregar estoque dos anúncios/);
+  assert.match(products,/ModalConfirmacao aberto=\{stockLoadConfirmation\}/);
+  assert.match(products,/Nada será salvo nesta consulta/);
+  assert.match(products,/setStockLoadConfirmation\(false\); setStockLoadOpen\(true\)/);
+  const ui=readFileSync(new URL('../../app/marketplaces/InitialStockLoad.tsx',import.meta.url),'utf8');
+  assert.match(ui,/onClick=\{\(\) => setConfirming\(true\)\}/);
+  assert.match(ui,/aoConfirmar=\{\(\) => \{ void apply\(\); \}\}/);
 });
 
 test('ações da carga inicial ficam antes dos resultados, sem duplicar no rodapé',()=>{

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 2.0.0.02 -->
+<!-- ava-version: 2.0.0.03 -->
+
+> Revisão 2.0.0.03: confirmação antes da consulta e da gravação da carga inicial
+> no Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa ou no PWA.
 
 > Revisão 2.0.0.02: ações da carga inicial ficam no topo dos resultados em
 > Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa ou no PWA.
