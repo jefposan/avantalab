@@ -1,6 +1,39 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 2.0.0.04 -->
+<!-- ava-version: 2.0.0.10 -->
+
+> Revisão 2.0.0.10: ícone de atualização do cabeçalho corrigido. Botões do
+> cabeçalho de Marketplaces mostram ajuda padrão abaixo, no mouse ou foco pelo
+> teclado. Atualização continua manual das listas, sem recarregar o navegador
+> nem enviar edições aos marketplaces. Sem mudança das funções existentes.
+> O tooltip do botão de atualização é **Atualizar anuncios**.
+> Dicas inferiores têm largura do conteúdo e preferem uma linha, com quebra
+> apenas quando necessário para caber na tela.
+
+> Revisão 2.0.0.09: nas linhas de Vendas, a seta ao lado da situação aponta
+> para baixo quando fechada e para cima quando aberta. A linha inteira abre
+> ou fecha os detalhes, inclusive pelo teclado.
+
+> Revisão 2.0.0.08: clicar para abrir uma venda leva o cabeçalho do pedido para
+> baixo do cabeçalho fixo e destaca fundo/borda. Fechar ou atualizar em segundo
+> plano não provoca nova rolagem. Redução de movimento respeitada.
+
+> Revisão 2.0.0.07: Anunciados inicia em **Todas as contas**, com **Situação:
+> Ativo**. **Conta dos anúncios** fica no cabeçalho, na linha dos botões, e não
+> altera a conta de Novo anúncio. A lista informa a conta de origem; editar ou
+> preparar cópia usa essa origem, mesmo em Todas. Filtro de contas bloqueado
+> durante edição ou preparação de cópia. Consulta só contas conectadas da empresa.
+
+> Revisão 2.0.0.06: atualizações automáticas não substituem as listas nem o
+> pedido/pós-venda aberto. Avisos e contadores no cabeçalho acompanham novidades;
+> nova venda continua abrindo o popup. O ícone de atualização no cabeçalho indica
+> novidades e aplica as listas somente ao clicar; fica bloqueado durante edição
+> de anúncio/publicação. **Atualizar** de cada bloco continua manual. Escolher
+> filtros ou clicar no sino usa as vendas recentes. Estoque segue sincronizando
+> no servidor; a lista estável não representa paralisação da rotina.
+
+> Revisão 2.0.0.05: linhas de Vendas recebem destaque de fundo ao passar o mouse
+> ou usar foco pelo teclado. Sem impacto operacional.
 
 > Revisão 2.0.0.04: a busca e os botões **Novo produto**, **Importar anúncios
 > existentes** e **Carregar estoque dos anúncios** ficam na mesma barra compacta

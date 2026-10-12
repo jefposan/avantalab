@@ -23,6 +23,8 @@ import SalesFilters, { monthPeriod } from './SalesFilters';
 import { saleGroup, salesInPeriod, salesSummary, type SaleGroup } from '@/app/modules/marketplaces/sales-status';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import { inventoryIssueMessage, type MarketplaceLiveFeed } from '@/app/modules/marketplaces/live-feed';
+import { createPassiveRefresh } from './passive-refresh';
+import { Icon } from '@/app/projetos/components/Icon';
 
 const providers: Array<{ id: MarketplaceId; name: string; available: boolean }> = [
   { id: 'mercado_livre', name: 'Mercado Livre', available: true },
@@ -60,6 +62,12 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [disconnecting, setDisconnecting] = useState(false);
   const [renewAccount, setRenewAccount] = useState<MarketplaceAccount | null>(null);
   const [sales, setSales] = useState<MarketplaceSale[]>([]);
+  const [salesSnapshot, setSalesSnapshot] = useState<MarketplaceSale[]>([]);
+  const [backgroundRefresh, setBackgroundRefresh] = useState(0);
+  const [updatesAvailable, setUpdatesAvailable] = useState(false);
+  const [inventorySnapshot, setInventorySnapshot] = useState<MarketplaceLiveFeed | null>(null);
+  type SalesData = { sales: MarketplaceSale[]; awaitingUpdates: number };
+  const salesReader = useRef<ReturnType<typeof createPassiveRefresh<SalesData>> | null>(null);
   const [liveFeed, setLiveFeed] = useState<MarketplaceLiveFeed | null>(null);
   const [liveUnavailable, setLiveUnavailable] = useState(false);
   const liveVersion = useRef<string | null | undefined>(undefined);
@@ -71,11 +79,16 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       setLiveUnavailable(Boolean(detail.unavailable));
       if (!detail.feed) return;
       setLiveFeed(detail.feed);
-      if (liveVersion.current !== undefined && detail.feed.updatedAt !== liveVersion.current) setRefreshKey(value => value + 1);
+      setInventorySnapshot(current => current ?? detail.feed!);
+      if (liveVersion.current !== undefined && detail.feed.updatedAt !== liveVersion.current) { setUpdatesAvailable(true); setBackgroundRefresh(value => value + 1); }
       liveVersion.current = detail.feed.updatedAt;
     };
     window.addEventListener('avanta:marketplace-live-feed', update);
-    return () => window.removeEventListener('avanta:marketplace-live-feed', update);
+    const listingUpdate = (event: Event) => {
+      if ((event as CustomEvent<{ companyId: string }>).detail?.companyId === companyId) setUpdatesAvailable(true);
+    };
+    window.addEventListener('avanta:marketplace-background-change', listingUpdate);
+    return () => { window.removeEventListener('avanta:marketplace-live-feed', update); window.removeEventListener('avanta:marketplace-background-change', listingUpdate); };
   }, [companyId]);
   const [salesLoading, setSalesLoading] = useState(true);
   const [salesError, setSalesError] = useState('');
@@ -135,20 +148,23 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const summary = useMemo(() => salesSummary(periodSales, salesGroup), [periodSales, salesGroup]);
   const pendingSales = summary.byConnection;
   const pendingSalesTotal = summary.filteredTotal;
-  const visibleSales = useMemo(() => periodSales.filter((sale) => (!salesGroup || saleGroup(sale) === salesGroup) && (!salesAccount || sale.connectionId === salesAccount)), [periodSales, salesGroup, salesAccount]);
+  const visibleSales = useMemo(() => salesInPeriod(salesSnapshot, salesPeriod).filter((sale) => (!salesGroup || saleGroup(sale) === salesGroup) && (!salesAccount || sale.connectionId === salesAccount)), [salesSnapshot, salesPeriod, salesGroup, salesAccount]);
 
   useEffect(() => {
     if (accessState !== 'ready') return;
-    const controller = new AbortController();
-    setSalesLoading(true); setSalesError('');
-    void marketplaceClientRequest(`vendas?empresaId=${encodeURIComponent(companyId)}&scope=all`, undefined, controller.signal).then((data: { sales: MarketplaceSale[]; awaitingUpdates: number }) => {
-      if (controller.signal.aborted) return;
-      setSales(data.sales || []); setAwaitingUpdates(data.awaitingUpdates || 0);
-    }).catch((error) => {
-      if (!controller.signal.aborted) setSalesError(error instanceof Error ? error.message : 'Não foi possível carregar as vendas.');
-    }).finally(() => { if (!controller.signal.aborted) setSalesLoading(false); });
-    return () => controller.abort();
-  }, [accessState, companyId, accountSignature, refreshKey, salesRefresh]);
+    const reader = createPassiveRefresh<SalesData>({
+      read: signal => marketplaceClientRequest(`vendas?empresaId=${encodeURIComponent(companyId)}&scope=all`, undefined, signal),
+      onLatest: data => setSales(data.sales || []),
+      onVisible: data => { setSalesSnapshot(data.sales || []); setAwaitingUpdates(data.awaitingUpdates || 0); },
+      onLoading: loading => { setSalesLoading(loading); if (loading) setSalesError(''); },
+      onError: error => setSalesError(error instanceof Error ? error.message : 'Não foi possível carregar as vendas.'),
+    });
+    salesReader.current = reader;
+    void reader.manual();
+    return () => { reader.stop(); if (salesReader.current === reader) salesReader.current = null; };
+  }, [accessState, companyId, accountSignature]);
+  useEffect(() => { if (refreshKey || salesRefresh) void salesReader.current?.manual(); }, [refreshKey, salesRefresh]);
+  useEffect(() => { if (backgroundRefresh) void salesReader.current?.background(); }, [backgroundRefresh]);
 
   useEffect(() => {
     if (salesAccount && !accountSignature.split(',').includes(salesAccount)) setSalesAccount('');
@@ -309,11 +325,17 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
 
   return <main className={`${styles.page} ${empresa.temaEscuro ? styles.dark : ''}`} style={{ '--marketplace-brand': empresa.corPrimaria } as CSSProperties}>
     <MarketplaceLiveMonitor key={companyId} companyId={companyId} brand={empresa.corPrimaria} dark={empresa.temaEscuro} />
-    <ModuloHeader empresa={empresa} onBack={voltar} className={styles.salesHeader}>
-      <SalesFilters period={salesPeriod} onPeriodChange={setSalesPeriod} group={salesGroup} onGroupChange={setSalesGroup} counts={summary.byGroup} total={summary.total} dark={empresa.temaEscuro} brand={empresa.corPrimaria} />
-      <button type="button" className={styles.salesNotification} onClick={() => { setSalesExpanded(true); setSalesAccount(''); document.getElementById('sales-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }} aria-label={`${pendingSalesTotal} vendas nos filtros selecionados. Ver todas as contas.`} title="Vendas nos filtros selecionados" aria-busy={salesLoading}>
+    <ModuloHeader empresa={empresa} onBack={voltar} className={styles.salesHeader} returnTooltip="Voltar à Gestão" returnTooltipPosition="bottom">
+      <SalesFilters period={salesPeriod} onPeriodChange={period => { setSalesSnapshot(sales); setSalesPeriod(period); }} group={salesGroup} onGroupChange={group => { setSalesSnapshot(sales); setSalesGroup(group); }} counts={summary.byGroup} total={summary.total} dark={empresa.temaEscuro} brand={empresa.corPrimaria} />
+      <Tooltip posicao="bottom" texto="Atualizar anuncios">
+        <button type="button" className={`${styles.settingsButton} ${styles.backgroundUpdateControl}`} disabled={salesLoading || accountSelectionLocked || publicationBusy} aria-label={updatesAvailable || liveUnavailable ? 'Atualizar novidades de anúncios e vendas' : 'Atualizar listas de anúncios e vendas'} onClick={() => { setInventorySnapshot(liveFeed); setUpdatesAvailable(false); setRefreshKey(value => value + 1); }}>
+          <Icon name="refresh" size={20} />
+          {(updatesAvailable || liveUnavailable) && <span className={styles.backgroundUpdateDot} aria-hidden="true" />}
+        </button>
+      </Tooltip>
+      <Tooltip texto="Ver vendas do período selecionado" posicao="bottom"><button type="button" className={styles.salesNotification} onClick={() => { setSalesExpanded(true); setSalesAccount(''); document.getElementById('sales-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); setSalesSnapshot(sales); }} aria-label={`${pendingSalesTotal} vendas nos filtros selecionados. Ver todas as contas.`} aria-busy={salesLoading}>
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>{pendingSalesTotal > 0 && <b>{pendingSalesTotal}</b>}
-      </button>
+      </button></Tooltip>
     </ModuloHeader>
     <div className={styles.content}>
     <section className={styles.hero} aria-labelledby="module-title">
@@ -367,19 +389,19 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     </section>
 
     {marketplace === 'mercado_livre' && <div className={styles.inventoryStatus} role="status">
-      {liveUnavailable ? 'Os avisos automáticos não puderam ser consultados. Atualize a página; confira a configuração se persistir.' : liveFeed?.enabled ? <>
-        {liveFeed.workerHealthy ? 'Sincronização automática ativa.' : 'A rotina automática ainda não confirmou atividade recente. Confira a ativação antes de confiar na baixa automática.'}
-        {Boolean(liveFeed.pendingSales || liveFeed.pendingStock) && <span>{liveFeed.pendingSales} aviso(s) de venda e {liveFeed.pendingStock} anúncio(s) aguardando atualização.</span>}
-        {liveFeed.issues.map(issue => <span key={issue.issue}>{inventoryIssueMessage(issue.issue)} ({issue.total})</span>)}
-      </> : 'A sincronização automática de estoque ainda precisa ser ativada nesta empresa.'}
+      {inventorySnapshot?.enabled ? <>
+        {inventorySnapshot.workerHealthy ? 'Sincronização automática ativa.' : 'A rotina automática ainda não confirmou atividade recente. Confira a ativação antes de confiar na baixa automática.'}
+        {Boolean(inventorySnapshot.pendingSales || inventorySnapshot.pendingStock) && <span>{inventorySnapshot.pendingSales} aviso(s) de venda e {inventorySnapshot.pendingStock} anúncio(s) aguardando atualização.</span>}
+        {inventorySnapshot.issues.map(issue => <span key={issue.issue}>{inventoryIssueMessage(issue.issue)} ({issue.total})</span>)}
+      </> : inventorySnapshot ? 'A sincronização automática de estoque ainda precisa ser ativada nesta empresa.' : 'Consultando situação da sincronização…'}
     </div>}
     {marketplace === 'mercado_livre' && <AvantaKanban className={styles.panelOrder} order={panelOrder.order} onOrderChange={panelOrder.change} disabled={!panelOrder.ready || publicationBusy || priceUsersOpen || !!disconnectAccount} items={[
-      { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={setSalesAccount} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
+      { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={account => { setSalesSnapshot(sales); setSalesAccount(account); }} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
       { id: 'products', title: 'Produtos e estoque', render: (handle) => <ProductsStock key={companyId} companyId={companyId} accounts={accounts} canManage={canManage} dark={empresa.temaEscuro} brand={empresa.corPrimaria} refreshKey={refreshKey} preparationLocked={publicationBusy || accountSelectionLocked} reorderHandle={handle} onPrepare={(localProductId, targetConnectionId) => {
         setSelectedAccount(targetConnectionId); setCopyRequest({ id: crypto.randomUUID(), localProductId, targetConnectionId });
         requestAnimationFrame(() => document.getElementById('new-listing-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }));
       }} /> },
-      { id: 'announced', title: 'Anunciados', render: (handle) => <Anunciados companyId={companyId} dark={empresa.temaEscuro} brand={empresa.corPrimaria} accountId={selectedAccount} onAccountsLoaded={loadAccounts} onAccountSelectionLockedChange={setAccountSelectionLocked} onPublishInAnotherAccount={(sourceConnectionId, listingId, targetConnectionId) => {
+      { id: 'announced', title: 'Anunciados', render: (handle) => <Anunciados companyId={companyId} dark={empresa.temaEscuro} brand={empresa.corPrimaria} onAccountsLoaded={loadAccounts} onAccountSelectionLockedChange={setAccountSelectionLocked} onPublishInAnotherAccount={(sourceConnectionId, listingId, targetConnectionId) => {
       if (publicationBusy) { setConnectionNotice('Conclua ou limpe a preparação em Novo anúncio antes de abrir outra.'); return; }
       setSelectedAccount(targetConnectionId);
       setCopyRequest({ id: crypto.randomUUID(), sourceConnectionId, listingId, targetConnectionId });

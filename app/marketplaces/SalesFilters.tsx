@@ -8,6 +8,7 @@ import DraggableModalCard from '@/app/components/DraggableModalCard';
 import { SALE_GROUPS, validSalePeriod, type SaleGroup, type SalePeriod } from '@/app/modules/marketplaces/sales-status';
 import MarketplaceSelect from './MarketplaceSelect';
 import styles from './marketplaces.module.css';
+import Tooltip from '@/app/components/Tooltip';
 
 export function monthPeriod(year: number, month: number): SalePeriod {
   const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -36,10 +37,10 @@ export default function SalesFilters({ period, onPeriodChange, group, onGroupCha
   return <>
     <div className={`${styles.salesFilters} ${dark ? receiptStyles.darkScope : ''}`} style={{ '--cp': brand, '--texto-primario': dark ? '#e2e8f0' : '#1e293b' } as CSSProperties}>
       <div className={styles.salesDateFilters}>
-        <FiltroCompetencia referencia={reference} todos={!period.start} onMudarMes={moveMonth} onMostrarTodos={() => onPeriodChange({ start: '', end: '' })} />
-        <button type="button" className={styles.refreshSales} aria-pressed={custom} onClick={() => { setDraft(period.start ? period : month); setError(''); setOpen(true); }} title={custom ? `${dateLabel(period.start)} a ${dateLabel(period.end)}` : 'Selecionar datas inicial e final'}>{custom ? `${dateLabel(period.start)} – ${dateLabel(period.end)}` : 'Período'}</button>
+        <FiltroCompetencia referencia={reference} todos={!period.start} onMudarMes={moveMonth} onMostrarTodos={() => onPeriodChange({ start: '', end: '' })} tooltipPosition="bottom" />
+        <Tooltip texto={custom ? `Vendas de ${dateLabel(period.start)} a ${dateLabel(period.end)}` : 'Escolher data inicial e final'} posicao="bottom"><button type="button" className={styles.refreshSales} aria-pressed={custom} onClick={() => { setDraft(period.start ? period : month); setError(''); setOpen(true); }}>{custom ? `${dateLabel(period.start)} – ${dateLabel(period.end)}` : 'Período'}</button></Tooltip>
       </div>
-      <MarketplaceSelect label="" ariaLabel="Filtrar situação das vendas" value={group} placeholder="Todas as situações" className={styles.salesStatusFilter} onChange={(value) => onGroupChange(value as SaleGroup | '')} options={[
+      <MarketplaceSelect label="" ariaLabel="Filtrar situação das vendas" tooltipText="Filtrar vendas por situação" tooltipPosition="bottom" value={group} placeholder="Todas as situações" className={styles.salesStatusFilter} onChange={(value) => onGroupChange(value as SaleGroup | '')} options={[
         { value: '', label: 'Todas', detail: String(total) },
         ...SALE_GROUPS.map(({ value, label }) => ({ value, label, detail: String(counts[value]) })),
       ]} />

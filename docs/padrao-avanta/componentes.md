@@ -49,6 +49,14 @@ divisor ou agrupamento sem identidade própria.
   preferências nem adiciona botões sem uma ação implementada.
 - O `AppHeader` continua destinado ao dashboard completo, com abas e controles
   próprios; não é equivalente a esse cabeçalho de módulo.
+- `ModuloHeader` aceita `returnTooltip` e `returnTooltipPosition` opcionais
+  para ajuda do retorno; ausentes, preservam a estrutura anterior. O filtro
+  compartilhado `FiltroCompetencia` aceita `tooltipPosition` opcional, sem
+  adicionar ajuda ou wrappers nos consumidores que não a configurarem.
+  Em cabeçalhos fixos, usar `Tooltip` com `posicao="bottom"` para ajuda abaixo
+  do controle, sem duplicar balões nativos via `title`.
+  Tooltips inferiores ajustam a largura ao conteúdo, até 280px ou o espaço
+  da tela com margem de 8px, preferindo uma linha sem cortar texto nas bordas.
 
 - Botões devem possuir variantes: primário, secundário, discreto e destrutivo.
 - Inputs, selects, textareas, checkboxes, datas e moeda devem convergir para

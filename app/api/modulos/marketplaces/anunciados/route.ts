@@ -9,9 +9,16 @@ export async function GET(request: Request) {
     const params = new URL(request.url).searchParams;
     const { db, empresaId } = await authorizeMarketplace(request, params.get('empresaId'));
     const connectionId = params.get('connectionId');
-    if (!uuidIsValid(connectionId)) throw new MarketplaceError(400, 'select_account', 'Selecione uma conta.');
+    const allAccounts = params.get('scope') === 'all';
+    if (!allAccounts && !uuidIsValid(connectionId)) throw new MarketplaceError(400, 'select_account', 'Selecione uma conta.');
+    const { data: connections, error: connectionError } = await db.from('marketplace_connections').select('id').eq('empresa_id', empresaId).eq('provider', 'mercado_livre').eq('status', 'connected');
+    if (connectionError) throw connectionError;
+    const ids = (connections || []).map(row => row.id);
+    if (!allAccounts && !ids.includes(connectionId!)) throw new MarketplaceError(403, 'invalid_account', 'A conta não está conectada nesta empresa.');
     const page = Math.max(1, Math.min(10000, Number(params.get('page')) || 1));
-    let query = db.from('marketplace_listings').select('snapshot,status', { count: 'exact' }).eq('empresa_id', empresaId).eq('connection_id', connectionId);
+    if (!ids.length) return NextResponse.json({ listings: [], total: 0, page }, { headers: { 'Cache-Control': 'no-store' } });
+    let query = db.from('marketplace_listings').select('snapshot,status,connectionId:connection_id', { count: 'exact' }).eq('empresa_id', empresaId);
+    query = allAccounts ? query.in('connection_id', ids) : query.eq('connection_id', connectionId);
     const status = params.get('status');
     if (['active', 'paused', 'closed', 'under_review', 'inactive', 'deleted'].includes(status || '')) query = query.eq('status', status);
     const search = normalizarTexto((params.get('q') || '').slice(0, 120)).replace(/[%_\\]/g, '');

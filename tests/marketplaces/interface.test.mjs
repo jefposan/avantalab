@@ -13,6 +13,17 @@ const accountPicker = read('app/marketplaces/MarketplaceAccountPicker.tsx');
 const marketplaceSelect = read('app/marketplaces/MarketplaceSelect.tsx');
 const css = read('app/marketplaces/marketplaces.module.css');
 
+test('linhas de Vendas têm destaque suave por mouse e teclado nos dois temas, sem alterar os estados', () => {
+  assert.match(css, /@media \(hover: hover\) and \(pointer: fine\) \{\s*\.salesPanel \.saleSummary:hover \{ background: color-mix\(in srgb, var\(--brand\) 4%, #fff\); \}\s*\.dark \.salesPanel \.saleSummary:hover \{ background: color-mix\(in srgb, var\(--brand\) 10%, #182235\); \}/);
+  assert.match(css, /\.salesPanel \.saleSummary:focus-visible \{ background: color-mix\(in srgb, var\(--brand\) 4%, #fff\); \}/);
+  assert.match(css, /\.dark \.salesPanel \.saleSummary:focus-visible \{ background: color-mix\(in srgb, var\(--brand\) 10%, #182235\); \}/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.saleSummary \{ transition: none; \} \}/);
+  for (const rule of css.matchAll(/\.saleSummary:(?:hover|focus-visible) \{([^}]+)\}/g)) {
+    assert.doesNotMatch(rule[1], /(?:^|;)\s*(?:color|transform|display|width|height):/);
+  }
+  assert.match(css, /\.saleSummary b\[data-status="cancelled"\]/);
+});
+
 test('a cada abertura somente Vendas inicia aberto, sem persistir expansão dos outros blocos', () => {
   const products = read('app/marketplaces/ProductsStock.tsx');
   assert.match(client, /const \[salesExpanded, setSalesExpanded\] = useState\(true\)/);
@@ -191,7 +202,7 @@ test('static notices are removed without disguising validation or hiding importa
   assert.match(listings, /Frete vendedor estimado/);
 });
 
-test('the publication account field uses the standard dropdown and listings use the selected account from card one', () => {
+test('a conta de publicação continua própria, independente do filtro de contas dos anúncios', () => {
   assert.match(client, /return connected\[0\]\?\.id \|\| ''/);
   assert.match(client, /accountId=\{selectedAccount\}/);
   assert.match(newListing, /<MarketplaceAccountPicker label="Publicar na conta"/);

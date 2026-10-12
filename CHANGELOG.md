@@ -1,5 +1,59 @@
 # Changelog
 
+## 2.0.0.10 - 2026-10-11
+
+- SVG de atualização do cabeçalho substituído pelo ícone compartilhado refresh.
+  Tooltip do botão com o texto solicitado: “Atualizar anuncios”.
+  Tooltips inferiores ajustados à largura do texto, preferindo uma linha;
+  limite responsivo e margem lateral evitam corte nas bordas da tela.
+  Tooltips oficiais abaixo de Início, mês anterior/próximo, Todos, Período,
+  situação, atualização e sino. Removidos títulos nativos duplicados.
+  Opções de tooltip são opt-in nos componentes reutilizados; outros módulos
+  mantêm comportamento/layout anteriores. Ava revisada.
+- Entrega consolidada dos ajustes 2.0.0.04 a 2.0.0.10, para publicação após
+  autorização do usuário. Sem alterações adicionais em estoque ou anúncios.
+
+## 2.0.0.09 - 2026-10-11
+
+- Setas nas linhas de Vendas, ao lado da situação: para baixo quando fechadas
+  e para cima quando abertas. Ícone compartilhado, linha inteira clicável,
+  associação acessível aos detalhes e layout responsivo. Ava revisada.
+  Sem publicação nesta entrega.
+
+## 2.0.0.08 - 2026-10-11
+
+- Abrir uma venda alinha seu cabeçalho abaixo do topo fixo e destaca fundo/borda
+  com a cor da empresa, sem alterar textos/estados. Fecha sem nova rolagem.
+  Anunciados e Vendas reutilizam a mesma rolagem, restrita à abertura manual;
+  atualização automática não reposiciona a página. Ava revisada. Sem publicação.
+
+## 2.0.0.07 - 2026-10-11
+
+- Anunciados inicia com Todas as contas conectadas e situação Ativo. Seletor
+  de contas no cabeçalho, independente da conta de Novo anúncio. Consulta global
+  ordenada/paginada no servidor, restrita às contas conectadas da empresa.
+  Origem identificada por anúncio; edição, ações e cópia mantêm a conta correta.
+  Filtros bloqueados durante edição/preparação. Ava revisada. Sem publicação.
+
+## 2.0.0.06 - 2026-10-11
+
+- Atualização automática de anúncios e vendas em segundo plano, sem loading,
+  troca da lista, remontagem de pós-venda ou alteração das mensagens acima dos
+  blocos. Contadores do cabeçalho acompanham os dados recentes; o popup de nova
+  venda permanece ativo. Indicador de novidades no cabeçalho permite aplicar
+  as listas manualmente, respeitando edição/publicação em andamento.
+- Leituras manuais têm prioridade; respostas antigas e de contexto desmontado
+  são descartadas. Avisos recebidos durante uma consulta são recuperados depois.
+  Hora da sincronização, sozinha, não gera aviso de alteração do anúncio.
+  Ava revisada. Sem publicação nesta entrega.
+
+## 2.0.0.05 - 2026-10-11
+
+- Linhas de Vendas destacadas suavemente ao passar o mouse, com a cor da empresa
+  e suporte ao tema escuro. Foco por teclado recebe o mesmo destaque, sem mudar
+  textos ou indicadores de situação. Respeitada a redução de movimento.
+  Ava revisada, sem impacto operacional. Alteração mantida local, sem publicação.
+
 ## 2.0.0.04 - 2026-10-11
 
 - Busca de Produtos e estoque mais estreita e botões compactos na mesma barra:

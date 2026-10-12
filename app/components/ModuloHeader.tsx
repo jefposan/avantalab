@@ -3,12 +3,15 @@
 import { useCallback, useState, type CSSProperties, type ReactNode, type SyntheticEvent } from 'react';
 import { Icon } from '@/app/projetos/components/Icon';
 import styles from '@/app/custos/custos.module.css';
+import Tooltip from './Tooltip';
 
 type Props = {
   empresa: { nome: string; logoUrl?: string; corPrimaria: string; temaEscuro: boolean };
   onBack: () => void;
   returnLabel?: string;
   returnAriaLabel?: string;
+  returnTooltip?: string;
+  returnTooltipPosition?: 'top' | 'bottom';
   children?: ReactNode;
   className?: string;
 };
@@ -139,9 +142,10 @@ export function AdaptiveModuleLogo({ src, alt, className = styles.moduleLogo, fr
 }
 
 /** Reuses the consolidated module header, including its responsive/dark styles. */
-export default function ModuloHeader({ empresa, onBack, returnLabel = 'Início', returnAriaLabel = 'Voltar ao Dashboard do AvantaLab', children, className = '' }: Props) {
+export default function ModuloHeader({ empresa, onBack, returnLabel = 'Início', returnAriaLabel = 'Voltar ao Dashboard do AvantaLab', returnTooltip, returnTooltipPosition = 'top', children, className = '' }: Props) {
+  const back = <button type="button" onClick={onBack} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</button>;
   return <header className={`${styles.root} ${styles.moduleHeader} ${empresa.temaEscuro ? styles.dark : ''} ${className}`} style={{ '--custos-brand': empresa.corPrimaria, minHeight: 'var(--module-header-height)' } as CSSProperties}>
-    <button type="button" onClick={onBack} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</button>
+    {returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back}
     <div className={styles.moduleIdentity}>
       {empresa.logoUrl ? <AdaptiveModuleLogo key={empresa.logoUrl} src={empresa.logoUrl} alt={empresa.nome} frameClassName={styles.moduleLogoFrame} /> : <span>{empresa.nome}</span>}
     </div>

@@ -1,6 +1,22 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 2.0.0.04 -->
+<!-- ava-version: 2.0.0.10 -->
+
+> Revisão 2.0.0.10: ícone e tooltips do cabeçalho do Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile nativa ou no PWA.
+
+> Revisão 2.0.0.09: seta de expansão nas linhas de Vendas do Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile nativa ou no PWA.
+
+> Revisão 2.0.0.08: filtro próprio de contas/Ativo em Anunciados e rolagem manual
+> ao abrir uma venda no Marketplaces Web, também em navegador estreito.
+> Sem impacto operacional na Gestão Mobile nativa ou no PWA.
+
+> Revisão 2.0.0.06: Marketplaces Web consulta avisos em segundo plano, sem mover
+> listas abertas. Sem impacto operacional na Gestão Mobile nativa ou no PWA.
+
+> Revisão 2.0.0.05: destaque ao passar o mouse nas linhas de Vendas do
+> Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa ou no PWA.
 
 > Revisão 2.0.0.04: barra compacta de Produtos e estoque no Marketplaces Web.
 > Sem impacto operacional na Gestão Mobile nativa ou no PWA.

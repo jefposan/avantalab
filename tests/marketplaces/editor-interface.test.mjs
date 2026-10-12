@@ -22,10 +22,11 @@ test('formulário comum permite salvar/cancelar, valida, protege descarte e usa 
   assert.match(form,/document.getElementById.*?\.focus\(\)/);
 });
 test('atualização e filtros não descartam edição aberta; a conta é bloqueada no card Marketplace', () => {
-  assert.match(page,/syncController.current \|\| acting \|\| expanded/);
+  assert.match(page,/acting \|\| expanded \|\| copyingListing\) return/);
+  assert.match(page,/if \(syncController.current\) \{\s*if \(background\) return;\s*syncController.current.abort\(\)/);
   assert.match(page,/syncController.current\?\.abort\(\);\n    setExpanded/);
-  assert.match(page,/<ListingEditor key=\{`\$\{accountId\}-\$\{item.id\}`\}/);
-  assert.match(page,/disabled=\{!accountId \|\| account\?\.status !== 'connected' \|\| syncing \|\| acting \|\| !!expanded\}/);
+  assert.match(page,/<ListingEditor key=\{`\$\{sourceAccountId\}-\$\{item.id\}`\}/);
+  assert.match(page,/disabled=\{!connectedSignature \|\| syncing \|\| acting \|\| !!expanded\}/);
   assert.match(page, /MarketplaceAccountPicker label="Conta de destino"/);
   const client = read('app/marketplaces/MarketplacesClient.tsx');
   assert.match(client,/disabled=\{accountSelectionLocked \|\| publicationBusy\}/);
@@ -69,7 +70,7 @@ test('ações de publicação ficam disponíveis na própria edição e preserva
   assert.match(form, /'Excluir definitivamente'/);
   assert.match(form, /const lifecycleDisabled = loading \|\| saving \|\| stale \|\| dirty;/);
   assert.match(form, /Salve ou cancele as alterações antes de mudar a situação do anúncio\./);
-  assert.match(page, /onListingAction=\{\(action\) => setConfirmation\(\{ action, id: item\.id, name: item\.title, connectionId: accountId \}\)\}/);
+  assert.match(page, /onListingAction=\{\(action\) => setConfirmation\(\{ action, id: item\.id, name: item\.title, connectionId: sourceAccountId \}\)\}/);
   assert.match(page, /setExpanded\(''\);\n      setSyncNotice\('Ação confirmada pelo Mercado Livre\.'/);
   assert.match(css, /\.inlineEditorForm \.actionBar \.destructiveAction \{[^}]*color: #b42318;/);
 });
@@ -117,9 +118,11 @@ test('abrir edição alinha o título abaixo do cabeçalho, após expandir e sem
   assert.match(open, /if \(expanded !== id\) \{[\s\S]*requestAnimationFrame/);
   assert.match(open, /const row = button\?\.closest\('tr'\)/);
   assert.match(open, /getAttribute\('aria-expanded'\) !== 'true'/);
-  assert.match(open, /closest\('main'\)\?\.querySelector\('header'\)/);
-  assert.match(open, /window.scrollY \+ row.getBoundingClientRect\(\).top - headerBottom - 8/);
-  assert.match(open, /prefers-reduced-motion: reduce.*'instant' : 'smooth'/);
+  assert.match(open, /scrollMarketplaceRow\(row\)/);
+  const scrollSource = read('app/marketplaces/scroll-panel-row.ts');
+  assert.match(scrollSource, /closest\('main'\)\?\.querySelector\('header'\)/);
+  assert.match(scrollSource, /window.scrollY \+ row.getBoundingClientRect\(\).top - headerBottom - 8/);
+  assert.match(scrollSource, /prefers-reduced-motion: reduce.*'instant' : 'smooth'/);
   assert.match(form, /requestAnimationFrame\(\(\) => formRef.current\?\.querySelector<HTMLElement>[\s\S]*?\.focus\(\{ preventScroll: true \}\)\)/);
   for (const [headerBottom, reducedMotion] of [[80, false], [228, true]]) {
     const frames = [], scrolls = [], horizontal = [];
@@ -132,6 +135,7 @@ test('abrir edição alinha o título abaixo do cabeçalho, após expandir e sem
       tableScroll: { current: { scrollTo: (options) => horizontal.push(options.left), closest: () => ({ querySelector: () => ({ getBoundingClientRect: () => ({ bottom: headerBottom }) }) }) } },
       requestAnimationFrame: (callback) => frames.push(callback),
       window: { scrollY: 1000, scrollTo: (options) => scrolls.push(options), matchMedia: () => ({ matches: reducedMotion }) },
+      scrollMarketplaceRow: () => scrolls.push({ top: 1500 - headerBottom - 8, behavior: reducedMotion ? 'instant' : 'smooth' }),
     };
     const openEditing = runInNewContext(`(id) => {${open}}`, context);
     openEditing('listing-a');

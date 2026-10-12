@@ -1,6 +1,21 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 2.0.0.04 -->
+<!-- ava-version: 2.0.0.10 -->
+
+> Revisão 2.0.0.10: ícone e tooltips do cabeçalho do Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 2.0.0.09: indicação de expansão nas linhas de Vendas do Marketplaces
+> Web. Sem impacto operacional no AvantaVendas.
+
+> Revisão 2.0.0.08: filtro de contas em Anunciados e rolagem/destaque manual de
+> pedidos no Marketplaces Web. Sem impacto operacional no AvantaVendas.
+
+> Revisão 2.0.0.06: atualizações passivas do Marketplaces Web preservam leitura.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 2.0.0.05: destaque de fundo nas linhas de Vendas do Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
 
 > Revisão 2.0.0.04: barra de Produtos e estoque compactada no Marketplaces Web.
 > Sem impacto operacional no AvantaVendas.

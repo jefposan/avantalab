@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import styles from './marketplaces.module.css';
+import Tooltip from '@/app/components/Tooltip';
 
 export type MarketplaceSelectOption = { value: string; label: string; detail?: string };
 
@@ -16,9 +17,11 @@ type Props = {
   error?: string;
   className?: string;
   onChange: (value: string) => void;
+  tooltipText?: string;
+  tooltipPosition?: 'top' | 'bottom';
 };
 
-export default function MarketplaceSelect({ id, label, ariaLabel, value, options, placeholder, disabled = false, error, className = '', onChange }: Props) {
+export default function MarketplaceSelect({ id, label, ariaLabel, value, options, placeholder, disabled = false, error, className = '', onChange, tooltipText, tooltipPosition = 'top' }: Props) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -62,10 +65,7 @@ export default function MarketplaceSelect({ id, label, ariaLabel, value, options
     requestAnimationFrame(() => focusOption(position));
   }
 
-  return <div ref={root} className={`${styles.selectField} ${className}`.trim()}>
-    {label && <span id={labelId} className={styles.selectLabel}>{label}</span>}
-    <div className={styles.selectControl}>
-      <button
+  const button = <button
         ref={trigger}
         id={controlId}
         type="button"
@@ -88,7 +88,11 @@ export default function MarketplaceSelect({ id, label, ariaLabel, value, options
       >
         <span id={valueId}>{selected ? `${selected.label}${selected.detail ? ` · ${selected.detail}` : ''}` : placeholder}</span>
         <span aria-hidden="true">▾</span>
-      </button>
+      </button>;
+  return <div ref={root} className={`${styles.selectField} ${className}`.trim()}>
+    {label && <span id={labelId} className={styles.selectLabel}>{label}</span>}
+    <div className={styles.selectControl}>
+      {tooltipText ? <Tooltip texto={tooltipText} posicao={tooltipPosition} wrapperClassName="w-full" desativado={visibleOpen}>{button}</Tooltip> : button}
       {visibleOpen && <div
         id={listId}
         className={styles.selectList}

@@ -39,7 +39,8 @@ test('ordens independentes no topo, anúncios reiniciam paginação e preservam 
   assert.match(listings, /disabled=\{loading \|\| syncing \|\| acting \|\| !!expanded \|\| !!copyingListing\}/);
   assert.match(listings, /onChange=\{\(value\) => \{ setOrder\(value\); setPage\(1\); \}\}/);
   const route = readFileSync(new URL('../../app/api/modulos/marketplaces/anunciados/route.ts', import.meta.url), 'utf8');
-  assert.match(route, /eq\('empresa_id', empresaId\)\.eq\('connection_id', connectionId\)/);
+  assert.match(route, /eq\('empresa_id', empresaId\)/);
+  assert.match(route, /allAccounts \? query.in\('connection_id', ids\) : query.eq\('connection_id', connectionId\)/);
   assert.match(route, /order\('snapshot->>createdAt', \{ ascending: order === 'asc', nullsFirst: false \}\)\.order\('provider_listing_id'\)\.range/);
 });
 

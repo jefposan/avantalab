@@ -9,10 +9,14 @@
 .salesDateFilters { flex-wrap: wrap; }
 .salesDateFilters > div > div { height: 44px; border-radius: 12px; }
 .salesDateFilters button { min-height: 44px; }
-.salesDateFilters > div > div > button { min-width: 44px; }
+.salesDateFilters > div > div > button, .salesDateFilters > div > div > span > button { min-width: 44px; }
+@media (max-width: 760px) { .salesDateFilters > div > div { height: 48px; } }
 .salesDateFilters button:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 28%, transparent); outline-offset: 2px; }
 .salesStatusFilter { width: 210px; }
 .salesAccountFilter { max-width: 340px; margin-bottom: 12px; }
+.announcedAccountFilter { width: 210px; min-width: 0; }
+.announcedAccountFilter .selectTrigger { min-height: 44px; height: 44px; }
+@media (max-width: 760px) { .announcedAccountFilter .selectTrigger { min-height: 48px; height: 48px; } }
 .salesScopeHelp { margin: 0 0 14px; color: #64748b; font-size: 12px; line-height: 1.5; }
 .salesPeriodDialog { max-width: 480px; margin: 0 auto; font-family: var(--av-font-family, Inter, sans-serif); }
 .salesPeriodDates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -25,6 +29,8 @@
 .salesPanel { scroll-margin-top: 100px; }
 .panelOrder { margin-top: 24px; }
 .inventoryStatus { display: grid; gap: 8px; margin-top: 24px; padding: 14px 16px; border-radius: 12px; background: color-mix(in srgb, var(--brand) 6%, #fff); color: #334155; font-size: 12px; line-height: 1.5; }
+.backgroundUpdateControl { position: relative; }
+.backgroundUpdateDot { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--brand); }
 .dark .inventoryStatus { background: color-mix(in srgb, var(--brand) 12%, #182235); color: #e2e8f0; }
 .localPagination { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
 .localToolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 18px 0; }
@@ -354,5 +360,20 @@
 .saleSummary b { max-width: 48%; overflow-wrap: anywhere; }
 .saleSummary b[data-status="cancelled"] { color: #9a3412; background: #fff7ed; }
 .dark .saleSummary b[data-status="cancelled"] { color: #fdba74; background: #3a2d19; }
+.saleSummary { transition: background-color .15s ease; }
+@media (hover: hover) and (pointer: fine) {
+  .salesPanel .saleSummary:hover { background: color-mix(in srgb, var(--brand) 4%, #fff); }
+  .dark .salesPanel .saleSummary:hover { background: color-mix(in srgb, var(--brand) 10%, #182235); }
+}
+.salesPanel .saleSummary:focus-visible { background: color-mix(in srgb, var(--brand) 4%, #fff); }
+.dark .salesPanel .saleSummary:focus-visible { background: color-mix(in srgb, var(--brand) 10%, #182235); }
+@media (prefers-reduced-motion: reduce) { .saleSummary { transition: none; } }
+.salesPanel .saleSummary[aria-expanded="true"] { background: color-mix(in srgb, var(--brand) 8%, #fff); box-shadow: inset 3px 0 0 var(--brand); }
+.dark .salesPanel .saleSummary[aria-expanded="true"] { background: color-mix(in srgb, var(--brand) 16%, #182235); }
+.saleSummary .saleStatusAction { display: flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; max-width: 48%; gap: 8px; }
+.saleSummary .saleStatusAction b { flex: 0 1 auto; min-width: 0; max-width: none; }
+.saleDisclosure { flex: 0 0 16px; color: var(--brand); transform: rotate(90deg); }
+.saleSummary[aria-expanded="true"] .saleDisclosure { transform: rotate(-90deg); }
+@media (max-width: 760px) { .saleSummary .saleStatusAction { max-width: 42%; } }
 .dark .postSaleLink { color: #bfdbfe; }
 @media (max-width: 760px) { .postSale dl > div { grid-template-columns: 1fr; }.postSale .refreshSales, .postSaleLink { min-height: 48px; }.saleSummary b { max-width: 42%; } }

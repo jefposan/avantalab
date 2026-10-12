@@ -49,10 +49,57 @@ const { default: Anunciados } = await import(pathToFileURL(resolve(root, 'app/ma
 const { default: ProductsStock } = await import(pathToFileURL(resolve(root, 'app/marketplaces/ProductsStock.tsx')).href);
 const { default: AvantaKanban } = await import(pathToFileURL(resolve(root, 'app/components/AvantaKanban.tsx')).href);
 const { default: DateOrderButton } = await import(pathToFileURL(resolve(root, 'app/marketplaces/DateOrderButton.tsx')).href);
+const { default: FiltroCompetencia } = await import(pathToFileURL(resolve(root, 'app/recebimentos/components/FiltroCompetencia.tsx')).href);
+const { default: ModuloHeader } = await import(pathToFileURL(resolve(root, 'app/components/ModuloHeader.tsx')).href);
+const { default: MarketplaceSelect } = await import(pathToFileURL(resolve(root, 'app/marketplaces/MarketplaceSelect.tsx')).href);
+const { Icon: OfficialIcon } = await import(pathToFileURL(resolve(root, 'app/projetos/components/Icon.tsx')).href);
 hooks.deregister();
 const render = (Component, props) => renderToStaticMarkup(React.createElement(Component, props));
 const noop = () => {};
 const salesProps = { companyId: 'empresa', accountId: '', onAccountChange: noop, accounts: [], sales: [], canManage: false, loading: false, error: '', awaitingUpdates: 0, onRefresh: noop, onSaleUpdated: noop, onExpandedChange: noop, dark: false, brand: '#003E73' };
+
+test('ícone compartilhado refresh usa quatro traços completos e cantos arredondados', () => {
+  const html = render(OfficialIcon, { name: 'refresh', size: 20 });
+  assert.match(html, /viewBox="0 0 24 24"/);
+  assert.match(html, /stroke-linecap="round" stroke-linejoin="round"/);
+  assert.equal((html.match(/<path /g) || []).length, 4);
+  assert.match(html, /d="M21 3v5h-5"/);
+  assert.match(html, /d="M8 16H3v5"/);
+});
+test('competência adiciona tooltips somente por opção, mantendo botões, datas e textos anteriores', () => {
+  const props = { referencia: { ano: 2026, mes: 9 }, todos: false, onMudarMes: noop, onMostrarTodos: noop };
+  const original = render(FiltroCompetencia, props), helped = render(FiltroCompetencia, { ...props, tooltipPosition: 'bottom' });
+  assert.equal((original.match(/class="inline-flex /g) || []).length, 0);
+  assert.equal((helped.match(/class="inline-flex /g) || []).length, 3);
+  for (const html of [original, helped]) {
+    assert.equal((html.match(/<button /g) || []).length, 3);
+    assert.match(html, /Mês anterior/); assert.match(html, /Próximo mês/); assert.match(html, /OUT/); assert.match(html, /2026/); assert.match(html, /Todos/);
+  }
+});
+test('retorno e seletor preservam estrutura padrão quando não recebem tooltip', () => {
+  const headerProps = { empresa: { nome: 'Empresa', corPrimaria: '#003E73', temaEscuro: false }, onBack: noop };
+  assert.doesNotMatch(render(ModuloHeader, headerProps), /class="inline-flex /);
+  assert.match(render(ModuloHeader, { ...headerProps, returnTooltip: 'Voltar', returnTooltipPosition: 'bottom' }), /class="inline-flex /);
+  const selectProps = { label: '', ariaLabel: 'Situação', value: '', options: [{ value: '', label: 'Todas' }], placeholder: 'Todas', onChange: noop };
+  assert.doesNotMatch(render(MarketplaceSelect, selectProps), /class="inline-flex w-full"/);
+  const helped = render(MarketplaceSelect, { ...selectProps, tooltipText: 'Filtrar vendas', tooltipPosition: 'bottom' });
+  assert.match(helped, /class="inline-flex w-full"/);
+  assert.match(helped, /aria-label="Situação"/); assert.match(helped, /aria-haspopup="listbox"/); assert.match(helped, /aria-expanded="false"/);
+});
+test('cabeçalho de Marketplaces configura tooltip inferior em cada controle, sem titles duplicados', () => {
+  const read = file => readFileSync(resolve(root, file), 'utf8');
+  const client = read('app/marketplaces/MarketplacesClient.tsx');
+  const header = client.slice(client.indexOf('<ModuloHeader'), client.indexOf('</ModuloHeader>'));
+  assert.match(header, /returnTooltipPosition="bottom"/);
+  assert.equal((header.match(/posicao="bottom"/g) || []).length, 2);
+  assert.match(header, /<Icon name="refresh" size=\{20\}/);
+  assert.match(header, /<Tooltip posicao="bottom" texto="Atualizar anuncios">/);
+  assert.doesNotMatch(header, /title=|M20 7v5h-5/);
+  const filters = read('app/marketplaces/SalesFilters.tsx');
+  assert.equal((filters.match(/tooltipPosition="bottom"/g) || []).length, 2);
+  assert.match(filters, /<Tooltip[^>]*posicao="bottom"><button/);
+  assert.doesNotMatch(filters, /title=\{custom/);
+});
 
 test('botão de data alterna nos dois sentidos com rótulo acessível e tooltip oficial', () => {
   for (const context of ['Vendas', 'Anunciados']) for (const order of ['asc', 'desc']) {
@@ -142,6 +189,14 @@ test('Anunciados inicia recolhido com controle próprio no topo e filtros montad
   assert.match(html, /aria-controls="announced-content"/);
   assert.match(html, /id="announced-content" hidden=""/);
   assert.ok(html.indexOf('Expandir Anunciados') < html.indexOf('Pesquisar'));
+  assert.match(html, /aria-label="Conta dos anúncios"/);
+  assert.ok(html.indexOf('Conta dos anúncios') < html.indexOf('id="announced-content"'));
+  assert.match(html, /Todas as contas/);
+  const source = readFileSync(resolve(root, 'app/marketplaces/Anunciados.tsx'), 'utf8');
+  assert.match(source, /const \[accountId, setAccountId\] = useState\(''\)/);
+  assert.match(source, /const \[status, setStatus\] = useState\('active'\)/);
+  assert.match(source, /<ListingEditor[^>]*accountId=\{sourceAccountId\}/);
+  assert.match(source, /onPublishInAnotherAccount\(sourceAccountId, item.id, copyTargetId\)/);
 });
 
 test('Produtos e estoque inicia recolhido sem remover as ações da área expansível', () => {
@@ -188,7 +243,7 @@ test('barra compacta dos produtos mantém busca e três ações juntas, respeita
 });
 
 test('controles do cabeçalho usam Tooltip oficial, sem balão nativo duplicado no arraste', () => {
-  for (const [file, text] of [['Anunciados.tsx', 'Atualizar anúncios da conta selecionada'], ['Vendas.tsx', 'Atualizar vendas e envios']]) {
+  for (const [file, text] of [['Anunciados.tsx', 'Atualizar anúncios das contas selecionadas'], ['Vendas.tsx', 'Atualizar vendas e envios']]) {
     const source = readFileSync(resolve(root, `app/marketplaces/${file}`), 'utf8');
     assert.match(source, /import Tooltip from '@\/app\/components\/Tooltip'/);
     assert.ok(source.includes(`<Tooltip texto="${text}"><button`));

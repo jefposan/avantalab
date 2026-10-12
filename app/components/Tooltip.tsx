@@ -2,6 +2,7 @@
 
 import { ReactNode, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { tooltipCenterWithinViewport } from '@/app/lib/tooltip-position';
 
 interface TooltipProps {
   texto: string;
@@ -89,11 +90,16 @@ export default function Tooltip({
         typeof document !== 'undefined' &&
         createPortal(
           <div
+            role="tooltip"
+            ref={element => {
+              if (element && posicao === 'bottom') element.style.left = `${tooltipCenterWithinViewport(coords.left, element.offsetWidth, window.innerWidth)}px`;
+            }}
             className="pointer-events-none fixed z-[99999] max-w-[280px] rounded-lg bg-slate-900 px-3 py-2 text-[11px] font-semibold leading-snug text-white shadow-xl"
             style={{
               top: coords.top,
               left: coords.left,
               transform: transformPorPosicao[posicao],
+              ...(posicao === 'bottom' ? { width: 'max-content', maxWidth: 'min(280px, calc(100vw - 16px))' } : {}),
             }}
           >
             {texto}
