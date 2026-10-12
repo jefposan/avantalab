@@ -269,6 +269,6 @@ test('controles do cabeçalho usam Tooltip oficial, sem balão nativo duplicado 
 
 test('sino expande Vendas antes de levar ao bloco, sem alterar escopo da conta de anúncios', () => {
   const source = readFileSync(resolve(root, 'app/marketplaces/MarketplacesClient.tsx'), 'utf8');
-  assert.match(source, /setSalesExpanded\(true\); setSalesAccount\(''\); document\.getElementById\('sales-title'\)/);
+  assert.match(source, /setSalesExpanded\(true\); setSalesAccount\(''\); setSalesSnapshot\(sales\); scrollToSales\(\)/);
   assert.match(source, /expanded=\{salesExpanded\} onExpandedChange=\{setSalesExpanded\}/);
 });

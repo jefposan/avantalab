@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.0.14 - 2026-10-12
+
+- Escolher uma situação no header aplica a seleção de todas as contas, expande
+  Vendas e rola até o card depois da renderização, inclusive Todas ou situação
+  sem resultados. Mantido o período selecionado e o filtro sincronizado.
+- Ver vendas usa a mesma rolagem, descontando cabeçalho e marcas fixas, com
+  espaço para o título e suporte a movimento reduzido. Escolher situação no
+  próprio bloco ou atualizar em segundo plano não move a página. Sem publicar.
+
 ## 3.0.0.13 - 2026-10-12
 
 - Filtro Situação ao lado de Conta das vendas, usando o mesmo estado do header:

@@ -1,4 +1,4 @@
-/** Chamado somente após abrir uma linha por ação explícita do usuário. */
+/** Chamado somente por ação explícita para exibir uma linha ou um bloco. */
 export function scrollMarketplaceRow(row: HTMLElement) {
   const header = row.closest('main')?.querySelector('header');
   const selector = row.closest('main')?.querySelector('[data-marketplace-selector]');

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.13 -->
+<!-- ava-version: 3.0.0.14 -->
+
+> Revisão 3.0.0.14: seleção de situação no header rola até Vendas no
+> Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa/AvantaPreços.
 
 > Revisão 3.0.0.13: seletor Situação no bloco Vendas do Marketplaces Web.
 > Sem impacto operacional na Gestão Mobile nativa ou no AvantaPreços.

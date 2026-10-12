@@ -30,6 +30,7 @@ import { connectionTarget, validateConnectionAuthorization } from './connection-
 import { accountsForMarketplace, publicationAccount } from './marketplace-scope';
 import { accountDisplayName, connectedAccountForIdentification, preserveNewerAccountLabel } from './account-identification';
 import AccountIdentification, { type AccountLabelResult } from './AccountIdentification';
+import { scrollMarketplaceRow } from './scroll-panel-row';
 
 const providers: Array<{ id: MarketplaceId; name: string; logo: string; width: number; height: number; available: boolean; selectable?: boolean }> = [
   { id: 'mercado_livre', name: 'Mercado Livre', logo: 'mercado-livre.png', width: 224, height: 58, available: true },
@@ -107,12 +108,21 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [salesExpanded, setSalesExpanded] = useState(true);
   const [salesGroup, setSalesGroup] = useState<SaleGroup | ''>('');
   const [salesPeriod, setSalesPeriod] = useState<SalePeriod>({ start: '', end: '' });
+  function scrollToSales() {
+    requestAnimationFrame(() => {
+      const card = document.getElementById('sales-title')?.closest('section');
+      if (card?.isConnected) scrollMarketplaceRow(card);
+    });
+  }
   function selectSalesFromHeader(selection: { period?: SalePeriod; group?: SaleGroup | '' }) {
     setSalesSnapshot(sales);
     setSalesAccount('');
     setSalesExpanded(true);
     if (selection.period !== undefined) setSalesPeriod(selection.period);
-    if (selection.group !== undefined) setSalesGroup(selection.group);
+    if (selection.group !== undefined) {
+      setSalesGroup(selection.group);
+      scrollToSales();
+    }
   }
   function selectSalesInPanel(group: SaleGroup | '') {
     setSalesSnapshot(sales);
@@ -414,7 +424,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
           {(updatesAvailable || liveUnavailable) && <span className={styles.backgroundUpdateDot} aria-hidden="true" />}
         </button>
       </Tooltip>
-      <Tooltip texto="Ver vendas do período selecionado" posicao="bottom"><button type="button" className={`${styles.salesNotification} ${styles.headerTextAction}`} onClick={() => { setSalesExpanded(true); setSalesAccount(''); document.getElementById('sales-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); setSalesSnapshot(sales); }} aria-label={`${pendingSalesTotal} vendas nos filtros selecionados. Ver todas as contas.`} aria-busy={salesLoading}>
+      <Tooltip texto="Ver vendas do período selecionado" posicao="bottom"><button type="button" className={`${styles.salesNotification} ${styles.headerTextAction}`} onClick={() => { setSalesExpanded(true); setSalesAccount(''); setSalesSnapshot(sales); scrollToSales(); }} aria-label={`${pendingSalesTotal} vendas nos filtros selecionados. Ver todas as contas.`} aria-busy={salesLoading}>
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg><span className={styles.headerButtonText}>Ver vendas</span>{pendingSalesTotal > 0 && <b>{pendingSalesTotal}</b>}
       </button></Tooltip>
         </div>

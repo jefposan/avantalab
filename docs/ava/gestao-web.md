@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.13 -->
+<!-- ava-version: 3.0.0.14 -->
+
+> Revisão 3.0.0.14: escolher situação no header aplica o filtro de todas as
+> contas, expande **Vendas** e rola até seu card, com título abaixo do header
+> e das marcas fixas. **Ver vendas** usa a mesma rolagem. Funciona também
+> para Todas e situações sem resultados. Período mantido; situação no bloco
+> e atualizações automáticas não rolam. Movimento reduzido respeitado.
+> Sem publicação.
 
 > Revisão 3.0.0.13: **Situação** fica ao lado de **Conta das vendas**.
 > Vale a última situação escolhida, no bloco ou no header; os dois seletores

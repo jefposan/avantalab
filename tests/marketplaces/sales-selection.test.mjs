@@ -17,7 +17,7 @@ function find(predicate) {
 const handler = find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'selectSalesFromHeader');
 const visible = find(node => ts.isVariableDeclaration(node) && node.name.getText(source) === 'visibleSales');
 const compile = text => ts.transpileModule(text, { compilerOptions: { target: ts.ScriptTarget.ESNext } }).outputText;
-const choose = new Function('sales', 'setSalesSnapshot', 'setSalesAccount', 'setSalesExpanded', 'setSalesPeriod', 'setSalesGroup', `${compile(handler.getText(source))}; return selectSalesFromHeader;`);
+const choose = new Function('sales', 'setSalesSnapshot', 'setSalesAccount', 'setSalesExpanded', 'setSalesPeriod', 'setSalesGroup', 'scrollToSales', `${compile(handler.getText(source))}; return selectSalesFromHeader;`);
 const panelHandler = find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'selectSalesInPanel');
 const chooseInPanel = new Function('sales', 'setSalesSnapshot', 'setSalesGroup', `${compile(panelHandler.getText(source))}; return selectSalesInPanel;`);
 const readVisible = new Function('salesSnapshot', 'salesPeriod', 'salesGroup', 'salesAccount', 'salesInPeriod', 'saleGroup', `${compile(`const read = ${visible.initializer.arguments[0].getText(source)};`)} return read();`);
@@ -29,10 +29,11 @@ const sales = [
 ];
 function setup() {
   const state = { snapshot: [], account: 'conta-c', expanded: false, period: { start: '2026-10-01', end: '2026-10-31' }, group: '' };
-  const select = choose(sales, value => state.snapshot = value, value => state.account = value, value => state.expanded = value, value => state.period = value, value => state.group = value);
+  const scrolls = [];
+  const select = choose(sales, value => state.snapshot = value, value => state.account = value, value => state.expanded = value, value => state.period = value, value => state.group = value, () => scrolls.push({ group: state.group, expanded: state.expanded, account: state.account }));
   const selectInPanel = chooseInPanel(sales, value => state.snapshot = value, value => state.group = value);
   const rows = () => readVisible(state.snapshot, state.period, state.group, state.account, salesInPeriod, saleGroup);
-  return { state, select, selectInPanel, rows };
+  return { state, select, selectInPanel, rows, scrolls };
 }
 
 test('inicia período, situações e contas em Todos, inclusive nos anúncios', () => {
@@ -101,4 +102,29 @@ test('contagens no bloco respeitam conta e período, sem ficarem limitadas à si
   assert.equal(count(inPeriod, 'conta-b', salesSummary).byGroup.delivered, 3);
   assert.equal(count(inPeriod, '', salesSummary).total, 7);
   assert.match(client, /counts=\{accountSalesSummary.byGroup\} total=\{accountSalesSummary.total\}/);
+});
+
+test('selecionar situação no header aplica o estado e expande Vendas antes de agendar a rolagem', () => {
+  const { select, selectInPanel, scrolls } = setup();
+  select({ group: 'delivered' });
+  assert.deepEqual(scrolls, [{ group: 'delivered', expanded: true, account: '' }]);
+  select({ group: 'delivered' }); assert.equal(scrolls.length, 2);
+  select({ group: '' }); assert.equal(scrolls.length, 3);
+  selectInPanel('awaiting_dispatch'); assert.equal(scrolls.length, 3);
+  select({ period: { start: '', end: '' } }); assert.equal(scrolls.length, 3);
+});
+
+test('rolagem aguarda a renderização e usa o card de Vendas; desmontagem não rola', () => {
+  const scrollHandler = find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'scrollToSales');
+  const make = new Function('requestAnimationFrame', 'document', 'scrollMarketplaceRow', `${compile(scrollHandler.getText(source))}; return scrollToSales;`);
+  const frames = [], moved = [], card = { isConnected: true };
+  let active = true;
+  const scroll = make(callback => frames.push(callback), { getElementById: id => {
+    assert.equal(id, 'sales-title');
+    return active ? { closest: selector => { assert.equal(selector, 'section'); return card; } } : null;
+  } }, element => moved.push(element));
+  scroll(); assert.equal(moved.length, 0); frames.shift()(); assert.deepEqual(moved, [card]);
+  scroll(); card.isConnected = false; frames.shift()(); assert.equal(moved.length, 1);
+  scroll(); active = false; frames.shift()(); assert.equal(moved.length, 1);
+  assert.match(client, /setSalesSnapshot\(sales\); scrollToSales\(\);/);
 });
