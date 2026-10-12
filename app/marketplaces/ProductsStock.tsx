@@ -11,6 +11,7 @@ import { marketplaceClientRequest, type MarketplaceAccount } from './Anunciados'
 import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 import MarketplaceSelect from './MarketplaceSelect';
 import { collapseMarketplacePanel } from './collapse-panel';
+import InitialStockLoad from './InitialStockLoad';
 import styles from './marketplaces.module.css';
 
 type Props = { companyId: string; dark: boolean; brand: string; canManage: boolean; accounts: MarketplaceAccount[]; refreshKey: number; preparationLocked: boolean; onPrepare: (productId: string, connectionId: string) => void; reorderHandle?: ReactNode };
@@ -101,7 +102,7 @@ function ProductDetail({ product, props, busy, onCommand }: { product: LocalProd
         <button type="button" disabled={busy || preparationLocked || !targetAccount || product.stock_quantity == null || product.stock_quantity === 0} onClick={() => onPrepare(product.id, targetAccount)}>Preparar anúncio</button><p className={styles.help}>{product.stock_quantity == null ? 'Confirme o estoque físico primeiro.' : preparationLocked ? 'Conclua ou limpe a preparação aberta antes de iniciar outra.' : 'Abre Novo anúncio para revisar preço, descrição e opções da conta. Não publica automaticamente.'}</p>
       </section>
     </>}
-    <details className={styles.localSection}><summary>Histórico de estoque</summary>{historyLoaded && !movements.length && <p className={styles.help}>Nenhuma quantidade física confirmada.</p>}<ul>{movements.map(movement => <li key={movement.id}><strong>{movement.kind === 'confirmation' ? 'Confirmação' : 'Ajuste'} · {date(movement.created_at)}</strong><span>{movement.stock_before == null ? 'A confirmar' : movement.stock_before} → {movement.stock_after} un. {movement.note}</span></li>)}</ul></details>
+    <details className={styles.localSection}><summary>Histórico de estoque</summary>{historyLoaded && !movements.length && <p className={styles.help}>Nenhuma quantidade física confirmada.</p>}<ul>{movements.map(movement => <li key={movement.id}><strong>{movement.kind === 'confirmation' ? 'Confirmação' : movement.kind === 'sale' ? 'Venda' : 'Ajuste'} · {date(movement.created_at)}</strong><span>{movement.stock_before == null ? 'A confirmar' : movement.stock_before} → {movement.stock_after} un. {movement.note}</span></li>)}</ul></details>
     {detailError && <p className={styles.connectionMessage} role="alert">{detailError}</p>}
   </div>;
 }
@@ -115,6 +116,7 @@ export default function ProductsStock(props: Props) {
   const [expanded, setExpanded] = useState(true);
   const [detailId, setDetailId] = useState('');
   const [creating, setCreating] = useState(false);
+  const [stockLoadOpen, setStockLoadOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -132,7 +134,12 @@ export default function ProductsStock(props: Props) {
     } catch (failure) { if (!current.signal.aborted) setError(failure instanceof Error ? failure.message : 'Não foi possível carregar produtos.'); }
     finally { if (!current.signal.aborted) setLoading(false); }
   }, [companyId, query, page]);
-  useEffect(() => { const timer = setTimeout(() => { void load(); }, 250); return () => { clearTimeout(timer); controller.current?.abort(); }; }, [load, refreshKey]);
+  useEffect(() => {
+    // Uma venda não pode apagar campos que o usuário está revisando.
+    if (detailId || creating || busy) return;
+    const timer = setTimeout(() => { void load(); }, 250);
+    return () => { clearTimeout(timer); controller.current?.abort(); };
+  }, [load, refreshKey, detailId, creating, busy]);
   async function execute(command: Command) {
     if (busy || !canManage) return;
     setBusy(true); setError(''); setMessage('');
@@ -156,8 +163,12 @@ export default function ProductsStock(props: Props) {
   return <section className={`${styles.panel} ${styles.listingsPanel}`} aria-labelledby="products-title">
     <div className={`${styles.panelHeading} ${expanded ? '' : styles.panelHeadingCollapsed}`}><div><h2 id="products-title">Produtos e estoque</h2><p className={styles.help}>{total} {query ? 'produtos encontrados' : 'cadastros locais da empresa'}</p></div><div className={styles.panelHeadingActions}>{reorderHandle}<Tooltip texto="Atualizar os cadastros locais"><button type="button" className={styles.refreshSales} disabled={loading || busy} onClick={() => void load()}>Atualizar</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="produtos e estoque" controlsId="products-content" expandido={expanded} corPrimaria={brand} darkMode={dark} onClick={() => setExpanded(value => !value)} /></div></div>
     <div id="products-content" hidden={!expanded}>
-      <p className={styles.help}>Um estoque físico por produto, compartilhado pelos seus anúncios. Nesta etapa, vendas ainda não dão baixa automática e ajustes aqui não alteram o Mercado Livre.</p>
+      <p className={styles.help}>Um estoque físico por produto, compartilhado pelos anúncios vinculados. Após a ativação, novas vendas baixam o saldo e ajustes de estoque são enviados aos anúncios compatíveis. Confira as pendências de sincronização acima.</p>
       <div className={styles.localToolbar}><div className={styles.form}><CampoBusca id="local-product-search" aria-label="Buscar produtos locais" value={query} onChange={value => { setQuery(value); setPage(1); setDetailId(''); }} placeholder="Nome, código interno ou EAN" /></div>{canManage && <><Tooltip texto="Criar um cadastro local sem publicar"><button type="button" disabled={busy} onClick={() => setCreating(value => !value)} aria-expanded={creating}>Novo produto</button></Tooltip><Tooltip texto="Importar anúncios já sincronizados, sem somar estoques"><button type="button" disabled={busy || loading} onClick={() => onCommand({ action: 'import' }, 'Importar os anúncios já sincronizados de todas as contas desta empresa? Os produtos novos ficarão com estoque a confirmar. Anúncios do mesmo produto poderão ser vinculados por você depois, sem somar quantidades.')}>{busy ? 'Aguarde…' : 'Importar anúncios existentes'}</button></Tooltip></>}</div>
+      {canManage && <div className={styles.actionBar}><Tooltip texto="Revisar as quantidades atuais dos anúncios ativos para a carga inicial local"><button id="load-listing-stock-button" className={styles.initialStockTrigger} type="button" disabled={busy || loading || stockLoadOpen} aria-expanded={stockLoadOpen} aria-controls="initial-stock-load" onClick={() => setStockLoadOpen(true)}>Carregar estoque dos anúncios</button></Tooltip></div>}
+      {stockLoadOpen && canManage && <div id="initial-stock-load" className={styles.localStockLoad}><InitialStockLoad companyId={companyId} dark={dark} brand={brand} onBusyChange={setBusy} onUpdated={load} onClose={() => {
+        setStockLoadOpen(false); requestAnimationFrame(() => document.getElementById('load-listing-stock-button')?.focus({ preventScroll: true }));
+      }} /></div>}
       {creating && canManage && <ProductFields disabled={busy} onSave={onCommand} onCancel={() => setCreating(false)} />}
       {loading && <p className={styles.help} role="status">Carregando produtos…</p>}
       {!loading && !products.length && !error && <p className={styles.help}>Nenhum produto encontrado. Cadastre um produto ou importe os anúncios existentes.</p>}

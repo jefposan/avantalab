@@ -387,6 +387,7 @@ export async function publishMercadoLivreCatalog(db: SupabaseClient, connection:
   const local = await getLocalProduct(db, connection.empresa_id, localProductId);
   if (local.stock_quantity == null) throw new MarketplaceError(409, 'physical_stock_pending', 'Confirme o estoque físico em “Produtos e estoque” antes de publicar.');
   if (form.stock > local.stock_quantity) throw new MarketplaceError(409, 'physical_stock_exceeded', 'A quantidade do anúncio supera o estoque físico confirmado. Confira o cadastro.');
+  if (form.stock !== local.stock_quantity) throw new MarketplaceError(409, 'physical_stock_changed', 'Use o saldo local atual no anúncio. Para alterar a quantidade, ajuste Produtos e estoque e prepare novamente.');
   const { data: draft, error: insertError } = await db.from('marketplace_publications').insert({
     empresa_id: connection.empresa_id, connection_id: connection.id, provider: 'mercado_livre', ean: prepared.ean,
     price_cents: Math.round(form.price * 100), status: 'publishing', idempotency_key: requestKey, created_by: actor,

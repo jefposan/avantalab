@@ -1,6 +1,21 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.51.0.02 -->
+<!-- ava-version: 2.0.0 -->
+
+> Revisão 2.0.0: estoque por vendas e aviso central de Marketplaces Web.
+> Sem impacto operacional no AvantaVendas; não unifica seus saldos com Marketplaces.
+
+> Revisão 1.52.0.03: títulos dos cards de Marketplaces Web sem numeração.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.52.0.02: expansão dos produtos mais compacta no Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.52.0.01: retirada de orientações estáticas no Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 1.52.0: carga inicial de estoque no Marketplaces Web. Sem impacto
+> operacional no AvantaVendas; os saldos dos módulos continuam separados.
 
 > Revisão 1.51.0.02: Recolher no rodapé dos blocos de Marketplaces Web.
 > Sem impacto operacional no AvantaVendas.

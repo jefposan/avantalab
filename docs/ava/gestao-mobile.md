@@ -1,6 +1,23 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.51.0.02 -->
+<!-- ava-version: 2.0.0 -->
+
+> Revisão 2.0.0: estoque por vendas e popup central na Gestão/Marketplaces Web,
+> inclusive em navegador estreito. Sem mudança operacional no PWA AvantaPreços
+> ou na Gestão Mobile imperativa/nativa. Não há push com navegador fechado.
+
+> Revisão 1.52.0.03: títulos dos cards de Marketplaces Web sem numeração.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
+
+> Revisão 1.52.0.02: expansão dos produtos mais compacta no Marketplaces Web.
+> Área de toque preservada; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.52.0.01: retirada de orientações estáticas no Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.
+
+> Revisão 1.52.0: carga inicial de estoque por anúncios ativos no Marketplaces
+> Web, também em tela estreita. Sem impacto operacional na Gestão Mobile ou
+> no PWA AvantaPreços; sem baixa automática por vendas.
 
 > Revisão 1.51.0.02: Recolher no rodapé dos blocos de Marketplaces Web.
 > Sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços.

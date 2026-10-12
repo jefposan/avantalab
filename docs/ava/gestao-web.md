@@ -1,6 +1,42 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.51.0.02 -->
+<!-- ava-version: 2.0.0 -->
+
+> Revisão 2.0.0: após migração, publicação e ativação do agendador Supabase,
+> novas vendas confirmadas baixam uma vez o saldo local dos produtos vinculados.
+> Vendas históricas anteriores ao ponto inicial não baixam novamente. Ajustes
+> em Produtos e estoque alimentam anúncios compatíveis; não editar o estoque
+> vinculado separadamente no anúncio. Nova publicação usa o saldo local atual.
+> A fila relê o saldo enviado; falhas, estoque insuficiente, falta de vínculo,
+> variações, kits, Full e depósitos sem configuração ficam como pendência visível.
+> Cancelamento/reembolso não comprova retorno físico nem repõe unidades.
+> Aviso central **Nova venda** mostra conta, plataforma, pedido, produto e quantidade,
+> sem depender dos filtros. **Ver anúncio no Mercado Livre** abre o anúncio vendido;
+> pode ser necessário entrar na mesma conta. **Entendi** registra leitura apenas
+> para o usuário, não marca envio. Várias vendas/itens aparecem um por vez, após
+> fechar outra edição/modal. Realtime e conferência de dez segundos atualizam a tela.
+> Com o navegador fechado não há popup/push; a rotina de estoque continua no servidor.
+> Conferir a situação da sincronização: não afirmar ativação apenas pela versão.
+> Outras plataformas exigem seus conectores; não prometer atualização instantânea.
+
+> Revisão 1.52.0.03: retirada da numeração decorativa dos cards Marketplace,
+> Novo anúncio e Vendas. Títulos e contagens mantidos; sem impacto operacional.
+
+> Revisão 1.52.0.02: botões Expandir/Recolher de cada produto com metade da
+> altura visual e área de toque preservada. Sem impacto operacional.
+
+> Revisão 1.52.0.01: retirada de duas orientações estáticas em Novo anúncio.
+> Validações e fluxos preservados; sem impacto operacional.
+
+> Revisão 1.52.0: para anúncios já feitos, **Carregar estoque dos anúncios**
+> em **Produtos e estoque** consulta o ML e revisa a carga inicial dos cadastros
+> ainda sem saldo. Só anúncio ativo com quantidade maior que zero fornece
+> estoque; inativos e zerados são desconsiderados, sem zerar o local. Vincule
+> anúncios iguais antes da carga. Uma única origem pode ser sugerida; com mais
+> de um anúncio, escolha apenas um, sem somar contas. Confirme **Carregar estoque**.
+> Uma mudança na quantidade durante a revisão exige nova consulta. Saldos locais
+> já definidos, inclusive zero, não são sobrescritos; depois use o ajuste manual.
+> A origem fica no histórico. Não modifica anúncios nem implementa baixa por vendas.
 
 > Revisão 1.51.0.02: os blocos **Vendas**, **Anunciados** e **Produtos e
 > estoque** oferecem **Recolher** também no rodapé quando expandidos. Recolher

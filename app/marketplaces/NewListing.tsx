@@ -201,13 +201,11 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
       <div className={styles.descriptionSearchRow}>
         <div className={styles.eanField}>
           <label htmlFor="new-search-description">Ou pesquise por nome, marca ou modelo</label>
-          <CampoBusca id="new-search-description" autoComplete="off" maxLength={120} disabled={preparing || publishing} value={searchDescription} onChange={changeSearchDescription} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); searchByDescription(); } }} placeholder="Ex.: Cooktop Mondial Fast Cook 220V" rotuloLimpar="Limpar pesquisa por descrição" aria-describedby="new-search-description-help" />
+          <CampoBusca id="new-search-description" autoComplete="off" maxLength={120} disabled={preparing || publishing} value={searchDescription} onChange={changeSearchDescription} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); searchByDescription(); } }} placeholder="Ex.: Cooktop Mondial Fast Cook 220V" rotuloLimpar="Limpar pesquisa por descrição" />
         </div>
         <button type="button" className={`${styles.primary} ${styles.searchAction}`} aria-busy={searchingBy === 'description'} disabled={!canManage || !selectedAccount || preparing || publishing || searchDescription.trim().length < 3} onClick={searchByDescription}>{searchingBy === 'description' ? 'Pesquisando…' : 'Buscar produto'}</button>
-        <p id="new-search-description-help" className={styles.help}>Digite pelo menos 3 caracteres e escolha a ficha correta. Nada é publicado nesta pesquisa.</p>
       </div>
       {!selectedAccount && <p className={styles.help}>{accountId ? 'Esta conta não está conectada. Reconecte-a ou selecione outra conta para publicar.' : 'Conecte ou selecione uma conta do Mercado Livre para pesquisar o produto.'}</p>}
-      <p className={styles.help}>O produto já está cadastrado? Prepare o anúncio em Produtos e estoque para reutilizar a ficha e o mesmo saldo físico.</p>
       {accountId && !canManage && <p className={styles.help}>Seu perfil pode consultar anúncios, mas não preparar publicações.</p>}
     </div>
 

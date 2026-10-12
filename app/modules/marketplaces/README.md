@@ -94,7 +94,9 @@ credenciais adicionais no ambiente.
 ## Limites atuais
 
 - `Pesquisar` consulta primeiro o catálogo do Mercado Livre e, na ausência de ficha, os produtos ativos cadastrados no perfil da empresa. Após revisão da ficha e preenchimento dos campos obrigatórios, `Publicar` executa a criação mediante ação explícita do usuário.
-- Cron e webhook não foram ativados; o cache não se atualiza com o módulo fechado.
+- A automação de estoque depende da migração `20261012010000_marketplace_inventory_sync.sql`,
+  da publicação das rotas e da execução do script de ativação do agendador abaixo.
+  Conferir o heartbeat e as pendências antes de afirmar operação em produção.
 - Outras contas podem ser vinculadas por OAuth e escolhidas no seletor; a
   validação ao vivo usou somente a conta que já estava conectada. Uma ficha
   publicada pode ser preparada para outra conta conectada da mesma empresa,
@@ -126,6 +128,68 @@ credenciais adicionais no ambiente.
 Outros marketplaces aparecem como integrações planejadas até que seus contratos e credenciais oficiais sejam configurados.
 
 ## Mercado Livre: ativação do ambiente
+
+### Carga inicial do estoque local
+
+`produtos/estoque-anuncios` consulta o estoque atual dos anúncios vinculados,
+com autorização de gestão por empresa. Revisão sem gravação em lotes de três
+produtos e cursor por ID; somente ativos com quantidade positiva, sem variações.
+Mais de uma origem exige escolha de um anúncio, nunca soma. Confirmação relê
+vínculo, conta, vendedor, quantidade e revisão; preserva saldos já definidos,
+inclusive zero. Usa a RPC atômica existente e registra origem no histórico.
+Falhas parciais não são zero nem sucesso. Após a ativação da automação, o saldo
+definido passa a alimentar os anúncios vinculados elegíveis.
+Vincular anúncios iguais antes da carga; importar ficha permanece separado.
+
+### Automação do estoque e novas vendas — 2.0.0
+
+1. Aplicar a migração aditiva e publicar a aplicação. Não reenviar vendas históricas
+   para simular movimentação: o marco inicial é deliberado. Um saldo físico ajustado
+   define novo marco, considerando absorvidos os pedidos anteriores à contagem.
+2. Confirmar que POST sem credencial para `/api/cron/marketplaces` responde **401**.
+3. Aplicar `supabase/operations/marketplace_inventory_scheduler.sql`: `pg_cron`/`pg_net`,
+   agenda de 30 segundos criada **desativada**, chave exclusiva privada gerada no banco.
+   Pode ser configurada antes da publicação; ativar apenas após o teste 401 da rota,
+   com `select cron.alter_job(jobid,active:=true) from cron.job where jobname='avantalab-marketplace-inventory-v1';`.
+   O job
+   envia essa chave, nunca service_role ou token ML. Manter `net` fora dos schemas
+   expostos pela Data API e a rotina sem execução para anon/authenticated. O pg_net
+   gerenciado não permite revogar suas permissões como postgres: logins diretos ao
+   banco podem ler seus cabeçalhos temporários e devem ser restritos a serviços
+   confiáveis. Não criar RPC pública de leitura dessa fila. Um lease de 75 segundos e
+   limite de rota de 60 segundos evitam workers simultâneos; prioridades alternadas.
+   Conferir que a API responde `406/PGRST106` para o schema `net`, sem consultar
+   cabeçalhos. Limitação documentada em
+   [permissões do pg_net gerenciado](https://supabase.com/docs/guides/troubleshooting/revoking-access-to-pg_net-objects-has-no-effect-0bbc16).
+4. No DevCenter manter webhook `/api/webhooks/mercado-livre` com `orders_v2`,
+   `shipments` e `items`. Falha ao guardar a fila retorna 503. O callback responde
+   antes de processar (`after`). Pedidos são relidos e o vendedor é verificado.
+5. Conferir `cron.job_run_details` e `marketplace_inventory_worker.finished_at`
+   sem selecionar tokens. Interromper de forma recuperável desativando apenas
+   `avantalab-marketplace-inventory-v1` em `cron.job`; não apagar tabelas/histórico.
+
+Baixas por pedido/item são atômicas com histórico e outbox. Nenhuma quantidade
+de conta é somada. Itens recebidos alteram cache/vínculo, não provocam baixa por
+diferença de estoque. A fila compara revisão local, verifica vendedor e modelo,
+manda somente `available_quantity` e confirma via GET. Valores incertos,
+multiorigem/Full, kits, variações, produto sem vínculo/saldo ou UP cujos anúncios
+não estão unificados permanecem pendentes. Não reativar pausas manuais. Saldo
+remoto menor após venda não é aumentado por tentativa de sincronização.
+Vendas sem webhook são recuperadas por janela paginada fixa com sobreposição
+de uma hora (os filtros de data ML têm precisão horária), persistindo fila antes
+do cursor. Estoque continua sujeito ao atraso das APIs e vendas simultâneas entre
+plataformas; não oferecer garantia de consistência instantânea/zero overselling.
+
+`marketplace_sale_alerts`/`marketplace_sale_alert_reads` guardam avisos por item
+e leitura por usuário; não são os contadores filtrados de pedidos. Realtime
+privado transmite apenas sinal sem conteúdo; API relê com autorização por empresa.
+Conferência de dez segundos/foco recupera sinais. Popup reutiliza `ModalConfirmacao`,
+espera modal/edição finalizar, mostra dados do pedido e abre permalink validado,
+com consulta ao provedor se não houver cache. Fechar não marca envio. Gestão e
+módulos Web com empresa na URL recebem avisos; PWAs operacionais e Gestão Mobile
+imperativa não recebem push nesta entrega. Provedores futuros exigem adaptadores.
+
+### Configuração
 
 Cadastre no DevCenter a URL exata de retorno:
 `https://SEU-DOMINIO/api/modulos/marketplaces/conexoes/mercado-livre/callback`.

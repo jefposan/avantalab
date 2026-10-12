@@ -15,7 +15,7 @@ test('vendas chegam por webhook validado, são enfileiradas e relidas no provedo
   assert.match(webhook, /parseSaleNotification/);
   assert.match(webhook, /queueSaleNotification/);
   assert.match(webhook, /status: 503/);
-  assert.match(service, /\['orders_v2', 'orders', 'shipments'\]/);
+  assert.match(service, /\['orders_v2', 'orders', 'shipments', 'items'\]/);
   assert.match(service, /await mlRequest\(db, connection, `\/orders\/\$\{id\}`\)/);
   assert.match(service, /processSaleNotifications/);
   assert.match(route, /authorizeMarketplace\(request, params\.get\('empresaId'\)\)/);

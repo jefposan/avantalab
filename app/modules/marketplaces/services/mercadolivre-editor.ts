@@ -25,6 +25,14 @@ async function freshEditor(db: SupabaseClient, connection: SellerConnection, id:
   ]);
   if (user.id != null && String(user.id) !== connection.seller_reference) throw new MarketplaceError(409, 'seller_mismatch', 'Identidade da conta divergente. Reconecte a conta.');
   const editor = mercadoLivreEditPolicy(item, category, user, description.text, automation, stockModel, titleAssociation, availableListingTypes);
+  const linked = await db.from('marketplace_product_links').select('product_id').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider_listing_id', id).maybeSingle();
+  if (linked.error) throw new MarketplaceError(503, 'inventory_database', 'Não foi possível conferir o estoque local deste anúncio.');
+  if (linked.data) {
+    const local = await db.from('marketplace_products').select('stock_quantity').eq('empresa_id', connection.empresa_id).eq('id', linked.data.product_id).is('archived_at', null).maybeSingle();
+    if (local.error) throw new MarketplaceError(503, 'inventory_database', 'Não foi possível conferir o estoque local deste anúncio.');
+    if (local.data?.stock_quantity != null && editor.fields.stock.editable) editor.fields.stock = { ...editor.fields.stock, editable: false,
+      reason: 'Estoque unificado. Ajuste o saldo em Produtos e estoque para atualizar os anúncios vinculados.', notice: `Saldo local: ${local.data.stock_quantity} unidade(s).` };
+  }
   const revision = createHash('sha256').update(JSON.stringify({ connection: connection.id, updated: item.last_updated, editor })).digest('hex');
   return { editor: { ...editor, revision } as ListingEditor, descriptionExists: description.exists, titleWriteField: item.user_product_id ? 'family_name' : 'title' };
 }

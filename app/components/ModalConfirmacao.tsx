@@ -6,6 +6,7 @@ import DraggableModalCard from './DraggableModalCard';
 type ModalConfirmacaoProps = {
   aberto: boolean;
   titulo: string;
+  rotuloCabecalho?: string;
   mensagem: string;
   textoCancelar?: string;
   textoConfirmar?: string;
@@ -21,6 +22,7 @@ type ModalConfirmacaoProps = {
 export default function ModalConfirmacao({
   aberto,
   titulo,
+  rotuloCabecalho,
   mensagem,
   textoCancelar = "Cancelar",
   textoConfirmar = "Confirmar",
@@ -126,7 +128,7 @@ export default function ModalConfirmacao({
       >
         <div data-modal-drag-handle className="px-5 py-4" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">
-            {variante === 'destrutiva' ? 'Confirmação de exclusão' : 'Confirmação'}
+            {rotuloCabecalho || (variante === 'destrutiva' ? 'Confirmação de exclusão' : 'Confirmação')}
           </p>
           <h2 id={tituloId} className="mt-1 text-xl font-black">{titulo}</h2>
         </div>

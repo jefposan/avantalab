@@ -277,11 +277,20 @@ test('publicar cadastro local vincula o anúncio e mantém o saldo físico, sem 
   const local = localFixture(), db = database({ marketplace_products: [local] });
   const mock = noEanProvider(); globalThis.fetch = mock.fetch;
   const target = copyTarget(); const prepared = await prepareLocalProductPublication(db, target, local.id);
-  const result = await publishMercadoLivreCatalog(db, target, 'actor', crypto.randomUUID(), {...prepared.form, stock:1});
+  const result = await publishMercadoLivreCatalog(db, target, 'actor', crypto.randomUUID(), prepared.form);
   assert.equal(result.localProductId, local.id); assert.equal(db.tables.marketplace_products.length,1);
   assert.equal(db.tables.marketplace_products[0].stock_quantity,3);
   assert.equal(db.tables.marketplace_product_links[0].product_id,local.id);
   assert.equal(mock.bodies.find(entry=>entry.path==='/items').body.attributes.some(attr=>attr.id==='GTIN'),false);
+}));
+
+test('publicação não cria saldo parcial divergente do estoque central', () => environment(async () => {
+  const local = localFixture(), db = database({ marketplace_products: [local] });
+  const mock = noEanProvider(); globalThis.fetch = mock.fetch;
+  const target = copyTarget(); const prepared = await prepareLocalProductPublication(db, target, local.id);
+  await assert.rejects(() => publishMercadoLivreCatalog(db, target, 'actor', crypto.randomUUID(), { ...prepared.form, stock: 1 }), { code: 'physical_stock_changed' });
+  assert.equal(mock.sequence.includes('POST /items'), false);
+  assert.equal(db.tables.marketplace_products[0].stock_quantity, 3);
 }));
 
 test('estoque pendente ou insuficiente impede criação no ML e não altera saldo', () => environment(async () => {

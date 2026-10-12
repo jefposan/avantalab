@@ -1,5 +1,59 @@
 # Changelog
 
+## 2.0.0 - 2026-10-11
+
+- Estoque de Marketplaces por pedido/item confirmado: baixa atômica única,
+  ponto inicial para não repetir histórico e movimentos de venda auditados.
+  Cancelamento/reembolso não repõe saldo físico automaticamente.
+- Fila durável de saldos por anúncio, revisão concorrente, retentativas,
+  releitura para confirmar envio e limites explícitos para Full, depósitos,
+  variações e kits. Estoque remoto menor não é reposto por evento de venda.
+  Nova publicação usa saldo local atual; edição separada de estoque vinculado bloqueada.
+- Webhook inicia processamento após resposta; varredura paginada recupera vendas
+  sem aviso. Migração e script Supabase Cron protegido; job criado desativado,
+  ativação exige rota publicada. Não modifica outros jobs nem envia service_role ao agendador.
+  Migração aplicada no Supabase e agendador configurado inativo; ativação e
+  validação real entre Mercado Livre e produção ficam para a publicação.
+- Popup central de nova venda por usuário/empresa com conta, pedido, produto,
+  quantidade e abertura do anúncio na plataforma; fila de avisos e leitura
+  persistida. Realtime privado mais recuperação de dez segundos. Atualização das
+  listas preserva edições abertas; situação e pendências aparecem em português.
+- Não inclui push com navegador fechado, estoque AvantaVendas ou conectores dos
+  marketplaces ainda planejados. Ava revisada para operação e limites de ativação.
+
+## 1.52.0.03 - 2026-10-11
+
+- Removida a numeração decorativa dos cards Marketplace, Novo anúncio e Vendas.
+  Preservados os títulos, as contagens e os controles. Estilo sem uso removido.
+  Ava revisada, sem impacto operacional.
+
+## 1.52.0.02 - 2026-10-11
+
+- Botões Expandir/Recolher de cada produto local com altura visual de 24px
+  (redução de 50%) e largura compacta. Área de clique/toque de 48px mantida,
+  assim como tooltip, teclado e tema. Controles dos blocos não alterados.
+  Ava revisada, sem impacto operacional.
+
+## 1.52.0.01 - 2026-10-11
+
+- Removidas as duas orientações estáticas abaixo da busca em Novo anúncio.
+  Mantidas a validação mínima da pesquisa, seleção da ficha e revisão antes
+  de publicar. Removida também a referência acessível ao texto excluído.
+  Ava revisada, sem impacto operacional.
+
+## 1.52.0 - 2026-10-11
+
+- Carga inicial do estoque local a partir de anúncios ativos com quantidade
+  positiva: consulta atual ao Mercado Livre, revisão e confirmação antes de
+  gravar. Anúncios inativos, zerados ou com variações não fornecem saldo.
+- Uma origem por produto; múltiplos anúncios exigem escolha, nunca soma.
+  Saldos locais já definidos são preservados, inclusive zero. Quantidade,
+  vínculo, conta, empresa e revisão relidos antes da gravação; alteração na
+  quantidade impede usar uma revisão antiga. Origem registrada no histórico.
+- Sem migração ou alteração de anúncios no ML. Importação da ficha continua
+  separada; vincular anúncios iguais antes da carga inicial. Baixa por vendas
+  e sincronização local → marketplace ainda não incluídas. Ava revisada.
+
 ## 1.51.0.02 - 2026-10-11
 
 - Recolher também no rodapé dos blocos Vendas, Anunciados e Produtos e estoque,

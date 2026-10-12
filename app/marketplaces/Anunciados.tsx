@@ -101,7 +101,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
   }, [companyId, accountId, query, status, order, page]);
   const loadListRef = useRef(loadList);
   useEffect(() => { loadListRef.current = loadList; }, [loadList]);
-  useEffect(() => { if (refreshKey) void loadListRef.current(); }, [refreshKey]);
+  useEffect(() => { if (refreshKey && !expanded && !acting && !copyingListing) void loadListRef.current(); }, [refreshKey, expanded, acting, copyingListing]);
 
   useEffect(() => {
     const timer = setTimeout(() => { setRows([]); void loadList(); }, 250);

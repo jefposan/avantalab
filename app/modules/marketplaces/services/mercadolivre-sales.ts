@@ -4,8 +4,9 @@ import { MarketplaceError } from './management-access';
 import { loadConnection, mlBinaryRequest, mlRequest, type SellerConnection } from './mercadolivre-management';
 import { objectValue, uuidIsValid } from './listing-model';
 import { readPostSale } from '../post-sale';
+import { inventoryLines } from './inventory-model';
 
-export type SaleNotification = { id: string; seller: string; topic: 'orders_v2' | 'orders' | 'shipments'; resource: string; orderId?: string; shipmentId?: string };
+export type SaleNotification = { id: string; seller: string; topic: 'orders_v2' | 'orders' | 'shipments' | 'items'; resource: string; orderId?: string; shipmentId?: string; listingId?: string };
 export type MarketplaceSale = { id: string; connectionId: string; orderId: string; soldAt: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: Array<{ title: string; quantity: number; unitPrice: number | null }> };
 
 const orderId = (value: unknown) => /^\d{1,24}$/.test(String(value)) ? String(value) : '';
@@ -17,7 +18,8 @@ export function parseSaleNotification(value: unknown, applicationId: string): Sa
   const body = objectValue(value);
   const topic = body.topic;
   const resource = body.resource;
-  if (String(body.application_id) !== applicationId || !['orders_v2', 'orders', 'shipments'].includes(String(topic)) || typeof body._id !== 'string' || !body._id || body._id.length > 160 || !/^\d{1,20}$/.test(String(body.user_id)) || typeof resource !== 'string') return null;
+  if (String(body.application_id) !== applicationId || !['orders_v2', 'orders', 'shipments', 'items'].includes(String(topic)) || typeof body._id !== 'string' || !body._id || body._id.length > 160 || !/^\d{1,20}$/.test(String(body.user_id)) || typeof resource !== 'string') return null;
+  if (topic === 'items' && /^\/items\/MLB\d{6,20}$/.test(resource)) return { id: body._id, seller: String(body.user_id), topic, resource, listingId: resource.slice(7) };
   if (topic === 'shipments' && /^\/shipments\/\d{1,24}$/.test(resource)) return { id: body._id, seller: String(body.user_id), topic, resource, shipmentId: resource.slice(11) };
   if ((topic === 'orders_v2' || topic === 'orders') && /^\/orders\/\d{1,24}$/.test(resource)) return { id: body._id, seller: String(body.user_id), topic, resource, orderId: resource.slice(8) };
   return null;
@@ -39,6 +41,9 @@ function saleSnapshot(order: Record<string, unknown>, shipment: Record<string, u
     orderId: orderId(order.id), soldAt: text(order.date_created, 80), status: text(order.status, 80) || 'unknown', shipmentId: shipmentId(shipment?.id || shipping.id) || null,
     shipmentStatus, shipmentSubstatus, labelStatus, buyer: text(objectValue(order.buyer).nickname, 160) || null,
     total: amount(order.total_amount), currency: text(order.currency_id, 12) || 'BRL', items,
+    confirmedAt: text(order.date_closed, 80) || null,
+    providerUpdatedAt: text(order.last_updated || order.date_last_updated, 80) || null,
+    inventoryLines: inventoryLines(order.order_items),
   };
 }
 
@@ -51,9 +56,10 @@ function publicSale(row: Record<string, unknown>): MarketplaceSale {
     total: amount(snapshot.total), currency: text(snapshot.currency, 12) || 'BRL', items: (Array.isArray(snapshot.items) ? snapshot.items : []).map(objectValue).map((item) => ({ title: text(item.title) || 'Produto', quantity: Math.max(1, Math.floor(amount(item.quantity) || 1)), unitPrice: amount(item.unitPrice) })).slice(0, 100) };
 }
 
-async function syncOrder(db: SupabaseClient, connection: SellerConnection, id: string) {
+export async function syncOrder(db: SupabaseClient, connection: SellerConnection, id: string) {
   const order = objectValue(await mlRequest(db, connection, `/orders/${id}`));
-  if (orderId(order.id) !== id) throw new MarketplaceError(503, 'invalid_order', 'O Mercado Livre devolveu uma venda inválida.');
+  if (orderId(order.id) !== id || orderId(objectValue(order.seller).id) !== connection.seller_reference) throw new MarketplaceError(503, 'invalid_order', 'O Mercado Livre não confirmou a venda desta conta.');
+  if (['paid', 'partially_refunded'].includes(String(order.status)) && (!Array.isArray(order.order_items) || !order.order_items.length)) throw new MarketplaceError(503, 'invalid_order', 'Os itens da venda não foram confirmados.');
   const shipping = objectValue(order.shipping); const idShipment = shipmentId(shipping.id);
   let shipment: Record<string, unknown> | null = null;
   if (idShipment) {
@@ -66,23 +72,30 @@ async function syncOrder(db: SupabaseClient, connection: SellerConnection, id: s
 }
 
 export async function queueSaleNotification(db: SupabaseClient, notification: SaleNotification) {
-  const { data: connection } = await db.from('marketplace_connections').select('id,empresa_id').eq('provider', 'mercado_livre').eq('seller_reference', notification.seller).eq('status', 'connected').maybeSingle();
-  if (!connection) return;
-  await db.from('marketplace_sale_notifications').upsert({ id: notification.id, empresa_id: connection.empresa_id, connection_id: connection.id, topic: notification.topic, resource: notification.resource }, { onConflict: 'id', ignoreDuplicates: true });
+  const { data: connection, error: connectionError } = await db.from('marketplace_connections').select('id,empresa_id').eq('provider', 'mercado_livre').eq('seller_reference', notification.seller).eq('status', 'connected').maybeSingle();
+  if (connectionError) throw new MarketplaceError(503, 'database', 'Não foi possível conferir a conta do aviso.');
+  if (!connection) return null;
+  const { error } = await db.from('marketplace_sale_notifications').upsert({ id: notification.id, empresa_id: connection.empresa_id, connection_id: connection.id, topic: notification.topic, resource: notification.resource }, { onConflict: 'id', ignoreDuplicates: true });
+  if (error) throw new MarketplaceError(503, 'database', 'Não foi possível guardar o aviso de venda.');
+  return connection;
 }
 
-export async function processSaleNotifications(db: SupabaseClient, connection: SellerConnection) {
-  const { data, error } = await db.from('marketplace_sale_notifications').select('id,topic,resource,attempts').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).is('processed_at', null).lte('next_attempt_at', new Date().toISOString()).order('created_at').limit(12);
+export async function processSaleNotifications(db: SupabaseClient, connection: SellerConnection, limit = 12, deadline = Infinity) {
+  const { data, error } = await db.from('marketplace_sale_notifications').select('id,topic,resource,attempts').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).is('processed_at', null).lte('next_attempt_at', new Date().toISOString()).order('created_at').limit(limit);
   if (error) throw new MarketplaceError(503, 'database', 'Não foi possível consultar as vendas recebidas.');
   for (const event of data || []) {
+    if (Date.now() > deadline) break;
     try {
       let id = String(event.resource).split('/').pop() || '';
       if (event.topic === 'shipments') {
         const shipment = objectValue(await mlRequest(db, connection, `/shipments/${id}`));
         id = orderId(shipment.order_id);
       }
-      if (!orderId(id)) throw new Error('invalid_resource');
-      await syncOrder(db, connection, id);
+      if (event.topic === 'items') await (await import('./inventory-listings')).observeInventoryListing(db, connection, id);
+      else {
+        if (!orderId(id)) throw new Error('invalid_resource');
+        await syncOrder(db, connection, id);
+      }
       await db.from('marketplace_sale_notifications').update({ processed_at: new Date().toISOString(), error_code: null }).eq('id', event.id);
     } catch (error) {
       const attempts = Math.min(99, Number(event.attempts || 0) + 1);

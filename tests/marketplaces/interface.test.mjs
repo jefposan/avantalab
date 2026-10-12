@@ -13,6 +13,36 @@ const accountPicker = read('app/marketplaces/MarketplaceAccountPicker.tsx');
 const marketplaceSelect = read('app/marketplaces/MarketplaceSelect.tsx');
 const css = read('app/marketplaces/marketplaces.module.css');
 
+test('cards são identificados por título, sem numeração decorativa', () => {
+  const sales = read('app/marketplaces/Vendas.tsx');
+  for (const source of [client, sales, listings, read('app/marketplaces/ProductsStock.tsx')]) {
+    assert.doesNotMatch(source, /styles\.step/);
+  }
+  assert.doesNotMatch(css, /\.step\s*\{/);
+  assert.match(client, /<h2>Marketplace<\/h2>/);
+  assert.match(client, /<h2 id="new-listing-title">Novo anúncio<\/h2>/);
+  assert.match(sales, /<h2 id="sales-title">Vendas · \{sales\.length\}<\/h2>/);
+});
+
+test('expansão individual de produtos tem face de 24px e alvo de 48px sem alterar os blocos', () => {
+  const products = read('app/marketplaces/ProductsStock.tsx');
+  assert.match(products, /contexto=\{`produto \$\{product\.name\}`\} controlsId=\{`local-detail-\$\{product\.id\}`\}/);
+  assert.match(css, /\.localProductHeading button\[aria-controls\^="local-detail-"\] \{[^}]*min-height: 24px; height: 24px;[^}]*min-width: 80px;[^}]*font-size: 12px;/);
+  assert.match(css, /\.localProductHeading button\[aria-controls\^="local-detail-"\]::after \{ content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 48px; transform: translateY\(-50%\); \}/);
+  assert.match(css, /\.localProductHeading button\[aria-controls\^="local-detail-"\] svg \{ width: 12px; height: 12px;/);
+  assert.match(css, /:not\(:where\(\.localProductHeading button\)\)/);
+  assert.match(css, /\.panelHeadingActions \{ --heading-control-height: 40px;/);
+  assert.match(css, /\.panelHeadingActions \{ --heading-control-height: 48px;/);
+});
+
+test('Novo anúncio não exibe as orientações removidas e mantém validação da busca', () => {
+  assert.doesNotMatch(newListing, /Digite pelo menos 3 caracteres e escolha a ficha correta/);
+  assert.doesNotMatch(newListing, /O produto já está cadastrado\?/);
+  assert.doesNotMatch(newListing, /new-search-description-help/);
+  assert.match(newListing, /searchDescription\.trim\(\)\.length < 3/);
+  assert.match(newListing, /onClick=\{searchByDescription\}/);
+});
+
 test('cópia sem EAN preenche valores visíveis e mantém origem, descrição e opções para revisão', () => {
   const start = newListing.indexOf('  function applyPreparation(');
   const end = newListing.indexOf('\n  async function prepare(', start);

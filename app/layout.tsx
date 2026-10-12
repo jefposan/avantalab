@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from 'react';
+import MarketplaceLiveScope from './components/MarketplaceLiveMonitor';
 import "./globals.css";
 import { inter } from "./lib/fonts";
 import WebPopupScrollLock from "./components/WebPopupScrollLock";
@@ -75,6 +77,7 @@ export default function RootLayout({
       </head>
       <body className="typography-system min-h-full flex flex-col">
         <WebPopupScrollLock />
+        <Suspense fallback={null}><MarketplaceLiveScope /></Suspense>
         {children}
       </body>
     </html>

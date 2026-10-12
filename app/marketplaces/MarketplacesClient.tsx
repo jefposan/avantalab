@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import ModuloHeader from '@/app/components/ModuloHeader';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
+import { MarketplaceLiveMonitor } from '@/app/components/MarketplaceLiveMonitor';
 import AvantaKanban from '@/app/components/AvantaKanban';
 import Tooltip from '@/app/components/Tooltip';
 import AuthorizationRenewal from './AuthorizationRenewal';
@@ -21,6 +22,7 @@ import Vendas from './Vendas';
 import SalesFilters, { monthPeriod } from './SalesFilters';
 import { saleGroup, salesInPeriod, salesSummary, type SaleGroup } from '@/app/modules/marketplaces/sales-status';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
+import { inventoryIssueMessage, type MarketplaceLiveFeed } from '@/app/modules/marketplaces/live-feed';
 
 const providers: Array<{ id: MarketplaceId; name: string; available: boolean }> = [
   { id: 'mercado_livre', name: 'Mercado Livre', available: true },
@@ -58,6 +60,23 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [disconnecting, setDisconnecting] = useState(false);
   const [renewAccount, setRenewAccount] = useState<MarketplaceAccount | null>(null);
   const [sales, setSales] = useState<MarketplaceSale[]>([]);
+  const [liveFeed, setLiveFeed] = useState<MarketplaceLiveFeed | null>(null);
+  const [liveUnavailable, setLiveUnavailable] = useState(false);
+  const liveVersion = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    liveVersion.current = undefined;
+    const update = (event: Event) => {
+      const detail = (event as CustomEvent<{ companyId: string; feed?: MarketplaceLiveFeed; unavailable?: boolean }>).detail;
+      if (detail?.companyId !== companyId) return;
+      setLiveUnavailable(Boolean(detail.unavailable));
+      if (!detail.feed) return;
+      setLiveFeed(detail.feed);
+      if (liveVersion.current !== undefined && detail.feed.updatedAt !== liveVersion.current) setRefreshKey(value => value + 1);
+      liveVersion.current = detail.feed.updatedAt;
+    };
+    window.addEventListener('avanta:marketplace-live-feed', update);
+    return () => window.removeEventListener('avanta:marketplace-live-feed', update);
+  }, [companyId]);
   const [salesLoading, setSalesLoading] = useState(true);
   const [salesError, setSalesError] = useState('');
   const [salesRefresh, setSalesRefresh] = useState(0);
@@ -289,6 +308,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }
 
   return <main className={`${styles.page} ${empresa.temaEscuro ? styles.dark : ''}`} style={{ '--marketplace-brand': empresa.corPrimaria } as CSSProperties}>
+    <MarketplaceLiveMonitor key={companyId} companyId={companyId} brand={empresa.corPrimaria} dark={empresa.temaEscuro} />
     <ModuloHeader empresa={empresa} onBack={voltar} className={styles.salesHeader}>
       <SalesFilters period={salesPeriod} onPeriodChange={setSalesPeriod} group={salesGroup} onGroupChange={setSalesGroup} counts={summary.byGroup} total={summary.total} dark={empresa.temaEscuro} brand={empresa.corPrimaria} />
       <button type="button" className={styles.salesNotification} onClick={() => { setSalesExpanded(true); setSalesAccount(''); document.getElementById('sales-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); }} aria-label={`${pendingSalesTotal} vendas nos filtros selecionados. Ver todas as contas.`} title="Vendas nos filtros selecionados" aria-busy={salesLoading}>
@@ -311,7 +331,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
 
     <section className={styles.grid} aria-label="Configuração de publicação">
       <article className={styles.panel}>
-        <div className={styles.panelHeading}><div><p className={styles.step}>1</p><h2>Marketplace</h2></div></div>
+        <div className={styles.panelHeading}><div><h2>Marketplace</h2></div></div>
         <div className={styles.providerGrid}>
           {providers.map((provider) => <button key={provider.id} type="button" disabled={!provider.available} className={`${styles.provider} ${marketplace === provider.id ? styles.providerSelected : ''}`} onClick={() => setMarketplace(provider.id)} aria-pressed={marketplace === provider.id}>
             <strong>{provider.name}</strong>{!provider.available && <small>Em breve</small>}
@@ -341,11 +361,18 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       </article>
 
       <article className={styles.panel}>
-        <div className={styles.panelHeading}><div><p className={styles.step}>2</p><h2 id="new-listing-title">Novo anúncio</h2></div></div>
+        <div className={styles.panelHeading}><div><h2 id="new-listing-title">Novo anúncio</h2></div></div>
         {marketplace === 'mercado_livre' && <NewListing key={companyId} companyId={companyId} accountId={selectedAccount} accounts={accounts} accountSelectionLocked={accountSelectionLocked} onSelectAccount={setSelectedAccount} onBusyChange={setPublicationBusy} canManage={canManage} onPublished={() => setRefreshKey((value) => value + 1)} copyRequest={copyRequest} onCopyHandled={() => { setCopyRequest(null); setRefreshKey((value) => value + 1); }} />}
       </article>
     </section>
 
+    {marketplace === 'mercado_livre' && <div className={styles.inventoryStatus} role="status">
+      {liveUnavailable ? 'Os avisos automáticos não puderam ser consultados. Atualize a página; confira a configuração se persistir.' : liveFeed?.enabled ? <>
+        {liveFeed.workerHealthy ? 'Sincronização automática ativa.' : 'A rotina automática ainda não confirmou atividade recente. Confira a ativação antes de confiar na baixa automática.'}
+        {Boolean(liveFeed.pendingSales || liveFeed.pendingStock) && <span>{liveFeed.pendingSales} aviso(s) de venda e {liveFeed.pendingStock} anúncio(s) aguardando atualização.</span>}
+        {liveFeed.issues.map(issue => <span key={issue.issue}>{inventoryIssueMessage(issue.issue)} ({issue.total})</span>)}
+      </> : 'A sincronização automática de estoque ainda precisa ser ativada nesta empresa.'}
+    </div>}
     {marketplace === 'mercado_livre' && <AvantaKanban className={styles.panelOrder} order={panelOrder.order} onOrderChange={panelOrder.change} disabled={!panelOrder.ready || publicationBusy || priceUsersOpen || !!disconnectAccount} items={[
       { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={setSalesAccount} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
       { id: 'products', title: 'Produtos e estoque', render: (handle) => <ProductsStock key={companyId} companyId={companyId} accounts={accounts} canManage={canManage} dark={empresa.temaEscuro} brand={empresa.corPrimaria} refreshKey={refreshKey} preparationLocked={publicationBusy || accountSelectionLocked} reorderHandle={handle} onPrepare={(localProductId, targetConnectionId) => {
