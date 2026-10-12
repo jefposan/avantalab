@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 2.0.0.03 -->
+<!-- ava-version: 2.0.0.04 -->
+
+> Revisão 2.0.0.04: barra compacta de Produtos e estoque no Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile nativa ou no PWA.
 
 > Revisão 2.0.0.03: confirmação antes da consulta e da gravação da carga inicial
 > no Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa ou no PWA.

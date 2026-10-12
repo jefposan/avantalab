@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 2.0.0.03 -->
+<!-- ava-version: 2.0.0.04 -->
+
+> Revisão 2.0.0.04: a busca e os botões **Novo produto**, **Importar anúncios
+> existentes** e **Carregar estoque dos anúncios** ficam na mesma barra compacta
+> de Produtos e estoque no computador. No celular, aparecem em coluna.
+> Confirmações e proteção dos saldos existentes permanecem iguais.
 
 > Revisão 2.0.0.03: **Carregar estoque dos anúncios** pede confirmação antes
 > da consulta. **Revisar anúncios** só mostra as quantidades, sem salvar saldos.

@@ -26,8 +26,10 @@
 .panelOrder { margin-top: 24px; }
 .inventoryStatus { display: grid; gap: 8px; margin-top: 24px; padding: 14px 16px; border-radius: 12px; background: color-mix(in srgb, var(--brand) 6%, #fff); color: #334155; font-size: 12px; line-height: 1.5; }
 .dark .inventoryStatus { background: color-mix(in srgb, var(--brand) 12%, #182235); color: #e2e8f0; }
-.localToolbar, .localPagination { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
-.localToolbar > div:first-child { flex: 1 1 260px; min-width: 0; }
+.localPagination { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
+.localToolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 18px 0; }
+.localToolbar > div:first-child { flex: 1 1 200px; min-width: 180px; max-width: 360px; }
+.localToolbar > span { flex: 0 0 auto; max-width: 100%; }
 .localProducts { display: grid; gap: 12px; }
 .localStockLoad { margin-bottom: 24px; }
 /* Preserva o alvo mobile apesar dos seletores legados dos botões de anúncios. */
@@ -224,6 +226,14 @@
 .listingTable tbody .listingRow:has(:focus-visible) > :is(th, td):not(.editingListingTitle) { background: color-mix(in srgb, var(--brand) 4%, #fff); }
 .dark .listingTable tbody .listingRow:has(:focus-visible) > :is(th, td):not(.editingListingTitle) { background: color-mix(in srgb, var(--brand) 10%, #182235); }
 .listingsPanel button:not(.primary):not(.selectTrigger):not(.selectOption):not(.publishOtherAccountButton):not(:global(.avanta-campo-busca-limpar)):not([data-avanta-kanban-handle]):not(:where(.panelHeadingActions button)):not(:where(.localProductHeading button)) { min-height: 44px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: var(--brand); padding: 0 12px; font: inherit; cursor: pointer; }
+/* A barra compacta prevalece sobre os seletores legados de botões do painel. */
+.listingsPanel .localToolbar > span > button { padding-inline: 10px !important; font-size: 14px !important; white-space: nowrap; }
+@media (max-width: 760px) {
+  .localToolbar { align-items: stretch; }
+  .localToolbar > div:first-child { flex-basis: 100%; min-width: 0; max-width: none; }
+  .localToolbar > span { flex-basis: 100%; }
+  .listingsPanel .localToolbar > span > button { width: 100%; min-height: 48px !important; white-space: normal; }
+}
 .listingTable .listingActions { position: sticky; right: 0; z-index: 1; text-align: center; background: #fff; box-shadow: -1px 0 0 #e2e8f0; }
 .listingTable thead .listingActions { background: #f1f5f9; }
 .listingsPanel button.editListing { display: inline-flex; align-items: center; justify-content: center; width: 44px; padding: 0; border: 0; border-radius: 12px; background: transparent; }

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.0.04 - 2026-10-11
+
+- Busca de Produtos e estoque mais estreita e botões compactos na mesma barra:
+  Novo produto, Importar anúncios existentes e Carregar estoque dos anúncios.
+  No celular, controles em coluna com alvo de 48px, sem rolagem horizontal.
+  Confirmações e proteções da carga inicial preservadas; Ava revisada.
+
 ## 2.0.0.03 - 2026-10-11
 
 - Confirmação padrão antes de consultar anúncios para a carga inicial.

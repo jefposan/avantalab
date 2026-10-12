@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 2.0.0.03 -->
+<!-- ava-version: 2.0.0.04 -->
+
+> Revisão 2.0.0.04: barra de Produtos e estoque compactada no Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
 
 > Revisão 2.0.0.03: confirmação da carga inicial no Marketplaces Web reforçada.
 > Sem impacto operacional no AvantaVendas.

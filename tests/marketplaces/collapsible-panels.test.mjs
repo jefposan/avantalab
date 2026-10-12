@@ -167,6 +167,26 @@ test('cabeçalho de Anunciados reutiliza os estilos de Vendas sem sobrepor Expan
   assert.equal((css.match(/:not\(:where\(\.panelHeadingActions button\)\)/g) || []).length, 2);
 });
 
+test('barra compacta dos produtos mantém busca e três ações juntas, respeitando permissões e mobile', () => {
+  const props = { companyId: 'empresa', dark: false, brand: '#003E73', accounts: [], refreshKey: 0, preparationLocked: false, onPrepare: noop };
+  const html = render(ProductsStock, { ...props, canManage: true });
+  const toolbar = html.slice(html.indexOf('class="localToolbar"'), html.indexOf('class="localProducts"'));
+  assert.match(toolbar, /id="local-product-search"/);
+  assert.match(toolbar, /Novo produto/);
+  assert.match(toolbar, /Importar anúncios existentes/);
+  assert.match(toolbar, /id="load-listing-stock-button"/);
+  assert.ok(!toolbar.includes('class="actionBar"'));
+  assert.equal((html.match(/id="load-listing-stock-button"/g) || []).length, 1);
+  const readonly = render(ProductsStock, { ...props, canManage: false });
+  assert.match(readonly, /id="local-product-search"/);
+  for (const text of ['Novo produto', 'Importar anúncios existentes', 'load-listing-stock-button']) assert.ok(!readonly.includes(text));
+  const css = readFileSync(resolve(root, 'app/marketplaces/marketplaces.module.css'), 'utf8');
+  assert.match(css, /\.localToolbar > div:first-child \{ flex: 1 1 200px; min-width: 180px; max-width: 360px; \}/);
+  assert.match(css, /\.listingsPanel \.localToolbar > span > button \{ padding-inline: 10px !important; font-size: 14px !important; white-space: nowrap; \}/);
+  assert.match(css, /\.localToolbar > div:first-child \{ flex-basis: 100%; min-width: 0; max-width: none; \}/);
+  assert.match(css, /\.listingsPanel \.localToolbar > span > button \{ width: 100%; min-height: 48px !important; white-space: normal; \}/);
+});
+
 test('controles do cabeçalho usam Tooltip oficial, sem balão nativo duplicado no arraste', () => {
   for (const [file, text] of [['Anunciados.tsx', 'Atualizar anúncios da conta selecionada'], ['Vendas.tsx', 'Atualizar vendas e envios']]) {
     const source = readFileSync(resolve(root, `app/marketplaces/${file}`), 'utf8');
