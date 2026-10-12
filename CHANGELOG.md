@@ -7,7 +7,10 @@
   sem resultados. Mantido o período selecionado e o filtro sincronizado.
 - Ver vendas usa a mesma rolagem, descontando cabeçalho e marcas fixas, com
   espaço para o título e suporte a movimento reduzido. Escolher situação no
-  próprio bloco ou atualizar em segundo plano não move a página. Sem publicar.
+  próprio bloco ou atualizar em segundo plano não move a página.
+- Entrega consolidada das revisões 3.0.0.11 a 3.0.0.14 para produção, incluindo
+  recuperação do histórico, situações operacionais e filtros sincronizados.
+  Migração aditiva do histórico já aplicada; build e 1.011 testes aprovados.
 
 ## 3.0.0.13 - 2026-10-12
 

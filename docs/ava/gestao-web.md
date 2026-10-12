@@ -7,7 +7,8 @@
 > e das marcas fixas. **Ver vendas** usa a mesma rolagem. Funciona também
 > para Todas e situações sem resultados. Período mantido; situação no bloco
 > e atualizações automáticas não rolam. Movimento reduzido respeitado.
-> Sem publicação.
+> Esta entrega reúne as revisões 3.0.0.11 a 3.0.0.14 para produção; a migração
+> aditiva do histórico já foi aplicada. As notas abaixo registram sua evolução.
 
 > Revisão 3.0.0.13: **Situação** fica ao lado de **Conta das vendas**.
 > Vale a última situação escolhida, no bloco ou no header; os dois seletores
