@@ -193,7 +193,7 @@ test('Anunciados inicia recolhido com controle próprio no topo e filtros montad
   assert.ok(html.indexOf('Conta dos anúncios') < html.indexOf('id="announced-content"'));
   assert.match(html, /Todas as contas/);
   const source = readFileSync(resolve(root, 'app/marketplaces/Anunciados.tsx'), 'utf8');
-  assert.match(source, /const \[accountId, setAccountId\] = useState\(''\)/);
+  assert.match(source, /const \[accountSelection, setAccountId\] = useState\(''\)/);
   assert.match(source, /const \[status, setStatus\] = useState\('active'\)/);
   assert.match(source, /<ListingEditor[^>]*accountId=\{sourceAccountId\}/);
   assert.match(source, /onPublishInAnotherAccount\(sourceAccountId, item.id, copyTargetId\)/);

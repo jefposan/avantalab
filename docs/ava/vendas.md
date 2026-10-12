@@ -1,6 +1,66 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 2.0.0.10 -->
+<!-- ava-version: 3.0.0.10 -->
+
+> Revisão 3.0.0.10: ordenação por quantidade no seletor de situações do
+> Marketplaces Web. Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.09: segunda redução visual de 10% nos botões do header
+> Marketplaces Web. Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.08: botões do header Marketplaces Web mais baixos,
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.07: botões da lista de situações do Marketplaces Web
+> compactados. Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.06: opções compactas no seletor de situação das vendas
+> do Marketplaces Web. Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.05: paleta do cabeçalho Marketplaces Web ajustada, com
+> contador dentro de Ver vendas. Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.04: organização visual do cabeçalho Marketplaces Web, sem
+> impacto operacional no AvantaVendas. Contagem do sino é total filtrado,
+> não quantidade de vendas novas ou não lidas.
+
+> Revisão 3.0.0.03: card inicial do Marketplaces Web compactado, sem a frase
+> Conexão e gestão. Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.02: simplificação de Novo anúncio no Marketplaces Web,
+> sem campo duplicado de identificação. Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.01: identificação das contas editada pelo lápis no módulo
+> Marketplaces Web. Sem impacto operacional no AvantaVendas ou no estoque.
+
+> Revisão 3.0.0: identificação local de contas no módulo Marketplaces Web.
+> Sem impacto operacional no AvantaVendas; as vendas do módulo Web exibem
+> o nome local quando definido, mantendo a conexão e o pedido originais.
+
+> Revisão 2.2.0: filtro por marketplace e navegação fixa no módulo Web.
+> Vendas e avisos do módulo permanecem gerais. Sem impacto operacional
+> no AvantaVendas.
+
+> Revisão 2.1.0.06: card de apresentação do Marketplaces Web mais baixo.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 2.1.0.05: retirada de orientação estática em contas do módulo Web.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 2.1.0.04: contas conectadas compactas no módulo Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 2.1.0.03: blocos Marketplace e Novo anúncio em largura integral
+> no módulo Web. Sem impacto operacional no AvantaVendas.
+
+> Revisão 2.1.0.02: identidade visual no seletor do módulo Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 2.1.0.01: opção Magalu selecionável no módulo Web local.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 2.1.0: backend OAuth Magalu preparado, ainda sem ativação/publicação.
+> Sem impacto operacional no AvantaVendas.
 
 > Revisão 2.0.0.10: ícone e tooltips do cabeçalho do Marketplaces Web.
 > Sem impacto operacional no AvantaVendas.

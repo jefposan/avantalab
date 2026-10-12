@@ -14,11 +14,12 @@ type Props = {
   onMudarMes: (delta: number) => void;
   onMostrarTodos: () => void;
   mostrarTodos?: boolean;
+  todosLabel?: string;
   tooltipPosition?: 'top' | 'bottom';
 };
 
 /** Controle único de competência para as filas de Recebimentos. */
-export default function FiltroCompetencia({ referencia, todos, onMudarMes, onMostrarTodos, mostrarTodos = true, tooltipPosition }: Props) {
+export default function FiltroCompetencia({ referencia, todos, onMudarMes, onMostrarTodos, mostrarTodos = true, todosLabel = 'Todos', tooltipPosition }: Props) {
   const tip = (element: ReactNode, text: string) => tooltipPosition ? <Tooltip texto={text} posicao={tooltipPosition}>{element}</Tooltip> : element;
   return (
     <div className={styles.filtroCompetencia} aria-label="Filtro por competência">
@@ -43,7 +44,7 @@ export default function FiltroCompetencia({ referencia, todos, onMudarMes, onMos
         aria-pressed={todos}
         onClick={onMostrarTodos}
       >
-        Todos
+        {todosLabel}
       </button>, 'Mostrar todos os meses')}
     </div>
   );

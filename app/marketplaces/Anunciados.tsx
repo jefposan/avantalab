@@ -19,8 +19,11 @@ import { collapseMarketplacePanel } from './collapse-panel';
 import type { DateOrder } from '@/app/modules/marketplaces/date-order';
 import { listingDisplaySignature } from './passive-refresh';
 import { scrollMarketplaceRow } from './scroll-panel-row';
+import type { MarketplaceId } from '@/app/modules/marketplaces/types';
+import { accountsForMarketplace } from './marketplace-scope';
+import { accountDisplayName, accountReferenceDetail, preserveNewerAccountLabel } from './account-identification';
 
-export type MarketplaceAccount = { id: string; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
+export type MarketplaceAccount = { id: string; provider?: MarketplaceId; local_label?: string | null; local_label_updated_at?: string | null; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
 type Row = { snapshot: ListingSnapshot; status: string; connectionId: string };
 type Confirmation = { action: ListingAction; id: string; name: string; connectionId: string };
 const statusNames: Record<string, string> = { connected: 'Conectada', expired: 'Reconectar', attention: 'Requer atenção', connecting: 'Conectando', active: 'Ativo', paused: 'Pausado', closed: 'Encerrado', deleted: 'Excluído', under_review: 'Em revisão', inactive: 'Inativo' };
@@ -42,9 +45,11 @@ export async function marketplaceClientRequest(path: string, body?: unknown, sig
   return payload;
 }
 
-export default function Anunciados({ companyId, dark, brand, onAccountsLoaded, onAccountSelectionLockedChange, onPublishInAnotherAccount, refreshKey = 0, reorderHandle }: { companyId: string; dark: boolean; brand: string; onAccountsLoaded: (accounts: MarketplaceAccount[], canDisconnect: boolean) => void; onAccountSelectionLockedChange: (locked: boolean) => void; onPublishInAnotherAccount: (sourceConnectionId: string, listingId: string, targetConnectionId: string) => void; refreshKey?: number; reorderHandle?: ReactNode }) {
-  const [accountId, setAccountId] = useState('');
+export default function Anunciados({ companyId, marketplace = 'mercado_livre', accountNames, dark, brand, onAccountsLoaded, onAccountSelectionLockedChange, onPublishInAnotherAccount, refreshKey = 0, reorderHandle }: { companyId: string; marketplace?: MarketplaceId; accountNames?: MarketplaceAccount[]; dark: boolean; brand: string; onAccountsLoaded: (accounts: MarketplaceAccount[], canDisconnect: boolean, labelsAvailable?: boolean) => void; onAccountSelectionLockedChange: (locked: boolean) => void; onPublishInAnotherAccount: (sourceConnectionId: string, listingId: string, targetConnectionId: string) => void; refreshKey?: number; reorderHandle?: ReactNode }) {
+  const [accountSelection, setAccountId] = useState('');
   const [accounts, setAccounts] = useState<MarketplaceAccount[]>([]);
+  const scopedAccounts = accountsForMarketplace(accounts.map(account => preserveNewerAccountLabel(accountNames?.find(known => known.id === account.id), account)), marketplace);
+  const accountId = scopedAccounts.some(account => account.id === accountSelection && account.status === 'connected') ? accountSelection : '';
   const [canManage, setCanManage] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
   const [rowsAccountId, setRowsAccountId] = useState('');
@@ -72,9 +77,10 @@ export default function Anunciados({ companyId, dark, brand, onAccountsLoaded, o
   const syncController = useRef<AbortController | null>(null);
   const listController = useRef<AbortController | null>(null);
   const activeAccountId = rows.find(row => row.snapshot.id === expanded)?.connectionId || accountId;
-  const account = accounts.find((candidate) => candidate.id === activeAccountId);
-  const connectedSignature = accounts.filter(candidate => candidate.status === 'connected').map(candidate => candidate.id).sort().join(',');
-  const visibleRows = rowsAccountId === accountId ? rows : [];
+  const account = scopedAccounts.find((candidate) => candidate.id === activeAccountId);
+  const connectedSignature = scopedAccounts.filter(candidate => candidate.status === 'connected').map(candidate => candidate.id).sort().join(',');
+  const visibleRows = marketplace === 'mercado_livre' && rowsAccountId === accountId ? rows : [];
+  const displayedTotal = marketplace === 'mercado_livre' ? total : 0;
   const visibleSignature = useRef('');
   useEffect(() => { visibleSignature.current = listingDisplaySignature({ listings: rows, total }); }, [rows, total]);
   const editing = !!expanded && canManage && account?.status === 'connected';
@@ -83,7 +89,7 @@ export default function Anunciados({ companyId, dark, brand, onAccountsLoaded, o
     const data = await marketplaceClientRequest(`conexoes?empresaId=${encodeURIComponent(companyId)}`, undefined, signal);
     if (signal?.aborted) return;
     setAccounts(data.accounts); setCanManage(data.canManage);
-    onAccountsLoaded(data.accounts, data.canConnect);
+    onAccountsLoaded(data.accounts, data.canConnect, data.labelsAvailable !== false);
   }, [companyId, onAccountsLoaded]);
 
   useEffect(() => {
@@ -96,6 +102,7 @@ export default function Anunciados({ companyId, dark, brand, onAccountsLoaded, o
 
   const loadList = useCallback(async () => {
     listController.current?.abort();
+    if (marketplace !== 'mercado_livre') { setRows([]); setTotal(0); setLoading(false); setError(''); setSyncNotice(''); return; }
     const controller = new AbortController(); listController.current = controller;
     setLoading(true);
     try {
@@ -104,7 +111,7 @@ export default function Anunciados({ companyId, dark, brand, onAccountsLoaded, o
       if (!controller.signal.aborted) { setRows(data.listings); setRowsAccountId(accountId); setTotal(data.total); }
     } catch (failure) { if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : 'Falha ao carregar anúncios.'); }
     finally { if (!controller.signal.aborted) setLoading(false); }
-  }, [companyId, accountId, query, status, order, page]);
+  }, [companyId, marketplace, accountId, query, status, order, page]);
   const loadListRef = useRef(loadList);
   useEffect(() => { loadListRef.current = loadList; }, [loadList]);
   useEffect(() => { if (refreshKey && !expanded && !acting && !copyingListing) void loadListRef.current(); }, [refreshKey, expanded, acting, copyingListing]);
@@ -115,7 +122,8 @@ export default function Anunciados({ companyId, dark, brand, onAccountsLoaded, o
   }, [loadList]);
 
   const synchronize = useCallback(async (background = false) => {
-    const targets = accounts.filter(candidate => candidate.status === 'connected' && (!accountId || candidate.id === accountId));
+    if (marketplace !== 'mercado_livre') return;
+    const targets = accountsForMarketplace(accounts, marketplace).filter(candidate => candidate.status === 'connected' && (!accountId || candidate.id === accountId));
     if (!targets.length || acting || expanded || copyingListing) return;
     if (syncController.current) {
       if (background) return;
@@ -142,7 +150,7 @@ export default function Anunciados({ companyId, dark, brand, onAccountsLoaded, o
       }
     } catch (failure) { if (!controller.signal.aborted && !background) { setError(failure instanceof Error ? failure.message : 'Sincronização falhou.'); setSyncNotice('Dados anteriores preservados. Sincronização pendente.'); await loadListRef.current(); } }
     finally { if (syncController.current === controller) { syncController.current = null; if (!background) setSyncing(false); } }
-  }, [accountId, accounts, acting, expanded, copyingListing, companyId, loadAccounts, query, status, order, page]);
+  }, [accountId, accounts, marketplace, acting, expanded, copyingListing, companyId, loadAccounts, query, status, order, page]);
 
   const synchronizeRef = useRef(synchronize);
   useEffect(() => { synchronizeRef.current = synchronize; }, [synchronize]);
@@ -191,30 +199,30 @@ export default function Anunciados({ companyId, dark, brand, onAccountsLoaded, o
   }
 
   return <section className={`${styles.panel} ${styles.listingsPanel}`} aria-labelledby="announced-title">
-    <div className={`${styles.panelHeading} ${!panelExpanded ? styles.panelHeadingCollapsed : ''}`}><div><h2 id="announced-title">Anunciados</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<MarketplaceSelect label="" ariaLabel="Conta dos anúncios" className={styles.announcedAccountFilter} value={accountId} placeholder="Todas as contas" options={[{ value: '', label: 'Todas as contas' }, ...accounts.filter(candidate => candidate.status === 'connected').map(candidate => ({ value: candidate.id, label: candidate.seller_name || `Vendedor ${candidate.seller_reference}` }))]} disabled={loading || syncing || acting || !!expanded || !!copyingListing} onChange={value => { setAccountId(value); setPageSelection({ accountId: value, page: 1 }); setSyncNotice(''); setError(''); }} /><DateOrderButton context="Anunciados" order={order} disabled={loading || syncing || acting || !!expanded || !!copyingListing} onChange={(value) => { setOrder(value); setPage(1); }} /><Tooltip texto="Atualizar anúncios das contas selecionadas"><button className={styles.refreshSales} type="button" disabled={!connectedSignature || syncing || acting || !!expanded} onClick={() => void synchronize()}>{syncing ? 'Atualizando…' : 'Atualizar'}</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="Anunciados" controlsId="announced-content" expandido={panelExpanded} onClick={() => setPanelExpanded((current) => !current)} corPrimaria={brand} darkMode={dark} /></div></div>
+    <div className={`${styles.panelHeading} ${!panelExpanded ? styles.panelHeadingCollapsed : ''}`}><div><h2 id="announced-title">Anunciados</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<MarketplaceSelect label="" ariaLabel="Conta dos anúncios" className={styles.announcedAccountFilter} value={accountId} placeholder="Todas as contas" options={[{ value: '', label: 'Todas as contas' }, ...scopedAccounts.filter(candidate => candidate.status === 'connected').map(candidate => ({ value: candidate.id, label: accountDisplayName(candidate) }))]} disabled={loading || syncing || acting || !!expanded || !!copyingListing} onChange={value => { setAccountId(value); setPageSelection({ accountId: value, page: 1 }); setSyncNotice(''); setError(''); }} /><DateOrderButton context="Anunciados" order={order} disabled={loading || syncing || acting || !!expanded || !!copyingListing} onChange={(value) => { setOrder(value); setPage(1); }} /><Tooltip texto="Atualizar anúncios das contas selecionadas"><button className={styles.refreshSales} type="button" disabled={!connectedSignature || syncing || acting || !!expanded} onClick={() => void synchronize()}>{syncing ? 'Atualizando…' : 'Atualizar'}</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="Anunciados" controlsId="announced-content" expandido={panelExpanded} onClick={() => setPanelExpanded((current) => !current)} corPrimaria={brand} darkMode={dark} /></div></div>
     <div id="announced-content" hidden={!panelExpanded}>
     <div className={styles.listingFilters}>
       <label>Pesquisar<CampoBusca disabled={!!expanded} aria-label="Pesquisar por nome, código, EAN ou SKU" value={query} onChange={(value) => { if (expanded) return; setQuery(value); setPage(1); }} placeholder="Nome, código, EAN ou SKU" /></label>
       <MarketplaceSelect label="Situação" value={status} options={[{ value: '', label: 'Todas' }, ...['active', 'paused', 'closed', 'under_review', 'inactive', 'deleted'].map((value) => ({ value, label: statusNames[value] }))]} placeholder="Todas" disabled={!!expanded} onChange={(value) => { setStatus(value); setPage(1); }} />
     </div>
     {error && <p role="alert" className={styles.connectionMessage}>{error}</p>}
-    <p role="status" className={styles.help}>{syncNotice || (loading ? 'Carregando anúncios…' : `${total} anúncio(s) nesta seleção.`)}</p>
+    <p role="status" className={styles.help}>{(marketplace === 'mercado_livre' ? syncNotice : '') || (loading ? 'Carregando anúncios…' : `${displayedTotal} anúncio(s) nesta seleção.`)}</p>
     <div ref={tableScroll} className={styles.tableScroll} tabIndex={0} aria-label="Tabela de anúncios, role horizontalmente para ver todas as colunas" aria-busy={loading || syncing}>
       <table className={styles.listingTable}><caption className={styles.srOnly}>Produtos anunciados na conta selecionada</caption><colgroup><col style={{ width: '23%' }} /><col style={{ width: '9%' }} /><col style={{ width: '10%' }} /><col style={{ width: '11%' }} /><col style={{ width: '10%' }} /><col style={{ width: '7%' }} /><col style={{ width: '7%' }} /><col /><col style={{ width: 64 }} /></colgroup><thead><tr>{['Anúncio', 'Situação', 'Preço', 'Frete vendedor estimado', 'Taxa estimada', 'Estoque', 'Vendidos', 'Envio', 'Ações'].map((name) => <th key={name} scope="col" className={name === 'Ações' ? styles.listingActions : undefined}>{name}</th>)}</tr></thead>
         <tbody>{visibleRows.map(({ snapshot: item, status: rowStatus, connectionId }) => {
           const sourceAccountId = connectionId || accountId;
-          const sourceAccount = accounts.find(candidate => candidate.id === sourceAccountId);
+          const sourceAccount = scopedAccounts.find(candidate => candidate.id === sourceAccountId);
           const shipping = shippingLabels(item.shipping);
           const publishOtherAccountAction = canManage && sourceAccount?.status === 'connected' && <div className={styles.publishOtherAccountAction}>
             <Tooltip texto="Preparar este anúncio em outra conta para revisar antes de publicar"><button type="button" className={styles.publishOtherAccountButton} disabled={acting || syncing || (!!copyingListing && copyingListing.id !== item.id)} aria-expanded={copyingListing?.id === item.id} aria-controls={`listing-copy-${item.id}`} onClick={() => { setCopyingListing(copyingListing?.id === item.id ? null : item); setCopyTargetId(''); }}>Publicar em outra conta</button></Tooltip>
           </div>;
           return <Fragment key={item.id}><tr className={styles.listingRow}>
-          <th scope="row" title={item.title} className={expanded === item.id && editing ? styles.editingListingTitle : undefined}>{expanded === item.id && editing && <small className={styles.editingListingLabel}>Em edição</small>}<strong>{item.title}</strong><small>{sourceAccount?.seller_name || 'Mercado Livre'} · {item.id}{item.sku ? ` · SKU ${item.sku}` : ''}</small></th>
+          <th scope="row" title={item.title} className={expanded === item.id && editing ? styles.editingListingTitle : undefined}>{expanded === item.id && editing && <small className={styles.editingListingLabel}>Em edição</small>}<strong>{item.title}</strong><small>{accountDisplayName(sourceAccount)} · {item.id}{item.sku ? ` · SKU ${item.sku}` : ''}</small></th>
           <td>{statusNames[rowStatus] || rowStatus}</td><td>{money(item.price, item.currency)}</td><td>{money(item.freightEstimate)}</td><td>{money(item.feeEstimate)}{item.feePercent != null && <small>{item.feePercent}%</small>}</td><td>{item.stock ?? 'Indisponível'}</td><td>{item.sold ?? 'Indisponível'}</td><td>{shipping.freight}<small>{shipping.method}</small></td>
           <td className={styles.listingActions}><button type="button" ref={(button) => { if (button) editButtons.current.set(item.id, button); else editButtons.current.delete(item.id); }} className={styles.editListing} aria-label={`Editar anúncio: ${item.title}`} title="Editar anúncio" aria-expanded={expanded === item.id} aria-controls={`details-${item.id}`} disabled={acting || editing || (!!expanded && expanded !== item.id) || !!copyingListing} onClick={() => openEditing(item.id)}><Icon name="edit" size={18} /></button></td>
         </tr>{expanded === item.id && <tr id={`details-${item.id}`}><td colSpan={9}><div className={styles.listingDetails}>
           {editing ? <>{copyingListing?.id === item.id && <div id={`listing-copy-${item.id}`} className={styles.listingCopy}>
-            <MarketplaceAccountPicker label="Conta de destino" value={copyTargetId} options={accounts.filter((candidate) => candidate.status === 'connected' && candidate.id !== sourceAccountId).map((candidate) => ({ id: candidate.id, name: candidate.seller_name || `Vendedor ${candidate.seller_reference}`, detail: `ID ${candidate.seller_reference}` }))} placeholder="Selecione outra conta conectada" disabled={acting || syncing} onChange={setCopyTargetId} />
+            <MarketplaceAccountPicker label="Conta de destino" value={copyTargetId} options={scopedAccounts.filter((candidate) => candidate.status === 'connected' && candidate.id !== sourceAccountId).map((candidate) => ({ id: candidate.id, name: accountDisplayName(candidate), detail: accountReferenceDetail(candidate) }))} placeholder="Selecione outra conta conectada" disabled={acting || syncing} onChange={setCopyTargetId} />
             <div className={styles.actionBar}><button type="button" onClick={() => { setCopyingListing(null); setCopyTargetId(''); }}>Cancelar</button><button type="button" className={styles.primary} disabled={!copyTargetId || acting || syncing} onClick={() => { onPublishInAnotherAccount(sourceAccountId, item.id, copyTargetId); setCopyingListing(null); setCopyTargetId(''); }}>Preparar publicação</button></div>
             <p>O AvantaLab consulta os dados atuais, prepara a ficha no destino e abre o formulário para sua revisão. Nada é publicado nesta etapa.</p>
           </div>}<ListingEditor key={`${sourceAccountId}-${item.id}`} companyId={companyId} accountId={sourceAccountId} itemId={item.id} snapshot={item} permalink={item.permalink} additionalAction={publishOtherAccountAction} dark={dark} brand={brand} request={marketplaceClientRequest} onBusy={setActing} onClose={() => cancelEditing(item.id)} onListingAction={(action) => setConfirmation({ action, id: item.id, name: item.title, connectionId: sourceAccountId })} onSaved={(listing) => {
@@ -226,7 +234,7 @@ export default function Anunciados({ companyId, dark, brand, onAccountsLoaded, o
             return <button key={action} type="button" disabled={!allowed || acting || syncing} onClick={() => setConfirmation({ action: action as ListingAction, id: item.id, name: item.title, connectionId: sourceAccountId })}>{actionNames[action as ListingAction]}</button>;
           })}{item.permalink && <a href={item.permalink} target="_blank" rel="noopener noreferrer">Abrir no Mercado Livre ↗</a>}{publishOtherAccountAction}</div>
           <dl><ListingData item={item} /></dl>{copyingListing?.id === item.id && <div id={`listing-copy-${item.id}`} className={styles.listingCopy}>
-            <MarketplaceAccountPicker label="Conta de destino" value={copyTargetId} options={accounts.filter((candidate) => candidate.status === 'connected' && candidate.id !== sourceAccountId).map((candidate) => ({ id: candidate.id, name: candidate.seller_name || `Vendedor ${candidate.seller_reference}`, detail: `ID ${candidate.seller_reference}` }))} placeholder="Selecione outra conta conectada" disabled={acting || syncing} onChange={setCopyTargetId} />
+            <MarketplaceAccountPicker label="Conta de destino" value={copyTargetId} options={scopedAccounts.filter((candidate) => candidate.status === 'connected' && candidate.id !== sourceAccountId).map((candidate) => ({ id: candidate.id, name: accountDisplayName(candidate), detail: accountReferenceDetail(candidate) }))} placeholder="Selecione outra conta conectada" disabled={acting || syncing} onChange={setCopyTargetId} />
             <div className={styles.actionBar}><button type="button" onClick={() => { setCopyingListing(null); setCopyTargetId(''); }}>Cancelar</button><button type="button" className={styles.primary} disabled={!copyTargetId || acting || syncing} onClick={() => { onPublishInAnotherAccount(sourceAccountId, item.id, copyTargetId); setCopyingListing(null); setCopyTargetId(''); }}>Preparar publicação</button></div>
             <p>O AvantaLab consulta os dados atuais, prepara a ficha no destino e abre o formulário para sua revisão. Nada é publicado nesta etapa.</p>
           </div>}</>}
@@ -236,7 +244,7 @@ export default function Anunciados({ companyId, dark, brand, onAccountsLoaded, o
         {!visibleRows.length && <tr><td colSpan={9}>{loading ? 'Carregando…' : syncing ? 'Aguardando sincronização…' : 'Nenhum anúncio encontrado.'}</td></tr>}
         </tbody></table>
     </div>
-    <nav className={styles.pagination} aria-label="Páginas dos anúncios"><button type="button" disabled={page <= 1 || loading || !!expanded} onClick={() => setPage(page - 1)}>Anterior</button><span>Página {page} de {Math.max(1, Math.ceil(total / 25))}</span><button type="button" disabled={page * 25 >= total || loading || !!expanded} onClick={() => setPage(page + 1)}>Próxima</button></nav>
+    <nav className={styles.pagination} aria-label="Páginas dos anúncios"><button type="button" disabled={page <= 1 || loading || !!expanded} onClick={() => setPage(page - 1)}>Anterior</button><span>Página {page} de {Math.max(1, Math.ceil(displayedTotal / 25))}</span><button type="button" disabled={page * 25 >= displayedTotal || loading || !!expanded} onClick={() => setPage(page + 1)}>Próxima</button></nav>
     <div className={`${styles.panelHeadingActions} ${styles.panelFooterActions}`}><BotaoExpandirCard variante="painel" modo="lista" contexto="Anunciados" controlsId="announced-content" expandido={panelExpanded} onClick={() => collapseMarketplacePanel('announced-content', () => setPanelExpanded(false))} corPrimaria={brand} darkMode={dark} /></div>
     </div>
     <ModalConfirmacao aberto={!!confirmation} titulo={confirmation ? `${actionNames[confirmation.action]}?` : ''} mensagem={confirmation ? `${confirmation.name}. ${confirmation.action === 'close' ? 'Esta ação encerra definitivamente o anúncio e não permite reativação.' : confirmation.action === 'delete' ? 'O anúncio será marcado como excluído no Mercado Livre. O histórico local é preservado.' : confirmation.action === 'pause' ? 'O anúncio deixará de vender até ser reativado.' : 'O anúncio voltará a vender se o Mercado Livre permitir.'}` : ''} textoConfirmar={confirmation ? actionNames[confirmation.action] : 'Confirmar'} carregando={acting} darkMode={dark} corPrimaria={brand} variante={confirmation?.action === 'resume' ? 'primaria' : 'destrutiva'} aoCancelar={() => { if (!acting) setConfirmation(null); }} aoConfirmar={executeAction} />

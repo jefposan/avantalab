@@ -9,12 +9,13 @@ import CampoBusca from '@/app/components/CampoBusca';
 import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 import MarketplaceSelect from './MarketplaceSelect';
 import styles from './marketplaces.module.css';
+import { accountDisplayName, accountReferenceDetail } from './account-identification';
 
 export type ListingCopyRequest = { id: string; targetConnectionId: string } & ({ sourceConnectionId: string; listingId: string; localProductId?: never } | { localProductId: string; sourceConnectionId?: never; listingId?: never });
-type Props = { companyId: string; accountId: string; accounts: MarketplaceAccount[]; accountSelectionLocked: boolean; onSelectAccount: (id: string) => void; onBusyChange: (busy: boolean) => void; canManage: boolean; onPublished: () => void; copyRequest: ListingCopyRequest | null; onCopyHandled: () => void };
+type Props = { companyId: string; marketplaceName?: string; marketplaceAvailable?: boolean; accountId: string; accounts: MarketplaceAccount[]; accountSelectionLocked: boolean; onSelectAccount: (id: string) => void; onBusyChange: (busy: boolean) => void; canManage: boolean; onPublished: () => void; copyRequest: ListingCopyRequest | null; onCopyHandled: () => void };
 const initial = (): PublicationForm => ({ ean: '', productId: '', categoryId: '', price: 0, stock: -1, listingType: '', shippingMode: '', condition: '', warrantyType: '', description: '', attributes: {} });
 
-export default function NewListing({ companyId, accountId, accounts, accountSelectionLocked, onSelectAccount, onBusyChange, canManage, onPublished, copyRequest, onCopyHandled }: Props) {
+export default function NewListing({ companyId, marketplaceName = 'Mercado Livre', marketplaceAvailable = true, accountId, accounts, accountSelectionLocked, onSelectAccount, onBusyChange, canManage, onPublished, copyRequest, onCopyHandled }: Props) {
   const activeRef = useRef(true);
   const eanInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<PublicationForm>(initial);
@@ -180,7 +181,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
       onSelectAccount(target.id);
       applyPreparation(response.result, copiedForm);
       setCopyTargetId('');
-      setMessage(`A ficha foi preparada em ${target.seller_name || `Vendedor ${target.seller_reference}`}. Revise todos os dados antes de publicar.`);
+      setMessage(`A ficha foi preparada em ${accountDisplayName(target)}. Revise todos os dados antes de publicar.`);
     } catch (failure) {
       if (activeRef.current) setMessage(failure instanceof Error ? failure.message : 'Não foi possível preparar a publicação na outra conta.');
     } finally { setPreparing(false); }
@@ -188,7 +189,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
 
   return <div className={styles.newListing}>
     <div className={styles.form}>
-      <MarketplaceAccountPicker label="Publicar na conta" value={accountId} options={connectedAccounts.map((account) => ({ id: account.id, name: account.seller_name || `Vendedor ${account.seller_reference}`, detail: `ID ${account.seller_reference}` }))} placeholder={connectedAccounts.length ? 'Selecione uma conta' : 'Nenhuma conta conectada'} disabled={accountSelectionLocked || preparing || publishing || !!prepared} onChange={onSelectAccount} />
+      <MarketplaceAccountPicker label="Publicar na conta" value={accountId} options={connectedAccounts.map((account) => ({ id: account.id, name: accountDisplayName(account), detail: accountReferenceDetail(account) }))} placeholder={connectedAccounts.length ? 'Selecione uma conta' : 'Nenhuma conta conectada'} disabled={accountSelectionLocked || preparing || publishing || !!prepared} onChange={onSelectAccount} />
       <div className={styles.eanField}>
         <label htmlFor="new-ean">EAN / GTIN</label>
         <div className={styles.eanControl}>
@@ -205,8 +206,9 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
         </div>
         <button type="button" className={`${styles.primary} ${styles.searchAction}`} aria-busy={searchingBy === 'description'} disabled={!canManage || !selectedAccount || preparing || publishing || searchDescription.trim().length < 3} onClick={searchByDescription}>{searchingBy === 'description' ? 'Pesquisando…' : 'Buscar produto'}</button>
       </div>
-      {!selectedAccount && <p className={styles.help}>{accountId ? 'Esta conta não está conectada. Reconecte-a ou selecione outra conta para publicar.' : 'Conecte ou selecione uma conta do Mercado Livre para pesquisar o produto.'}</p>}
-      {accountId && !canManage && <p className={styles.help}>Seu perfil pode consultar anúncios, mas não preparar publicações.</p>}
+      {!marketplaceAvailable && <p className={styles.help} role="status">Publicação no {marketplaceName} ainda não disponível.</p>}
+      {marketplaceAvailable && !selectedAccount && <p className={styles.help}>{accountId ? 'Esta conta não está conectada. Reconecte-a ou selecione outra conta para publicar.' : `Conecte ou selecione uma conta do ${marketplaceName} para pesquisar o produto.`}</p>}
+      {marketplaceAvailable && accountId && !canManage && <p className={styles.help}>Seu perfil pode consultar anúncios, mas não preparar publicações.</p>}
     </div>
 
     {prepared?.status === 'not_found' && <p className={styles.catalogNotice} role="status">{prepared.notice || 'EAN não localizado. Confira o código; nenhum anúncio foi criado.'}</p>}
@@ -241,7 +243,7 @@ export default function NewListing({ companyId, accountId, accounts, accountSele
       <button type="button" className={styles.primary} disabled={!selectedAccount || !ready || !matched || publishing || preparing || !!publishedId} onClick={() => void publish()}>{publishing ? 'Publicando…' : publishedId ? 'Publicado' : 'Publicar'}</button>
       <button type="button" className={styles.refreshSales} disabled={publishing || preparing} onClick={() => { setPrepared(null); setForm(initial()); setPriceText(''); setStockText(''); setMatched(false); setPublishedId(''); setMessage(''); setPreserveCopiedFields(false); setRequestKey(crypto.randomUUID()); }}>Limpar preparação</button>
       {publishedId && connectedAccounts.filter((account) => account.id !== accountId).length > 0 && <div className={styles.publishAnotherAccount}>
-        <MarketplaceAccountPicker label="Publicar esta ficha em outra conta" value={copyTargetId} options={connectedAccounts.filter((account) => account.id !== accountId).map((account) => ({ id: account.id, name: account.seller_name || `Vendedor ${account.seller_reference}`, detail: `ID ${account.seller_reference}` }))} placeholder="Selecione a conta de destino" disabled={preparing || publishing} onChange={setCopyTargetId} />
+        <MarketplaceAccountPicker label="Publicar esta ficha em outra conta" value={copyTargetId} options={connectedAccounts.filter((account) => account.id !== accountId).map((account) => ({ id: account.id, name: accountDisplayName(account), detail: accountReferenceDetail(account) }))} placeholder="Selecione a conta de destino" disabled={preparing || publishing} onChange={setCopyTargetId} />
         <button type="button" disabled={!copyTargetId || preparing || publishing} onClick={() => void prepareForAnotherAccount()}>Preparar em outra conta</button>
         <p>Os dados são copiados apenas para revisão. A nova conta só recebe o anúncio após uma confirmação separada.</p>
       </div>}

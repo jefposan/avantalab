@@ -1,6 +1,121 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 2.0.0.10 -->
+<!-- ava-version: 3.0.0.10 -->
+
+> Revisão 3.0.0.10: **Situação das vendas** ordena automaticamente da maior
+> para a menor quantidade no período escolhido, com **Todas** no início e
+> situações zeradas ao fim. Empates conservam a ordem original. Alterações
+> nas contagens reordenam a lista sem trocar o filtro selecionado. Sem publicar.
+
+> Revisão 3.0.0.09: mais 10% de redução na altura visual dos botões do
+> cabeçalho Marketplaces. Área interativa, textos e altura do header mantidos.
+> Sem impacto operacional. Sem publicação.
+
+> Revisão 3.0.0.08: botões do cabeçalho Marketplaces 10% mais baixos,
+> com área interativa e altura do header mantidas. Sem impacto operacional.
+> Sem publicação.
+
+> Revisão 3.0.0.07: opções de Situação das vendas mais estreitas e baixas
+> no desktop, com área de toque preservada. Sem impacto operacional;
+> nomes, filtros e altura do cabeçalho mantidos. Sem publicação.
+
+> Revisão 3.0.0.06: opções de Situação das vendas com fonte menor, nome
+> e quantidade na mesma linha. Sem impacto operacional; filtros e altura
+> do cabeçalho preservados. Sem publicação.
+
+> Revisão 3.0.0.05: cores suaves nos filtros do cabeçalho Marketplaces;
+> Ver vendas destacado na cor da empresa, com contador dentro do botão.
+> Altura e ações mantidas, sem impacto operacional. O contador continua
+> sendo o total filtrado, não vendas novas/não lidas. Sem publicação.
+
+> Revisão 3.0.0.04: cabeçalho Marketplaces dividido em **Período das vendas**
+> (mês, Todo o período, Selecionar datas), **Situação das vendas** (seletor e
+> contagem por situação) e **Atualização e avisos** (Atualizar e Ver vendas).
+> Altura mantida. Em tablet estreito, rótulo do grupo e tooltips identificam
+> as ações compactadas em ícones. Ver vendas abre a lista com os filtros
+> atuais e todas as contas; o número é total filtrado, não vendas novas/não
+> lidas. A bolinha de Atualizar indica novidades disponíveis. Selecionar datas
+> abre o mesmo card de início/fim; apenas o texto foi esclarecido. Sem publicar.
+
+> Revisão 3.0.0.03: retirado Conexão e gestão do card inicial de Marketplaces,
+> reduzindo sua altura e espaçamento vertical. Título e ações preservados;
+> sem impacto operacional. Sem publicação.
+
+> Revisão 3.0.0.02: removido o campo separado Identificação da conta de
+> Novo anúncio, pois **Publicar na conta** já mostra nome local, nome oficial
+> e ID. Alteração da identificação continua no lápis da conta conectada;
+> conexão bem-sucedida continua solicitando a identificação. Sem publicação.
+
+> Revisão 3.0.0.01: **Identificação da conta** em Novo anúncio apenas exibe
+> o nome local, sem permitir edição. Após conexão bem-sucedida, a conta
+> confirmada solicita uma identificação dentro do próprio card. Nas contas
+> já conectadas, o lápis antes de **Renovar** abre essa mesma edição, somente
+> do nome local. Use **Salvar identificação** ou **Cancelar**; sair do campo
+> não salva. O nome aparece após o logo, antes do nome oficial e ID. Renovação
+> não solicita novo nome. Sem alteração remota de anúncios, estoque ou nome
+> oficial. Esta orientação substitui o salvamento automático da revisão anterior.
+
+> Revisão 3.0.0: **Identificação da conta**, antes de Publicar na conta em
+> Novo anúncio, permite ao administrador/master atribuir um nome local ou
+> número. Salva ao sair do campo ou pressionar Enter; apagar volta ao nome
+> oficial. Identificação compartilhada pelos usuários da empresa, exibida
+> nas contas, seletores, anúncios, vendas e destinos dos produtos. Nome
+> oficial e ID continuam disponíveis. Não renomeia a conta no marketplace,
+> não reconecta nem altera estoques. Erro de salvamento permanece visível;
+> só confirme a alteração após resposta do servidor. Tabela auxiliar aplicada
+> com autorização, código sem publicação.
+
+> Revisão 2.2.0: a marca selecionada filtra contas, Novo anúncio, Anunciados
+> e destinos de preparação do cadastro. Esta regra substitui a seleção que
+> antes definia apenas o destino de Conectar outra conta. Não mistura contas
+> de plataformas diferentes. A troca fica bloqueada durante edição/preparação.
+> Produtos e estoque continuam compartilhados pela empresa; Vendas e os avisos
+> continuam gerais, com seus próprios filtros. Todas as marcas são selecionáveis,
+> mas Em breve/Em preparação não ativa a integração ou a publicação.
+> Header e marcas permanecem visíveis ao rolar, com 12px de folga entre eles;
+> alturas e rolagem se adaptam à tela. Sem publicação nesta entrega.
+
+> Revisão 2.1.0.06: card de apresentação de Marketplaces mais baixo por
+> redução do espaçamento vertical. Título e botões preservados. Sem impacto
+> operacional. Sem publicação.
+
+> Revisão 2.1.0.05: retirada da orientação estática sobre contas mantidas e
+> janela anônima. Sem impacto operacional; conectar continua preservando as
+> contas existentes e os avisos de erro continuam aparecendo. Sem publicação.
+
+> Revisão 2.1.0.04: contas conectadas compactas, com marca, nome, ID, situação,
+> última sincronização e avisos na mesma linha no desktop. Em telas menores ou
+> dados extensos, as informações quebram de linha sem corte. Renovar é o
+> mesmo Renovar autorização e continua abrindo dentro da conta; Desconectar
+> mantém sua confirmação. Botões menores preservam área de toque.
+> Conectar outra conta e Atualizar contas ficam no cabeçalho da lista; Atualizar
+> contas continua recarregando todas as conexões da empresa. A marca vem da
+> conexão, não do seletor. Nenhuma nova integração ativada. Sem publicação.
+
+> Revisão 2.1.0.03: blocos horizontais de largura integral: Marketplace
+> primeiro e Novo anúncio logo abaixo. Marcas na mesma linha no desktop e
+> com quebra responsiva. Nenhuma mudança na seleção, conexão ou publicação.
+> Cards de contas compactos continuam apenas simulados. Sem publicação.
+
+> Revisão 2.1.0.02: seletor Marketplace usa logos e cores das marcas.
+> Borda e sinal de confirmação identificam a opção selecionada. Em breve e
+> Em preparação continuam visíveis e não significam integração ativa. A
+> seleção muda somente o destino de Conectar outra conta. Cards de contas
+> compactos foram apenas simulados, não implementados. Sem publicação.
+
+> Revisão 2.1.0.01: **Marketplace** define somente o destino de **Conectar
+> outra conta**. Magalu é selecionável; vendas, anúncios, produtos, cabeçalho
+> e contas existentes não mudam nem são remontados pela seleção. Novo anúncio
+> continua usando a conta de publicação própria, independente desse seletor.
+> O backend Magalu ainda está em preparação e informa isso ao tentar conectar.
+> Não significa que a loja está conectada. Sem publicação nesta entrega.
+
+> Revisão 2.1.0: retorno seguro Magalu preparado no backend, sem publicação.
+> Magalu continua em preparação na interface. Cadastro da aplicação no ID
+> Magalu não conecta uma loja nem ativa anúncios, vendas ou estoque. A loja
+> precisa autorizar o acesso por conta própria; pessoa física desenvolvedora
+> não equivale a uma conta seller habilitada. Migração e configuração dependem da
+> futura ativação autorizada; não afirmar que o Magalu já sincroniza.
 
 > Revisão 2.0.0.10: ícone de atualização do cabeçalho corrigido. Botões do
 > cabeçalho de Marketplaces mostram ajuda padrão abaixo, no mouse ou foco pelo

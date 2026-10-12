@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import styles from './marketplaces.module.css';
 import Tooltip from '@/app/components/Tooltip';
 
@@ -19,9 +19,11 @@ type Props = {
   onChange: (value: string) => void;
   tooltipText?: string;
   tooltipPosition?: 'top' | 'bottom';
+  leadingIcon?: ReactNode;
+  detailAsBadge?: boolean;
 };
 
-export default function MarketplaceSelect({ id, label, ariaLabel, value, options, placeholder, disabled = false, error, className = '', onChange, tooltipText, tooltipPosition = 'top' }: Props) {
+export default function MarketplaceSelect({ id, label, ariaLabel, value, options, placeholder, disabled = false, error, className = '', onChange, tooltipText, tooltipPosition = 'top', leadingIcon, detailAsBadge = false }: Props) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -86,7 +88,7 @@ export default function MarketplaceSelect({ id, label, ariaLabel, value, options
           if (event.key === 'End' && visibleOpen) { event.preventDefault(); focusOption('last'); }
         }}
       >
-        <span id={valueId}>{selected ? `${selected.label}${selected.detail ? ` · ${selected.detail}` : ''}` : placeholder}</span>
+        <span id={valueId} className={leadingIcon || detailAsBadge ? styles.selectValueWithIcon : undefined}>{leadingIcon}{detailAsBadge && selected ? <><span>{selected.label}</span>{selected.detail && <small className={styles.selectCount}>{selected.detail}</small>}</> : selected ? `${selected.label}${selected.detail ? ` · ${selected.detail}` : ''}` : placeholder}</span>
         <span aria-hidden="true">▾</span>
       </button>;
   return <div ref={root} className={`${styles.selectField} ${className}`.trim()}>

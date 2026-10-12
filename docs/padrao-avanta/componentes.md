@@ -55,6 +55,8 @@ divisor ou agrupamento sem identidade própria.
   adicionar ajuda ou wrappers nos consumidores que não a configurarem.
   Em cabeçalhos fixos, usar `Tooltip` com `posicao="bottom"` para ajuda abaixo
   do controle, sem duplicar balões nativos via `title`.
+  `FiltroCompetencia` aceita `todosLabel` opcional para esclarecer a abrangência
+  no consumidor; ausente, mantém **Todos** e seu funcionamento original.
   Tooltips inferiores ajustam a largura ao conteúdo, até 280px ou o espaço
   da tela com margem de 8px, preferindo uma linha sem cortar texto nas bordas.
 

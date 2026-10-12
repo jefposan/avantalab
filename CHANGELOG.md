@@ -1,5 +1,216 @@
 # Changelog
 
+## 3.0.0.10 - 2026-10-12
+
+- Entrega consolidada das alterações pendentes de Marketplaces: identidade das
+  plataformas, navegação fixa, contas compactas com identificação local e edição
+  por lápis, renovação inline, cabeçalho organizado/colorido e filtros compactos.
+  Cadastro de identificações já aplicado ao banco. Backend Magalu permanece
+  bloqueado por configuração, sem ativar conexão, anúncios, vendas ou estoque.
+  Diagnóstico da venda ausente de ADRIANO não representa correção implementada.
+- Situação das vendas no header ordena automaticamente os grupos pela quantidade
+  decrescente no período escolhido. Todas fica no início; zeros vão ao fim;
+  empates preservam a ordem original. Contagens novas recalculam a ordem sem
+  mudar o filtro escolhido, os grupos exclusivos ou as listas de pedidos.
+- Layout compacto, teclado e identificadores mantidos. PADRÃO AVANTA v1.17.0
+  e orientação da Ava atualizados. Ordenação não modifica banco ou estoque.
+
+## 3.0.0.09 - 2026-10-12
+
+- Mais 10% de redução sobre a altura atual dos botões do header Marketplaces:
+  controles de 39,6px para 35,64px no desktop e de 32,4px para 29,16px no mobile.
+  Início reduzido proporcionalmente; fontes, larguras, altura do cabeçalho
+  e alvos interativos de 44/48px preservados.
+- PADRÃO AVANTA v1.17.0 e Ava revisados, sem impacto operacional. Sem publicação.
+
+## 3.0.0.08 - 2026-10-12
+
+- Botões do cabeçalho Marketplaces com altura visual reduzida em 10%:
+  controles de 44px para 39,6px no desktop e de 36px para 32,4px no mobile.
+  Início também reduzido proporcionalmente. Alvos de clique/toque mantidos
+  em 44/48px, sem alterar fontes, larguras, opções da lista ou altura do header.
+- PADRÃO AVANTA v1.17.0 e Ava revisados, sem impacto operacional. Sem publicação.
+
+## 3.0.0.07 - 2026-10-12
+
+- Opções de Situação das vendas mais compactas: altura desktop de 44px
+  para 36px (cerca de 20%), fonte 11px e menor padding/largura mínima.
+  Mantém nomes completos e contagem na mesma linha; toque usa 44px.
+- Cabeçalho, filtros e demais botões preservados. PADRÃO AVANTA v1.17.0
+  e Ava revisados, sem impacto operacional. Sem publicação.
+
+## 3.0.0.06 - 2026-10-12
+
+- Opções de Situação das vendas com fonte menor (12px), nome e quantidade
+  na mesma linha e largura suficiente para os nomes completos. Lista adaptada
+  ao celular, preservando altura do cabeçalho, filtros, teclado e alvos de toque.
+- Ajuste isolado nesse seletor; demais listas mantidas. PADRÃO AVANTA v1.17.0
+  e Ava revisados, sem impacto operacional. Sem publicação.
+
+## 3.0.0.05 - 2026-10-12
+
+- Paleta aprovada do cabeçalho Marketplaces: filtros em azul acinzentado
+  suave, bordas discretas e Atualizar secundário. Ver vendas recebe fundo
+  na cor principal da empresa e contador dentro do botão, sem badge flutuante.
+- Alturas responsivas, grupos, filtros, tooltips inferiores e ações preservados.
+  Estados hover, foco e tema escuro mantidos; não altera outros módulos/PWAs.
+- PADRÃO AVANTA v1.17.0 e Ava revisados, sem impacto operacional. Sem publicação.
+
+## 3.0.0.04 - 2026-10-12
+
+- Cabeçalho Marketplaces organizado em Período das vendas, Situação das vendas
+  e Atualização e avisos, com divisores discretos, calendário/filtro e texto
+  junto aos ícones Atualizar/Ver vendas. Mantém alturas de referência: 80px
+  desktop, 125px tablet e 173/229px nas faixas mobile.
+- Todo o período e Selecionar datas explicitam o alcance do filtro. Contagem
+  da situação em badge neutro; sino mantém total nos filtros selecionados,
+  sem alegar que são vendas novas. Bolinha permanece para novidades disponíveis.
+- FiltroCompetencia recebe todosLabel opcional, preservando Todos nos demais
+  módulos. MarketplaceSelect permite ícone e badge opcionais, sem alterar
+  consumidores anteriores. Popup de datas, teclado, tooltip inferior, cores
+  do perfil, atualização discreta e navegação de vendas preservados.
+- PADRÃO AVANTA v1.17.0 e Ava revisados. Sem banco, publicação ou anúncios reais.
+
+## 3.0.0.03 - 2026-10-12
+
+- Removido Conexão e gestão do card inicial de Marketplaces. Mantém apenas
+  título e ações, com padding vertical reduzido de 12px para 8px; intervalo
+  interno mobile de 12px para 8px. Sem reduzir título ou alvos dos botões.
+- PADRÃO AVANTA v1.17.0; Ava revisada sem impacto operacional. Sem publicação.
+
+## 3.0.0.02 - 2026-10-12
+
+- Removido o campo duplicado Identificação da conta em Novo anúncio. O seletor
+  Publicar na conta já exibe identificação local, nome oficial e ID juntos.
+- Linha desktop volta a ter conta, EAN/GTIN e Pesquisar, redistribuindo a
+  largura disponível; celular mantém uma coluna. Lápis da conta e solicitação
+  após conexão preservados. PADRÃO AVANTA v1.17.0; Ava atualizada. Sem publicar.
+
+## 3.0.0.01 - 2026-10-12
+
+- Identificação em Novo anúncio passa a ser somente leitura. A edição fica
+  dentro da conta conectada, pelo lápis oficial antes de Renovar, com Salvar
+  identificação e Cancelar. Não salva mais ao sair do campo.
+- Ao concluir uma nova conexão ML, o retorno informa o ID confirmado; após
+  consulta autenticada da empresa, abre a identificação daquela conta.
+  Funciona no popup e no retorno direto; renovação não abre este cadastro.
+- Nome local permanece após o logo, antes do nome oficial e do ID. Rascunho,
+  erro, bloqueio de envio duplicado, foco e Escape preservados. PADRÃO AVANTA
+  v1.17.0 e Ava atualizados. Sem nova migração ou publicação.
+
+## 3.0.0 - 2026-10-12
+
+- Identificação local da conta como primeiro campo de Novo anúncio: aceita
+  texto ou número (incluindo zeros iniciais), salva ao sair do campo ou usar
+  Enter e reutiliza o nome em contas, seletores, anúncios, vendas e destinos
+  dos produtos. Nome oficial e ID permanecem disponíveis para conferência.
+- Tabela auxiliar `marketplace_connection_labels` aplicada ao Supabase com
+  autorização do usuário. RLS ativa, sem acesso direto de anon/authenticated;
+  gravação via backend exige permissão de conexões e vínculo da mesma empresa.
+  Não altera contas, credenciais, estoque ou anúncios dos marketplaces.
+- Respostas antigas não apagam uma identificação recém-salva; falha de banco
+  informa indisponibilidade sem simular salvamento. Layout de quatro campos
+  no desktop, duas colunas no tablet e uma no celular.
+- Correção da seleção de marcas Em breve para não executar destino OAuth
+  inexistente na renderização. PADRÃO AVANTA v1.17.0; Ava revisada.
+  Mudança aditiva de banco versionada em major conforme AGENTS.md.
+  Código não publicado; migração do cadastro aplicada e verificada.
+
+## 2.2.0 - 2026-10-12
+
+- Seleção de marketplace agora filtra contas conectadas, destinos de Novo
+  anúncio, Anunciados e preparação pelo cadastro local. Não reaproveita uma
+  conta da plataforma anterior nem apaga conexões; preserva edição/preparação
+  em andamento bloqueando a troca. Publicação continua exigindo revisão.
+- Todas as marcas podem ser selecionadas para consulta do contexto; opções
+  Em breve/Em preparação não ativam integrações, consulta ML nem publicação.
+  Destinos do cadastro filtrados, mas produtos, vínculos e estoque da empresa
+  permanecem compartilhados. Vendas e avisos continuam gerais.
+- Header fixo e barra de marcas aderente com folga de 12px abaixo do header,
+  preservada até o fim da página. Mede alturas reais por ResizeObserver,
+  adapta celular e rolagem de detalhes sem encobrir cabeçalhos.
+- Correção do ancestral de rolagem restrita à própria página Marketplaces,
+  sem modificar os demais módulos. PADRÃO AVANTA v1.17.0, Ava revisada.
+  Sem alterações remotas de banco, credenciais ou publicação.
+
+## 2.1.0.06 - 2026-10-12
+
+- Card de apresentação de Marketplaces mais baixo: padding vertical de 24px
+  para 12px no desktop, sem reduzir texto, botões ou intervalo entre blocos.
+  No celular, padding vertical de 20px para 12px e intervalo interno de 12px.
+- Mantém quebra responsiva, cores, foco, ações e áreas de clique de 44/48px.
+  PADRÃO AVANTA v1.17.0; Ava revisada sem impacto operacional. Sem publicação.
+
+## 2.1.0.05 - 2026-10-12
+
+- Removida a orientação estática sobre contas mantidas e uso de janela anônima
+  acima da lista de contas conectadas, incluindo a referência aria-describedby
+  ao texto removido. Conexões, controles, permissões e avisos de erro mantidos.
+- Ava revisada, sem alteração operacional. Sem publicação.
+
+## 2.1.0.04 - 2026-10-12
+
+- Aplicada a organização compacta das contas conectadas: marca, nome, ID,
+  situação, última sincronização e avisos na mesma linha no desktop. Dados
+  extensos e telas menores quebram de linha sem esconder informações.
+- Logo e faixa lateral identificam o marketplace da conexão, independentemente
+  do seletor de destino. Integrações ainda indisponíveis não foram ativadas.
+- Renovar e Desconectar à direita, com face de 28px e alvo de 44/48px.
+  Renovar preserva nome acessível completo e tooltip; expansão interna,
+  permissões, confirmações, foco e dados de cada conta mantidos.
+- Conectar outra conta e Atualizar contas no cabeçalho da lista, sem mudar suas
+  funções. Ava revisada; PADRÃO AVANTA v1.17.0 consultado. Sem publicação.
+
+## 2.1.0.03 - 2026-10-12
+
+- Configuração de publicação em dois blocos horizontais de largura integral:
+  Marketplace primeiro, Novo anúncio abaixo, com 24px entre os blocos.
+- Seis marcas na mesma linha no desktop, três colunas em telas intermediárias
+  e duas no celular. Mantém logos, estados e seleção; ações de conexão com
+  largura limitada para não se esticarem pelo card inteiro.
+- Sem remount de formulários, alterar conexões, integrações, vendas ou estoque.
+  Contas compactas continuam apenas na simulação. PADRÃO AVANTA v1.17.0;
+  documentação e conhecimento da Ava revisados. Sem publicação.
+
+## 2.1.0.02 - 2026-10-12
+
+- Seletor de marketplaces com logos locais de fontes oficiais e cores das
+  marcas, preservando o visual aprovado na simulação. Seleção com borda e
+  confirmação visual, nomes acessíveis, foco por teclado e layout responsivo.
+- Opções em preparação/em breve mantêm a identidade colorida e os bloqueios
+  existentes. Seleção continua alterando apenas o destino da conexão.
+- Organização compacta das contas apresentada somente em simulação, sem
+  alterar os cards reais. Sem ativar integrações ou publicar. PADRÃO AVANTA
+  v1.17.0 consultado; manuais e conhecimento da Ava revisados.
+
+## 2.1.0.01 - 2026-10-12
+
+- Magalu selecionável como destino de “Conectar outra conta”. Selecionar não
+  filtra, oculta, remonta ou altera vendas, anúncios, cadastro local, contas,
+  cabeçalho e formulário. O botão usa o endpoint da plataforma escolhida e
+  valida o domínio oficial antes de navegar. Seleção bloqueada durante operações.
+- Removido aviso disparado só pela seleção. Preparação Magalu é informada
+  apenas ao tentar conectar enquanto o backend não estiver ativado.
+- Sem ativar OAuth/estoque Magalu, aplicar migração remota ou publicar.
+  Reutiliza controles e estilos oficiais existentes; Ava revisada.
+
+## 2.1.0 - 2026-10-12
+
+- Preparação do OAuth Magalu no servidor: início autenticado por empresa e
+  administrador, retorno exato, state expirável de uso único, PKCE S256 e
+  cookie HttpOnly vinculado ao navegador. Revalida acesso antes e depois do
+  consentimento; troca de código e tokens criptografados somente no servidor.
+- Rotas Magalu separadas do Mercado Livre, bloqueadas por configuração até
+  ativação explícita. Solicita apenas consulta de pedidos, produtos e estoque.
+  Uma loja autorizada permanece com sincronização em preparação, sem ativar
+  publicação, avisos ou movimentação de estoque que ainda não têm adaptador.
+- Migração OAuth preparada e testada em PostgreSQL local, não aplicada ao
+  Supabase remoto. Sem publicação. Manuais da Ava revisados.
+- Aplicação AvantaLab criada pelo IDM oficial no ID Magalu pessoal em
+  12/10/2026; callback somente localhost:3000 e três escopos de consulta
+  confirmados AVAILABLE. Credenciais geradas em arquivo local privado fora
+  do Git. Não conecta loja nem ativa a integração em produção.
+
 ## 2.0.0.10 - 2026-10-11
 
 - SVG de atualização do cabeçalho substituído pelo ícone compartilhado refresh.

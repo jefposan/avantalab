@@ -40,3 +40,13 @@ test('somente clique de abertura rola; fechamento, respostas e eventos automáti
   assert.match(css, /\.salesPanel \.saleSummary\[aria-expanded="true"\] \{ background: color-mix\(in srgb, var\(--brand\) 8%, #fff\); box-shadow: inset 3px 0 0 var\(--brand\); \}/);
   assert.match(css, /\.dark \.salesPanel \.saleSummary\[aria-expanded="true"\] \{ background: color-mix\(in srgb, var\(--brand\) 16%, #182235\); \}/);
 });
+
+test('rolagem de linha aberta deixa espaço depois das marcas fixadas, não só do header', () => {
+  const previous = globalThis.window;
+  try {
+    const calls = [];
+    globalThis.window = { scrollY: 1000, matchMedia: () => ({ matches: true }), scrollTo: args => calls.push(args) };
+    scrollMarketplaceRow({ closest: () => ({ querySelector: selector => ({ getBoundingClientRect: () => ({ bottom: selector === 'header' ? 80 : 190 }) }) }), getBoundingClientRect: () => ({ top: 500 }) });
+    assert.equal(calls[0].top, 1302);
+  } finally { if (previous === undefined) delete globalThis.window; else globalThis.window = previous; }
+});

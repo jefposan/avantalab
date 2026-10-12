@@ -1,6 +1,73 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 2.0.0.10 -->
+<!-- ava-version: 3.0.0.10 -->
+
+> Revisão 3.0.0.10: situações do header Marketplaces Web ordenadas por
+> quantidade. Sem impacto operacional na Gestão Mobile nativa ou AvantaPreços.
+
+> Revisão 3.0.0.09: botões do header Marketplaces Web mais baixos,
+> mantendo área de toque. Sem impacto operacional na Gestão Mobile nativa
+> ou no PWA AvantaPreços.
+
+> Revisão 3.0.0.08: redução visual de 10% nos botões do header Marketplaces
+> Web, preservando alvo de toque. Sem impacto operacional na Gestão Mobile
+> nativa ou no PWA AvantaPreços.
+
+> Revisão 3.0.0.07: compactação da lista de situações do Marketplaces Web,
+> preservando área de toque. Sem impacto operacional na Gestão Mobile
+> nativa ou AvantaPreços.
+
+> Revisão 3.0.0.06: lista de situações do Marketplaces Web compactada
+> em linhas únicas. Sem impacto operacional na Gestão Mobile ou AvantaPreços.
+
+> Revisão 3.0.0.05: paleta do cabeçalho Marketplaces Web refinada, mantendo
+> altura e comportamento responsivo. Sem impacto operacional na Gestão
+> Mobile nativa ou no PWA AvantaPreços. Sem publicação.
+
+> Revisão 3.0.0.04: cabeçalho do Marketplaces Web em três grupos com altura
+> preservada e adaptação responsiva. Sem impacto operacional na Gestão Mobile
+> nativa ou no PWA AvantaPreços; o controle compartilhado mantém Todos nesses módulos.
+
+> Revisão 3.0.0.03: card inicial de Marketplaces Web mais baixo, sem a frase
+> Conexão e gestão. Sem impacto operacional na Gestão Mobile ou AvantaPreços.
+
+> Revisão 3.0.0.02: removido campo redundante de identificação em Novo
+> anúncio do Marketplaces Web. Sem impacto operacional na Gestão Mobile
+> nativa ou no PWA AvantaPreços.
+
+> Revisão 3.0.0.01: edição da identificação pelo lápis no card da conta
+> do Marketplaces Web, com nome somente leitura em Novo anúncio. Sem impacto
+> operacional na Gestão Mobile nativa ou no PWA AvantaPreços.
+
+> Revisão 3.0.0: identificação local de contas no módulo Marketplaces Web,
+> com layout responsivo. Sem impacto operacional na Gestão Mobile nativa
+> ou no PWA AvantaPreços; não altera nome, conexão ou saldo do marketplace.
+
+> Revisão 2.2.0: filtro por marketplace e navegação fixa no módulo Web,
+> incluindo barra de marcas compacta responsiva. Sem impacto operacional na
+> Gestão Mobile nativa ou no PWA AvantaPreços.
+
+> Revisão 2.1.0.06: card de apresentação do Marketplaces Web mais baixo,
+> também responsivo. Sem impacto operacional na Gestão Mobile e no AvantaPreços.
+
+> Revisão 2.1.0.05: retirada de orientação estática em contas do módulo Web.
+> Sem impacto operacional na Gestão Mobile e no PWA AvantaPreços.
+
+> Revisão 2.1.0.04: contas conectadas compactas no módulo Marketplaces Web,
+> com quebra responsiva e alvos de toque preservados. Sem impacto operacional
+> na Gestão Mobile nativa e no PWA AvantaPreços.
+
+> Revisão 2.1.0.03: blocos Marketplace e Novo anúncio em largura integral
+> no módulo Web. Sem impacto operacional na Gestão Mobile e no AvantaPreços.
+
+> Revisão 2.1.0.02: identidade visual no seletor do módulo Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile e no PWA AvantaPreços.
+
+> Revisão 2.1.0.01: opção Magalu selecionável no módulo Web local.
+> Sem impacto operacional na Gestão Mobile e no PWA AvantaPreços.
+
+> Revisão 2.1.0: backend OAuth Magalu preparado, ainda sem ativação/publicação.
+> Sem impacto operacional na Gestão Mobile e no PWA AvantaPreços.
 
 > Revisão 2.0.0.10: ícone e tooltips do cabeçalho do Marketplaces Web.
 > Sem impacto operacional na Gestão Mobile nativa ou no PWA.

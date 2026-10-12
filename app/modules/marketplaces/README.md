@@ -4,6 +4,11 @@ Módulo Web e PWA por empresa para conectar contas de marketplaces, preparar pub
 
 ## Segurança
 
+- Identificação local de contas em `marketplace_connection_labels`, sem
+  alterar nome oficial ou tokens. Migração `20261012190000` aplicada ao
+  Supabase AvantaLab em 12/10/2026 com autorização; RLS e privilégios
+  verificados. PATCH exige gerenciamento de conexões e mesma empresa;
+  tabela acessível apenas pelo backend. Incluída na entrega Web 3.0.0.10.
 - Nunca coleta, transmite, persiste ou registra a senha do marketplace.
 - A primeira integração é Mercado Livre por OAuth 2.0 Authorization Code + PKCE.
 - `Client Secret`, access token e refresh token ficam apenas no servidor. Os tokens persistidos usam criptografia em repouso com chave externa versionada; nunca chegam ao navegador, logs ou contexto da Ava.
@@ -21,6 +26,14 @@ credenciais adicionais no ambiente.
 
 ## Implementado e validado
 
+- Refinamento 3.0.0.02: Novo anúncio usa somente Publicar na conta para
+  apresentar nome local, nome oficial e ID, sem campo de identificação duplicado.
+  Edição pelo lápis e solicitação após conexão preservadas. Sem publicação.
+- Refinamento 3.0.0.01: identificação somente leitura em Novo anúncio; lápis
+  oficial antes de Renovar abre edição inline na conta, com salvar/cancelar.
+  Após nova conexão ML, callback informa o ID (sem credenciais) no popup e
+  no fallback; UI relê conexões autenticadas e só abre a conta confirmada da
+  empresa. Renovação não abre identificação. Sem nova migração/publicação.
 - **Produtos e estoque** (1.51.0): cadastro separado por empresa, SKU local,
   EAN opcional, fotos, descrição, atributos e opções da ficha de publicação.
   Importação do cache é parcial; **Consultar ficha do anúncio** busca os dados
@@ -190,6 +203,90 @@ módulos Web com empresa na URL recebem avisos; PWAs operacionais e Gestão Mobi
 imperativa não recebem push nesta entrega. Provedores futuros exigem adaptadores.
 
 ### Configuração
+
+#### Magalu — preparação 2.1.0 (backend incluído em 3.0.0.10, integração não ativada)
+
+- Evolução 2.2.0: seletor é contexto de contas/anúncios/destinos, não apenas
+  destino da conexão. Helper testável filtra pelo provider e rejeita conta
+  fora da seleção. Payloads legados sem provider pertencem ao Mercado Livre.
+  Não muda o endpoint nem ativa adaptadores pendentes; consultas de Anunciados
+  fora do ML não executam rotas ML. Produtos e estoque/vínculos mantêm todas
+  as informações; apenas seus destinos de publicação são filtrados.
+- Header fixo e barra nativa sticky no ancestral de conteúdo completo,
+  offsets medidos por ResizeObserver; corpo com overflow restrito à página
+  deste módulo para corrigir sticky. Detalhes respeitam ambas as faixas.
+  Vendas e avisos continuam gerais. Sem publicação.
+
+- Refinamento 2.1.0.04: contas em linhas compactas; branding usa `provider`
+  da conexão (payloads legados sem provider continuam Mercado Livre), não o
+  seletor de destino. Preserva campos completos, avisos, ações e renovação
+  interna; quebra responsiva evita corte. Ações globais no cabeçalho da lista.
+  Não altera rotas, permissões, tokens, estoques nem ativa outros marketplaces.
+
+- Refinamento 2.1.0.03: configuração em dois blocos horizontais de largura
+  integral, Marketplace primeiro e Novo anúncio abaixo, separados por 24px.
+  Seis marcas por linha no desktop, três em telas intermediárias e duas no
+  celular. Mudança somente de CSS, sem desmontar estados ou ativar integrações.
+
+- Refinamento visual 2.1.0.02: botões do seletor com identidade das seis marcas,
+  logos locais e fontes documentadas em `public/images/marketplaces/README.md`.
+  Nome acessível preservado, seleção com borda/check e disponibilidade textual.
+  Não ativa novos conectores. A disposição compacta das contas foi apenas
+  simulada e não mudou os cards reais. Sem publicação.
+
+- Refinamento 2.1.0.01: seletor determina só destino de “Conectar outra conta”,
+  incluindo Magalu. Listas, cabeçalho, contas e Novo anúncio permanecem montados
+  e inalterados. A conta de publicação continua independente. Endpoint e URL
+  de autorização validados por plataforma. Preparação é informada apenas ao
+  tentar conectar enquanto o backend não estiver ativado.
+- Aplicação **AvantaLab** criada via IDM oficial em 12/10/2026 no ID pessoal
+  do desenvolvedor. UUID público `d7fdb3df-be33-4f3b-bf4b-23061e254b66`.
+  Lista oficial confirmou os três escopos abaixo em AVAILABLE. Não houve
+  exigência de CNPJ nesta criação; isso não comprova habilitação de uma loja
+  seller nem homologação completa da integração. Não criar aplicação duplicada.
+- Início privado: `POST /api/modulos/marketplaces/conexoes/magalu/iniciar`,
+  JSON `{ empresaId }`, Bearer AvantaLab e Origin do mesmo ambiente. Só Gestor
+  Master/Administrador de empresa com o módulo ativo. Reutiliza o botão de conexão.
+- Retorno implementado: `/api/modulos/marketplaces/conexoes/magalu/callback`.
+  Cadastro inicial da aplicação usa
+  `http://localhost:3000/api/modulos/marketplaces/conexoes/magalu/callback`.
+  Cadastrar o endereço HTTPS de produção apenas junto da futura publicação;
+  não iniciar consentimento real apontando para uma rota ainda não publicada.
+- Variáveis exclusivamente no servidor: `MAGALU_CLIENT_ID`,
+  `MAGALU_CLIENT_SECRET`, `MAGALU_OAUTH_REDIRECT_URI`, `MAGALU_OAUTH_ENABLED`.
+  Flag ausente/falsa bloqueia o fluxo. Reutiliza `MARKETPLACE_SECRETS_KEY`;
+  nunca regenerar essa chave para habilitar outra plataforma.
+  No desenvolvimento, `MAGALU_LOCAL_CREDENTIALS_FILE` pode apontar somente para
+  `.codex/magalu/client-credentials.json`, gerado pelo IDM com modo 0600 e pasta
+  0700, fora do Git. Esse fallback não existe em produção; produção exige
+  credenciais no gerenciador de segredos/variáveis server-side. Flag local
+  permanece falsa até autorização de teste com uma loja e banco preparado.
+- Aplicar futuramente `20261012160000_marketplace_magalu_oauth.sql` junto da
+  ativação autorizada. Nesta entrega a migração só foi testada localmente,
+  sem alterar o projeto Supabase remoto. RLS e privilégios privados preservados.
+- State de 10 minutos, consumo atômico, PKCE S256, binding por cookie HttpOnly
+  SameSite Lax e por pendência. Retorno depende da origem/callback exatos e da
+  configuração usada no início; revalida administrador/módulo antes de trocar
+  o código e novamente antes de salvar. Cancela sem alterar contas existentes.
+- Solicita somente `open:order-order-seller:read`,
+  `open:portfolio-skus-seller:read`, `open:portfolio-stocks-seller:read`.
+  A loja deve escolher a organização seller (`choose_tenants=true`). Conta
+  pessoal do desenvolvedor não comprova elegibilidade/acesso de loja.
+- Troca no endpoint fixo `https://id.magalu.com/oauth/token`, sem redirects.
+  Metadados são lidos exclusivamente do token obtido diretamente desse endpoint
+  TLS, não de JWT fornecido pelo cliente. Exige subject GENPUB.uuid, audiência
+  Marketplace, validade e escopos de consulta completos; formato divergente
+  falha de forma fechada e requer conferência do contrato real antes de ativar.
+- Tokens AES-256-GCM no cofre existente. Respostas não carregam tokens/código,
+  não imprimem erros brutos e removem a query do histórico da aba de retorno.
+  Falha ou repetição não sinaliza sucesso. Autorização completa fica `attention`
+  / `magalu_connector_pending`, para não anunciar sincronização inexistente.
+- Interface, workers e estoque do Mercado Livre permanecem restritos ao ML.
+  Falta implementar/testar os adaptadores Magalu e uma autorização de loja real.
+  Testes de retorno usam respostas simuladas; não equivalem a homologação real.
+
+Fontes oficiais: [criação de aplicação](https://developers.magalu.com/docs/first-steps/create-an-application/create-application/index.html)
+e [consentimento OAuth](https://developers.magalu.com/docs/first-steps/create-an-application/authentication-authorization/index.html).
 
 Cadastre no DevCenter a URL exata de retorno:
 `https://SEU-DOMINIO/api/modulos/marketplaces/conexoes/mercado-livre/callback`.

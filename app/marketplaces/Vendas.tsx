@@ -8,6 +8,7 @@ import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusTe
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import type { MarketplaceAccount } from './Anunciados';
 import MarketplaceSelect from './MarketplaceSelect';
+import { accountDisplayName } from './account-identification';
 import SalePostSale from './SalePostSale';
 import DateOrderButton from './DateOrderButton';
 import { collapseMarketplacePanel } from './collapse-panel';
@@ -50,7 +51,7 @@ export default function Vendas({ companyId, accountId, onAccountChange, accounts
   return <section className={`${styles.panel} ${styles.salesPanel}`} aria-labelledby="sales-title">
     <div className={`${styles.panelHeading} ${!expanded ? styles.panelHeadingCollapsed : ''}`}><div><h2 id="sales-title">Vendas · {sales.length}</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<DateOrderButton context="Vendas" order={order} onChange={setOrder} disabled={loading} /><Tooltip texto="Atualizar vendas e envios"><button type="button" className={styles.refreshSales} onClick={onRefresh} disabled={loading}>{loading ? 'Atualizando…' : 'Atualizar'}</button></Tooltip><BotaoExpandirCard variante="painel" modo="lista" contexto="Vendas" controlsId="sales-content" expandido={expanded} onClick={() => onExpandedChange(!expanded)} corPrimaria={brand} darkMode={dark} /></div></div>
     <div id="sales-content" hidden={!expanded}>
-    <MarketplaceSelect label="Conta das vendas" value={accountId} placeholder="Todas as contas" onChange={onAccountChange} options={[{ value: '', label: 'Todas as contas' }, ...accounts.map((account) => ({ value: account.id, label: account.seller_name || `Vendedor ${account.seller_reference}` }))]} className={styles.salesAccountFilter} />
+    <MarketplaceSelect label="Conta das vendas" value={accountId} placeholder="Todas as contas" onChange={onAccountChange} options={[{ value: '', label: 'Todas as contas' }, ...accounts.map((account) => ({ value: account.id, label: accountDisplayName(account) }))]} className={styles.salesAccountFilter} />
     <p className={styles.salesScopeHelp}>Pedidos únicos no período e na situação selecionados no cabeçalho. O sino reúne todas as contas.</p>
     {awaitingUpdates > 0 && <p className={styles.salesScopeHelp} role="status">Há atualizações de vendas em processamento. Use Atualizar para conferir novamente.</p>}
     {printError && <p className={styles.salesError} role="alert">{printError}</p>}
@@ -61,7 +62,7 @@ export default function Vendas({ companyId, accountId, onAccountChange, accounts
         setOpen(opening ? sale.id : '');
         if (opening) requestAnimationFrame(() => { if (button.isConnected && button.getAttribute('aria-expanded') === 'true') scrollMarketplaceRow(button); });
       }} aria-expanded={open === sale.id} aria-controls={`sale-details-${sale.id}`}>
-        <span><strong>Pedido #{sale.orderId}</strong><small>{accounts.find((account) => account.id === sale.connectionId)?.seller_name || 'Mercado Livre'} · {date.format(new Date(sale.soldAt))}{sale.buyer ? ` · ${sale.buyer}` : ''}</small></span><span className={styles.saleStatusAction}><b data-status={sale.status === 'cancelled' ? 'cancelled' : sale.labelStatus}>{saleStatusText(sale)}</b><Icon name="chevron" size={16} className={styles.saleDisclosure} aria-hidden="true" /></span>
+        <span><strong>Pedido #{sale.orderId}</strong><small>{accountDisplayName(accounts.find((account) => account.id === sale.connectionId))} · {date.format(new Date(sale.soldAt))}{sale.buyer ? ` · ${sale.buyer}` : ''}</small></span><span className={styles.saleStatusAction}><b data-status={sale.status === 'cancelled' ? 'cancelled' : sale.labelStatus}>{saleStatusText(sale)}</b><Icon name="chevron" size={16} className={styles.saleDisclosure} aria-hidden="true" /></span>
       </button>
       {open === sale.id && <div id={`sale-details-${sale.id}`} className={styles.saleDetails}><dl><div><dt>Itens</dt><dd>{sale.items.map((item) => <span key={`${item.title}-${item.quantity}`}>{item.quantity}× {item.title}{item.unitPrice != null ? ` · ${money.format(item.unitPrice)}` : ''}</span>)}</dd></div><div><dt>Total</dt><dd>{sale.total == null ? 'Indisponível' : money.format(sale.total)}</dd></div><div><dt>Situação do pedido</dt><dd>{orderStatusText(sale.status)}</dd></div><div><dt>Envio original ao comprador</dt><dd>{shipmentStatusText(sale.shipmentStatus, sale.shipmentSubstatus) || 'Em atualização'}</dd></div></dl>
         {saleConflictText(sale) && <p className={styles.salesError}>{saleConflictText(sale)}</p>}

@@ -5,10 +5,11 @@ import FiltroCompetencia from '@/app/recebimentos/components/FiltroCompetencia';
 import receiptStyles from '@/app/recebimentos/recebimentos.module.css';
 import CardExpandidoModal from '@/app/components/CardExpandidoModal';
 import DraggableModalCard from '@/app/components/DraggableModalCard';
-import { SALE_GROUPS, validSalePeriod, type SaleGroup, type SalePeriod } from '@/app/modules/marketplaces/sales-status';
+import { orderedSaleGroups, validSalePeriod, type SaleGroup, type SalePeriod } from '@/app/modules/marketplaces/sales-status';
 import MarketplaceSelect from './MarketplaceSelect';
 import styles from './marketplaces.module.css';
 import Tooltip from '@/app/components/Tooltip';
+import { Icon } from '@/app/projetos/components/Icon';
 
 export function monthPeriod(year: number, month: number): SalePeriod {
   const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -36,13 +37,16 @@ export default function SalesFilters({ period, onPeriodChange, group, onGroupCha
 
   return <>
     <div className={`${styles.salesFilters} ${dark ? receiptStyles.darkScope : ''}`} style={{ '--cp': brand, '--texto-primario': dark ? '#e2e8f0' : '#1e293b' } as CSSProperties}>
-      <div className={styles.salesDateFilters}>
-        <FiltroCompetencia referencia={reference} todos={!period.start} onMudarMes={moveMonth} onMostrarTodos={() => onPeriodChange({ start: '', end: '' })} tooltipPosition="bottom" />
-        <Tooltip texto={custom ? `Vendas de ${dateLabel(period.start)} a ${dateLabel(period.end)}` : 'Escolher data inicial e final'} posicao="bottom"><button type="button" className={styles.refreshSales} aria-pressed={custom} onClick={() => { setDraft(period.start ? period : month); setError(''); setOpen(true); }}>{custom ? `${dateLabel(period.start)} – ${dateLabel(period.end)}` : 'Período'}</button></Tooltip>
+      <div className={styles.headerPeriodGroup} role="group" aria-labelledby="sales-period-heading">
+        <span id="sales-period-heading" className={styles.headerGroupLabel}>Período das vendas</span>
+        <div className={styles.salesDateFilters} data-mode={!period.start ? 'all' : custom ? 'custom' : 'month'}>
+        <FiltroCompetencia referencia={reference} todos={!period.start} onMudarMes={moveMonth} onMostrarTodos={() => onPeriodChange({ start: '', end: '' })} todosLabel="Todo o período" tooltipPosition="bottom" />
+        <Tooltip texto={custom ? `Vendas de ${dateLabel(period.start)} a ${dateLabel(period.end)}` : 'Escolher data inicial e final'} posicao="bottom"><button type="button" className={`${styles.refreshSales} ${styles.headerDateButton}`} aria-label={custom ? `Selecionar datas: ${dateLabel(period.start)} a ${dateLabel(period.end)}` : 'Selecionar datas'} aria-haspopup="dialog" aria-expanded={open} aria-pressed={custom} onClick={() => { setDraft(period.start ? period : month); setError(''); setOpen(true); }}><Icon name="calendar" size={16} /><span>{custom ? `${dateLabel(period.start)} – ${dateLabel(period.end)}` : 'Selecionar datas'}</span></button></Tooltip>
+        </div>
       </div>
-      <MarketplaceSelect label="" ariaLabel="Filtrar situação das vendas" tooltipText="Filtrar vendas por situação" tooltipPosition="bottom" value={group} placeholder="Todas as situações" className={styles.salesStatusFilter} onChange={(value) => onGroupChange(value as SaleGroup | '')} options={[
+      <MarketplaceSelect label="Situação das vendas" ariaLabel="Filtrar situação das vendas" leadingIcon={<Icon name="filter" size={16} />} detailAsBadge tooltipText="Filtrar vendas por situação" tooltipPosition="bottom" value={group} placeholder="Todas as situações" className={styles.salesStatusFilter} onChange={(value) => onGroupChange(value as SaleGroup | '')} options={[
         { value: '', label: 'Todas', detail: String(total) },
-        ...SALE_GROUPS.map(({ value, label }) => ({ value, label, detail: String(counts[value]) })),
+        ...orderedSaleGroups(counts).map(({ value, label }) => ({ value, label, detail: String(counts[value]) })),
       ]} />
     </div>
     <CardExpandidoModal aberto={open} rotulo="Selecionar período de vendas" onFechar={() => setOpen(false)}>

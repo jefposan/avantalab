@@ -13,6 +13,79 @@ const accountPicker = read('app/marketplaces/MarketplaceAccountPicker.tsx');
 const marketplaceSelect = read('app/marketplaces/MarketplaceSelect.tsx');
 const css = read('app/marketplaces/marketplaces.module.css');
 
+test('card de apresentação é mais baixo sem diminuir texto nem alvos dos botões', () => {
+  const hero = css.match(/\.hero \{([^}]+)\}/)[1];
+  assert.match(hero, /padding: 8px 24px;/);
+  assert.match(hero, /margin-bottom: 24px;/);
+  assert.doesNotMatch(hero, /(?:^|;)\s*(?:height|max-height|overflow):/);
+  assert.match(css, /\.hero h1 \{ font-size: 26px; line-height: 1\.2;/);
+  assert.match(css, /\.hero \{ align-items: stretch; flex-direction: column; gap: 8px; padding: 8px 20px; \}/);
+  assert.doesNotMatch(client, /Conexão e gestão|styles\.eyebrow/);
+  assert.match(client, /<h1 id="module-title">Anúncios em marketplaces<\/h1>/);
+  assert.match(css, /\.marketplaceMobileLink \{[^}]*min-height: 44px;/);
+  assert.match(css, /\.settingsButton, \.iconAction \{[^}]*width: 44px; height: 44px;/);
+  assert.match(css, /\.marketplaceMobileLink \{ width: 100%; min-height: 48px; \}/);
+});
+
+test('seletor mantém marcas coloridas com assets locais, nome acessível e seleção explícita', () => {
+  const source = stripTypeScriptTypes(client.slice(client.indexOf('const providers:'), client.indexOf('\nexport default function')));
+  const providers = runInNewContext(`${source}; providers`);
+  assert.equal(providers.length, 6);
+  assert.match(read('public/images/marketplaces/amazon.svg'), /<mask id="mask-2" fill="white">/);
+  for (const provider of providers) {
+    assert.ok(provider.width > 0 && provider.height > 0);
+    const asset = readFileSync(new URL(`../../public/images/marketplaces/${provider.logo}`, import.meta.url));
+    if (provider.logo.endsWith('.svg')) {
+      const svg = asset.toString('utf8');
+      assert.match(svg, /<svg\b/);
+      assert.doesNotMatch(svg, /<script\b|<foreignObject\b|\son[a-z]+\s*=/i);
+      assert.doesNotMatch(svg, /(?:href|src)=["'](?!#)[^"']+/i);
+    } else assert.equal(asset.subarray(1, 4).toString(), 'PNG');
+    assert.ok(css.includes(`.provider[data-provider="${provider.id}"]`));
+  }
+  assert.match(client, /data-provider=\{provider.id\}/);
+  assert.match(client, /<strong className=\{styles.providerName\}>\{provider.name\}<\/strong>/);
+  assert.match(client, /<Image className=\{styles.providerLogo\}[\s\S]*?alt=""[\s\S]*?unoptimized/);
+  assert.match(client, /marketplace === provider.id && <span className=\{styles.providerCheck\} aria-hidden="true"><Icon name="check"/);
+  assert.match(css, /\.page \.provider:disabled \{ opacity: 1; cursor: not-allowed; \}/);
+  assert.match(css, /\.page \.provider:focus-visible \{ outline: 3px solid #003e73;/);
+  assert.match(css, /\.providerLogo \{[^}]*max-width: 100%;[^}]*object-fit: contain;/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.page \.provider \{ transition: none; \} \}/);
+});
+
+test('todas as marcas podem filtrar a tela sem declarar conexão ou publicação operacional', () => {
+  const source = stripTypeScriptTypes(client.slice(client.indexOf('const providers:'), client.indexOf('\nexport default function')));
+  const providers = runInNewContext(`${source}; providers`);
+  const selector = client.slice(client.indexOf('{providers.map'), client.indexOf('</button>)}', client.indexOf('{providers.map')));
+  const expression = selector.match(/disabled=\{([^}]+)\}/)[1];
+  const disabled = (provider, changes = {}) => runInNewContext(expression, { provider, connecting: false, accountSelectionLocked: false, publicationBusy: false, disconnecting: false, identificationAccountId: '', ...changes });
+  for (const provider of providers) assert.equal(disabled(provider), false);
+  const magalu = providers.find(provider => provider.id === 'magalu');
+  assert.equal(magalu.available, false); assert.equal(magalu.selectable, true);
+  for (const state of ['connecting', 'accountSelectionLocked', 'publicationBusy', 'disconnecting']) assert.equal(disabled(magalu, { [state]: true }), true);
+  assert.equal(disabled(magalu, {identificationAccountId: 'editing'}),true);
+  assert.match(selector, /provider.selectable \? 'Em preparação' : 'Em breve'/);
+  assert.match(selector, /aria-pressed=\{marketplace === provider.id\}/);
+  assert.match(selector, /setMarketplace\(provider.id\)/);
+  assert.match(client, /marketplace !== 'mercado_livre' && marketplace !== 'magalu'/);
+  assert.doesNotMatch(client, /!connectionTarget\(marketplace\)/);
+  assert.match(client, /canManage=\{canManage && selectedProvider.available && !connecting\}/);
+});
+
+test('seletor filtra contas e destinos sem desmontar os blocos nem alterar avisos gerais', () => {
+  const rendered = client.slice(client.indexOf('  return <main className='));
+  assert.doesNotMatch(rendered, /marketplace === 'mercado_livre'|marketplace === 'magalu'|Magalu · Conexão em preparação/);
+  for (const component of ['SalesFilters', 'NewListing', 'AvantaKanban', 'Vendas', 'ProductsStock', 'Anunciados']) assert.match(rendered, new RegExp(`<${component}\\b`));
+  const connect = client.slice(client.indexOf('  async function connectMarketplace()'), client.indexOf("  if (accessState === 'loading')"));
+  assert.match(connect, /connectionTarget\(marketplace\)/);assert.match(connect, /fetch\(target.endpoint/);
+  assert.match(connect, /validateConnectionAuthorization\(marketplace, payload.authorizationUrl\)/);
+  assert.doesNotMatch(connect, /setSelectedAccount|setSalesAccount|setSalesExpanded|setCopyRequest/);
+  assert.match(client, /const displayedAccounts = accountsForMarketplace\(renewableAccounts, marketplace\)/);
+  assert.match(client, /const publicationAccountId = publicationAccount\(marketplaceAccounts, selectedAccount\)/);
+  assert.match(rendered, /accounts=\{marketplaceAccounts\}/);
+  assert.match(rendered, /<Anunciados companyId=\{companyId\} marketplace=\{marketplace\}/);
+});
+
 test('linhas de Vendas têm destaque suave por mouse e teclado nos dois temas, sem alterar os estados', () => {
   assert.match(css, /@media \(hover: hover\) and \(pointer: fine\) \{\s*\.salesPanel \.saleSummary:hover \{ background: color-mix\(in srgb, var\(--brand\) 4%, #fff\); \}\s*\.dark \.salesPanel \.saleSummary:hover \{ background: color-mix\(in srgb, var\(--brand\) 10%, #182235\); \}/);
   assert.match(css, /\.salesPanel \.saleSummary:focus-visible \{ background: color-mix\(in srgb, var\(--brand\) 4%, #fff\); \}/);
@@ -42,7 +115,7 @@ test('cards são identificados por título, sem numeração decorativa', () => {
     assert.doesNotMatch(source, /styles\.step/);
   }
   assert.doesNotMatch(css, /\.step\s*\{/);
-  assert.match(client, /<h2>Marketplace<\/h2>/);
+  assert.match(client, /<h2 className=\{styles.srOnly\}>Marketplace<\/h2>/);
   assert.match(client, /<h2 id="new-listing-title">Novo anúncio<\/h2>/);
   assert.match(sales, /<h2 id="sales-title">Vendas · \{sales\.length\}<\/h2>/);
 });
@@ -142,10 +215,33 @@ test('connected accounts stay in rounded controls at the bottom of the marketpla
   assert.match(css, /\.dark \.connectedAccount \{[^}]*background:/);
 });
 
+test('contas compactas preservam campos, marca da conexão e controles com alvo acessível', () => {
+  const cards = client.slice(client.indexOf('displayedAccounts.map'), client.indexOf('</article>; })}</div>'));
+  assert.match(cards, /provider.id === \(account.provider \?\? 'mercado_livre'\)/);
+  assert.match(cards, /data-provider=\{account.provider \?\? 'mercado_livre'\}/);
+  assert.doesNotMatch(cards, /data-provider=\{marketplace\}|provider.id === marketplace/);
+  for (const field of ['seller_name', 'seller_reference', 'status', 'last_synced_at']) assert.ok(cards.includes(`account.${field}`));
+  assert.match(cards, /pendingSales\[account.id\]/);
+  assert.match(cards, /alt=\{accountProvider.name\}/);
+  assert.doesNotMatch(cards, /<br\s*\/?>/);
+  assert.match(cards, /aria-label=\{`Renovar autorização de \$\{account.seller_name \|\| account.seller_reference\}`\}/);
+  assert.match(cards, />Renovar<\/button>/);
+  assert.match(cards, /setDisconnectAccount\(account\)/);
+  assert.match(cards, /disabled=\{accountSelectionLocked \|\| publicationBusy\} aria-pressed=\{account.id === publicationAccountId\}/);
+  assert.match(css, /\.connectedAccount \{ display: grid; grid-template-columns: minmax\(0, 1fr\) auto;/);
+  assert.match(css, /\.connectedAccountSelect \{ display: flex; flex-wrap: wrap;/);
+  assert.match(css, /\.connectedAccount > div:is\(\[id\^="account-renewal-"\], \[id\^="account-identification-"\]\) \{ grid-column: 1 \/ -1;/);
+  assert.match(css, /\.page \.connectedAccounts \.compactConnectionButton \{ min-height: 44px;/);
+  assert.match(css, /\.connectedAccounts \.compactConnectionButton::before \{ inset-block: 8px;/);
+  assert.match(css, /@media \(max-width: 760px\) \{ \.connectedAccount \{ grid-template-columns: minmax\(0, 1fr\);/);
+  assert.match(css, /\.connectedAccountsTitle > span \{/);
+  assert.doesNotMatch(css, /\.connectedAccountsHeading span \{/);
+});
+
 test('connecting another marketplace account keeps the existing connections intact', () => {
   assert.match(client, /connectedAccounts\.length \? 'Conectar outra conta' : 'Conectar conta'/);
-  assert.match(client, /id="connect-another-account-help" className=\{styles\.connectionHelp\}>As contas já conectadas serão mantidas\. Para autorizar outra, saia da conta atual do Mercado Livre neste navegador ou use uma janela anônima\./);
-  assert.match(client, /aria-describedby=\{connectedAccounts\.length \? 'connect-another-account-help' : undefined\}/);
+  assert.doesNotMatch(client, /connect-another-account-help|As contas já conectadas serão mantidas/);
+  assert.match(client, /onClick=\{\(\) => void connectMarketplace\(\)\}/);
   assert.match(css, /\.connectionHelp \{ margin: 0; color: #64748b; font-size: 12px; \}/);
 });
 
@@ -188,10 +284,20 @@ test('grid panels fill their track without auto margins, sharing the content wra
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.grid \{ grid-template-columns: 1fr;/);
 });
 
+test('configuração usa blocos horizontais de largura integral: Marketplace antes de Novo anúncio', () => {
+  assert.match(css, /\.grid \{ display: grid; grid-template-columns: minmax\(0, 1fr\); gap: 24px;/);
+  assert.doesNotMatch(css, /grid-template-columns: minmax\(0, \.78fr\) minmax\(0, 1\.22fr\)/);
+  assert.ok(client.indexOf('<nav className={styles.marketplaceSelector}') < client.indexOf('<NewListing '));
+  assert.match(css, /\.providerGrid \{ display: grid; grid-template-columns: repeat\(6, minmax\(0, 1fr\)\);/);
+  assert.match(css, /@media \(min-width: 761px\) and \(max-width: 1100px\) \{ \.providerGrid \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);
+  assert.match(css, /@media \(max-width: 760px\) \{ \.providerGrid \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+  assert.match(css, /\.connectionGeneralActions \{[^}]*flex-wrap: wrap;[^}]*max-width: 100%;/);
+});
+
 test('static notices are removed without disguising validation or hiding important errors', () => {
   assert.doesNotMatch(client, /OAuth|PKCE|styles.webOnly|styles.security|styles.flow|Nesta etapa/);
   assert.doesNotMatch(listings, /Para adicionar ou reconectar|Atualização automática enquanto|Anúncios da conta selecionada, inclusive/);
-  assert.match(client, /<NewListing key=\{companyId\} companyId=\{companyId\} accountId=\{selectedAccount\}/);
+  assert.match(client, /<NewListing key=\{companyId\} companyId=\{companyId\} marketplaceName=\{selectedProvider.name\} accountId=\{publicationAccountId\}/);
   assert.match(newListing, /'Pesquisar'/);
   assert.match(newListing, /EAN não localizado/);
   assert.match(newListing, /'Publicar'/);
@@ -204,7 +310,7 @@ test('static notices are removed without disguising validation or hiding importa
 
 test('a conta de publicação continua própria, independente do filtro de contas dos anúncios', () => {
   assert.match(client, /return connected\[0\]\?\.id \|\| ''/);
-  assert.match(client, /accountId=\{selectedAccount\}/);
+  assert.match(client, /accountId=\{publicationAccountId\}/);
   assert.match(newListing, /<MarketplaceAccountPicker label="Publicar na conta"/);
   assert.doesNotMatch(listings, /<MarketplaceAccountPicker label="Conta do Mercado Livre"/);
   assert.match(accountPicker, /<MarketplaceSelect/);
@@ -217,8 +323,10 @@ test('a conta de publicação continua própria, independente do filtro de conta
 
 test('connections load from the persisted company records and OAuth returns without replacing the module page', () => {
   assert.match(client, /const refreshConnections = useCallback/);
-  assert.match(client, /if \(accessState !== 'ready'\) return;\s*void refreshConnections\(\)/);
-  assert.match(client, /window\.open\('', 'avantalab-mercado-livre-oauth'/);
+  assert.match(client, /if \(accessState !== 'ready'\) return;\s*queueMicrotask/);
+  assert.match(client, /askIdentification \? completeNewConnection\(connectedAccountId\) : refreshConnections\(\)/);
+  assert.match(client, /window\.open\('', target.popup/);
+  assert.match(read('app/marketplaces/connection-target.ts'), /popup: 'avantalab-mercado-livre-oauth'/);
   assert.match(client, /window\.addEventListener\('message', receiveAuthorization\)/);
   assert.match(client, /data\.type !== 'avantalab-marketplace-oauth'/);
   assert.match(read('app/api/modulos/marketplaces/conexoes/mercado-livre/callback/route.ts'), /window\.opener\.postMessage\(message,target\)/);
@@ -244,7 +352,7 @@ test('every marketplace list opens in the same anchored system component', () =>
 test('new listing keeps account, a wide EAN field and a compact search action on one desktop row', () => {
   assert.match(newListing, /<div className=\{styles\.form\}>\s*<MarketplaceAccountPicker[\s\S]*?<div className=\{styles\.eanField\}>[\s\S]*?<button type="button" className=\{`\$\{styles\.primary\} \$\{styles\.searchAction\}`\}/);
   assert.match(newListing, /\{searchingBy === 'ean' \? 'Pesquisando…' : 'Pesquisar'\}/);
-  assert.match(css, /\.newListing \.form \{ grid-template-columns: minmax\(0, 1fr\) minmax\(260px, 1\.25fr\) auto; align-items: end;/);
+  assert.match(css, /\.newListing \.form \{ grid-template-columns: minmax\(180px, 1fr\) minmax\(260px, 1\.25fr\) auto; align-items: end;/);
   assert.match(css, /\.newListing \.searchAction \{ min-width: 94px; padding-inline: 14px; \}/);
   assert.match(css, /@media \(max-width: 760px\) \{ \.newListing \.form, \.catalogFields, \.catalogAttributes \{ grid-template-columns: 1fr;/);
 });

@@ -1,8 +1,33 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, salesInPeriod, salesSummary, saleGroup, validSalePeriod } from '../../app/modules/marketplaces/sales-status.ts';
+import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, salesInPeriod, salesSummary, saleGroup, validSalePeriod, orderedSaleGroups, SALE_GROUPS } from '../../app/modules/marketplaces/sales-status.ts';
 
 const sale = (overrides = {}) => ({ status: 'paid', shipmentStatus: 'ready_to_ship', shipmentSubstatus: 'ready_to_print', labelStatus: 'ready', ...overrides });
+
+test('ordena situações da maior contagem para a menor e deixa zeros ao final', () => {
+  const counts = { confirmed: 3, awaiting_dispatch: 2, cancelled: 1 };
+  const ordered = orderedSaleGroups(counts);
+  assert.deepEqual(ordered.slice(0, 3).map(group => group.value), ['confirmed', 'awaiting_dispatch', 'cancelled']);
+  assert.equal(ordered.length, SALE_GROUPS.length);
+  assert.ok(ordered.slice(3).every(group => !counts[group.value]));
+});
+
+test('empates preservam ordem original sem mutar catálogo ou contagens', () => {
+  const original = structuredClone(SALE_GROUPS);
+  const counts = Object.freeze({ cancelled: 2, confirmed: 2, awaiting_dispatch: 2 });
+  assert.deepEqual(orderedSaleGroups(counts).slice(0, 3).map(group => group.value), ['confirmed', 'awaiting_dispatch', 'cancelled']);
+  assert.deepEqual(orderedSaleGroups({}), SALE_GROUPS);
+  assert.deepEqual(SALE_GROUPS, original);
+  assert.deepEqual(counts, { cancelled: 2, confirmed: 2, awaiting_dispatch: 2 });
+});
+
+test('nova contagem reordena os mesmos identificadores sem alterar classificação', () => {
+  const previous = orderedSaleGroups({ delivered: 6, cancelled: 3, in_transit: 1 });
+  const updated = orderedSaleGroups({ confirmed: 8, delivered: 6, cancelled: 3, in_transit: 1 });
+  assert.equal(previous[0].value, 'delivered');
+  assert.equal(updated[0].value, 'confirmed');
+  assert.deepEqual(updated.map(group => group.value).sort(), previous.map(group => group.value).sort());
+});
 
 test('traduz os estados operacionais conhecidos sem expor códigos do Mercado Livre', () => {
   assert.equal(saleStatusText(sale()), 'Etiqueta pronta para impressão');

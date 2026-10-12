@@ -163,6 +163,8 @@ test('callback de conexão anterior permanece compatível com verificador cripto
   const response=await callback.GET(new Request(`https://avantalab.com.br/api/modulos/marketplaces/conexoes/mercado-livre/callback?state=${request.requestId}&code=fixture-code`));
   const html=await response.text();
   assert.match(html,/marketplaceConnection=connected/);assert.doesNotMatch(html,/\/marketplaces\/renovar/);
+  assert.match(html,new RegExp(`"connectionId":"${connection}"`));
+  assert.match(html,new RegExp(`connectionId=${connection}`));
   assert.equal(db.tables.marketplace_connections.length,1);
   assert.equal(JSON.parse(vault.openMarketplaceSecret(db.tables.marketplace_connections[0].token_sealed)).accessToken,'new-access');
 });
@@ -178,7 +180,7 @@ test('interface usa tooltip padrão, mantém contas expiradas e link sem token d
   assert.doesNotMatch(panel, /onRefresh|async function refresh|>Atualizar contas</);
   assert.doesNotMatch(panel, /styles\.renewalFooter/);
   const css=readFileSync(resolve(root,'app/marketplaces/marketplaces.module.css'),'utf8');
-  assert.match(css,/\.connectedAccount \{ display: grid; grid-template-columns: minmax\(0, 1fr\);/);
+  assert.match(css,/\.connectedAccount \{ display: grid; grid-template-columns: minmax\(0, 1fr\) auto;/);
   assert.match(css,/\.connectedAccountSelect strong, \.connectedAccountSelect small \{[^}]*white-space: normal/);
   assert.match(css,/\.compactConnectionButton::before \{[^}]*inset: 6px 0/);
   assert.match(css,/\.page \.compactConnectionButton \{[^}]*min-height: 44px/);
@@ -186,12 +188,12 @@ test('interface usa tooltip padrão, mantém contas expiradas e link sem token d
 });
 test('renovação expande dentro da conta e atualização geral fica ao lado de conectar',()=>{
   const source=readFileSync(resolve(root,'app/marketplaces/MarketplacesClient.tsx'),'utf8');
-  const accountCards=source.slice(source.indexOf('renewableAccounts.map'),source.indexOf('</article>)}</div>'));
+  const accountCards=source.slice(source.indexOf('displayedAccounts.map'),source.indexOf('</article>; })}</div>'));
   assert.match(accountCards,/renewAccount\?\.id === account\.id && <div id=\{`account-renewal-\$\{account\.id\}`\}><AuthorizationRenewal companyId=\{companyId\} account=\{account\}/);
   assert.match(accountCards,/aria-controls=\{`account-renewal-\$\{account\.id\}`\}/);
   assert.match(accountCards,/document\.getElementById\(`renew-account-\$\{account\.id\}`\)\?\.focus\(\)/);
   assert.equal((source.match(/<AuthorizationRenewal /g)||[]).length,1);
-  const generalActions=source.slice(source.indexOf('className={styles.connectionGeneralActions}'),source.indexOf('{connectedAccounts.length > 0 && <p'));
+  const generalActions=source.slice(source.indexOf('className={styles.connectionGeneralActions}'),source.indexOf('{connectionNotice && <p'));
   assert.match(generalActions,/Conectar outra conta[\s\S]*updateConnections\(\)[\s\S]*Atualizar contas/);
   assert.match(generalActions,/connectionsRefreshing \? 'Atualizando…'/);
   assert.match(generalActions,/accountSelectionLocked \|\| publicationBusy/);
@@ -299,7 +301,7 @@ test('card confere resultado autenticado, preserva noopener e remove instrução
   assert.match(panel, /popup\.opener = null/);
   assert.doesNotMatch(panel, /use Atualizar contas|Ao concluir, use/);
   const client = readFileSync(resolve(root, 'app/marketplaces/MarketplacesClient.tsx'), 'utf8');
-  assert.match(client, /current\.map\(\(account\) => account.id === updated.id \? updated : account\)/);
+  assert.match(client, /current\.map\(\(account\) => account.id === updated.id \? preserveNewerAccountLabel\(account, updated\) : account\)/);
   assert.match(client, /onCompleted=\{completeAccountRenewal\}/);
   assert.match(client, /if \(data.renewal\) return/);
   const landing = readFileSync(resolve(root, 'app/marketplaces/renovar/RenewalClient.tsx'), 'utf8');

@@ -7,13 +7,14 @@ import { MarketplaceError } from '@/app/modules/marketplaces/services/management
 
 export const runtime = 'nodejs';
 
-function destination(request: Request, empresaId: string, status: 'connected' | 'error', message = '', renewal = false) {
+function destination(request: Request, empresaId: string, status: 'connected' | 'error', message = '', renewal = false, connectionId = '') {
   const url = new URL(renewal ? '/marketplaces/renovar' : '/marketplaces', request.url);
   if (empresaId && !renewal) url.searchParams.set('empresaId', empresaId);
   url.searchParams.set(renewal ? 'resultado' : 'marketplaceConnection', status);
+  if (connectionId && status === 'connected' && !renewal) url.searchParams.set('connectionId', connectionId);
   if (message) url.searchParams.set('message', message.slice(0, 180));
   const origin = new URL(request.url).origin;
-  const payload = JSON.stringify({ type: 'avantalab-marketplace-oauth', provider: 'mercado_livre', empresaId, status, renewal, message: message.slice(0, 180) }).replace(/</g, '\\u003c');
+  const payload = JSON.stringify({ type: 'avantalab-marketplace-oauth', provider: 'mercado_livre', empresaId, status, renewal, connectionId: renewal ? '' : connectionId, message: message.slice(0, 180) }).replace(/</g, '\\u003c');
   const fallback = JSON.stringify(url.toString()).replace(/</g, '\\u003c');
   // Quando a autorização nasce em uma janela, ela atualiza a aba original e fecha.
   // Sem opener (fluxos antigos, favoritos ou bloqueio de popup), preserva o redirecionamento seguro.
@@ -81,11 +82,11 @@ export async function GET(request: Request) {
       last_error_code: null,
       updated_at: new Date().toISOString(),
     };
-    const { error } = existing
-      ? await db.from('marketplace_connections').update(connection).eq('id', existing.id)
-      : await db.from('marketplace_connections').insert(connection);
-    if (error) throw error;
-    return destination(request, pending.empresa_id, 'connected');
+    const { data: saved, error } = existing
+      ? await db.from('marketplace_connections').update(connection).eq('id', existing.id).select('id').maybeSingle()
+      : await db.from('marketplace_connections').insert(connection).select('id').maybeSingle();
+    if (error || !saved) throw error || new Error('Não foi possível confirmar a conta conectada.');
+    return destination(request, pending.empresa_id, 'connected', '', false, saved.id);
   } catch (error) {
     const detail = error instanceof Error ? error.message : 'erro-desconhecido';
     // Registra somente diagnóstico sem tokens/códigos OAuth e preserva uma orientação acionável para o usuário.

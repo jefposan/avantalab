@@ -107,6 +107,14 @@ export const SALE_GROUPS = [
 ] as const;
 
 export type SaleGroup = typeof SALE_GROUPS[number]['value'];
+
+/** Ordenação de apresentação: contagens decrescentes, empate na ordem original. */
+export function orderedSaleGroups(counts: Readonly<Partial<Record<SaleGroup, number>>>) {
+  return SALE_GROUPS.map((group, index) => ({ group, index }))
+    .sort((a, b) => (counts[b.group.value] ?? 0) - (counts[a.group.value] ?? 0) || a.index - b.index)
+    .map(({ group }) => group);
+}
+
 export type SalePeriod = { start: string; end: string };
 export type FilterableSale = SaleStatusInput & { connectionId: string; orderId: string; soldAt: string; createdAt: string };
 

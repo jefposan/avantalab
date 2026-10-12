@@ -9,7 +9,10 @@ export async function GET(request: Request) {
       .select('id,provider,seller_reference,seller_name,status,connected_at,expires_at,last_synced_at,last_error_code')
       .eq('empresa_id', empresaId).eq('provider', 'mercado_livre').neq('status', 'disconnected').order('connected_at', { ascending: false });
     if (error) throw new MarketplaceError(503, 'database', 'Não foi possível consultar as contas. Verifique se a migração de gestão de anúncios foi aplicada neste ambiente.');
-    return NextResponse.json({ accounts: data || [], canConnect: podeGerenciar, canManage: ['gestor_master', 'administrador', 'operador_completo'].includes(vinculo.perfil || '') }, { headers: { 'Cache-Control': 'no-store' } });
+    const { data: labels, error: labelsError } = await db.from('marketplace_connection_labels').select('connection_id,local_label,updated_at').eq('empresa_id', empresaId);
+    const byId = new Map((labelsError ? [] : labels || []).map(label => [label.connection_id, label]));
+    const accounts = (data || []).map(account => ({ ...account, local_label: byId.get(account.id)?.local_label ?? null, local_label_updated_at: byId.get(account.id)?.updated_at ?? null }));
+    return NextResponse.json({ accounts, labelsAvailable: !labelsError, canConnect: podeGerenciar, canManage: ['gestor_master', 'administrador', 'operador_completo'].includes(vinculo.perfil || '') }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) { return managementFailure(error); }
 }
 
