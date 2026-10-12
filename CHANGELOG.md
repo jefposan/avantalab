@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0.01 - 2026-10-11
+
+- Marketplaces inicia com Anunciados e Produtos e estoque recolhidos e Vendas
+  aberto, a cada abertura ou recarga. Expansão manual, filtros, ordem dos blocos
+  e sincronização preservados. Ava revisada para orientar o botão Expandir.
+
 ## 2.0.0 - 2026-10-11
 
 - Estoque de Marketplaces por pedido/item confirmado: baixa atômica única,

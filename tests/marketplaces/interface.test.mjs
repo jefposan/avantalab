@@ -13,6 +13,18 @@ const accountPicker = read('app/marketplaces/MarketplaceAccountPicker.tsx');
 const marketplaceSelect = read('app/marketplaces/MarketplaceSelect.tsx');
 const css = read('app/marketplaces/marketplaces.module.css');
 
+test('a cada abertura somente Vendas inicia aberto, sem persistir expansão dos outros blocos', () => {
+  const products = read('app/marketplaces/ProductsStock.tsx');
+  assert.match(client, /const \[salesExpanded, setSalesExpanded\] = useState\(true\)/);
+  assert.match(listings, /const \[panelExpanded, setPanelExpanded\] = useState\(false\)/);
+  assert.match(products, /const \[expanded, setExpanded\] = useState\(false\)/);
+  assert.match(listings, /id="announced-content" hidden=\{!panelExpanded\}/);
+  assert.match(products, /id="products-content" hidden=\{!expanded\}/);
+  for (const source of [listings, products]) assert.doesNotMatch(source, /(?:localStorage|sessionStorage)/);
+  assert.match(listings, /onClick=\{\(\) => setPanelExpanded\(\(current\) => !current\)\}/);
+  assert.match(products, /onClick=\{\(\) => setExpanded\(value => !value\)\}/);
+});
+
 test('cards são identificados por título, sem numeração decorativa', () => {
   const sales = read('app/marketplaces/Vendas.tsx');
   for (const source of [client, sales, listings, read('app/marketplaces/ProductsStock.tsx')]) {

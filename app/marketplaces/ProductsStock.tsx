@@ -113,7 +113,7 @@ export default function ProductsStock(props: Props) {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState('');
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [detailId, setDetailId] = useState('');
   const [creating, setCreating] = useState(false);
   const [stockLoadOpen, setStockLoadOpen] = useState(false);

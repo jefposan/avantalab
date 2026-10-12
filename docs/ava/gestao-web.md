@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 2.0.0 -->
+<!-- ava-version: 2.0.0.01 -->
+
+> Revisão 2.0.0.01: ao abrir ou recarregar Marketplaces, somente **Vendas**
+> inicia aberto. **Anunciados** e **Produtos e estoque** iniciam recolhidos;
+> use **Expandir** no cabeçalho para acessar suas listas e ações. Durante a
+> visita, a expansão manual é preservada nas atualizações. Ordem, filtros,
+> sincronização e controles do topo/rodapé não mudaram.
 
 > Revisão 2.0.0: após migração, publicação e ativação do agendador Supabase,
 > novas vendas confirmadas baixam uma vez o saldo local dos produtos vinculados.

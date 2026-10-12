@@ -46,6 +46,7 @@ const hooks = registerHooks({
 const { default: Toggle } = await import(pathToFileURL(resolve(root, 'app/components/BotaoExpandirCard.tsx')).href);
 const { default: Vendas } = await import(pathToFileURL(resolve(root, 'app/marketplaces/Vendas.tsx')).href);
 const { default: Anunciados } = await import(pathToFileURL(resolve(root, 'app/marketplaces/Anunciados.tsx')).href);
+const { default: ProductsStock } = await import(pathToFileURL(resolve(root, 'app/marketplaces/ProductsStock.tsx')).href);
 const { default: AvantaKanban } = await import(pathToFileURL(resolve(root, 'app/components/AvantaKanban.tsx')).href);
 const { default: DateOrderButton } = await import(pathToFileURL(resolve(root, 'app/marketplaces/DateOrderButton.tsx')).href);
 hooks.deregister();
@@ -135,12 +136,21 @@ test('Vendas recolhe só o conteúdo e mantém título, total, atualizar e filtr
   assert.ok(!expanded.includes('id="sales-content" hidden'));
 });
 
-test('Anunciados inicia expandido com controle próprio no topo', () => {
+test('Anunciados inicia recolhido com controle próprio no topo e filtros montados', () => {
   const html = render(Anunciados, { companyId: 'empresa', accountId: '', dark: false, brand: '#003E73', onAccountsLoaded: noop, onAccountSelectionLockedChange: noop, onPublishInAnotherAccount: noop });
-  assert.match(html, /aria-label="Recolher Anunciados"/);
+  assert.match(html, /aria-label="Expandir Anunciados" aria-expanded="false"/);
   assert.match(html, /aria-controls="announced-content"/);
-  assert.ok(!html.includes('id="announced-content" hidden'));
-  assert.ok(html.indexOf('Recolher Anunciados') < html.indexOf('Pesquisar'));
+  assert.match(html, /id="announced-content" hidden=""/);
+  assert.ok(html.indexOf('Expandir Anunciados') < html.indexOf('Pesquisar'));
+});
+
+test('Produtos e estoque inicia recolhido sem remover as ações da área expansível', () => {
+  const html = render(ProductsStock, { companyId: 'empresa', dark: false, brand: '#003E73', canManage: true, accounts: [], refreshKey: 0, preparationLocked: false, onPrepare: noop });
+  assert.match(html, /aria-label="Expandir produtos e estoque" aria-expanded="false"/);
+  assert.match(html, /aria-controls="products-content"/);
+  assert.match(html, /id="products-content" hidden=""/);
+  assert.ok(html.indexOf('Expandir produtos e estoque') < html.indexOf('Novo produto'));
+  assert.match(html, /Carregar estoque dos anúncios/);
 });
 
 test('cabeçalho de Anunciados reutiliza os estilos de Vendas sem sobrepor Expandir', () => {

@@ -59,7 +59,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
   const [expandedState, setExpandedState] = useState({ accountId: '', id: '' });
   const expanded = expandedState.accountId === accountId ? expandedState.id : '';
   const setExpanded = (id: string) => setExpandedState({ accountId, id });
-  const [panelExpanded, setPanelExpanded] = useState(true);
+  const [panelExpanded, setPanelExpanded] = useState(false);
   const editButtons = useRef(new Map<string, HTMLButtonElement>());
   const tableScroll = useRef<HTMLDivElement>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);

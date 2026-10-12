@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 2.0.0 -->
+<!-- ava-version: 2.0.0.01 -->
+
+> Revisão 2.0.0.01: Marketplaces Web inicia apenas Vendas aberto; Anunciados
+> e Produtos e estoque recolhidos, inclusive em navegador estreito.
+> Sem impacto operacional na Gestão Mobile nativa ou no PWA AvantaPreços.
 
 > Revisão 2.0.0: estoque por vendas e popup central na Gestão/Marketplaces Web,
 > inclusive em navegador estreito. Sem mudança operacional no PWA AvantaPreços
