@@ -10,6 +10,7 @@ import type { LocalProduct } from '@/app/modules/marketplaces/services/local-pro
 import { marketplaceClientRequest, type MarketplaceAccount } from './Anunciados';
 import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 import MarketplaceSelect from './MarketplaceSelect';
+import { collapseMarketplacePanel } from './collapse-panel';
 import styles from './marketplaces.module.css';
 
 type Props = { companyId: string; dark: boolean; brand: string; canManage: boolean; accounts: MarketplaceAccount[]; refreshKey: number; preparationLocked: boolean; onPrepare: (productId: string, connectionId: string) => void; reorderHandle?: ReactNode };
@@ -165,6 +166,7 @@ export default function ProductsStock(props: Props) {
         {detailId === product.id && <ProductDetail key={`${product.id}:${product.revision}`} product={product} props={props} busy={busy} onCommand={onCommand} />}
       </article>)}</div>
       {total > 25 && <div className={styles.localPagination}><button disabled={busy || loading || page === 1} onClick={() => { setPage(page - 1); setDetailId(''); }}>Anterior</button><span>Página {page} de {Math.ceil(total / 25)}</span><button disabled={busy || loading || page * 25 >= total} onClick={() => { setPage(page + 1); setDetailId(''); }}>Próxima</button></div>}
+      <div className={`${styles.panelHeadingActions} ${styles.panelFooterActions}`}><BotaoExpandirCard variante="painel" modo="lista" contexto="produtos e estoque" controlsId="products-content" expandido={expanded} corPrimaria={brand} darkMode={dark} onClick={() => collapseMarketplacePanel('products-content', () => setExpanded(false))} /></div>
     </div>
     {message && <p className={styles.catalogSuccess} role="status">{message}</p>}{error && <p className={styles.connectionMessage} role="alert">{error}</p>}
     <ModalConfirmacao aberto={!!confirmation} titulo={confirmation?.command.action === 'import' ? 'Importar anúncios?' : confirmation?.command.action === 'merge' ? 'Vincular cadastros?' : 'Confirmar estoque físico?'} mensagem={confirmation?.message || ''} textoConfirmar="Confirmar" variante="primaria" carregando={busy} corPrimaria={brand} darkMode={dark} aoCancelar={() => { if (!busy) setConfirmation(null); }} aoConfirmar={() => { if (confirmation) void execute(confirmation.command); }} />

@@ -69,6 +69,7 @@
 .panelHeadingActions { --heading-control-height: 40px; --heading-control-hover-background: color-mix(in srgb, var(--brand) 7%, #fff); display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .dark .panelHeadingActions { --heading-control-hover-background: color-mix(in srgb, var(--brand) 22%, #182235); }
 .panelHeadingCollapsed { margin-bottom: 0; }
+.panelFooterActions { margin-top: 24px; }
 .panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"], button[aria-controls="products-content"]) { position: relative; min-height: var(--heading-control-height); height: var(--heading-control-height); transition: background-color .15s ease, border-color .15s ease; }
 /* Face compacta no desktop; área clicável continua com 48px de altura. */
 .panelHeadingActions :is(.refreshSales, button[aria-controls="sales-content"], button[aria-controls="announced-content"], button[aria-controls="products-content"])::after { content: ''; position: absolute; inset: calc((var(--heading-control-height) - 48px) / 2) 0; }

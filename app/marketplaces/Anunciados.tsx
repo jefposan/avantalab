@@ -15,6 +15,7 @@ import ListingEditor from './ListingEditor';
 import MarketplaceSelect from './MarketplaceSelect';
 import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 import DateOrderButton from './DateOrderButton';
+import { collapseMarketplacePanel } from './collapse-panel';
 import type { DateOrder } from '@/app/modules/marketplaces/date-order';
 
 export type MarketplaceAccount = { id: string; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
@@ -222,6 +223,7 @@ export default function Anunciados({ companyId, dark, brand, accountId, onAccoun
         </tbody></table>
     </div>
     <nav className={styles.pagination} aria-label="Páginas dos anúncios"><button type="button" disabled={page <= 1 || loading || !!expanded} onClick={() => setPage(page - 1)}>Anterior</button><span>Página {page} de {Math.max(1, Math.ceil(total / 25))}</span><button type="button" disabled={page * 25 >= total || loading || !!expanded} onClick={() => setPage(page + 1)}>Próxima</button></nav>
+    <div className={`${styles.panelHeadingActions} ${styles.panelFooterActions}`}><BotaoExpandirCard variante="painel" modo="lista" contexto="Anunciados" controlsId="announced-content" expandido={panelExpanded} onClick={() => collapseMarketplacePanel('announced-content', () => setPanelExpanded(false))} corPrimaria={brand} darkMode={dark} /></div>
     </div>
     <ModalConfirmacao aberto={!!confirmation} titulo={confirmation ? `${actionNames[confirmation.action]}?` : ''} mensagem={confirmation ? `${confirmation.name}. ${confirmation.action === 'close' ? 'Esta ação encerra definitivamente o anúncio e não permite reativação.' : confirmation.action === 'delete' ? 'O anúncio será marcado como excluído no Mercado Livre. O histórico local é preservado.' : confirmation.action === 'pause' ? 'O anúncio deixará de vender até ser reativado.' : 'O anúncio voltará a vender se o Mercado Livre permitir.'}` : ''} textoConfirmar={confirmation ? actionNames[confirmation.action] : 'Confirmar'} carregando={acting} darkMode={dark} corPrimaria={brand} variante={confirmation?.action === 'resume' ? 'primaria' : 'destrutiva'} aoCancelar={() => { if (!acting) setConfirmation(null); }} aoConfirmar={executeAction} />
   </section>;

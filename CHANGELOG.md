@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.51.0.02 - 2026-10-11
+
+- Recolher também no rodapé dos blocos Vendas, Anunciados e Produtos e estoque,
+  com o componente oficial e o mesmo estilo do topo. Oculto com o conteúdo;
+  preserva filtros e edições, devolve o foco e a leitura ao cabeçalho e respeita
+  movimento reduzido. Sem alterar anúncios, vendas ou estoque.
+
 ## 1.51.0.01 - 2026-10-11
 
 - Mais espaço vertical em Produtos e estoque: entre anúncios vinculados e

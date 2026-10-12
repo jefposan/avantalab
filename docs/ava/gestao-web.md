@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.51.0.01 -->
+<!-- ava-version: 1.51.0.02 -->
+
+> Revisão 1.51.0.02: os blocos **Vendas**, **Anunciados** e **Produtos e
+> estoque** oferecem **Recolher** também no rodapé quando expandidos. Recolher
+> pelo rodapé volta ao controle do topo, sem perder filtros ou edições.
 
 > Revisão 1.51.0.01: espaçamento vertical na ficha de Produtos e estoque,
 > entre campos, confirmações e ações. Sem impacto operacional.

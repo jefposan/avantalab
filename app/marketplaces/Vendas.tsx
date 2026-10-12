@@ -9,6 +9,7 @@ import type { MarketplaceAccount } from './Anunciados';
 import MarketplaceSelect from './MarketplaceSelect';
 import SalePostSale from './SalePostSale';
 import DateOrderButton from './DateOrderButton';
+import { collapseMarketplacePanel } from './collapse-panel';
 import { sortSalesByDate, type DateOrder } from '@/app/modules/marketplaces/date-order';
 import styles from './marketplaces.module.css';
 
@@ -61,6 +62,7 @@ export default function Vendas({ companyId, accountId, onAccountChange, accounts
         <SalePostSale key={`${companyId}:${sale.connectionId}:${sale.id}`} companyId={companyId} saleId={sale.id} connectionId={sale.connectionId} onSaleUpdated={onSaleUpdated} />
       </div>}
     </article>)}</div>}
+    <div className={`${styles.panelHeadingActions} ${styles.panelFooterActions}`}><BotaoExpandirCard variante="painel" modo="lista" contexto="Vendas" controlsId="sales-content" expandido={expanded} onClick={() => collapseMarketplacePanel('sales-content', () => onExpandedChange(false))} corPrimaria={brand} darkMode={dark} /></div>
     </div>
   </section>;
 }

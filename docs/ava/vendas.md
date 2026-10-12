@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.51.0.01 -->
+<!-- ava-version: 1.51.0.02 -->
+
+> Revisão 1.51.0.02: Recolher no rodapé dos blocos de Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
 
 > Revisão 1.51.0.01: espaçamento na ficha local de Marketplaces Web.
 > Sem impacto operacional no AvantaVendas.
