@@ -20,8 +20,8 @@ import NewListing, { type ListingCopyRequest } from './NewListing';
 import ProductsStock from './ProductsStock';
 import PriceUsersPanel from './PriceUsersPanel';
 import Vendas from './Vendas';
-import SalesFilters, { monthPeriod } from './SalesFilters';
-import { saleGroup, salesInPeriod, salesSummary, type SaleGroup } from '@/app/modules/marketplaces/sales-status';
+import SalesFilters from './SalesFilters';
+import { saleGroup, salesInPeriod, salesSummary, type SaleGroup, type SalePeriod } from '@/app/modules/marketplaces/sales-status';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import { inventoryIssueMessage, type MarketplaceLiveFeed } from '@/app/modules/marketplaces/live-feed';
 import { createPassiveRefresh } from './passive-refresh';
@@ -106,7 +106,14 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [salesAccount, setSalesAccount] = useState('');
   const [salesExpanded, setSalesExpanded] = useState(true);
   const [salesGroup, setSalesGroup] = useState<SaleGroup | ''>('');
-  const [salesPeriod, setSalesPeriod] = useState(() => monthPeriod(new Date().getFullYear(), new Date().getMonth()));
+  const [salesPeriod, setSalesPeriod] = useState<SalePeriod>({ start: '', end: '' });
+  function selectSalesFromHeader(selection: { period?: SalePeriod; group?: SaleGroup | '' }) {
+    setSalesSnapshot(sales);
+    setSalesAccount('');
+    setSalesExpanded(true);
+    if (selection.period !== undefined) setSalesPeriod(selection.period);
+    if (selection.group !== undefined) setSalesGroup(selection.group);
+  }
   const updateSale = useCallback((updated: MarketplaceSale) => {
     setSales((current) => current.map((sale) => sale.id === updated.id && sale.connectionId === updated.connectionId ? updated : sale));
   }, []);
@@ -115,6 +122,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const selectedProvider = useMemo(() => providers.find((provider) => provider.id === marketplace)!, [marketplace]);
   const loadAccounts = useCallback((available: MarketplaceAccount[], canManageConnection: boolean, labelsAvailable = true) => {
     setAccounts(previous => available.map(account => preserveNewerAccountLabel(previous.find(known => known.id === account.id), account)));
+    setSalesAccount(current => available.some(account => account.id === current && account.status === 'connected') ? current : '');
     setCanManageConnections(canManageConnection);
     setIdentificationAvailable(labelsAvailable);
     setSelectedAccount((current) => {
@@ -224,10 +232,6 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }, [accessState, companyId, accountSignature]);
   useEffect(() => { if (refreshKey || salesRefresh) void salesReader.current?.manual(); }, [refreshKey, salesRefresh]);
   useEffect(() => { if (backgroundRefresh) void salesReader.current?.background(); }, [backgroundRefresh]);
-
-  useEffect(() => {
-    if (salesAccount && !accountSignature.split(',').includes(salesAccount)) setSalesAccount('');
-  }, [accountSignature, salesAccount]);
 
   async function confirmDisconnectAccount() {
     if (!disconnectAccount || disconnecting) return;
@@ -394,7 +398,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     <MarketplaceLiveMonitor key={companyId} companyId={companyId} brand={empresa.corPrimaria} dark={empresa.temaEscuro} />
     <ModuloHeader empresa={empresa} onBack={voltar} className={styles.salesHeader} returnTooltip="Voltar à Gestão" returnTooltipPosition="bottom">
       <div className={styles.headerToolbar}>
-      <SalesFilters period={salesPeriod} onPeriodChange={period => { setSalesSnapshot(sales); setSalesPeriod(period); }} group={salesGroup} onGroupChange={group => { setSalesSnapshot(sales); setSalesGroup(group); }} counts={summary.byGroup} total={summary.total} dark={empresa.temaEscuro} brand={empresa.corPrimaria} />
+      <SalesFilters period={salesPeriod} onPeriodChange={period => selectSalesFromHeader({ period })} group={salesGroup} onGroupChange={group => selectSalesFromHeader({ group })} counts={summary.byGroup} total={summary.total} dark={empresa.temaEscuro} brand={empresa.corPrimaria} />
       <div className={styles.headerActionGroup} role="group" aria-labelledby="header-actions-heading">
         <span id="header-actions-heading" className={styles.headerGroupLabel}>Atualização e avisos</span>
         <div className={styles.headerActionButtons}>
@@ -452,7 +456,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
           {displayedAccounts.length ? <div className={styles.connectedAccountsList}>{displayedAccounts.map((account) => {
             const accountProvider = providers.find(provider => provider.id === (account.provider ?? 'mercado_livre'));
             return <article key={account.id} data-provider={account.provider ?? 'mercado_livre'} className={`${styles.connectedAccount} ${account.id === selectedAccount ? styles.connectedAccountSelected : ''}`}>
-            <button type="button" className={styles.connectedAccountSelect} onClick={() => { setSelectedAccount(account.id); setSalesAccount(account.id); }} disabled={accountSelectionLocked || publicationBusy} aria-pressed={account.id === publicationAccountId}>
+            <button type="button" className={styles.connectedAccountSelect} onClick={() => setSelectedAccount(account.id)} disabled={accountSelectionLocked || publicationBusy} aria-pressed={account.id === publicationAccountId}>
               <span className={styles.accountMarketplaceBrand}>{accountProvider ? <Image src={`/images/marketplaces/${accountProvider.logo}`} alt={accountProvider.name} width={accountProvider.width} height={accountProvider.height} unoptimized /> : 'Marketplace'}</span>
               <strong className={styles.accountName}>{accountDisplayName(account)}{pendingSales[account.id] ? <em className={styles.accountSalesBadge} title="Vendas nos filtros selecionados">{pendingSales[account.id]}</em> : null}</strong>
               {account.local_label && <small className={styles.accountReference}>{account.seller_name || `Vendedor ${account.seller_reference}`}</small>}

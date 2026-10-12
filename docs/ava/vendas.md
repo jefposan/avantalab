@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.11 -->
+<!-- ava-version: 3.0.0.12 -->
+
+> Revisão 3.0.0.12: filtros Todos e contas independentes no Marketplaces Web.
+> Sem impacto operacional no AvantaVendas; estoques continuam separados.
 
 > Revisão 3.0.0.11: recuperação de histórico e pendências do Marketplaces Web;
 > sem impacto operacional no AvantaVendas. Estoques continuam separados.

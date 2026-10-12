@@ -1,11 +1,21 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.11 -->
+<!-- ava-version: 3.0.0.12 -->
+
+> Revisão 3.0.0.12: Marketplaces inicia em **Todo o período**, **Todas** as
+> situações de vendas e **Todas as contas**. Anunciados também inicia em
+> todas as contas/situações, substituindo o padrão Ativos da revisão anterior.
+> Escolher situação ou período no cabeçalho abre Vendas, aplica a base recente
+> e limpa a conta anterior: Entregues 6 mostra os seis no período, de todas
+> as contas. Depois use **Conta das vendas** para restringir. Os números do
+> cabeçalho são de todas as contas, não apenas da restrição local. Escolher
+> conta para publicar não filtra vendas. Somente Vendas inicia expandido.
+> Sem alteração de estoque ou publicação.
 
 > Revisão 3.0.0.11: após migração/publicação, a rotina recupera vendas anteriores
 > à ativação, mais recentes primeiro, sem nova baixa das que já integram o saldo
 > inicial. Vendas novas têm prioridade na fila durante a recuperação do histórico.
-> Anunciados inicia em **Ativos / em andamento**: anúncio pausado,
+> O filtro **Ativos / em andamento** inclui anúncio pausado,
 > encerrado ou sem estoque continua ativo operacionalmente se tiver pedido em
 > curso. A linha mostra a pendência e, separadamente, o estado real no ML.
 > Saldo zero sem pendência não entra nos ativos. Cancelamento/devolução/reclamação

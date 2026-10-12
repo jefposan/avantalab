@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.11 -->
+<!-- ava-version: 3.0.0.12 -->
+
+> Revisão 3.0.0.12: filtros iniciais em Todos e seleção global no header do
+> Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa/AvantaPreços.
 
 > Revisão 3.0.0.11: histórico e classificação operacional de Anunciados no
 > Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa/AvantaPreços.

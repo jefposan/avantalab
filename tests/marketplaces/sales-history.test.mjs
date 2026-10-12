@@ -180,5 +180,5 @@ test('worker reserva rodada e rodízio independentes para histórico, sem mudar 
   assert.match(worker, /if \(turn === 2\) await reconcile\(true\)/);
   assert.match(worker, /history \? cursor\?\.history_checked_at : cursor\?\.checked_at/);
   assert.match(worker, /if \(turn !== 2\) await reconcile\(\)/);
-  assert.match(readFileSync(resolve(root, 'app/marketplaces/Anunciados.tsx'), 'utf8'), /const \[status, setStatus\] = useState\('active'\)/);
+  assert.match(readFileSync(resolve(root, 'app/marketplaces/Anunciados.tsx'), 'utf8'), /const \[status, setStatus\] = useState\(''\)/);
 });

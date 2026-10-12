@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.0.0.12 - 2026-10-12
+
+- Marketplaces inicia vendas em todas as datas, situações e contas; Anunciados
+  inicia em todas as situações e contas, substituindo o padrão inicial Ativos.
+- Escolher situação ou período no cabeçalho aplica os dados recentes, expande
+  Vendas e retira a restrição de conta. Depois, Conta das vendas permite refinar
+  aquela seleção. Os contadores do cabeçalho permanecem globais no período.
+- Selecionar conta para publicação não altera silenciosamente o filtro de
+  vendas. Mantidos isolamento por empresa, atualização oculta e estados dos
+  blocos. Sem alteração de estoque, dados no marketplace ou publicação.
+
 ## 3.0.0.11 - 2026-10-12
 
 - Recuperação das vendas anteriores à ativação, com cursor próprio, páginas

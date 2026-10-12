@@ -55,7 +55,7 @@ export default function Anunciados({ companyId, marketplace = 'mercado_livre', a
   const [rows, setRows] = useState<Row[]>([]);
   const [rowsAccountId, setRowsAccountId] = useState('');
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('active');
+  const [status, setStatus] = useState('');
   const [order, setOrder] = useState<DateOrder>('desc');
   const [pageSelection, setPageSelection] = useState({ accountId: '', page: 1 });
   const page = pageSelection.accountId === accountId ? pageSelection.page : 1;
