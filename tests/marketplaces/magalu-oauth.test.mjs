@@ -30,12 +30,22 @@ const company = '11111111-1111-4111-8111-111111111111', actor = '22222222-2222-4
 const seller = 'GENPUB.33333333-3333-4333-8333-333333333333';
 const config = { clientId: 'fixture-client', clientSecret: 'fixture-secret', redirectUri: `http://localhost:3000${oauth.MAGALU_CALLBACK_PATH}` };
 const originalFetch = globalThis.fetch;
+const fixtureEnvKeys = ['NODE_ENV', 'MAGALU_OAUTH_ENABLED', 'MAGALU_CLIENT_ID', 'MAGALU_CLIENT_SECRET', 'MAGALU_OAUTH_REDIRECT_URI', 'MAGALU_LOCAL_CREDENTIALS_FILE', 'MARKETPLACE_SECRETS_KEY', 'NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const originalEnv = Object.fromEntries(fixtureEnvKeys.map(key => [key, process.env[key]]));
+// As rotas locais são uma fixture de desenvolvimento, mesmo no build da Vercel.
+test.beforeEach(() => { process.env.NODE_ENV = 'development'; });
 test.before(() => {
   process.env.MAGALU_OAUTH_ENABLED = 'true'; process.env.MAGALU_CLIENT_ID = config.clientId; process.env.MAGALU_CLIENT_SECRET = config.clientSecret;
   process.env.MAGALU_OAUTH_REDIRECT_URI = config.redirectUri; process.env.MARKETPLACE_SECRETS_KEY = randomBytes(32).toString('base64url');
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://fixture.example'; process.env.SUPABASE_SERVICE_ROLE_KEY = 'fixture-service';
 });
 test.afterEach(() => { globalThis.fetch = originalFetch; delete globalThis.magaluDb; delete globalThis.magaluAccess; process.env.MAGALU_OAUTH_ENABLED = 'true'; process.env.MAGALU_CLIENT_ID = config.clientId; process.env.MAGALU_OAUTH_REDIRECT_URI = config.redirectUri; });
+test.after(() => {
+  for (const key of fixtureEnvKeys) {
+    if (originalEnv[key] === undefined) delete process.env[key];
+    else process.env[key] = originalEnv[key];
+  }
+});
 
 class Query {
   constructor(db, table) { this.db=db; this.table=table; this.filters=[]; this.mode='select'; }
@@ -82,7 +92,11 @@ test('URL oficial, loja escolhida, PKCE S256, state aleatório e intenções cri
 test('configuração recusa destinos externos, credenciais, parâmetros e HTTP público',()=>{
   for(const uri of ['https://evil.example'+oauth.MAGALU_CALLBACK_PATH,'https://avantalab.com.br.evil.example'+oauth.MAGALU_CALLBACK_PATH,'http://avantalab.com.br'+oauth.MAGALU_CALLBACK_PATH,'https://u:p@avantalab.com.br'+oauth.MAGALU_CALLBACK_PATH,config.redirectUri+'?x=1',config.redirectUri+'#hash','https://avantalab.com.br/other']) assert.throws(()=>oauth.validateMagaluRedirectUri(uri));
   assert.equal(oauth.validateMagaluRedirectUri(config.redirectUri),config.redirectUri);
-  const before=process.env.NODE_ENV;process.env.NODE_ENV='production';try{assert.throws(()=>oauth.validateMagaluRedirectUri(config.redirectUri));}finally{if(before===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=before;}
+  const before=process.env.NODE_ENV;process.env.NODE_ENV='production';try{
+    assert.throws(()=>oauth.validateMagaluRedirectUri(config.redirectUri));
+    const uri=`https://avantalab.com.br${oauth.MAGALU_CALLBACK_PATH}`;
+    assert.equal(oauth.validateMagaluRedirectUri(uri),uri);
+  }finally{if(before===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=before;}
 });
 test('intenção não aceita outra plataforma, configuração trocada ou PKCE incompleto',async()=>{
   const {auth}=await fixture();

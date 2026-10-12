@@ -2,6 +2,8 @@
 
 ## 3.0.0.10 - 2026-10-12
 
+- Testes OAuth Magalu isolam o ambiente das fixtures locais no build da Vercel;
+  validação continua bloqueando localhost e credenciais locais em produção.
 - Entrega consolidada das alterações pendentes de Marketplaces: identidade das
   plataformas, navegação fixa, contas compactas com identificação local e edição
   por lápis, renovação inline, cabeçalho organizado/colorido e filtros compactos.
