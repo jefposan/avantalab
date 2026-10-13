@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.0.0.31 - 2026-10-13
+
+- Ava: fluxos essenciais de Web, Mobile e Vendas são priorizados; orientações
+  usam rótulos reais e distinguem cadastrar tipos de despesa de lançar pagamentos.
+- Instruções exigem revisar e corrigir respostas equivocadas, sem defender uma
+  orientação genérica nem aceitar correções incompatíveis com o guia/permissões.
+- Contingência Supabase recebe o guia do ambiente no campo já suportado pela
+  função publicada. Chamada legada Mobile identifica explicitamente seu ambiente.
+- Publicação autorizada após 68 testes locais, seis avaliações reais com perguntas
+  sintéticas e compilação. Nenhum registro financeiro foi alterado.
+
 ## 3.0.0.30 - 2026-10-13
 
 - Projetos: Reorganizar mostra tooltip e exige confirmação explícita antes de

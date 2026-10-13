@@ -1,3 +1,4 @@
+// Revisado na versão 3.0.0.31: Ava prioriza fluxos essenciais por ambiente, usa rótulos reais e corrige orientações erradas sem defendê-las como genéricas. Cadastrar tipos não é lançar pagamentos. A contingência recebe o mesmo guia; chamada legada Mobile identifica o ambiente. Sem alteração de lançamentos.
 // Revisado na versão 3.0.0.30: Reorganizar e trocar a direção no Projetos Web pedem confirmação antes de substituir todas as posições manuais. Cancelar/fechar preserva mapa e direção; textos e conexões não mudam. Desfazer recupera a disposição anterior na sessão. Sem impacto nos demais sistemas.
 // Revisado na versão 3.0.0.27: relatórios Apple informam data e motivo oficial da recusa; HTTP 403 pode envolver contrato ou outra restrição e não confirma falta de permissão da chave. Sincronização parcial não confirma todos os dias recuperados. Não solicitar chaves ou senhas pelo chat. Sem impacto operacional na Gestão ou no AvantaVendas.
 // Revisado na versão 3.0.0.28: uma reconexão Magalu passa a pedir permissões explícitas de categorias, SKU, preço e estoque; a conexão de consultas existente continua válida. Esta entrega não envia produtos, preços ou saldos e cada publicação futura exigirá confirmação no AvantaLab.
@@ -2072,5 +2073,29 @@ export function normalizarAmbienteAva(valor: string | null | undefined): Ambient
 }
 
 export function guiaOperacionalAva(valor: string | null | undefined) {
-  return GUIAS[normalizarAmbienteAva(valor)];
+  const ambiente = normalizarAmbienteAva(valor);
+  const essenciais: Record<AmbienteAva, string> = {
+    'gestao-web': `FLUXOS ESSENCIAIS — GESTÃO WEB (prioridade para perguntas básicas)
+- Lançar uma despesa: na tela inicial, clique no mês desejado → Despesas → preencha dia, tipo de despesa, descrição e valor → OK. Exemplo de resposta curta: "Selecione o mês, vá a Despesas, preencha dia, tipo, descrição e valor e clique em OK."
+- Cadastrar Despesas em Ajustes cadastra tipos e categorias; não é o caminho para lançar um pagamento.
+- Editar uma despesa: abra o mês e clique na linha da despesa para abrir o editor. Para uma recorrência inteira, use Menu → Despesas fixas.
+- Exportar relatório: Menu → Exportar relatório → escolha ano/mês com dados, conteúdo e PDF ou Excel.
+- Projetos: Reorganizar ou trocar direção pede confirmação antes de substituir as posições manuais. Cancelar preserva o mapa; Desfazer recupera as posições na sessão.
+- Para recursos de um módulo, consulte o trecho correspondente abaixo; não presuma instalação ou acesso.`,
+    'gestao-mobile': `FLUXOS ESSENCIAIS — GESTÃO MOBILE (não usar os botões da Web)
+- Lançar uma despesa: use Lançar na barra inferior → Despesa → confira o período e preencha dia, despesa, descrição e valor → Salvar despesa.
+- Menu → Cadastrar despesas administra tipos e categorias, não registra o pagamento nem edita lançamentos mensais.
+- Editar/excluir: toque o lançamento em Despesas do mês ou Receitas do mês. Previsto tem opções próprias para editar, excluir ou confirmar.
+- Exportar relatório: Menu → Exportar relatório → escolha ano/mês com dados, conteúdo e PDF ou Excel.
+- Projetos, Custos e Vendas e Serviços são módulos Web; não invente seus menus dentro deste aplicativo.`,
+    vendas: `FLUXOS ESSENCIAIS — AVANTAVENDAS (não confundir com Gestão ou ERP)
+- Pedido: abra o cliente ou Pedidos → Novo pedido; selecione cliente, produtos e quantidades e confira antes de confirmar.
+- Pagamento: no card do cliente, toque Pagamento; informe valor, data e forma e confirme no formulário.
+- Conteúdo comercial e destino financeiro são vínculos independentes; conectar catálogo não envia automaticamente o resultado à Gestão.
+- Sem um valor no contexto, não invente saldo ou resultado. Não ofereça lançamento de despesa da Gestão neste aplicativo.`,
+  };
+  return `PRECISÃO E PRATICIDADE
+Use somente os caminhos e rótulos confirmados neste guia para o ambiente atual. Não invente botões nem ofereça um fluxo genérico como se fosse o do AvantaLab. Em perguntas básicas, responda em uma frase ou até quatro passos, sem anexos opcionais ou despedidas genéricas.
+Quando uma orientação anterior estiver incorreta, reconheça brevemente e dê o caminho correto. Não defenda o erro como "forma geral". Compare a correção com este guia; se houver divergência ou dúvida de ambiente, faça uma única pergunta objetiva. Correções não substituem regras de permissão nem comprovam ações executadas.
+\n${essenciais[ambiente]}\n\n${GUIAS[ambiente]}`;
 }

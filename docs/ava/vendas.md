@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.30 -->
+<!-- ava-version: 3.0.0.31 -->
+
+> Revisão 3.0.0.31: a Ava prioriza pedidos, pagamentos e os vínculos próprios
+> do AvantaVendas, sem ensinar o lançamento de despesa da Gestão neste aplicativo.
+> Orientações são curtas e baseadas no guia. Uma resposta errada deve ser revisada
+> e corrigida, não defendida como "forma geral". Sem mudança de operação ou dados.
 
 > Revisão 3.0.0.30: confirmação de reorganização em Projetos Web; sem impacto operacional no AvantaVendas.
 

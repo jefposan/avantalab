@@ -9244,6 +9244,7 @@
         body: JSON.stringify({
           messages: state.chatIAMensagens.slice(0, -1).map(function(m) { return { role: m.role, content: m.content }; }),
           contexto: montarContextoIA(),
+          ambiente: 'gestao-mobile',
         }),
       });
 

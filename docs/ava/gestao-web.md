@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.30 -->
+<!-- ava-version: 3.0.0.31 -->
+
+> Revisão 3.0.0.31: para lançar uma despesa, na tela inicial selecione o mês,
+> vá a Despesas, preencha dia, tipo de despesa, descrição e valor e clique em OK.
+> Cadastrar Despesas administra tipos e categorias; não é o lançamento mensal.
+> A Ava usa o fluxo exato, responde de forma curta e revisa erros de orientação
+> sem defendê-los como "forma geral". Contingência recebe o mesmo guia do ambiente.
 
 > Revisão 3.0.0.30: em Projetos, Reorganizar e a troca de direção do mapa exigem
 > confirmar o layout automático, que substitui todas as posições manuais, inclusive

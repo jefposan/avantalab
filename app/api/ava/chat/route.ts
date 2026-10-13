@@ -263,7 +263,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = JSON.stringify({ messages, contexto, ambiente });
+    // Compatibility with the existing Edge deployment: its context field is
+    // already included in the system message, so it must receive the same guide.
+    const guia = guiaOperacionalAva(ambiente);
+    const contextoFallback = `--- AMBIENTE ATUAL ---\n${normalizarAmbienteAva(ambiente)}\n\n--- GUIA OPERACIONAL ATUALIZADO ---\n${guia}\n---${contexto ? `\n\n--- DADOS ATUAIS DO USUÁRIO ---\n${contexto}\n---` : ''}`;
+    const body = JSON.stringify({ messages, contexto: contextoFallback, ambiente });
     const respostaOpenAI = await responderComOpenAI(messages, contexto, ambiente);
     if (respostaOpenAI) return respostaOpenAI;
 
