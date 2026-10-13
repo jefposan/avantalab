@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.33.05 -->
+<!-- ava-version: 3.0.0.33.06 -->
+
+> Revisão 3.0.0.33.06: o rótulo **Registrando…** do Controle de Ponto foi
+> contido no botão circular; sem impacto operacional.
 
 > Revisão 3.0.0.33.05: acesso aos módulos integrados pelo catálogo Web; sem impacto operacional na Gestão Mobile.
 

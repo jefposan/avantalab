@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.33.05 -->
+<!-- ava-version: 3.0.0.33.06 -->
+
+> Revisão 3.0.0.33.06: o rótulo **Registrando…** do Controle de Ponto foi
+> contido no botão circular; sem impacto operacional.
 
 > Revisão 3.0.0.33.05: em Menu > Módulos, Acessar nos cards instalados de Controle
 > de Ponto e Conteúdo AvantaVendas fecha o catálogo de módulos e abre seu popup.

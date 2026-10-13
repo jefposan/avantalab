@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.0.33.06 - 2026-10-13
+
+- Controle de Ponto: o estado **Registrando…** tem seletor específico para
+  manter o texto centralizado e totalmente dentro do botão circular.
+
 ## 3.0.0.33.05 - 2026-10-13
 
 - Módulos Web: Controle de Ponto e Conteúdo AvantaVendas instalados também
