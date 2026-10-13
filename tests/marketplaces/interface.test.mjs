@@ -53,6 +53,25 @@ test('seletor mantém marcas coloridas com assets locais, nome acessível e sele
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.page \.provider \{ transition: none; \} \}/);
 });
 
+test('Casas Bahia usa desenho local, fundo azul e traço vermelho sem placa branca', () => {
+  const svg=read('public/images/marketplaces/casas-bahia.svg');
+  assert.match(svg,/<rect width="124" height="30" rx="4" fill="#0033C6"\/>/);
+  assert.match(svg,/fill="#D43642"/);assert.match(svg,/fill="white"/);
+  assert.doesNotMatch(svg,/<rect[^>]+fill="white"|stroke="#E5E5E5"/);
+  assert.match(css,/\.provider\[data-provider="casas_bahia"\] \{[^}]*background: #0033c6;[^}]*color: #fff;/);
+  assert.match(css,/\.connectedAccount\[data-provider="casas_bahia"\][^}]*--account-marketplace-background: #0033c6;/);
+});
+
+test('retorno Magalu é limitado à janela aberta e conta autorizada não habilita operação nem renovação ML',()=>{
+  assert.match(client,/if \(!oauthWindow.current \|\| event.source !== oauthWindow.current\) return/);
+  assert.match(client,/\['mercado_livre', 'magalu'\]\.includes\(data.provider \|\| ''\)/);
+  assert.match(client,/data.empresaId !== companyId/);
+  assert.match(client,/Autorizada · sincronização pendente/);
+  assert.match(client,/Sincronização automática do Mercado Livre ativa\./);
+  assert.match(client,/!account.provider \|\| account.provider === 'mercado_livre'/);
+  assert.match(client,/canManage=\{canManage && selectedProvider.available && !connecting\}/);
+});
+
 test('todas as marcas podem filtrar a tela sem declarar conexão ou publicação operacional', () => {
   const source = stripTypeScriptTypes(client.slice(client.indexOf('const providers:'), client.indexOf('\nexport default function')));
   const providers = runInNewContext(`${source}; providers`);

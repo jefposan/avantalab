@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { randomBytes } from 'node:crypto';
+import { runInNewContext } from 'node:vm';
 import { PGlite } from '@electric-sql/pglite';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -125,6 +126,36 @@ test('retorno troca código só no servidor, de uso único e sem tocar ML',async
   assert.equal(JSON.parse(vault.openMarketplaceSecret(conn.token_sealed)).refreshToken,'fixture-refresh');assert.equal(JSON.stringify(db.tables.marketplace_connections[0]),before);
   await callback.GET(request(auth));assert.equal(exchanges,1);
 });
+test('retorno confirmado avisa somente a origem, fecha popup e oferece retorno com empresa e ID sem tokens',async()=>{
+  const {db,auth}=await fixture();globalThis.fetch=async()=>Response.json(tokenResponse());
+  const html=await(await callback.GET(request(auth))).text();
+  const script=html.match(/<script nonce="[^"]+">([\s\S]*?)<\/script>/)[1];
+  const messages=[],redirects=[],timeouts=[];let closes=0;
+  const location={pathname:oauth.MAGALU_CALLBACK_PATH,origin:'http://localhost:3000',replace:url=>redirects.push(new URL(url))};
+  const history={replaceState:(_state,_title,path)=>assert.equal(path,oauth.MAGALU_CALLBACK_PATH)};
+  const window={opener:{closed:false,postMessage:(payload,origin)=>messages.push({payload,origin})},location,close:()=>{closes++;},setTimeout:(fn,ms)=>timeouts.push({fn,ms})};
+  runInNewContext(script,{window,history,location});
+  const conn=db.tables.marketplace_connections.find(row=>row.provider==='magalu');
+  assert.equal(closes,1);assert.equal(messages.length,1);assert.equal(messages[0].origin,location.origin);
+  assert.deepEqual(JSON.parse(JSON.stringify(messages[0].payload)),{type:'avantalab-marketplace-oauth',provider:'magalu',empresaId:company,status:'connected',connectionId:conn.id,message:'Autorização Magalu concluída. A sincronização de anúncios, vendas e estoque ainda está em preparação.'});
+  assert.equal(conn.status,'attention');assert.equal(timeouts[0].ms,350);timeouts[0].fn();
+  assert.equal(redirects[0].origin,location.origin);assert.equal(redirects[0].searchParams.get('empresaId'),company);assert.equal(redirects[0].searchParams.get('connectionId'),conn.id);assert.equal(redirects[0].searchParams.get('marketplaceConnection'),'connected');
+  for(const secret of ['fixture-code','fixture-refresh',config.clientSecret,auth.intent.verifier,token()])assert.ok(!redirects[0].href.includes(secret));
+  messages.length=0;window.opener=null;runInNewContext(script,{window,history,location});assert.equal(messages.length,0);assert.equal(closes,1);
+});
+
+test('cancelamento avisa erro, sem ID; retorno não validado não comunica sucesso nem redireciona contexto',async()=>{
+  const {auth}=await fixture();const messages=[];let schedules=0;
+  const location={pathname:oauth.MAGALU_CALLBACK_PATH,origin:'http://localhost:3000'};
+  const window={opener:{closed:false,postMessage:payload=>messages.push(payload)},close:()=>{},setTimeout:()=>{schedules++;}};
+  const history={replaceState:()=>{}};
+  for(const [requestValue,trusted] of [[request(auth,'&error=access_denied'),true],[new NextRequest(config.redirectUri+'?state=invalid&code=PRIVATE'),false]]){
+    const html=await(await callback.GET(requestValue)).text();runInNewContext(html.match(/<script nonce="[^"]+">([\s\S]*?)<\/script>/)[1],{window,history,location});
+    if(trusted){assert.equal(messages.length,1);assert.equal(messages[0].status,'error');assert.equal(messages[0].connectionId,undefined);assert.equal(schedules,1);}
+    else{assert.equal(messages.length,1);assert.equal(schedules,1);assert.ok(!html.includes('PRIVATE'));}
+  }
+});
+
 test('início HTTPS usa cookie Secure e não aceita fallback de credencial local em produção',async()=>{
   const db=database();const uri=`https://avantalab.com.br${oauth.MAGALU_CALLBACK_PATH}`;process.env.MAGALU_OAUTH_REDIRECT_URI=uri;
   globalThis.magaluAccess=async()=>({db,empresaId:company,usuario:{id:actor}});

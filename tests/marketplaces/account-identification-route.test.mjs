@@ -16,7 +16,7 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   return next(specifier, context);
 } });
 const { PATCH } = await import('../../app/api/modulos/marketplaces/conexoes/identificacao/route.ts');
-const { GET } = await import('../../app/api/modulos/marketplaces/conexoes/route.ts');
+const { GET, DELETE } = await import('../../app/api/modulos/marketplaces/conexoes/route.ts');
 hooks.deregister();
 const company = '11111111-1111-4111-8111-111111111111';
 const connection = '22222222-2222-4222-8222-222222222222';
@@ -27,6 +27,8 @@ class Query {
   select(columns) { this.columns=columns.split(','); return this; }
   eq(key,value) { this.filters.push(row=>row[key]===value); return this; }
   neq(key,value) { this.filters.push(row=>row[key]!==value); return this; }
+  in(key,values) { this.filters.push(row=>values.includes(row[key])); return this; }
+  update(values) { this.updateValues=values; return this; }
   order() { return this; }
   upsert(values) { this.values=values; return this; }
   async maybeSingle() { const result=await this.run(); return {...result,data:result.data?.[0]||null}; }
@@ -42,6 +44,7 @@ class Query {
       if(existing) Object.assign(existing,this.values); else rows.push(this.values);
     }
     const selected=rows.filter(row=>this.filters.every(fn=>fn(row)));
+    if(this.updateValues)selected.forEach(row=>{this.db.writes.push({table:this.table,id:row.id,...this.updateValues});Object.assign(row,this.updateValues);});
     return {data:selected.map(row=>Object.fromEntries(this.columns.map(key=>[key,row[key]]))),error:null};
   }
 }
@@ -94,4 +97,30 @@ test('consulta combina identificação da empresa, nunca expõe token e tolera t
   db.fail='marketplace_connection_labels';
   response=await GET(new Request(`https://example.test/api?empresaId=${company}`)); result=await response.json();
   assert.equal(response.status,200); assert.equal(result.labelsAvailable,false); assert.equal(result.accounts.length,1);
+});
+
+test('consulta inclui Magalu autorizado e ML da empresa; rejeita outra empresa, provedor e desconexão',async()=>{
+  const db=setup();const magalu={id:actor,empresa_id:company,provider:'magalu',seller_reference:'GENPUB.test',status:'attention',last_error_code:'magalu_connector_pending',token_sealed:'PRIVATE'};
+  db.tables.marketplace_connections.push(magalu,{...magalu,id:'outside',empresa_id:actor},{...magalu,id:'unsupported',provider:'shopee'},{...magalu,id:'disconnected',status:'disconnected'});
+  db.tables.marketplace_connection_labels.push({connection_id:actor,empresa_id:company,local_label:'Minha loja'},{connection_id:actor,empresa_id:actor,local_label:'Outra empresa'});
+  const response=await GET(new Request(`https://example.test/api?empresaId=${company}`));const {accounts}=await response.json();
+  assert.equal(response.status,200);assert.deepEqual(accounts.map(row=>row.id),[connection,actor]);assert.equal(accounts[1].local_label,'Minha loja');assert.equal(accounts[1].status,'attention');assert.equal(accounts[1].last_error_code,'magalu_connector_pending');
+  for(const row of accounts)assert.equal(row.token_sealed,undefined);assert.equal(db.writes.length,0);
+});
+
+test('desconectar Magalu exige confirmação/permissão e limita alteração à conta da empresa',async()=>{
+  const db=setup();const magalu={id:actor,empresa_id:company,provider:'magalu',status:'attention',token_sealed:'PRIVATE'};
+  db.tables.marketplace_connections.push(magalu,{...magalu,id:'outside',empresa_id:actor},{...magalu,id:'unsupported',provider:'shopee'});
+  const mlBefore=JSON.stringify(db.tables.marketplace_connections[0]);
+  const remove=(id,confirmation=id)=>new Request('https://example.test/api',{method:'DELETE',body:JSON.stringify({empresaId:company,connectionId:id,confirmation})});
+  assert.notEqual((await DELETE(remove(actor,'wrong'))).status,200);assert.equal(db.writes.length,0);
+  assert.notEqual((await DELETE(remove('outside'))).status,200);assert.notEqual((await DELETE(remove('unsupported'))).status,200);assert.equal(db.writes.length,0);
+  assert.equal((await DELETE(remove(actor))).status,200);assert.equal(magalu.status,'disconnected');assert.equal(magalu.token_sealed,null);assert.equal(db.writes.length,1);assert.equal(JSON.stringify(db.tables.marketplace_connections[0]),mlBefore);
+  assert.equal(db.tables.marketplace_connections.find(row=>row.id==='outside').token_sealed,'PRIVATE');
+  globalThis.labelsAccess=async()=>{throw Object.assign(new Error('Sem permissão'),{status:403});};assert.equal((await DELETE(remove(connection))).status,403);assert.equal(db.writes.length,1);
+});
+
+test('Magalu autorizado recebe identificação sem modificar seus tokens ou estado de sincronização',async()=>{
+  const db=setup();Object.assign(db.tables.marketplace_connections[0],{provider:'magalu',status:'attention',last_error_code:'magalu_connector_pending'});
+  const before=JSON.stringify(db.tables.marketplace_connections);assert.equal((await PATCH(request('Loja Magalu'))).status,200);assert.equal(JSON.stringify(db.tables.marketplace_connections),before);assert.equal(db.writes[0].local_label,'Loja Magalu');
 });

@@ -160,8 +160,11 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       setMarketplace(account.provider ?? 'mercado_livre');
       setRenewAccount(null);
       setIdentificationAccountId(account.id);
-      setConnectionNotice('Conta conectada. Informe uma identificação para ela.');
-    } else setConnectionNotice('Conta conectada com sucesso. Use o lápis para identificar a conta.');
+      setConnectionNotice(account.provider === 'magalu'
+        ? 'Loja Magalu autorizada. Informe uma identificação. Anúncios, vendas e estoque ainda não estão sincronizando.'
+        : 'Conta conectada. Informe uma identificação para ela.');
+    } else if (account) setConnectionNotice('Conta conectada com sucesso. Use o lápis para identificar a conta.');
+    else throw new Error('Não foi possível confirmar a conta na lista. Use Atualizar contas.');
   }, [refreshConnections]);
 
   const completeAccountRenewal = useCallback((updated: MarketplaceAccount) => {
@@ -314,7 +317,8 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     const receiveAuthorization = (event: MessageEvent<unknown>) => {
       if (event.origin !== window.location.origin || !event.data || typeof event.data !== 'object') return;
       const data = event.data as { type?: string; provider?: string; empresaId?: string; status?: string; message?: string; renewal?: boolean; connectionId?: string };
-      if (data.type !== 'avantalab-marketplace-oauth' || data.provider !== 'mercado_livre' || data.empresaId !== companyId) return;
+      if (data.type !== 'avantalab-marketplace-oauth' || !['mercado_livre', 'magalu'].includes(data.provider || '') || data.empresaId !== companyId) return;
+      if (!oauthWindow.current || event.source !== oauthWindow.current) return;
       if (data.renewal) return; // Renovação é confirmada pela solicitação autenticada, não pela mensagem da janela.
       oauthWindow.current = null;
       if (data.status === 'connected') {
@@ -476,12 +480,12 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
               <strong className={styles.accountName}>{accountDisplayName(account)}{pendingSales[account.id] ? <em className={styles.accountSalesBadge} title="Vendas nos filtros selecionados">{pendingSales[account.id]}</em> : null}</strong>
               {account.local_label && <small className={styles.accountReference}>{account.seller_name || `Vendedor ${account.seller_reference}`}</small>}
               <small className={styles.accountReference}>ID {account.seller_reference}</small>
-              <small className={styles.accountStatus} data-status={account.status}>{account.status === 'connected' ? 'Conectada' : account.status === 'expired' ? 'Autorização expirada' : 'Requer atenção'}</small>
+              <small className={styles.accountStatus} data-status={account.status}>{account.provider === 'magalu' && account.status === 'attention' && account.last_error_code === 'magalu_connector_pending' ? 'Autorizada · sincronização pendente' : account.status === 'connected' ? 'Conectada' : account.status === 'expired' ? 'Autorização expirada' : 'Requer atenção'}</small>
               <small className={styles.accountSync}>Última sincronização: {account.last_synced_at ? new Date(account.last_synced_at).toLocaleString('pt-BR') : 'Ainda não sincronizado'}</small>
             </button>
             {canManageConnections && <div className={styles.accountConnectionActions}>
               <Tooltip texto="Editar identificação da conta"><button id={`edit-account-${account.id}`} type="button" className={styles.editListing} disabled={disconnecting || connecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} aria-label={`Editar identificação de ${accountDisplayName(account)}`} aria-expanded={identificationAccountId === account.id} aria-controls={`account-identification-${account.id}`} onClick={() => { setRenewAccount(null); setConnectionNotice(''); setIdentificationAccountId(account.id); }}><Icon name="edit" size={18} /></button></Tooltip>
-              <Tooltip texto="Renovar a autorização desta conta sem excluir a conexão ou o histórico"><button id={`renew-account-${account.id}`} type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton}`} disabled={disconnecting || connecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} aria-label={`Renovar autorização de ${account.seller_name || account.seller_reference}`} aria-expanded={renewAccount?.id === account.id} aria-controls={`account-renewal-${account.id}`} onClick={() => setRenewAccount((current) => current?.id === account.id ? null : account)}>Renovar</button></Tooltip>
+              {(!account.provider || account.provider === 'mercado_livre') && <Tooltip texto="Renovar a autorização desta conta sem excluir a conexão ou o histórico"><button id={`renew-account-${account.id}`} type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton}`} disabled={disconnecting || connecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} aria-label={`Renovar autorização de ${account.seller_name || account.seller_reference}`} aria-expanded={renewAccount?.id === account.id} aria-controls={`account-renewal-${account.id}`} onClick={() => setRenewAccount((current) => current?.id === account.id ? null : account)}>Renovar</button></Tooltip>}
               <button type="button" className={`${styles.disconnectAccountButton} ${styles.compactConnectionButton}`} disabled={disconnecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} onClick={() => setDisconnectAccount(account)}>Desconectar</button>
             </div>}
             {canManageConnections && identificationAccountId === account.id && <div id={`account-identification-${account.id}`}><AccountIdentification key={account.id} companyId={companyId} account={account} canEdit={canManageConnections} available={identificationAvailable} onSaved={updateAccountIdentification} onCancel={closeAccountIdentification} /></div>}
@@ -498,7 +502,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
 
     <div className={styles.inventoryStatus} role="status">
       {inventorySnapshot?.enabled ? <>
-        {inventorySnapshot.workerHealthy ? 'Sincronização automática ativa.' : 'A rotina automática ainda não confirmou atividade recente. Confira a ativação antes de confiar na baixa automática.'}
+        {inventorySnapshot.workerHealthy ? 'Sincronização automática do Mercado Livre ativa.' : 'A rotina automática do Mercado Livre ainda não confirmou atividade recente. Confira a ativação antes de confiar na baixa automática.'}
         {Boolean(inventorySnapshot.pendingSales || inventorySnapshot.pendingStock) && <span>{inventorySnapshot.pendingSales} aviso(s) de venda e {inventorySnapshot.pendingStock} anúncio(s) aguardando atualização.</span>}
         {inventorySnapshot.issues.map(issue => <span key={issue.issue}>{inventoryIssueMessage(issue.issue)} ({issue.total})</span>)}
       </> : inventorySnapshot ? 'A sincronização automática de estoque ainda precisa ser ativada nesta empresa.' : 'Consultando situação da sincronização…'}
@@ -518,7 +522,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     ]} />
     {panelOrder.notice && <p className={styles.connectionMessage} role="status">{panelOrder.notice}</p>}
     {priceUsersOpen && <PriceUsersPanel companyId={companyId} onClose={() => setPriceUsersOpen(false)} />}
-    <ModalConfirmacao aberto={!!disconnectAccount} titulo="Desconectar conta?" mensagem={disconnectAccount ? `${disconnectAccount.seller_name || disconnectAccount.seller_reference}. O AvantaLab apagará os tokens desta conexão. Os anúncios no Mercado Livre não serão alterados.` : ''} textoConfirmar="Desconectar" carregando={disconnecting} darkMode={empresa.temaEscuro} corPrimaria={empresa.corPrimaria} variante="destrutiva" aoCancelar={() => { if (!disconnecting) setDisconnectAccount(null); }} aoConfirmar={() => void confirmDisconnectAccount()} />
+    <ModalConfirmacao aberto={!!disconnectAccount} titulo="Desconectar conta?" mensagem={disconnectAccount ? `${accountDisplayName(disconnectAccount)}. O AvantaLab apagará os tokens desta conexão. Os anúncios na plataforma não serão alterados.` : ''} textoConfirmar="Desconectar" carregando={disconnecting} darkMode={empresa.temaEscuro} corPrimaria={empresa.corPrimaria} variante="destrutiva" aoCancelar={() => { if (!disconnecting) setDisconnectAccount(null); }} aoConfirmar={() => void confirmDisconnectAccount()} />
     </div>
   </main>;
 }

@@ -1,4 +1,4 @@
--- Preparação local: aplicar somente junto da futura ativação autorizada do Magalu.
+-- Aplicada ao projeto AvantaLab em 12/10/2026. Não ativa OAuth nem adaptadores.
 begin;
 set local lock_timeout = '5s';
 set local statement_timeout = '30s';

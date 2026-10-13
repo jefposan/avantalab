@@ -24,7 +24,7 @@ import { accountsForMarketplace } from './marketplace-scope';
 import { accountDisplayName, accountReferenceDetail, preserveNewerAccountLabel } from './account-identification';
 import type { ListingOperation } from '@/app/modules/marketplaces/listing-operations';
 
-export type MarketplaceAccount = { id: string; provider?: MarketplaceId; local_label?: string | null; local_label_updated_at?: string | null; seller_reference: string; seller_name: string | null; status: string; last_synced_at: string | null; expires_at: string | null };
+export type MarketplaceAccount = { id: string; provider?: MarketplaceId; local_label?: string | null; local_label_updated_at?: string | null; seller_reference: string; seller_name: string | null; status: string; last_error_code?: string | null; last_synced_at: string | null; expires_at: string | null };
 type Row = { snapshot: ListingSnapshot; status: string; operationalStatus?: string; operations?: ListingOperation; connectionId: string };
 type Confirmation = { action: ListingAction; id: string; name: string; connectionId: string };
 const statusNames: Record<string, string> = { connected: 'Conectada', expired: 'Reconectar', attention: 'Requer atenção', connecting: 'Conectando', active: 'Ativo', paused: 'Pausado', closed: 'Encerrado', deleted: 'Excluído', under_review: 'Em revisão', inactive: 'Inativo' };

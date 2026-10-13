@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.14 -->
+<!-- ava-version: 3.0.0.15 -->
+
+> Revisão 3.0.0.15: preparação OAuth Magalu e marca Casas Bahia em Marketplaces
+> Web. Sem impacto operacional no AvantaVendas; estoques permanecem separados.
+> Sem publicação ou ativação de vendas/estoque Magalu.
 
 > Revisão 3.0.0.14: rolagem por seleção no header de Marketplaces Web.
 > Sem impacto operacional no AvantaVendas; estoques continuam separados.

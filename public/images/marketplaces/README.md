@@ -17,6 +17,8 @@ disponibilidade: esses estados continuam no texto e no controle do seletor.
 - Casas Bahia: [Marketplace oficial](https://marketplace.grupocasasbahia.com.br),
   `https://cdn.prod.website-files.com/6172ca93d8647214cc00596a/61fbdce73a40ccdd1e7c0ccb_Logos%20Empresas.svg`.
   Viewport reduzido à marca Casas Bahia, sem as outras marcas do grupo.
+  Revisão 3.0.0.15: contornos originais preservados em branco sobre fundo azul
+  #0033C6 e traço vermelho #D43642 (cores do arquivo de origem), sem placa branca.
 - Amazon: [Venda na Amazon](https://venda.amazon.com.br),
   `https://m.media-amazon.com/images/G/01/sell/images/logo-amazon-white.svg`.
   Variante escura da palavra no fundo branco; sorriso laranja e geometria preservados.

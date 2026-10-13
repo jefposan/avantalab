@@ -13,6 +13,13 @@ test('solicitação após conexão usa apenas o ID confirmado no conjunto autent
   assert.equal(connectedAccountForIdentification([{...account,status:'disconnected'}],account.id),undefined);
 });
 
+test('Magalu autorizado permite identificar sem fingir sincronização ou aceitar outro estado/plataforma', () => {
+  const account={id:'33333333-3333-4333-8333-333333333333',provider:'magalu',status:'attention',last_error_code:'magalu_connector_pending'};
+  assert.equal(connectedAccountForIdentification([account],account.id),account);
+  for(const patch of [{provider:'mercado_livre'},{provider:'shopee'},{status:'disconnected'},{status:'expired'},{last_error_code:'denied'}])
+    assert.equal(connectedAccountForIdentification([{...account,...patch}],account.id),undefined);
+});
+
 test('nome no seletor sem campo duplicado; lápis antecede renovar e edição explícita fica dentro da conta', () => {
   const read = path => readFileSync(new URL(`../../${path}`,import.meta.url),'utf8');
   const listing=read('app/marketplaces/NewListing.tsx');

@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.0.0.15 - 2026-10-12
+
+- Retomada da aplicação Magalu existente, sem novo cadastro: migração OAuth
+  aditiva aplicada ao Supabase, retorno HTTPS registrado no IDM e credenciais
+  server-side configuradas na Vercel. Ativação continua falsa; sem publicação.
+- Retorno confirmado atualiza a lista e solicita identificação da loja,
+  comunicando-se apenas com a janela de origem e fechando o popup. Sem popup,
+  volta ao módulo com a empresa e o ID confirmados, sem códigos ou tokens.
+- Contas Magalu autorizadas aparecem com sincronização pendente, permitem
+  identificar/desconectar, mas não usam renovação ML nem habilitam publicação,
+  vendas ou estoque sem os adaptadores. Consulta e alteração isoladas por empresa.
+  Aviso da rotina automática identifica explicitamente o Mercado Livre.
+- Casas Bahia reutiliza o desenho vetorial, agora branco sobre azul #0033C6,
+  com traço vermelho #D43642 e sem placa branca. Card e identidade da conta
+  acompanham a marca. Teste real com uma loja Magalu ainda pendente.
+- Validação: build, 1.019 testes, lint dos arquivos alterados e verificações
+  do PADRÃO AVANTA/Ava aprovados. Testes OAuth usam respostas simuladas;
+  não equivalem à autorização/homologação de uma loja real. Não publicado.
+
 ## 3.0.0.14 - 2026-10-12
 
 - Escolher uma situação no header aplica a seleção de todas as contas, expande

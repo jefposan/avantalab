@@ -520,7 +520,7 @@
 .connectedAccount[data-provider="shopee"] { --account-marketplace-color: #ee4d2d; --account-marketplace-background: #ee4d2d; }
 .connectedAccount[data-provider="tiktok_shop"] { --account-marketplace-color: #101010; --account-marketplace-background: #101010; }
 .connectedAccount[data-provider="magalu"] { --account-marketplace-color: #0086ff; --account-marketplace-background: #0086ff; }
-.connectedAccount[data-provider="casas_bahia"] { --account-marketplace-color: #0033c6; --account-marketplace-background: #fff; }
+.connectedAccount[data-provider="casas_bahia"] { --account-marketplace-color: #0033c6; --account-marketplace-background: #0033c6; }
 .connectedAccount[data-provider="amazon"] { --account-marketplace-color: #ec912d; --account-marketplace-background: #fff; }
 .accountMarketplaceBrand { display: flex; flex: 0 0 90px; align-items: center; justify-content: center; min-height: 32px; border-radius: 8px; padding: 4px 7px; color: #334155; background: var(--account-marketplace-background, #f1f5f9); }
 .accountMarketplaceBrand img { display: block; width: 100%; height: 24px; object-fit: contain; }
@@ -556,7 +556,7 @@
 .page .provider[data-provider="shopee"] { background: #ee4d2d; color: #fff; }
 .page .provider[data-provider="tiktok_shop"] { background: #101010; color: #fff; }
 .page .provider[data-provider="magalu"] { background: #0086ff; color: #fff; }
-.page .provider[data-provider="casas_bahia"] { background: #fff; color: #0033c6; }
+.page .provider[data-provider="casas_bahia"] { background: #0033c6; color: #fff; }
 .page .provider[data-provider="amazon"] { background: #fff; color: #131921; }
 .page .provider:disabled { opacity: 1; cursor: not-allowed; }
 .page .providerSelected { border-color: #003e73; box-shadow: inset 0 0 0 1px #003e73, 0 3px 10px #003e731a; }
@@ -566,7 +566,7 @@
 .page .provider[data-provider="mercado_livre"] .providerLogo { height: 38px; }
 .page .provider[data-provider="magalu"] .providerLogo { height: 36px; }
 .page .provider .providerAvailability { border-radius: 999px; padding: 3px 9px; color: #fff; background: #0006; font-size: 11px; font-weight: 700; line-height: 1.4; }
-.page .provider[data-provider="casas_bahia"] .providerAvailability, .page .provider[data-provider="amazon"] .providerAvailability { color: #334155; background: #f1f5f9; }
+.page .provider[data-provider="amazon"] .providerAvailability { color: #334155; background: #f1f5f9; }
 .providerCheck { position: absolute; right: 7px; top: 7px; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid #fff; border-radius: 50%; color: #fff; background: #003e73; }
 .dark .providerGrid .provider { border-color: #64748b; }
 .dark .providerGrid .providerSelected { border-color: #93c5fd; box-shadow: inset 0 0 0 1px #93c5fd; }

@@ -204,7 +204,25 @@ imperativa não recebem push nesta entrega. Provedores futuros exigem adaptadore
 
 ### Configuração
 
-#### Magalu — preparação 2.1.0 (backend incluído em 3.0.0.10, integração não ativada)
+#### Magalu — preparação 3.0.0.15 (integração não ativada)
+
+- Retomada da aplicação existente: banco preparado e verificado no projeto
+  Supabase AvantaLab em 12/10/2026; contas/pendências ML preservadas, RLS ativo
+  e sem acesso anon/authenticated. Nenhum estoque ou token existente alterado.
+- Credenciais Magalu configuradas para produção na Vercel; client secret como
+  Secret (não exportável). Flag `MAGALU_OAUTH_ENABLED=false` até publicação
+  expressamente autorizada. A chave do cofre existente não foi alterada.
+  No local, essa chave não está disponível: testes usam fixtures isoladas,
+  não os tokens reais nem um novo cofre ligado ao banco de produção.
+- Callback confirmado comunica somente à origem e à janela que iniciou o
+  fluxo, atualiza contas e pede identificação; popup fecha. Sem opener,
+  retorna ao módulo com empresa e ID confirmados, sem código/token na URL.
+  Listagem e desconexão aceitam ML/Magalu, sempre restritas à empresa.
+  Loja autorizada fica `attention`/`magalu_connector_pending`, identificável,
+  com texto explícito de sincronização pendente e sem usar renovação ML.
+  Falta consentimento de loja real e adaptadores de anúncios/vendas/estoque.
+  Aviso da rotina automática identifica o ML mesmo quando outra marca está
+  selecionada; não implica atividade ou sincronização Magalu.
 
 - Evolução 2.2.0: seletor é contexto de contas/anúncios/destinos, não apenas
   destino da conexão. Helper testável filtra pelo provider e rejeita conta
@@ -250,8 +268,10 @@ imperativa não recebem push nesta entrega. Provedores futuros exigem adaptadore
 - Retorno implementado: `/api/modulos/marketplaces/conexoes/magalu/callback`.
   Cadastro inicial da aplicação usa
   `http://localhost:3000/api/modulos/marketplaces/conexoes/magalu/callback`.
-  Cadastrar o endereço HTTPS de produção apenas junto da futura publicação;
-  não iniciar consentimento real apontando para uma rota ainda não publicada.
+  Em 3.0.0.15, adicionado também
+  `https://avantalab.com.br/api/modulos/marketplaces/conexoes/magalu/callback`
+  na aplicação existente, preservando o local. Rota já publicada, flag falsa;
+  aguardar publicação autorizada dos ajustes/ativação antes do teste real.
 - Variáveis exclusivamente no servidor: `MAGALU_CLIENT_ID`,
   `MAGALU_CLIENT_SECRET`, `MAGALU_OAUTH_REDIRECT_URI`, `MAGALU_OAUTH_ENABLED`.
   Flag ausente/falsa bloqueia o fluxo. Reutiliza `MARKETPLACE_SECRETS_KEY`;
@@ -261,9 +281,9 @@ imperativa não recebem push nesta entrega. Provedores futuros exigem adaptadore
   0700, fora do Git. Esse fallback não existe em produção; produção exige
   credenciais no gerenciador de segredos/variáveis server-side. Flag local
   permanece falsa até autorização de teste com uma loja e banco preparado.
-- Aplicar futuramente `20261012160000_marketplace_magalu_oauth.sql` junto da
-  ativação autorizada. Nesta entrega a migração só foi testada localmente,
-  sem alterar o projeto Supabase remoto. RLS e privilégios privados preservados.
+- `20261012160000_marketplace_magalu_oauth.sql` aplicada ao Supabase remoto
+  em 3.0.0.15, sem ativar conexão ou adaptadores. RLS e privilégios privados
+  verificados e preservados; migração também validada com SQL real em PGlite.
 - State de 10 minutos, consumo atômico, PKCE S256, binding por cookie HttpOnly
   SameSite Lax e por pendência. Retorno depende da origem/callback exatos e da
   configuração usada no início; revalida administrador/módulo antes de trocar

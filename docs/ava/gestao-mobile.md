@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.14 -->
+<!-- ava-version: 3.0.0.15 -->
+
+> Revisão 3.0.0.15: finalização da preparação OAuth Magalu e marca Casas Bahia
+> no Marketplaces Web. Sem impacto operacional na Gestão Mobile/AvantaPreços.
+> Sem publicação, autorização real de loja ou sincronização Magalu.
 
 > Revisão 3.0.0.14: seleção de situação no header rola até Vendas no
 > Marketplaces Web. Sem impacto operacional na Gestão Mobile nativa/AvantaPreços.

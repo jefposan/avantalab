@@ -1,9 +1,10 @@
 export const ACCOUNT_LABEL_LIMIT = 80;
 
 /** O retorno OAuth apenas indica o ID; a conta deve vir da consulta autenticada da empresa. */
-export function connectedAccountForIdentification<T extends { id: string; status: string }>(accounts: T[], connectionId: unknown): T | undefined {
+export function connectedAccountForIdentification<T extends { id: string; status: string; provider?: string; last_error_code?: string | null }>(accounts: T[], connectionId: unknown): T | undefined {
   if (typeof connectionId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(connectionId)) return;
-  return accounts.find(account => account.id === connectionId && account.status === 'connected');
+  return accounts.find(account => account.id === connectionId && (account.status === 'connected'
+    || (account.provider === 'magalu' && account.status === 'attention' && account.last_error_code === 'magalu_connector_pending')));
 }
 type NamedAccount = { id?: string; local_label?: string | null; local_label_updated_at?: string | null; seller_name?: string | null; seller_reference: string };
 

@@ -1,6 +1,16 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.14 -->
+<!-- ava-version: 3.0.0.15 -->
+
+> Revisão 3.0.0.15: preparação do banco, retorno HTTPS e credenciais Magalu
+> concluídos, ainda sem publicação/ativação ou consentimento de loja real.
+> Após autorização confirmada, a lista se atualiza e solicita identificação;
+> o popup fecha ou retorna ao módulo da empresa. A conta aparece como
+> **Autorizada · sincronização pendente**, não como integração operacional.
+> Pode editar identificação/desconectar; Renovar permanece exclusivo do ML.
+> Não afirmar que Magalu publica, consulta vendas ou sincroniza estoque.
+> O aviso de rotina automática se refere expressamente ao Mercado Livre.
+> Casas Bahia agora usa logo branco sobre azul, com traço vermelho.
 
 > Revisão 3.0.0.14: escolher situação no header aplica o filtro de todas as
 > contas, expande **Vendas** e rola até seu card, com título abaixo do header
