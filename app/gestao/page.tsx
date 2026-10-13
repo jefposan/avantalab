@@ -20,7 +20,6 @@ import PontoAdminModal, { type AbaPontoAdmin, type DocumentoRepP, type EstadoAss
 import type { EstadoCobrancaFacial } from '@/app/lib/ponto-facial-cobranca';
 import SobreModal from '@/app/components/SobreModal';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
-import { MarketplaceLiveMonitor } from '@/app/components/MarketplaceLiveMonitor';
 import { despesasComMesmoValor, mensagemDespesasMesmoValor } from '@/app/lib/despesas-conferencia';
 import DraggableModalCard from '@/app/components/DraggableModalCard';
 import CardEntradaFaturamento from '@/app/components/CardEntradaFaturamento';
@@ -8664,8 +8663,6 @@ if (validacaoTelefoneObrigatoria) {
 
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${bgMain}`}>
-
-      {empresaId && modulosAtivos.includes('marketplaces') && <MarketplaceLiveMonitor key={`${empresaId}:${acessoUsuarioAtualId}`} companyId={empresaId} brand={corPrimaria} dark={darkMode} />}
 
       {empresaId && !contaRevisaoAppApple && cadastroPerfilStatus?.podeEditar && !cadastroPerfilStatus.completo && !cadastroPerfilStatus.adiado && !cadastroPerfilAdiado && (
         <CadastroPerfilModal

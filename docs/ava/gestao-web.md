@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.31 -->
+<!-- ava-version: 3.0.0.32 -->
+
+> Revisão 3.0.0.32: avisos de venda aparecem somente ao abrir **Anúncios em
+> marketplaces** no perfil que possui o pedido; a Gestão e os demais módulos
+> não os exibem. Em um aviso, **Ver venda no AvantaLab** restringe a conta,
+> expande e abre o pedido interno. Essa ação não abre nem consulta o portal
+> externo. **Entendi** apenas confirma a leitura para o usuário.
 
 > Revisão 3.0.0.31: para lançar uma despesa, na tela inicial selecione o mês,
 > vá a Despesas, preencha dia, tipo de despesa, descrição e valor e clique em OK.

@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.31 -->
+<!-- ava-version: 3.0.0.32 -->
+
+> Revisão 3.0.0.32: o popup de vendas ficou restrito ao Marketplaces Web e
+> abre o pedido interno no perfil correto. Sem impacto operacional no
+> AvantaVendas.
 
 > Revisão 3.0.0.31: a Ava prioriza pedidos, pagamentos e os vínculos próprios
 > do AvantaVendas, sem ensinar o lançamento de despesa da Gestão neste aplicativo.

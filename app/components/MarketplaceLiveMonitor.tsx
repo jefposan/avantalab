@@ -1,17 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import ModalConfirmacao from './ModalConfirmacao';
 import { supabase } from '@/app/lib/supabase';
 import { marketplaceClientRequest } from '@/app/marketplaces/Anunciados';
-import { alertLink, providerName, type MarketplaceLiveFeed, type SaleAlert } from '@/app/modules/marketplaces/live-feed';
-import { safeMarketplaceLink } from '@/app/modules/marketplaces/services/inventory-model';
-import { uuidIsValid } from '@/app/modules/marketplaces/services/listing-model';
+import { providerName, type MarketplaceLiveFeed, type SaleAlert } from '@/app/modules/marketplaces/live-feed';
 
-/** Cada empresa/usuário tem leitura persistida no servidor. Nenhum filtro de mês/conta oculta novas vendas. */
-export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = false }: { companyId: string; brand?: string; dark?: boolean }) {
+/** Cada empresa/usuário tem leitura persistida no servidor. Este monitor pertence apenas ao módulo Marketplace do perfil aberto. */
+export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = false, onOpenSale }: { companyId: string; brand?: string; dark?: boolean; onOpenSale: (alert: SaleAlert) => void }) {
   const [current, setCurrent] = useState<SaleAlert | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -26,8 +23,8 @@ export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = fa
     let channel: ReturnType<typeof supabase.channel> | null = null;
     const showNext = () => {
       if (stopped || currentRef.current || document.visibilityState !== 'visible') return;
-      // Não disputar foco com uma edição/confirmação. A Gestão deixa o próprio iframe exibir o aviso.
-      if ([...document.querySelectorAll('[aria-modal="true"], iframe[title="Anúncios em marketplaces"]')].some(element => {
+      // Não disputar foco com uma edição ou confirmação já aberta no próprio módulo.
+      if ([...document.querySelectorAll('[aria-modal="true"]')].some(element => {
         const bounds = element.getBoundingClientRect(); return bounds.width > 0 && bounds.height > 0 && getComputedStyle(element).visibility !== 'hidden';
       })) return;
       const next = alerts.current[0];
@@ -87,30 +84,20 @@ export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = fa
     } catch { setMessage('Não foi possível confirmar a leitura. Tente novamente.'); }
     finally { setBusy(false); }
   }
-  async function openListing() {
+  async function openSale() {
     if (!current || busy) return;
-    const tab = window.open('about:blank', '_blank');
-    if (!tab) { setMessage('Permita abrir uma nova aba para consultar o anúncio.'); return; }
-    tab.opener = null;
     setBusy(true); setMessage('');
     try {
-      let link = alertLink(current);
-      if (!link) {
-        const result = await marketplaceClientRequest('avisos', { empresaId: companyId, alertId: current.id, action: 'resolve_link' }) as { link: string };
-        link = safeMarketplaceLink(current.provider, result.link);
-      }
-      if (!link) throw new Error('Não foi possível abrir o anúncio nesta plataforma.');
-      tab.location.replace(link);
       await marketplaceClientRequest('avisos', { empresaId: companyId, alertId: current.id, action: 'acknowledge' });
       alerts.current = alerts.current.filter(alert => alert.id !== current.id);
-      currentRef.current = null; setCurrent(null); reloadRef.current();
+      const alert = current;
+      currentRef.current = null; setCurrent(null); onOpenSale(alert); reloadRef.current();
     } catch (error) {
-      try { if (tab.location.href === 'about:blank') tab.close(); } catch { /* Aba já navegou para a plataforma. */ }
-      setMessage(error instanceof Error ? error.message : 'Não foi possível abrir o anúncio. Tente novamente.');
+      setMessage(error instanceof Error ? error.message : 'Não foi possível abrir a venda. Tente novamente.');
     } finally { setBusy(false); }
   }
   if (!current) return null;
-  return createPortal(<MarketplaceSaleAlertView alert={current} remaining={remaining} message={message} busy={busy} brand={brand} dark={dark} onAcknowledge={acknowledge} onOpen={openListing} />, document.body);
+  return createPortal(<MarketplaceSaleAlertView alert={current} remaining={remaining} message={message} busy={busy} brand={brand} dark={dark} onAcknowledge={acknowledge} onOpen={openSale} />, document.body);
 }
 
 export function MarketplaceSaleAlertView({ alert, remaining = 0, message = '', busy = false, brand = '#003E73', dark = false, onAcknowledge, onOpen }: {
@@ -119,13 +106,6 @@ export function MarketplaceSaleAlertView({ alert, remaining = 0, message = '', b
   const date = new Date(alert.sold_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
   const text = `${alert.account_name || 'Conta conectada'} · ${providerName(alert.provider)}\nPedido #${alert.order_id} · ${date}\n\n${alert.quantity} × ${alert.title}\n\n${alert.kind === 'pending_dispatch' ? 'Esta venda ainda aguarda envio. Confira o pedido e a etiqueta.' : 'Confira o pedido e a liberação do envio na plataforma.'}${remaining ? `\nMais ${remaining} aviso(s) aguardando.` : ''}${message ? `\n\n${message}` : ''}`;
   return <ModalConfirmacao aberto titulo={alert.kind === 'pending_dispatch' ? 'Venda pendente' : 'Nova venda'} rotuloCabecalho="Marketplaces" mensagem={text} variante="primaria"
-    textoCancelar="Entendi" textoConfirmar={alert.provider === 'magalu' ? 'Ver pedido no Magalu' : `Ver anúncio no ${providerName(alert.provider)}`} carregando={busy}
+    textoCancelar="Entendi" textoConfirmar="Ver venda no AvantaLab" carregando={busy}
     corPrimaria={brand} darkMode={dark} aoCancelar={onAcknowledge} aoConfirmar={onOpen} />;
-}
-
-/** Demais módulos com empresa na URL; Gestão fornece o perfil ativo explicitamente. */
-export default function MarketplaceLiveScope() {
-  const pathname = usePathname(), params = useSearchParams(), companyId = params.get('empresaId');
-  if (!companyId || !uuidIsValid(companyId) || pathname === '/gestao' || pathname.startsWith('/mobile') || pathname.startsWith('/marketplaces')) return null;
-  return <MarketplaceLiveMonitor key={companyId} companyId={companyId} />;
 }

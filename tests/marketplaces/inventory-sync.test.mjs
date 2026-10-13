@@ -186,11 +186,12 @@ test('SQL real: mudança de quantidade do anúncio não duplica baixa e renova g
     assert.equal((await f.db.query('select generation from marketplace_inventory_outbox')).rows[0].generation,after.generation);
   }finally{await f.db.close();}
 });
-test('webhook confirma recebimento após gravar a fila, usa after e popup reutiliza modal com leitura persistida',()=>{
+test('webhook confirma recebimento após gravar a fila, usa after e popup reutiliza modal interno com leitura persistida',()=>{
   const webhook=read('app/api/webhooks/mercado-livre/route.ts'),monitor=read('app/components/MarketplaceLiveMonitor.tsx'),route=read('app/api/modulos/marketplaces/avisos/route.ts');
   assert.match(webhook,/await queueSaleNotification/);assert.match(webhook,/after\(async/);
   assert.match(monitor,/ModalConfirmacao aberto titulo=\{alert.kind === 'pending_dispatch' \? 'Venda pendente' : 'Nova venda'\}/);assert.match(monitor,/setInterval[\s\S]*10_000/);assert.match(monitor,/private: true/);
-  assert.match(monitor,/action: 'acknowledge'/);assert.match(monitor,/Ver anúncio no/);assert.match(monitor,/safeMarketplaceLink/);
+  assert.match(monitor,/action: 'acknowledge'/);assert.match(monitor,/Ver venda no AvantaLab/);assert.doesNotMatch(monitor,/window\.open|resolve_link|safeMarketplaceLink/);
   assert.match(route,/user_id: usuario.id/);assert.match(route,/eq\('empresa_id', empresaId\)/);
-  assert.match(read('app/gestao/page.tsx'),/modulosAtivos.includes\('marketplaces'\) && <MarketplaceLiveMonitor/);
+  assert.doesNotMatch(read('app/gestao/page.tsx'),/MarketplaceLiveMonitor/);
+  assert.match(read('app/marketplaces/MarketplacesClient.tsx'),/<MarketplaceLiveMonitor key=\{companyId\}[\s\S]*onOpenSale=\{openAlertSale\}/);
 });

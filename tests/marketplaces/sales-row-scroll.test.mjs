@@ -28,13 +28,15 @@ test('rolagem manual respeita cabeçalho fixo e redução de movimento, sem pass
     }
   } finally { if (previous === undefined) delete globalThis.window; else globalThis.window = previous; }
 });
-test('somente clique de abertura rola; fechamento, respostas e eventos automáticos não agendam rolagem', () => {
+test('clique de abertura e alerta confirmado rolam; fechamento, respostas e eventos automáticos não agendam rolagem', () => {
   const read = path => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
   const sales = read('app/marketplaces/Vendas.tsx');
   assert.match(sales, /const opening = open !== sale.id/);
   assert.match(sales, /if \(opening\) requestAnimationFrame/);
   assert.match(sales, /button.isConnected && button.getAttribute\('aria-expanded'\) === 'true'/);
   assert.equal((sales.match(/scrollMarketplaceRow\(button\)/g) || []).length, 1);
+  assert.match(sales, /sale\.id === saleToOpen && open === sale\.id/);
+  assert.match(sales, /scrollMarketplaceRow\(row\)/);
   assert.doesNotMatch(sales, /useEffect/);
   const css = read('app/marketplaces/marketplaces.module.css');
   assert.match(css, /\.salesPanel \.saleSummary\[aria-expanded="true"\] \{ background: color-mix\(in srgb, var\(--brand\) 8%, #fff\); box-shadow: inset 3px 0 0 var\(--brand\); \}/);

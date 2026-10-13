@@ -24,7 +24,7 @@ import SalesFilters from './SalesFilters';
 import { saleGroup, salesInPeriod, salesSummary, type SaleGroup, type SalePeriod } from '@/app/modules/marketplaces/sales-status';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import { salesAccountAvailable } from '@/app/modules/marketplaces/magalu-sales-model';
-import { inventoryIssueMessage, type MarketplaceLiveFeed } from '@/app/modules/marketplaces/live-feed';
+import { inventoryIssueMessage, type MarketplaceLiveFeed, type SaleAlert } from '@/app/modules/marketplaces/live-feed';
 import { createPassiveRefresh } from './passive-refresh';
 import { Icon } from '@/app/projetos/components/Icon';
 import { connectionTarget, validateConnectionAuthorization } from './connection-target';
@@ -110,6 +110,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [salesExpanded, setSalesExpanded] = useState(true);
   const [salesGroup, setSalesGroup] = useState<SaleGroup | ''>('');
   const [salesPeriod, setSalesPeriod] = useState<SalePeriod>({ start: '', end: '' });
+  const [saleToOpen, setSaleToOpen] = useState('');
   function scrollToSales() {
     requestAnimationFrame(() => {
       const card = document.getElementById('sales-title')?.closest('section');
@@ -129,6 +130,19 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   function selectSalesInPanel(group: SaleGroup | '') {
     setSalesSnapshot(sales);
     setSalesGroup(group);
+  }
+  function openAlertSale(alert: SaleAlert) {
+    const saleDate = new Date(alert.sold_at);
+    const dateParts = Number.isNaN(saleDate.getTime()) ? [] : new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(saleDate);
+    const dateValues = Object.fromEntries(dateParts.filter(part => ['year', 'month', 'day'].includes(part.type)).map(part => [part.type, part.value]));
+    const date = dateValues.year && dateValues.month && dateValues.day ? `${dateValues.year}-${dateValues.month}-${dateValues.day}` : '';
+    setSalesSnapshot(sales);
+    setSalesAccount(alert.connection_id);
+    setSalesGroup('');
+    setSalesPeriod(date ? { start: date, end: date } : { start: '', end: '' });
+    setSalesExpanded(true);
+    setSaleToOpen(alert.sale_id || '');
+    setSalesRefresh(value => value + 1);
   }
   const updateSale = useCallback((updated: MarketplaceSale) => {
     setSales((current) => current.map((sale) => sale.id === updated.id && sale.connectionId === updated.connectionId ? updated : sale));
@@ -419,7 +433,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }
 
   return <main className={`${styles.page} ${empresa.temaEscuro ? styles.dark : ''}`} style={{ '--marketplace-brand': empresa.corPrimaria } as CSSProperties} ref={pageRef}>
-    <MarketplaceLiveMonitor key={companyId} companyId={companyId} brand={empresa.corPrimaria} dark={empresa.temaEscuro} />
+    <MarketplaceLiveMonitor key={companyId} companyId={companyId} brand={empresa.corPrimaria} dark={empresa.temaEscuro} onOpenSale={openAlertSale} />
     <ModuloHeader empresa={empresa} onBack={voltar} className={styles.salesHeader} returnTooltip="Voltar à Gestão" returnTooltipPosition="bottom">
       <div className={styles.headerToolbar}>
       <SalesFilters period={salesPeriod} onPeriodChange={period => selectSalesFromHeader({ period })} group={salesGroup} onGroupChange={group => selectSalesFromHeader({ group })} counts={summary.byGroup} total={summary.total} dark={empresa.temaEscuro} brand={empresa.corPrimaria} />
@@ -513,7 +527,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       </> : inventorySnapshot ? 'A sincronização automática de estoque ainda precisa ser ativada nesta empresa.' : 'Consultando situação da sincronização…'}
     </div>
     <AvantaKanban className={styles.panelOrder} order={panelOrder.order} onOrderChange={panelOrder.change} disabled={!panelOrder.ready || publicationBusy || priceUsersOpen || !!disconnectAccount} items={[
-      { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={account => { setSalesSnapshot(sales); setSalesAccount(account); }} group={salesGroup} onGroupChange={selectSalesInPanel} counts={accountSalesSummary.byGroup} total={accountSalesSummary.total} accounts={salesAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} warnings={salesWarnings} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
+      { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={account => { setSalesSnapshot(sales); setSalesAccount(account); }} group={salesGroup} onGroupChange={selectSalesInPanel} counts={accountSalesSummary.byGroup} total={accountSalesSummary.total} accounts={salesAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} warnings={salesWarnings} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} saleToOpen={saleToOpen} key={`${saleToOpen}:${visibleSales.some(sale => sale.id === saleToOpen)}`} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
       { id: 'products', title: 'Produtos e estoque', render: (handle) => <ProductsStock key={companyId} companyId={companyId} accounts={accounts} publicationAccounts={marketplaceAccounts} canManage={canManage} dark={empresa.temaEscuro} brand={empresa.corPrimaria} refreshKey={refreshKey} preparationLocked={publicationBusy || accountSelectionLocked || !selectedProvider.available} reorderHandle={handle} onPrepare={(localProductId, targetConnectionId) => {
         if (!marketplaceAccounts.some(account => account.id === targetConnectionId && account.status === 'connected')) return;
         setSelectedAccount(targetConnectionId); setCopyRequest({ id: crypto.randomUUID(), localProductId, targetConnectionId });

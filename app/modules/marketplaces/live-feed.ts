@@ -1,5 +1,3 @@
-import { safeMarketplaceLink } from './services/inventory-model.ts';
-
 export type SaleAlert = { id: string; sale_id?: string; kind?: 'new_sale' | 'pending_dispatch'; connection_id: string; provider: string; listing_id: string; title: string; quantity: number; sold_at: string; order_id: string; account_name: string; permalink: string | null };
 export type MarketplaceLiveFeed = { alerts: SaleAlert[]; pendingStock: number; pendingSales: number; issues: Array<{ issue: string; total: number }>; updatedAt: string | null; workerFinishedAt: string | null; workerHealthy: boolean; enabled: boolean };
 const messages: Record<string, string> = {
@@ -20,4 +18,3 @@ const messages: Record<string, string> = {
 };
 export const inventoryIssueMessage = (code: string) => messages[code] || 'Há atualização pendente. O sistema tentará novamente; confira a conexão e o anúncio se persistir.';
 export const providerName = (provider: string) => ({ mercado_livre: 'Mercado Livre', shopee: 'Shopee', amazon: 'Amazon', magalu: 'Magalu', tiktok_shop: 'TikTok Shop', casas_bahia: 'Casas Bahia' })[provider] || 'Marketplace';
-export function alertLink(alert: SaleAlert) { return safeMarketplaceLink(alert.provider, alert.permalink); }

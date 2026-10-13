@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.31 -->
+<!-- ava-version: 3.0.0.32 -->
+
+> Revisão 3.0.0.32: o popup de vendas pertence somente ao módulo Marketplaces
+> Web e abre o pedido interno do perfil correto. Sem impacto operacional na
+> Gestão Mobile/AvantaPreços.
 
 > Revisão 3.0.0.31: para lançar despesa, use Lançar na barra inferior, escolha
 > Despesa, confira o período, preencha dia, despesa, descrição e valor e toque

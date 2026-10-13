@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import BotaoExpandirCard from '@/app/components/BotaoExpandirCard';
 import Tooltip from '@/app/components/Tooltip';
 import { Icon } from '@/app/projetos/components/Icon';
@@ -20,16 +20,17 @@ type Sale = MarketplaceSale;
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
-export default function Vendas({ companyId, accountId, onAccountChange, group, onGroupChange, counts, total, accounts, sales, canManage, loading, error, warnings = [], awaitingUpdates, onRefresh, onSaleUpdated, expanded, onExpandedChange, dark, brand, reorderHandle }: {
+export default function Vendas({ companyId, accountId, onAccountChange, group, onGroupChange, counts, total, accounts, sales, canManage, loading, error, warnings = [], awaitingUpdates, onRefresh, onSaleUpdated, expanded, onExpandedChange, saleToOpen, dark, brand, reorderHandle }: {
   companyId: string; accountId: string; onAccountChange: (id: string) => void; accounts: MarketplaceAccount[];
   group: SaleGroup | ''; onGroupChange: (group: SaleGroup | '') => void; counts: Record<SaleGroup, number>; total: number;
   sales: Sale[]; canManage: boolean; loading: boolean; error: string; awaitingUpdates: number; onRefresh: () => void; onSaleUpdated: (sale: Sale) => void;
-  expanded: boolean; onExpandedChange: (expanded: boolean) => void; dark: boolean; brand: string; reorderHandle?: ReactNode; warnings?: string[];
+  expanded: boolean; onExpandedChange: (expanded: boolean) => void; saleToOpen: string; dark: boolean; brand: string; reorderHandle?: ReactNode; warnings?: string[];
 }) {
   const [printError, setPrintError] = useState('');
-  const [open, setOpen] = useState('');
+  const [open, setOpen] = useState(() => saleToOpen && sales.some(sale => sale.id === saleToOpen) ? saleToOpen : '');
   const [printing, setPrinting] = useState('');
   const [order, setOrder] = useState<DateOrder>('desc');
+  const alertScrollDone = useRef(false);
   const orderedSales = useMemo(() => sortSalesByDate(sales, order), [sales, order]);
 
   async function printLabel(sale: Sale) {
@@ -65,7 +66,7 @@ export default function Vendas({ companyId, accountId, onAccountChange, group, o
     {awaitingUpdates > 0 && <p className={styles.salesScopeHelp} role="status">Há atualizações de vendas em processamento. Use Atualizar para conferir novamente.</p>}
     {printError && <p className={styles.salesError} role="alert">{printError}</p>}
     {warnings.map(warning => <p key={warning} className={styles.salesError} role="status">{warning}</p>)}
-    {error ? <p className={styles.salesError} role="alert">{error}</p> : loading ? <p className={styles.salesEmpty} role="status">Carregando vendas…</p> : !sales.length ? <p className={styles.salesEmpty}>Nenhuma venda encontrada nos filtros selecionados.</p> : <div className={styles.salesList}>{orderedSales.map((sale) => <article key={sale.id} className={styles.saleCard}>
+    {error ? <p className={styles.salesError} role="alert">{error}</p> : loading ? <p className={styles.salesEmpty} role="status">Carregando vendas…</p> : !sales.length ? <p className={styles.salesEmpty}>Nenhuma venda encontrada nos filtros selecionados.</p> : <div className={styles.salesList}>{orderedSales.map((sale) => <article key={sale.id} className={styles.saleCard} ref={sale.id === saleToOpen && open === sale.id ? row => { if (row && !alertScrollDone.current) { alertScrollDone.current = true; requestAnimationFrame(() => { if (row.isConnected) scrollMarketplaceRow(row); }); } } : undefined}>
       <button type="button" className={styles.saleSummary} onClick={event => {
         const button = event.currentTarget;
         const opening = open !== sale.id;

@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0.32 - 2026-10-13
+
+- Avisos de vendas de Marketplace aparecem somente após abrir o módulo
+  Marketplaces no perfil empresarial correspondente; a Gestão e os demais
+  módulos não consultam nem exibem esse popup.
+- **Ver venda no AvantaLab** filtra a conta certa, expande e abre o pedido
+  interno. O aviso não abre aba nem consulta a plataforma externa.
+
 ## 3.0.0.31 - 2026-10-13
 
 - Ava: fluxos essenciais de Web, Mobile e Vendas são priorizados; orientações
