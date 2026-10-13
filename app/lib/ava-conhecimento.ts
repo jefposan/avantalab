@@ -1,3 +1,4 @@
+// Revisado na versão 3.0.0.20: rotação protegida do token de webhook Asaas no servidor, sem impacto operacional nas orientações da Ava.
 // Revisado na versão 3.0.0.19: publicação autorizada dos motivos específicos e referência segura nas falhas Magalu, sem avisos sobre outras plataformas.
 // Revisado na versão 3.0.0.18: publicação autorizada dos ajustes e OAuth Magalu habilitado para consentimento da loja; operações Magalu ainda pendentes.
 // Revisado na versão 3.0.0.17: fundo externo branco para Casas Bahia, logo clássico preservado; sem impacto operacional/publicação.

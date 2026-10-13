@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.19 -->
+<!-- ava-version: 3.0.0.20 -->
+
+> Revisão 3.0.0.20: rotação protegida do token de webhook da Asaas, sem
+> alteração de telas, planos, lançamentos ou orientação operacional da Gestão.
 
 > Revisão 3.0.0.19: publicação autorizada do diagnóstico Magalu.
 > Avisos desse fluxo tratam somente do Magalu, sem mensagem sobre o Mercado Livre.

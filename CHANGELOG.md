@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.0.20 - 2026-10-12
+
+- Webhook da Asaas passa a suportar, de forma temporária e server-side, um
+  segundo token exclusivo de rotação. A troca de credencial pode ocorrer sem
+  interromper a recepção de eventos: os dois valores são comparados em tempo
+  constante e nenhum é exposto ao cliente, aos logs ou ao repositório.
+- A variável temporária será removida da produção ao fim da rotação; o token
+  principal permanecerá somente como segredo de Production.
+
 ## 3.0.0.19 - 2026-10-12
 
 - Mensagens da conexão Magalu sem aviso sobre o Mercado Livre; exibem apenas

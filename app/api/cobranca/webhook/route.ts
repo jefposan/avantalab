@@ -4,13 +4,13 @@ import { atualizarAssinaturaAsaas, listarCobrancasAssinaturaAsaas } from '../../
 import { calcularFimCarencia, calcularFimPeriodoPago } from '../../../lib/cobranca-fluxo';
 import { fimDaCarencia, somarUmMesData } from '../../../lib/ponto-facial-cobranca-servidor';
 import { lerReferenciaAssinatura, lerReferenciaPerfilAdicional, referenciaConfereAssinatura } from '../../../lib/cobranca-referencia';
+import { tokenWebhookAsaasValido } from '../../../lib/asaas-webhook-auth';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
-  const tokenEsperado = (process.env.ASAAS_WEBHOOK_TOKEN || '').trim();
   const tokenRecebido = (request.headers.get('asaas-access-token') || '').trim();
-  if (!tokenEsperado || tokenRecebido !== tokenEsperado) {
+  if (!tokenWebhookAsaasValido(tokenRecebido)) {
     return NextResponse.json({ erro: true, mensagem: 'não autorizado' }, { status: 401 });
   }
 
