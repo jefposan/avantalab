@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.18 -->
+<!-- ava-version: 3.0.0.19 -->
+
+> Revisão 3.0.0.19: publicação autorizada do diagnóstico Magalu.
+> Avisos desse fluxo tratam somente do Magalu, sem mensagem sobre o Mercado Livre.
+> Uma falha deve informar motivo conhecido e próxima ação: refazer autorização,
+> permitir consultas, conferir acesso da loja, aguardar comunicação ou pedir
+> revisão ao administrador. **Referência** identifica a ocorrência nos logs.
+> Identificação não reconhecida não prova que a conta seja de compras; resposta
+> fora do contrato também pode ser falha da integração. Não atribuir toda falha
+> às permissões nem afirmar sucesso sem conta salva. Nada muda no ML ou estoque.
+> Conta de compras e cadastro desenvolvedor não substituem cadastro de uma loja:
+> cadastro oficial começa em https://marketplace.magalu.com/cadastro?service=magalu
+> pelo CNPJ; concluir cadastro/aprovação e acesso da organização vendedora antes
+> de conectar no AvantaLab. Não prometer conversão automática por e-mail.
 
 > Revisão 3.0.0.18: publicação autorizada dos ajustes de contas Magalu e logo
 > clássico Casas Bahia com fundo branco. OAuth Magalu habilitado em produção:

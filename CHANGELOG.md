@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.0.0.19 - 2026-10-12
+
+- Mensagens da conexão Magalu sem aviso sobre o Mercado Livre; exibem apenas
+  o motivo e a orientação pertinentes. Teste cobre o catálogo de erros e sucesso.
+- Diagnóstico Magalu específico no início e retorno da conexão: autorização
+  expirada/cancelada, confirmação do navegador, aplicativo rejeitado, consultas
+  não autorizadas, identificação de loja não reconhecida, comunicação, resposta
+  incompatível, acesso AvantaLab alterado, cofre e consulta/gravação no banco.
+- Mensagens simples usam somente motivos conhecidos e orientação de próxima
+  ação; não presumem conta de consumidor nem culpam permissões em toda falha.
+  Referência aleatória permite localizar etapa/categoria nos logs privados.
+- Logs registram apenas enums, status HTTP, códigos SQL conhecidos e referência.
+  Não registram erro bruto, resposta externa, código OAuth, tokens, cookie, IDs
+  pessoais/da loja/empresa, credenciais ou URLs. Protocolo e proteções mantidos.
+- Publicação autorizada desta correção, sem mudanças no banco/configuração,
+  novo cadastro vendedor ou
+  alterações nas conexões/estoques Mercado Livre. Diagnóstico detalhado vale
+  para novas tentativas; motivo exato da falha anterior não foi registrado.
+- Validação para publicação: build completo, 1.027 testes, lint dos arquivos
+  alterados e verificações PADRÃO AVANTA/Ava aprovados. Conexão real da loja
+  Magalu ainda não confirmada; cadastro vendedor observado em análise.
+
 ## 3.0.0.18 - 2026-10-12
 
 - Entrega autorizada para produção das revisões 3.0.0.15 a 3.0.0.17: retorno

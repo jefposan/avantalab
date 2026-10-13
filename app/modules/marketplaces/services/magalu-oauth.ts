@@ -3,6 +3,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createPkceChallenge, createPkceVerifier } from './mercadolivre-oauth';
+import { MagaluConnectionError, magaluProviderRejection } from './magalu-diagnostics';
 
 export const MAGALU_CALLBACK_PATH = '/api/modulos/marketplaces/conexoes/magalu/callback';
 // A primeira etapa apenas conecta e consulta. Escrita depende dos futuros adaptadores.
@@ -60,27 +61,39 @@ export function readMagaluIntent(value: string, configuration: MagaluConfigurati
 /** Só interpreta tokens recebidos diretamente do endpoint HTTPS oficial, nunca do navegador. */
 function tokenMetadata(token: string) {
   const parts = token.split('.');
-  if (parts.length !== 3 || token.length > 32_768) throw new Error('Resposta Magalu incompleta.');
-  const claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as { sub?: unknown; exp?: unknown; aud?: unknown };
-  if (typeof claims.sub !== 'string' || !/^GENPUB\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(claims.sub)
-    || typeof claims.exp !== 'number' || !Number.isFinite(claims.exp) || claims.exp <= Date.now() / 1000
-    || !(Array.isArray(claims.aud) ? claims.aud : [claims.aud]).includes('https://api.magalu.com')) throw new Error('O Magalu não confirmou uma loja nesta autorização.');
+  if (parts.length !== 3 || token.length > 32_768) throw new MagaluConnectionError('response_invalid', { issue: 'token_format' });
+  let claims: { sub?: unknown; exp?: unknown; aud?: unknown };
+  try {
+    const value: unknown = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error();
+    claims = value;
+  } catch { throw new MagaluConnectionError('response_invalid', { issue: 'token_claims' }); }
+  if (typeof claims.exp !== 'number' || !Number.isFinite(claims.exp)) throw new MagaluConnectionError('response_invalid', { issue: 'token_claims' });
+  if (claims.exp <= Date.now() / 1000) throw new MagaluConnectionError('token_expired');
+  if (!(Array.isArray(claims.aud) ? claims.aud : [claims.aud]).includes('https://api.magalu.com')) throw new MagaluConnectionError('response_invalid', { issue: 'token_audience' });
+  if (typeof claims.sub !== 'string' || !/^GENPUB\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(claims.sub)) throw new MagaluConnectionError('identity_unconfirmed', { issue: 'identity_format' });
   return { sellerReference: claims.sub, expiresAt: claims.exp * 1000 };
 }
 
 export async function exchangeMagaluAuthorizationCode(code: string, intent: MagaluIntent, configuration: MagaluConfiguration) {
-  const response = await fetch('https://id.magalu.com/oauth/token', {
+  let response: Response;
+  try { response = await fetch('https://id.magalu.com/oauth/token', {
     method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({ grant_type: 'authorization_code', client_id: configuration.clientId, client_secret: configuration.clientSecret,
       redirect_uri: intent.redirectUri, code, code_verifier: intent.verifier }),
     cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(12_000),
-  });
+  }); } catch (error) {
+    throw new MagaluConnectionError(error instanceof Error && ['TimeoutError', 'AbortError'].includes(error.name) ? 'token_timeout' : 'token_network');
+  }
   const data = await response.json().catch(() => null) as { access_token?: unknown; refresh_token?: unknown; expires_in?: unknown; token_type?: unknown; scope?: unknown } | null;
-  if (!response.ok || typeof data?.access_token !== 'string' || !data.access_token || typeof data.refresh_token !== 'string' || !data.refresh_token
-    || data.token_type !== 'Bearer' || typeof data.expires_in !== 'number' || !Number.isFinite(data.expires_in) || data.expires_in <= 0 || data.expires_in > 7200
-    || typeof data.scope !== 'string') throw new Error('O Magalu não concluiu a autorização. Tente conectar novamente.');
+  if (!response.ok) throw magaluProviderRejection(response.status, data);
+  if (!data) throw new MagaluConnectionError('response_invalid', { providerStatus: response.status, issue: 'response_json' });
+  if (typeof data.access_token !== 'string' || !data.access_token || typeof data.refresh_token !== 'string' || !data.refresh_token) throw new MagaluConnectionError('response_invalid', { issue: 'token_fields' });
+  if (data.token_type !== 'Bearer') throw new MagaluConnectionError('response_invalid', { issue: 'token_type' });
+  if (typeof data.expires_in !== 'number' || !Number.isFinite(data.expires_in) || data.expires_in <= 0 || data.expires_in > 7200) throw new MagaluConnectionError('response_invalid', { issue: 'expires_in' });
+  if (typeof data.scope !== 'string') throw new MagaluConnectionError('response_invalid', { issue: 'scope_format' });
   const scopes = data.scope.split(/\s+/).filter(Boolean);
-  if (!MAGALU_CONNECTION_SCOPES.every(scope => scopes.includes(scope))) throw new Error('Autorize a consulta de pedidos, produtos e estoque da loja no Magalu para concluir.');
+  if (!MAGALU_CONNECTION_SCOPES.every(scope => scopes.includes(scope))) throw new MagaluConnectionError('missing_scopes');
   const metadata = tokenMetadata(data.access_token);
   return { accessToken: data.access_token, refreshToken: data.refresh_token, scopes, sellerReference: metadata.sellerReference,
     expiresAt: new Date(Math.min(metadata.expiresAt, Date.now() + data.expires_in * 1000)).toISOString() };

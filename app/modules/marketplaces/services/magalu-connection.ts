@@ -4,17 +4,21 @@ import { MarketplaceError } from './management-access';
 import { uuidIsValid } from './listing-model';
 import { createMagaluAuthorization, magaluBrowserHash, type MagaluConfiguration } from './magalu-oauth';
 import { sealMarketplaceSecret } from './secret-vault';
+import { MagaluConnectionError, magaluDatabaseFailure } from './magalu-diagnostics';
 
 export async function startMagaluConnection(db: SupabaseClient, companyId: string, actorId: string, configuration: MagaluConfiguration) {
   const { data, error } = await db.from('marketplace_oauth_pending').select('id').eq('empresa_id', companyId).eq('provider', 'magalu')
     .eq('started_by', actorId).is('consumed_at', null).gt('expires_at', new Date().toISOString()).limit(10);
-  if (error) throw new MarketplaceError(503, 'database', 'A preparação da conexão Magalu ainda não foi ativada no banco.');
+  if (error) throw magaluDatabaseFailure(error, 'pending_database');
   if ((data || []).length >= 10) throw new MarketplaceError(429, 'oauth_limit', 'Há autorizações pendentes. Aguarde alguns minutos antes de tentar novamente.');
   const authorization = createMagaluAuthorization(configuration);
+  let sealed: ReturnType<typeof sealMarketplaceSecret>;
+  try { sealed = sealMarketplaceSecret(JSON.stringify(authorization.intent)); }
+  catch { throw new MagaluConnectionError('vault_unavailable'); }
   const saved = await db.from('marketplace_oauth_pending').insert({ empresa_id: companyId, provider: 'magalu', state: authorization.state,
-    verifier_sealed: sealMarketplaceSecret(JSON.stringify(authorization.intent)), browser_binding_hash: magaluBrowserHash(authorization.browserBinding),
+    verifier_sealed: sealed, browser_binding_hash: magaluBrowserHash(authorization.browserBinding),
     started_by: actorId, expires_at: authorization.expiresAt });
-  if (saved.error) throw new MarketplaceError(503, 'database', 'Não foi possível preparar a conexão Magalu. Confira a migração do banco.');
+  if (saved.error) throw magaluDatabaseFailure(saved.error, 'pending_database');
   return authorization;
 }
 

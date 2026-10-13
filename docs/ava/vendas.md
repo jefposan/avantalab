@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.18 -->
+<!-- ava-version: 3.0.0.19 -->
+
+> Revisão 3.0.0.19: diagnóstico e mensagens Magalu no Marketplaces Web,
+> sem avisos sobre outras plataformas nesse fluxo. Publicação autorizada.
+> Sem impacto operacional no AvantaVendas; estoques separados.
 
 > Revisão 3.0.0.18: publicação de Marketplaces Web e OAuth Magalu para
 > consentimento da loja. Sem impacto operacional no AvantaVendas; seus estoques

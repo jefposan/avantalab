@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.18 -->
+<!-- ava-version: 3.0.0.19 -->
+
+> Revisão 3.0.0.19: diagnóstico e mensagens Magalu no Marketplaces Web,
+> sem avisos sobre outras plataformas nesse fluxo. Publicação autorizada.
+> Sem impacto operacional na Gestão Mobile/AvantaPreços.
 
 > Revisão 3.0.0.18: publicação dos ajustes Marketplaces Web e habilitação
 > OAuth Magalu para consentimento da loja, sem anúncios/vendas/estoque Magalu.

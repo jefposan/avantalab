@@ -206,6 +206,20 @@ imperativa não recebem push nesta entrega. Provedores futuros exigem adaptadore
 
 #### Magalu — OAuth habilitado em produção 3.0.0.18 (operações ainda pendentes)
 
+- Refinamento 3.0.0.19 com publicação autorizada: erros tipados e mensagens por
+  causa conhecida no início/callback. `magalu-diagnostics.ts` gera referência
+  aleatória e log `magalu_oauth_failure`, com etapa/código enum, status HTTP,
+  issue de validação e SQLSTATE conhecido quando disponível. Nunca logar
+  request/query/URL, código OAuth, cookie, segredo, tokens, resposta do provedor,
+  stack/erro bruto ou IDs de empresa/usuário/loja. O log serve ao administrador;
+  referência aparece também na mensagem, sem detalhes técnicos sensíveis.
+  Não presume buyer/pessoa física por formato JWT desconhecido: informa que
+  a loja não pôde ser identificada e que pode exigir revisão da integração.
+  Formato/audiência/escopos/validade continuam verificados como antes; não
+  relaxar identificação para aceitar acesso pessoal. Falha antiga sem log
+  não tem causa recuperável. Testes de diagnóstico usam fixtures, sem novo
+  consentimento real, alteração do banco, configuração externa ou estoque.
+
 - Em 3.0.0.18, usuário autorizou a publicação dos refinamentos e ativação do
   OAuth para consentimento da loja. Flag de produção `MAGALU_OAUTH_ENABLED=true`
   neste deploy; no local permanece falsa (cofre real não exportável).
