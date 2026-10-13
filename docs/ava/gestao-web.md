@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.24 -->
+<!-- ava-version: 3.0.0.25 -->
+
+> Revisão 3.0.0.25: no Admin, os indicadores Apple App Store e Google Play
+> mostram downloads iniciais oficiais dos últimos 90 dias e a data da última
+> leitura. Use **Atualizar lojas** para consultar as fontes agora. Dado atrasado
+> ou sem leitura oficial não confirma quantidade atual; o aviso indica a fonte
+> que precisa de configuração ou nova tentativa. Sem impacto na Gestão Mobile.
 
 > Revisão 3.0.0.24 (publicação autorizada): vendas/pós-venda Magalu das versões
 > anteriores e avisos de Venda pendente para pedidos antigos ainda aguardando

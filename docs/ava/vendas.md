@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.24 -->
+<!-- ava-version: 3.0.0.25 -->
+
+> Revisão 3.0.0.25: métricas oficiais de downloads do AvantaVendas no Admin
+> Web passam a identificar a data da fonte e leituras atrasadas, sem alterar o
+> funcionamento do aplicativo ou seus dados comerciais.
 
 > Revisão 3.0.0.24: publicação autorizada de consultas Magalu, avisos de pedidos
 > pendentes e etiquetas ML no Marketplaces Web. Sem impacto operacional no

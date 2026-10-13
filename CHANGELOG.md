@@ -1,5 +1,19 @@
 # Changelog
 
+## 3.0.0.25 - 2026-10-13
+
+- Admin: downloads de AvantaLab e AvantaVendas agora deixam explícita a janela
+  de 90 dias e a data da última leitura oficial. Dados atrasados ou ausentes
+  não se apresentam mais como atuais.
+- Sincronização das lojas: Apple não grava zero quando o relatório diário ainda
+  não foi disponibilizado; lê o ponto pendente de cada aplicativo e preserva
+  dias já obtidos se uma leitura falhar. Google Play pagina todos os relatórios,
+  registra zero real por dia quando aplicável e informa bucket, prefixo ou
+  permissão de conta de serviço quando não houver relatório disponível.
+- O cron e a atualização manual registram falhas acionáveis nos logs; o Admin
+  oferece atualização sob demanda sem expor credenciais. Manuais e Ava revisados
+  conforme PADRÃO AVANTA 1.17.0.
+
 ## 3.0.0.24 - 2026-10-13
 
 - Publicação autorizada da identificação segura Magalu, autorização única e

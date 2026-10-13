@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.24 -->
+<!-- ava-version: 3.0.0.25 -->
+
+> Revisão 3.0.0.25: indicadores de downloads das lojas foram corrigidos no
+> Admin Web, com data da fonte e aviso quando a leitura estiver atrasada. Sem
+> impacto operacional na Gestão Mobile/AvantaPreços.
 
 > Revisão 3.0.0.24: publicação autorizada de vendas/pós-venda Magalu, avisos
 > pendentes e etiquetas ML no Marketplaces Web. Sem impacto operacional na

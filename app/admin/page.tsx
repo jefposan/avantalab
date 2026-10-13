@@ -149,9 +149,21 @@ type ResumoDownloadsLoja = {
   downloads: number | null;
   atualizadoEm: string | null;
   dataMaisRecente: string | null;
+  situacao: 'atualizado' | 'atrasado' | 'sem_dados';
 };
 
 type DownloadsDasLojas = Record<'avantalab' | 'avantavendas', Record<'apple_app_store' | 'google_play', ResumoDownloadsLoja>>;
+
+function dataDownloadLegivel(data: string | null) {
+  if (!data) return 'sem leitura oficial';
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', day: '2-digit', month: '2-digit' }).format(new Date(`${data}T12:00:00.000Z`));
+}
+
+function statusDownloadLoja(resumo: ResumoDownloadsLoja | undefined) {
+  if (!resumo || resumo.situacao === 'sem_dados') return { texto: 'Sem leitura oficial', classe: 'text-slate-500' };
+  if (resumo.situacao === 'atrasado') return { texto: `Dados até ${dataDownloadLegivel(resumo.dataMaisRecente)}`, classe: 'text-amber-700' };
+  return { texto: `Dados até ${dataDownloadLegivel(resumo.dataMaisRecente)}`, classe: 'text-emerald-700' };
+}
 
 const PLATAFORMAS_CADASTRO: Array<{ id: ConsultaCadastros; label: string }> = [
   { id: 'todos', label: 'Todos' },
@@ -512,6 +524,8 @@ export default function AdminPage() {
   const [cadastroTotal, setCadastroTotal] = useState(0);
   const [downloadsDasLojas, setDownloadsDasLojas] = useState<DownloadsDasLojas | null>(null);
   const [downloadsDasLojasCarregando, setDownloadsDasLojasCarregando] = useState(false);
+  const [downloadsDasLojasMensagem, setDownloadsDasLojasMensagem] = useState('');
+  const [downloadsDasLojasJanelaDias, setDownloadsDasLojasJanelaDias] = useState(90);
   const [consumo, setConsumo] = useState<ConsumoPlataforma[]>([]);
   const [historicoIa, setHistoricoIa] = useState<HistoricoIa[]>([]);
   const [consumoCarregando, setConsumoCarregando] = useState(false);
@@ -636,10 +650,13 @@ export default function AdminPage() {
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível carregar os downloads das lojas.');
       setDownloadsDasLojas(data.lojas || null);
+      setDownloadsDasLojasJanelaDias(Number(data.janelaDias) || 90);
+      setDownloadsDasLojasMensagem('');
     } catch (requestError) {
       // Cadastros continuam disponíveis enquanto a integração oficial é
       // configurada ou o cron recupera um erro transitório da loja.
       console.warn(requestError);
+      setDownloadsDasLojasMensagem('Não foi possível consultar as fontes oficiais agora. Os números não foram atualizados.');
     } finally {
       setDownloadsDasLojasCarregando(false);
     }
@@ -654,10 +671,16 @@ export default function AdminPage() {
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível atualizar os downloads das lojas.');
       setDownloadsDasLojas(data.lojas || null);
+      setDownloadsDasLojasJanelaDias(Number(data.janelaDias) || 90);
+      const falhas = Array.isArray(data.resultados) ? data.resultados.filter((resultado: { ok?: boolean; configurado?: boolean }) => !resultado.ok || !resultado.configurado) : [];
+      setDownloadsDasLojasMensagem(falhas.length
+        ? `A atualização oficial ficou incompleta: ${falhas.map((resultado: { loja?: string; erro?: string; configurado?: boolean }) => resultado.erro || (resultado.configurado === false ? `${resultado.loja === 'google_play' ? 'Google Play' : 'Apple App Store'} não configurada` : `${resultado.loja === 'google_play' ? 'Google Play' : 'Apple App Store'} indisponível`)).join(' · ')}`
+        : 'Dados oficiais atualizados.');
     } catch (requestError) {
       // A lista de cadastros continua disponível quando uma loja demora para
       // disponibilizar o relatório oficial ou responde com falha transitória.
       console.warn(requestError);
+      setDownloadsDasLojasMensagem('Não foi possível atualizar as fontes oficiais. Os números anteriores foram mantidos identificados pela data.');
     } finally {
       setDownloadsDasLojasCarregando(false);
     }
@@ -1556,22 +1579,41 @@ export default function AdminPage() {
                       </p>
                     </div>
                     {consultaCadastros !== 'perfis_avantalab' && <>
-                      {(plataformaCadastro === 'todos' || plataformaCadastro === 'avantalab') && <div className="min-w-0">
-                        <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">Apple · AvantaLab</p>
-                        <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">{downloadsDasLojasCarregando ? '...' : downloadsDasLojas?.avantalab.apple_app_store.downloads?.toLocaleString('pt-BR') ?? '-'}</p>
-                      </div>}
-                      {(plataformaCadastro === 'todos' || plataformaCadastro === 'avantavendas') && <div className="min-w-0">
-                        <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">Apple · Vendas</p>
-                        <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">{downloadsDasLojasCarregando ? '...' : downloadsDasLojas?.avantavendas.apple_app_store.downloads?.toLocaleString('pt-BR') ?? '-'}</p>
-                      </div>}
-                      {(plataformaCadastro === 'todos' || plataformaCadastro === 'avantavendas') && <div className="min-w-0">
-                        <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">Google Play · Vendas</p>
-                        <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">{downloadsDasLojasCarregando ? '...' : downloadsDasLojas?.avantavendas.google_play.downloads?.toLocaleString('pt-BR') ?? '-'}</p>
-                      </div>}
+                      {(plataformaCadastro === 'todos' || plataformaCadastro === 'avantalab') && (() => {
+                        const resumo = downloadsDasLojas?.avantalab.apple_app_store;
+                        const status = statusDownloadLoja(resumo);
+                        return <div className="min-w-0" title={`Apple App Store · ${status.texto}`}>
+                          <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">Apple · AvantaLab</p>
+                          <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">{downloadsDasLojasCarregando ? '...' : resumo?.downloads?.toLocaleString('pt-BR') ?? '-'}</p>
+                          <p className={`mt-1 text-[9px] font-bold leading-none ${status.classe}`}>{downloadsDasLojasCarregando ? 'Consultando...' : status.texto}</p>
+                        </div>;
+                      })()}
+                      {(plataformaCadastro === 'todos' || plataformaCadastro === 'avantavendas') && (() => {
+                        const resumo = downloadsDasLojas?.avantavendas.apple_app_store;
+                        const status = statusDownloadLoja(resumo);
+                        return <div className="min-w-0" title={`Apple App Store · ${status.texto}`}>
+                          <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">Apple · Vendas</p>
+                          <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">{downloadsDasLojasCarregando ? '...' : resumo?.downloads?.toLocaleString('pt-BR') ?? '-'}</p>
+                          <p className={`mt-1 text-[9px] font-bold leading-none ${status.classe}`}>{downloadsDasLojasCarregando ? 'Consultando...' : status.texto}</p>
+                        </div>;
+                      })()}
+                      {(plataformaCadastro === 'todos' || plataformaCadastro === 'avantavendas') && (() => {
+                        const resumo = downloadsDasLojas?.avantavendas.google_play;
+                        const status = statusDownloadLoja(resumo);
+                        return <div className="min-w-0" title={`Google Play · ${status.texto}`}>
+                          <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-wide text-cyan-800">Google Play · Vendas</p>
+                          <p className="mt-0.5 text-xl font-black leading-none text-cyan-950" aria-live="polite">{downloadsDasLojasCarregando ? '...' : resumo?.downloads?.toLocaleString('pt-BR') ?? '-'}</p>
+                          <p className={`mt-1 text-[9px] font-bold leading-none ${status.classe}`}>{downloadsDasLojasCarregando ? 'Consultando...' : status.texto}</p>
+                        </div>;
+                      })()}
                     </>}
                   </div>
                 </div>
               </div>
+              {consultaCadastros !== 'perfis_avantalab' && <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                <p className={`text-[10px] font-medium ${downloadsDasLojasMensagem ? 'text-amber-800' : 'text-slate-500'}`} role="status">{downloadsDasLojasMensagem || `Downloads iniciais oficiais nos últimos ${downloadsDasLojasJanelaDias} dias. A data abaixo de cada indicador informa a última leitura disponível.`}</p>
+                <button type="button" onClick={() => void sincronizarDownloadsDasLojas()} disabled={downloadsDasLojasCarregando} className="flex h-8 items-center gap-1.5 rounded-md border border-cyan-200 bg-white px-2.5 text-[9px] font-black uppercase tracking-wide text-cyan-800 transition hover:bg-cyan-50 disabled:cursor-wait disabled:opacity-60"><Icon name="refresh" size={13} />{downloadsDasLojasCarregando ? 'Atualizando...' : 'Atualizar lojas'}</button>
+              </div>}
               <div className="mt-3 flex flex-col gap-2 lg:flex-row">
                 <div className="relative min-w-0 flex-1"><input value={consultaCadastros === 'perfis_avantalab' ? perfilBusca : cadastroBusca} onChange={(event) => consultaCadastros === 'perfis_avantalab' ? setPerfilBusca(event.target.value) : setCadastroBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void carregarConsultaAdministrativa(); }} placeholder={consultaCadastros === 'todos' ? 'Nome, e-mail ou perfil (vazio = todos)' : consultaCadastros === 'perfis_avantalab' ? 'Nome do perfil (vazio = todos)' : 'Nome ou e-mail do cadastro (vazio = todos)'} className="h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 pr-11 text-sm outline-none focus:border-cyan-700 lg:h-10" />{(consultaCadastros === 'perfis_avantalab' ? perfilBusca : cadastroBusca) && <button type="button" onClick={() => { if (consultaCadastros === 'perfis_avantalab') setPerfilBusca(''); else setCadastroBusca(''); void carregarConsultaAdministrativa(consultaCadastros, ''); }} aria-label="Limpar busca" title="Limpar busca" className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-md text-lg leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 lg:h-8 lg:w-8">×</button>}</div>
                 <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:flex lg:shrink-0">

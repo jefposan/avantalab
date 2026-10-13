@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { exigirAdmin } from '../../lib/admin-server';
-import { resumoDownloadsDasLojas, sincronizarDownloadsDasLojas } from '../../lib/downloads-lojas-servidor';
+import { DIAS_JANELA_DOWNLOADS_LOJAS, resumoDownloadsDasLojas, sincronizarDownloadsDasLojas } from '../../lib/downloads-lojas-servidor';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   try {
     const { autorizado } = await exigirAdmin(request);
     if (!autorizado) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
-    return NextResponse.json({ janelaDias: 90, lojas: await resumoDownloadsDasLojas() }, { headers: { 'Cache-Control': 'private, no-store' } });
+    return NextResponse.json({ janelaDias: DIAS_JANELA_DOWNLOADS_LOJAS, lojas: await resumoDownloadsDasLojas() }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     console.error('Erro ao consultar downloads das lojas:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível consultar os downloads oficiais.' }, { status: 500 });
@@ -25,8 +25,11 @@ export async function POST(request: Request) {
     if (!autorizado) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 
     const resultados = await sincronizarDownloadsDasLojas();
+    const falhas = resultados.filter((resultado) => !resultado.ok || !resultado.configurado);
+    if (falhas.length) console.error('Sincronização manual de downloads das lojas incompleta:', falhas);
     return NextResponse.json({
-      ok: resultados.every((resultado) => resultado.ok),
+      ok: falhas.length === 0,
+      janelaDias: DIAS_JANELA_DOWNLOADS_LOJAS,
       resultados,
       lojas: await resumoDownloadsDasLojas(),
     }, { headers: { 'Cache-Control': 'private, no-store' } });

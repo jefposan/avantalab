@@ -24,6 +24,7 @@ type ResumoLoja = {
   downloads: number | null;
   atualizadoEm: string | null;
   dataMaisRecente: string | null;
+  situacao: 'atualizado' | 'atrasado' | 'sem_dados';
 };
 
 
@@ -37,9 +38,12 @@ const PACOTES_GOOGLE: Record<AplicativoLoja, string> = {
   avantavendas: process.env.GOOGLE_PLAY_PACKAGE_AVANTAVENDAS || 'br.com.avantalab.vendas',
 };
 
-const DIAS_JANELA = 90;
+export const DIAS_JANELA_DOWNLOADS_LOJAS = 90;
 const FONTE_APPLE = 'apple_sales_report_v2';
 const CONCORRENCIA_RELATORIOS_APPLE = 6;
+// Os relatórios oficiais podem levar alguns dias para fechar. Antes disso, o
+// painel não deve chamar um número antigo de "atualizado".
+const ATRASO_MAXIMO_DIAS_RELATORIO = 4;
 
 type ResultadoSincronizacaoLoja = {
   loja: LojaDownload;
@@ -69,7 +73,7 @@ function dataIsoUTC(data: Date) {
   return data.toISOString().slice(0, 10);
 }
 
-function inicioDaJanela(dias = DIAS_JANELA) {
+function inicioDaJanela(dias = DIAS_JANELA_DOWNLOADS_LOJAS) {
   const data = new Date();
   data.setUTCDate(data.getUTCDate() - (dias - 1));
   return dataIsoUTC(data);
@@ -107,7 +111,9 @@ async function buscarRelatorioApple(data: string) {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/a-gzip' },
     cache: 'no-store',
   });
-  if (resposta.status === 404) return [];
+  // A Apple publica o relatório diário com defasagem. Um 404 não representa
+  // zero downloads: apenas significa que aquele dia ainda não está disponível.
+  if (resposta.status === 404) return null;
   if (!resposta.ok) throw new Error(`Apple respondeu ${resposta.status}.`);
   return lerRelatorioApple(descompactarRespostaApple(new Uint8Array(await resposta.arrayBuffer())));
 }
@@ -147,13 +153,20 @@ async function objetosGoogle(token: string) {
   const bucket = process.env.GOOGLE_PLAY_REPORTS_BUCKET;
   if (!bucket) return [] as string[];
   const prefixo = process.env.GOOGLE_PLAY_REPORTS_PREFIX || 'stats/installs/';
-  const parametros = new URLSearchParams({ prefix: prefixo, maxResults: '1000' });
-  const resposta = await fetch(`https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(bucket)}/o?${parametros}`, {
-    headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
-  });
-  if (!resposta.ok) throw new Error(`Google Cloud Storage respondeu ${resposta.status}.`);
-  const resultado = await resposta.json() as { items?: Array<{ name?: string }> };
-  return (resultado.items || []).map((item) => item.name || '').filter(Boolean);
+  const objetos: string[] = [];
+  let pageToken: string | undefined;
+  do {
+    const parametros = new URLSearchParams({ prefix: prefixo, maxResults: '1000' });
+    if (pageToken) parametros.set('pageToken', pageToken);
+    const resposta = await fetch(`https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(bucket)}/o?${parametros}`, {
+      headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
+    });
+    if (!resposta.ok) throw new Error(`Google Cloud Storage respondeu ${resposta.status}.`);
+    const resultado = await resposta.json() as { items?: Array<{ name?: string }>; nextPageToken?: string };
+    objetos.push(...(resultado.items || []).map((item) => item.name || '').filter(Boolean));
+    pageToken = resultado.nextPageToken || undefined;
+  } while (pageToken);
+  return objetos;
 }
 
 async function baixarObjetoGoogle(token: string, objeto: string) {
@@ -193,21 +206,42 @@ async function ultimaData(aplicativo: AplicativoLoja, loja: LojaDownload, fonte?
   return data?.data_referencia || null;
 }
 
+function menorData(datas: Array<string | null>) {
+  const validas = datas.filter((data): data is string => Boolean(data));
+  return validas.length === APLICATIVOS_LOJAS.length ? validas.sort()[0] || null : null;
+}
+
+function situacaoDoResumo(dataMaisRecente: string | null) {
+  if (!dataMaisRecente) return 'sem_dados' as const;
+  const limite = new Date();
+  limite.setUTCDate(limite.getUTCDate() - ATRASO_MAXIMO_DIAS_RELATORIO);
+  return dataMaisRecente >= dataIsoUTC(limite) ? 'atualizado' as const : 'atrasado' as const;
+}
+
 export async function sincronizarDownloadsApple() {
   if (!jwtApple() || !process.env.APPLE_APP_STORE_VENDOR_NUMBER) return { configurado: false, registros: 0 };
-  // A versão da fonte força uma única reprocessamento da janela depois de uma
-  // correção de interpretação, sem repetir o histórico em cada cron diário.
-  const dataInicial = await ultimaData('avantavendas', 'apple_app_store', FONTE_APPLE);
+  // As duas aplicações dividem o mesmo relatório. A leitura só avança a partir
+  // do menor ponto já consolidado: assim, se uma delas estiver sem histórico,
+  // ela volta a receber a janela completa em vez de herdar a data da outra.
+  const dataInicial = menorData(await Promise.all(
+    APLICATIVOS_LOJAS.map((aplicativo) => ultimaData(aplicativo, 'apple_app_store', FONTE_APPLE)),
+  ));
   const datas = datasParaBuscar(dataInicial);
   const agora = new Date().toISOString();
   const registros: RegistroDownloadDiario[] = [];
+  const falhas: string[] = [];
   // O histórico inicial contém até 90 relatórios. Lemos pequenos lotes em
   // paralelo para caber no tempo da função, sem abrir conexões ilimitadas com
   // a API da Apple.
   for (let inicio = 0; inicio < datas.length; inicio += CONCORRENCIA_RELATORIOS_APPLE) {
     const lote = datas.slice(inicio, inicio + CONCORRENCIA_RELATORIOS_APPLE);
-    const relatorios = await Promise.all(lote.map(async (data) => ({ data, linhas: await buscarRelatorioApple(data) })));
-    for (const { data, linhas } of relatorios) {
+    const resultados = await Promise.allSettled(lote.map(async (data) => ({ data, linhas: await buscarRelatorioApple(data) })));
+    for (const resultado of resultados) {
+      if (resultado.status === 'rejected') {
+        falhas.push(mensagemErro(resultado.reason));
+        continue;
+      }
+      const { data, linhas } = resultado.value;
       if (linhas === null) continue;
       for (const aplicativo of APLICATIVOS_LOJAS) {
         const downloads = linhas
@@ -218,6 +252,9 @@ export async function sincronizarDownloadsApple() {
     }
   }
   await salvarRegistros(registros);
+  if (falhas.length) {
+    throw new Error(`Apple App Store não respondeu todos os relatórios: ${[...new Set(falhas)].slice(0, 3).join(' ')}`);
+  }
   return { configurado: true, registros: registros.length };
 }
 
@@ -226,23 +263,36 @@ export async function sincronizarDownloadsGoogle() {
   if (!token || !process.env.GOOGLE_PLAY_REPORTS_BUCKET) return { configurado: false, registros: 0 };
   const inicio = inicioDaJanela();
   const objetos = (await objetosGoogle(token)).filter((objeto) => /(^|\/)installs_.*_\d{6}_country\.csv$/i.test(objeto));
+  if (!objetos.length) {
+    throw new Error('Google Play não devolveu relatórios de instalações. Confira o bucket, o prefixo e a permissão da conta de serviço para baixar relatórios.');
+  }
   const porChave = new Map<string, number>();
+  const datasComRelatorio = new Set<string>();
   for (const objeto of objetos) {
     const mes = objeto.match(/_(\d{6})_country\.csv$/i)?.[1] || '';
     if (mes && `${mes.slice(0, 4)}-${mes.slice(4)}-01` < inicio.slice(0, 8) + '01') continue;
     const linhas = lerRelatorioGoogle(await baixarObjetoGoogle(token, objeto));
     for (const linha of linhas) {
+      if (linha.data < inicio) continue;
       const aplicativo = (Object.entries(PACOTES_GOOGLE).find(([, pacote]) => pacote === linha.pacote)?.[0] || null) as AplicativoLoja | null;
-      if (!aplicativo || linha.data < inicio) continue;
+      if (!aplicativo) continue;
+      // Somente uma linha de um aplicativo Avanta confirma que esta é uma
+      // data útil para os nossos indicadores. Relatórios de outros pacotes
+      // no mesmo bucket não podem gerar zeros artificiais.
+      datasComRelatorio.add(linha.data);
       const chave = `${aplicativo}:${linha.data}`;
       porChave.set(chave, (porChave.get(chave) || 0) + linha.instalacoes);
     }
   }
   const agora = new Date().toISOString();
-  const registros = [...porChave.entries()].map(([chave, downloads]) => {
-    const [aplicativo, data] = chave.split(':') as [AplicativoLoja, string];
-    return { aplicativo, loja: 'google_play' as const, data_referencia: data, downloads: Math.max(0, downloads), fonte: 'google_play_bulk_report', atualizado_em: agora };
-  });
+  const registros = [...datasComRelatorio].flatMap((data) => APLICATIVOS_LOJAS.map((aplicativo) => ({
+    aplicativo,
+    loja: 'google_play' as const,
+    data_referencia: data,
+    downloads: Math.max(0, porChave.get(`${aplicativo}:${data}`) || 0),
+    fonte: 'google_play_bulk_report',
+    atualizado_em: agora,
+  })));
   await salvarRegistros(registros);
   return { configurado: true, registros: registros.length };
 }
@@ -263,8 +313,8 @@ export async function sincronizarDownloadsDasLojas() {
 
 export async function resumoDownloadsDasLojas(): Promise<Record<AplicativoLoja, Record<LojaDownload, ResumoLoja>>> {
   const vazio: Record<AplicativoLoja, Record<LojaDownload, ResumoLoja>> = {
-    avantalab: { apple_app_store: { downloads: null, atualizadoEm: null, dataMaisRecente: null }, google_play: { downloads: null, atualizadoEm: null, dataMaisRecente: null } },
-    avantavendas: { apple_app_store: { downloads: null, atualizadoEm: null, dataMaisRecente: null }, google_play: { downloads: null, atualizadoEm: null, dataMaisRecente: null } },
+    avantalab: { apple_app_store: { downloads: null, atualizadoEm: null, dataMaisRecente: null, situacao: 'sem_dados' }, google_play: { downloads: null, atualizadoEm: null, dataMaisRecente: null, situacao: 'sem_dados' } },
+    avantavendas: { apple_app_store: { downloads: null, atualizadoEm: null, dataMaisRecente: null, situacao: 'sem_dados' }, google_play: { downloads: null, atualizadoEm: null, dataMaisRecente: null, situacao: 'sem_dados' } },
   };
   const db = criarSupabaseAdmin();
   const { data, error } = await db.from('lojas_downloads_diarios').select('aplicativo, loja, downloads, data_referencia, atualizado_em').gte('data_referencia', inicioDaJanela());
@@ -278,6 +328,11 @@ export async function resumoDownloadsDasLojas(): Promise<Record<AplicativoLoja, 
     destino.downloads = (destino.downloads || 0) + Number(registro.downloads || 0);
     if (!destino.dataMaisRecente || registro.data_referencia > destino.dataMaisRecente) destino.dataMaisRecente = registro.data_referencia;
     if (!destino.atualizadoEm || registro.atualizado_em > destino.atualizadoEm) destino.atualizadoEm = registro.atualizado_em;
+  }
+  for (const aplicativo of APLICATIVOS_LOJAS) {
+    for (const loja of LOJAS_DOWNLOADS) {
+      vazio[aplicativo][loja].situacao = situacaoDoResumo(vazio[aplicativo][loja].dataMaisRecente);
+    }
   }
   return vazio;
 }

@@ -1,3 +1,4 @@
+// Revisado na versão 3.0.0.25: Admin mostra downloads oficiais das lojas com janela de 90 dias, data da fonte e aviso de atraso; não altera a operação da Gestão ou do AvantaVendas.
 // Revisado na versão 3.0.0.24: publicação autorizada de consultas Magalu, avisos pendentes e impressão ML; permissão Magalu para etiquetas configurada, geração local ainda pendente.
 // Revisado na versão 3.0.0.23: vendas e pós-venda Magalu preparados localmente, migração somente em banco isolado; autorização completa/pedidos reais pendentes e sem publicação.
 // Revisado na versão 3.0.0.22: autorização única das 14 consultas Magalu aprovadas; configuração externa conferida, código não publicado e consentimento da loja pendente.
