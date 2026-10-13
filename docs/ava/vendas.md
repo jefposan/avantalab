@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.27 -->
+<!-- ava-version: 3.0.0.28 -->
+
+> Revisão 3.0.0.28: consentimento adicional de catálogo Magalu preparado no
+> Marketplaces Web, sem envio de produto, preço ou estoque. Sem impacto
+> operacional no AvantaVendas ou nos seus dados comerciais.
 
 > Revisão 3.0.0.27: diagnóstico de relatórios Apple no Admin informa a data e o
 > código oficial da recusa. Sem impacto operacional no AvantaVendas.

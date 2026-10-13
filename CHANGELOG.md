@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.0.0.28 - 2026-10-13
+
+- Magalu: a próxima reconexão pelo AvantaLab passa a solicitar, separadamente,
+  categorias, SKU, preço e estoque, incluindo os três acessos de escrita. A
+  conexão anterior continua apta às consultas já autorizadas e a interface
+  indica quando é necessário reautorizar o catálogo.
+- Não existe envio de produto, preço ou estoque nesta entrega: a expansão de
+  consentimento não cria anúncios nem altera saldo. A publicação continuará
+  exigindo confirmação explícita no AvantaLab e contrato validado da API.
+- Manuais e conhecimento da Ava revisados conforme PADRÃO AVANTA 1.17.0.
+
 ## 3.0.0.27 - 2026-10-13
 
 - Relatórios Apple: recusa informa a data, o código e a descrição oficial

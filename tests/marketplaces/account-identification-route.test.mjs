@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 
 const root = resolve(import.meta.dirname, '../..');
 const hooks = registerHooks({ resolve(specifier, context, next) {
+  if (specifier === 'server-only') return { url: 'data:text/javascript,export {}', shortCircuit: true };
   if (specifier === 'next/server') return { url: 'data:text/javascript,export class NextResponse extends Response {static json(body,options){return new NextResponse(JSON.stringify(body),options)}}', shortCircuit: true };
   if (specifier.endsWith('/management-access')) return { url: 'data:text/javascript,export class MarketplaceError extends Error {constructor(status,code,message){super(message);this.status=status;this.code=code}};export function managementFailure(error){return Response.json({message:error.message,code:error.code},{status:error.status||503})};export async function authorizeMarketplace(request,company,action){return globalThis.labelsAccess(company,action)}', shortCircuit: true };
   let candidate;
@@ -100,11 +101,11 @@ test('consulta combina identificação da empresa, nunca expõe token e tolera t
 });
 
 test('consulta inclui Magalu autorizado e ML da empresa; rejeita outra empresa, provedor e desconexão',async()=>{
-  const db=setup();const magalu={id:actor,empresa_id:company,provider:'magalu',seller_reference:'GENPUB.test',status:'attention',last_error_code:'magalu_connector_pending',token_sealed:'PRIVATE'};
+  const db=setup();const magalu={id:actor,empresa_id:company,provider:'magalu',seller_reference:'GENPUB.test',status:'attention',last_error_code:'magalu_connector_pending',token_sealed:'PRIVATE',scopes:['open:portfolio-categories-seller:read','open:portfolio-skus-seller:read','open:portfolio-prices-seller:read','open:portfolio-stocks-seller:read','open:portfolio-skus-seller:write','open:portfolio-prices-seller:write','open:portfolio-stocks-seller:write']};
   db.tables.marketplace_connections.push(magalu,{...magalu,id:'outside',empresa_id:actor},{...magalu,id:'unsupported',provider:'shopee'},{...magalu,id:'disconnected',status:'disconnected'});
   db.tables.marketplace_connection_labels.push({connection_id:actor,empresa_id:company,local_label:'Minha loja'},{connection_id:actor,empresa_id:actor,local_label:'Outra empresa'});
   const response=await GET(new Request(`https://example.test/api?empresaId=${company}`));const {accounts}=await response.json();
-  assert.equal(response.status,200);assert.deepEqual(accounts.map(row=>row.id),[connection,actor]);assert.equal(accounts[1].local_label,'Minha loja');assert.equal(accounts[1].status,'attention');assert.equal(accounts[1].last_error_code,'magalu_connector_pending');
+  assert.equal(response.status,200);assert.deepEqual(accounts.map(row=>row.id),[connection,actor]);assert.equal(accounts[1].local_label,'Minha loja');assert.equal(accounts[1].status,'attention');assert.equal(accounts[1].last_error_code,'magalu_connector_pending');assert.equal(accounts[1].magalu_catalog_authorized,true);assert.equal(accounts[0].magalu_catalog_authorized,false);
   for(const row of accounts)assert.equal(row.token_sealed,undefined);assert.equal(db.writes.length,0);
 });
 

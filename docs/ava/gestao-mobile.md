@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.27 -->
+<!-- ava-version: 3.0.0.28 -->
+
+> Revisão 3.0.0.28: consentimento adicional de catálogo Magalu preparado no
+> Marketplaces Web, sem envio de produto, preço ou estoque. Sem impacto
+> operacional na Gestão Mobile/AvantaPreços.
 
 > Revisão 3.0.0.27: diagnóstico de relatórios Apple mais preciso no Admin.
 > Sem impacto operacional na Gestão Mobile.

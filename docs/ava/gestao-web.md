@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.27 -->
+<!-- ava-version: 3.0.0.28 -->
+
+> Revisão 3.0.0.28: a reconexão da mesma loja Magalu pelo AvantaLab agora
+> solicita consentimento separado para categorias, SKU, preço e estoque. A
+> conta atual continua consultando vendas; não é preciso excluí-la. Esta revisão
+> não envia produtos, preços ou saldos: a publicação permanece bloqueada até o
+> contrato de catálogo ser validado e a pessoa confirmar cada envio no AvantaLab.
 
 > Revisão 3.0.0.27: o diagnóstico de relatórios Apple inclui data e motivo oficial.
 > HTTP 403 não confirma falta de permissão da chave: conferir o código devolvido,

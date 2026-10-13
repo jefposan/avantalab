@@ -118,7 +118,7 @@ test('URL oficial, loja escolhida, PKCE S256, state aleatório e intenções cri
   assert.deepEqual(oauth.readMagaluIntent(vault.openMarketplaceSecret(row.verifier_sealed),config),auth.intent);
   assert.ok(!JSON.stringify(row).includes(auth.intent.verifier));assert.ok(Date.parse(row.expires_at)-Date.now()<=600000);
 });
-test('uma autorização reúne consultas completas de vendas e pós-venda sem escrita nem acesso irrestrito',async()=>{
+test('uma autorização reúne consultas e catálogo explícito, sem acesso irrestrito',async()=>{
   const expected=[
     'open:order-order-seller:read','open:portfolio-skus-seller:read','open:portfolio-stocks-seller:read',
     'open:order-delivery-seller:read','open:order-invoice-seller:read','open:order-logistics-seller:read',
@@ -128,8 +128,16 @@ test('uma autorização reúne consultas completas de vendas e pós-venda sem es
   ];
   assert.deepEqual(oauth.MAGALU_CONNECTION_SCOPES,expected);assert.equal(new Set(expected).size,expected.length);
   assert.ok(oauth.MAGALU_CONNECTION_SCOPES.every(scope=>scope.endsWith(':read')));
-  const {auth}=await fixture();assert.deepEqual(new URL(auth.authorizationUrl).searchParams.get('scope').split(' '),[...expected,oauth.MAGALU_LABEL_SCOPE]);
-  assert.deepEqual(oauth.MAGALU_AUTHORIZATION_SCOPES.filter(scope=>scope.endsWith(':write')),['open:order-logistics-seller:write']);
+  assert.deepEqual(oauth.MAGALU_CATALOG_SCOPES,[
+    'open:portfolio-categories-seller:read','open:portfolio-skus-seller:read','open:portfolio-prices-seller:read','open:portfolio-stocks-seller:read',
+    'open:portfolio-skus-seller:write','open:portfolio-prices-seller:write','open:portfolio-stocks-seller:write',
+  ]);
+  const {auth}=await fixture();assert.deepEqual(new URL(auth.authorizationUrl).searchParams.get('scope').split(' '),oauth.MAGALU_AUTHORIZATION_SCOPES);
+  assert.deepEqual(oauth.MAGALU_AUTHORIZATION_SCOPES.filter(scope=>scope.endsWith(':write')),[
+    'open:order-logistics-seller:write','open:portfolio-skus-seller:write','open:portfolio-prices-seller:write','open:portfolio-stocks-seller:write',
+  ]);
+  assert.equal(oauth.magaluCatalogScopesGranted(oauth.MAGALU_CONNECTION_SCOPES),false);
+  assert.equal(oauth.magaluCatalogScopesGranted(oauth.MAGALU_AUTHORIZATION_SCOPES),true);
 });
 test('cada consulta omitida impede falsa autorização completa e preserva as contas',async()=>{
   for(const omitted of oauth.MAGALU_CONNECTION_SCOPES){

@@ -4,7 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { MarketplaceError } from './management-access';
 import { objectValue, uuidIsValid } from './listing-model';
 import { openMarketplaceSecret, sealMarketplaceSecret } from './secret-vault';
-import { getMagaluOAuthConfiguration, MAGALU_CONNECTION_SCOPES, refreshMagaluToken } from './magalu-oauth';
+import { getMagaluOAuthConfiguration, magaluCatalogScopesGranted, MAGALU_CONNECTION_SCOPES, refreshMagaluToken } from './magalu-oauth';
 import { MagaluConnectionError } from './magalu-diagnostics';
 
 export type MagaluConnection = { id: string; empresa_id: string; provider: 'magalu'; seller_reference: string; status: string;
@@ -18,6 +18,19 @@ export async function loadMagaluConnection(db: SupabaseClient, companyId: string
   if (!['connected', 'attention'].includes(data.status) || !data.token_sealed) throw new MarketplaceError(409, 'reconnect', 'Conecte a mesma loja Magalu novamente, sem excluir a conta.');
   if (!Array.isArray(data.scopes) || !MAGALU_CONNECTION_SCOPES.every(scope => data.scopes.includes(scope))) throw new MarketplaceError(403, 'magalu_missing_scopes', 'Autorize novamente a mesma loja Magalu para permitir vendas e pós-venda. Não precisa excluir a conta.');
   return data as MagaluConnection;
+}
+
+/**
+ * Portão próprio para catálogo: consultas de vendas continuam válidas para uma
+ * conta que ainda não consentiu publicação. Nunca use este carregador para
+ * uma operação de leitura de pedidos ou pós-venda.
+ */
+export async function loadMagaluCatalogConnection(db: SupabaseClient, companyId: string, id: unknown): Promise<MagaluConnection> {
+  const connection = await loadMagaluConnection(db, companyId, id);
+  if (!magaluCatalogScopesGranted(connection.scopes)) {
+    throw new MarketplaceError(403, 'magalu_catalog_reauthorize', 'Para preparar catálogo, preços e estoque no AvantaLab, autorize novamente a mesma loja Magalu. Não precisa excluir a conta.');
+  }
+  return connection;
 }
 
 async function accessToken(db: SupabaseClient, initial: MagaluConnection, force = false): Promise<string> {

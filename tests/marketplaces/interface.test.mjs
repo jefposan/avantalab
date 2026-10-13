@@ -75,7 +75,7 @@ test('retorno Magalu é limitado à janela aberta e conta autorizada não habili
   assert.match(client,/if \(!oauthWindow.current \|\| event.source !== oauthWindow.current\) return/);
   assert.match(client,/\['mercado_livre', 'magalu'\]\.includes\(data.provider \|\| ''\)/);
   assert.match(client,/data.empresaId !== companyId/);
-  assert.match(client,/Autorizada · sincronização pendente/);
+  assert.match(client,/Autorizada · reautorize catálogo/);
   assert.match(client,/Sincronização automática do Mercado Livre ativa\./);
   assert.match(client,/!account.provider \|\| account.provider === 'mercado_livre'/);
   assert.match(client,/canManage=\{canManage && selectedProvider.available && !connecting\}/);

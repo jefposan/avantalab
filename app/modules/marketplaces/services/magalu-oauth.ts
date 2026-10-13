@@ -26,7 +26,22 @@ export const MAGALU_CONNECTION_SCOPES = [
 ] as const;
 // Escrita autorizada exclusivamente para geração de etiqueta; nunca para estoque/SAC.
 export const MAGALU_LABEL_SCOPE = 'open:order-logistics-seller:write';
-export const MAGALU_AUTHORIZATION_SCOPES = [...MAGALU_CONNECTION_SCOPES, MAGALU_LABEL_SCOPE];
+// Catálogo é uma autorização separada e explícita. Ela só é solicitada quando a
+// loja reconecta pelo AvantaLab; nenhuma conexão existente ganha escrita por
+// esta alteração, nem uma rota de leitura passa a publicar algo.
+export const MAGALU_CATALOG_SCOPES = [
+  'open:portfolio-categories-seller:read',
+  'open:portfolio-skus-seller:read',
+  'open:portfolio-prices-seller:read',
+  'open:portfolio-stocks-seller:read',
+  'open:portfolio-skus-seller:write',
+  'open:portfolio-prices-seller:write',
+  'open:portfolio-stocks-seller:write',
+] as const;
+export const MAGALU_AUTHORIZATION_SCOPES = [...new Set([...MAGALU_CONNECTION_SCOPES, MAGALU_LABEL_SCOPE, ...MAGALU_CATALOG_SCOPES])];
+export function magaluCatalogScopesGranted(scopes: unknown): scopes is string[] {
+  return Array.isArray(scopes) && MAGALU_CATALOG_SCOPES.every(scope => scopes.includes(scope));
+}
 export const MAGALU_OAUTH_TTL = 600;
 export type MagaluConfiguration = { clientId: string; clientSecret: string; redirectUri: string };
 export type MagaluIntent = { provider: 'magalu'; verifier: string; clientId: string; redirectUri: string };

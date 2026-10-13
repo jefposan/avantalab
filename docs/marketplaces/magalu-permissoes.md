@@ -1,6 +1,6 @@
 # Magalu — autorização única de consultas
 
-Revisão: 3.0.0.24, 13/10/2026. Publicação e migração autorizadas.
+Revisão: 3.0.0.28, 13/10/2026. Consentimento de catálogo preparado; envio ainda bloqueado.
 
 O administrador autorizou consultas de pedidos, entregas, documentos fiscais,
 pós-venda, mensagens de compradores e informações financeiras. A fonte
@@ -25,6 +25,26 @@ executável de leitura é `MAGALU_CONNECTION_SCOPES` em
 | Acompanhamento de transações SAC | `open:sac-transaction-seller:read` |
 | Relatório financeiro | `open:order-financial-report-seller:read` |
 | Conversas com compradores | `services:conversations-seller:read` |
+
+## Catálogo preparado (3.0.0.28)
+
+Uma nova autorização da mesma loja também solicita os acessos abaixo. Eles são
+isolados das consultas: a ausência deles não expira a conta nem interrompe
+vendas e pós-venda já autorizadas.
+
+| Área | Acesso |
+| --- | --- |
+| Categorias e ficha | `open:portfolio-categories-seller:read` |
+| SKU | `open:portfolio-skus-seller:read`, `open:portfolio-skus-seller:write` |
+| Preço | `open:portfolio-prices-seller:read`, `open:portfolio-prices-seller:write` |
+| Estoque | `open:portfolio-stocks-seller:read`, `open:portfolio-stocks-seller:write` |
+
+O servidor registra se a conexão recebeu o conjunto completo e orienta
+**reautorizar catálogo** quando faltar algum acesso. Não há rota de criação ou
+atualização de SKU, preço ou estoque nesta revisão; portanto a mudança de escopo
+não publica produtos nem movimenta estoque. A implementação posterior deve usar
+somente contratos oficiais validados, dados locais revisados e confirmação
+explícita por publicação no AvantaLab.
 
 Conferência externa pelo IDM oficial: os 14 acessos aparecem em AVAILABLE,
 todos como default e nenhum em PENDING. Audiências produtivas:

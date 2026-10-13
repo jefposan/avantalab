@@ -20,8 +20,8 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
 const model = await import('../../app/modules/marketplaces/magalu-sales-model.ts');
 const { readMagaluPostSale } = await import('../../app/modules/marketplaces/services/magalu-post-sale.ts');
 const { magaluPostSaleForSale, syncMagaluSales } = await import('../../app/modules/marketplaces/services/magalu-sales.ts');
-const { magaluRequest, loadMagaluConnection } = await import('../../app/modules/marketplaces/services/magalu-request.ts');
-const { MAGALU_CONNECTION_SCOPES } = await import('../../app/modules/marketplaces/services/magalu-oauth.ts');
+const { magaluRequest, loadMagaluCatalogConnection, loadMagaluConnection } = await import('../../app/modules/marketplaces/services/magalu-request.ts');
+const { MAGALU_CATALOG_SCOPES, MAGALU_CONNECTION_SCOPES } = await import('../../app/modules/marketplaces/services/magalu-oauth.ts');
 const { sealMarketplaceSecret } = await import('../../app/modules/marketplaces/services/secret-vault.ts');
 const { MarketplaceError } = await import('../../app/modules/marketplaces/services/management-access.ts');
 hooks.deregister();
@@ -128,6 +128,13 @@ test('conta de outra empresa e conjunto incompleto são recusados antes da API; 
   connection.scopes=[];await assert.rejects(loadMagaluConnection(db,company,connectionId),/Autorize/);connection.scopes=[...MAGALU_CONNECTION_SCOPES];
   globalThis.fetch=async()=>new Response('private failure',{status:403}); await assert.rejects(magaluRequest(db,connection,'/seller/v1/orders'),e=>e.status===403&&!e.message.includes('private'));
   assert.equal(connection.status,'attention');assert.ok(connection.token_sealed);
+});
+test('catálogo exige autorização própria sem bloquear consultas de vendas existentes', async () => {
+  const {db,connection}=fixture();
+  await loadMagaluConnection(db,company,connectionId);
+  await assert.rejects(loadMagaluCatalogConnection(db,company,connectionId),error=>error.code==='magalu_catalog_reauthorize');
+  connection.scopes=[...MAGALU_CONNECTION_SCOPES,...MAGALU_CATALOG_SCOPES];
+  assert.equal((await loadMagaluCatalogConnection(db,company,connectionId)).id,connectionId);
 });
 test('pós-venda exige venda/empresa/conta e não consulta pedido inexistente', async () => {
   const {db}=fixture();let calls=0;globalThis.fetch=async()=>{calls++;throw new Error('unexpected network')};

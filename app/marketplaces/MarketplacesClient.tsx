@@ -165,7 +165,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       setRenewAccount(null);
       setIdentificationAccountId(account.id);
       setConnectionNotice(account.provider === 'magalu'
-        ? 'Loja Magalu autorizada. Informe uma identificação. Anúncios, vendas e estoque ainda não estão sincronizando.'
+        ? 'Loja Magalu autorizada. Informe uma identificação. Para catálogo, preço e estoque pelo AvantaLab, reconecte esta mesma loja e aceite as permissões adicionais.'
         : 'Conta conectada. Informe uma identificação para ela.');
     } else if (account) setConnectionNotice('Conta conectada com sucesso. Use o lápis para identificar a conta.');
     else throw new Error('Não foi possível confirmar a conta na lista. Use Atualizar contas.');
@@ -485,7 +485,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
               <strong className={styles.accountName}>{accountDisplayName(account)}{pendingSales[account.id] ? <em className={styles.accountSalesBadge} title="Vendas nos filtros selecionados">{pendingSales[account.id]}</em> : null}</strong>
               {account.local_label && <small className={styles.accountReference}>{account.seller_name || `Vendedor ${account.seller_reference}`}</small>}
               <small className={styles.accountReference}>ID {account.seller_reference}</small>
-              <small className={styles.accountStatus} data-status={account.status}>{account.provider === 'magalu' && account.status === 'attention' && account.last_error_code === 'magalu_connector_pending' ? 'Autorizada · sincronização pendente' : account.status === 'connected' ? 'Conectada' : account.status === 'expired' ? 'Autorização expirada' : 'Requer atenção'}</small>
+              <small className={styles.accountStatus} data-status={account.status}>{account.provider === 'magalu' && account.status === 'attention' && account.last_error_code === 'magalu_connector_pending' ? (account.magalu_catalog_authorized ? 'Autorizada · catálogo em ativação' : 'Autorizada · reautorize catálogo') : account.status === 'connected' ? 'Conectada' : account.status === 'expired' ? 'Autorização expirada' : 'Requer atenção'}</small>
               <small className={styles.accountSync}>Última sincronização: {account.last_synced_at ? new Date(account.last_synced_at).toLocaleString('pt-BR') : 'Ainda não sincronizado'}</small>
             </button>
             {canManageConnections && <div className={styles.accountConnectionActions}>
