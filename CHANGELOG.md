@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.0.33.04 - 2026-10-13
+
+- Controle de Ponto: o texto **Registrando…** agora usa uma escala própria,
+  centralizada e contida no botão circular durante o envio da marcação.
+
 ## 3.0.0.33.03 - 2026-10-13
 
 - Situação/etiqueta da venda volta a ser apresentada horizontalmente.

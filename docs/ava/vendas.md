@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.33.03 -->
+<!-- ava-version: 3.0.0.33.04 -->
+
+> Revisão 3.0.0.33.04: refinamento visual do estado **Registrando…** no botão
+> central do Controle de Ponto; sem impacto operacional.
 
 > Revisão 3.0.0.33.03: expansão da linha e situação da etiqueta corrigidas no
 > Marketplaces Web. Sem impacto operacional no AvantaVendas.

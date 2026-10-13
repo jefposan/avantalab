@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.33.03 -->
+<!-- ava-version: 3.0.0.33.04 -->
+
+> Revisão 3.0.0.33.04: refinamento visual do estado **Registrando…** no botão
+> central do Controle de Ponto; sem impacto operacional.
 
 > Revisão 3.0.0.33.03: clique em qualquer ponto da linha da venda abre ou fecha
 > os detalhes; **Copiar pedido** apenas copia. A situação da etiqueta aparece
