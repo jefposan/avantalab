@@ -8,21 +8,6 @@ import { createRequire } from 'node:module';
 
 const loadModule = createRequire(import.meta.url);
 
-test('árvore de apresentação separa hierarquia de integração e preserva importação', () => {
-  const p = freshProject();
-  p.presentationTree = true;
-  const source = {...p.nodes[0], position: {x: 100, y: 600}};
-  const target = {...p.nodes[0], id: 'target', position: {x: 100, y: 1100}};
-  const hierarchy = domain.presentationConnectionRoute(source, target, 'hierarquica');
-  assert.match(hierarchy.path, /H 358/);
-  const integration = domain.presentationConnectionRoute(source, {...target, position: {x: 700,y:600}}, 'livre', 2);
-  assert.match(integration.path, /V 516 H 812/);
-  assert.equal(integration.label.y, 510);
-  assert.equal(domain.validateProjectImport(domain.exportProject(p), 'outra').presentationTree, true);
-  delete p.presentationTree;
-  assert.equal(domain.validateProjectImport(domain.exportProject(p), 'outra').presentationTree, undefined);
-});
-
 let compiledDir;
 let domain;
 let demo;

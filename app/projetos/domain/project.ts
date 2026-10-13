@@ -4,7 +4,6 @@ import {
   PROJECT_FILE_VERSION,
   STATUSES,
   type MapDirection,
-  type ConnectionType,
   type Project,
   type ProjectCollection,
   type ProjectConnection,
@@ -151,24 +150,6 @@ export function visibleNodeIds(nodes: ProjectNode[]) {
 }
 
 export function layoutProject(project: Project, direction: MapDirection): Project {
-  if (project.presentationTree && direction === 'vertical') {
-    const root = project.nodes.find((node) => node.parentId === null);
-    if (root) {
-      const branches = getChildren(project.nodes, root.id);
-      const positions = new Map<string, { x: number; y: number }>([[root.id, { x: 70 + Math.max(0, branches.length - 1) * 225, y: 60 }]]);
-      branches.forEach((branch, index) => {
-        const x = 70 + index * 450;
-        positions.set(branch.id, { x, y: 600 });
-        let row = 0;
-        const walk = (parent: ProjectNode) => getChildren(project.nodes, parent.id).forEach((child) => {
-          positions.set(child.id, { x, y: 840 + row++ * 180 });
-          walk(child);
-        });
-        walk(branch);
-      });
-      return { ...project, nodes: project.nodes.map((node) => ({ ...node, position: positions.get(node.id) ?? node.position })), updatedAt: new Date().toISOString() };
-    }
-  }
   const roots = getChildren(project.nodes, null);
   const positions = new Map<string, { x: number; y: number }>();
   let leafIndex = 0;
@@ -191,7 +172,6 @@ export function layoutProject(project: Project, direction: MapDirection): Projec
   });
   return {
     ...project,
-    ...(project.presentationTree && direction === 'horizontal' ? { presentationTree: false } : {}),
     nodes: project.nodes.map((node) => ({ ...node, position: positions.get(node.id) ?? node.position })),
     updatedAt: new Date().toISOString(),
   };
@@ -212,25 +192,6 @@ export function connectionPath(source: ProjectNode, target: ProjectNode, directi
   const ty = target.position.y + NODE_HEIGHT / 2;
   const mid = (sx + tx) / 2;
   return `M ${sx} ${sy} C ${mid} ${sy}, ${mid} ${ty}, ${tx} ${ty}`;
-}
-
-// Opt-in for presentation trees: hierarchy uses empty side corridors and
-// integrations use numbered lanes above the module row. Other maps keep curves.
-export function presentationConnectionRoute(source: ProjectNode, target: ProjectNode, type: ConnectionType, lane = 0) {
-  const sx = source.position.x + NODE_WIDTH / 2;
-  const tx = target.position.x + NODE_WIDTH / 2;
-  if (type === 'livre') {
-    const y = Math.min(source.position.y, target.position.y) - 40 - lane * 22;
-    return { path: `M ${sx} ${source.position.y} V ${y} H ${tx} V ${target.position.y}`, label: { x: (sx + tx) / 2, y: y - 6 } };
-  }
-  const sy = source.position.y + NODE_HEIGHT;
-  const ty = target.position.y;
-  if (Math.abs(sx - tx) < 1 && ty > sy + 80) {
-    const corridor = Math.max(source.position.x, target.position.x) + NODE_WIDTH + 34;
-    return { path: `M ${sx} ${sy} V ${sy + 24} H ${corridor} V ${ty - 24} H ${tx} V ${ty}`, label: { x: corridor + 8, y: (sy + ty) / 2 } };
-  }
-  const y = sy + Math.max(20, (ty - sy) / 2);
-  return { path: `M ${sx} ${sy} V ${y} H ${tx} V ${ty}`, label: { x: (sx + tx) / 2, y: y - 6 } };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -297,7 +258,6 @@ export function validateProjectImport(value: unknown, companyId: string): Projec
   const projectId = createId('project');
   return {
     id: projectId,
-    ...(raw.presentationTree === true ? { presentationTree: true } : {}),
     companyId,
     name: `${cleanText(raw.name, 120) || 'Projeto importado'} (importado)`,
     description: cleanText(raw.description, 600),

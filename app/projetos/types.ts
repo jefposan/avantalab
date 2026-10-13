@@ -66,7 +66,6 @@ export type Activity = {
 };
 
 export type Project = {
-  presentationTree?: boolean;
   id: string;
   companyId: string;
   name: string;

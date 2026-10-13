@@ -1,11 +1,6 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.29 -->
-
-> Revisão 3.0.0.29: árvores de apresentação explicitamente habilitadas em Projetos
-> usam orientação vertical e corredores para as conexões. Hierarquia representa
-> pertencimento; setas livres representam integrações e não instalam módulos.
-> Selecionar um ramo e Expandir mostra suas funcionalidades. Mapas comuns não mudam.
+<!-- ava-version: 3.0.0.28 -->
 
 > Revisão 3.0.0.28: a reconexão da mesma loja Magalu pelo AvantaLab agora
 > solicita consentimento separado para categorias, SKU, preço e estoque. A
