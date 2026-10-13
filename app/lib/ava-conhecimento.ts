@@ -1,3 +1,4 @@
+// Revisado na versão 3.0.0.33.05: Acessar em Controle de Ponto e Conteúdo AvantaVendas instalados fecha Módulos e abre os popups existentes na Gestão Web, com as mesmas permissões do menu.
 // Revisado na versão 3.0.0.33.03: linha inteira da venda volta a abrir/fechar os detalhes; Copiar não expande. Situação/etiqueta permanece em uma linha. Sem mudança na consulta da etiqueta.
 // Revisado na versão 3.0.0.33.02: Copiar pedido fica junto do número na linha de vendas, separado da situação. Mantém a cópia de “Pedido #…”; sem alteração no fluxo de etiquetas.
 // Revisado na versão 3.0.0.33.01: logo da plataforma na linha da venda usa o mesmo tamanho visual de Contas conectadas. Sem alteração operacional.
@@ -2087,7 +2088,8 @@ export function guiaOperacionalAva(valor: string | null | undefined) {
 - Editar uma despesa: abra o mês e clique na linha da despesa para abrir o editor. Para uma recorrência inteira, use Menu → Despesas fixas.
 - Exportar relatório: Menu → Exportar relatório → escolha ano/mês com dados, conteúdo e PDF ou Excel.
 - Projetos: Reorganizar ou trocar direção pede confirmação antes de substituir as posições manuais. Cancelar preserva o mapa; Desfazer recupera as posições na sessão.
-- Para recursos de um módulo, consulte o trecho correspondente abaixo; não presuma instalação ou acesso.`,
+- Para recursos de um módulo, consulte o trecho correspondente abaixo; não presuma instalação ou acesso.
+- Menu → Módulos → Acessar no Controle de Ponto ou Conteúdo AvantaVendas instalado fecha Módulos e abre o popup correspondente, conforme as permissões.`,
     'gestao-mobile': `FLUXOS ESSENCIAIS — GESTÃO MOBILE (não usar os botões da Web)
 - Lançar uma despesa: use Lançar na barra inferior → Despesa → confira o período e preencha dia, despesa, descrição e valor → Salvar despesa.
 - Menu → Cadastrar despesas administra tipos e categorias, não registra o pagamento nem edita lançamentos mensais.

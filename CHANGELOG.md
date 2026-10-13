@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.0.33.05 - 2026-10-13
+
+- Módulos Web: Controle de Ponto e Conteúdo AvantaVendas instalados também
+  oferecem Acessar. O clique fecha Módulos e abre o popup existente com as
+  mesmas permissões e ações do menu. Sem mudança de instalação ou dados.
+- Publicação autorizada após os 248 testes de módulos e a compilação local.
+
 ## 3.0.0.33.04 - 2026-10-13
 
 - Controle de Ponto: o texto **Registrando…** agora usa uma escala própria,

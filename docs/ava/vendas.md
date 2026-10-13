@@ -1,6 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.33.04 -->
+<!-- ava-version: 3.0.0.33.05 -->
+
+> Revisão 3.0.0.33.05: acesso aos módulos integrados pelo catálogo da Gestão Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 3.0.0.33.04: refinamento visual do estado **Registrando…** no botão
 > central do Controle de Ponto; sem impacto operacional.

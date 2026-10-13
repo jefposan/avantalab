@@ -117,7 +117,7 @@ export default function ModulosModal({
                 const liberado = acessoComercial === 'liberado';
                 const disponivelNoPlano = Boolean(acessoComercial);
                 const registro = obterRegistroModulo(m.id);
-                const possuiPagina = registro?.navegacao.modo === 'pagina_total' && Boolean(registro.navegacao.rota);
+                const possuiPagina = (registro?.navegacao.modo === 'pagina_total' && Boolean(registro.navegacao.rota)) || m.id === 'ponto' || m.id === 'vendas_mobile';
                 const preco = (m.precoMensal ?? 14.9).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 return (
                   <article

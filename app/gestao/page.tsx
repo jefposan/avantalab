@@ -3125,6 +3125,22 @@ useEffect(() => {
   }
 
   function acessarModuloInstalado(moduloId: string) {
+    if (!empresaId || !modulosAtivos.includes(moduloId)) {
+      abrirAviso('Acesso indisponível', 'Este módulo não está instalado no perfil atual.', undefined, 'erro');
+      return;
+    }
+    if (moduloId === 'ponto') {
+      if (!podeGerenciarPonto) { abrirAviso('Acesso não permitido', 'Seu usuário não tem permissão para gerenciar o Controle de Ponto.'); return; }
+      setModalModulos(false);
+      abrirPontoIntegrado();
+      return;
+    }
+    if (moduloId === 'vendas_mobile') {
+      if (!podeAcessarVendasMobileWeb) { abrirAviso('Acesso não permitido', 'Seu usuário não tem permissão para acessar o Conteúdo AvantaVendas.'); return; }
+      setModalModulos(false);
+      abrirConteudoVendasIntegrado();
+      return;
+    }
     const modulo = obterRegistroModulo(moduloId);
     if (!empresaId || modulo?.navegacao.modo !== 'pagina_total' || !modulo.navegacao.rota) {
       abrirAviso('Acesso indisponível', 'Não foi possível localizar a página deste módulo.', undefined, 'erro');
@@ -3132,6 +3148,24 @@ useEffect(() => {
     }
     setModalModulos(false);
     navegarParaModulo(modulo.id, modulo.navegacao.rota, empresaId);
+  }
+
+  function abrirPontoIntegrado() {
+    setAjustesAberto(false);
+    setAbaInicialPontoAdmin('lista');
+    setRelatorioInicialPonto(null);
+    setInstanciaPontoAdmin((atual) => atual + 1);
+    setModalPontoAdmin(true);
+    carregarFuncionariosPonto();
+    carregarPontoConfig();
+    carregarFuncionariosFacialPonto();
+    carregarDiasNaoUteisPonto();
+  }
+
+  function abrirConteudoVendasIntegrado() {
+    setAjustesAberto(false);
+    setMenuAjuste(null);
+    setModalNovidadesVendas(true);
   }
 
   function navegarParaModulo(moduloId: string, rota: string, empresaAtualId: string) {
@@ -11393,7 +11427,7 @@ if (validacaoTelefoneObrigatoria) {
         {modulosAtivos.includes('ponto') && podeGerenciarPonto && (
           <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="right" wrapperClassName="av-menu-gestao-atalho order-30 w-full">
             <button
-              onClick={() => { setAjustesAberto(false); setAbaInicialPontoAdmin('lista'); setRelatorioInicialPonto(null); setInstanciaPontoAdmin((atual) => atual + 1); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); carregarFuncionariosFacialPonto(); carregarDiasNaoUteisPonto(); }}
+              onClick={abrirPontoIntegrado}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >
@@ -11428,7 +11462,7 @@ if (validacaoTelefoneObrigatoria) {
         {modulosAtivos.includes('vendas_mobile') && podeAcessarVendasMobileWeb && (
           <Tooltip texto="Publique novidades, catálogo, fotos, vídeos e PDFs para a equipe do AvantaVendas." posicao="right" wrapperClassName="av-menu-gestao-atalho order-50 w-full">
             <button
-              onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setModalNovidadesVendas(true); }}
+              onClick={abrirConteudoVendasIntegrado}
               className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >

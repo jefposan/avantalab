@@ -1,6 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.33.04 -->
+<!-- ava-version: 3.0.0.33.05 -->
+
+> Revisão 3.0.0.33.05: acesso aos módulos integrados pelo catálogo Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 3.0.0.33.04: refinamento visual do estado **Registrando…** no botão
 > central do Controle de Ponto; sem impacto operacional.

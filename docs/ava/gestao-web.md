@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.33.04 -->
+<!-- ava-version: 3.0.0.33.05 -->
+
+> Revisão 3.0.0.33.05: em Menu > Módulos, Acessar nos cards instalados de Controle
+> de Ponto e Conteúdo AvantaVendas fecha o catálogo de módulos e abre seu popup.
+> O acesso pelo menu permanece igual e as permissões existentes são preservadas.
 
 > Revisão 3.0.0.33.04: refinamento visual do estado **Registrando…** no botão
 > central do Controle de Ponto; sem impacto operacional.
