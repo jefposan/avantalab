@@ -37,7 +37,7 @@ const providers: Array<{ id: MarketplaceId; name: string; logo: string; width: n
   { id: 'shopee', name: 'Shopee', logo: 'shopee.svg', width: 116, height: 36, available: false },
   { id: 'tiktok_shop', name: 'TikTok Shop', logo: 'tiktok-shop.svg', width: 160, height: 30, available: false },
   { id: 'magalu', name: 'Magalu', logo: 'magalu.svg', width: 122, height: 32, available: false, selectable: true },
-  { id: 'casas_bahia', name: 'Casas Bahia', logo: 'casas-bahia.svg', width: 124, height: 30, available: false },
+  { id: 'casas_bahia', name: 'Casas Bahia', logo: 'casas-bahia.svg', width: 288, height: 75, available: false },
   { id: 'amazon', name: 'Amazon', logo: 'amazon.svg', width: 97, height: 30, available: false },
 ];
 

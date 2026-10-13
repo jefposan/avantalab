@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.0.16 - 2026-10-12
+
+- Casas Bahia passa a usar a imagem clássica fornecida pelo usuário: CASAS
+  na faixa vermelha e BAHIA maior no azul, sem redesenhar letras nem alterar
+  os pixels da referência. SVG local enquadra somente a marca, sem margens.
+- Proporção preservada no seletor e na identidade das contas; azul #0055A4
+  acompanha a imagem. Mesmos componentes, dimensões de botão e estados.
+  Sem impacto operacional, alteração de integração ou publicação.
+- Validação: prévia local conferida, 37 testes de interface, lint do consumidor
+  e verificações PADRÃO AVANTA/Ava aprovados. Não executado novo build completo
+  neste refinamento exclusivamente visual.
+
 ## 3.0.0.15 - 2026-10-12
 
 - Retomada da aplicação Magalu existente, sem novo cadastro: migração OAuth

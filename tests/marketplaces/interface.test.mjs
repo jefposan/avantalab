@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createHash } from 'node:crypto';
 import { stripTypeScriptTypes } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { formatarMoedaDigitada } from '../../app/lib/formatters.ts';
@@ -39,7 +40,11 @@ test('seletor mantém marcas coloridas com assets locais, nome acessível e sele
       const svg = asset.toString('utf8');
       assert.match(svg, /<svg\b/);
       assert.doesNotMatch(svg, /<script\b|<foreignObject\b|\son[a-z]+\s*=/i);
-      assert.doesNotMatch(svg, /(?:href|src)=["'](?!#)[^"']+/i);
+      if (provider.id === 'casas_bahia') {
+        // Uma única imagem PNG local, incorporada sem alterações; nunca URLs remotas.
+        const sources=[...svg.matchAll(/(?:href|src)="([^"]+)"/g)].map(match=>match[1]);
+        assert.equal(sources.length,1);assert.match(sources[0],/^data:image\/png;base64,[A-Za-z0-9+/=]+$/);
+      } else assert.doesNotMatch(svg, /(?:href|src)=["'](?!#)[^"']+/i);
     } else assert.equal(asset.subarray(1, 4).toString(), 'PNG');
     assert.ok(css.includes(`.provider[data-provider="${provider.id}"]`));
   }
@@ -53,13 +58,16 @@ test('seletor mantém marcas coloridas com assets locais, nome acessível e sele
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.page \.provider \{ transition: none; \} \}/);
 });
 
-test('Casas Bahia usa desenho local, fundo azul e traço vermelho sem placa branca', () => {
+test('Casas Bahia usa a imagem clássica intacta, enquadrada sem margens, e seu azul original', () => {
   const svg=read('public/images/marketplaces/casas-bahia.svg');
-  assert.match(svg,/<rect width="124" height="30" rx="4" fill="#0033C6"\/>/);
-  assert.match(svg,/fill="#D43642"/);assert.match(svg,/fill="white"/);
-  assert.doesNotMatch(svg,/<rect[^>]+fill="white"|stroke="#E5E5E5"/);
-  assert.match(css,/\.provider\[data-provider="casas_bahia"\] \{[^}]*background: #0033c6;[^}]*color: #fff;/);
-  assert.match(css,/\.connectedAccount\[data-provider="casas_bahia"\][^}]*--account-marketplace-background: #0033c6;/);
+  assert.match(svg,/width="288" height="75" viewBox="16 122 288 75"/);
+  assert.match(svg,/<image x="0" y="0" width="320" height="320"/);
+  const data=Buffer.from(svg.match(/href="data:image\/png;base64,([A-Za-z0-9+/=]+)"/)[1],'base64');
+  assert.equal(data.subarray(1,4).toString(),'PNG');
+  assert.equal(createHash('sha256').update(data).digest('hex'),'7f510d115a413ecd399f769bf8b4730ddd4589c68e28c2f2990596a9029f3898');
+  assert.doesNotMatch(svg,/<text\b|<rect\b|<script\b|<foreignObject\b/);
+  assert.match(css,/\.provider\[data-provider="casas_bahia"\] \{[^}]*background: #0055a4;[^}]*color: #fff;/);
+  assert.match(css,/\.connectedAccount\[data-provider="casas_bahia"\][^}]*--account-marketplace-background: #0055a4;/);
 });
 
 test('retorno Magalu é limitado à janela aberta e conta autorizada não habilita operação nem renovação ML',()=>{

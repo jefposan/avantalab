@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.15 -->
+<!-- ava-version: 3.0.0.16 -->
+
+> Revisão 3.0.0.16: logo clássico Casas Bahia fornecido pelo usuário aplicado
+> ao seletor e à identidade das contas. Sem impacto operacional ou publicação.
 
 > Revisão 3.0.0.15: preparação do banco, retorno HTTPS e credenciais Magalu
 > concluídos, ainda sem publicação/ativação ou consentimento de loja real.

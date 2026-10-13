@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.15 -->
+<!-- ava-version: 3.0.0.16 -->
+
+> Revisão 3.0.0.16: logo clássico Casas Bahia no Marketplaces Web.
+> Sem impacto operacional no AvantaVendas; sem publicação.
 
 > Revisão 3.0.0.15: preparação OAuth Magalu e marca Casas Bahia em Marketplaces
 > Web. Sem impacto operacional no AvantaVendas; estoques permanecem separados.
