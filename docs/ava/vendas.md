@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.26 -->
+<!-- ava-version: 3.0.0.27 -->
+
+> Revisão 3.0.0.27: diagnóstico de relatórios Apple no Admin informa a data e o
+> código oficial da recusa. Sem impacto operacional no AvantaVendas.
 
 > Revisão 3.0.0.26: relatórios Google Play no Admin interpretam CSV UTF-16,
 > e o login administrativo permite o gerenciador de senha do navegador.

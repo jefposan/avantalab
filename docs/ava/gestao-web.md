@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.26 -->
+<!-- ava-version: 3.0.0.27 -->
+
+> Revisão 3.0.0.27: o diagnóstico de relatórios Apple inclui data e motivo oficial.
+> HTTP 403 não confirma falta de permissão da chave: conferir o código devolvido,
+> a situação do contrato e a chave ativa. Sincronização parcial não confirma que
+> todos os dias foram recuperados. Sem alteração nos controles da Gestão.
 
 > Revisão 3.0.0.26: o login do Admin permite reconhecimento pelo gerenciador de
 > senhas do navegador. Salvar/preencher depende das preferências do navegador;

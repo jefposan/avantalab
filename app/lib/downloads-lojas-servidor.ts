@@ -114,10 +114,19 @@ async function buscarRelatorioApple(data: string) {
   // A Apple publica o relatório diário com defasagem. Um 404 não representa
   // zero downloads: apenas significa que aquele dia ainda não está disponível.
   if (resposta.status === 404) return null;
-  if (resposta.status === 403) {
-    throw new Error('Apple respondeu 403: a chave configurada não tem acesso aos relatórios Sales and Trends. Confira sua permissão no App Store Connect.');
+  if (!resposta.ok) {
+    // O status 403 também pode indicar contrato pendente ou uma recusa para
+    // uma data específica. Preservar o diagnóstico oficial, sem inferir que
+    // a chave perdeu sua permissão. Não registrar token, chave ou headers.
+    const corpo = await resposta.json().catch(() => null) as {
+      errors?: Array<{ code?: string; detail?: string; title?: string }>;
+    } | null;
+    const erro = corpo?.errors?.[0];
+    const codigo = typeof erro?.code === 'string' && /^[A-Z0-9_.-]{1,120}$/i.test(erro.code) ? erro.code : '';
+    const detalhe = typeof erro?.detail === 'string' ? erro.detail
+      : typeof erro?.title === 'string' ? erro.title : '';
+    throw new Error(`Apple respondeu ${resposta.status} em ${data}${codigo ? ` (${codigo})` : ''}${detalhe ? `: ${detalhe.replace(/\s+/g, ' ').slice(0, 350)}` : '.'}`);
   }
-  if (!resposta.ok) throw new Error(`Apple respondeu ${resposta.status}.`);
   return lerRelatorioApple(descompactarRespostaApple(new Uint8Array(await resposta.arrayBuffer())));
 }
 

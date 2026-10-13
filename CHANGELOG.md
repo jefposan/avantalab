@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0.27 - 2026-10-13
+
+- Relatórios Apple: recusa informa a data, o código e a descrição oficial
+  devolvidos pela API. HTTP 403 não é mais atribuído automaticamente à permissão
+  da chave: também pode ocorrer por contrato pendente ou outra restrição.
+- Dados confirmados permanecem preservados durante falhas parciais. Diagnóstico
+  não inclui headers, tokens ou chaves. Manuais e Ava revisados.
+
 ## 3.0.0.26 - 2026-10-13
 
 - Google Play: leitura dos CSVs oficiais em UTF-16LE/BE, com ou sem BOM, e UTF-8

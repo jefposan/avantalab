@@ -58,6 +58,21 @@ test('Apple 403 informa recusa da chave e não grava zero nem avança o históri
     APPLE_APP_STORE_CONNECT_PRIVATE_KEY: 'simulada', APPLE_APP_STORE_VENDOR_NUMBER: 'vendor' },
     fetch: async () => new Response('{}', { status: 403 }),
   });
-  await assert.rejects(app.sincronizarDownloadsApple(), /403.*Sales and Trends/);
+  await assert.rejects(app.sincronizarDownloadsApple(), /403 em \d{4}-\d{2}-\d{2}/);
+  assert.equal(app.gravados.length, 0);
+});
+
+test('Apple distingue contrato pendente pela resposta oficial e não afirma falta de permissão', async () => {
+  const app = servidor({ env: { APPLE_APP_STORE_CONNECT_ISSUER_ID: 'issuer', APPLE_APP_STORE_CONNECT_KEY_ID: 'key',
+    APPLE_APP_STORE_CONNECT_PRIVATE_KEY: 'simulada', APPLE_APP_STORE_VENDOR_NUMBER: 'vendor' },
+    fetch: async () => Response.json({ errors: [{ code: 'FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED',
+      detail: 'This request requires an in-effect agreement that has not been signed or has expired.' }] }, { status: 403 }),
+  });
+  await assert.rejects(app.sincronizarDownloadsApple(), erro => {
+    assert.match(erro.message, /REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED/);
+    assert.match(erro.message, /in-effect agreement/);
+    assert.doesNotMatch(erro.message, /não tem acesso/);
+    return true;
+  });
   assert.equal(app.gravados.length, 0);
 });
