@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0.30 - 2026-10-13
+
+- Projetos: Reorganizar mostra tooltip e exige confirmação explícita antes de
+  substituir as posições manuais, inclusive de ramos recolhidos. Trocar a direção
+  usa a mesma confirmação. Cancelar ou fechar preserva posições e direção.
+- Textos e conexões permanecem preservados; Desfazer recupera a disposição anterior.
+- Publicação autorizada após validação; nenhum dado de projeto é reorganizado pela atualização.
+
 ## 3.0.0.28 - 2026-10-13
 
 - Magalu: a próxima reconexão pelo AvantaLab passa a solicitar, separadamente,

@@ -10,6 +10,7 @@ import { KanbanView } from './KanbanView';
 import { ListView } from './ListView';
 import { MapCanvas } from './MapCanvas';
 import { Modal } from './Modal';
+import Tooltip from '@/app/components/Tooltip';
 import { correspondeBusca, normalizarTexto } from '@/app/lib/formatters';
 
 function downloadJson(project: Project) {
@@ -48,6 +49,7 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
 }) {
   const [view, setView] = useState<ProjectView>('mapa');
   const [direction, setDirection] = useState<MapDirection>('horizontal');
+  const [reorganizeDirection, setReorganizeDirection] = useState<MapDirection | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [detailsId, setDetailsId] = useState<string | null>(null);
@@ -284,7 +286,7 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
 
     <div className={styles.workspaceToolbar}>
       <div className={styles.nodeSearch}><Icon name="search" size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar nós, etiquetas ou pessoas" aria-label="Buscar no projeto" />{query && <button type="button" onClick={() => { setQuery(''); setSearchHighlight(null); }} aria-label="Limpar busca">×</button>}{searchResults.length > 0 && <div className={styles.searchResults}>{searchResults.map((node) => <button type="button" key={node.id} onClick={() => { setSearchHighlight(node.id); setSelectedIds(new Set([node.id])); if (view !== 'mapa') setDetailsId(node.id); setQuery(''); }}><i style={{ background: node.color }}>{node.icon}</i><span><strong>{node.title}</strong><small>{NODE_TYPE_LABELS[node.type]} · {STATUS_LABELS[node.status]}</small></span></button>)}</div>}</div>
-      <div className={styles.toolbarButtons}><button type="button" className={filterOpen ? styles.toolbarActive : ''} onClick={() => setFilterOpen(!filterOpen)}><Icon name="filter" size={17} /> Filtros</button>{view === 'mapa' && !readOnly && <><button type="button" onClick={() => { const next = layoutProject(project, direction); onChange(next); onMessage('Mapa reorganizado.'); }}><Icon name="layout" size={17} /> Reorganizar</button><select aria-label="Direção do mapa" value={direction} onChange={(event) => { const next = event.target.value as MapDirection; setDirection(next); onChange(layoutProject(project, next)); }}><option value="horizontal">Esquerda → direita</option><option value="vertical">Cima → baixo</option></select></>}{!readOnly && <><button type="button" onClick={onUndo} disabled={!canUndo} aria-label="Desfazer"><Icon name="undo" size={17} /></button><button type="button" onClick={onRedo} disabled={!canRedo} aria-label="Refazer"><Icon name="redo" size={17} /></button></>}</div>
+      <div className={styles.toolbarButtons}><button type="button" className={filterOpen ? styles.toolbarActive : ''} onClick={() => setFilterOpen(!filterOpen)}><Icon name="filter" size={17} /> Filtros</button>{view === 'mapa' && !readOnly && <><Tooltip texto="Aplica o layout automático e substitui todas as posições manuais dos cards. Clique para revisar e confirmar." posicao="bottom"><button type="button" onClick={() => setReorganizeDirection(direction)}><Icon name="layout" size={17} /> Reorganizar</button></Tooltip><select aria-label="Direção do mapa" value={direction} onChange={(event) => setReorganizeDirection(event.target.value as MapDirection)}><option value="horizontal">Esquerda → direita</option><option value="vertical">Cima → baixo</option></select></>}{!readOnly && <><button type="button" onClick={onUndo} disabled={!canUndo} aria-label="Desfazer"><Icon name="undo" size={17} /></button><button type="button" onClick={onRedo} disabled={!canRedo} aria-label="Refazer"><Icon name="redo" size={17} /></button></>}</div>
       {filterOpen && <div className={styles.filterPanel}><label>Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="todos">Todos</option>{STATUSES.map((value) => <option key={value} value={value}>{STATUS_LABELS[value]}</option>)}</select></label><label>Prioridade<select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}><option value="todos">Todas</option>{PRIORITIES.map((value) => <option key={value} value={value}>{PRIORITY_LABELS[value]}</option>)}</select></label><label>Responsável<select value={assigneeFilter} onChange={(event) => setAssigneeFilter(event.target.value)}><option value="todos">Todos</option>{people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label><label>Tipo<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="todos">Todos</option>{Object.entries(NODE_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>Prazo e condição<select value={deadlineFilter} onChange={(event) => setDeadlineFilter(event.target.value)}><option value="todos">Todos</option><option value="atrasados">Atrasados</option><option value="concluidos">Concluídos</option><option value="sem_responsavel">Sem responsável</option><option value="com_prazo">Com prazo</option><option value="sem_prazo">Sem prazo</option></select></label></div>}
     </div>
 
@@ -294,6 +296,14 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
     </main>
 
     {view === 'mapa' && mapaEmFoco && <button type="button" className={styles.mapFocusToggleFloating} onClick={alternarFocoNoMapa} aria-label="Exibir cabeçalho do mapa" title="Exibir cabeçalho"><Icon name="fit" size={18} /><span>Exibir cabeçalho</span></button>}
+
+    <Modal open={reorganizeDirection !== null} onClose={() => setReorganizeDirection(null)} title="Reorganizar o mapa?" description="O layout automático substituirá toda a organização manual das posições dos cards, inclusive dos ramos recolhidos." compact>
+      <p>Os textos, funções e conexões serão preservados. A organização será aplicada na direção {reorganizeDirection === 'vertical' ? 'de cima para baixo' : 'da esquerda para a direita'}. Você poderá usar Desfazer após confirmar.</p>
+      <div className={styles.modalActions}>
+        <button type="button" className={styles.secondaryButton} onClick={() => setReorganizeDirection(null)}>Cancelar</button>
+        <button type="button" className={styles.primaryButton} onClick={() => { if (!reorganizeDirection || readOnly) return; const next = layoutProject(project, reorganizeDirection); setDirection(reorganizeDirection); setReorganizeDirection(null); onChange(next); onMessage('Mapa reorganizado. Use Desfazer para recuperar as posições anteriores.'); }}>Confirmar reorganização</button>
+      </div>
+    </Modal>
 
     <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title="Atalhos do Mapa de Projetos" description="Os atalhos são ignorados enquanto você edita um campo.">
       <div className={styles.shortcutList}>{[['Tab', 'Adicionar nó filho'], ['Shift + Tab', 'Adicionar nó irmão'], ['Duplo clique', 'Editar título'], ['Enter', 'Confirmar edição'], ['Esc', 'Cancelar ou fechar'], ['Delete / Backspace', 'Excluir com confirmação'], ['⌘/Ctrl + C', 'Copiar nó'], ['⌘/Ctrl + V', 'Colar nó'], ['⌘/Ctrl + Z', 'Desfazer'], ['⌘/Ctrl + Shift + Z', 'Refazer'], ['Botão direito', 'Abrir menu de ações']].map(([keys, action]) => <div key={keys}><kbd>{keys}</kbd><span>{action}</span></div>)}</div>

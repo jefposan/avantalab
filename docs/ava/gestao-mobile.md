@@ -1,6 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.28 -->
+<!-- ava-version: 3.0.0.30 -->
+
+> Revisão 3.0.0.30: confirmação de reorganização em Projetos Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 3.0.0.28: consentimento adicional de catálogo Magalu preparado no
 > Marketplaces Web, sem envio de produto, preço ou estoque. Sem impacto

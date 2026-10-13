@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.28 -->
+<!-- ava-version: 3.0.0.30 -->
+
+> Revisão 3.0.0.30: em Projetos, Reorganizar e a troca de direção do mapa exigem
+> confirmar o layout automático, que substitui todas as posições manuais, inclusive
+> de ramos recolhidos. Cancelar, fechar ou Escape preserva o mapa e a direção.
+> Textos e conexões não mudam; Desfazer recupera a disposição anterior na sessão.
 
 > Revisão 3.0.0.28: a reconexão da mesma loja Magalu pelo AvantaLab agora
 > solicita consentimento separado para categorias, SKU, preço e estoque. A
