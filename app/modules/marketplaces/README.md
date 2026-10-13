@@ -204,9 +204,17 @@ imperativa não recebem push nesta entrega. Provedores futuros exigem adaptadore
 
 ### Configuração
 
-#### Magalu — preparação 3.0.0.15 (integração não ativada)
+#### Magalu — OAuth habilitado em produção 3.0.0.18 (operações ainda pendentes)
 
-- Retomada da aplicação existente: banco preparado e verificado no projeto
+- Em 3.0.0.18, usuário autorizou a publicação dos refinamentos e ativação do
+  OAuth para consentimento da loja. Flag de produção `MAGALU_OAUTH_ENABLED=true`
+  neste deploy; no local permanece falsa (cofre real não exportável).
+  Nenhuma aplicação/credencial foi recriada, escopo ampliado ou estoque alterado.
+  Após deploy, validar a origem/rota protegida e iniciar pelo botão autenticado.
+  Consentimento real depende do responsável e sua organização seller. A marca
+  continua Em preparação pelas operações ainda pendentes, não por OAuth desligado.
+
+- Preparação anterior (3.0.0.15), mantida como registro: banco verificado no projeto
   Supabase AvantaLab em 12/10/2026; contas/pendências ML preservadas, RLS ativo
   e sem acesso anon/authenticated. Nenhum estoque ou token existente alterado.
 - Credenciais Magalu configuradas para produção na Vercel; client secret como

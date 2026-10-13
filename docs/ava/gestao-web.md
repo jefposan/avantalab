@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.17 -->
+<!-- ava-version: 3.0.0.18 -->
+
+> Revisão 3.0.0.18: publicação autorizada dos ajustes de contas Magalu e logo
+> clássico Casas Bahia com fundo branco. OAuth Magalu habilitado em produção:
+> selecione **Magalu**, use **Conectar outra conta** e entre como responsável
+> pela loja no ID Magalu para escolher a organização e autorizar as consultas.
+> Após confirmação real, fecha o popup, atualiza contas e pede identificação.
+> Não afirmar que uma loja está conectada antes desse retorno. **Em preparação**
+> permanece porque anúncios, vendas e estoque Magalu ainda não estão integrados.
+> A conta autorizada mostra sincronização pendente; ML permanece operacional.
 
 > Revisão 3.0.0.17: Casas Bahia mantém o logo clássico sobre fundo externo
 > branco no seletor e nas contas. Sem impacto operacional ou publicação.

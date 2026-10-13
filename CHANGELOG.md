@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.0.0.18 - 2026-10-12
+
+- Entrega autorizada para produção das revisões 3.0.0.15 a 3.0.0.17: retorno
+  automático Magalu, lista de contas autorizadas e logo clássico Casas Bahia
+  sobre fundo branco.
+- OAuth Magalu habilitado em produção para testar consentimento da loja,
+  reaproveitando a aplicação, banco e cofre existentes. Somente os três escopos
+  de consulta aprovados; nenhuma ampliação para escrita ou mudança no ML.
+- Autorizar a loja confirma a conta e solicita identificação; anúncios,
+  vendas e estoque Magalu continuam pendentes dos adaptadores. Marca mantém
+  Em preparação por esse motivo. Renovação ML não é aplicada a conta Magalu.
+
+- Validação anterior à publicação: build, 1.019 testes, lint dos consumidores
+  alterados e verificações PADRÃO AVANTA/Ava aprovados. Consentimento real
+  da loja ainda depende do responsável; não equivale a sincronização Magalu.
+
 ## 3.0.0.17 - 2026-10-12
 
 - Fundo externo branco para Casas Bahia no seletor e na identificação das

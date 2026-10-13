@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.17 -->
+<!-- ava-version: 3.0.0.18 -->
+
+> Revisão 3.0.0.18: publicação dos ajustes Marketplaces Web e habilitação
+> OAuth Magalu para consentimento da loja, sem anúncios/vendas/estoque Magalu.
+> Sem impacto operacional na Gestão Mobile/AvantaPreços.
 
 > Revisão 3.0.0.17: fundo externo branco da marca Casas Bahia no Marketplaces
 > Web. Sem impacto operacional na Gestão Mobile/AvantaPreços; sem publicação.
