@@ -18,6 +18,7 @@ export function inventoryLines(raw: unknown): InventoryLine[] {
   return [...lines.values()];
 }
 export function safeMarketplaceLink(provider: string, value: unknown): string | null {
+  if (provider === 'magalu') return value === 'https://seller.magalu.com' || value === 'https://seller.magalu.com/' ? value : null;
   if (provider !== 'mercado_livre' || typeof value !== 'string') return null;
   try {
     const url = new URL(value);

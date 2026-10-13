@@ -1,6 +1,7 @@
 /** Contratos oficiais: /post-purchase/v1/claims e /post-purchase/v2/claims/{id}/returns.
  * O retorno do produto e o reembolso nunca são inferidos do cancelamento do pedido.
- * Apenas campos permitidos chegam à tela; conversa, anexos e endereços brutos não.
+ * Apenas campos permitidos chegam à tela; anexos e endereços brutos não.
+ * Magalu usa os protocolos SAC; mensagens são texto seguro, nunca HTML executável.
  */
 export type ReturnDetails = {
   processState: 'open' | 'closed' | 'unknown';
@@ -8,6 +9,10 @@ export type ReturnDetails = {
   physicalReturn: boolean; shipments: Array<{ id: string; statusText: string; destinationText: string; tracking: string | null }>;
 };
 export type ClaimDetails = {
+  reference?: string;
+  messages?: Array<{ id: string; text: string; date: string | null }>;
+  events?: Array<{ id: string; text: string; date: string | null }>;
+  returnRecords?: Array<{ id: string; statusText: string }>;
   processState: 'open' | 'closed' | 'unknown';
   id: string; statusText: string; typeText: string; reasonText: string;
   resolutionText: string | null; actions: Array<{ text: string; dueAt: string | null; required: boolean }>;
@@ -17,6 +22,8 @@ export type ClaimDetails = {
   returnDetails: ReturnDetails | null;
 };
 export type PostSaleDetails = {
+  provider?: 'mercado_livre' | 'magalu';
+  financialEntries?: Array<{ text: string; value: number | null; statusText: string; date: string | null }>;
   processState?: 'open' | 'closed' | 'unknown';
   checkedAt: string; cancellation: { reasonText: string; requestedByText: string; date: string | null } | null;
   refundText: string; refundedAmount: number | null; currency: string;

@@ -23,6 +23,7 @@ import Vendas from './Vendas';
 import SalesFilters from './SalesFilters';
 import { saleGroup, salesInPeriod, salesSummary, type SaleGroup, type SalePeriod } from '@/app/modules/marketplaces/sales-status';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
+import { salesAccountAvailable } from '@/app/modules/marketplaces/magalu-sales-model';
 import { inventoryIssueMessage, type MarketplaceLiveFeed } from '@/app/modules/marketplaces/live-feed';
 import { createPassiveRefresh } from './passive-refresh';
 import { Icon } from '@/app/projetos/components/Icon';
@@ -76,7 +77,8 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const [backgroundRefresh, setBackgroundRefresh] = useState(0);
   const [updatesAvailable, setUpdatesAvailable] = useState(false);
   const [inventorySnapshot, setInventorySnapshot] = useState<MarketplaceLiveFeed | null>(null);
-  type SalesData = { sales: MarketplaceSale[]; awaitingUpdates: number };
+  type SalesData = { sales: MarketplaceSale[]; awaitingUpdates: number; warnings?: string[] };
+  const [salesWarnings, setSalesWarnings] = useState<string[]>([]);
   const salesReader = useRef<ReturnType<typeof createPassiveRefresh<SalesData>> | null>(null);
   const [liveFeed, setLiveFeed] = useState<MarketplaceLiveFeed | null>(null);
   const [liveUnavailable, setLiveUnavailable] = useState(false);
@@ -136,7 +138,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const selectedProvider = useMemo(() => providers.find((provider) => provider.id === marketplace)!, [marketplace]);
   const loadAccounts = useCallback((available: MarketplaceAccount[], canManageConnection: boolean, labelsAvailable = true) => {
     setAccounts(previous => available.map(account => preserveNewerAccountLabel(previous.find(known => known.id === account.id), account)));
-    setSalesAccount(current => available.some(account => account.id === current && account.status === 'connected') ? current : '');
+    setSalesAccount(current => available.some(account => account.id === current && salesAccountAvailable(account)) ? current : '');
     setCanManageConnections(canManageConnection);
     setIdentificationAvailable(labelsAvailable);
     setSelectedAccount((current) => {
@@ -204,12 +206,13 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }
 
   const connectedAccounts = accounts.filter((account) => account.status === 'connected');
+  const salesAccounts = accounts.filter(salesAccountAvailable);
   const renewableAccounts = accounts.filter((account) => ['connected', 'expired', 'attention'].includes(account.status));
   const marketplaceAccounts = accountsForMarketplace(accounts, marketplace);
   const displayedAccounts = accountsForMarketplace(renewableAccounts, marketplace);
   const displayedConnectedAccounts = accountsForMarketplace(connectedAccounts, marketplace);
   const publicationAccountId = publicationAccount(marketplaceAccounts, selectedAccount);
-  const accountSignature = connectedAccounts.map((account) => account.id).sort().join(',');
+  const accountSignature = salesAccounts.map((account) => account.id).sort().join(',');
   const periodSales = useMemo(() => salesInPeriod(sales, salesPeriod), [sales, salesPeriod]);
   const summary = useMemo(() => salesSummary(periodSales, salesGroup), [periodSales, salesGroup]);
   const accountSalesSummary = useMemo(() => salesSummary(periodSales.filter(sale => !salesAccount || sale.connectionId === salesAccount), ''), [periodSales, salesAccount]);
@@ -240,7 +243,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     const reader = createPassiveRefresh<SalesData>({
       read: signal => marketplaceClientRequest(`vendas?empresaId=${encodeURIComponent(companyId)}&scope=all`, undefined, signal),
       onLatest: data => setSales(data.sales || []),
-      onVisible: data => { setSalesSnapshot(data.sales || []); setAwaitingUpdates(data.awaitingUpdates || 0); },
+      onVisible: data => { setSalesSnapshot(data.sales || []); setAwaitingUpdates(data.awaitingUpdates || 0); setSalesWarnings(data.warnings || []); },
       onLoading: loading => { setSalesLoading(loading); if (loading) setSalesError(''); },
       onError: error => setSalesError(error instanceof Error ? error.message : 'Não foi possível carregar as vendas.'),
     });
@@ -508,7 +511,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       </> : inventorySnapshot ? 'A sincronização automática de estoque ainda precisa ser ativada nesta empresa.' : 'Consultando situação da sincronização…'}
     </div>
     <AvantaKanban className={styles.panelOrder} order={panelOrder.order} onOrderChange={panelOrder.change} disabled={!panelOrder.ready || publicationBusy || priceUsersOpen || !!disconnectAccount} items={[
-      { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={account => { setSalesSnapshot(sales); setSalesAccount(account); }} group={salesGroup} onGroupChange={selectSalesInPanel} counts={accountSalesSummary.byGroup} total={accountSalesSummary.total} accounts={connectedAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
+      { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={account => { setSalesSnapshot(sales); setSalesAccount(account); }} group={salesGroup} onGroupChange={selectSalesInPanel} counts={accountSalesSummary.byGroup} total={accountSalesSummary.total} accounts={salesAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} warnings={salesWarnings} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
       { id: 'products', title: 'Produtos e estoque', render: (handle) => <ProductsStock key={companyId} companyId={companyId} accounts={accounts} publicationAccounts={marketplaceAccounts} canManage={canManage} dark={empresa.temaEscuro} brand={empresa.corPrimaria} refreshKey={refreshKey} preparationLocked={publicationBusy || accountSelectionLocked || !selectedProvider.available} reorderHandle={handle} onPrepare={(localProductId, targetConnectionId) => {
         if (!marketplaceAccounts.some(account => account.id === targetConnectionId && account.status === 'connected')) return;
         setSelectedAccount(targetConnectionId); setCopyRequest({ id: crypto.randomUUID(), localProductId, targetConnectionId });

@@ -136,6 +136,10 @@ export async function exchangeMagaluAuthorizationCode(code: string, intent: Maga
   const data = await response.json().catch(() => null) as { access_token?: unknown; refresh_token?: unknown; expires_in?: unknown; token_type?: unknown; scope?: unknown } | null;
   if (!response.ok) throw magaluProviderRejection(response.status, data);
   if (!data) throw new MagaluConnectionError('response_invalid', { providerStatus: response.status, issue: 'response_json' });
+  return validateMagaluTokens(data);
+}
+
+async function validateMagaluTokens(data: { access_token?: unknown; refresh_token?: unknown; expires_in?: unknown; token_type?: unknown; scope?: unknown }) {
   if (typeof data.access_token !== 'string' || !data.access_token || typeof data.refresh_token !== 'string' || !data.refresh_token) throw new MagaluConnectionError('response_invalid', { issue: 'token_fields' });
   if (data.token_type !== 'Bearer') throw new MagaluConnectionError('response_invalid', { issue: 'token_type' });
   if (typeof data.expires_in !== 'number' || !Number.isFinite(data.expires_in) || data.expires_in <= 0 || data.expires_in > 7200) throw new MagaluConnectionError('response_invalid', { issue: 'expires_in' });
@@ -146,4 +150,23 @@ export async function exchangeMagaluAuthorizationCode(code: string, intent: Maga
   await confirmMagaluSeller(data.access_token, metadata.sellerReference);
   return { accessToken: data.access_token, refreshToken: data.refresh_token, scopes, sellerReference: metadata.sellerReference,
     expiresAt: new Date(Math.min(metadata.expiresAt, Date.now() + data.expires_in * 1000)).toISOString() };
+}
+
+/** Renovação exclusivamente server-side, com o mesmo tenant e consultas conferidos. */
+export async function refreshMagaluToken(refreshToken: string, configuration: MagaluConfiguration) {
+  let response: Response;
+  try {
+    response = await fetch('https://id.magalu.com/oauth/token', {
+      method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'refresh_token', client_id: configuration.clientId, client_secret: configuration.clientSecret, refresh_token: refreshToken }),
+      cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(12_000),
+    });
+  } catch { throw new MagaluConnectionError('token_network'); }
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    if (response.status === 400 && data?.error === 'invalid_grant') throw new MagaluConnectionError('authorization_revoked');
+    throw magaluProviderRejection(response.status, data);
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new MagaluConnectionError('response_invalid', { issue: 'response_json' });
+  return validateMagaluTokens(data);
 }

@@ -1,5 +1,31 @@
 # Changelog
 
+## 3.0.0.23 - 2026-10-13
+
+- Integração local de consulta de vendas e pós-venda Magalu no painel existente
+  de Vendas: filtros, contagens, pedidos, várias entregas, prazo de preparação
+  e chaves/situações de notas fiscais, sem alterar a interface do ML.
+- Protocolos vinculados ao pedido/loja/canal, motivos e situações em português,
+  responsável, prazo, mensagens e histórico. Registros financeiros separados
+  por crédito/débito, sem somar dinheiro recebido ou deduzir reembolso.
+- Consulta paginada com cursor, janela fixa e retomada sem pular pedidos,
+  atualização silenciosa e rodada Magalu no agendador existente. Aviso de nova
+  venda por pedido, sem duplicação e sem alertar importação anterior à ativação.
+- Revalidação de empresa/conta/pedido, rotas GET permitidas, cofre e renovação
+  de tokens com trava e comparação concorrente; recusa de autorização incompleta
+  ou de resposta de outra loja. Dados brutos e credenciais não chegam à tela.
+- Migração preparada e validada em banco isolado; NÃO aplicada à produção.
+  Consentimento real das 14 consultas e pedidos reais ainda precisam ser validados.
+  Devolução registrada não confirma produto recebido; ausência só aparece após
+  consulta integral. Geração de etiquetas, escrita, conversas fora dos protocolos,
+  arquivos fiscais e conector de estoque Magalu permanecem etapas separadas.
+- Sem publicação. Manuais da Ava e guia executável revisados conforme
+  PADRÃO AVANTA 1.17.0; testes de simulação, apresentação e PostgreSQL local.
+- Validação: build completo, 1.066 testes aprovados, lint, PADRÃO AVANTA e Ava;
+  conferência visual com dados fictícios em desktop e celular (390 px), sem
+  rolagem horizontal. Renovação/revogação e autorização concorrente simuladas;
+  servidor original da porta 3000 preservado, prévia isolada na porta 3011.
+
 ## 3.0.0.22 - 2026-10-13
 
 - Com autorização explícita do administrador, reunião de 14 consultas Magalu

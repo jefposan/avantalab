@@ -43,3 +43,13 @@ test('acesso negado oferece orientação sem declarar ausência nem autorizar re
   assert.ok(!html.includes('Nenhuma reclamação vinculada'));
   assert.match(html, /Não foi possível confirmar se existe devolução/);
 });
+
+test('Magalu reutiliza o painel, sem orientação do ML, com mensagens escapadas e portal próprio', () => {
+  const details = { provider: 'magalu', checkedAt: fixtureDetails.checkedAt, cancellation: null, currency: 'BRL', refundText: 'Reembolso não confirmado', refundedAmount: null,
+    claimsComplete: true, returnsComplete: false, warnings: [], accessIssues: [{ permissionDenied: true }], financialEntries: [{ text: 'Débito · Comissão', value: 10, statusText: 'Concluída', date: null }],
+    claims: [{ id: 'teste', typeText: 'Cancelamento', statusText: 'Aguardando vendedor', reasonText: 'Produto com defeito', actions: [], messages: [{ id: 'msg', text: '<img src=x onerror=alert(1)>', date: null }], events: [{ id: 'evt', text: 'Reembolso autorizado', date: null }], returnRecords: [{ id: 'ret', statusText: 'Devolução registrada' }] }] };
+  const html=renderPostSale({details});
+  assert.match(html,/Pós-venda · Magalu/);assert.match(html,/https:\/\/seller.magalu.com/);assert.doesNotMatch(html,/Mercado Livre|DevCenter|claims e returns/);
+  assert.match(html,/&lt;img/);assert.doesNotMatch(html,/<img/);assert.match(html,/recebimento físico ainda não foi confirmado/);assert.match(html,/Histórico do protocolo/);assert.match(html,/Mensagens do protocolo/);
+  assert.match(renderPostSale({details:null,provider:'magalu',loading:true}),/no Magalu/);
+});

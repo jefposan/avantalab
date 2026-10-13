@@ -1,6 +1,20 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.22 -->
+<!-- ava-version: 3.0.0.23 -->
+
+> Revisão 3.0.0.23 (somente local, sem publicação): consulta de vendas e pós-venda
+> Magalu preparada no mesmo painel do ML. Vendas reúne contas autorizadas; use
+> Conta das vendas e Situação para filtrar. Expandir o pedido mostra suas entregas,
+> preparação, notas fiscais informadas e Pós-venda · Magalu. Protocolos incluem
+> motivo, situação, responsável, prazo, mensagens e histórico quando disponíveis.
+> Cancelamento não comprova devolução nem reembolso; remessa de retorno não
+> confirma recebimento físico. Falha ou acesso negado não significam ausência.
+> Movimentações financeiras não equivalem a saldo recebido. Respostas, devoluções
+> e reembolsos continuam no portal Magalu; procure o pedido na mesma loja.
+> Não há geração de etiquetas, sincronização de estoque Magalu, anexos fiscais
+> ou conversas fora de protocolos nesta etapa. Migração só testada em banco isolado:
+> aplicar e validar autorização das 14 consultas/pedidos reais antes de ativar.
+> Não afirmar que vendas reais foram carregadas ou que produção já foi atualizada.
 
 > Revisão 3.0.0.22 (código local, sem publicação): uma única autorização Magalu
 > solicita as 14 consultas aprovadas: pedidos, produtos, estoque, entregas,

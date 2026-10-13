@@ -8,6 +8,7 @@ import { readOrderSearchPages, reconcileSalesHistory } from './mercadolivre-sale
 import { listingStockPolicy } from './inventory-model';
 import { objectValue } from './listing-model';
 import { stockModelFromResponse } from './mercadolivre-edit-policy';
+import { salesAccountAvailable } from '../magalu-sales-model';
 
 type StockJob = { link_id: string; empresa_id: string; product_id: string; desired_quantity: number; revision: number; generation: string; allow_increase: boolean; attempts: number };
 const failureCode = (error: unknown) => error instanceof MarketplaceError ? error.code : 'processing';
@@ -112,6 +113,23 @@ export async function runMarketplaceWorker(db: SupabaseClient) {
     const worker = await db.from('marketplace_inventory_worker').select('turn').eq('id', 1).maybeSingle();
     assertDatabase(worker.error);
     const turn = Number(worker.data?.turn || 0) % 3;
+    const refreshMagalu = async () => {
+      if (!process.env.MAGALU_CLIENT_ID || !process.env.MAGALU_CLIENT_SECRET || Date.now() > deadline - 30_000) return;
+      const accounts = await db.from('marketplace_connections').select('id,empresa_id,provider,status,last_error_code,last_checked_at')
+        .in('empresa_id', enabled).eq('provider', 'magalu').in('status', ['connected', 'attention']).order('last_checked_at', { nullsFirst: true });
+      assertDatabase(accounts.error);
+      const candidate = accounts.data?.find(salesAccountAvailable);
+      if (!candidate) return;
+      try {
+        const { loadMagaluConnection } = await import('./magalu-request');
+        const { syncMagaluSales } = await import('./magalu-sales');
+        await syncMagaluSales(db, await loadMagaluConnection(db, candidate.empresa_id, candidate.id), deadline - 3_000);
+      } catch (error) { issue = failureCode(error); }
+      // O rodízio inclui falhas: uma loja sem permissão não bloqueia as demais.
+      const checked = await db.from('marketplace_connections').update({ last_checked_at: new Date().toISOString() })
+        .eq('empresa_id', candidate.empresa_id).eq('id', candidate.id).eq('provider', 'magalu');
+      assertDatabase(checked.error);
+    };
     const refreshPending = async () => {
       if (Date.now() > deadline - 24_000) return;
       const accounts = await db.from('marketplace_connections').select('id').in('empresa_id', enabled).eq('provider', 'mercado_livre').eq('status', 'connected');
@@ -174,7 +192,7 @@ export async function runMarketplaceWorker(db: SupabaseClient) {
     // Histórico usa rodada própria e rodízio próprio; não ocupa a janela de vendas novas.
     if (turn === 2) await reconcile(true);
     // Reconfere pedidos e pós-vendas ainda abertos mesmo sem novo webhook.
-    if (turn === 1) await refreshPending();
+    if (turn === 1) { await refreshMagalu(); await refreshPending(); }
     const queued = await db.from('marketplace_sale_notifications').select('empresa_id,connection_id').in('empresa_id', enabled).is('processed_at', null).lte('next_attempt_at', new Date().toISOString()).order('priority').order('created_at').limit(100);
     assertDatabase(queued.error);
     for (const row of [...new Map((queued.data || []).map(row => [row.connection_id, row])).values()]) {

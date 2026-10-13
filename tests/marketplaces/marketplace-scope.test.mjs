@@ -47,5 +47,6 @@ test('navegação fica no contexto da página inteira, mede altura real e manté
   assert.match(listings, /scopedAccounts.filter/);
   assert.match(products, /const publicationAccounts = props.publicationAccounts \?\? accounts/);
   assert.match(products, /!validTargetAccount/);
-  assert.match(client, /<Vendas[\s\S]*?accounts=\{connectedAccounts\}/);
+  assert.match(client, /<Vendas[\s\S]*?accounts=\{salesAccounts\}/);
+  assert.match(client, /const salesAccounts = accounts.filter\(salesAccountAvailable\)/);
 });

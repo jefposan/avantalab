@@ -75,7 +75,7 @@ test('header usa o handler global e escolher conta para publicar não restringe 
   assert.match(client, /onGroupChange=\{group => selectSalesFromHeader\(\{ group \}\)\}/);
   assert.match(client, /connectedAccountSelect\} onClick=\{\(\) => setSelectedAccount\(account.id\)\}/);
   assert.match(client, /onAccountChange=\{account => \{ setSalesSnapshot\(sales\); setSalesAccount\(account\); \}\}/);
-  assert.match(client, /setSalesAccount\(current => available.some\(account => account.id === current && account.status === 'connected'\) \? current : ''\)/);
+  assert.match(client, /setSalesAccount\(current => available.some\(account => account.id === current && salesAccountAvailable\(account\)\) \? current : ''\)/);
 });
 
 test('situação do bloco substitui a do header sem perder conta ou período; última escolha prevalece', () => {

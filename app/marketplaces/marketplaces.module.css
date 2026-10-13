@@ -576,3 +576,4 @@
 @media (max-width: 760px) { .providerGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.page .provider { min-height: 104px; padding: 18px 12px; }.providerLogo { height: 30px; } }
 @media (prefers-reduced-motion: reduce) { .page .provider { transition: none; } }
 @media (max-width: 760px) { .postSale dl > div { grid-template-columns: 1fr; }.postSale .refreshSales, .postSaleLink { min-height: 48px; }.saleSummary b { max-width: 42%; } }
+.postSaleMessage { margin: 0; font-size: 12px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }

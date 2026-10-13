@@ -119,7 +119,7 @@ export function MarketplaceSaleAlertView({ alert, remaining = 0, message = '', b
   const date = new Date(alert.sold_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
   const text = `${alert.account_name || 'Conta conectada'} · ${providerName(alert.provider)}\nPedido #${alert.order_id} · ${date}\n\n${alert.quantity} × ${alert.title}\n\nConfira o pedido e a liberação do envio na plataforma.${remaining ? `\nMais ${remaining} aviso(s) aguardando.` : ''}${message ? `\n\n${message}` : ''}`;
   return <ModalConfirmacao aberto titulo="Nova venda" rotuloCabecalho="Marketplaces" mensagem={text} variante="primaria"
-    textoCancelar="Entendi" textoConfirmar={`Ver anúncio no ${providerName(alert.provider)}`} carregando={busy}
+    textoCancelar="Entendi" textoConfirmar={alert.provider === 'magalu' ? 'Ver pedido no Magalu' : `Ver anúncio no ${providerName(alert.provider)}`} carregando={busy}
     corPrimaria={brand} darkMode={dark} aoCancelar={onAcknowledge} aoConfirmar={onOpen} />;
 }
 

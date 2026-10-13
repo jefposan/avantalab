@@ -1,6 +1,6 @@
 # Magalu — autorização única de consultas
 
-Revisão: 3.0.0.22, 13/10/2026. Código ainda não publicado.
+Revisão: 3.0.0.23, 13/10/2026. Código ainda não publicado.
 
 O administrador autorizou consultas de pedidos, entregas, documentos fiscais,
 pós-venda, mensagens de compradores e informações financeiras. A fonte
@@ -44,9 +44,35 @@ foram modificados. A inspeção não exibiu credenciais ou dados de compradores.
    vínculos; não exige excluir ou desconectar a conta.
 
 Não houve novo consentimento de vendedor ou gravação de tokens em produção
-nesta etapa. A autorização prepara acesso às APIs; exibir/sincronizar essas
-informações no módulo ainda depende dos adaptadores Magalu. Não afirmar que
-pedidos, devoluções, relatórios ou mensagens reais já foram carregados.
+nesta etapa. Adaptadores de vendas/pós-venda e apresentação estão preparados
+localmente na 3.0.0.23. A migração `20261013150000_marketplace_magalu_sales.sql`
+foi testada somente em PostgreSQL isolado: ainda precisa ser aplicada ao destino
+autorizado. Não afirmar que dados reais já foram carregados ou produção ativada.
+
+## Consulta preparada (3.0.0.23)
+
+- Pedidos paginados com janela de atualização fixa, cursor e retomada; nenhuma
+  exclusão de canceladas. Atualização silenciosa, sem trocar a lista em foco.
+- Filtros existentes de conta/situação/período e detalhes dos vários pacotes,
+  prazo de preparação e chave/situação da nota fiscal quando informados.
+- Protocolos ligados ao código/UUID do pedido, canal, entrega e vendedor;
+  situação, motivo, responsável, prazo, mensagens e histórico em português.
+- Registros financeiros ligados ao UUID do pedido, sem totalizar recebimento
+  ou reembolso: crédito, débito e informativo são distintos.
+- Registro de remessa de devolução não comprova produto recebido. O contrato
+  detalhado da remessa ainda precisa ser confirmado com resposta real; não
+  inventar situação, rastreamento, recebimento físico ou valor reembolsado.
+- Banco privado com RLS, trava por conta, renovação protegida de token e aviso
+  deduplicado por pedido aprovado após conexão/ativação. Consulta incompleta não
+  avança cursor nem vira ausência de reclamações. Rotina usa o agendador existente,
+  somente nas empresas com módulo vigente e rotina habilitada.
+- Não implementados nesta etapa: arquivos/anexos fiscais, conversas fora dos
+  protocolos, transações detalhadas SAC, etiquetas, publicação e estoque Magalu.
+  Permissão configurada não equivale a endpoint implementado.
+
+Antes de ativar: aplicar migração com aprovação, autorizar a mesma loja com as
+14 consultas e verificar pedidos reais, protocolos/remessas/financeiro, filtros
+e avisos. O teste prévio de identidade da loja usava outro conjunto de consultas.
 
 ## Limites
 

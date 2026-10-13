@@ -8,7 +8,9 @@ import { inventoryLines } from './inventory-model';
 import type { PostSaleProgress } from '../listing-operations';
 
 export type SaleNotification = { id: string; seller: string; topic: 'orders_v2' | 'orders' | 'shipments' | 'items'; resource: string; orderId?: string; shipmentId?: string; listingId?: string };
-export type MarketplaceSale = { id: string; connectionId: string; orderId: string; soldAt: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: Array<{ title: string; quantity: number; unitPrice: number | null }> };
+export type MarketplaceSale = { provider?: 'mercado_livre' | 'magalu'; providerOrderStatus?: string; warnings?: string[];
+  deliveries?: Array<{ id: string; code: string; status: string | null; statusText: string; deadline: string | null; invoices: Array<{ key: string | null; statusText: string }> }>;
+  id: string; connectionId: string; orderId: string; soldAt: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: Array<{ title: string; quantity: number; unitPrice: number | null }> };
 
 const orderId = (value: unknown) => /^\d{1,24}$/.test(String(value)) ? String(value) : '';
 const shipmentId = orderId;
@@ -49,9 +51,13 @@ function saleSnapshot(order: Record<string, unknown>, shipment: Record<string, u
   };
 }
 
-function publicSale(row: Record<string, unknown>): MarketplaceSale {
+export function publicSale(row: Record<string, unknown>): MarketplaceSale {
   const snapshot = objectValue(row.snapshot);
-  return { id: String(row.id), connectionId: String(row.connection_id), orderId: String(row.provider_order_id), soldAt: text(snapshot.soldAt, 80) || String(row.created_at), status: text(row.status, 80), shipmentId: typeof row.shipment_id === 'string' ? row.shipment_id : null,
+  return { ...(row.provider === 'magalu' ? { provider: 'magalu' as const, providerOrderStatus: text(snapshot.providerOrderStatus),
+    warnings: (Array.isArray(snapshot.warnings) ? snapshot.warnings : []).filter((warning): warning is string => typeof warning === 'string').map(warning => text(warning)),
+    deliveries: (Array.isArray(snapshot.deliveries) ? snapshot.deliveries : []).map(objectValue).map(delivery => ({ id: text(delivery.id,100), code: text(delivery.code,100), status: typeof delivery.status === 'string' ? text(delivery.status) : null, statusText: text(delivery.statusText), deadline: typeof delivery.deadline === 'string' ? text(delivery.deadline,80) : null,
+      invoices: (Array.isArray(delivery.invoices) ? delivery.invoices : []).map(objectValue).map(invoice => ({key: /^\d{44}$/.test(String(invoice.key)) ? String(invoice.key) : null, statusText:text(invoice.statusText)})) })) } : {}),
+    id: String(row.id), connectionId: String(row.connection_id), orderId: String(row.provider_order_id), soldAt: text(snapshot.soldAt, 80) || String(row.created_at), status: text(row.status, 80), shipmentId: typeof row.shipment_id === 'string' ? row.shipment_id : null,
     shipmentStatus: typeof row.shipment_status === 'string' ? row.shipment_status : null, shipmentSubstatus: typeof row.shipment_substatus === 'string' ? row.shipment_substatus : null,
     labelStatus: row.label_status === 'ready' || row.label_status === 'fulfilled' ? row.label_status : 'unavailable', seenAt: typeof row.seen_at === 'string' ? row.seen_at : null,
     createdAt: String(row.created_at), updatedAt: String(row.updated_at), buyer: typeof snapshot.buyer === 'string' ? snapshot.buyer : null,

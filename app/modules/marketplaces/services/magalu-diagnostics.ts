@@ -24,6 +24,7 @@ const messages = {
   seller_access_denied: 'O Magalu não liberou o acesso vendedor desta conta. Conecte novamente e escolha a loja, não o perfil pessoal. Se já escolheu a loja, confira a liberação da integração no Magalu.',
   seller_verification_failed: 'Não conseguimos confirmar a loja no Magalu agora. Tente novamente em instantes; se continuar, avise o administrador.',
   token_expired: 'O Magalu retornou uma autorização já vencida. Inicie uma nova conexão.',
+  authorization_revoked: 'A autorização desta loja venceu ou foi revogada. Conecte a mesma loja novamente, sem excluir a conta.',
   connection_database: 'O AvantaLab não conseguiu salvar a conta Magalu. Tente novamente; se continuar, avise o administrador.',
   connection_changed: 'A conta mudou durante a conexão. Atualize as contas e tente conectar novamente.',
   vault_unavailable: 'O AvantaLab não conseguiu guardar a autorização com segurança. Avise o administrador.',

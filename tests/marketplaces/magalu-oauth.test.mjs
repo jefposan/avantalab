@@ -90,6 +90,24 @@ function mockTokenFetch(handler) {
     : handler(url,options);
 }
 
+test('refresh usa formulário oficial, valida escopos e revalida perfil vendedor', async () => {
+  mockTokenFetch(async (url, options) => {
+    assert.equal(url,'https://id.magalu.com/oauth/token');assert.equal(options.method,'POST');assert.equal(options.redirect,'error');
+    assert.equal(options.headers['Content-Type'],'application/x-www-form-urlencoded');
+    assert.equal(options.body.get('grant_type'),'refresh_token');assert.equal(options.body.get('refresh_token'),'fixture-old-refresh');assert.equal(options.body.get('client_secret'),config.clientSecret);
+    return Response.json(tokenResponse());
+  });
+  const result=await oauth.refreshMagaluToken('fixture-old-refresh',config);assert.equal(result.sellerReference,seller);assert.deepEqual(result.scopes,[...oauth.MAGALU_CONNECTION_SCOPES]);
+});
+test('refresh revogado não expõe o corpo privado do provedor', async () => {
+  globalThis.fetch=async()=>Response.json({error:'invalid_grant',error_description:'private-secret'},{status:400});
+  await assert.rejects(oauth.refreshMagaluToken('fixture-refresh',config),error=>error.code==='authorization_revoked'&&!error.message.includes('private-secret'));
+});
+test('refresh sem consulta obrigatória não aceita renovação incompleta', async () => {
+  mockTokenFetch(async()=>Response.json(tokenResponse({scope:'open:order-order-seller:read'})));
+  await assert.rejects(oauth.refreshMagaluToken('fixture-refresh',config),error=>error.code==='missing_scopes');
+});
+
 test('URL oficial, loja escolhida, PKCE S256, state aleatório e intenções criptografadas',async()=>{
   const {auth,row}=await fixture(); const url=new URL(auth.authorizationUrl);
   assert.equal(url.origin,'https://id.magalu.com'); assert.equal(url.pathname,'/login');assert.equal(url.searchParams.get('choose_tenants'),'true');
