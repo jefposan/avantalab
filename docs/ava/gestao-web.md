@@ -1,6 +1,22 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.32 -->
+<!-- ava-version: 3.0.0.33.03 -->
+
+> Revisão 3.0.0.33.03: clique em qualquer ponto da linha da venda abre ou fecha
+> os detalhes; **Copiar pedido** apenas copia. A situação da etiqueta aparece
+> em uma linha horizontal. A consulta e a prévia da etiqueta não mudaram.
+
+> Revisão 3.0.0.33.02: **Copiar pedido** fica ao lado do número, separado da
+> situação da venda. Continua copiando `Pedido #…`; a etiqueta não muda.
+
+> Revisão 3.0.0.33.01: o logo da plataforma na linha de venda passa a ter o
+> mesmo tamanho visual de Contas conectadas. Sem impacto operacional.
+
+> Revisão 3.0.0.33: em Marketplaces Web, cada venda identifica a plataforma e
+> **Copiar** coloca `Pedido #…` na área de transferência. Para Mercado Livre,
+> **Consultar etiqueta** obtém o PDF pela API oficial e o exibe no AvantaLab;
+> não abre uma aba vazia. A alternativa **Abrir o PDF em nova guia** é explícita
+> e erros de consulta aparecem na própria tela. Não há mudança no fluxo Magalu.
 
 > Revisão 3.0.0.32: avisos de venda aparecem somente ao abrir **Anúncios em
 > marketplaces** no perfil que possui o pedido; a Gestão e os demais módulos
@@ -50,7 +66,8 @@
 > ML: abrir o pedido atualiza só a linha. Etiqueta liberada mostra Imprimir ou
 > Reimprimir; Consultar etiqueta relê o provedor quando o cache não a liberou.
 > Envio programado mostra data informada pelo ML, sem prometer liberação antecipada.
-> PDF abre em aba separada; permitir popup se o navegador bloquear. Impressão
+> PDF aparece dentro do AvantaLab; **Abrir o PDF em nova guia** é opcional e
+> explícito. Não é preciso permitir popup. Impressão
 > revalida o pedido atual: canceladas, despachadas e Full não imprimem localmente.
 > Magalu: acesso de logística para etiquetas autorizado e configurado junto das
 > 14 consultas, mas geração local ainda depende de contrato completo/validação real.

@@ -1,6 +1,19 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.32 -->
+<!-- ava-version: 3.0.0.33.03 -->
+
+> Revisão 3.0.0.33.03: expansão da linha e situação da etiqueta corrigidas no
+> Marketplaces Web. Sem impacto operacional na Gestão Mobile/AvantaPreços.
+
+> Revisão 3.0.0.33.02: botão de cópia reposicionado no Marketplaces Web.
+> Sem impacto operacional na Gestão Mobile/AvantaPreços.
+
+> Revisão 3.0.0.33.01: tamanho do logo nas vendas do Marketplaces Web ajustado.
+> Sem impacto operacional na Gestão Mobile/AvantaPreços.
+
+> Revisão 3.0.0.33: identificação de plataforma, cópia do número de pedido e
+> prévia local de etiqueta pertencem ao Marketplaces Web. Sem impacto
+> operacional na Gestão Mobile/AvantaPreços.
 
 > Revisão 3.0.0.32: o popup de vendas pertence somente ao módulo Marketplaces
 > Web e abre o pedido interno do perfil correto. Sem impacto operacional na

@@ -1,6 +1,19 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.32 -->
+<!-- ava-version: 3.0.0.33.03 -->
+
+> Revisão 3.0.0.33.03: expansão da linha e situação da etiqueta corrigidas no
+> Marketplaces Web. Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.33.02: botão de cópia reposicionado no Marketplaces Web.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.33.01: tamanho do logo nas vendas do Marketplaces Web ajustado.
+> Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.0.0.33: identificação de plataforma, cópia do pedido e prévia de
+> etiqueta são recursos do Marketplaces Web. Sem impacto operacional no
+> AvantaVendas.
 
 > Revisão 3.0.0.32: o popup de vendas ficou restrito ao Marketplaces Web e
 > abre o pedido interno no perfil correto. Sem impacto operacional no

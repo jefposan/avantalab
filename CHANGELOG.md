@@ -1,5 +1,29 @@
 # Changelog
 
+## 3.0.0.33.03 - 2026-10-13
+
+- Situação/etiqueta da venda volta a ser apresentada horizontalmente.
+- Clique em qualquer ponto da linha abre ou fecha os detalhes; o botão Copiar
+  mantém somente a ação de cópia.
+
+## 3.0.0.33.02 - 2026-10-13
+
+- Botão de copiar pedido passa a ficar junto ao número, com aparência compacta
+  e alvo acessível, sem dividir a área da situação da venda.
+
+## 3.0.0.33.01 - 2026-10-13
+
+- Logo da plataforma nas linhas de venda passa a usar o mesmo tamanho e fundo
+  de Contas conectadas, inclusive em telas menores.
+
+## 3.0.0.33 - 2026-10-13
+
+- Vendas de Marketplaces passam a identificar visualmente a plataforma em cada
+  pedido e oferecem cópia de `Pedido #…` para a área de transferência.
+- Etiquetas do Mercado Livre são consultadas pela API oficial e exibidas dentro
+  do AvantaLab, com alternativa explícita para abrir o PDF e mensagem de erro
+  visível. O fluxo não deixa mais uma aba vazia nem depende de popup.
+
 ## 3.0.0.32 - 2026-10-13
 
 - Avisos de vendas de Marketplace aparecem somente após abrir o módulo

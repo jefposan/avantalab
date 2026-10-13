@@ -10,7 +10,7 @@ test('seta compartilhada acompanha aria-expanded e detalhes sem criar botão ani
   assert.match(source, /aria-controls=\{`sale-details-\$\{sale.id\}`\}/);
   assert.match(source, /<div id=\{`sale-details-\$\{sale.id\}`\} className=\{styles.saleDetails\}/);
   assert.match(css, /\.saleDisclosure \{[^}]*transform: rotate\(90deg\)/);
-  assert.match(css, /\.saleSummary\[aria-expanded="true"\] \.saleDisclosure \{ transform: rotate\(-90deg\); \}/);
+  assert.match(css, /\.saleSummaryExpanded \.saleDisclosure \{ transform: rotate\(-90deg\); \}/);
   assert.match(css, /\.saleSummary \.saleStatusAction b \{[^}]*max-width: none;/);
 });
 
@@ -33,14 +33,14 @@ test('clique de abertura e alerta confirmado rolam; fechamento, respostas e even
   const sales = read('app/marketplaces/Vendas.tsx');
   assert.match(sales, /const opening = open !== sale.id/);
   assert.match(sales, /if \(opening\) requestAnimationFrame/);
-  assert.match(sales, /button.isConnected && button.getAttribute\('aria-expanded'\) === 'true'/);
-  assert.equal((sales.match(/scrollMarketplaceRow\(button\)/g) || []).length, 1);
+  assert.match(sales, /row.isConnected && row.querySelector\('\[aria-expanded="true"\]'\)/);
+  assert.equal((sales.match(/scrollMarketplaceRow\(row\)/g) || []).length, 2);
   assert.match(sales, /sale\.id === saleToOpen && open === sale\.id/);
   assert.match(sales, /scrollMarketplaceRow\(row\)/);
   assert.doesNotMatch(sales, /useEffect/);
   const css = read('app/marketplaces/marketplaces.module.css');
-  assert.match(css, /\.salesPanel \.saleSummary\[aria-expanded="true"\] \{ background: color-mix\(in srgb, var\(--brand\) 8%, #fff\); box-shadow: inset 3px 0 0 var\(--brand\); \}/);
-  assert.match(css, /\.dark \.salesPanel \.saleSummary\[aria-expanded="true"\] \{ background: color-mix\(in srgb, var\(--brand\) 16%, #182235\); \}/);
+  assert.match(css, /\.salesPanel \.saleSummaryExpanded \{ background: color-mix\(in srgb, var\(--brand\) 8%, #fff\); box-shadow: inset 3px 0 0 var\(--brand\); \}/);
+  assert.match(css, /\.dark \.salesPanel \.saleSummaryExpanded \{ background: color-mix\(in srgb, var\(--brand\) 16%, #182235\); \}/);
 });
 
 test('rolagem de linha aberta deixa espaço depois das marcas fixadas, não só do header', () => {
