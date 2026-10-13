@@ -1,6 +1,20 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.21 -->
+<!-- ava-version: 3.0.0.22 -->
+
+> Revisão 3.0.0.22 (código local, sem publicação): uma única autorização Magalu
+> solicita as 14 consultas aprovadas: pedidos, produtos, estoque, entregas,
+> notas/documentos fiscais, reclamações, devoluções, mensagens/eventos do SAC,
+> transações do SAC, conversas com compradores e relatório financeiro.
+> Os acessos foram adicionados à aplicação Magalu e conferidos como disponíveis
+> e padrão, sem pendências; não foi liberada escrita. Isso não concede o
+> consentimento da loja automaticamente: na próxima conexão, escolha a mesma
+> loja e permita o conjunto de consultas. Não é preciso excluir a conta; a
+> conexão existente é atualizada mantendo sua identificação e vínculos.
+> Escopo ausente impede falsa confirmação completa. Cancelar, reembolsar,
+> responder mensagens ou gerar etiquetas não foi liberado por esta etapa.
+> As telas/adaptadores de vendas e pós-venda Magalu ainda precisam ser ativados;
+> não afirmar que os dados já aparecem no AvantaLab ou foram testados em vendas reais.
 
 > Revisão 3.0.0.21 (local, sem publicação): a conexão Magalu usa o acesso
 > escolhido no ID Magalu (`tenant`), não o identificador do login. Antes de

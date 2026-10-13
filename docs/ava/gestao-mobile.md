@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.21 -->
+<!-- ava-version: 3.0.0.22 -->
+
+> Revisão 3.0.0.22: consultas Magalu reunidas em uma autorização no Marketplaces
+> Web, sem publicação do código. Sem impacto operacional na Gestão Mobile/AvantaPreços.
 
 > Revisão 3.0.0.21: identificação e confirmação de acesso vendedor Magalu
 > corrigidas no Marketplaces Web, somente local e sem publicação.

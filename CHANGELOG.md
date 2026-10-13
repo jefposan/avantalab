@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.0.0.22 - 2026-10-13
+
+- Com autorização explícita do administrador, reunião de 14 consultas Magalu
+  num único consentimento: pedidos, produtos, estoque, entregas, notas fiscais,
+  documentos fiscais, reclamações, devoluções, mensagens/eventos/transações do
+  SAC, conversas com compradores e relatório financeiro. Somente leitura;
+  nenhum acesso irrestrito, cancelamento, reembolso ou alteração de estoque.
+- Aplicação existente atualizada pelo IDM oficial: 14 consultas disponíveis
+  e padrão, nenhuma pendente, audiências de APIs e serviços conferidas. Não
+  alterados client secret, retorno, duração dos tokens ou banco de produção.
+- Código valida o conjunto completo e orienta autorizar novamente a mesma loja
+  quando faltar consulta, sem excluir a conta. Testes cobrem cada permissão
+  ausente e atualização da conexão existente, preservando identificação e ID.
+- Configuração externa não equivale ao consentimento da loja nem à implementação
+  dos adaptadores/telas Magalu. Nenhuma nova autorização/token de vendedor foi
+  obtida ou salva nesta etapa. Geração de etiquetas e demais escritas não liberadas.
+- Código sem publicação; manuais e conhecimento da Ava revisados conforme
+  PADRÃO AVANTA 1.17.0. Detalhes em docs/marketplaces/magalu-permissoes.md.
+- Validação: build completo, 1.039 testes (34 de OAuth Magalu), lint,
+  verificações PADRÃO AVANTA/Ava e conferência externa das consultas aprovados.
+  Consentimento real deste novo conjunto ainda depende da próxima conexão da loja.
+
 ## 3.0.0.21 - 2026-10-12
 
 - Correção local da identidade Magalu: o retorno atual traz o login em `sub`

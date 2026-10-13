@@ -100,6 +100,38 @@ test('URL oficial, loja escolhida, PKCE S256, state aleatório e intenções cri
   assert.deepEqual(oauth.readMagaluIntent(vault.openMarketplaceSecret(row.verifier_sealed),config),auth.intent);
   assert.ok(!JSON.stringify(row).includes(auth.intent.verifier));assert.ok(Date.parse(row.expires_at)-Date.now()<=600000);
 });
+test('uma autorização reúne consultas completas de vendas e pós-venda sem escrita nem acesso irrestrito',async()=>{
+  const expected=[
+    'open:order-order-seller:read','open:portfolio-skus-seller:read','open:portfolio-stocks-seller:read',
+    'open:order-delivery-seller:read','open:order-invoice-seller:read','open:order-logistics-seller:read',
+    'open:logistic-fiscal-documents-seller:read','open:tickets-seller:read','open:ticket-messages-seller:read',
+    'open:ticket-events-seller:read','open:ticket-returns-seller:read','open:sac-transaction-seller:read',
+    'open:order-financial-report-seller:read','services:conversations-seller:read',
+  ];
+  assert.deepEqual(oauth.MAGALU_CONNECTION_SCOPES,expected);assert.equal(new Set(expected).size,expected.length);
+  assert.ok(oauth.MAGALU_CONNECTION_SCOPES.every(scope=>scope.endsWith(':read')));
+  const {auth}=await fixture();assert.deepEqual(new URL(auth.authorizationUrl).searchParams.get('scope').split(' '),expected);
+});
+test('cada consulta omitida impede falsa autorização completa e preserva as contas',async()=>{
+  for(const omitted of oauth.MAGALU_CONNECTION_SCOPES){
+    const {db,auth}=await fixture();const before=JSON.stringify(db.tables.marketplace_connections);let checks=0;
+    globalThis.fetch=async url=>{if(url===sellerEndpoint){checks++;throw Error('não deve consultar');}return Response.json(tokenResponse({scope:oauth.MAGALU_CONNECTION_SCOPES.filter(scope=>scope!==omitted).join(' ')}));};
+    const html=await(await callback.GET(request(auth))).text();assert.equal(diagnosticReports.at(-1).code,'missing_scopes');assert.equal(checks,0);
+    assert.match(html,/Não precisa excluir a conta/);assert.doesNotMatch(html,/Autorização Magalu concluída/);assert.equal(JSON.stringify(db.tables.marketplace_connections),before);
+  }
+});
+test('nova autorização completa atualiza a mesma conta e preserva identificação e vínculos',async()=>{
+  const {db,auth}=await fixture();const otherBefore=JSON.stringify(db.tables.marketplace_connections[0]);
+  const existing={id:crypto.randomUUID(),empresa_id:company,provider:'magalu',seller_reference:seller,status:'attention',display_name:'Saldão Aline',token_sealed:vault.sealMarketplaceSecret('previous'),scopes:['open:order-order-seller:read','open:portfolio-skus-seller:read','open:portfolio-stocks-seller:read']};
+  db.tables.marketplace_connections.push(existing);mockTokenFetch(async()=>Response.json(tokenResponse()));
+  assert.match(await(await callback.GET(request(auth))).text(),/Autorização Magalu concluída/);
+  assert.equal(db.tables.marketplace_connections.filter(row=>row.provider==='magalu').length,1);
+  assert.equal(db.tables.marketplace_connections.find(row=>row.provider==='magalu').id,existing.id);
+  assert.equal(existing.display_name,'Saldão Aline');assert.deepEqual(existing.scopes,oauth.MAGALU_CONNECTION_SCOPES);
+  assert.equal(JSON.stringify(db.tables.marketplace_connections[0]),otherBefore);
+  assert.equal(JSON.parse(vault.openMarketplaceSecret(existing.token_sealed)).refreshToken,'fixture-refresh');
+  assert.equal(existing.last_error_code,'magalu_connector_pending');
+});
 test('configuração recusa destinos externos, credenciais, parâmetros e HTTP público',()=>{
   for(const uri of ['https://evil.example'+oauth.MAGALU_CALLBACK_PATH,'https://avantalab.com.br.evil.example'+oauth.MAGALU_CALLBACK_PATH,'http://avantalab.com.br'+oauth.MAGALU_CALLBACK_PATH,'https://u:p@avantalab.com.br'+oauth.MAGALU_CALLBACK_PATH,config.redirectUri+'?x=1',config.redirectUri+'#hash','https://avantalab.com.br/other']) assert.throws(()=>oauth.validateMagaluRedirectUri(uri));
   assert.equal(oauth.validateMagaluRedirectUri(config.redirectUri),config.redirectUri);

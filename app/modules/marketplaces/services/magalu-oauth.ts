@@ -6,8 +6,24 @@ import { createPkceChallenge, createPkceVerifier } from './mercadolivre-oauth';
 import { MagaluConnectionError, magaluProviderRejection } from './magalu-diagnostics';
 
 export const MAGALU_CALLBACK_PATH = '/api/modulos/marketplaces/conexoes/magalu/callback';
-// A primeira etapa apenas conecta e consulta. Escrita depende dos futuros adaptadores.
-export const MAGALU_CONNECTION_SCOPES = ['open:order-order-seller:read', 'open:portfolio-skus-seller:read', 'open:portfolio-stocks-seller:read'] as const;
+// Uma autorização reúne as consultas de venda e pós-venda aprovadas pelo usuário.
+// Não libera cancelamentos, reembolsos, envio de mensagens, publicação ou alteração de estoque.
+export const MAGALU_CONNECTION_SCOPES = [
+  'open:order-order-seller:read',
+  'open:portfolio-skus-seller:read',
+  'open:portfolio-stocks-seller:read',
+  'open:order-delivery-seller:read',
+  'open:order-invoice-seller:read',
+  'open:order-logistics-seller:read',
+  'open:logistic-fiscal-documents-seller:read',
+  'open:tickets-seller:read',
+  'open:ticket-messages-seller:read',
+  'open:ticket-events-seller:read',
+  'open:ticket-returns-seller:read',
+  'open:sac-transaction-seller:read',
+  'open:order-financial-report-seller:read',
+  'services:conversations-seller:read',
+] as const;
 export const MAGALU_OAUTH_TTL = 600;
 export type MagaluConfiguration = { clientId: string; clientSecret: string; redirectUri: string };
 export type MagaluIntent = { provider: 'magalu'; verifier: string; clientId: string; redirectUri: string };
