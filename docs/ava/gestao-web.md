@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.16 -->
+<!-- ava-version: 3.0.0.17 -->
+
+> Revisão 3.0.0.17: Casas Bahia mantém o logo clássico sobre fundo externo
+> branco no seletor e nas contas. Sem impacto operacional ou publicação.
 
 > Revisão 3.0.0.16: logo clássico Casas Bahia fornecido pelo usuário aplicado
 > ao seletor e à identidade das contas. Sem impacto operacional ou publicação.

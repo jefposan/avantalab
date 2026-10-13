@@ -58,7 +58,7 @@ test('seletor mantém marcas coloridas com assets locais, nome acessível e sele
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.page \.provider \{ transition: none; \} \}/);
 });
 
-test('Casas Bahia usa a imagem clássica intacta, enquadrada sem margens, e seu azul original', () => {
+test('Casas Bahia mantém a imagem clássica intacta sobre fundo branco no seletor e na conta', () => {
   const svg=read('public/images/marketplaces/casas-bahia.svg');
   assert.match(svg,/width="288" height="75" viewBox="16 122 288 75"/);
   assert.match(svg,/<image x="0" y="0" width="320" height="320"/);
@@ -66,8 +66,9 @@ test('Casas Bahia usa a imagem clássica intacta, enquadrada sem margens, e seu 
   assert.equal(data.subarray(1,4).toString(),'PNG');
   assert.equal(createHash('sha256').update(data).digest('hex'),'7f510d115a413ecd399f769bf8b4730ddd4589c68e28c2f2990596a9029f3898');
   assert.doesNotMatch(svg,/<text\b|<rect\b|<script\b|<foreignObject\b/);
-  assert.match(css,/\.provider\[data-provider="casas_bahia"\] \{[^}]*background: #0055a4;[^}]*color: #fff;/);
-  assert.match(css,/\.connectedAccount\[data-provider="casas_bahia"\][^}]*--account-marketplace-background: #0055a4;/);
+  assert.match(css,/\.provider\[data-provider="casas_bahia"\] \{[^}]*background: #fff;[^}]*color: #0055a4;/);
+  assert.match(css,/\.connectedAccount\[data-provider="casas_bahia"\][^}]*--account-marketplace-color: #0055a4;[^}]*--account-marketplace-background: #fff;/);
+  assert.match(css,/\.provider\[data-provider="casas_bahia"\] \.providerAvailability \{ color: #334155; background: #f1f5f9;/);
 });
 
 test('retorno Magalu é limitado à janela aberta e conta autorizada não habilita operação nem renovação ML',()=>{

@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0.17 - 2026-10-12
+
+- Fundo externo branco para Casas Bahia no seletor e na identificação das
+  contas. Logo clássico preservado integralmente, com vermelho e azul próprios.
+  Disponibilidade usa badge claro legível; dimensões, seleção e funções mantidas.
+- Sem impacto operacional ou publicação. Validação proporcional: 37 testes
+  de interface, verificações PADRÃO AVANTA/Ava e conferência da prévia local.
+
 ## 3.0.0.16 - 2026-10-12
 
 - Casas Bahia passa a usar a imagem clássica fornecida pelo usuário: CASAS

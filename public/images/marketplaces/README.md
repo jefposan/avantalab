@@ -20,7 +20,8 @@ disponibilidade: esses estados continuam no texto e no controle do seletor.
   no SVG local, sem alterar pixels nem reconstruir letras. `viewBox` enquadra
   somente a marca (288×75), excluindo as margens da imagem 320×320.
   CASAS na faixa vermelha, BAHIA maior no azul; cores predominantes da
-  referência #E30613 e #0055A4. Botão e identidade da conta usam esse azul.
+  referência #E30613 e #0055A4. Revisão 3.0.0.17: botão e identificação da
+  conta usam fundo externo branco; azul continua como detalhe da marca.
   Não depende do arquivo temporário do usuário ou de download externo.
 - Amazon: [Venda na Amazon](https://venda.amazon.com.br),
   `https://m.media-amazon.com/images/G/01/sell/images/logo-amazon-white.svg`.

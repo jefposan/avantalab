@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.16 -->
+<!-- ava-version: 3.0.0.17 -->
+
+> Revisão 3.0.0.17: fundo externo branco da marca Casas Bahia no Marketplaces
+> Web. Sem impacto operacional na Gestão Mobile/AvantaPreços; sem publicação.
 
 > Revisão 3.0.0.16: logo clássico Casas Bahia no Marketplaces Web.
 > Sem impacto operacional na Gestão Mobile/AvantaPreços; sem publicação.

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.16 -->
+<!-- ava-version: 3.0.0.17 -->
+
+> Revisão 3.0.0.17: Casas Bahia com fundo externo branco no Marketplaces Web.
+> Sem impacto operacional no AvantaVendas; sem publicação.
 
 > Revisão 3.0.0.16: logo clássico Casas Bahia no Marketplaces Web.
 > Sem impacto operacional no AvantaVendas; sem publicação.

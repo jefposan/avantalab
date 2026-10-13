@@ -1,3 +1,4 @@
+// Revisado na versão 3.0.0.17: fundo externo branco para Casas Bahia, logo clássico preservado; sem impacto operacional/publicação.
 // Revisado na versão 3.0.0.16: logo clássico Casas Bahia, sem impacto operacional ou publicação.
 // Revisado na versão 3.0.0.15: preparação OAuth Magalu concluída, sem ativação/publicação ou sincronização; logo Casas Bahia azul/vermelho.
 // Revisado na versão 3.0.0.14: situação selecionada no header expande e rola até o card Vendas.
