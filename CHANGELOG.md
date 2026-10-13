@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.0.29 - 2026-10-13
+
+- Projetos: mapas explicitamente marcados como árvore de apresentação usam
+  conexões ortogonais, corredores laterais para a hierarquia e faixas superiores
+  identificadas para integrações. Mapas existentes sem essa marca mantêm curvas.
+- A marca acompanha exportação/importação e inicia orientação vertical. Planta
+  AVANTALAB organiza sistemas/módulos independentes sob uma única raiz.
+- Sem alteração em cadastros, acessos, instalação de módulos ou dados financeiros.
+
 ## 3.0.0.28 - 2026-10-13
 
 - Magalu: a próxima reconexão pelo AvantaLab passa a solicitar, separadamente,

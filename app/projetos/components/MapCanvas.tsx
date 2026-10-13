@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { connectionPath, visibleNodeIds } from '../domain/project';
+import { connectionPath, presentationConnectionRoute, visibleNodeIds } from '../domain/project';
 import type { ConnectionType, MapDirection, Person, Project, ProjectNode } from '../types';
 import styles from '../projetos.module.css';
 import { Icon } from './Icon';
@@ -168,11 +168,13 @@ export function MapCanvas({
         {project.connections.filter((edge) => visible.has(edge.sourceId) && visible.has(edge.targetId)).map((edge) => {
           const source = nodeMap.get(edge.sourceId); const target = nodeMap.get(edge.targetId);
           if (!source || !target) return null;
-          const path = connectionPath(source, target, direction);
+          const lane = project.connections.filter((item) => item.type === 'livre').findIndex((item) => item.id === edge.id);
+          const route = project.presentationTree ? presentationConnectionRoute(source, target, edge.type, Math.max(0, lane)) : null;
+          const path = route?.path ?? connectionPath(source, target, direction);
           return <g key={edge.id} className={`${styles.edge} ${edge.type === 'livre' ? styles.freeEdge : ''} ${selectedEdgeId === edge.id ? styles.selectedEdge : ''}`} onClick={(event) => { event.stopPropagation(); onEdgeSelect(edge.id); onSelectionChange(new Set()); }} role="button" tabIndex={-1}>
             <path className={styles.edgeHit} d={path} />
             <path className={styles.edgeLine} d={path} markerEnd={edge.type === 'livre' ? 'url(#arrow-project)' : undefined} />
-            {edge.label && <text x={(source.position.x + target.position.x) / 2 + 112} y={(source.position.y + target.position.y) / 2 + 46}>{edge.label}</text>}
+            {edge.label && <text x={route?.label.x ?? (source.position.x + target.position.x) / 2 + 112} y={route?.label.y ?? (source.position.y + target.position.y) / 2 + 46}>{edge.label}</text>}
           </g>;
         })}
       </svg>

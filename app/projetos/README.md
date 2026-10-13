@@ -40,6 +40,13 @@ mas não adicionados: não estão instalados e alterariam dependências globais 
 um módulo que ainda precisa permanecer isolado. O layout automático implementa
 uma árvore determinística nas direções horizontal e vertical.
 
+Árvores explicitamente marcadas com `presentationTree: true` usam raiz no topo,
+ramos independentes em uma faixa e funções em colunas abaixo. O traçado ortogonal
+usa corredores laterais e setas de integração acima da faixa. Importação/exportação
+preservam a marca; Reorganizar vertical mantém esse arranjo. Trocar para horizontal
+retorna ao layout convencional. Não é roteamento geral contra obstáculos arbitrários:
+a organização depende de preservar as colunas livres. Mapas não marcados não mudam.
+
 ## Funcionalidades implementadas
 
 - Gestão de projetos em cards e lista: criação, edição dos dados gerais, modelos,

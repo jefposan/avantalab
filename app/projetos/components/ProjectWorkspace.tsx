@@ -47,7 +47,7 @@ export function ProjectWorkspace({ project, people, saveState, onBack, onChange,
   readOnly?: boolean;
 }) {
   const [view, setView] = useState<ProjectView>('mapa');
-  const [direction, setDirection] = useState<MapDirection>('horizontal');
+  const [direction, setDirection] = useState<MapDirection>(project.presentationTree ? 'vertical' : 'horizontal');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [detailsId, setDetailsId] = useState<string | null>(null);
