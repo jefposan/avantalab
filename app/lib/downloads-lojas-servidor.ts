@@ -114,6 +114,9 @@ async function buscarRelatorioApple(data: string) {
   // A Apple publica o relatório diário com defasagem. Um 404 não representa
   // zero downloads: apenas significa que aquele dia ainda não está disponível.
   if (resposta.status === 404) return null;
+  if (resposta.status === 403) {
+    throw new Error('Apple respondeu 403: a chave configurada não tem acesso aos relatórios Sales and Trends. Confira sua permissão no App Store Connect.');
+  }
   if (!resposta.ok) throw new Error(`Apple respondeu ${resposta.status}.`);
   return lerRelatorioApple(descompactarRespostaApple(new Uint8Array(await resposta.arrayBuffer())));
 }
@@ -175,7 +178,7 @@ async function baixarObjetoGoogle(token: string, objeto: string) {
     headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
   });
   if (!resposta.ok) throw new Error(`Não foi possível baixar o relatório do Google (${resposta.status}).`);
-  return resposta.text();
+  return new Uint8Array(await resposta.arrayBuffer());
 }
 
 function datasParaBuscar(ultimaData: string | null) {
@@ -267,7 +270,6 @@ export async function sincronizarDownloadsGoogle() {
     throw new Error('Google Play não devolveu relatórios de instalações. Confira o bucket, o prefixo e a permissão da conta de serviço para baixar relatórios.');
   }
   const porChave = new Map<string, number>();
-  const datasComRelatorio = new Set<string>();
   for (const objeto of objetos) {
     const mes = objeto.match(/_(\d{6})_country\.csv$/i)?.[1] || '';
     if (mes && `${mes.slice(0, 4)}-${mes.slice(4)}-01` < inicio.slice(0, 8) + '01') continue;
@@ -276,23 +278,19 @@ export async function sincronizarDownloadsGoogle() {
       if (linha.data < inicio) continue;
       const aplicativo = (Object.entries(PACOTES_GOOGLE).find(([, pacote]) => pacote === linha.pacote)?.[0] || null) as AplicativoLoja | null;
       if (!aplicativo) continue;
-      // Somente uma linha de um aplicativo Avanta confirma que esta é uma
-      // data útil para os nossos indicadores. Relatórios de outros pacotes
-      // no mesmo bucket não podem gerar zeros artificiais.
-      datasComRelatorio.add(linha.data);
       const chave = `${aplicativo}:${linha.data}`;
       porChave.set(chave, (porChave.get(chave) || 0) + linha.instalacoes);
     }
   }
+  if (!porChave.size) {
+    throw new Error('Os relatórios Google Play não contêm instalações dos aplicativos configurados nos últimos 90 dias. Confira o pacote do aplicativo e o período dos relatórios.');
+  }
   const agora = new Date().toISOString();
-  const registros = [...datasComRelatorio].flatMap((data) => APLICATIVOS_LOJAS.map((aplicativo) => ({
-    aplicativo,
-    loja: 'google_play' as const,
-    data_referencia: data,
-    downloads: Math.max(0, porChave.get(`${aplicativo}:${data}`) || 0),
-    fonte: 'google_play_bulk_report',
-    atualizado_em: agora,
-  })));
+  const registros = [...porChave.entries()].map(([chave, downloads]) => {
+    const [aplicativo, data] = chave.split(':') as [AplicativoLoja, string];
+    return { aplicativo, loja: 'google_play' as const, data_referencia: data,
+      downloads: Math.max(0, downloads), fonte: 'google_play_bulk_report', atualizado_em: agora };
+  });
   await salvarRegistros(registros);
   return { configurado: true, registros: registros.length };
 }

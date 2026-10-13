@@ -1397,18 +1397,19 @@ export default function AdminPage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-3 py-4 sm:px-5 sm:py-6">
-        {!authorized ? <section className="mx-auto mt-8 max-w-sm rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        {!authorized ? <form id="admin-login" method="post" action="/admin" autoComplete="on" onSubmit={(event) => { event.preventDefault(); if (!loading) void loadPanel(); }} className="mx-auto mt-8 max-w-sm rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <span className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-50 text-cyan-800"><Icon name="lock" size={20} /></span>
           <h2 className="mt-4 text-lg font-black text-slate-950">Acesso administrativo</h2>
           <p className="mt-1 text-sm text-slate-500">Entre com a senha administrativa para acessar mensagens, disparos e configurações.</p>
-          <label className="mt-5 block text-[10px] font-black uppercase tracking-wide text-slate-500">Senha</label>
+          <input type="text" name="username" autoComplete="username" value="admin" readOnly tabIndex={-1} aria-label="Identificador administrativo" className="sr-only" />
+          <label htmlFor="admin-password" className="mt-5 block text-[10px] font-black uppercase tracking-wide text-slate-500">Senha</label>
           <div className="relative mt-1">
-            <input type={mostrarToken ? 'text' : 'password'} value={token} onChange={(event) => setToken(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void loadPanel(); }} autoComplete="current-password" className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 pr-11 text-base outline-none focus:border-cyan-700 focus:ring-2 focus:ring-cyan-700/15" placeholder="Digite a senha" />
+            <input id="admin-password" name="password" type={mostrarToken ? 'text' : 'password'} value={token} onChange={(event) => setToken(event.target.value)} autoComplete="current-password" autoCapitalize="none" spellCheck={false} required aria-describedby={error ? 'admin-login-error' : undefined} aria-invalid={Boolean(error)} className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 pr-11 text-base outline-none focus:border-cyan-700 focus:ring-2 focus:ring-cyan-700/15" placeholder="Digite a senha" />
             <BotaoVisibilidadeSenha visivel={mostrarToken} onToggle={() => setMostrarToken((valor) => !valor)} className="absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800" />
           </div>
-          {error && <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{error}</p>}
-          <button type="button" onClick={() => void loadPanel()} disabled={loading} className="mt-4 h-11 w-full rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">{loading ? 'Acessando...' : 'Acessar painel'}</button>
-        </section> : <>
+          {error && <p id="admin-login-error" role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{error}</p>}
+          <button type="submit" disabled={loading} className="mt-4 h-11 w-full rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">{loading ? 'Acessando...' : 'Acessar painel'}</button>
+        </form> : <>
           {(error || notice) && <div className={`mb-4 rounded-md border px-3 py-2.5 text-sm font-bold ${error ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>{error || notice}</div>}
 
           {view === 'avaliacoes' && <div className="space-y-4">

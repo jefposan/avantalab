@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { ehDownloadInicialApple, lerRelatorioApple, lerRelatorioGoogle } from '../../app/lib/downloads-lojas-relatorios.ts';
+import { decodificarRelatorioGoogle, ehDownloadInicialApple, lerRelatorioApple, lerRelatorioGoogle } from '../../app/lib/downloads-lojas-relatorios.ts';
 
 test('lê unidades do relatório diário de vendas da Apple', () => {
   const linhas = lerRelatorioApple([
@@ -33,6 +33,31 @@ test('lê instalações diárias do relatório CSV do Google Play', () => {
     { data: '2026-09-12', pacote: 'br.com.avantalab.vendas', instalacoes: 3 },
     { data: '2026-09-12', pacote: 'br.com.avantalab.app', instalacoes: 2 },
   ]);
+});
+
+const csvGoogle = 'Date,Package Name,Country,Daily Device Installs\r\n2026-10-10,br.com.avantalab.vendas,BR,12\r\n2026-10-11,br.com.avantalab.vendas,BR,0';
+const esperadoGoogle = [
+  { data: '2026-10-10', pacote: 'br.com.avantalab.vendas', instalacoes: 12 },
+  { data: '2026-10-11', pacote: 'br.com.avantalab.vendas', instalacoes: 0 },
+];
+
+test('lê o CSV oficial UTF-16LE com BOM e preserva o dia de zero instalações', () => {
+  const arquivo = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(csvGoogle, 'utf16le')]);
+  assert.deepEqual(lerRelatorioGoogle(arquivo), esperadoGoogle);
+});
+
+test('aceita UTF-16BE e UTF-16 sem BOM, além do UTF-8 convertido', () => {
+  const littleEndian = Buffer.from(csvGoogle, 'utf16le');
+  const bigEndian = Buffer.from(littleEndian).swap16();
+  for (const arquivo of [littleEndian, bigEndian, Buffer.concat([Buffer.from([0xfe, 0xff]), bigEndian]), Buffer.from(csvGoogle)]) {
+    assert.deepEqual(lerRelatorioGoogle(arquivo), esperadoGoogle);
+  }
+});
+
+test('relatório ilegível ou sem colunas obrigatórias não vira importação bem-sucedida vazia', () => {
+  assert.throws(() => lerRelatorioGoogle('Date,Package Name,Country\n2026-10-10,br.com.avantalab.vendas,BR'), /colunas de instalações/);
+  assert.throws(() => lerRelatorioGoogle(new Uint8Array()), /está vazio/);
+  assert.throws(() => decodificarRelatorioGoogle(Buffer.from([0xff, 0xfe, 0x41])), /encoded data/);
 });
 
 test('sincronização não inventa zero quando a Apple ainda não liberou o relatório e diagnostica a fonte Google', () => {

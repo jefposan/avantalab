@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.25 -->
+<!-- ava-version: 3.0.0.26 -->
+
+> Revisão 3.0.0.26: relatórios Google Play no Admin interpretam CSV UTF-16,
+> e o login administrativo permite o gerenciador de senha do navegador.
+> Sem impacto operacional no AvantaVendas ou nos seus dados comerciais.
 
 > Revisão 3.0.0.25: métricas oficiais de downloads do AvantaVendas no Admin
 > Web passam a identificar a data da fonte e leituras atrasadas, sem alterar o

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.25 -->
+<!-- ava-version: 3.0.0.26 -->
+
+> Revisão 3.0.0.26: login do Admin compatível com gerenciadores de senha e leitura
+> UTF-16 dos relatórios Google corrigida. Sem impacto operacional na Gestão Mobile.
 
 > Revisão 3.0.0.25: indicadores de downloads das lojas foram corrigidos no
 > Admin Web, com data da fonte e aviso quando a leitura estiver atrasada. Sem

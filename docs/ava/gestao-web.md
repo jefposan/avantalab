@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.25 -->
+<!-- ava-version: 3.0.0.26 -->
+
+> Revisão 3.0.0.26: o login do Admin permite reconhecimento pelo gerenciador de
+> senhas do navegador. Salvar/preencher depende das preferências do navegador;
+> não existe armazenamento local próprio da senha. CSV oficial Google Play usa
+> UTF-16 e é interpretado corretamente. Apple 403 indica chave sem acesso aos
+> relatórios: conferir Sales and Trends no App Store Connect, sem pedir segredo
+> pelo chat. Atualizar lojas confirma os dados somente após resposta da fonte.
 
 > Revisão 3.0.0.25: no Admin, os indicadores Apple App Store e Google Play
 > mostram downloads iniciais oficiais dos últimos 90 dias e a data da última

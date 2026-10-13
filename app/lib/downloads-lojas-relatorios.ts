@@ -72,15 +72,30 @@ export function lerRelatorioApple(conteudo: string): LinhaApple[] {
   });
 }
 
-export function lerRelatorioGoogle(conteudo: string): LinhaGoogle[] {
-  const linhas = conteudo.trim().split(/\r?\n/).filter(Boolean);
-  if (linhas.length < 2) return [];
+export function decodificarRelatorioGoogle(conteudo: Uint8Array): string {
+  // Os CSVs oficiais do Play Console usam UTF-16. Também aceitamos UTF-8
+  // para arquivos já convertidos e UTF-16 sem BOM, sem perder o cabeçalho.
+  const bigEndian = conteudo[0] === 0xfe && conteudo[1] === 0xff;
+  const littleEndian = conteudo[0] === 0xff && conteudo[1] === 0xfe;
+  const semBomLittleEndian = conteudo[1] === 0 && conteudo[3] === 0;
+  const semBomBigEndian = conteudo[0] === 0 && conteudo[2] === 0;
+  const encoding = bigEndian || semBomBigEndian ? 'utf-16be'
+    : littleEndian || semBomLittleEndian ? 'utf-16le' : 'utf-8';
+  return new TextDecoder(encoding, { fatal: true }).decode(conteudo);
+}
+
+export function lerRelatorioGoogle(conteudo: string | Uint8Array): LinhaGoogle[] {
+  const texto = typeof conteudo === 'string' ? conteudo : decodificarRelatorioGoogle(conteudo);
+  const linhas = texto.trim().split(/\r?\n/).filter(Boolean);
+  if (!linhas.length) throw new Error('O relatório de instalações do Google Play está vazio.');
   const cabecalho = dividirCsv(linhas[0]).map(normalizarCabecalho);
   const indice = (...nomes: string[]) => nomes.map((nome) => cabecalho.indexOf(nome)).find((posicao) => posicao >= 0) ?? -1;
   const data = indice('date');
   const pacote = indice('package name', 'package');
   const instalacoes = indice('daily device installs', 'daily user installs');
-  if (data < 0 || pacote < 0 || instalacoes < 0) return [];
+  if (data < 0 || pacote < 0 || instalacoes < 0) {
+    throw new Error('Não foi possível reconhecer as colunas de instalações do relatório Google Play.');
+  }
   return linhas.slice(1).map((linha) => {
     const colunas = dividirCsv(linha);
     return {

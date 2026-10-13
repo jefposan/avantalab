@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.0.26 - 2026-10-13
+
+- Google Play: leitura dos CSVs oficiais em UTF-16LE/BE, com ou sem BOM, e UTF-8
+  convertido. Relatório ilegível ou sem linhas do aplicativo não confirma
+  sincronização. Cada aplicativo recebe somente os dias presentes em sua fonte.
+- Apple: erro 403 identificado na execução produtiva; aviso explica a recusa
+  da chave aos relatórios Sales and Trends. Recuperação depende de acesso válido
+  no App Store Connect; dados anteriores permanecem datados.
+- Admin: login com formulário semântico, identificador estável e campos nomeados
+  permite salvar/preencher a senha pelo gerenciador do navegador. A aplicação
+  não grava a senha em armazenamento local. Manuais e Ava revisados.
+
 ## 3.0.0.25 - 2026-10-13
 
 - Admin: downloads de AvantaLab e AvantaVendas agora deixam explícita a janela
