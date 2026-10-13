@@ -112,7 +112,7 @@ test('URL oficial, loja escolhida, PKCE S256, state aleatório e intenções cri
   const {auth,row}=await fixture(); const url=new URL(auth.authorizationUrl);
   assert.equal(url.origin,'https://id.magalu.com'); assert.equal(url.pathname,'/login');assert.equal(url.searchParams.get('choose_tenants'),'true');
   assert.equal(url.searchParams.get('state'),auth.state); assert.equal(url.searchParams.get('code_challenge_method'),'S256');
-  assert.equal(url.searchParams.get('scope'),oauth.MAGALU_CONNECTION_SCOPES.join(' '));
+  assert.equal(url.searchParams.get('scope'),oauth.MAGALU_AUTHORIZATION_SCOPES.join(' '));
   assert.ok(!auth.authorizationUrl.includes(config.clientSecret));assert.ok(!auth.authorizationUrl.includes(auth.intent.verifier));
   assert.equal(row.browser_binding_hash,oauth.magaluBrowserHash(auth.browserBinding));assert.equal(row.provider,'magalu');
   assert.deepEqual(oauth.readMagaluIntent(vault.openMarketplaceSecret(row.verifier_sealed),config),auth.intent);
@@ -128,7 +128,8 @@ test('uma autorização reúne consultas completas de vendas e pós-venda sem es
   ];
   assert.deepEqual(oauth.MAGALU_CONNECTION_SCOPES,expected);assert.equal(new Set(expected).size,expected.length);
   assert.ok(oauth.MAGALU_CONNECTION_SCOPES.every(scope=>scope.endsWith(':read')));
-  const {auth}=await fixture();assert.deepEqual(new URL(auth.authorizationUrl).searchParams.get('scope').split(' '),expected);
+  const {auth}=await fixture();assert.deepEqual(new URL(auth.authorizationUrl).searchParams.get('scope').split(' '),[...expected,oauth.MAGALU_LABEL_SCOPE]);
+  assert.deepEqual(oauth.MAGALU_AUTHORIZATION_SCOPES.filter(scope=>scope.endsWith(':write')),['open:order-logistics-seller:write']);
 });
 test('cada consulta omitida impede falsa autorização completa e preserva as contas',async()=>{
   for(const omitted of oauth.MAGALU_CONNECTION_SCOPES){

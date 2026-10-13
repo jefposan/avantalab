@@ -34,7 +34,9 @@ export default function Vendas({ companyId, accountId, onAccountChange, group, o
 
   async function printLabel(sale: Sale) {
     if (printing || !canManage) return;
-    const popup = window.open('', '_blank', 'noopener');
+    const popup = window.open('about:blank', '_blank');
+    if (!popup) { setPrintError('Permita abrir uma nova aba para imprimir a etiqueta.'); return; }
+    popup.opener = null;
     setPrinting(sale.id); setPrintError('');
     try {
       const { data } = await (await import('@/app/lib/supabase')).supabase.auth.getSession();
@@ -76,7 +78,8 @@ export default function Vendas({ companyId, accountId, onAccountChange, group, o
         {sale.warnings?.map(warning => <p key={warning} className={styles.salesError}>{warning}</p>)}
         {sale.deliveries?.map(pack => <section key={pack.id} className={styles.claimDetails} aria-label={`Entrega ${pack.code || pack.id}`}><h4>Entrega {pack.code || pack.id} · {pack.statusText}</h4>{pack.deadline && <p>Prazo de envio: {date.format(new Date(pack.deadline))}</p>}{pack.invoices.map((invoice, index) => <p key={index}>{invoice.statusText}{invoice.key && <span> · Chave: {invoice.key}</span>}</p>)}</section>)}
         {saleConflictText(sale) && <p className={styles.salesError}>{saleConflictText(sale)}</p>}
-        {sale.provider === 'magalu' ? null : sale.labelStatus === 'ready' && sale.shipmentStatus === 'ready_to_ship' && sale.status !== 'cancelled' ? <button type="button" className={styles.primary} disabled={!canManage || printing === sale.id} onClick={() => void printLabel(sale)}>{printing === sale.id ? 'Preparando etiqueta…' : labelActionText(sale)}</button> : labelUnavailableText(sale) ? <p className={styles.labelUnavailable}>{labelUnavailableText(sale)}</p> : null}
+        {sale.dispatchDeadline && <p className={styles.salesScopeHelp}>Prazo de envio: {date.format(new Date(sale.dispatchDeadline))}</p>}
+        {sale.provider === 'magalu' ? sale.status !== 'cancelled' && sale.deliveries?.some(pack => ['pending', 'handling', 'ready_to_ship', 'not_verified'].includes(pack.status || '')) ? <><p className={styles.labelUnavailable}>Por enquanto, a impressão desta etiqueta é feita no portal Magalu.</p><a className={styles.postSaleLink} href="https://seller.magalu.com" target="_blank" rel="noopener noreferrer">Abrir etiquetas no Magalu ↗</a></> : null : sale.labelStatus === 'ready' && sale.shipmentStatus === 'ready_to_ship' && sale.status !== 'cancelled' ? <button type="button" className={styles.primary} disabled={!canManage || printing === sale.id} onClick={() => void printLabel(sale)}>{printing === sale.id ? 'Preparando etiqueta…' : labelActionText(sale)}</button> : <>{labelUnavailableText(sale) && <p className={styles.labelUnavailable}>{labelUnavailableText(sale)}</p>}{canManage && ['paid', 'confirmed', 'partially_refunded'].includes(sale.status) && ['', 'pending', 'handling', 'ready_to_ship', 'not_verified'].includes(sale.shipmentStatus || '') && sale.labelStatus !== 'fulfilled' && <button type="button" className={styles.refreshSales} disabled={!!printing} onClick={() => void printLabel(sale)}>{printing === sale.id ? 'Consultando etiqueta…' : 'Consultar etiqueta no Mercado Livre'}</button>}</>}
         <SalePostSale key={`${companyId}:${sale.connectionId}:${sale.id}`} companyId={companyId} saleId={sale.id} connectionId={sale.connectionId} provider={sale.provider} onSaleUpdated={onSaleUpdated} />
       </div>}
     </article>)}</div>}

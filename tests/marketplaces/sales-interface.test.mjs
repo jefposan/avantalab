@@ -32,6 +32,9 @@ test('contadores e etiquetas são isolados por conta e a impressão fica no Avan
   assert.match(service, /'ready_to_print', 'printed'/);
   assert.match(label, /authorizeMarketplace\(request, body\.empresaId, 'manage'\)/);
   assert.match(label, /Content-Type': 'application\/pdf'/);
-  assert.match(service, /label_status !== 'ready'/);
+  assert.match(service, /snapshot.labelStatus !== 'ready'/);
+  assert.match(service, /orders\/\$\{data.provider_order_id\}/);
+  assert.match(sales, /popup.opener = null/);
+  assert.doesNotMatch(sales, /window.open\('', '_blank', 'noopener'\)/);
   assert.match(service, /'O envio Full é operado pelo Mercado Livre/);
 });

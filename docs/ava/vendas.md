@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.23 -->
+<!-- ava-version: 3.0.0.24 -->
+
+> Revisão 3.0.0.24: publicação autorizada de consultas Magalu, avisos de pedidos
+> pendentes e etiquetas ML no Marketplaces Web. Sem impacto operacional no
+> AvantaVendas; não altera seu caixa ou implementa estoque Magalu.
 
 > Revisão 3.0.0.23: consulta de vendas/pós-venda Magalu preparada no Marketplaces
 > Web, sem publicação ou migração produtiva. Sem impacto operacional no

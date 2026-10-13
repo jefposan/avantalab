@@ -41,7 +41,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ link }, { headers });
     }
     if (body.action !== 'acknowledge') throw new MarketplaceError(400, 'invalid_action', 'Ação de aviso inválida.');
-    const saved = await db.from('marketplace_sale_alert_reads').upsert({ empresa_id: empresaId, alert_id: alert.data.id, user_id: usuario.id }, { onConflict: 'alert_id,user_id' });
+    const associated = await db.from('marketplace_sale_alerts').select('id').eq('empresa_id', empresaId).eq('connection_id', alert.data.connection_id).eq('sale_id', alert.data.sale_id);
+    if (associated.error || !associated.data?.length) throw new MarketplaceError(503, 'database', 'Não foi possível confirmar os avisos deste pedido.');
+    const saved = await db.from('marketplace_sale_alert_reads').upsert(associated.data.map(row => ({ empresa_id: empresaId, alert_id: row.id, user_id: usuario.id })), { onConflict: 'alert_id,user_id' });
     if (saved.error) throw new MarketplaceError(503, 'database', 'Não foi possível confirmar a leitura. Tente novamente.');
     return NextResponse.json({ ok: true }, { headers });
   } catch (error) { return managementFailure(error); }

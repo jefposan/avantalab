@@ -1,10 +1,10 @@
 # Magalu — autorização única de consultas
 
-Revisão: 3.0.0.23, 13/10/2026. Código ainda não publicado.
+Revisão: 3.0.0.24, 13/10/2026. Publicação e migração autorizadas.
 
 O administrador autorizou consultas de pedidos, entregas, documentos fiscais,
 pós-venda, mensagens de compradores e informações financeiras. A fonte
-executável é `MAGALU_CONNECTION_SCOPES` em
+executável de leitura é `MAGALU_CONNECTION_SCOPES` em
 `app/modules/marketplaces/services/magalu-oauth.ts`.
 
 ## Conjunto configurado
@@ -29,7 +29,14 @@ executável é `MAGALU_CONNECTION_SCOPES` em
 Conferência externa pelo IDM oficial: os 14 acessos aparecem em AVAILABLE,
 todos como default e nenhum em PENDING. Audiências produtivas:
 `https://api.magalu.com` e `https://services.magalu.com`.
-Nenhum escopo `write` ou `apiin:all` foi adicionado.
+Na .22 nenhum escopo `write` ou `apiin:all` havia sido adicionado.
+Na .24, com confirmação explícita para etiquetas, adicionado somente
+`open:order-logistics-seller:write`. `MAGALU_AUTHORIZATION_SCOPES` solicita os 15
+acessos juntos. A leitura continua funcionando com as 14 consultas; não expirar
+a conta só porque falta a escrita de etiquetas. Nenhum acesso irrestrito.
+O endpoint oficial de geração não publica parâmetros/corpo completos na referência
+consultada; não enviar payload por tentativa nem afirmar geração local pronta.
+Até confirmar o contrato e validar com entrega real, impressão usa o portal Magalu.
 Client secret, redirect URIs, validade dos tokens e conexões existentes não
 foram modificados. A inspeção não exibiu credenciais ou dados de compradores.
 

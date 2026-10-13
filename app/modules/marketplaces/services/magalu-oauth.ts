@@ -24,6 +24,9 @@ export const MAGALU_CONNECTION_SCOPES = [
   'open:order-financial-report-seller:read',
   'services:conversations-seller:read',
 ] as const;
+// Escrita autorizada exclusivamente para geração de etiqueta; nunca para estoque/SAC.
+export const MAGALU_LABEL_SCOPE = 'open:order-logistics-seller:write';
+export const MAGALU_AUTHORIZATION_SCOPES = [...MAGALU_CONNECTION_SCOPES, MAGALU_LABEL_SCOPE];
 export const MAGALU_OAUTH_TTL = 600;
 export type MagaluConfiguration = { clientId: string; clientSecret: string; redirectUri: string };
 export type MagaluIntent = { provider: 'magalu'; verifier: string; clientId: string; redirectUri: string };
@@ -64,7 +67,7 @@ export function createMagaluAuthorization(configuration: MagaluConfiguration) {
   const intent: MagaluIntent = { provider: 'magalu', verifier: createPkceVerifier(), clientId: configuration.clientId, redirectUri: configuration.redirectUri };
   const url = new URL('https://id.magalu.com/login');
   for (const [key, value] of Object.entries({ response_type: 'code', client_id: configuration.clientId, redirect_uri: configuration.redirectUri,
-    state, scope: MAGALU_CONNECTION_SCOPES.join(' '), choose_tenants: 'true', code_challenge: createPkceChallenge(intent.verifier), code_challenge_method: 'S256' })) url.searchParams.set(key, value);
+    state, scope: MAGALU_AUTHORIZATION_SCOPES.join(' '), choose_tenants: 'true', code_challenge: createPkceChallenge(intent.verifier), code_challenge_method: 'S256' })) url.searchParams.set(key, value);
   return { state, browserBinding, intent, authorizationUrl: url.toString(), expiresAt: new Date(Date.now() + MAGALU_OAUTH_TTL * 1000).toISOString() };
 }
 

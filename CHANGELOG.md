@@ -1,5 +1,29 @@
 # Changelog
 
+## 3.0.0.24 - 2026-10-13
+
+- Publicação autorizada da identificação segura Magalu, autorização única e
+  consultas de vendas/pós-venda preparadas nas versões .21, .22 e .23.
+- Avisos de pedidos aguardando envio anteriores à ativação, classificados como
+  Venda pendente, sem baixar estoque histórico. Um popup por pedido e leitura por
+  usuário; entregues, cancelados, despachados e Full não aparecem como pendentes.
+- ML: formato logístico atual (`logistic.mode/type`) e header oficial dos envios;
+  data de liberação de etiqueta e prazo de envio quando informados. A consulta
+  manual atualiza a linha aberta sem recarregar a lista ou deslocar o foco.
+- Impressão ML revalida pedido/conta/envio antes do PDF, sem depender do cache
+  antigo; botão Consultar etiqueta para pendentes ainda não liberados. Corrigida
+  abertura da aba PDF, isolando opener sem perder a referência à janela. PDF
+  validado por assinatura/tamanho. Webhook de envio usa pedidos locais vinculados
+  quando o ML não retorna mais order_id; aguarda o pedido quando ainda ausente.
+- Migrações aditivas de vendas Magalu e avisos pendentes, sem alterar o ponto
+  inicial ou somar estoques das contas. RLS e consultas privadas preservadas.
+- Com autorização explícita, logística escrita Magalu adicionada à aplicação e
+  solicitada junto das 14 consultas. Nenhuma operação de cancelamento, reembolso
+  ou estoque implementada/liberada no backend. Impressão direta Magalu continua
+  pendente de contrato completo e validação real: por enquanto abre o portal,
+  somente em pedidos com entrega pendente. Não anunciar impressão universal pronta.
+- Manuais e Ava revisados para o PADRÃO AVANTA 1.17.0.
+
 ## 3.0.0.23 - 2026-10-13
 
 - Integração local de consulta de vendas e pós-venda Magalu no painel existente

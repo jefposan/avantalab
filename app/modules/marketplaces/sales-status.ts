@@ -3,6 +3,7 @@ export type SaleStatusInput = {
   shipmentStatus: string | null;
   shipmentSubstatus: string | null;
   labelStatus: 'ready' | 'unavailable' | 'fulfilled';
+  labelReleaseAt?: string | null;
 };
 
 const orderStates: Record<string, string> = {
@@ -18,6 +19,7 @@ const orderStates: Record<string, string> = {
 };
 
 const shipmentSubstates: Record<string, string> = {
+  buffered: 'Envio programado · aguardando liberação da etiqueta',
   waiting_for_label_generation: 'Gerando etiqueta',
   regenerating: 'Gerando nova etiqueta',
   invoice_pending: 'Aguardando nota fiscal ou DC-e',
@@ -85,6 +87,10 @@ export function labelUnavailableText(sale: SaleStatusInput) {
   if (sale.shipmentStatus === 'not_delivered') return null;
   if (sale.shipmentStatus === 'cancelled' || sale.status === 'cancelled') return null;
   if (sale.labelStatus === 'fulfilled') return 'Envio Full: a etiqueta é operada pelo Mercado Livre.';
+  if (sale.shipmentSubstatus === 'buffered') {
+    const stamp = sale.labelReleaseAt && new Date(/^\d{4}-\d{2}-\d{2}$/.test(sale.labelReleaseAt) ? `${sale.labelReleaseAt}T12:00:00Z` : sale.labelReleaseAt);
+    return stamp && Number.isFinite(stamp.getTime()) ? `O Mercado Livre programou a liberação da etiqueta para ${new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(stamp)}.` : 'Envio programado pelo Mercado Livre. A etiqueta será liberada na data definida pela plataforma.';
+  }
   if (sale.shipmentSubstatus === 'invoice_pending') return 'A etiqueta será liberada depois da nota fiscal ou DC-e.';
   if (sale.shipmentSubstatus === 'waiting_for_label_generation' || sale.shipmentSubstatus === 'regenerating') return 'O Mercado Livre ainda está gerando a etiqueta.';
   return 'A etiqueta ainda não foi liberada pelo Mercado Livre para este envio.';

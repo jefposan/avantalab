@@ -1,6 +1,22 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.23 -->
+<!-- ava-version: 3.0.0.24 -->
+
+> Revisão 3.0.0.24 (publicação autorizada): vendas/pós-venda Magalu das versões
+> anteriores e avisos de Venda pendente para pedidos antigos ainda aguardando
+> envio. Entendi confirma a leitura, não envia ou encerra a venda. Um aviso por
+> pedido/usuário; entregues, cancelados, despachados e Full não geram pendência.
+> ML: abrir o pedido atualiza só a linha. Etiqueta liberada mostra Imprimir ou
+> Reimprimir; Consultar etiqueta relê o provedor quando o cache não a liberou.
+> Envio programado mostra data informada pelo ML, sem prometer liberação antecipada.
+> PDF abre em aba separada; permitir popup se o navegador bloquear. Impressão
+> revalida o pedido atual: canceladas, despachadas e Full não imprimem localmente.
+> Magalu: acesso de logística para etiquetas autorizado e configurado junto das
+> 14 consultas, mas geração local ainda depende de contrato completo/validação real.
+> Por enquanto, Abrir etiquetas no Magalu leva ao portal e exige localizar o pedido
+> na mesma loja. Não afirmar que impressão de todos os marketplaces está pronta.
+> Após publicar, autorizar a loja com os novos acessos e testar dados reais; estoque,
+> anexos fiscais e conversas fora de protocolos Magalu não foram integrados.
 
 > Revisão 3.0.0.23 (somente local, sem publicação): consulta de vendas e pós-venda
 > Magalu preparada no mesmo painel do ML. Vendas reúne contas autorizadas; use

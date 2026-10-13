@@ -66,6 +66,11 @@ test('validador do Mercado Livre aceita sucesso 204 sem exigir JSON', () => envi
   globalThis.fetch=async (_url,options) => { assert.equal(options.method,'POST'); return new Response(null,{status:204}); };
   assert.equal(await mlRequest(db,connection,'/items/validate','POST',{title:'Teste'}),null);
 }));
+test('envios enviam o header oficial novo sem afetar consultas de outros recursos', () => environment(async () => {
+  const db=database(),connection=await loadConnection(db,company,connectionId);
+  globalThis.fetch=async(url,options)=>{assert.equal(options.headers['X-Format-New'],url.includes('/shipments/')?'true':undefined);return Response.json({id:555});};
+  await mlRequest(db,connection,'/shipments/555');await mlRequest(db,connection,'/items/MLB123456');
+}));
 test('negação de recurso não é apresentada como perda da conexão', () => environment(async () => {
   const db=database(), connection=await loadConnection(db,company,connectionId);
   globalThis.fetch=async () => Response.json({code:'PA_UNAUTHORIZED_RESULT_FROM_POLICIES'},{status:403});

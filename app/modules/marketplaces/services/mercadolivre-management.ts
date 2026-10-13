@@ -96,7 +96,7 @@ export async function mlRequest(db: SupabaseClient, connection: SellerConnection
     let response: Response;
     try {
       response = await fetch(`https://api.mercadolibre.com${path}`, { method, cache: 'no-store', signal: AbortSignal.timeout(8_000),
-        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(/^\/shipments\/\d+/.test(path) ? { 'X-Format-New': 'true' } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
         ...(body ? { body: JSON.stringify(body) } : {}) });
     } catch {
       throw new MarketplaceError(503, method === 'GET' ? 'provider_unavailable' : 'mutation_uncertain', method === 'GET' ? 'Mercado Livre indisponível. Tente novamente.' : 'A resposta do Mercado Livre não chegou. Atualize a lista antes de repetir a ação.');
@@ -150,7 +150,9 @@ export async function mlBinaryRequest(db: SupabaseClient, connection: SellerConn
     }
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('pdf')) throw new MarketplaceError(503, 'invalid_label', 'O Mercado Livre não devolveu uma etiqueta em PDF.');
-    return new Uint8Array(await response.arrayBuffer());
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.length < 5 || bytes.length > 15 * 1024 * 1024 || String.fromCharCode(...bytes.slice(0, 5)) !== '%PDF-') throw new MarketplaceError(503, 'invalid_label', 'O Mercado Livre devolveu um arquivo de etiqueta inválido. Tente novamente.');
+    return bytes;
   }
   throw new MarketplaceError(409, 'reconnect', 'Reconecte esta conta para imprimir a etiqueta.');
 }

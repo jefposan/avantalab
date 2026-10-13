@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.23 -->
+<!-- ava-version: 3.0.0.24 -->
+
+> Revisão 3.0.0.24: publicação autorizada de vendas/pós-venda Magalu, avisos
+> pendentes e etiquetas ML no Marketplaces Web. Sem impacto operacional na
+> Gestão Mobile/AvantaPreços; PWAs e instalação do iPhone preservados.
 
 > Revisão 3.0.0.23: consulta de vendas/pós-venda Magalu preparada no Marketplaces
 > Web, sem publicação ou migração produtiva. Sem impacto operacional na Gestão

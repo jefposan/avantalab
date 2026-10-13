@@ -9,6 +9,7 @@ import type { PostSaleProgress } from '../listing-operations';
 
 export type SaleNotification = { id: string; seller: string; topic: 'orders_v2' | 'orders' | 'shipments' | 'items'; resource: string; orderId?: string; shipmentId?: string; listingId?: string };
 export type MarketplaceSale = { provider?: 'mercado_livre' | 'magalu'; providerOrderStatus?: string; warnings?: string[];
+  labelReleaseAt?: string | null; dispatchDeadline?: string | null;
   deliveries?: Array<{ id: string; code: string; status: string | null; statusText: string; deadline: string | null; invoices: Array<{ key: string | null; statusText: string }> }>;
   id: string; connectionId: string; orderId: string; soldAt: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: Array<{ title: string; quantity: number; unitPrice: number | null }> };
 
@@ -31,8 +32,8 @@ export function parseSaleNotification(value: unknown, applicationId: string): Sa
 function saleSnapshot(order: Record<string, unknown>, shipment: Record<string, unknown> | null) {
   const shipping = objectValue(order.shipping);
   const logistics = shipment ? objectValue(shipment.logistic) : {};
-  const mode = text((shipment || shipping).mode, 40);
-  const logisticType = text(logistics.logistic_type || (shipment || shipping).logistic_type, 80);
+  const mode = text(logistics.mode || (shipment || shipping).mode, 40);
+  const logisticType = text(logistics.type || logistics.logistic_type || (shipment || shipping).logistic_type, 80);
   const shipmentStatus = shipment ? text(shipment.status, 80) || null : null;
   const shipmentSubstatus = shipment ? text(shipment.substatus, 80) || null : null;
   const labelStatus: MarketplaceSale['labelStatus'] = logisticType === 'fulfillment' ? 'fulfilled' : mode === 'me2' && shipmentStatus === 'ready_to_ship' && ['ready_to_print', 'printed'].includes(shipmentSubstatus || '') ? 'ready' : 'unavailable';
@@ -43,6 +44,8 @@ function saleSnapshot(order: Record<string, unknown>, shipment: Record<string, u
   return {
     orderId: orderId(order.id), soldAt: text(order.date_created, 80), status: text(order.status, 80) || 'unknown', shipmentId: shipmentId(shipment?.id || shipping.id) || null,
     shipmentStatus, shipmentSubstatus, labelStatus, buyer: text(objectValue(order.buyer).nickname, 160) || null,
+    labelReleaseAt: text(objectValue(shipment?.buffering).date || objectValue(objectValue(shipment?.lead_time).buffering).date, 80) || null,
+    dispatchDeadline: text(objectValue(objectValue(shipment?.lead_time).estimated_handling_limit).date, 80) || null,
     total: amount(order.total_amount), currency: text(order.currency_id, 12) || 'BRL', items,
     confirmedAt: text(order.date_closed, 80) || null,
     providerUpdatedAt: text(order.last_updated || order.date_last_updated, 80) || null,
@@ -53,7 +56,7 @@ function saleSnapshot(order: Record<string, unknown>, shipment: Record<string, u
 
 export function publicSale(row: Record<string, unknown>): MarketplaceSale {
   const snapshot = objectValue(row.snapshot);
-  return { ...(row.provider === 'magalu' ? { provider: 'magalu' as const, providerOrderStatus: text(snapshot.providerOrderStatus),
+  return { ...(snapshot.labelReleaseAt ? { labelReleaseAt: text(snapshot.labelReleaseAt, 80) } : {}), ...(snapshot.dispatchDeadline ? { dispatchDeadline: text(snapshot.dispatchDeadline, 80) } : {}), ...(row.provider === 'magalu' ? { provider: 'magalu' as const, providerOrderStatus: text(snapshot.providerOrderStatus),
     warnings: (Array.isArray(snapshot.warnings) ? snapshot.warnings : []).filter((warning): warning is string => typeof warning === 'string').map(warning => text(warning)),
     deliveries: (Array.isArray(snapshot.deliveries) ? snapshot.deliveries : []).map(objectValue).map(delivery => ({ id: text(delivery.id,100), code: text(delivery.code,100), status: typeof delivery.status === 'string' ? text(delivery.status) : null, statusText: text(delivery.statusText), deadline: typeof delivery.deadline === 'string' ? text(delivery.deadline,80) : null,
       invoices: (Array.isArray(delivery.invoices) ? delivery.invoices : []).map(objectValue).map(invoice => ({key: /^\d{44}$/.test(String(invoice.key)) ? String(invoice.key) : null, statusText:text(invoice.statusText)})) })) } : {}),
@@ -122,13 +125,18 @@ export async function processSaleNotifications(db: SupabaseClient, connection: S
   for (const event of data || []) {
     if (Date.now() > deadline) break;
     try {
-      let id = String(event.resource).split('/').pop() || '';
+      const id = String(event.resource).split('/').pop() || '';
       if (event.topic === 'shipments') {
         const shipment = objectValue(await mlRequest(db, connection, `/shipments/${id}`));
-        id = orderId(shipment.order_id);
+        if (shipmentId(shipment.id) !== id) throw new Error('invalid_shipment');
+        const known = await db.from('marketplace_sales').select('provider_order_id').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider', 'mercado_livre').eq('shipment_id', id);
+        if (known.error) throw new MarketplaceError(503, 'database', 'Não foi possível conferir os pedidos deste envio.');
+        const ids = [...new Set([orderId(shipment.order_id), ...(known.data || []).map(row => orderId(row.provider_order_id))].filter(Boolean))];
+        if (!ids.length) throw new MarketplaceError(503, 'shipment_awaiting_order', 'O envio aguarda a chegada do pedido para ser atualizado.');
+        for (const associatedId of ids) await syncOrder(db, connection, associatedId, deadline);
       }
       if (event.topic === 'items') await (await import('./inventory-listings')).observeInventoryListing(db, connection, id);
-      else {
+      else if (event.topic !== 'shipments') {
         if (!orderId(id)) throw new Error('invalid_resource');
         await syncOrder(db, connection, id, deadline);
       }
@@ -194,9 +202,20 @@ export async function postSaleForSale(db: SupabaseClient, companyId: string, con
 }
 
 export async function labelForSale(db: SupabaseClient, companyId: string, connectionId: string, saleId: string) {
+  if (!uuidIsValid(saleId)) throw new MarketplaceError(400, 'invalid_sale', 'Pedido inválido.');
   const connection = await loadConnection(db, companyId, connectionId);
-  const { data, error } = await db.from('marketplace_sales').select('shipment_id,label_status').eq('empresa_id', companyId).eq('connection_id', connectionId).eq('id', saleId).maybeSingle();
+  const { data, error } = await db.from('marketplace_sales').select('provider_order_id').eq('empresa_id', companyId).eq('connection_id', connectionId).eq('provider', 'mercado_livre').eq('id', saleId).maybeSingle();
   if (error || !data) throw new MarketplaceError(404, 'sale_not_found', 'Venda não encontrada nesta conta.');
-  if (data.label_status !== 'ready' || !shipmentId(data.shipment_id)) throw new MarketplaceError(409, 'label_unavailable', data.label_status === 'fulfilled' ? 'O envio Full é operado pelo Mercado Livre e não possui etiqueta para impressão local.' : 'A etiqueta ainda não está disponível para este envio.');
-  return mlBinaryRequest(db, connection, `/shipment_labels?shipment_ids=${data.shipment_id}&response_type=pdf`);
+  if (!orderId(data.provider_order_id)) throw new MarketplaceError(409, 'invalid_order', 'O pedido precisa ser atualizado antes de imprimir.');
+  const order = objectValue(await mlRequest(db, connection, `/orders/${data.provider_order_id}`));
+  if (orderId(order.id) !== data.provider_order_id || orderId(objectValue(order.seller).id) !== connection.seller_reference) throw new MarketplaceError(503, 'invalid_order', 'O Mercado Livre não confirmou o pedido desta conta.');
+  if (!['paid', 'confirmed', 'partially_refunded'].includes(String(order.status))) throw new MarketplaceError(409, 'label_unavailable', 'Este pedido não está liberado para envio. Confira sua situação atual.');
+  const shippingId = shipmentId(objectValue(order.shipping).id);
+  if (!shippingId) throw new MarketplaceError(409, 'label_unavailable', 'O Mercado Livre ainda não informou o envio deste pedido.');
+  const shipment = objectValue(await mlRequest(db, connection, `/shipments/${shippingId}`));
+  if (shipmentId(shipment.id) !== shippingId) throw new MarketplaceError(503, 'invalid_shipment', 'O Mercado Livre não confirmou o envio deste pedido.');
+  const snapshot = saleSnapshot(order, shipment);
+  if (snapshot.labelStatus === 'fulfilled') throw new MarketplaceError(409, 'label_unavailable', 'O envio Full é operado pelo Mercado Livre e não possui etiqueta para impressão local.');
+  if (snapshot.labelStatus !== 'ready') throw new MarketplaceError(409, 'label_unavailable', snapshot.shipmentSubstatus === 'buffered' ? 'O Mercado Livre programou o envio para outra data. A etiqueta será liberada pela plataforma.' : 'A etiqueta ainda não está disponível para este envio.');
+  return mlBinaryRequest(db, connection, `/shipment_labels?shipment_ids=${shippingId}&response_type=pdf`);
 }

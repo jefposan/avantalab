@@ -1,6 +1,6 @@
 import { safeMarketplaceLink } from './services/inventory-model.ts';
 
-export type SaleAlert = { id: string; connection_id: string; provider: string; listing_id: string; title: string; quantity: number; sold_at: string; order_id: string; account_name: string; permalink: string | null };
+export type SaleAlert = { id: string; sale_id?: string; kind?: 'new_sale' | 'pending_dispatch'; connection_id: string; provider: string; listing_id: string; title: string; quantity: number; sold_at: string; order_id: string; account_name: string; permalink: string | null };
 export type MarketplaceLiveFeed = { alerts: SaleAlert[]; pendingStock: number; pendingSales: number; issues: Array<{ issue: string; total: number }>; updatedAt: string | null; workerFinishedAt: string | null; workerHealthy: boolean; enabled: boolean };
 const messages: Record<string, string> = {
   sales_history_setup: 'A recuperação das vendas anteriores precisa ser ativada no banco pelo administrador do sistema.',

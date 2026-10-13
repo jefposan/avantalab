@@ -132,6 +132,8 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }
   const updateSale = useCallback((updated: MarketplaceSale) => {
     setSales((current) => current.map((sale) => sale.id === updated.id && sale.connectionId === updated.connectionId ? updated : sale));
+    // A consulta acionada pelo usuário atualiza só a linha aberta, não a lista toda.
+    setSalesSnapshot((current) => current.map((sale) => sale.id === updated.id && sale.connectionId === updated.connectionId ? updated : sale));
   }, []);
   const oauthWindow = useRef<Window | null>(null);
   const returnHref = `/gestao?empresaId=${encodeURIComponent(companyId)}`;

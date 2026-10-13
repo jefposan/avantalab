@@ -9,14 +9,14 @@ const root = resolve(import.meta.dirname, '../..');
 const hooks = registerHooks({ resolve(specifier, context, next) {
   if (specifier === 'server-only') return { url: 'data:text/javascript,export {}', shortCircuit: true };
   if (specifier === './management-access') return { url: 'data:text/javascript,export class MarketplaceError extends Error { constructor(status,code,message){super(message);this.status=status;this.code=code;} }', shortCircuit: true };
-  if (specifier === './mercadolivre-management') return { url: 'data:text/javascript,export async function loadConnection(db,company,id){if(company!==db.company||id!==db.connection.id)throw new Error("Conta não encontrada");return db.connection;} export async function mlRequest(db,connection,path){return db.read(path);} export async function mlBinaryRequest(){throw new Error("Not used");}', shortCircuit: true };
+  if (specifier === './mercadolivre-management') return { url: 'data:text/javascript,export async function loadConnection(db,company,id){if(company!==db.company||id!==db.connection.id)throw new Error("Conta não encontrada");return db.connection;} export async function mlRequest(db,connection,path){return db.read(path);} export async function mlBinaryRequest(db,connection,path){db.binaryReads.push(path);return new Uint8Array([37,80,68,70,45]);}', shortCircuit: true };
   let candidate;
   if (specifier.startsWith('@/')) candidate = resolve(root, specifier.slice(2));
   else if (specifier.startsWith('.') && context.parentURL?.startsWith('file:')) candidate = resolve(dirname(new URL(context.parentURL).pathname), specifier);
   if (candidate && existsSync(`${candidate}.ts`)) return next(pathToFileURL(`${candidate}.ts`).href, context);
   return next(specifier, context);
 } });
-const { postSaleForSale } = await import('../../app/modules/marketplaces/services/mercadolivre-sales.ts');
+const { postSaleForSale, labelForSale } = await import('../../app/modules/marketplaces/services/mercadolivre-sales.ts');
 hooks.deregister();
 const company = '11111111-1111-4111-8111-111111111111';
 const connectionId = '22222222-2222-4222-8222-222222222222';
@@ -128,4 +128,28 @@ test('rota e cliente preservam autenticação, conta da venda e cancelamento de 
   assert.match(client, /controller\.abort\(\)/);
   assert.match(client, /if \(controller.signal.aborted\) return/);
   assert.match(client, /Atualizar pós-venda/);
+});
+
+test('novo formato logístico reconhece etiqueta e prazo; cache indisponível não bloqueia PDF atual', async () => {
+  const db=database({status:'paid'});db.rows[0].provider='mercado_livre';db.binaryReads=[];const oldRead=db.read;
+  db.read=async(path)=>path==='/shipments/555'?{id:555,status:'ready_to_ship',substatus:'ready_to_print',logistic:{mode:'me2',type:'xd_drop_off'},lead_time:{estimated_handling_limit:{date:'2026-10-14T15:00:00Z'}}}:oldRead(path);
+  const refreshed=await postSaleForSale(db,company,connectionId,saleId);assert.equal(refreshed.sale.labelStatus,'ready');assert.equal(refreshed.sale.dispatchDeadline,'2026-10-14T15:00:00Z');
+  db.rows[0].label_status='unavailable';await labelForSale(db,company,connectionId,saleId);assert.deepEqual(db.binaryReads,['/shipment_labels?shipment_ids=555&response_type=pdf']);
+});
+test('impressão revalida conta/pedido e recusa canceladas, despachadas, Full e agendadas antes do PDF', async () => {
+  for(const scenario of [{order:{status:'cancelled'},shipment:{status:'ready_to_ship',substatus:'ready_to_print',mode:'me2'}},
+    {order:{status:'paid'},shipment:{status:'shipped',substatus:'printed',mode:'me2'}},
+    {order:{status:'paid'},shipment:{status:'ready_to_ship',substatus:'ready_to_print',logistic:{mode:'me2',type:'fulfillment'}}},
+    {order:{status:'paid'},shipment:{status:'pending',substatus:'buffered',mode:'me2'}}]) {
+    const db=database(scenario.order);db.rows[0].provider='mercado_livre';db.binaryReads=[];db.rows[0].label_status='ready';const oldRead=db.read;
+    db.read=async(path)=>path==='/shipments/555'?{id:555,...scenario.shipment}:oldRead(path);
+    await assert.rejects(labelForSale(db,company,connectionId,saleId));assert.deepEqual(db.binaryReads,[]);
+  }
+  const db=database({status:'paid',seller:{id:999}});db.rows[0].provider='mercado_livre';db.binaryReads=[];
+  await assert.rejects(labelForSale(db,company,connectionId,saleId),/não confirmou/);assert.deepEqual(db.binaryReads,[]);
+});
+test('buffered conserva data de liberação e não indica etiqueta disponível', async () => {
+  const db=database({status:'paid'});const oldRead=db.read;
+  db.read=async(path)=>path==='/shipments/555'?{id:555,status:'pending',substatus:'buffered',logistic:{mode:'me2',type:'xd_drop_off'},buffering:{date:'2026-10-14T03:00:00Z'}}:oldRead(path);
+  const result=await postSaleForSale(db,company,connectionId,saleId);assert.equal(result.sale.labelStatus,'unavailable');assert.equal(result.sale.labelReleaseAt,'2026-10-14T03:00:00Z');
 });
