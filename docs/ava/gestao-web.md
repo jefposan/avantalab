@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.20 -->
+<!-- ava-version: 3.0.0.21 -->
+
+> Revisão 3.0.0.21 (local, sem publicação): a conexão Magalu usa o acesso
+> escolhido no ID Magalu (`tenant`), não o identificador do login. Antes de
+> salvar, confirma o perfil vendedor na API oficial e a identidade da loja.
+> Se o Magalu negar acesso vendedor, refaça a conexão escolhendo a loja, não
+> o perfil pessoal; se já escolheu a loja, confira a liberação da integração.
+> Falhas temporárias não confirmam conexão nem provam que a conta seja pessoal.
+> Teste isolado da Saldão Aline valida autorização/identidade sem gravar tokens
+> ou contas em produção. Ainda não ativa anúncios, vendas ou estoque Magalu.
 
 > Revisão 3.0.0.20: rotação protegida do token de webhook da Asaas, sem
 > alteração de telas, planos, lançamentos ou orientação operacional da Gestão.

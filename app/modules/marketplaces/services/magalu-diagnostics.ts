@@ -21,6 +21,8 @@ const messages = {
   missing_scopes: 'Faltou autorizar alguma consulta no Magalu. Conecte novamente e marque pedidos, produtos e estoque.',
   response_invalid: 'A resposta do Magalu não foi reconhecida pelo AvantaLab. Avise o administrador para conferir a integração.',
   identity_unconfirmed: 'Não conseguimos identificar uma loja no retorno do Magalu. Confirme o acesso da loja vendedora; se já usou esse acesso, avise o administrador.',
+  seller_access_denied: 'O Magalu não liberou o acesso vendedor desta conta. Conecte novamente e escolha a loja, não o perfil pessoal. Se já escolheu a loja, confira a liberação da integração no Magalu.',
+  seller_verification_failed: 'Não conseguimos confirmar a loja no Magalu agora. Tente novamente em instantes; se continuar, avise o administrador.',
   token_expired: 'O Magalu retornou uma autorização já vencida. Inicie uma nova conexão.',
   connection_database: 'O AvantaLab não conseguiu salvar a conta Magalu. Tente novamente; se continuar, avise o administrador.',
   connection_changed: 'A conta mudou durante a conexão. Atualize as contas e tente conectar novamente.',
@@ -30,7 +32,7 @@ const messages = {
 export type MagaluFailureCode = keyof typeof messages;
 const stages = ['start', 'configuration', 'pending_lookup', 'browser_validation', 'intent_validation', 'access_check', 'consume', 'exchange', 'access_recheck', 'connection_lookup', 'save'] as const;
 export type MagaluFailureStage = typeof stages[number];
-const issues = ['response_json', 'token_fields', 'token_type', 'expires_in', 'scope_format', 'token_format', 'token_claims', 'token_audience', 'identity_format'] as const;
+const issues = ['response_json', 'token_fields', 'token_type', 'expires_in', 'scope_format', 'token_format', 'token_claims', 'token_audience', 'identity_format', 'seller_profile', 'seller_identity'] as const;
 type Issue = typeof issues[number];
 const databaseCodes = ['23505', '23503', '23514', '42501', '42P01', '42703', 'PGRST116', 'PGRST204'] as const;
 type DatabaseCode = typeof databaseCodes[number];

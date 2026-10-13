@@ -83,6 +83,12 @@ function request(auth,query='&code=fixture-code',binding=auth.browserBinding) {
 }
 function token(claims={}) {return `eyJhbGciOiJSUzI1NiJ9.${Buffer.from(JSON.stringify({sub:seller,exp:Math.floor(Date.now()/1000)+7200,aud:['https://api.magalu.com'],...claims})).toString('base64url')}.fixture-signature`;}
 function tokenResponse(changes={}) {return {access_token:token(),refresh_token:'fixture-refresh',token_type:'Bearer',expires_in:7200,scope:oauth.MAGALU_CONNECTION_SCOPES.join(' '),...changes};}
+const sellerEndpoint='https://api.magalu.com/seller/v1/portfolios/me';
+function mockTokenFetch(handler) {
+  globalThis.fetch=async(url,options)=>url===sellerEndpoint
+    ? Response.json({tenant:{id:seller},seller:{id:'fixture-seller'},channel:{id:'fixture-channel',name:'Magalu'}})
+    : handler(url,options);
+}
 
 test('URL oficial, loja escolhida, PKCE S256, state aleatório e intenções criptografadas',async()=>{
   const {auth,row}=await fixture(); const url=new URL(auth.authorizationUrl);
@@ -121,7 +127,7 @@ test('início exige origem, módulo e administrador; cookie limitado, HttpOnly e
 });
 test('retorno troca código só no servidor, de uso único e sem tocar ML',async()=>{
   const {db,auth}=await fixture();const before=JSON.stringify(db.tables.marketplace_connections[0]);let exchanges=0;
-  globalThis.fetch=async(url,options)=>{exchanges++;assert.equal(url,'https://id.magalu.com/oauth/token');assert.equal(options.redirect,'error');const body=JSON.parse(options.body);assert.equal(body.client_secret,config.clientSecret);assert.equal(body.code_verifier,auth.intent.verifier);assert.equal(body.redirect_uri,config.redirectUri);return Response.json(tokenResponse());};
+  mockTokenFetch(async(url,options)=>{exchanges++;assert.equal(url,'https://id.magalu.com/oauth/token');assert.equal(options.redirect,'error');const body=JSON.parse(options.body);assert.equal(body.client_secret,config.clientSecret);assert.equal(body.code_verifier,auth.intent.verifier);assert.equal(body.redirect_uri,config.redirectUri);return Response.json(tokenResponse());});
   const response=await callback.GET(request(auth));const html=await response.text();assert.match(html,/Autorização Magalu concluída/);assert.match(html,/sincronização.*preparação/);
   assert.equal(response.headers.get('referrer-policy'),'no-referrer');assert.equal(response.headers.get('cache-control'),'no-store');assert.match(response.headers.get('content-security-policy'),/frame-ancestors 'none'/);
   assert.match(response.headers.get('set-cookie'),/"maxAge":0/);assert.match(html,/history.replaceState/);
@@ -131,7 +137,7 @@ test('retorno troca código só no servidor, de uso único e sem tocar ML',async
   await callback.GET(request(auth));assert.equal(exchanges,1);
 });
 test('retorno confirmado avisa somente a origem, fecha popup e oferece retorno com empresa e ID sem tokens',async()=>{
-  const {db,auth}=await fixture();globalThis.fetch=async()=>Response.json(tokenResponse());
+  const {db,auth}=await fixture();mockTokenFetch(async()=>Response.json(tokenResponse()));
   const html=await(await callback.GET(request(auth))).text();
   const script=html.match(/<script nonce="[^"]+">([\s\S]*?)<\/script>/)[1];
   const messages=[],redirects=[],timeouts=[];let closes=0;
@@ -184,7 +190,7 @@ test('cancelamento consome pendência, preserva conta e não mostra erro bruto e
 test('permissão revogada antes ou durante consentimento impede salvar',async()=>{
   for(const during of [false,true]) {
     const {db,auth}=await fixture();let exchanges=0;if(!during)db.tables.usuarios_empresa[0].status='inativo';
-    globalThis.fetch=async()=>{exchanges++;db.tables.usuarios_empresa[0].perfil='operador_simples';return Response.json(tokenResponse());};
+    mockTokenFetch(async()=>{exchanges++;db.tables.usuarios_empresa[0].perfil='operador_simples';return Response.json(tokenResponse());});
     assert.doesNotMatch(await(await callback.GET(request(auth))).text(),/Autorização Magalu concluída/);assert.equal(db.tables.marketplace_connections.length,1);assert.equal(exchanges,during?1:0);
   }
 });
@@ -194,14 +200,86 @@ test('rejeita tokens incompletos, identidade pessoal, audiência errada e escopo
   }
 });
 test('repetição paralela do mesmo callback troca o código uma única vez',async()=>{
-  const {db,auth}=await fixture();let exchanges=0;globalThis.fetch=async()=>{exchanges++;return Response.json(tokenResponse());};
+  const {db,auth}=await fixture();let exchanges=0;mockTokenFetch(async()=>{exchanges++;return Response.json(tokenResponse());});
   await Promise.all([callback.GET(request(auth)),callback.GET(request(auth))]);assert.equal(exchanges,1);assert.equal(db.tables.marketplace_connections.filter(row=>row.provider==='magalu').length,1);
+});
+test('tenant é a loja; UUID do login nunca vira referência de vendedor',async()=>{
+  const {db,auth}=await fixture();
+  mockTokenFetch(async()=>Response.json(tokenResponse({access_token:token({sub:actor,tenant:seller})})));
+  const html=await(await callback.GET(request(auth))).text();
+  assert.match(html,/Autorização Magalu concluída/);
+  const connection=db.tables.marketplace_connections.find(row=>row.provider==='magalu');
+  assert.equal(connection.seller_reference,seller);assert.notEqual(connection.seller_reference,actor);
+});
+test('tenant pessoal, inválido ou conflitante não permite fallback para sub legado',async()=>{
+  for(const tenant of [actor,`PERSON.${actor}`,'GENPUB.invalid','',null,{},[seller]]){
+    const {db,auth}=await fixture();const before=JSON.stringify(db.tables.marketplace_connections);
+    globalThis.fetch=async()=>Response.json(tokenResponse({access_token:token({tenant})}));
+    assert.doesNotMatch(await(await callback.GET(request(auth))).text(),/Autorização Magalu concluída/);
+    assert.equal(diagnosticReports.at(-1).code,'identity_unconfirmed');assert.equal(JSON.stringify(db.tables.marketplace_connections),before);
+  }
+  const {db,auth}=await fixture();globalThis.fetch=async()=>Response.json(tokenResponse({access_token:token({sub:actor})}));
+  assert.doesNotMatch(await(await callback.GET(request(auth))).text(),/Autorização Magalu concluída/);
+  assert.equal(db.tables.marketplace_connections.filter(row=>row.provider==='magalu').length,0);
+});
+test('tenant não dispensa identidade do login, audiência, validade ou escopos',async()=>{
+  for(const changes of [{sub:'PERSON.invalid',tenant:seller},{sub:null,tenant:seller},{aud:'other',tenant:seller},{exp:1,tenant:seller}]){
+    const {db,auth}=await fixture();globalThis.fetch=async()=>Response.json(tokenResponse({access_token:token(changes)}));
+    assert.doesNotMatch(await(await callback.GET(request(auth))).text(),/Autorização Magalu concluída/);assert.equal(db.tables.marketplace_connections.length,1);
+  }
+  const {db,auth}=await fixture();globalThis.fetch=async()=>Response.json(tokenResponse({access_token:token({sub:actor,tenant:seller}),scope:oauth.MAGALU_CONNECTION_SCOPES[0]}));
+  assert.doesNotMatch(await(await callback.GET(request(auth))).text(),/Autorização Magalu concluída/);
+  assert.equal(diagnosticReports.at(-1).code,'missing_scopes');assert.equal(db.tables.marketplace_connections.length,1);
+});
+test('confirma vendedor pelo tenant autorizado, somente em HTTPS e sem escrita',async()=>{
+  const {db,auth}=await fixture();const calls=[];const accessToken=token({sub:actor,tenant:seller});
+  globalThis.fetch=async(url,options)=>{
+    calls.push(url);
+    if(url==='https://id.magalu.com/oauth/token')return Response.json(tokenResponse({access_token:accessToken}));
+    assert.equal(url,sellerEndpoint);assert.equal(options.method,'GET');assert.equal(options.redirect,'error');assert.equal(options.cache,'no-store');assert.ok(options.signal);
+    assert.equal(options.headers.Authorization,`Bearer ${accessToken}`);assert.equal(options.headers['X-Tenant-Id'],seller);assert.equal(options.body,undefined);
+    return Response.json({tenant:{id:seller},seller:{id:'fixture-seller'}});
+  };
+  assert.match(await(await callback.GET(request(auth))).text(),/Autorização Magalu concluída/);
+  assert.deepEqual(calls,['https://id.magalu.com/oauth/token',sellerEndpoint]);
+  assert.equal(db.tables.marketplace_connections.find(row=>row.provider==='magalu').seller_reference,seller);
+});
+test('perfil pessoal com tenant GENPUB e escopos completos não vira loja se API recusar',async()=>{
+  for(const status of [401,403]){
+    const {db,auth}=await fixture();const before=JSON.stringify(db.tables.marketplace_connections);
+    globalThis.fetch=async url=>url===sellerEndpoint?Response.json({error:'PRIVATE',detail:'PRIVATE-TOKEN'},{status}):Response.json(tokenResponse({access_token:token({sub:actor,tenant:seller})}));
+    const html=await(await callback.GET(request(auth))).text();
+    assert.equal(diagnosticReports.at(-1).code,'seller_access_denied');assert.match(html,/escolha a loja/);assert.equal(JSON.stringify(db.tables.marketplace_connections),before);
+    assert.doesNotMatch(html,/PRIVATE|Autorização Magalu concluída/);assert.ok(!JSON.stringify(diagnosticReports).includes('PRIVATE'));
+  }
+});
+test('vendedor de outro tenant, perfil incompleto e JSON inválido impedem salvar',async()=>{
+  for(const body of [null,[],{}, {tenant:{id:seller},seller:{}},{tenant:{id:seller},seller:{id:''}}, {tenant:{id:`GENPUB.${actor}`},seller:{id:'fixture'}}, {tenant:{id:actor},seller:{id:'fixture'}}]){
+    const {db,auth}=await fixture();const before=JSON.stringify(db.tables.marketplace_connections);
+    globalThis.fetch=async url=>url===sellerEndpoint?Response.json(body):Response.json(tokenResponse({access_token:token({sub:actor,tenant:seller})}));
+    assert.doesNotMatch(await(await callback.GET(request(auth))).text(),/Autorização Magalu concluída/);
+    assert.equal(JSON.stringify(db.tables.marketplace_connections),before);assert.ok(['identity_unconfirmed','response_invalid'].includes(diagnosticReports.at(-1).code));
+  }
+  const {db,auth}=await fixture();globalThis.fetch=async url=>url===sellerEndpoint?new Response('PRIVATE-INVALID'):Response.json(tokenResponse());
+  assert.doesNotMatch(await(await callback.GET(request(auth))).text(),/PRIVATE|Autorização Magalu concluída/);assert.equal(db.tables.marketplace_connections.length,1);
+});
+test('falha temporária na confirmação da loja não é sucesso nem diagnóstico de conta pessoal',async()=>{
+  for(const [status,code] of [[429,'provider_rate_limit'],[500,'provider_unavailable'],[503,'provider_unavailable'],[422,'seller_verification_failed'],[204,'seller_verification_failed'],[302,'seller_verification_failed'],[0,'seller_verification_failed']]){
+    const {db,auth}=await fixture();const before=JSON.stringify(db.tables.marketplace_connections);
+    globalThis.fetch=async url=>{
+      if(url!==sellerEndpoint)return Response.json(tokenResponse());
+      if(!status)throw new Error('PRIVATE-NETWORK');
+      return status===204?new Response(null,{status}):Response.json({detail:'PRIVATE'},{status});
+    };
+    const html=await(await callback.GET(request(auth))).text();assert.equal(diagnosticReports.at(-1).code,code);assert.equal(JSON.stringify(db.tables.marketplace_connections),before);
+    assert.doesNotMatch(html,/PRIVATE|Autorização Magalu concluída|escolha a loja/);
+  }
 });
 test('desconexão concorrente e falha no banco não viram sucesso',async()=>{
   for(const mode of ['race','database']) {
     const {db,auth}=await fixture();const existing={id:crypto.randomUUID(),empresa_id:company,provider:'magalu',seller_reference:seller,status:'attention',token_sealed:vault.sealMarketplaceSecret('old')};db.tables.marketplace_connections.push(existing);
     if(mode==='race')db.beforeSave=()=>{existing.status='disconnected';existing.token_sealed=null;};else db.fail='marketplace_connections';
-    globalThis.fetch=async()=>Response.json(tokenResponse());assert.doesNotMatch(await(await callback.GET(request(auth))).text(),/Autorização Magalu concluída/);
+    mockTokenFetch(async()=>Response.json(tokenResponse()));assert.doesNotMatch(await(await callback.GET(request(auth))).text(),/Autorização Magalu concluída/);
     if(mode==='race')assert.equal(existing.token_sealed,null);else assert.equal(vault.openMarketplaceSecret(existing.token_sealed),'old');
   }
 });
@@ -213,7 +291,7 @@ test('mensagens da conexão Magalu não exibem avisos sobre outras plataformas',
   const codes=[...source.split('} as const;')[0].matchAll(/^  ([a-z_]+): '/gm)].map(match=>match[1]);
   assert.ok(codes.length>20);
   for(const code of codes)assert.doesNotMatch(diagnostics.reportMagaluFailure(new diagnostics.MagaluConnectionError(code),'exchange').message,/Mercado Livre|\bML\b|mercado_livre/i);
-  const {auth}=await fixture();globalThis.fetch=async()=>Response.json(tokenResponse());
+  const {auth}=await fixture();mockTokenFetch(async()=>Response.json(tokenResponse()));
   assert.doesNotMatch(await(await callback.GET(request(auth))).text(),/Mercado Livre|\bML\b|mercado_livre/i);
 });
 
@@ -251,7 +329,7 @@ test('banco, cofre e acesso do AvantaLab falham na etapa certa, sem atribuir a f
     const {db,auth}=await fixture();const before=JSON.stringify(db.tables.marketplace_connections);
     if(mode==='pending')db.fail='marketplace_oauth_pending';if(mode==='access')db.tables.usuarios_empresa[0].status='inativo';
     if(mode==='lookup'||mode==='save'){db.fail='marketplace_connections';db.failMode=mode==='save'?'insert':'select';db.failCode='23514';}
-    globalThis.fetch=async()=>{if(mode==='access-after')db.tables.usuarios_empresa[0].status='inativo';if(mode==='vault')process.env.MARKETPLACE_SECRETS_KEY='PRIVATE-INVALID-KEY';return Response.json(tokenResponse());};
+    mockTokenFetch(async()=>{if(mode==='access-after')db.tables.usuarios_empresa[0].status='inativo';if(mode==='vault')process.env.MARKETPLACE_SECRETS_KEY='PRIVATE-INVALID-KEY';return Response.json(tokenResponse());});
     const html=await(await callback.GET(request(auth))).text();const report=diagnosticReports.at(-1);assert.equal(report.code,code);assert.equal(report.stage,stage);assert.equal(JSON.stringify(db.tables.marketplace_connections),before);assert.ok(!html.includes('PRIVATE'));assert.ok(!JSON.stringify(report).includes('DB-private-detail'));
     if(mode==='lookup'||mode==='save')assert.equal(report.database_code,'23514');
     process.env.MARKETPLACE_SECRETS_KEY=fixtureVaultKey;

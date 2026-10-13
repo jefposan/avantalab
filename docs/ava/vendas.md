@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.20 -->
+<!-- ava-version: 3.0.0.21 -->
+
+> Revisão 3.0.0.21: correção local da identificação/acesso vendedor Magalu
+> no Marketplaces Web, sem publicação. Sem impacto operacional no AvantaVendas;
+> autorização Magalu não ativa anúncios, vendas ou sincronização de estoque.
 
 > Revisão 3.0.0.20: rotação protegida do token de webhook da Asaas no servidor,
 > sem impacto operacional no AvantaVendas.

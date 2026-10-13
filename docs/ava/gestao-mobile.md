@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.20 -->
+<!-- ava-version: 3.0.0.21 -->
+
+> Revisão 3.0.0.21: identificação e confirmação de acesso vendedor Magalu
+> corrigidas no Marketplaces Web, somente local e sem publicação.
+> Sem impacto operacional na Gestão Mobile/AvantaPreços.
 
 > Revisão 3.0.0.20: rotação protegida do token de webhook da Asaas no servidor,
 > sem impacto operacional na Gestão Mobile/AvantaPreços.

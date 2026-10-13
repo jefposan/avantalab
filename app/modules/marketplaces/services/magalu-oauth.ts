@@ -62,7 +62,7 @@ export function readMagaluIntent(value: string, configuration: MagaluConfigurati
 function tokenMetadata(token: string) {
   const parts = token.split('.');
   if (parts.length !== 3 || token.length > 32_768) throw new MagaluConnectionError('response_invalid', { issue: 'token_format' });
-  let claims: { sub?: unknown; exp?: unknown; aud?: unknown };
+  let claims: { sub?: unknown; tenant?: unknown; exp?: unknown; aud?: unknown };
   try {
     const value: unknown = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error();
@@ -71,8 +71,40 @@ function tokenMetadata(token: string) {
   if (typeof claims.exp !== 'number' || !Number.isFinite(claims.exp)) throw new MagaluConnectionError('response_invalid', { issue: 'token_claims' });
   if (claims.exp <= Date.now() / 1000) throw new MagaluConnectionError('token_expired');
   if (!(Array.isArray(claims.aud) ? claims.aud : [claims.aud]).includes('https://api.magalu.com')) throw new MagaluConnectionError('response_invalid', { issue: 'token_audience' });
-  if (typeof claims.sub !== 'string' || !/^GENPUB\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(claims.sub)) throw new MagaluConnectionError('identity_unconfirmed', { issue: 'identity_format' });
-  return { sellerReference: claims.sub, expiresAt: claims.exp * 1000 };
+  const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+  const sellerId = new RegExp(`^GENPUB\\.${uuid}$`, 'i');
+  // No retorno atual, sub identifica o login e tenant o acesso escolhido.
+  // GENPUB também pode ser pessoal: confirmar o perfil vendedor na API.
+  // Preservar o contrato legado sub=GENPUB.uuid somente sem claim tenant.
+  const hasTenant = Object.hasOwn(claims, 'tenant');
+  const reference = hasTenant ? claims.tenant : claims.sub;
+  if (typeof reference !== 'string' || !sellerId.test(reference)
+    || typeof claims.sub !== 'string' || !new RegExp(`^(?:GENPUB\\.)?${uuid}$`, 'i').test(claims.sub)) {
+    throw new MagaluConnectionError('identity_unconfirmed', { issue: 'identity_format' });
+  }
+  return { sellerReference: reference, expiresAt: claims.exp * 1000 };
+}
+
+/** Confirma o vendedor no próprio Magalu antes de permitir salvar credenciais. */
+async function confirmMagaluSeller(accessToken: string, sellerReference: string) {
+  let response: Response;
+  try {
+    response = await fetch('https://api.magalu.com/seller/v1/portfolios/me', {
+      method: 'GET', headers: { Accept: 'application/json', Authorization: `Bearer ${accessToken}`, 'X-Tenant-Id': sellerReference },
+      cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(12_000),
+    });
+  } catch { throw new MagaluConnectionError('seller_verification_failed'); }
+  if ([401, 403].includes(response.status)) throw new MagaluConnectionError('seller_access_denied', { providerStatus: response.status });
+  if (response.status === 429) throw new MagaluConnectionError('provider_rate_limit', { providerStatus: response.status });
+  if (response.status >= 500) throw new MagaluConnectionError('provider_unavailable', { providerStatus: response.status });
+  if (response.status !== 200) throw new MagaluConnectionError('seller_verification_failed', { providerStatus: response.status });
+  const data: unknown = await response.json().catch(() => null);
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new MagaluConnectionError('response_invalid', { issue: 'seller_profile' });
+  const profile = data as { tenant?: { id?: unknown }; seller?: { id?: unknown } };
+  if (typeof profile.tenant?.id !== 'string' || typeof profile.seller?.id !== 'string' || !profile.seller.id.trim()) {
+    throw new MagaluConnectionError('response_invalid', { issue: 'seller_profile' });
+  }
+  if (profile.tenant.id !== sellerReference) throw new MagaluConnectionError('identity_unconfirmed', { issue: 'seller_identity' });
 }
 
 export async function exchangeMagaluAuthorizationCode(code: string, intent: MagaluIntent, configuration: MagaluConfiguration) {
@@ -95,6 +127,7 @@ export async function exchangeMagaluAuthorizationCode(code: string, intent: Maga
   const scopes = data.scope.split(/\s+/).filter(Boolean);
   if (!MAGALU_CONNECTION_SCOPES.every(scope => scopes.includes(scope))) throw new MagaluConnectionError('missing_scopes');
   const metadata = tokenMetadata(data.access_token);
+  await confirmMagaluSeller(data.access_token, metadata.sellerReference);
   return { accessToken: data.access_token, refreshToken: data.refresh_token, scopes, sellerReference: metadata.sellerReference,
     expiresAt: new Date(Math.min(metadata.expiresAt, Date.now() + data.expires_in * 1000)).toISOString() };
 }

@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.0.0.21 - 2026-10-12
+
+- Correção local da identidade Magalu: o retorno atual traz o login em `sub`
+  e o acesso escolhido em `tenant`. O tenant válido tem precedência; retorno
+  legado sem tenant continua sujeito à confirmação de vendedor.
+- Antes de salvar credenciais, consulta GET oficial do perfil vendedor exige
+  HTTP 200, perfil reconhecido e tenant igual ao autorizado. GENPUB e escopos
+  de consulta sozinhos não confirmam loja. Recusa, perfil divergente/incompleto,
+  comunicação, limite e indisponibilidade impedem salvar, com motivos seguros.
+- Mantidos PKCE, state, cookie/navegador, uso único, empresa/permissão,
+  escopos somente de leitura, cofre e logs sem tokens ou resposta externa.
+- Teste real isolado da Saldão Aline confirmou autorização, identidade e acesso
+  vendedor na API Magalu (HTTP 200). Perfil pessoal recusado no fluxo final
+  (HTTP 403), sem falsa confirmação. Nenhuma conta/token foi salva no banco de produção;
+  nenhum anúncio/estoque foi alterado. Script opcional é somente loopback,
+  em desenvolvimento, sem Supabase e sem persistência de tokens.
+- Sem publicação; autorização não ativa os futuros adaptadores Magalu de
+  anúncios, vendas e estoque. Manuais e conhecimento da Ava revisados.
+- Validação: build completo, 1.036 testes, lint dos arquivos alterados,
+  PADRÃO AVANTA 1.17.0 e Ava aprovados. Servidor local original restaurado.
+
 ## 3.0.0.20 - 2026-10-12
 
 - Webhook da Asaas passa a suportar, de forma temporária e server-side, um
