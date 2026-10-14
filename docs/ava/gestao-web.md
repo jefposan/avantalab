@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.33.06 -->
+<!-- ava-version: 3.0.0.33.07 -->
+
+> Revisão 3.0.0.33.07: no Mercado Livre, o botão de etiqueta só aparece quando
+> o envio está apto para **Imprimir** ou **Reimprimir**. Não há botão Consultar
+> para etiqueta indisponível. Um envio já coletado informa que a emissão não é
+> permitida nesta etapa; **Atualizar** relê as vendas e abrir o pedido relê o envio.
 
 > Revisão 3.0.0.33.06: o rótulo **Registrando…** do Controle de Ponto foi
 > contido no botão circular; sem impacto operacional.
@@ -24,7 +29,7 @@
 
 > Revisão 3.0.0.33: em Marketplaces Web, cada venda identifica a plataforma e
 > **Copiar** coloca `Pedido #…` na área de transferência. Para Mercado Livre,
-> **Consultar etiqueta** obtém o PDF pela API oficial e o exibe no AvantaLab;
+> a impressão obtém o PDF pela API oficial e o exibe no AvantaLab;
 > não abre uma aba vazia. A alternativa **Abrir o PDF em nova guia** é explícita
 > e erros de consulta aparecem na própria tela. Não há mudança no fluxo Magalu.
 
@@ -74,7 +79,8 @@
 > envio. Entendi confirma a leitura, não envia ou encerra a venda. Um aviso por
 > pedido/usuário; entregues, cancelados, despachados e Full não geram pendência.
 > ML: abrir o pedido atualiza só a linha. Etiqueta liberada mostra Imprimir ou
-> Reimprimir; Consultar etiqueta relê o provedor quando o cache não a liberou.
+> Reimprimir; Atualizar vendas ou abrir o pedido relê o provedor quando o cache
+> ainda não a liberou.
 > Envio programado mostra data informada pelo ML, sem prometer liberação antecipada.
 > PDF aparece dentro do AvantaLab; **Abrir o PDF em nova guia** é opcional e
 > explícito. Não é preciso permitir popup. Impressão

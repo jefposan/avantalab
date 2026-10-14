@@ -27,6 +27,8 @@ test('contadores e etiquetas são isolados por conta e a impressão fica no Avan
   assert.match(sales, /\/api\/modulos\/marketplaces\/vendas\/etiqueta/);
   assert.match(sales, /URL\.createObjectURL/);
   assert.match(sales, /labelActionText/);
+  assert.match(sales, /canManage && canPrintSaleLabel\(sale\)/);
+  assert.doesNotMatch(sales, /Consultar etiqueta no Mercado Livre/);
   assert.match(saleStatus, /Imprimir etiqueta/);
   assert.match(saleStatus, /Reimprimir etiqueta/);
   assert.match(service, /'ready_to_print', 'printed'/);

@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, type ReactNode } from 'react';
 import BotaoExpandirCard from '@/app/components/BotaoExpandirCard';
 import Tooltip from '@/app/components/Tooltip';
 import { Icon } from '@/app/projetos/components/Icon';
-import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, orderStatusText, saleConflictText, orderedSaleGroups, type SaleGroup } from '@/app/modules/marketplaces/sales-status';
+import { canPrintSaleLabel, labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, orderStatusText, saleConflictText, orderedSaleGroups, type SaleGroup } from '@/app/modules/marketplaces/sales-status';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import type { MarketplaceAccount } from './Anunciados';
 import MarketplaceSelect from './MarketplaceSelect';
@@ -52,7 +52,7 @@ export default function Vendas({ companyId, accountId, onAccountChange, group, o
   const orderedSales = useMemo(() => sortSalesByDate(sales, order), [sales, order]);
 
   async function printLabel(sale: Sale) {
-    if (printing || !canManage) return;
+    if (printing || !canManage || !canPrintSaleLabel(sale)) return;
     setPrinting(sale.id); setPrintError('');
     try {
       const { data } = await (await import('@/app/lib/supabase')).supabase.auth.getSession();
@@ -121,7 +121,7 @@ export default function Vendas({ companyId, accountId, onAccountChange, group, o
         {sale.deliveries?.map(pack => <section key={pack.id} className={styles.claimDetails} aria-label={`Entrega ${pack.code || pack.id}`}><h4>Entrega {pack.code || pack.id} · {pack.statusText}</h4>{pack.deadline && <p>Prazo de envio: {date.format(new Date(pack.deadline))}</p>}{pack.invoices.map((invoice, index) => <p key={index}>{invoice.statusText}{invoice.key && <span> · Chave: {invoice.key}</span>}</p>)}</section>)}
         {saleConflictText(sale) && <p className={styles.salesError}>{saleConflictText(sale)}</p>}
         {sale.dispatchDeadline && <p className={styles.salesScopeHelp}>Prazo de envio: {date.format(new Date(sale.dispatchDeadline))}</p>}
-        {sale.provider === 'magalu' ? sale.status !== 'cancelled' && sale.deliveries?.some(pack => ['pending', 'handling', 'ready_to_ship', 'not_verified'].includes(pack.status || '')) ? <><p className={styles.labelUnavailable}>Por enquanto, a impressão desta etiqueta é feita no portal Magalu.</p><a className={styles.postSaleLink} href="https://seller.magalu.com" target="_blank" rel="noopener noreferrer">Abrir etiquetas no Magalu ↗</a></> : null : sale.labelStatus === 'ready' && sale.shipmentStatus === 'ready_to_ship' && sale.status !== 'cancelled' ? <button type="button" className={styles.primary} disabled={!canManage || printing === sale.id} onClick={() => void printLabel(sale)}>{printing === sale.id ? 'Preparando etiqueta…' : labelActionText(sale)}</button> : <>{labelUnavailableText(sale) && <p className={styles.labelUnavailable}>{labelUnavailableText(sale)}</p>}{canManage && ['paid', 'confirmed', 'partially_refunded'].includes(sale.status) && ['', 'pending', 'handling', 'ready_to_ship', 'not_verified'].includes(sale.shipmentStatus || '') && sale.labelStatus !== 'fulfilled' && <button type="button" className={styles.refreshSales} disabled={!!printing} onClick={() => void printLabel(sale)}>{printing === sale.id ? 'Consultando etiqueta…' : 'Consultar etiqueta no Mercado Livre'}</button>}</>}
+        {sale.provider === 'magalu' ? sale.status !== 'cancelled' && sale.deliveries?.some(pack => ['pending', 'handling', 'ready_to_ship', 'not_verified'].includes(pack.status || '')) ? <><p className={styles.labelUnavailable}>Por enquanto, a impressão desta etiqueta é feita no portal Magalu.</p><a className={styles.postSaleLink} href="https://seller.magalu.com" target="_blank" rel="noopener noreferrer">Abrir etiquetas no Magalu ↗</a></> : null : <>{!canPrintSaleLabel(sale) && labelUnavailableText(sale) && <p className={styles.labelUnavailable}>{labelUnavailableText(sale)}</p>}{canManage && canPrintSaleLabel(sale) && <button type="button" className={styles.primary} disabled={printing === sale.id} onClick={() => void printLabel(sale)}>{printing === sale.id ? 'Preparando etiqueta…' : labelActionText(sale)}</button>}</>}
         {labelPreview?.saleId === sale.id && <section className={styles.labelPreview} aria-label={`Etiqueta do Pedido #${sale.orderId}`}><div><strong>Etiqueta do Mercado Livre</strong><button type="button" className={styles.refreshSales} onClick={closeLabelPreview}>Fechar etiqueta</button></div><iframe title={`Etiqueta do Pedido #${sale.orderId}`} src={labelPreview.url} /><a className={styles.postSaleLink} href={labelPreview.url} target="_blank" rel="noopener noreferrer">Abrir o PDF em nova guia ↗</a></section>}
         <SalePostSale key={`${companyId}:${sale.connectionId}:${sale.id}`} companyId={companyId} saleId={sale.id} connectionId={sale.connectionId} provider={sale.provider} onSaleUpdated={onSaleUpdated} />
       </div>}

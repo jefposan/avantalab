@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.33.06 -->
+<!-- ava-version: 3.0.0.33.07 -->
+
+> Revisão 3.0.0.33.07: a ação de etiqueta indisponível foi removida do
+> Marketplaces Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 3.0.0.33.06: o rótulo **Registrando…** do Controle de Ponto foi
 > contido no botão circular; sem impacto operacional.

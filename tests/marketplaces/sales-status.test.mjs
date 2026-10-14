@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, salesInPeriod, salesSummary, saleGroup, validSalePeriod, orderedSaleGroups, SALE_GROUPS } from '../../app/modules/marketplaces/sales-status.ts';
+import { canPrintSaleLabel, labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, salesInPeriod, salesSummary, saleGroup, validSalePeriod, orderedSaleGroups, SALE_GROUPS } from '../../app/modules/marketplaces/sales-status.ts';
 
 const sale = (overrides = {}) => ({ status: 'paid', shipmentStatus: 'ready_to_ship', shipmentSubstatus: 'ready_to_print', labelStatus: 'ready', ...overrides });
 
@@ -39,9 +39,24 @@ test('traduz os estados operacionais conhecidos sem expor códigos do Mercado Li
 
 test('etiqueta impressa continua disponível para reimpressão', () => {
   const printed = sale({ shipmentSubstatus: 'printed' });
+  assert.equal(canPrintSaleLabel(sale()), true);
+  assert.equal(canPrintSaleLabel(printed), true);
   assert.equal(labelActionText(printed), 'Reimprimir etiqueta');
   assert.equal(saleStatusText(printed), 'Etiqueta impressa — pronta para despacho');
   assert.equal(labelUnavailableText(sale({ labelStatus: 'unavailable', shipmentSubstatus: 'invoice_pending' })), 'A etiqueta será liberada depois da nota fiscal ou DC-e.');
+});
+
+test('botão de etiqueta só é elegível quando a impressão está liberada', () => {
+  for (const overrides of [
+    { labelStatus: 'unavailable', shipmentSubstatus: 'waiting_for_label_generation' },
+    { labelStatus: 'unavailable', shipmentSubstatus: 'picked_up' },
+    { shipmentSubstatus: 'picked_up' },
+    { shipmentStatus: 'shipped' },
+    { status: 'cancelled' },
+    { status: 'payment_in_process' },
+    { labelStatus: 'fulfilled' },
+  ]) assert.equal(canPrintSaleLabel(sale(overrides)), false);
+  assert.equal(labelUnavailableText(sale({ labelStatus: 'unavailable', shipmentSubstatus: 'picked_up' })), 'Envio já coletado ou em trânsito. A etiqueta não pode ser emitida nesta etapa.');
 });
 
 test('não apresenta espera de etiqueta depois do despacho ou encerramento', () => {

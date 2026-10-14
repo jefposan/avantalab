@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0.33.07 - 2026-10-13
+
+- Marketplaces: o botão de etiqueta do Mercado Livre aparece apenas quando
+  pedido e envio permitem imprimir ou reimprimir. Estados pendentes, Full,
+  cancelados ou já coletados não exibem ação de emissão.
+- Envio coletado não é mais descrito como etiqueta “ainda não liberada”.
+  Atualizar vendas ou abrir o pedido continua relendo o estado do envio.
+
 ## 3.0.0.33.06 - 2026-10-13
 
 - Controle de Ponto: o estado **Registrando…** tem seletor específico para

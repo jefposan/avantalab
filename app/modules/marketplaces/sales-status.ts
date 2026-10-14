@@ -81,12 +81,20 @@ export function labelActionText(sale: SaleStatusInput) {
   return sale.shipmentSubstatus === 'printed' ? 'Reimprimir etiqueta' : 'Imprimir etiqueta';
 }
 
+export function canPrintSaleLabel(sale: SaleStatusInput) {
+  return ['paid', 'confirmed', 'partially_refunded'].includes(sale.status)
+    && sale.labelStatus === 'ready'
+    && sale.shipmentStatus === 'ready_to_ship'
+    && ['ready_to_print', 'printed'].includes(sale.shipmentSubstatus || '');
+}
+
 export function labelUnavailableText(sale: SaleStatusInput) {
   if (sale.shipmentStatus === 'delivered') return null;
   if (sale.shipmentStatus === 'shipped') return null;
   if (sale.shipmentStatus === 'not_delivered') return null;
   if (sale.shipmentStatus === 'cancelled' || sale.status === 'cancelled') return null;
   if (sale.labelStatus === 'fulfilled') return 'Envio Full: a etiqueta é operada pelo Mercado Livre.';
+  if (['picked_up', 'in_hub', 'out_for_delivery', 'soon_deliver', 'at_the_door'].includes(sale.shipmentSubstatus || '')) return 'Envio já coletado ou em trânsito. A etiqueta não pode ser emitida nesta etapa.';
   if (sale.shipmentSubstatus === 'buffered') {
     const stamp = sale.labelReleaseAt && new Date(/^\d{4}-\d{2}-\d{2}$/.test(sale.labelReleaseAt) ? `${sale.labelReleaseAt}T12:00:00Z` : sale.labelReleaseAt);
     return stamp && Number.isFinite(stamp.getTime()) ? `O Mercado Livre programou a liberação da etiqueta para ${new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(stamp)}.` : 'Envio programado pelo Mercado Livre. A etiqueta será liberada na data definida pela plataforma.';
