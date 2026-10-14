@@ -4,9 +4,11 @@ import { useEffect } from 'react';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { EVENTO_ABERTURA_PUSH_MOBILE, resolverDestinoPushMobile } from './push-navigation';
+import { pushNativoDisponivel } from './push-native-support';
 
 type NativeBadge = { set(options: { count: number }): Promise<unknown> };
 const NativeBadge = registerPlugin<NativeBadge>('NativeBadge');
+const AndroidPushSupport = registerPlugin<{ status(): Promise<{ ready: boolean }> }>('AvantaPushSupport');
 const TOKEN_KEY = 'avantalab.nativo.push-token';
 const TOKEN_KEY_IOS_ANTERIOR = 'avantalab.ios.push-token';
 const BADGE_KEY = 'avantalab.mobile.badge';
@@ -18,6 +20,7 @@ declare global {
     __avantalabSincronizarPushNativoMobile?: () => Promise<TokenPushNativo | null>;
     __avantalabDesativarPushNativoMobile?: () => Promise<TokenPushNativo | null>;
     __avantalabEstadoPushNativoMobile?: () => Promise<boolean>;
+    __avantalabPushNativoDisponivel?: () => Promise<boolean>;
     __avantalabAtualizarBadgeNativo?: (quantidade: number) => void;
     __avantalabDestinoPushNativoMobile?: string;
   }
@@ -25,7 +28,12 @@ declare global {
 
 export default function NativePushNotificationsBridge() {
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
+    if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('PushNotifications')) return;
+    const disponibilidadePush = pushNativoDisponivel(
+      Capacitor.getPlatform(),
+      Capacitor.isPluginAvailable('AvantaPushSupport'),
+      () => AndroidPushSupport.status(),
+    );
     let resolverToken: ((token: TokenPushNativo) => void) | null = null;
     let rejeitarToken: ((erro: Error) => void) | null = null;
     let badgeConfirmadoPelaGestao: number | null = null;
@@ -56,6 +64,9 @@ export default function NativePushNotificationsBridge() {
     };
 
     const iniciar = async (solicitarPermissao: boolean) => {
+      if (!(await disponibilidadePush)) {
+        throw new Error('As notificações estão temporariamente indisponíveis neste aplicativo. Você pode continuar usando a Gestão normalmente.');
+      }
       const permissao = solicitarPermissao
         ? await PushNotifications.requestPermissions()
         : await PushNotifications.checkPermissions();
@@ -95,16 +106,20 @@ export default function NativePushNotificationsBridge() {
         window.location.assign(destino.href);
       });
       window.__avantalabAtivarPushNativoMobile = () => iniciar(true);
+      window.__avantalabPushNativoDisponivel = () => disponibilidadePush;
       window.__avantalabSincronizarPushNativoMobile = async () => {
+        if (!(await disponibilidadePush)) return null;
         const permissao = await PushNotifications.checkPermissions();
         return permissao.receive === 'granted' ? iniciar(false) : null;
       };
       window.__avantalabDesativarPushNativoMobile = async () => {
         const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_IOS_ANTERIOR);
         const canal: TokenPushNativo['canal'] = Capacitor.getPlatform() === 'android' ? 'fcm' : 'apns';
-        await PushNotifications.unregister(); localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_KEY_IOS_ANTERIOR); return token ? { token, canal } : null;
+        if (await disponibilidadePush) await PushNotifications.unregister();
+        localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_KEY_IOS_ANTERIOR); return token ? { token, canal } : null;
       };
       window.__avantalabEstadoPushNativoMobile = async () => {
+        if (!(await disponibilidadePush)) return false;
         const permissao = await PushNotifications.checkPermissions();
         if (permissao.receive !== 'granted') return false;
         void iniciar(false).catch(() => undefined);
@@ -116,8 +131,8 @@ export default function NativePushNotificationsBridge() {
       aplicarBadgeNativo(normalizarBadge(badgePersistido), false);
       window.dispatchEvent(new CustomEvent('avantalab:badge-nativo-pronto'));
     };
-    void preparar();
-    return () => { delete window.__avantalabAtivarPushNativoMobile; delete window.__avantalabSincronizarPushNativoMobile; delete window.__avantalabDesativarPushNativoMobile; delete window.__avantalabEstadoPushNativoMobile; delete window.__avantalabAtualizarBadgeNativo; void PushNotifications.removeAllListeners(); };
+    void preparar().catch(() => undefined);
+    return () => { delete window.__avantalabAtivarPushNativoMobile; delete window.__avantalabSincronizarPushNativoMobile; delete window.__avantalabDesativarPushNativoMobile; delete window.__avantalabEstadoPushNativoMobile; delete window.__avantalabPushNativoDisponivel; delete window.__avantalabAtualizarBadgeNativo; void PushNotifications.removeAllListeners().catch(() => undefined); };
   }, []);
   return null;
 }

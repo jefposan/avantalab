@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.0.33.08 - 2026-10-13
+
+- Gestão Android: registro e remoção de push exigem confirmação da configuração
+  nativa. O pacote antigo 1.0.1 sem Firebase continua abrindo normalmente e não
+  chama o registro que encerrava o processo; o convite automático não é exibido
+  enquanto as notificações estiverem indisponíveis.
+- Pacote Android do Gestão 1.0.2 (código 2): transforma falhas de configuração
+  do plugin PushNotifications em rejeições tratáveis, preservando acesso e dados.
+- iOS/APNs, navegador/PWA e AvantaVendas preservados.
+
 ## 3.0.0.33.07 - 2026-10-13
 
 - Marketplaces: o botão de etiqueta do Mercado Livre aparece apenas quando

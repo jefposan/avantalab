@@ -5624,12 +5624,13 @@
   // No primeiro acesso de cada usuário neste aparelho, oferece ativar as
   // notificacoes. O toque no botao "Ativar" e o gesto que o iOS exige
   // para disparar o pedido de permissao do sistema.
-  function avaliarPromptNotificacoes() {
+  async function avaliarPromptNotificacoes() {
     try {
       if (!state.usuario || !state.usuario.id) return;
       if (state.notificacoesAtivas) { marcarPromptNotifVisto('ativado'); return; }
       if (notificacoesDesativadasExplicitamenteMobile()) return;
       var suporteNativo = typeof window.__avantalabAtivarPushNativoMobile === 'function';
+      if (suporteNativo && typeof window.__avantalabPushNativoDisponivel === 'function' && !(await window.__avantalabPushNativoDisponivel())) return;
       var suporteWeb = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
       if (!suporteNativo && !suporteWeb) return;
       if (!suporteNativo && Notification.permission === 'denied') { marcarPromptNotifVisto('negado-sistema'); return; }

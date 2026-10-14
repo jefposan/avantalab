@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.33.07 -->
+<!-- ava-version: 3.0.0.33.08 -->
+
+> Revisão 3.0.0.33.08: proteção contra encerramento por notificações no pacote
+> Android da Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 3.0.0.33.07: a ação de etiqueta indisponível foi removida do
 > Marketplaces Web; sem impacto operacional no AvantaVendas.

@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.33.07 -->
+<!-- ava-version: 3.0.0.33.08 -->
+
+> Revisão 3.0.0.33.08: na Gestão Android, notificações só são registradas quando
+> o pacote confirma suporte configurado. Sem suporte, a Gestão funciona normalmente
+> e não oferece o convite automático. Ativação manual informa indisponibilidade
+> temporária em português. Não orientar reinstalação ou limpeza de dados para
+> esta falha de configuração. iOS/APNs e navegador/PWA seguem iguais.
 
 > Revisão 3.0.0.33.07: a ação de etiqueta indisponível foi removida do
 > Marketplaces Web; sem impacto operacional na Gestão Mobile/AvantaPreços.
@@ -4240,7 +4246,10 @@ deve usar os nomes do menu e da barra inferior do celular.
   do aparelho fica em **Menu > Configurações > Preferências > Receber
   notificações**.
 - No primeiro login de cada usuário no aparelho, a Gestão oferece a autorização
-  para notificações depois do tutorial inicial. Se o iOS, Android ou navegador
+  para notificações depois do tutorial inicial, quando o aparelho e o pacote
+  têm suporte configurado. Na Gestão Android sem esse suporte, o convite não é
+  exibido e o app continua funcionando; não orientar limpeza de dados ou
+  reinstalação como solução. Se o iOS, Android configurado ou navegador
   já tiver autorizado, o token é sincronizado automaticamente. **Agora não** e
   uma desativação manual são respeitados; para mudar depois, use **Menu >
   Configurações > Preferências > Receber notificações**.

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.33.07 -->
+<!-- ava-version: 3.0.0.33.08 -->
+
+> Revisão 3.0.0.33.08: proteção contra encerramento por notificações no pacote
+> Android da Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 3.0.0.33.07: no Mercado Livre, o botão de etiqueta só aparece quando
 > o envio está apto para **Imprimir** ou **Reimprimir**. Não há botão Consultar
