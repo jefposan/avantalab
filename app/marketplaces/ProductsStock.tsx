@@ -11,6 +11,7 @@ import { marketplaceClientRequest, type MarketplaceAccount } from './Anunciados'
 import MarketplaceAccountPicker from './MarketplaceAccountPicker';
 import { accountDisplayName, accountReferenceDetail } from './account-identification';
 import MarketplaceSelect from './MarketplaceSelect';
+import { publicationAccountAvailable } from './marketplace-scope';
 import { collapseMarketplacePanel } from './collapse-panel';
 import InitialStockLoad from './InitialStockLoad';
 import styles from './marketplaces.module.css';
@@ -61,7 +62,7 @@ function ProductDetail({ product, props, busy, onCommand }: { product: LocalProd
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const { companyId, canManage, accounts, preparationLocked, onPrepare } = props;
   const publicationAccounts = props.publicationAccounts ?? accounts;
-  const validTargetAccount = publicationAccounts.some(account => account.id === targetAccount && account.status === 'connected') ? targetAccount : '';
+  const validTargetAccount = publicationAccounts.some(account => account.id === targetAccount && publicationAccountAvailable(account)) ? targetAccount : '';
   useEffect(() => {
     const controller = new AbortController();
     void marketplaceClientRequest(`produtos?${new URLSearchParams({ empresaId: companyId, productId: product.id })}`, undefined, controller.signal).then(data => {
@@ -101,7 +102,7 @@ function ProductDetail({ product, props, busy, onCommand }: { product: LocalProd
         <label className={styles.catalogMatch}><input type="checkbox" disabled={busy || !target} checked={sameProduct} onChange={event => setSameProduct(event.target.checked)} />Confirmo que são exatamente o mesmo produto físico.</label>
         <button type="button" disabled={busy || !target || !sameProduct} onClick={() => onCommand({ action: 'merge', productId: product.id, revision: product.revision, targetId: target?.id, targetRevision: target?.revision, sameProduct }, `Vincular os anúncios de “${product.name}” ao cadastro “${target?.name}”? Este cadastro ficará arquivado e o estoque do destino será mantido, sem soma.`)}>Vincular ao cadastro</button>
       </details>}
-      <section className={styles.localSection}><h3>Anunciar a partir deste cadastro</h3><MarketplaceAccountPicker label="Conta para publicar" value={validTargetAccount} onChange={setTargetAccount} options={publicationAccounts.filter(account => account.status === 'connected').map(account => ({ id: account.id, name: accountDisplayName(account), detail: accountReferenceDetail(account) }))} placeholder="Selecione a conta" disabled={busy || preparationLocked} />
+      <section className={styles.localSection}><h3>Anunciar a partir deste cadastro</h3><MarketplaceAccountPicker label="Conta para publicar" value={validTargetAccount} onChange={setTargetAccount} options={publicationAccounts.filter(publicationAccountAvailable).map(account => ({ id: account.id, name: accountDisplayName(account), detail: accountReferenceDetail(account) }))} placeholder="Selecione a conta" disabled={busy || preparationLocked} />
         <button type="button" disabled={busy || preparationLocked || !validTargetAccount || product.stock_quantity == null || product.stock_quantity === 0} onClick={() => onPrepare(product.id, validTargetAccount)}>Preparar anúncio</button><p className={styles.help}>{product.stock_quantity == null ? 'Confirme o estoque físico primeiro.' : preparationLocked ? 'Conclua ou limpe a preparação aberta antes de iniciar outra.' : 'Abre Novo anúncio para revisar preço, descrição e opções da conta. Não publica automaticamente.'}</p>
       </section>
     </>}

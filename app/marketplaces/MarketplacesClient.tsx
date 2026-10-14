@@ -17,6 +17,7 @@ import { supabase } from '@/app/lib/supabase';
 import styles from './marketplaces.module.css';
 import Anunciados, { marketplaceClientRequest, type MarketplaceAccount } from './Anunciados';
 import NewListing, { type ListingCopyRequest } from './NewListing';
+import MagaluListing from './MagaluListing';
 import ProductsStock from './ProductsStock';
 import PriceUsersPanel from './PriceUsersPanel';
 import Vendas from './Vendas';
@@ -28,7 +29,7 @@ import { inventoryIssueMessage, type MarketplaceLiveFeed, type SaleAlert } from 
 import { createPassiveRefresh } from './passive-refresh';
 import { Icon } from '@/app/projetos/components/Icon';
 import { connectionTarget, validateConnectionAuthorization } from './connection-target';
-import { accountsForMarketplace, publicationAccount } from './marketplace-scope';
+import { accountsForMarketplace, publicationAccount, publicationAccountAvailable } from './marketplace-scope';
 import { accountDisplayName, connectedAccountForIdentification, preserveNewerAccountLabel } from './account-identification';
 import AccountIdentification, { type AccountLabelResult } from './AccountIdentification';
 import { scrollMarketplaceRow } from './scroll-panel-row';
@@ -37,7 +38,7 @@ const providers: Array<{ id: MarketplaceId; name: string; logo: string; width: n
   { id: 'mercado_livre', name: 'Mercado Livre', logo: 'mercado-livre.png', width: 224, height: 58, available: true },
   { id: 'shopee', name: 'Shopee', logo: 'shopee.svg', width: 116, height: 36, available: false },
   { id: 'tiktok_shop', name: 'TikTok Shop', logo: 'tiktok-shop.svg', width: 160, height: 30, available: false },
-  { id: 'magalu', name: 'Magalu', logo: 'magalu.svg', width: 122, height: 32, available: false, selectable: true },
+  { id: 'magalu', name: 'Magalu', logo: 'magalu.svg', width: 122, height: 32, available: true, selectable: true },
   { id: 'casas_bahia', name: 'Casas Bahia', logo: 'casas-bahia.svg', width: 288, height: 75, available: false },
   { id: 'amazon', name: 'Amazon', logo: 'amazon.svg', width: 97, height: 30, available: false },
 ];
@@ -158,8 +159,8 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     setCanManageConnections(canManageConnection);
     setIdentificationAvailable(labelsAvailable);
     setSelectedAccount((current) => {
-      if (available.some((account) => account.id === current && account.status === 'connected')) return current;
-      const connected = available.filter((account) => account.status === 'connected');
+      if (available.some((account) => account.id === current && publicationAccountAvailable(account))) return current;
+      const connected = available.filter(publicationAccountAvailable);
       return connected[0]?.id || '';
     });
   }, []);
@@ -179,7 +180,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       setRenewAccount(null);
       setIdentificationAccountId(account.id);
       setConnectionNotice(account.provider === 'magalu'
-        ? 'Loja Magalu autorizada. Informe uma identificação. Para catálogo, preço e estoque pelo AvantaLab, reconecte esta mesma loja e aceite as permissões adicionais.'
+        ? account.magalu_catalog_authorized ? 'Loja Magalu autorizada para catálogo, preço e estoque. Informe uma identificação para ela.' : 'Loja Magalu autorizada. Informe uma identificação. Para publicar, reconecte a mesma loja e aceite as permissões de catálogo.'
         : 'Conta conectada. Informe uma identificação para ela.');
     } else if (account) setConnectionNotice('Conta conectada com sucesso. Use o lápis para identificar a conta.');
     else throw new Error('Não foi possível confirmar a conta na lista. Use Atualizar contas.');
@@ -221,7 +222,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     } finally { setConnectionsRefreshing(false); }
   }
 
-  const connectedAccounts = accounts.filter((account) => account.status === 'connected');
+  const connectedAccounts = accounts.filter(publicationAccountAvailable);
   const salesAccounts = accounts.filter(salesAccountAvailable);
   const renewableAccounts = accounts.filter((account) => ['connected', 'expired', 'attention'].includes(account.status));
   const marketplaceAccounts = accountsForMarketplace(accounts, marketplace);
@@ -499,7 +500,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
               <strong className={styles.accountName}>{accountDisplayName(account)}{pendingSales[account.id] ? <em className={styles.accountSalesBadge} title="Vendas nos filtros selecionados">{pendingSales[account.id]}</em> : null}</strong>
               {account.local_label && <small className={styles.accountReference}>{account.seller_name || `Vendedor ${account.seller_reference}`}</small>}
               <small className={styles.accountReference}>ID {account.seller_reference}</small>
-              <small className={styles.accountStatus} data-status={account.status}>{account.provider === 'magalu' && account.status === 'attention' && account.last_error_code === 'magalu_connector_pending' ? (account.magalu_catalog_authorized ? 'Autorizada · catálogo em ativação' : 'Autorizada · reautorize catálogo') : account.status === 'connected' ? 'Conectada' : account.status === 'expired' ? 'Autorização expirada' : 'Requer atenção'}</small>
+              <small className={styles.accountStatus} data-status={account.status}>{account.provider === 'magalu' && account.status === 'attention' && account.last_error_code === 'magalu_connector_pending' ? (account.magalu_catalog_authorized ? 'Autorizada · catálogo para testes' : 'Autorizada · reautorize catálogo') : account.status === 'connected' ? 'Conectada' : account.status === 'expired' ? 'Autorização expirada' : 'Requer atenção'}</small>
               <small className={styles.accountSync}>Última sincronização: {account.last_synced_at ? new Date(account.last_synced_at).toLocaleString('pt-BR') : 'Ainda não sincronizado'}</small>
             </button>
             {canManageConnections && <div className={styles.accountConnectionActions}>
@@ -515,7 +516,9 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
 
       <article className={styles.panel}>
         <div className={styles.panelHeading}><div><h2 id="new-listing-title">Novo anúncio</h2></div></div>
-        <NewListing key={companyId} companyId={companyId} marketplaceName={selectedProvider.name} accountId={publicationAccountId} marketplaceAvailable={selectedProvider.available} accounts={marketplaceAccounts} accountSelectionLocked={accountSelectionLocked || !!identificationAccountId || connecting} onSelectAccount={setSelectedAccount} onBusyChange={setPublicationBusy} canManage={canManage && selectedProvider.available && !connecting} onPublished={() => setRefreshKey((value) => value + 1)} copyRequest={copyRequest} onCopyHandled={() => { setCopyRequest(null); setRefreshKey((value) => value + 1); }} />
+        {marketplace === 'magalu'
+          ? <MagaluListing key={`${companyId}:${publicationAccountId}`} companyId={companyId} accountId={publicationAccountId} accounts={marketplaceAccounts} accountSelectionLocked={accountSelectionLocked || !!identificationAccountId || connecting} onSelectAccount={setSelectedAccount} onBusyChange={setPublicationBusy} canManage={canManage && !connecting} onPublished={() => setRefreshKey((value) => value + 1)} copyRequest={copyRequest} onCopyHandled={() => { setCopyRequest(null); setRefreshKey((value) => value + 1); }} />
+          : <NewListing key={companyId} companyId={companyId} marketplaceName={selectedProvider.name} accountId={publicationAccountId} marketplaceAvailable={selectedProvider.available} accounts={marketplaceAccounts} accountSelectionLocked={accountSelectionLocked || !!identificationAccountId || connecting} onSelectAccount={setSelectedAccount} onBusyChange={setPublicationBusy} canManage={canManage && selectedProvider.available && !connecting} onPublished={() => setRefreshKey((value) => value + 1)} copyRequest={copyRequest} onCopyHandled={() => { setCopyRequest(null); setRefreshKey((value) => value + 1); }} />}
       </article>
     </section>
 
@@ -529,7 +532,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     <AvantaKanban className={styles.panelOrder} order={panelOrder.order} onOrderChange={panelOrder.change} disabled={!panelOrder.ready || publicationBusy || priceUsersOpen || !!disconnectAccount} items={[
       { id: 'sales', title: 'Vendas', render: (handle) => <Vendas companyId={companyId} accountId={salesAccount} onAccountChange={account => { setSalesSnapshot(sales); setSalesAccount(account); }} group={salesGroup} onGroupChange={selectSalesInPanel} counts={accountSalesSummary.byGroup} total={accountSalesSummary.total} accounts={salesAccounts} sales={visibleSales} canManage={canManage} loading={salesLoading} error={salesError} warnings={salesWarnings} awaitingUpdates={awaitingUpdates} onRefresh={() => setSalesRefresh((value) => value + 1)} onSaleUpdated={updateSale} expanded={salesExpanded} onExpandedChange={setSalesExpanded} saleToOpen={saleToOpen} key={`${saleToOpen}:${visibleSales.some(sale => sale.id === saleToOpen)}`} dark={empresa.temaEscuro} brand={empresa.corPrimaria} reorderHandle={handle} /> },
       { id: 'products', title: 'Produtos e estoque', render: (handle) => <ProductsStock key={companyId} companyId={companyId} accounts={accounts} publicationAccounts={marketplaceAccounts} canManage={canManage} dark={empresa.temaEscuro} brand={empresa.corPrimaria} refreshKey={refreshKey} preparationLocked={publicationBusy || accountSelectionLocked || !selectedProvider.available} reorderHandle={handle} onPrepare={(localProductId, targetConnectionId) => {
-        if (!marketplaceAccounts.some(account => account.id === targetConnectionId && account.status === 'connected')) return;
+        if (!marketplaceAccounts.some(account => account.id === targetConnectionId && publicationAccountAvailable(account))) return;
         setSelectedAccount(targetConnectionId); setCopyRequest({ id: crypto.randomUUID(), localProductId, targetConnectionId });
         requestAnimationFrame(() => document.getElementById('new-listing-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }));
       }} /> },

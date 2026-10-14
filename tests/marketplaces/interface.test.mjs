@@ -81,7 +81,7 @@ test('retorno Magalu é limitado à janela aberta e conta autorizada não habili
   assert.match(client,/canManage=\{canManage && selectedProvider.available && !connecting\}/);
 });
 
-test('todas as marcas podem filtrar a tela sem declarar conexão ou publicação operacional', () => {
+test('Magalu abre publicação própria e outras marcas sem integração permanecem bloqueadas', () => {
   const source = stripTypeScriptTypes(client.slice(client.indexOf('const providers:'), client.indexOf('\nexport default function')));
   const providers = runInNewContext(`${source}; providers`);
   const selector = client.slice(client.indexOf('{providers.map'), client.indexOf('</button>)}', client.indexOf('{providers.map')));
@@ -89,7 +89,7 @@ test('todas as marcas podem filtrar a tela sem declarar conexão ou publicação
   const disabled = (provider, changes = {}) => runInNewContext(expression, { provider, connecting: false, accountSelectionLocked: false, publicationBusy: false, disconnecting: false, identificationAccountId: '', ...changes });
   for (const provider of providers) assert.equal(disabled(provider), false);
   const magalu = providers.find(provider => provider.id === 'magalu');
-  assert.equal(magalu.available, false); assert.equal(magalu.selectable, true);
+  assert.equal(magalu.available, true); assert.equal(magalu.selectable, true);
   for (const state of ['connecting', 'accountSelectionLocked', 'publicationBusy', 'disconnecting']) assert.equal(disabled(magalu, { [state]: true }), true);
   assert.equal(disabled(magalu, {identificationAccountId: 'editing'}),true);
   assert.match(selector, /provider.selectable \? 'Em preparação' : 'Em breve'/);
@@ -102,8 +102,9 @@ test('todas as marcas podem filtrar a tela sem declarar conexão ou publicação
 
 test('seletor filtra contas e destinos sem desmontar os blocos nem alterar avisos gerais', () => {
   const rendered = client.slice(client.indexOf('  return <main className='));
-  assert.doesNotMatch(rendered, /marketplace === 'mercado_livre'|marketplace === 'magalu'|Magalu · Conexão em preparação/);
-  for (const component of ['SalesFilters', 'NewListing', 'AvantaKanban', 'Vendas', 'ProductsStock', 'Anunciados']) assert.match(rendered, new RegExp(`<${component}\\b`));
+  assert.match(rendered, /marketplace === 'magalu'\s*\? <MagaluListing/);
+  assert.doesNotMatch(rendered, /Magalu · Conexão em preparação/);
+  for (const component of ['SalesFilters', 'NewListing', 'MagaluListing', 'AvantaKanban', 'Vendas', 'ProductsStock', 'Anunciados']) assert.match(rendered, new RegExp(`<${component}\\b`));
   const connect = client.slice(client.indexOf('  async function connectMarketplace()'), client.indexOf("  if (accessState === 'loading')"));
   assert.match(connect, /connectionTarget\(marketplace\)/);assert.match(connect, /fetch\(target.endpoint/);
   assert.match(connect, /validateConnectionAuthorization\(marketplace, payload.authorizationUrl\)/);

@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.0.0.33.08 -->
+<!-- ava-version: 3.1.0 -->
+
+> Revisão 3.1.0: o fluxo inicial de publicação Magalu pertence ao Marketplaces
+> Web. Sem impacto operacional no AvantaVendas ou no seu caixa; não cria
+> sincronização automática de estoque Magalu.
 
 > Revisão 3.0.0.33.08: proteção contra encerramento por notificações no pacote
 > Android da Gestão Mobile; sem impacto operacional no AvantaVendas.

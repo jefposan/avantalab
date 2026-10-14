@@ -8,6 +8,11 @@ export function accountsForMarketplace<T extends Account>(accounts: T[], marketp
 }
 
 export function publicationAccount(accounts: Account[], selectedId: string): string {
-  const connected = accounts.filter(account => account.status === 'connected');
+  const connected = accounts.filter(publicationAccountAvailable);
   return connected.find(account => account.id === selectedId)?.id ?? connected[0]?.id ?? '';
+}
+
+export function publicationAccountAvailable(account: Account): boolean {
+  return account.status === 'connected' || (account.provider === 'magalu' && account.status === 'attention'
+    && 'last_error_code' in account && account.last_error_code === 'magalu_connector_pending');
 }

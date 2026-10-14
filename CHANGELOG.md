@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.0 - 2026-10-13
+
+- Marketplaces Web: fluxo inicial de publicação Magalu a partir do cadastro local, com consulta de categoria e campos obrigatórios, revisão da ficha, confirmação explícita e envio sequencial de SKU, preço e estoque pelo contrato oficial.
+- O status acompanha a confirmação assíncrona do Magalu; resposta HTTP 202 não é tratada como anúncio já publicado. Conta sem escopos de catálogo, estoque físico não confirmado, EAN inválido, foto não JPEG ou SKU duplicado bloqueiam o envio.
+- Dois índices de proteção contra SKU duplicado e mais de um envio ativo por loja foram aplicados e conferidos no banco de produção; não havia publicações Magalu prévias.
+- A primeira publicação Magalu não ativa sincronização automática de estoque nem importa anúncios antigos; validação com loja autorizada e SKU real permanece necessária.
+
 ## 3.0.0.33.08 - 2026-10-13
 
 - Gestão Android: registro e remoção de push exigem confirmação da configuração

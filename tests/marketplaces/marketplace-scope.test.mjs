@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { accountsForMarketplace, publicationAccount } from '../../app/marketplaces/marketplace-scope.ts';
+import { accountsForMarketplace, publicationAccount, publicationAccountAvailable } from '../../app/marketplaces/marketplace-scope.ts';
 
 const accounts = [
   { id: 'ml-legacy', status: 'connected' },
@@ -27,6 +27,13 @@ test('publicação usa somente conta conectada do conjunto filtrado, nunca desti
   assert.equal(publicationAccount(accountsForMarketplace(accounts, 'amazon'), 'ml'), '');
   assert.equal(publicationAccount(accountsForMarketplace(accounts, 'shopee'), 'ml'), '');
   assert.equal(publicationAccount(accountsForMarketplace(accounts, 'mercado_livre'), 'ml'), 'ml');
+});
+
+test('Magalu autorizado para catálogo pode preparar publicação mesmo enquanto vendas estão em ativação', () => {
+  const waiting = { id: 'magalu-waiting', provider: 'magalu', status: 'attention', last_error_code: 'magalu_connector_pending' };
+  assert.equal(publicationAccountAvailable(waiting), true);
+  assert.equal(publicationAccount([waiting], waiting.id), waiting.id);
+  assert.equal(publicationAccountAvailable({ ...waiting, last_error_code: 'magalu_reauthorize' }), false);
 });
 
 test('navegação fica no contexto da página inteira, mede altura real e mantém permissões', () => {

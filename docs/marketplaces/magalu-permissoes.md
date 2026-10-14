@@ -1,6 +1,17 @@
 # Magalu — autorização única de consultas
 
-Revisão: 3.0.0.28, 13/10/2026. Consentimento de catálogo preparado; envio ainda bloqueado.
+Revisão: 3.1.0, 13/10/2026. Publicação inicial por SKU, preço e estoque preparada; validação em loja real pendente.
+
+Na versão 3.1.0, uma conta com o conjunto completo de escopos de catálogo pode
+preparar um produto local e confirmar o envio ao Magalu. O envio é assíncrono:
+SKU, preço e estoque são registrados sequencialmente, com conferência pelo GET
+oficial entre as etapas. O status `published` só é mostrado após confirmação
+do SKU pelo Magalu. Os dois índices de proteção por SKU/loja da migração
+`20261014030000_marketplace_magalu_publication_guard.sql` foram aplicados e
+conferidos no banco de produção em 13/10/2026; antes havia zero publicações
+Magalu. Ainda faltam teste
+em loja autorizada e observação da moderação de um SKU real. Não sincroniza
+estoque subsequente nem importa anúncios antigos.
 
 O administrador autorizou consultas de pedidos, entregas, documentos fiscais,
 pós-venda, mensagens de compradores e informações financeiras. A fonte
@@ -40,11 +51,9 @@ vendas e pós-venda já autorizadas.
 | Estoque | `open:portfolio-stocks-seller:read`, `open:portfolio-stocks-seller:write` |
 
 O servidor registra se a conexão recebeu o conjunto completo e orienta
-**reautorizar catálogo** quando faltar algum acesso. Não há rota de criação ou
-atualização de SKU, preço ou estoque nesta revisão; portanto a mudança de escopo
-não publica produtos nem movimenta estoque. A implementação posterior deve usar
-somente contratos oficiais validados, dados locais revisados e confirmação
-explícita por publicação no AvantaLab.
+**reautorizar catálogo** quando faltar algum acesso. A versão 3.1.0 adiciona
+criação inicial de SKU, primeiro preço e estoque após revisão dos dados locais
+e confirmação explícita no AvantaLab; conceder escopos por si só não publica.
 
 Conferência externa pelo IDM oficial: os 14 acessos aparecem em AVAILABLE,
 todos como default e nenhum em PENDING. Audiências produtivas:

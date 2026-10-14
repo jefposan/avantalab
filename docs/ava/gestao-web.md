@@ -1,6 +1,17 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.0.0.33.08 -->
+<!-- ava-version: 3.1.0 -->
+
+> Revisão 3.1.0: no Marketplaces Web, escolha Magalu, selecione uma loja com
+> permissões de catálogo, prepare um produto do cadastro local em Produtos e
+> estoque, busque a categoria final, complete os campos e confirme o envio.
+> O AvantaLab envia SKU, primeiro preço e estoque em etapas; use **Verificar e
+> continuar envio** até o Magalu confirmar. "Recebido" não significa publicado.
+> São exigidos estoque físico confirmado, EAN válido e foto JPEG HTTPS. Uma
+> loja sem permissões deve ser reautorizada sem excluir a conexão. Não há
+> importação de anúncios antigos nem sincronização automática de estoque Magalu
+> nesta entrega. O fluxo ainda precisa de validação com uma loja autorizada e
+> um produto real; não afirmar que um anúncio foi publicado sem retorno do Magalu.
 
 > Revisão 3.0.0.33.08: proteção contra encerramento por notificações no pacote
 > Android da Gestão Mobile; sem impacto operacional na Gestão Web.

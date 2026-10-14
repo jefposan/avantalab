@@ -20,7 +20,7 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
 const model = await import('../../app/modules/marketplaces/magalu-sales-model.ts');
 const { readMagaluPostSale } = await import('../../app/modules/marketplaces/services/magalu-post-sale.ts');
 const { magaluPostSaleForSale, syncMagaluSales } = await import('../../app/modules/marketplaces/services/magalu-sales.ts');
-const { magaluRequest, loadMagaluCatalogConnection, loadMagaluConnection } = await import('../../app/modules/marketplaces/services/magalu-request.ts');
+const { magaluRequest, magaluCatalogRequest, loadMagaluCatalogConnection, loadMagaluConnection } = await import('../../app/modules/marketplaces/services/magalu-request.ts');
 const { MAGALU_CATALOG_SCOPES, MAGALU_CONNECTION_SCOPES } = await import('../../app/modules/marketplaces/services/magalu-oauth.ts');
 const { sealMarketplaceSecret } = await import('../../app/modules/marketplaces/services/secret-vault.ts');
 const { MarketplaceError } = await import('../../app/modules/marketplaces/services/management-access.ts');
@@ -193,4 +193,23 @@ test('atenção autoriza somente conector pendente; outras plataformas/sessões 
   assert.equal(model.salesAccountAvailable({provider:'magalu',status:'attention',last_error_code:'magalu_connector_pending'}),true);
   assert.equal(model.salesAccountAvailable({provider:'magalu',status:'expired'}),false);assert.equal(model.salesAccountAvailable({provider:'magalu',status:'attention',last_error_code:'revoked'}),false);
   assert.equal(model.salesAccountAvailable({provider:'shopee',status:'connected'}),false);assert.equal(model.salesAccountAvailable({provider:'mercado_livre',status:'connected'}),true);
+});
+
+test('catálogo Magalu restringe escrita a rotas fixas e aceita lista de categorias oficial', async () => {
+  const { db, connection } = fixture();
+  connection.scopes = [...MAGALU_CONNECTION_SCOPES, ...MAGALU_CATALOG_SCOPES];
+  const seen = [];
+  globalThis.fetch = async (url, options) => {
+    seen.push({ url: String(url), method: options.method, tenant: options.headers['X-Tenant-Id'] });
+    return options.method === 'GET' ? Response.json([{ id: eventId, name: 'Categoria', path: 'Raiz/Categoria' }]) : Response.json({ trace_id: eventId }, { status: 202 });
+  };
+  const found = await magaluCatalogRequest(db, connection, 'GET', '/seller/v1/portfolios/category?name=Categoria');
+  assert.equal(Array.isArray(found.data), true);
+  const posted = await magaluCatalogRequest(db, connection, 'POST', '/seller/v1/portfolios/skus', { sku: 'SKU-1' });
+  assert.equal(posted.status, 202);
+  assert.equal(seen.length, 2);
+  assert.ok(seen.every(entry => entry.tenant === seller));
+  await assert.rejects(magaluCatalogRequest(db, connection, 'POST', '/seller/v1/orders', {}));
+  await assert.rejects(magaluCatalogRequest(db, connection, 'POST', '/seller/v1/portfolios/skus?foo=1', {}));
+  assert.equal(seen.length, 2);
 });

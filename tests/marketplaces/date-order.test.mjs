@@ -32,7 +32,7 @@ test('ordens independentes no topo, anúncios reiniciam paginação e preservam 
   for (const [source, context] of [[sales, 'Vendas'], [listings, 'Anunciados']]) {
     assert.match(source, /useState<DateOrder>\('desc'\)/);
     assert.ok(source.includes(`<DateOrderButton context="${context}"`));
-    assert.ok(source.indexOf('<DateOrderButton') < source.indexOf(`id="${context === 'Vendas' ? 'sales' : 'announced'}-content"`));
+    assert.ok(source.indexOf('<DateOrderButton') < source.indexOf(`id="${context === 'Vendas' ? 'sales' : 'announced'}-content"`, source.indexOf('<DateOrderButton')));
   }
   assert.match(sales, /orderedSales\.map/);
   assert.match(listings, /status, order, page: String\(page\)/);

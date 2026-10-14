@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 3.0.0.33.08 -->
+<!-- ava-version: 3.1.0 -->
+
+> Revisão 3.1.0: publicação Magalu preparada no Marketplaces Web, sem impacto
+> operacional na Gestão Mobile ou no AvantaPreços. Não prometer sincronização
+> automática de estoque Magalu nem anúncio publicado antes da confirmação real.
 
 > Revisão 3.0.0.33.08: na Gestão Android, notificações só são registradas quando
 > o pacote confirma suporte configurado. Sem suporte, a Gestão funciona normalmente
