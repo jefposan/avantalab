@@ -1,6 +1,7 @@
 # Reconciliação AvantaLab — candidato 3.2.0.310
 
-**Estado: NÃO APTO PARA INTEGRAÇÃO.** Auditoria e candidato local; nenhum envio,
+**Estado: candidato com build completo aprovado; integração externa bloqueada
+por auditoria histórica e autorização.** Auditoria e candidato local; nenhum envio,
 PR, merge, promoção, mudança de banco ou alteração do checkout canônico.
 PADRÃO AVANTA consultado: 1.23.1. Data: 04/11/2026, America/Sao_Paulo.
 
@@ -48,6 +49,20 @@ PADRÃO AVANTA consultado: 1.23.1. Data: 04/11/2026, America/Sao_Paulo.
   produção vigente; os hashes históricos mostram arquivos conservados,
   substituídos ou ausentes na versão atual.
 
+## Espelho local fiel da produção
+
+- Pasta durável: `/Users/JEFF/AvantaLab Projetos/espelhos/producao-3.2.0.309`.
+- 2.314 fontes com bytes, hashes SHA-1/SHA-256 e conjunto de arquivos
+  conferidos. Sem arquivos faltantes, alterados ou extras, exceto metadados
+  Git locais. O verificador offline está ao lado da pasta.
+- Snapshot local `b1cfcca524d7d6a42433fa7bd00847cbb93dd49c`, distinto do SHA
+  da produção: incorpora também os 12 arquivos que faltavam no Git original.
+- Espelho preservado sem instalar dependências ou gerar artefatos nele.
+  Alterações e testes ocorrem somente no candidato separado.
+- A fidelidade cobre as fontes do deployment, não dados de clientes, segredos,
+  variáveis remotas ou binários nativos. Estrutura do schema public foi capturada
+  separadamente em consulta somente de leitura.
+
 ## Banco: fatos e pendências
 
 - Projeto: `qzewxhdkwettnlmkjoqd`. Consultados a lista de migrações e
@@ -57,7 +72,10 @@ PADRÃO AVANTA consultado: 1.23.1. Data: 04/11/2026, America/Sao_Paulo.
 - O checkout canônico possui 16 identificadores locais sem registro remoto.
   Destes, 15 existiam no pacote publicado e foram excluídos deste candidato.
   O outro já não pertencia ao pacote e não foi importado. Os originais da raiz
-  não foram alterados; cópias de auditoria ficam fora do candidato.
+  não foram alterados. Após autorização de continuidade, os 15 arquivos já
+  publicados foram preservados, com os mesmos hashes, exclusivamente em
+  `tests/fixtures/sql-historico`; referências dos testes foram ajustadas. Não
+  são tratados como migrações aplicadas e não serão executados no Supabase.
 - Oito exclusões aparecem no diff contra a main, pois esses arquivos já estavam
   versionados nela. A justificativa é a ausência no histórico remoto, não uma
   autorização para descartar desenvolvimento paralelo.
@@ -71,6 +89,12 @@ PADRÃO AVANTA consultado: 1.23.1. Data: 04/11/2026, America/Sao_Paulo.
   localizados registros de preparação/aplicação das migrações 20261104160000
   e 20260807190000. A entrega 3.2.0.114 documenta a 20261023050000. Esses
   indícios complementam a auditoria, mas não resolvem todas as divergências.
+- Snapshot atual do schema public: 352 funções, 235 tabelas/views/sequências,
+  2.508 colunas, 1.336 constraints, 601 índices, 401 políticas e 181 triggers.
+  Foram mapeadas 49 assinaturas atuais aos casos divergentes e comparados
+  44 corpos, dos quais 29 coincidem lexicalmente. Essa prova do estado atual
+  não substitui a execução histórica original. Classificação detalhada em
+  `migracoes-divergentes-estado-atual.json`.
 - Nenhuma migration repair, aplicação de migração ou escrita no banco.
   `migrations: []` no manifesto: esta entrega não prevê SQL no banco.
 
@@ -87,36 +111,43 @@ PADRÃO AVANTA consultado: 1.23.1. Data: 04/11/2026, America/Sao_Paulo.
 - A proteção ainda **não está ativa no checkout canônico ou no provedor**.
   Envios diretos que contornem esse comando exigem proteção externa própria.
 
-## Validações
+## Validações finais
 
-- Dependências exatas instaladas no clone por npm ci; lockfile publicado difere
-  do checkout canônico. Nenhuma instalação na raiz compartilhada.
-- PADRÃO AVANTA e Ava: aprovados, manuais revisados para a candidata 3.2.0.310.
-- Infraestrutura: **28 testes aprovados**, incluindo seis testes da nova guarda.
-- Segurança: **493 aprovados, um falho** (494 testes). A falha exige o arquivo
-  20261014050000, sem registro de aplicação remota.
-- `npm run build`: gate completo executado com um processo de testes;
-  **2.447 aprovados, 45 falhos, seis ignorados pelo próprio conjunto**
-  (2.498 testes). O comando encerrou com erro antes de next build.
-  As falhas decorrem de dependências dos SQLs excluídos, preservados os testes.
-  Portanto **não há build de aplicação aprovado** para este candidato.
-- Não foram removidos testes nem usados ignoreBuildErrors, cache de aprovação,
-  aumento de máquina, force ou turbo.
+- Dependências exatas instaladas no clone por npm ci, sem instalação na raiz.
+- PADRÃO AVANTA 1.23.1 e Ava: aprovados para a candidata 3.2.0.310.
+- Infraestrutura: 28 testes aprovados, incluindo seis testes da nova guarda.
+- Segurança: **495 testes aprovados, nenhuma falha**.
+- Referências dinâmicas de fixtures: 18 testes aprovados. Demonstração local de
+  vendas diretas: teste transacional aprovado após ajuste da origem do SQL.
+- **npm run build aprovado integralmente**: 2.507 testes aprovados, nenhuma
+  falha e seis ignorados pelo próprio conjunto (2.513 testes), compilação Next.js,
+  TypeScript, geração de 234 páginas e otimização final concluídos.
+- O build exigiu configuração local do projeto Supabase correto. Variáveis
+  públicas e a configuração de serviço exigida pelos imports das rotas ficaram
+  somente no `.env.local` ignorado, com acesso local restrito. Valores não foram
+  exibidos, versionados, enviados ao provedor ou copiados para o espelho fiel.
+- As falhas iniciais por SQLs excluídos foram resolvidas preservando os bytes
+  originais como fixtures autorizadas e ajustando seus carregadores. Nenhum
+  teste foi removido/enfraquecido; não houve mudança de regra de negócio.
+- Não foram usados ignoreBuildErrors, cache de aprovação, aumento de máquina,
+  force, turbo ou aplicação de banco para obter aprovação.
+- `git diff --check` do escopo desta continuação passou. Os apontamentos contra
+  a main inteira pertencem a espaços/fins de linha herdados das fontes já
+  publicadas e estão registrados no log da auditoria inicial.
 
-- Diff contra a main antes deste inventário: 770 A, 8 D, 207 M. Relação explícita em `arquivos-candidato.json`.
-- `git diff --check` aponta espaços/fins de linha herdados dos arquivos já
-  publicados; não foram normalizados para não ampliar o escopo da reconciliação.
+Diff final contra a main: 784 A, 211 M, 4 R100, 1 supabase/migrations/20261012010000_marketplace_inventory_sync.sql, 1 supabase/migrations/20261012190000_marketplace_connection_labels.sql, 1 supabase/migrations/20261013150000_marketplace_magalu_sales.sql, 1 supabase/migrations/20261014030000_marketplace_magalu_publication_guard.sql, 1 tests/fixtures/sql-historico/20261011200000_marketplace_local_products.sql, 1 tests/fixtures/sql-historico/20261012160000_marketplace_magalu_oauth.sql, 1 tests/fixtures/sql-historico/20261012230000_marketplace_sales_history.sql, 1 tests/fixtures/sql-historico/20261013170000_marketplace_pending_sale_alerts.sql. Relação completa em
+`arquivos-candidato.json`. Os 118 arquivos antes ausentes seguem preservados.
 
 ## Próximos passos e restauração
 
 1. Resolver a proveniência/conteúdo dos 19 históricos divergentes, sem reparar
    o banco ou considerar rascunhos como migrações aplicadas.
-2. Decisão expressa pendente: permitir que os 15 SQLs já presentes no pacote
-   publicado sobrevivam exclusivamente como fixtures de teste, fora da pasta
-   de migrações e sem aplicação, ou mantê-los totalmente fora do candidato.
-   Nenhuma exceção foi presumida e nenhuma fixture foi incluída por enquanto.
-3. Fechar o diff e os testes, executar build aprovado e conferir novamente
-   produção, fila, main e versão antes de apresentar integração.
+2. Autorização de continuidade e organização recebida após a pergunta sobre
+   fixtures: os 15 SQLs já publicados foram preservados somente como dados de
+   testes, com procedência e hashes. Nenhum teste foi removido ou enfraquecido.
+3. Build completo aprovado e espelho local íntegro. Conferir novamente produção,
+   fila, main e versão antes de qualquer integração; resolver ou aceitar
+   explicitamente os limites históricos da auditoria de banco primeiro.
 4. Somente após autorização explícita: push, PR e integração por commit normal,
    preservando a ancestralidade da main. Não há necessidade de force ou de
    alterar o histórico publicado. Os snapshots originais permanecem preservados
@@ -128,6 +159,10 @@ PADRÃO AVANTA consultado: 1.23.1. Data: 04/11/2026, America/Sao_Paulo.
 intactas. Depois de integração, correção por novo commit revisado, sem rollback
 funcional para 3.1.0 e sem reaplicar ou desfazer migrações históricas. Não houve
 mudança de banco a reverter nesta auditoria.
+
+Candidato durável: `/Users/JEFF/AvantaLab Projetos/espelhos/reconciliacao-main-3.2.0.310`.
+Seu commit preserva a ancestralidade da main; o espelho de produção fica em pasta
+separada. Não instalar dependências nem executar testes dentro do espelho fiel.
 
 Evidências extensas: JSONs desta pasta; respostas originais, SQL remoto e logs
 em `/private/tmp/avanta-reconciliacao-20261104-auditoria/` (fora do pacote).

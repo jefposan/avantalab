@@ -1,8 +1,9 @@
+import { sqlDeTesteURL } from '../helpers/sql-historico.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
-const read=path=>readFileSync(new URL(`../../supabase/migrations/${path}`,import.meta.url),'utf8');
+const read=path=>readFileSync(sqlDeTesteURL(path),'utf8');
 
 test('SQL real: pendentes anteriores à ativação geram popup sem baixar estoque ou avisar entregues',async()=>{
   const db=new PGlite();

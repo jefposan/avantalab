@@ -67,7 +67,7 @@ test('tabela auxiliar mantém RLS, limita texto e impede vínculo com outra empr
       create table public.marketplace_connections(id uuid primary key,empresa_id uuid not null references empresas(id));
       insert into empresas values('11111111-1111-4111-8111-111111111111'),('22222222-2222-4222-8222-222222222222');
       insert into marketplace_connections values('33333333-3333-4333-8333-333333333333','11111111-1111-4111-8111-111111111111');`);
-    const sql=readFileSync(new URL('../../supabase/migrations/20261012190000_marketplace_connection_labels.sql',import.meta.url),'utf8');
+    const sql=readFileSync(new URL('../../tests/fixtures/sql-historico/20261012190000_marketplace_connection_labels.sql',import.meta.url),'utf8');
     await db.exec(sql);
     await db.query("insert into marketplace_connection_labels(connection_id,empresa_id,local_label) values($1,$2,$3)",['33333333-3333-4333-8333-333333333333','11111111-1111-4111-8111-111111111111','001']);
     await assert.rejects(db.query("update marketplace_connection_labels set empresa_id=$1",['22222222-2222-4222-8222-222222222222']));

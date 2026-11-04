@@ -1,8 +1,9 @@
+import { sqlDeTesteURL } from '../helpers/sql-historico.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
-const migration=name=>readFileSync(`supabase/migrations/${name}`,'utf8');
+const migration=name=>readFileSync(sqlDeTesteURL(name),'utf8');
 test('catálogo automático: vínculo entre contas, estoque físico pendente, preservação, identidade e isolamento',async()=>{
  const db=new PGlite();try{
   await db.exec(`create schema auth;create role anon;create role authenticated;create role service_role;

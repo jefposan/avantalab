@@ -1,0 +1,12 @@
+{
+  "productionVersion": "3.2.0.309",
+  "deploymentId": "dpl_Dq1wCBwU92G354cov6BCiN4qrYt9",
+  "productionGitSnapshot": "884bf1d716d5d203ded0828fe25fc7df92490fa9",
+  "mirrorLocalSnapshot": "b1cfcca524d7d6a42433fa7bd00847cbb93dd49c",
+  "mirrorPath": "/Users/JEFF/AvantaLab Projetos/espelhos/producao-3.2.0.309",
+  "verifiedSourceFiles": 2314,
+  "verificationReceipt": "/Users/JEFF/AvantaLab Projetos/espelhos/producao-3.2.0.309-verificacao.json",
+  "offlineVerifier": "/Users/JEFF/AvantaLab Projetos/espelhos/verificar-producao-3.2.0.309.py",
+  "scope": "Fontes src do deployment, bytes e conjunto de arquivos idênticos; metadados Git locais adicionais. Sem dados, segredos, configuração remota ou binários nativos. O commit local do espelho é distinto do commit identificado pela produção.",
+  "schemaPublicSnapshot": "/Users/JEFF/AvantaLab Projetos/espelhos/producao-3.2.0.309-schema-public-readonly.json"
+}

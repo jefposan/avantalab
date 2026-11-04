@@ -1,8 +1,9 @@
+import { sqlDeTesteURL } from '../helpers/sql-historico.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
-const sql=name=>readFileSync(`supabase/migrations/${name}`,'utf8');
+const sql=name=>readFileSync(sqlDeTesteURL(name),'utf8');
 test('exclusão SQL: saldo, todas as contas, histórico, concorrência, permissões e repetição segura',async()=>{
  const db=new PGlite();try{
   await db.exec(`create schema auth;create role anon;create role authenticated;create role service_role;

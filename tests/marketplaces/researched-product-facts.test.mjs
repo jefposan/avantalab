@@ -79,7 +79,7 @@ test('fluxo real de consulta retorna ficha web mesmo sem preço: EAN e caracter�
 test('SQL real: completa campos por empresa sem duplicar, substituir manual ou alterar saldo/preço',async()=>{
  const db=new PGlite();try{
   await db.exec(`create schema auth;create role anon;create role authenticated;create role service_role;create table auth.users(id uuid primary key);create table empresas(id uuid primary key);create table usuarios_empresa(user_id uuid,empresa_id uuid,status text,perfil text);create table empresa_modulos(empresa_id uuid,modulo_id text,ativo boolean,expira_em timestamptz);create table marketplace_connections(id uuid primary key,empresa_id uuid,provider text);`);
-  await db.exec(readFileSync('supabase/migrations/20261011200000_marketplace_local_products.sql','utf8'));
+  await db.exec(readFileSync('tests/fixtures/sql-historico/20261011200000_marketplace_local_products.sql','utf8'));
   await db.exec(`create table marketplace_price_consultations(id uuid primary key default gen_random_uuid(),empresa_id uuid,created_by uuid,provider_product_id text,product_name text,ean text,product_description text,image_url text,market_price_cents bigint,created_at timestamptz default now());`);
   await db.exec(readFileSync('supabase/migrations/20261019020000_marketplace_price_products_stock.sql','utf8'));
   await db.exec(readFileSync('supabase/migrations/20261021040000_marketplace_researched_product_facts.sql','utf8'));

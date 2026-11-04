@@ -432,7 +432,7 @@ test('expiração, cancelamento e confirmação do navegador são diferenciados 
 test('SQL real amplia só pendências OAuth, mantém RLS e registros existentes',async()=>{
   const db=new PGlite();try{
     await db.exec("create role anon;create role authenticated;create role service_role;create table marketplace_oauth_pending(id uuid primary key,provider text not null check(provider='mercado_livre'),state text,verifier_sealed jsonb);insert into marketplace_oauth_pending values(gen_random_uuid(),'mercado_livre','existing','{}');");
-    const sql=readFileSync(resolve(root,'supabase/migrations/20261012160000_marketplace_magalu_oauth.sql'),'utf8');await db.exec(sql);await db.exec(sql);
+    const sql=readFileSync(resolve(root,'tests/fixtures/sql-historico/20261012160000_marketplace_magalu_oauth.sql'),'utf8');await db.exec(sql);await db.exec(sql);
     assert.equal((await db.query("select state from marketplace_oauth_pending where provider='mercado_livre'")).rows[0].state,'existing');
     await db.exec("insert into marketplace_oauth_pending values(gen_random_uuid(),'magalu','new','{}',null)");
     await assert.rejects(db.exec("insert into marketplace_oauth_pending values(gen_random_uuid(),'other','bad','{}',null)"));

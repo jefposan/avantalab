@@ -1,3 +1,4 @@
+import { sqlDeTesteURL } from '../helpers/sql-historico.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {registerHooks} from 'node:module';
@@ -48,7 +49,7 @@ test('API permite edição e pesquisa a usuários de consulta; pesquisa só na a
 test('SQL real: snapshot LOCAL nunca duplica produto, nem sem EAN, e não confirma/soma unidades',async()=>{
   const db=new PGlite();try{
     await db.exec(`create schema auth;create role anon;create role authenticated;create role service_role;create table auth.users(id uuid primary key);create table empresas(id uuid primary key);create table usuarios_empresa(user_id uuid,empresa_id uuid,status text,perfil text);create table empresa_modulos(empresa_id uuid,modulo_id text,ativo boolean,expira_em timestamptz);create table marketplace_connections(id uuid primary key,empresa_id uuid,provider text);create table modulos(id text,superficies text[]);`);
-    for(const file of ['20261011200000_marketplace_local_products.sql','20261005213000_marketplace_price_consultations.sql','20261005221000_marketplace_price_manual_reference.sql','20261006162000_marketplace_price_history_reuse.sql','20261007114000_marketplace_price_openai_sources.sql','20261019020000_marketplace_price_products_stock.sql','20261019030000_marketplace_local_reference.sql'])await db.exec(readFileSync('supabase/migrations/'+file,'utf8'));
+    for(const file of ['20261011200000_marketplace_local_products.sql','20261005213000_marketplace_price_consultations.sql','20261005221000_marketplace_price_manual_reference.sql','20261006162000_marketplace_price_history_reuse.sql','20261007114000_marketplace_price_openai_sources.sql','20261019020000_marketplace_price_products_stock.sql','20261019030000_marketplace_local_reference.sql'])await db.exec(readFileSync(sqlDeTesteURL(file),'utf8'));
     const actor=crypto.randomUUID(),other=crypto.randomUUID();await db.query('insert into empresas values($1),($2)',[company,other]);await db.query('insert into auth.users values($1)',[actor]);
     await db.query(`insert into marketplace_products(id,empresa_id,name,price_cents,stock_quantity,stock_confirmed_at,pictures) values($1,$2,'Nome manual',20000,7,now(),'["https://loja.example/manual.jpg"]')`,[id,company]);
     const insert=async tenant=>db.query(`insert into marketplace_price_consultations(empresa_id,created_by,input_type,input_value,provider_product_id,product_name,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source) values($1,$2,'text','Nome manual',$3,'Nome manual',20000,10000,14000,18000,1,20000,20000,'local_reference') returning local_product_id`,[tenant,actor,'LOCAL:'+id]);

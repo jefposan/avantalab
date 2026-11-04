@@ -1,3 +1,4 @@
+import { sqlDeTesteURL } from '../helpers/sql-historico.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -26,7 +27,7 @@ test('SQL real: preço liberado por perfil ativo, sem conceder estoque/cadastro 
    create table empresa_modulos(empresa_id uuid,modulo_id text,ativo boolean,expira_em timestamptz);
    create table marketplace_price_users(user_id uuid,empresa_id uuid,ativo boolean);
    create table marketplace_connections(id uuid primary key,empresa_id uuid,provider text);`);
-  for(const file of ['20261011200000_marketplace_local_products.sql','20261019010000_marketplace_product_price_research.sql','20261021050000_marketplace_price_reference_access.sql'])await db.exec(readFileSync('supabase/migrations/'+file,'utf8'));
+  for(const file of ['20261011200000_marketplace_local_products.sql','20261019010000_marketplace_product_price_research.sql','20261021050000_marketplace_price_reference_access.sql'])await db.exec(readFileSync(sqlDeTesteURL(file),'utf8'));
   const company=crypto.randomUUID(),other=crypto.randomUUID(),actor=crypto.randomUUID(),regular=crypto.randomUUID(),id=crypto.randomUUID();
   await db.query('insert into empresas values($1),($2)',[company,other]);await db.query('insert into auth.users values($1),($2)',[actor,regular]);
   await db.query("insert into empresa_modulos values($1,'marketplaces',true,null),($2,'marketplaces',true,null)",[company,other]);

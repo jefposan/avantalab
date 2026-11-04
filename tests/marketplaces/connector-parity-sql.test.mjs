@@ -1,8 +1,9 @@
+import { sqlDeTesteURL } from '../helpers/sql-historico.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
-const sql=name=>readFileSync(`supabase/migrations/${name}`,'utf8');
+const sql=name=>readFileSync(sqlDeTesteURL(name),'utf8');
 test('SQL: Magalu baixa uma vez, não soma contas, preserva histórico, cancelamento e ML',async()=>{
  const db=new PGlite();try{
   await db.exec(`create schema auth;create role anon;create role authenticated;create role service_role;create table auth.users(id uuid primary key);create table empresas(id uuid primary key);create table usuarios_empresa(user_id uuid,empresa_id uuid,status text,perfil text);create table empresa_modulos(empresa_id uuid,modulo_id text,ativo boolean,expira_em timestamptz);create table marketplace_connections(id uuid primary key,empresa_id uuid,provider text,status text,seller_name text,connected_at timestamptz default now()-interval '2 days');create table marketplace_listings(id uuid primary key default gen_random_uuid(),empresa_id uuid,connection_id uuid,provider text default 'mercado_livre',provider_listing_id text,search_text text,status text,snapshot jsonb,synced_at timestamptz default now());create table marketplace_listing_actions(id uuid primary key default gen_random_uuid(),connection_id uuid,provider_listing_id text,status text);`);

@@ -7,7 +7,7 @@ test('migração impede segundo envio do mesmo SKU à mesma loja sem tocar no Me
   const db = new PGlite();
   try {
     await db.exec("create table marketplace_publications(connection_id uuid, provider text, provider_listing_id text, status text)");
-    const sql = readFileSync(new URL('../../supabase/migrations/20261014030000_marketplace_magalu_publication_guard.sql', import.meta.url), 'utf8');
+    const sql = readFileSync(new URL('../../tests/fixtures/sql-historico/20261014030000_marketplace_magalu_publication_guard.sql', import.meta.url), 'utf8');
     await db.exec(sql);
     await db.exec(sql);
     const connection = '11111111-1111-4111-8111-111111111111';

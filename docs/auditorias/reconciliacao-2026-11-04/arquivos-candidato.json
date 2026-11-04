@@ -1937,11 +1937,19 @@
   },
   {
     "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/arquivos-candidato.json"
+  },
+  {
+    "status": "A",
     "path": "docs/auditorias/reconciliacao-2026-11-04/arquivos-preservados-main.json"
   },
   {
     "status": "A",
     "path": "docs/auditorias/reconciliacao-2026-11-04/deployments.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/espelho-local.json"
   },
   {
     "status": "A",
@@ -1953,11 +1961,19 @@
   },
   {
     "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/migracoes-divergentes-estado-atual.json"
+  },
+  {
+    "status": "A",
     "path": "docs/auditorias/reconciliacao-2026-11-04/migration-content-comparison.json"
   },
   {
     "status": "A",
     "path": "docs/auditorias/reconciliacao-2026-11-04/migrations-excluded.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/validacao-final.json"
   },
   {
     "status": "A",
@@ -2404,38 +2420,6 @@
     "path": "scripts/verificar-padrao-avanta.mjs"
   },
   {
-    "status": "D",
-    "path": "supabase/migrations/20261011200000_marketplace_local_products.sql"
-  },
-  {
-    "status": "D",
-    "path": "supabase/migrations/20261012010000_marketplace_inventory_sync.sql"
-  },
-  {
-    "status": "D",
-    "path": "supabase/migrations/20261012160000_marketplace_magalu_oauth.sql"
-  },
-  {
-    "status": "D",
-    "path": "supabase/migrations/20261012190000_marketplace_connection_labels.sql"
-  },
-  {
-    "status": "D",
-    "path": "supabase/migrations/20261012230000_marketplace_sales_history.sql"
-  },
-  {
-    "status": "D",
-    "path": "supabase/migrations/20261013150000_marketplace_magalu_sales.sql"
-  },
-  {
-    "status": "D",
-    "path": "supabase/migrations/20261013170000_marketplace_pending_sale_alerts.sql"
-  },
-  {
-    "status": "D",
-    "path": "supabase/migrations/20261014030000_marketplace_magalu_publication_guard.sql"
-  },
-  {
     "status": "A",
     "path": "supabase/migrations/20261016190000_marketplace_price_lots.sql"
   },
@@ -2734,6 +2718,94 @@
   {
     "status": "M",
     "path": "tests/financeiro/seletor-centro-custo-global.test.mjs"
+  },
+  {
+    "status": "R100",
+    "path": "supabase/migrations/20261011200000_marketplace_local_products.sql"
+  },
+  {
+    "status": "tests/fixtures/sql-historico/20261011200000_marketplace_local_products.sql",
+    "path": "R100"
+  },
+  {
+    "status": "supabase/migrations/20261012010000_marketplace_inventory_sync.sql",
+    "path": "tests/fixtures/sql-historico/20261012010000_marketplace_inventory_sync.sql"
+  },
+  {
+    "status": "R100",
+    "path": "supabase/migrations/20261012160000_marketplace_magalu_oauth.sql"
+  },
+  {
+    "status": "tests/fixtures/sql-historico/20261012160000_marketplace_magalu_oauth.sql",
+    "path": "R100"
+  },
+  {
+    "status": "supabase/migrations/20261012190000_marketplace_connection_labels.sql",
+    "path": "tests/fixtures/sql-historico/20261012190000_marketplace_connection_labels.sql"
+  },
+  {
+    "status": "R100",
+    "path": "supabase/migrations/20261012230000_marketplace_sales_history.sql"
+  },
+  {
+    "status": "tests/fixtures/sql-historico/20261012230000_marketplace_sales_history.sql",
+    "path": "R100"
+  },
+  {
+    "status": "supabase/migrations/20261013150000_marketplace_magalu_sales.sql",
+    "path": "tests/fixtures/sql-historico/20261013150000_marketplace_magalu_sales.sql"
+  },
+  {
+    "status": "R100",
+    "path": "supabase/migrations/20261013170000_marketplace_pending_sale_alerts.sql"
+  },
+  {
+    "status": "tests/fixtures/sql-historico/20261013170000_marketplace_pending_sale_alerts.sql",
+    "path": "R100"
+  },
+  {
+    "status": "supabase/migrations/20261014030000_marketplace_magalu_publication_guard.sql",
+    "path": "tests/fixtures/sql-historico/20261014030000_marketplace_magalu_publication_guard.sql"
+  },
+  {
+    "status": "A",
+    "path": "tests/fixtures/sql-historico/20261014050000_usuario_areas_liberadas.sql"
+  },
+  {
+    "status": "A",
+    "path": "tests/fixtures/sql-historico/20261023060000_marketplace_grouped_listings.sql"
+  },
+  {
+    "status": "A",
+    "path": "tests/fixtures/sql-historico/20261024150000_marketplace_inventory_protection.sql"
+  },
+  {
+    "status": "A",
+    "path": "tests/fixtures/sql-historico/20261025170000_marketplace_quality_web_usage.sql"
+  },
+  {
+    "status": "A",
+    "path": "tests/fixtures/sql-historico/20261026170000_marketplace_fiscal_history.sql"
+  },
+  {
+    "status": "A",
+    "path": "tests/fixtures/sql-historico/20261027130000_marketplace_product_posts.sql"
+  },
+  {
+    "status": "A",
+    "path": "tests/fixtures/sql-historico/20261030143000_importador_despesas_centros.sql"
+  },
+  {
+    "status": "A",
+    "path": "tests/fixtures/sql-historico/README.md"
+  },
+  {
+    "status": "A",
+    "path": "tests/fixtures/sql-historico/proveniencia.json"
+  },
+  {
+    "status": "A",
+    "path": "tests/helpers/sql-historico.mjs"
   },
   {
     "status": "A",
@@ -3036,6 +3108,10 @@
     "path": "tests/marketplaces/listing-management.test.mjs"
   },
   {
+    "status": "M",
+    "path": "tests/marketplaces/listing-operations.test.mjs"
+  },
+  {
     "status": "A",
     "path": "tests/marketplaces/listing-price-batch.test.mjs"
   },
@@ -3113,7 +3189,15 @@
   },
   {
     "status": "M",
+    "path": "tests/marketplaces/magalu-publication-migration.test.mjs"
+  },
+  {
+    "status": "M",
     "path": "tests/marketplaces/magalu-publication-model.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/magalu-sales-migration.test.mjs"
   },
   {
     "status": "M",
@@ -3194,6 +3278,10 @@
   {
     "status": "M",
     "path": "tests/marketplaces/passive-refresh.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/pending-sale-alerts.test.mjs"
   },
   {
     "status": "A",

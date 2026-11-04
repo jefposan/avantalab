@@ -16,7 +16,7 @@ async function fixture(){
   const sql=new PGlite(),company=crypto.randomUUID(),other=crypto.randomUUID(),user=crypto.randomUUID(),manager=crypto.randomUUID(),id=crypto.randomUUID();
   await sql.exec(`create schema auth;create role anon;create role authenticated;create role service_role;create table auth.users(id uuid primary key);create table empresas(id uuid primary key);create table usuarios_empresa(id uuid default gen_random_uuid(),user_id uuid,empresa_id uuid,status text,perfil text);create table empresa_modulos(empresa_id uuid,modulo_id text,ativo boolean,expira_em timestamptz);create table marketplace_connections(id uuid primary key,empresa_id uuid,provider text);create table usuarios_contas(user_id uuid references auth.users(id),login text unique,atualizado_em timestamptz);`);
   await sql.exec(readFileSync('supabase/migrations/20261006090000_avantaprecos_users.sql','utf8'));
-  await sql.exec(readFileSync('supabase/migrations/20261011200000_marketplace_local_products.sql','utf8'));
+  await sql.exec(readFileSync('tests/fixtures/sql-historico/20261011200000_marketplace_local_products.sql','utf8'));
   await sql.exec(`create table marketplace_price_consultations(id uuid primary key default gen_random_uuid(),empresa_id uuid references empresas(id),created_by uuid references auth.users(id) on delete set null,product_name text,market_price_cents integer);`);
   await sql.exec(readFileSync('supabase/migrations/20261016190000_marketplace_price_lots.sql','utf8'));
   await sql.query('insert into empresas values($1),($2)',[company,other]);await sql.query('insert into auth.users values($1),($2)',[user,manager]);

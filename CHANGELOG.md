@@ -5,6 +5,7 @@
 - Candidato isolado de reconciliação da main com a produção 3.2.0.309, preservando arquivos nativos e histórico da main.
 - Publicação de produção exige SHA exato da main remota, identidade oficial e plano de migrações versionado no mesmo commit.
 - Migrações sem registro remoto ficam fora do candidato; validação e evidências pendentes são documentadas na auditoria.
+- SQLs históricos já publicados, sem registro de aplicação remoto, preservados exclusivamente como fixtures de testes com hashes de procedência.
 - Sem publicação, promoção ou aplicação de banco nesta preparação.
 
 

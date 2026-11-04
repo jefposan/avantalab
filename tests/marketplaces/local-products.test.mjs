@@ -26,7 +26,7 @@ test('RPC real: isolamento, estoque pendente/zero, idempotência, concorrência 
   const db = new PGlite();
   try {
     await db.exec(`create schema auth; create role anon; create role authenticated; create role service_role; create table auth.users(id uuid primary key); create table empresas(id uuid primary key); create table usuarios_empresa(user_id uuid,empresa_id uuid,status text,perfil text); create table empresa_modulos(empresa_id uuid,modulo_id text,ativo boolean,expira_em timestamptz); create table marketplace_connections(id uuid primary key,empresa_id uuid,provider text);`);
-    await db.exec(readFileSync(new URL('../../supabase/migrations/20261011200000_marketplace_local_products.sql',import.meta.url),'utf8'));
+    await db.exec(readFileSync(new URL('../../tests/fixtures/sql-historico/20261011200000_marketplace_local_products.sql',import.meta.url),'utf8'));
     const company=crypto.randomUUID(),other=crypto.randomUUID(),actor=crypto.randomUUID(),connection=crypto.randomUUID(),wrong=crypto.randomUUID();
     await db.query('insert into empresas values ($1),($2)',[company,other]); await db.query('insert into auth.users values ($1)',[actor]);
     await db.query("insert into usuarios_empresa values ($1,$2,'ativo','administrador')",[actor,company]);

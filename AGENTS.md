@@ -101,3 +101,23 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Conferir o suporte no binário final, não apenas no código-fonte; distinguir
   recurso nativo, permissão do sistema e ativação posterior pela Web. Preservar
   fallback para versões instaladas sem o recurso e testar sem bloquear navegação.
+
+## Reconciliação e origem das próximas entregas
+
+- Novas entregas devem partir de branch/worktree isolado da main oficial atual.
+  Publicação de produção exige o SHA exato de `origin/main`, consultado na rede,
+  pelo comando `npm run publicar:vercel`; não contornar fila, base ou guarda.
+- Identidade legítima do AvantaLab: Jeff <jefposan@hotmail.com>, remoto
+  `https://github.com/jefposan/avantalab.git`. Configurar localmente cada pacote
+  antes de criar snapshots e conferir autor, committer e remoto antes do envio.
+- Espelhos de produção são cópias de preservação verificadas, não branches de
+  desenvolvimento ou autorização para publicar. Conservar o vínculo com o
+  deployment de origem e distinguir o SHA da produção do snapshot local.
+- `tests/fixtures/sql-historico` contém SQL exclusivo de bancos de teste isolados.
+  Sua existência não comprova aplicação remota. Nunca mover para a pasta de
+  migrações nem executar no Supabase apenas para alinhar o Git.
+- Enquanto houver trabalho paralelo no checkout canônico, preservá-lo onde está.
+  Não trocar/resetar sua branch para sincronizar a main. A futura sincronização
+  da raiz exige primeiro preservar esses trabalhos com seus responsáveis.
+- Consultar `docs/auditorias/reconciliacao-2026-11-04/README.md` e
+  `planejamento/pipeline-entregas.md` antes de integrar esta reconciliação.

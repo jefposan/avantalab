@@ -1,0 +1,31 @@
+{
+  "candidateVersion": "3.2.0.310",
+  "productionVersion": "3.2.0.309",
+  "fullBuild": {
+    "command": "AVANTA_TEST_CONCURRENCY=1 npm run build",
+    "exitCode": 0,
+    "tests": 2513,
+    "pass": 2507,
+    "fail": 0,
+    "skip": 6,
+    "typescript": true,
+    "nextCompilation": true,
+    "generatedPages": 234
+  },
+  "security": {
+    "pass": 495,
+    "fail": 0
+  },
+  "infrastructure": {
+    "pass": 28,
+    "fail": 0
+  },
+  "standard": "PADRAO-AVANTA 1.23.1 aprovado",
+  "ava": "aprovado",
+  "mirrorFilesVerified": 2314,
+  "historicalMigrationDifferences": 19,
+  "databaseWriteOrMigrationApplied": false,
+  "externalPublicationPerformed": false,
+  "rootCheckoutModified": false,
+  "log": "/private/tmp/avanta-reconciliacao-20261104-auditoria/build-com-configuracao.log"
+}

@@ -30,7 +30,7 @@ create table marketplace_products(id uuid primary key,empresa_id uuid,archived_a
 create table marketplace_listings(empresa_id uuid,connection_id uuid,provider_listing_id text,status text);`);await db.exec(readFileSync('supabase/migrations/20261024060000_marketplace_quality_daily_ai.sql','utf8'));await db.exec(readFileSync('supabase/migrations/20261024062000_marketplace_quality_numeric_receipt.sql','utf8'));return db;}
 test('orçamento mensal atômico por empresa, idempotência/cache, recibo e reserva incerta',async()=>{
  const db=await setup();try{
- await db.exec(readFileSync('supabase/migrations/20261025170000_marketplace_quality_web_usage.sql','utf8'));
+ await db.exec(readFileSync('tests/fixtures/sql-historico/20261025170000_marketplace_quality_web_usage.sql','utf8'));
  const company=crypto.randomUUID(),actor=crypto.randomUUID(),product=crypto.randomUUID(),hash='a'.repeat(64),key=crypto.randomUUID();
  await db.query('insert into empresas values($1)',[company]);await db.query('insert into marketplace_products values($1,$2,null)',[product,company]);await db.query("insert into empresa_modulos values($1,'marketplaces',true,null)",[company]);await db.query("insert into usuarios_empresa values($1,$2,'ativo','operador_completo')",[company,actor]);
  const claim=async(h=hash,k=crypto.randomUUID(),who=actor)=>(await db.query('select marketplace_quality_ai_claim($1,$2,$3,$4,$5)r',[company,who,product,h,k])).rows[0].r;

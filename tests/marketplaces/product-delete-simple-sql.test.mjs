@@ -1,8 +1,9 @@
+import { sqlDeTesteURL } from '../helpers/sql-historico.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
-const sql=n=>readFileSync('supabase/migrations/'+n,'utf8');
+const sql=n=>readFileSync(sqlDeTesteURL(n),'utf8');
 test('exclusão simplificada: saldo desconhecido/positivo não bloqueia; apaga cadastro e mantém vendas/movimentos',async()=>{
  const db=new PGlite();try{
  await db.exec(`create schema auth;create role anon;create role authenticated;create role service_role;

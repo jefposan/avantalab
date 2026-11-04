@@ -8,7 +8,7 @@ test('centro explícito, recibo, repetição, isolamento e rascunhos por centro 
  grant usage on schema auth to authenticated;grant select on usuarios_empresa,centros_custo to authenticated;`);
  await db.exec(readFileSync('supabase/migrations/20260721223000_importador_despesas_lancamentos.sql','utf8'));
  await db.exec('alter default privileges grant execute on functions to anon;');
- await db.exec(readFileSync('supabase/migrations/20261030143000_importador_despesas_centros.sql','utf8'));
+ await db.exec(readFileSync('tests/fixtures/sql-historico/20261030143000_importador_despesas_centros.sql','utf8'));
  assert.equal((await db.query("select has_function_privilege('anon','public.importar_lancamentos_despesas_contexto_rpc(uuid,uuid,text,jsonb)','EXECUTE') as allowed")).rows[0].allowed,false);
  const actor=crypto.randomUUID(),otherActor=crypto.randomUUID(),company=crypto.randomUUID(),other=crypto.randomUUID(),lika=crypto.randomUUID(),luciana=crypto.randomUUID(),paused=crypto.randomUUID(),outside=crypto.randomUUID();
  await db.query('insert into auth.users values($1),($2)',[actor,otherActor]);await db.query('insert into empresas values($1),($2)',[company,other]);await db.query("insert into usuarios_empresa values($1,$2,'ativo','operador_completo')",[actor,company]);await db.query("select set_config('app.actor',$1,false)",[actor]);

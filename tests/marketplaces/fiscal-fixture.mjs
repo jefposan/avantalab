@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
-const migration = await readFile('supabase/migrations/20261026170000_marketplace_fiscal_history.sql', 'utf8');
+const migration = await readFile('tests/fixtures/sql-historico/20261026170000_marketplace_fiscal_history.sql', 'utf8');
 export const ids = { company:'10000000-0000-4000-8000-000000000001', other:'10000000-0000-4000-8000-000000000002', connection:'20000000-0000-4000-8000-000000000001', foreign:'20000000-0000-4000-8000-000000000002', sale:'30000000-0000-4000-8000-000000000001' };
 export async function fixture(legacy = false) {
   const db = new PGlite(), { company, other, connection, foreign, sale } = ids;

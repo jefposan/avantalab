@@ -31,7 +31,7 @@ test('migração protege financeiro/RPC, módulos, múltiplos vínculos e altera
       insert into lancamentos values('00000000-0000-4000-8000-000000000020','${company}',123),('00000000-0000-4000-8000-000000000021','${other}',456);
       insert into projetos_documentos values(1,'${company}','autorizado');`);
     await db.exec(`insert into storage.objects values(1,'notas-lancamentos','${company}/nota.jpg'),(2,'notas-lancamentos','${other}/nota.jpg');`);
-    await db.exec(readFileSync('supabase/migrations/20261014050000_usuario_areas_liberadas.sql','utf8'));
+    await db.exec(readFileSync('tests/fixtures/sql-historico/20261014050000_usuario_areas_liberadas.sql','utf8'));
     await db.exec(`update usuarios_empresa set dashboard_liberada=false,modulos_liberados=array['projetos'] where empresa_id='${company}'; set "request.user"='${user}'; set request.role='authenticated'; set role authenticated;`);
     assert.deepEqual((await db.query('select valor from lancamentos')).rows,[{valor:'456'}]);
     assert.equal((await db.query('select count(*)::int as n from projetos_documentos')).rows[0].n,1);

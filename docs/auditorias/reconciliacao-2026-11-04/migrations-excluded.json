@@ -2,76 +2,91 @@
   {
     "path": "supabase/migrations/20261011200000_marketplace_local_products.sql",
     "sha256": "49be22f50e05bc836439f3e7c16a715044d352d230ad60fc5db4060ba20d7034",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261011200000_marketplace_local_products.sql"
   },
   {
     "path": "supabase/migrations/20261012010000_marketplace_inventory_sync.sql",
     "sha256": "b3a90aaac1ff03a933fd7d02b367aed23ed78da3bfb86d45522cea8d421f9a73",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261012010000_marketplace_inventory_sync.sql"
   },
   {
     "path": "supabase/migrations/20261012160000_marketplace_magalu_oauth.sql",
     "sha256": "86b583c73793c80af09eaf45d6fed8bbd2cc842a68a39c97a422eb05359cb362",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261012160000_marketplace_magalu_oauth.sql"
   },
   {
     "path": "supabase/migrations/20261012190000_marketplace_connection_labels.sql",
     "sha256": "229fb65f2b522de4b8f0a69d87e4172fcb3ba4d00257a77901436e32096b1c53",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261012190000_marketplace_connection_labels.sql"
   },
   {
     "path": "supabase/migrations/20261012230000_marketplace_sales_history.sql",
     "sha256": "3b0ff31a388a69ea74f0bd4ab5d44bf440aebaa4ad8f6f96192bb0429672cfb7",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261012230000_marketplace_sales_history.sql"
   },
   {
     "path": "supabase/migrations/20261013150000_marketplace_magalu_sales.sql",
     "sha256": "96e3f8266ca8220c745b97f6c1986db2fa4474bd4935946b6c399c3af9c351fa",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261013150000_marketplace_magalu_sales.sql"
   },
   {
     "path": "supabase/migrations/20261013170000_marketplace_pending_sale_alerts.sql",
     "sha256": "41d8f083407a537db380b6dc66459e56398973e62620691b78c854618e28382f",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261013170000_marketplace_pending_sale_alerts.sql"
   },
   {
     "path": "supabase/migrations/20261014030000_marketplace_magalu_publication_guard.sql",
     "sha256": "98482fe810c84f386326467749c444e89f849df1fde64d19bee0dd16e36496f8",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261014030000_marketplace_magalu_publication_guard.sql"
   },
   {
     "path": "supabase/migrations/20261014050000_usuario_areas_liberadas.sql",
     "sha256": "35e3d994574868f9ccb5ee4fbdbdb4fa8a2cb1d43dc9a07cf1070b1f4aabf8a5",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261014050000_usuario_areas_liberadas.sql"
   },
   {
     "path": "supabase/migrations/20261023060000_marketplace_grouped_listings.sql",
     "sha256": "e48b9cbf0d182a7881f4249b7d5d21e5e2e8c42533839b420afb92b42820cbbe",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261023060000_marketplace_grouped_listings.sql"
   },
   {
     "path": "supabase/migrations/20261024150000_marketplace_inventory_protection.sql",
     "sha256": "26df565702ee63259bc9efa0726c46c828e538c56024c2ae41481e809efd39aa",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261024150000_marketplace_inventory_protection.sql"
   },
   {
     "path": "supabase/migrations/20261025170000_marketplace_quality_web_usage.sql",
     "sha256": "d70dd9d89942c36a43dc0c37b937ca48c777cb26d9458e60b4e48977287f677a",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261025170000_marketplace_quality_web_usage.sql"
   },
   {
     "path": "supabase/migrations/20261026170000_marketplace_fiscal_history.sql",
     "sha256": "ab38d3d373b2af1af6facc5cf0115af88f7aba2e130918705b6d60acd5b4baa7",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261026170000_marketplace_fiscal_history.sql"
   },
   {
     "path": "supabase/migrations/20261027130000_marketplace_product_posts.sql",
     "sha256": "e6b85078a202ebc26d2bd05daa4df7de97ed244902f58ba6886de937d7bf9bb6",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261027130000_marketplace_product_posts.sql"
   },
   {
     "path": "supabase/migrations/20261030143000_importador_despesas_centros.sql",
     "sha256": "6a22f5d0103940fb042ad4259f1cb9cba652e672658315fee13793c07ce19b83",
-    "reason": "Sem registro no histórico remoto; fonte preservada somente na auditoria externa ao pacote."
+    "reason": "Sem registro no histórico remoto: excluído da pasta de migrações; preservado exclusivamente como fixture de teste após autorização de continuidade do responsável.",
+    "testFixture": "tests/fixtures/sql-historico/20261030143000_importador_despesas_centros.sql"
   }
 ]
