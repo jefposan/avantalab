@@ -135,7 +135,7 @@ PADRÃO AVANTA consultado: 1.23.1. Data: 04/11/2026, America/Sao_Paulo.
   a main inteira pertencem a espaços/fins de linha herdados das fontes já
   publicadas e estão registrados no log da auditoria inicial.
 
-Diff final contra a main: 784 A, 211 M, 4 R100, 1 supabase/migrations/20261012010000_marketplace_inventory_sync.sql, 1 supabase/migrations/20261012190000_marketplace_connection_labels.sql, 1 supabase/migrations/20261013150000_marketplace_magalu_sales.sql, 1 supabase/migrations/20261014030000_marketplace_magalu_publication_guard.sql, 1 tests/fixtures/sql-historico/20261011200000_marketplace_local_products.sql, 1 tests/fixtures/sql-historico/20261012160000_marketplace_magalu_oauth.sql, 1 tests/fixtures/sql-historico/20261012230000_marketplace_sales_history.sql, 1 tests/fixtures/sql-historico/20261013170000_marketplace_pending_sale_alerts.sql. Relação completa em
+Diff final contra a main (movimentos mostrados como adição/exclusão): 792 A, 8 D, 211 M. Relação completa em
 `arquivos-candidato.json`. Os 118 arquivos antes ausentes seguem preservados.
 
 ## Próximos passos e restauração
