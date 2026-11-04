@@ -8,16 +8,15 @@ create table if not exists public.assinatura_avisos (
   criado_em timestamptz not null default now(),
   unique (fatura_id, user_id, marco)
 );
-
+create index if not exists assinatura_avisos_empresa_criado_em_idx
+  on public.assinatura_avisos (empresa_id, criado_em desc);
 alter table public.assinatura_avisos enable row level security;
-
 do $$
 declare v_job bigint;
 begin
   select jobid into v_job from cron.job where jobname = 'processar-avisos-assinaturas' limit 1;
   if v_job is not null then perform cron.unschedule(v_job); end if;
 end $$;
-
 select cron.schedule(
   'processar-avisos-assinaturas',
   '0 11 * * *',

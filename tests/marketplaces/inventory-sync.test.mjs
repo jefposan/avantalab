@@ -55,16 +55,16 @@ async function fixture() {
     create table marketplace_connection_labels(connection_id uuid,empresa_id uuid,local_label text);
     create table marketplace_listings(id uuid primary key default gen_random_uuid(),empresa_id uuid,connection_id uuid,provider_listing_id text,search_text text,status text,snapshot jsonb,synced_at timestamptz default now());`);
   await db.exec(read('supabase/migrations/20261007230000_marketplace_sales_notifications.sql'));
-  await db.exec(read('tests/fixtures/sql-historico/20261011200000_marketplace_local_products.sql'));
+  await db.exec(read('supabase/historico-sem-registro/20261011200000_marketplace_local_products.sql'));
   const company=crypto.randomUUID(),other=crypto.randomUUID(),actor=crypto.randomUUID(),second=crypto.randomUUID(),conn=crypto.randomUUID(),conn2=crypto.randomUUID(),wrong=crypto.randomUUID();
   await db.query('insert into empresas values($1),($2)',[company,other]); await db.query('insert into auth.users values($1),($2)',[actor,second]);
   await db.query("insert into usuarios_empresa values($1,$2,'ativo','administrador'),($3,$2,'ativo','operador_simples')",[actor,company,second]);
   await db.query("insert into empresa_modulos values($1,'marketplaces',true,null)",[company]);
   await db.query("insert into marketplace_connections values($1,$2,'mercado_livre','connected','Conta A'),($3,$2,'mercado_livre','connected','Conta B'),($4,$5,'mercado_livre','connected','Outra empresa')",[conn,company,conn2,wrong,other]);
-  await db.exec(read('tests/fixtures/sql-historico/20261012010000_marketplace_inventory_sync.sql'));
-  await db.exec(read('tests/fixtures/sql-historico/20261012230000_marketplace_sales_history.sql'));
+  await db.exec(read('supabase/historico-sem-registro/20261012010000_marketplace_inventory_sync.sql'));
+  await db.exec(read('supabase/historico-sem-registro/20261012230000_marketplace_sales_history.sql'));
   await db.exec("alter table marketplace_sale_alerts add column alert_kind text not null default 'new_sale'; alter table marketplace_connections add column last_error_code text;");
-  await db.exec(read('tests/fixtures/sql-historico/20261024150000_marketplace_inventory_protection.sql'));
+  await db.exec(read('supabase/historico-sem-registro/20261024150000_marketplace_inventory_protection.sql'));
   await db.query("update marketplace_inventory_settings set activated_at=now()-interval '2 days'");
   const command=async(action,data)=>(await db.query('select marketplace_product_command($1,$2,$3,$4,$5) as r',[company,actor,action,JSON.stringify(data),crypto.randomUUID()])).rows[0].r;
   const product=async(name='Produto',stock=8)=>{

@@ -1933,7 +1933,27 @@
   },
   {
     "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/AUDITORIA-15-SQL.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/AUDITORIA-15-SQL.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/FECHAMENTO.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/PROPOSTA-MAIN.md"
+  },
+  {
+    "status": "A",
     "path": "docs/auditorias/reconciliacao-2026-11-04/README.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/ajustes-historicos.json"
   },
   {
     "status": "A",
@@ -1945,11 +1965,23 @@
   },
   {
     "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/auditar-registros.mjs"
+  },
+  {
+    "status": "A",
     "path": "docs/auditorias/reconciliacao-2026-11-04/deployments.json"
   },
   {
     "status": "A",
     "path": "docs/auditorias/reconciliacao-2026-11-04/espelho-local.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/evidencias-registros-remotos.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/fontes-historicas-sem-registro.json"
   },
   {
     "status": "A",
@@ -1969,7 +2001,19 @@
   },
   {
     "status": "A",
-    "path": "docs/auditorias/reconciliacao-2026-11-04/migrations-excluded.json"
+    "path": "docs/auditorias/reconciliacao-2026-11-04/prova-gerador-registro.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/provas-execucao-historica.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/provas-variantes-historicas.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/sql-canonical.mjs"
   },
   {
     "status": "A",
@@ -2420,6 +2464,98 @@
     "path": "scripts/verificar-padrao-avanta.mjs"
   },
   {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261011200000_marketplace_local_products.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261012010000_marketplace_inventory_sync.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261012160000_marketplace_magalu_oauth.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261012190000_marketplace_connection_labels.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261012230000_marketplace_sales_history.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261013150000_marketplace_magalu_sales.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261013170000_marketplace_pending_sale_alerts.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261014030000_marketplace_magalu_publication_guard.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261014050000_usuario_areas_liberadas.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261023060000_marketplace_grouped_listings.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261024150000_marketplace_inventory_protection.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261025170000_marketplace_quality_web_usage.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261026170000_marketplace_fiscal_history.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261027130000_marketplace_product_posts.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261030143000_importador_despesas_centros.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/README.md"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/proveniencia.json"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260708143000_caixinhas_movimentos.sql"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260718123000_recebimentos_presencial.sql"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260718173000_integracao_financeira_recebimentos.sql"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260801090000_avisos_vencimento_assinatura.sql"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260905152000_vendas_comercial.sql"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260907143000_limpa_observacoes_tecnicas_clientes.sql"
+  },
+  {
     "status": "D",
     "path": "supabase/migrations/20261011200000_marketplace_local_products.sql"
   },
@@ -2753,74 +2889,6 @@
   },
   {
     "status": "A",
-    "path": "tests/fixtures/sql-historico/20261011200000_marketplace_local_products.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261012010000_marketplace_inventory_sync.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261012160000_marketplace_magalu_oauth.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261012190000_marketplace_connection_labels.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261012230000_marketplace_sales_history.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261013150000_marketplace_magalu_sales.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261013170000_marketplace_pending_sale_alerts.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261014030000_marketplace_magalu_publication_guard.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261014050000_usuario_areas_liberadas.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261023060000_marketplace_grouped_listings.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261024150000_marketplace_inventory_protection.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261025170000_marketplace_quality_web_usage.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261026170000_marketplace_fiscal_history.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261027130000_marketplace_product_posts.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/20261030143000_importador_despesas_centros.sql"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/README.md"
-  },
-  {
-    "status": "A",
-    "path": "tests/fixtures/sql-historico/proveniencia.json"
-  },
-  {
-    "status": "A",
     "path": "tests/helpers/sql-historico.mjs"
   },
   {
@@ -2846,6 +2914,14 @@
   {
     "status": "A",
     "path": "tests/infra/entrega-web-auditoria.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/infra/fontes-historicas-produto.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/infra/historico-migracoes-auditoria.test.mjs"
   },
   {
     "status": "A",

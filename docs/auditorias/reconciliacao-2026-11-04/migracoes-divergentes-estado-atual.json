@@ -22,7 +22,9 @@
       "sourceSha256": "f7230ca9d62a1126c148ab592d112401102ea8fa2f9d03ac516d225d792b271e",
       "remoteStatementsSha256": "464c3a4519d3696a9566c711269fcf552b2536e1e14c89a3d1ba3ed5149d238c",
       "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
-      "currentBodyChecks": []
+      "currentBodyChecks": [],
+      "publishedSourceSha256": "f7230ca9d62a1126c148ab592d112401102ea8fa2f9d03ac516d225d792b271e",
+      "candidateSourceSha256": "b43d33002b65a1b7297cbe42c4e8a81a2575d601618d2745da487203ace59006"
     },
     {
       "version": "20260718123000",
@@ -110,7 +112,9 @@
           "matchingSignatures": [],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "00d63068c2e6830b5cd6484261711f9489b031cecabbe7efde785f44fc98f696",
+      "candidateSourceSha256": "2305912e134a46abb1dd0b2f033aeb58702f1bfd0d1a006e3ee52aeb843e7c3f"
     },
     {
       "version": "20260718173000",
@@ -157,7 +161,9 @@
           "matchingSignatures": [],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "50222e599a9436b3821986fbae738b66cf5ab781cb0b22aa118f3760ff053c89",
+      "candidateSourceSha256": "eb6e5305957dd3eb713cb6c57f9a76ac0e387eaa85d162a3fedb2de18d042a2a"
     },
     {
       "version": "20260801090000",
@@ -168,7 +174,9 @@
       "sourceSha256": "4cfda20b7e22a4781cf3dac13695429ccbb7454f32e8e795181e0223eb364a4d",
       "remoteStatementsSha256": "98dad1e3f6e4fad2748ef75cae80e49fd36e2887507897fbaa06b0bd0691b9d1",
       "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
-      "currentBodyChecks": []
+      "currentBodyChecks": [],
+      "publishedSourceSha256": "4cfda20b7e22a4781cf3dac13695429ccbb7454f32e8e795181e0223eb364a4d",
+      "candidateSourceSha256": "ce5826188b07b11438b08095736ed95e3d611dd26cb60869a442aaa3a2fa96eb"
     },
     {
       "version": "20260807190000",
@@ -208,7 +216,9 @@
           ],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "52fabf895b33a2bdd5a6b996d09acebb43aca89889b8c5f99f7f43e3caf8d941",
+      "candidateSourceSha256": "52fabf895b33a2bdd5a6b996d09acebb43aca89889b8c5f99f7f43e3caf8d941"
     },
     {
       "version": "20260820160000",
@@ -235,7 +245,9 @@
           ],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "89b261622fbeefa4ef04add7d7b768a10b3a8330a98d937a847619b10d2a9afc",
+      "candidateSourceSha256": "89b261622fbeefa4ef04add7d7b768a10b3a8330a98d937a847619b10d2a9afc"
     },
     {
       "version": "20260905152000",
@@ -338,7 +350,9 @@
           "matchingSignatures": [],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "228fdbe8acbc669dfa999edcfd392f0de3fba421ce6bebbcf343b97d9f870734",
+      "candidateSourceSha256": "89b3601c108c89091986ee8a4932d032f05334775158e4c07260a85b22a0f28a"
     },
     {
       "version": "20260907143000",
@@ -349,7 +363,9 @@
       "sourceSha256": "1355bfc8af7fe109f5c52ad3b0311e619e42a15b1a836fedce081958c7edcd76",
       "remoteStatementsSha256": "4023c1119d4c89984675bb8ce6e5e0887c1f3760c1ab5baaa4ae998563160ba3",
       "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
-      "currentBodyChecks": []
+      "currentBodyChecks": [],
+      "publishedSourceSha256": "1355bfc8af7fe109f5c52ad3b0311e619e42a15b1a836fedce081958c7edcd76",
+      "candidateSourceSha256": "7a17cd27096d276e549412b8318e09103fb3ecfc83f2462ab796682b3f65aa2e"
     },
     {
       "version": "20261005200000",
@@ -404,7 +420,9 @@
           "matchingSignatures": [],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "f13b3ea37a8a530b1cee00082ebbdf42bf314ca1d80f0741fbbf9429e672ead6",
+      "candidateSourceSha256": "f13b3ea37a8a530b1cee00082ebbdf42bf314ca1d80f0741fbbf9429e672ead6"
     },
     {
       "version": "20261016190000",
@@ -431,7 +449,9 @@
           ],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "cea61006adcfae91f39926d1f455b21c74f32e94bb39e5b7b91b5b449261a5bf",
+      "candidateSourceSha256": "cea61006adcfae91f39926d1f455b21c74f32e94bb39e5b7b91b5b449261a5bf"
     },
     {
       "version": "20261022010000",
@@ -519,7 +539,9 @@
           ],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "5871f8bc2f6c2d323182cea227cbcd19bf7c919e58958d7ae20412312892ce7e",
+      "candidateSourceSha256": "5871f8bc2f6c2d323182cea227cbcd19bf7c919e58958d7ae20412312892ce7e"
     },
     {
       "version": "20261023050000",
@@ -530,7 +552,9 @@
       "sourceSha256": "7315119cfe031566c62363a8201ae4c773a384843cc1d57291fb539fe05e8e21",
       "remoteStatementsSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
       "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
-      "currentBodyChecks": []
+      "currentBodyChecks": [],
+      "publishedSourceSha256": "7315119cfe031566c62363a8201ae4c773a384843cc1d57291fb539fe05e8e21",
+      "candidateSourceSha256": "7315119cfe031566c62363a8201ae4c773a384843cc1d57291fb539fe05e8e21"
     },
     {
       "version": "20261024050000",
@@ -583,7 +607,9 @@
           ],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "29fd22d04616b76abdc22a1af50f5853636a39b13204e9aa304bc55090969379",
+      "candidateSourceSha256": "29fd22d04616b76abdc22a1af50f5853636a39b13204e9aa304bc55090969379"
     },
     {
       "version": "20261026020000",
@@ -610,7 +636,9 @@
           ],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "45249c5fb1a01582f5dd8e95e2ccbf4679b4be56af769fdb079bc478b999d324",
+      "candidateSourceSha256": "45249c5fb1a01582f5dd8e95e2ccbf4679b4be56af769fdb079bc478b999d324"
     },
     {
       "version": "20261026030000",
@@ -637,7 +665,9 @@
           ],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "1106e2b8207f603e442e91f1fac2c1d7da3eb14ca88545b2316aee7b185ab1ef",
+      "candidateSourceSha256": "1106e2b8207f603e442e91f1fac2c1d7da3eb14ca88545b2316aee7b185ab1ef"
     },
     {
       "version": "20261026220000",
@@ -648,7 +678,9 @@
       "sourceSha256": "640af543ff3c3d8b1ba61330cf4f9772bfde0ea136147f1f4dd47dc5e2c1f76f",
       "remoteStatementsSha256": "6810e56b679c9877845a727e8e68199dd6c6b3e8072eade56c22182425f37ee9",
       "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
-      "currentBodyChecks": []
+      "currentBodyChecks": [],
+      "publishedSourceSha256": "640af543ff3c3d8b1ba61330cf4f9772bfde0ea136147f1f4dd47dc5e2c1f76f",
+      "candidateSourceSha256": "640af543ff3c3d8b1ba61330cf4f9772bfde0ea136147f1f4dd47dc5e2c1f76f"
     },
     {
       "version": "20261027010000",
@@ -720,7 +752,9 @@
           ],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "2c041bdecf8084f854066b8e115e279bec8f2973d923dd254b5f164c775ca300",
+      "candidateSourceSha256": "2c041bdecf8084f854066b8e115e279bec8f2973d923dd254b5f164c775ca300"
     },
     {
       "version": "20261027020000",
@@ -783,7 +817,9 @@
           ],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "e16be77bbdd44b9731d5fedcbc06bdd75e23db9937cdbb9af209a1e1bced294a",
+      "candidateSourceSha256": "e16be77bbdd44b9731d5fedcbc06bdd75e23db9937cdbb9af209a1e1bced294a"
     },
     {
       "version": "20261104160000",
@@ -823,7 +859,10 @@
           ],
           "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
         }
-      ]
+      ],
+      "publishedSourceSha256": "55c7a4d79b9d1b63c8ce388e65d39978ff8250ca8133bb629719a61514465b67",
+      "candidateSourceSha256": "55c7a4d79b9d1b63c8ce388e65d39978ff8250ca8133bb629719a61514465b67"
     }
-  ]
+  ],
+  "sourceComparisonScope": "Fontes publicadas 3.2.0.309 comparadas ao schema capturado; ajustes dos seis arquivos no candidato estão em ajustes-historicos.json."
 }

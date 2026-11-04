@@ -63,6 +63,7 @@ test('migração ausente do commit ou hash divergente bloqueiam', () => fixture(
     { path: f.path, sha256: '0'.repeat(64) },
     { path: 'supabase/migrations/20261104190001_ausente.sql', sha256: '0'.repeat(64) },
     { path: '../fora.sql', sha256: '0'.repeat(64) },
+    { path: 'supabase/historico-sem-registro/20261011200000_marketplace_local_products.sql', sha256: '0'.repeat(64) },
   ]) await assert.rejects(conferirOrigemProducao({rodar:f.rodar,manifesto:{migrations:[migration]}}));
   await assert.rejects(conferirOrigemProducao({rodar:f.rodar,manifesto:{}}), /Declare migrations/);
 }));

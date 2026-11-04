@@ -1,5 +1,9 @@
 <!-- ava-version: 3.2.0.310 -->
 
+> Revisão 3.2.0.310: fontes históricas de recursos existentes preservadas após auditoria; sem impacto operacional e sem remoção de funcionalidades.
+
+> Auditoria 3.2.0.310: histórico SQL conferido e organizado; sem impacto operacional e sem aplicação de migrações.
+
 > Revisão 3.2.0.310: reconciliação de fontes e proteção da publicação pela main; sem impacto operacional.
 
 > Revisão 3.2.0.309: Modelo Excel de despesas consulta os tipos atuais do perfil a cada download e atualiza a lista de reconhecimento, compartilhada pelos centros de custo. Se a consulta falhar, tente novamente; não é gerado modelo antigo. Nomes distintos, como Água e Água / Energia, não são associados por suposição.

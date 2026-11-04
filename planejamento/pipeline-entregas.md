@@ -116,3 +116,12 @@ canônico após integração autorizada. Não altera publicações em andamento.
   o candidato; produção e main permanecem intocadas. Após integração,
   correções devem usar novo commit com revisão, preservando a linha funcional
   publicada e sem reaplicar migrações históricas.
+
+## Fontes históricas de recursos existentes
+
+`supabase/historico-sem-registro` preserva os 15 SQLs com estruturas presentes
+e usos auditados no produto, mas sem identificador correspondente no histórico
+remoto consultado. Não são recursos obsoletos nem material exclusivo de testes.
+Os testes leem essa fonte única. A pasta não integra a fila automática de
+migrações; ausência do identificador não autoriza aplicar SQL ou migration repair.
+Consultar proveniência e AUDITORIA-15-SQL antes de alterar ou descartar uma fonte.

@@ -2,7 +2,6 @@
 -- Estrutura revisada do modulo Vendas e Servicos. Aplicar somente depois de backup remoto.
 
 begin;
-
 create table public.vendas_clientes (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -49,7 +48,6 @@ create table public.vendas_clientes (
   unique (empresa_id, codigo),
   unique (empresa_id, documento_tipo, documento)
 );
-
 create table public.vendas_cliente_contatos (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -66,10 +64,8 @@ create table public.vendas_cliente_contatos (
   foreign key (empresa_id, cliente_id) references public.vendas_clientes(empresa_id, id) on delete cascade,
   constraint vendas_cliente_contatos_nome_check check (length(trim(nome)) between 2 and 120)
 );
-
 create unique index vendas_cliente_contato_principal_uidx
   on public.vendas_cliente_contatos (empresa_id, cliente_id) where principal and ativo;
-
 create table public.vendas_sequencias (
   empresa_id uuid not null references public.empresas(id) on delete cascade,
   tipo text not null check (tipo in ('cliente','orcamento','pedido','venda','ordem_servico','inventario')),
@@ -78,7 +74,6 @@ create table public.vendas_sequencias (
   atualizado_em timestamptz not null default now(),
   primary key (empresa_id, tipo, ano)
 );
-
 create table public.vendas_operacoes (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -141,11 +136,9 @@ create table public.vendas_operacoes (
   foreign key (empresa_id, cliente_id) references public.vendas_clientes(empresa_id, id) on delete restrict,
   foreign key (empresa_id, convertido_de_id) references public.vendas_operacoes(empresa_id, id) on delete restrict
 );
-
 create unique index vendas_operacoes_conversao_uidx
   on public.vendas_operacoes (empresa_id, convertido_de_id)
   where convertido_de_id is not null;
-
 create table public.vendas_operacao_itens (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -180,7 +173,6 @@ create table public.vendas_operacao_itens (
   unique (empresa_id, operacao_id, id),
   unique (empresa_id, operacao_id, posicao)
 );
-
 create table public.vendas_ordens_servico (
   operacao_id uuid primary key,
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -212,7 +204,6 @@ create table public.vendas_ordens_servico (
     or (aceite_situacao in ('aceito','recusado') and aceite_em is not null and nullif(trim(aceite_por),'') is not null)
   )
 );
-
 create table public.vendas_os_materiais (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -234,7 +225,6 @@ create table public.vendas_os_materiais (
   unique (empresa_id, id),
   unique (empresa_id, operacao_id, id)
 );
-
 create table public.vendas_os_checklist (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -248,7 +238,6 @@ create table public.vendas_os_checklist (
   constraint vendas_os_checklist_conclusao_check check ((not concluido and concluido_em is null) or (concluido and concluido_em is not null)),
   unique (empresa_id, operacao_id, posicao)
 );
-
 create table public.vendas_os_anexos (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -263,7 +252,6 @@ create table public.vendas_os_anexos (
   foreign key (empresa_id, operacao_id) references public.vendas_ordens_servico(empresa_id, operacao_id) on delete cascade,
   unique (empresa_id, referencia_storage)
 );
-
 create table public.vendas_estoque_locais (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -278,10 +266,8 @@ create table public.vendas_estoque_locais (
   unique (empresa_id, id),
   unique (empresa_id, codigo)
 );
-
 create unique index vendas_estoque_local_padrao_uidx
   on public.vendas_estoque_locais (empresa_id) where padrao and ativo;
-
 create table public.vendas_estoque_saldos (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -299,7 +285,6 @@ create table public.vendas_estoque_saldos (
   constraint vendas_estoque_saldos_negativo_check check (permite_negativo or saldo_fisico >= 0),
   constraint vendas_estoque_saldos_reserva_check check (permite_negativo or saldo_reservado <= saldo_fisico)
 );
-
 create table public.vendas_estoque_reservas (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -326,7 +311,6 @@ create table public.vendas_estoque_reservas (
     or (operacao_item_id is null and os_material_id is not null)
   )
 );
-
 create table public.vendas_estoque_movimentos (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -352,15 +336,12 @@ create table public.vendas_estoque_movimentos (
   foreign key (empresa_id, reserva_id) references public.vendas_estoque_reservas(empresa_id, id) on delete restrict,
   foreign key (empresa_id, operacao_id) references public.vendas_operacoes(empresa_id, id) on delete restrict
 );
-
 create unique index vendas_estoque_reserva_os_ativa_uidx
   on public.vendas_estoque_reservas (empresa_id, os_material_id)
   where os_material_id is not null and situacao='ativa';
-
 create unique index vendas_estoque_reserva_item_ativa_uidx
   on public.vendas_estoque_reservas (empresa_id, operacao_item_id)
   where operacao_item_id is not null and situacao='ativa';
-
 create table public.vendas_inventarios (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -382,7 +363,6 @@ create table public.vendas_inventarios (
   foreign key (empresa_id, local_id) references public.vendas_estoque_locais(empresa_id, id) on delete restrict,
   constraint vendas_inventarios_numero_check check ((numero is null and ano is null) or (numero > 0 and ano between 2000 and 9999))
 );
-
 create table public.vendas_inventario_itens (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -403,7 +383,6 @@ create table public.vendas_inventario_itens (
   ),
   unique (empresa_id, inventario_id, produto_id)
 );
-
 create table public.vendas_contas_receber (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -435,7 +414,6 @@ create table public.vendas_contas_receber (
     saldo_aberto = round(valor_original - valor_recebido + valor_estornado, 2)
   )
 );
-
 create table public.vendas_contas_receber_eventos (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -451,7 +429,6 @@ create table public.vendas_contas_receber_eventos (
   unique (empresa_id, chave_idempotencia),
   foreign key (empresa_id, conta_receber_id) references public.vendas_contas_receber(empresa_id, id) on delete restrict
 );
-
 create table public.vendas_fiscal_configuracoes (
   empresa_id uuid primary key references public.empresas(id) on delete cascade,
   situacao text not null default 'rascunho' check (situacao in ('rascunho','publicada')),
@@ -477,7 +454,6 @@ create table public.vendas_fiscal_configuracoes (
     )
   )
 );
-
 create table public.vendas_fiscal_rascunhos (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -499,7 +475,6 @@ create table public.vendas_fiscal_rascunhos (
   unique (empresa_id, chave_idempotencia),
   foreign key (empresa_id, operacao_id) references public.vendas_operacoes(empresa_id, id) on delete restrict
 );
-
 create table public.vendas_eventos (
   id bigint generated always as identity primary key,
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -512,11 +487,9 @@ create table public.vendas_eventos (
   criado_por uuid references auth.users(id) on delete set null,
   criado_em timestamptz not null default now()
 );
-
 create unique index vendas_eventos_idempotencia_uidx
   on public.vendas_eventos (empresa_id, chave_idempotencia)
   where chave_idempotencia is not null;
-
 create index vendas_clientes_busca_idx on public.vendas_clientes (empresa_id, situacao, nome_exibicao);
 create index vendas_operacoes_lista_idx on public.vendas_operacoes (empresa_id, tipo, situacao, criado_em desc);
 create index vendas_operacoes_cliente_idx on public.vendas_operacoes (empresa_id, cliente_id, criado_em desc);
@@ -530,7 +503,6 @@ create index vendas_contas_receber_cliente_idx on public.vendas_contas_receber (
 create unique index vendas_fiscal_configuracoes_idempotencia_uidx on public.vendas_fiscal_configuracoes (empresa_id, chave_idempotencia);
 create index vendas_fiscal_rascunhos_lista_idx on public.vendas_fiscal_rascunhos (empresa_id, situacao, criado_em desc);
 create index vendas_eventos_recurso_idx on public.vendas_eventos (empresa_id, recurso_tipo, recurso_id, criado_em desc);
-
 create or replace function public.vendas_touch_version()
 returns trigger language plpgsql set search_path = public, pg_temp as $$
 begin
@@ -539,13 +511,11 @@ begin
   new.atualizado_em := now();
   return new;
 end $$;
-
 create or replace function public.vendas_rejeitar_alteracao_imutavel()
 returns trigger language plpgsql set search_path = public, pg_temp as $$
 begin
   raise exception 'O histórico comercial é imutável; registre um novo evento de correção.' using errcode='23514';
 end $$;
-
 create or replace function public.vendas_validar_produto_empresa()
 returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 declare v_produto_id uuid;
@@ -559,7 +529,6 @@ begin
   ) then raise exception 'O item do catálogo não pertence à empresa da operação.' using errcode='23514'; end if;
   return new;
 end $$;
-
 create or replace function public.vendas_validar_item_editavel()
 returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 declare v_empresa_id uuid; v_operacao_id uuid;
@@ -575,7 +544,6 @@ begin
   new.atualizado_em := now();
   return new;
 end $$;
-
 create or replace function public.vendas_validar_tabela_preco_empresa()
 returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 begin
@@ -586,7 +554,6 @@ begin
   ) then raise exception 'A tabela de preços não pertence à empresa da operação ou está inativa.' using errcode='23514'; end if;
   return new;
 end $$;
-
 create or replace function public.vendas_validar_ordem_servico()
 returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 begin
@@ -597,7 +564,6 @@ begin
   ) then raise exception 'A execução precisa pertencer a uma ordem de serviço da mesma empresa.' using errcode='23514'; end if;
   return new;
 end $$;
-
 create or replace function public.vendas_reservar_numero_operacao(p_empresa_id uuid, p_operacao_id uuid)
 returns table(operacao_tipo text, operacao_ano integer, operacao_numero bigint)
 language plpgsql security definer set search_path = public, pg_temp as $$
@@ -625,7 +591,6 @@ begin
    where empresa_id=p_empresa_id and id=p_operacao_id;
   return query select v_operacao.tipo, v_ano, v_numero;
 end $$;
-
 create trigger vendas_clientes_touch before update on public.vendas_clientes
 for each row execute function public.vendas_touch_version();
 create trigger vendas_operacoes_touch before update on public.vendas_operacoes
@@ -642,7 +607,6 @@ create trigger vendas_contas_receber_touch before update on public.vendas_contas
 for each row execute function public.vendas_touch_version();
 create trigger vendas_fiscal_configuracoes_touch before update on public.vendas_fiscal_configuracoes
 for each row execute function public.vendas_touch_version();
-
 create trigger vendas_operacao_itens_editavel before insert or update or delete on public.vendas_operacao_itens
 for each row execute function public.vendas_validar_item_editavel();
 create trigger vendas_operacao_itens_empresa before insert or update on public.vendas_operacao_itens
@@ -655,7 +619,6 @@ create trigger vendas_estoque_saldos_empresa before insert or update on public.v
 for each row execute function public.vendas_validar_produto_empresa();
 create trigger vendas_inventario_itens_empresa before insert or update on public.vendas_inventario_itens
 for each row execute function public.vendas_validar_produto_empresa();
-
 create trigger vendas_estoque_movimentos_immutable before update or delete on public.vendas_estoque_movimentos
 for each row execute function public.vendas_rejeitar_alteracao_imutavel();
 create trigger vendas_contas_receber_eventos_immutable before update or delete on public.vendas_contas_receber_eventos
@@ -664,7 +627,6 @@ create trigger vendas_fiscal_rascunhos_immutable before update or delete on publ
 for each row execute function public.vendas_rejeitar_alteracao_imutavel();
 create trigger vendas_eventos_immutable before update or delete on public.vendas_eventos
 for each row execute function public.vendas_rejeitar_alteracao_imutavel();
-
 alter table public.vendas_clientes enable row level security;
 alter table public.vendas_clientes force row level security;
 alter table public.vendas_cliente_contatos enable row level security;
@@ -705,7 +667,6 @@ alter table public.vendas_fiscal_rascunhos enable row level security;
 alter table public.vendas_fiscal_rascunhos force row level security;
 alter table public.vendas_eventos enable row level security;
 alter table public.vendas_eventos force row level security;
-
 revoke all on table public.vendas_clientes, public.vendas_cliente_contatos,
   public.vendas_sequencias, public.vendas_operacoes, public.vendas_operacao_itens,
   public.vendas_ordens_servico, public.vendas_os_materiais, public.vendas_os_checklist,
@@ -727,7 +688,6 @@ grant select,insert on table public.vendas_estoque_movimentos,
   public.vendas_contas_receber_eventos, public.vendas_fiscal_rascunhos,
   public.vendas_eventos to service_role;
 grant usage,select on sequence public.vendas_eventos_id_seq to service_role;
-
 revoke all on function public.vendas_touch_version() from public, anon, authenticated;
 revoke all on function public.vendas_rejeitar_alteracao_imutavel() from public, anon, authenticated;
 revoke all on function public.vendas_validar_produto_empresa() from public, anon, authenticated;
@@ -736,13 +696,11 @@ revoke all on function public.vendas_validar_tabela_preco_empresa() from public,
 revoke all on function public.vendas_validar_ordem_servico() from public, anon, authenticated;
 revoke all on function public.vendas_reservar_numero_operacao(uuid,uuid) from public, anon, authenticated;
 grant execute on function public.vendas_reservar_numero_operacao(uuid,uuid) to service_role;
-
 comment on table public.vendas_operacoes is 'Orcamentos, pedidos, vendas e ordens de servico com retratos historicos do cliente, preco e pagamento.';
 comment on column public.vendas_operacao_itens.custo_unitario_retrato is 'Dado interno; nunca deve ser devolvido sem a permissao catalog.view_cost.';
 comment on table public.vendas_estoque_movimentos is 'Razao imutavel do estoque; saldo e reserva sao atualizados apenas por transacao server-side.';
 comment on table public.vendas_contas_receber_eventos is 'Historico financeiro append-only; correcoes sao novos eventos, nunca alteracao retroativa.';
 comment on table public.vendas_fiscal_configuracoes is 'Matriz fiscal versionada da empresa; somente uma publicacao revisada pode alimentar a preparacao server-side e cada publicacao gera o evento configuracao_fiscal_publicada.';
 comment on table public.vendas_fiscal_rascunhos is 'Retrato fiscal comercial imutavel; nao reserva numero, nao assina e nao representa documento autorizado.';
-comment on column public.vendas_clientes.documento_tipo is 'CPF e CNPJ são validados no servidor e permanecem vinculados exclusivamente ao perfil empresarial.';
-
+comment on column public.vendas_clientes.documento_tipo is 'A interface inicial habilita somente CNPJ; CPF permanece preparado para uma etapa futura homologada.';
 commit;

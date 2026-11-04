@@ -1,10 +1,10 @@
--- Módulo Recebimentos Presenciais.
+-- Módulo Recebimentos Presencial.
 -- Independente do Controle de Ponto: tabelas, usuários, sessão e políticas próprias.
 
 insert into public.modulos (id, nome, descricao, icone, perfis, ordem)
 values (
   'recebimentos_presencial',
-  'Recebimentos Presenciais',
+  'Recebimentos Presencial',
   'Cobrança em dinheiro em campo, com conferência e baixa pelo gestor.',
   'recebimentos',
   '{empresa}',
@@ -16,7 +16,6 @@ on conflict (id) do update set
   icone = excluded.icone,
   perfis = excluded.perfis,
   ordem = excluded.ordem;
-
 create table if not exists public.recebimentos_colaboradores (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -31,12 +30,10 @@ create table if not exists public.recebimentos_colaboradores (
   atualizado_em timestamptz not null default now(),
   unique (user_id, empresa_id)
 );
-
 create unique index if not exists recebimentos_colaboradores_cpf_uidx
   on public.recebimentos_colaboradores (cpf);
 create index if not exists recebimentos_colaboradores_empresa_idx
   on public.recebimentos_colaboradores (empresa_id, ativo, nome);
-
 create table if not exists public.recebimentos_empresas (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -48,10 +45,8 @@ create table if not exists public.recebimentos_empresas (
   criado_em timestamptz not null default now(),
   atualizado_em timestamptz not null default now()
 );
-
 create index if not exists recebimentos_empresas_empresa_idx
   on public.recebimentos_empresas (empresa_id, ativo, nome);
-
 create table if not exists public.recebimentos_subempresas (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -70,10 +65,8 @@ create table if not exists public.recebimentos_subempresas (
   criado_em timestamptz not null default now(),
   atualizado_em timestamptz not null default now()
 );
-
 create index if not exists recebimentos_subempresas_empresa_idx
   on public.recebimentos_subempresas (empresa_id, recebimento_empresa_id, ativo, nome);
-
 create table if not exists public.recebimentos_lancamentos (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
@@ -94,14 +87,12 @@ create table if not exists public.recebimentos_lancamentos (
   criado_em timestamptz not null default now(),
   atualizado_em timestamptz not null default now()
 );
-
 create index if not exists recebimentos_lancamentos_empresa_vencimento_idx
   on public.recebimentos_lancamentos (empresa_id, vencimento);
 create index if not exists recebimentos_lancamentos_colaborador_recebido_idx
   on public.recebimentos_lancamentos (colaborador_user_id, recebido_em desc);
 create index if not exists recebimentos_lancamentos_situacao_idx
   on public.recebimentos_lancamentos (situacao);
-
 create table if not exists public.recebimentos_eventos (
   id uuid primary key default gen_random_uuid(),
   lancamento_id uuid not null references public.recebimentos_lancamentos(id) on delete cascade,
@@ -111,10 +102,8 @@ create table if not exists public.recebimentos_eventos (
   snapshot jsonb not null default '{}'::jsonb,
   criado_em timestamptz not null default now()
 );
-
 create index if not exists recebimentos_eventos_lancamento_idx
   on public.recebimentos_eventos (lancamento_id, criado_em desc);
-
 create or replace function public.recebimentos_pode_gerir(p_empresa_id uuid)
 returns boolean
 language sql
@@ -135,7 +124,6 @@ as $$
       and ue.perfil in ('gestor_master', 'administrador')
   );
 $$;
-
 create or replace function public.recebimentos_e_colaborador(p_empresa_id uuid)
 returns boolean
 language sql
@@ -155,23 +143,19 @@ as $$
       and c.ativo
   );
 $$;
-
 revoke all on function public.recebimentos_pode_gerir(uuid) from public;
 revoke all on function public.recebimentos_e_colaborador(uuid) from public;
 grant execute on function public.recebimentos_pode_gerir(uuid) to authenticated;
 grant execute on function public.recebimentos_e_colaborador(uuid) to authenticated;
-
 alter table public.recebimentos_colaboradores enable row level security;
 alter table public.recebimentos_empresas enable row level security;
 alter table public.recebimentos_subempresas enable row level security;
 alter table public.recebimentos_lancamentos enable row level security;
 alter table public.recebimentos_eventos enable row level security;
-
 drop policy if exists recebimentos_colaboradores_select on public.recebimentos_colaboradores;
 create policy recebimentos_colaboradores_select
   on public.recebimentos_colaboradores for select to authenticated
   using (user_id = auth.uid() or public.recebimentos_pode_gerir(empresa_id));
-
 drop policy if exists recebimentos_empresas_select on public.recebimentos_empresas;
 create policy recebimentos_empresas_select
   on public.recebimentos_empresas for select to authenticated
@@ -181,7 +165,6 @@ create policy recebimentos_empresas_gestao
   on public.recebimentos_empresas for all to authenticated
   using (public.recebimentos_pode_gerir(empresa_id))
   with check (public.recebimentos_pode_gerir(empresa_id));
-
 drop policy if exists recebimentos_subempresas_select on public.recebimentos_subempresas;
 create policy recebimentos_subempresas_select
   on public.recebimentos_subempresas for select to authenticated
@@ -191,7 +174,6 @@ create policy recebimentos_subempresas_gestao
   on public.recebimentos_subempresas for all to authenticated
   using (public.recebimentos_pode_gerir(empresa_id))
   with check (public.recebimentos_pode_gerir(empresa_id));
-
 drop policy if exists recebimentos_lancamentos_select on public.recebimentos_lancamentos;
 create policy recebimentos_lancamentos_select
   on public.recebimentos_lancamentos for select to authenticated
@@ -204,7 +186,6 @@ create policy recebimentos_lancamentos_select
       and public.recebimentos_e_colaborador(empresa_id)
     )
   );
-
 drop policy if exists recebimentos_lancamentos_insert on public.recebimentos_lancamentos;
 create policy recebimentos_lancamentos_insert
   on public.recebimentos_lancamentos for insert to authenticated
@@ -216,13 +197,11 @@ create policy recebimentos_lancamentos_insert
       and situacao in ('aguardando_conferencia', 'recebido_a_menor', 'recebido_a_maior')
     )
   );
-
 drop policy if exists recebimentos_lancamentos_update_gestao on public.recebimentos_lancamentos;
 create policy recebimentos_lancamentos_update_gestao
   on public.recebimentos_lancamentos for update to authenticated
   using (public.recebimentos_pode_gerir(empresa_id))
   with check (public.recebimentos_pode_gerir(empresa_id));
-
 -- Permite ao colaborador assumir uma cobrança aberta ou corrigir somente um
 -- lançamento que já pertence a ele. Baixa, devolução e estorno continuam exclusivos do gestor.
 drop policy if exists recebimentos_lancamentos_update_colaborador on public.recebimentos_lancamentos;
@@ -240,12 +219,10 @@ create policy recebimentos_lancamentos_update_colaborador
     and colaborador_user_id = auth.uid()
     and situacao in ('aguardando_conferencia', 'recebido_a_menor', 'recebido_a_maior')
   );
-
 drop policy if exists recebimentos_lancamentos_delete on public.recebimentos_lancamentos;
 create policy recebimentos_lancamentos_delete
   on public.recebimentos_lancamentos for delete to authenticated
   using (public.recebimentos_pode_gerir(empresa_id));
-
 drop policy if exists recebimentos_eventos_select on public.recebimentos_eventos;
 create policy recebimentos_eventos_select
   on public.recebimentos_eventos for select to authenticated
@@ -255,7 +232,6 @@ create policy recebimentos_eventos_select
       where l.id = lancamento_id and public.recebimentos_pode_gerir(l.empresa_id)
     )
   );
-
 create or replace function public.recebimentos_baixar(p_lancamento_id uuid, p_motivo text default null)
 returns public.recebimentos_lancamentos
 language plpgsql
@@ -278,7 +254,6 @@ begin
   return v_lancamento;
 end;
 $$;
-
 create or replace function public.recebimentos_devolver(p_lancamento_id uuid, p_motivo text)
 returns public.recebimentos_lancamentos
 language plpgsql
@@ -301,7 +276,6 @@ begin
   return v_lancamento;
 end;
 $$;
-
 create or replace function public.recebimentos_registrar_divergencia(p_lancamento_id uuid, p_motivo text)
 returns public.recebimentos_lancamentos
 language plpgsql
@@ -326,7 +300,6 @@ begin
   return v_lancamento;
 end;
 $$;
-
 create or replace function public.recebimentos_estornar(p_lancamento_id uuid, p_motivo text)
 returns public.recebimentos_lancamentos
 language plpgsql
@@ -354,7 +327,6 @@ begin
   return v_lancamento;
 end;
 $$;
-
 revoke all on function public.recebimentos_baixar(uuid, text) from public;
 revoke all on function public.recebimentos_devolver(uuid, text) from public;
 revoke all on function public.recebimentos_registrar_divergencia(uuid, text) from public;
@@ -363,7 +335,6 @@ grant execute on function public.recebimentos_baixar(uuid, text) to authenticate
 grant execute on function public.recebimentos_devolver(uuid, text) to authenticated;
 grant execute on function public.recebimentos_registrar_divergencia(uuid, text) to authenticated;
 grant execute on function public.recebimentos_estornar(uuid, text) to authenticated;
-
 do $$
 begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime')

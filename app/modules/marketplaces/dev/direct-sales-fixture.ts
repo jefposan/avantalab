@@ -5,7 +5,7 @@ export const DIRECT_DEMO={company:'10000000-0000-4000-8000-000000000001',other:'
 export async function createDirectSalesFixture(){
  const db=new PGlite(),{company,other,actor,editor}=DIRECT_DEMO;
  const migration=async(name:string)=>{
-  const directory=name==='20261011200000_marketplace_local_products.sql'?'tests/fixtures/sql-historico':'supabase/migrations';
+  const directory=name==='20261011200000_marketplace_local_products.sql'?'supabase/historico-sem-registro':'supabase/migrations';
   return db.exec(await readFile(`${process.cwd()}/${directory}/${name}`,'utf8'));
  };
  try{

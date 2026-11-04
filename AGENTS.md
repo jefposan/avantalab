@@ -113,9 +113,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Espelhos de produção são cópias de preservação verificadas, não branches de
   desenvolvimento ou autorização para publicar. Conservar o vínculo com o
   deployment de origem e distinguir o SHA da produção do snapshot local.
-- `tests/fixtures/sql-historico` contém SQL exclusivo de bancos de teste isolados.
-  Sua existência não comprova aplicação remota. Nunca mover para a pasta de
-  migrações nem executar no Supabase apenas para alinhar o Git.
+- `supabase/historico-sem-registro` preserva fontes de recursos presentes no
+  produto, com presença e uso auditados e identificadores ausentes no histórico
+  remoto. Não são apenas fixtures. Nunca executar ou mover para a fila automática
+  de migrações apenas para alinhar o Git; consultar a proveniência e o inventário.
 - Enquanto houver trabalho paralelo no checkout canônico, preservá-lo onde está.
   Não trocar/resetar sua branch para sincronizar a main. A futura sincronização
   da raiz exige primeiro preservar esses trabalhos com seus responsáveis.

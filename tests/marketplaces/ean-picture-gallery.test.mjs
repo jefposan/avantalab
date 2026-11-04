@@ -8,7 +8,7 @@ test('galeria por EAN conserva fotos encontradas, é idempotente e preserva capa
  const db=new PGlite();
  try{
   await db.exec('create schema auth;create role anon;create role authenticated;create role service_role;create table auth.users(id uuid primary key);create table empresas(id uuid primary key);create table usuarios_empresa(user_id uuid,empresa_id uuid,status text,perfil text);create table empresa_modulos(empresa_id uuid,modulo_id text,ativo boolean,expira_em timestamptz);create table marketplace_connections(id uuid primary key,empresa_id uuid,provider text);');
-  await db.exec(readFileSync('tests/fixtures/sql-historico/20261011200000_marketplace_local_products.sql','utf8'));
+  await db.exec(readFileSync('supabase/historico-sem-registro/20261011200000_marketplace_local_products.sql','utf8'));
   await db.exec('create table marketplace_price_consultations(id uuid primary key default gen_random_uuid(),empresa_id uuid,created_by uuid,provider_product_id text,product_name text,ean text,product_description text,image_url text,market_price_cents bigint,created_at timestamptz default now());');
   for(const file of ['20261019020000_marketplace_price_products_stock.sql','20261021040000_marketplace_researched_product_facts.sql','20261026020000_marketplace_ean_picture_gallery.sql'])await db.exec(readFileSync(sqlDeTesteURL(file),'utf8'));
   const company=crypto.randomUUID(),other=crypto.randomUUID(),actor=crypto.randomUUID();

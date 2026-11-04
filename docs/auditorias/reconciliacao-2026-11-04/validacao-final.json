@@ -4,8 +4,8 @@
   "fullBuild": {
     "command": "AVANTA_TEST_CONCURRENCY=1 npm run build",
     "exitCode": 0,
-    "tests": 2513,
-    "pass": 2507,
+    "tests": 2523,
+    "pass": 2517,
     "fail": 0,
     "skip": 6,
     "typescript": true,
@@ -13,11 +13,11 @@
     "generatedPages": 234
   },
   "security": {
-    "pass": 495,
+    "pass": 505,
     "fail": 0
   },
   "infrastructure": {
-    "pass": 28,
+    "pass": 38,
     "fail": 0
   },
   "standard": "PADRAO-AVANTA 1.23.1 aprovado",
@@ -27,5 +27,13 @@
   "databaseWriteOrMigrationApplied": false,
   "externalPublicationPerformed": false,
   "rootCheckoutModified": false,
-  "log": "/private/tmp/avanta-reconciliacao-20261104-auditoria/build-com-configuracao.log"
+  "log": "/private/tmp/avanta-reconciliacao-20261104-auditoria/auditoria15/build-final.log",
+  "historicalMigrationCausesDocumented": 19,
+  "productHistoricalSources": {
+    "count": 15,
+    "preserved": 15,
+    "obsoleteProven": 0,
+    "folder": "supabase/historico-sem-registro",
+    "provisionalTestOnlyClassificationRemoved": true
+  }
 }

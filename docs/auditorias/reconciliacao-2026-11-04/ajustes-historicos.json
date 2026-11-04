@@ -1,0 +1,50 @@
+[
+  {
+    "version": "20260708143000",
+    "path": "supabase/migrations/20260708143000_caixinhas_movimentos.sql",
+    "publishedSourceSha256": "f7230ca9d62a1126c148ab592d112401102ea8fa2f9d03ac516d225d792b271e",
+    "reconciledSourceSha256": "b43d33002b65a1b7297cbe42c4e8a81a2575d601618d2745da487203ace59006",
+    "remoteStatementsSha256": "464c3a4519d3696a9566c711269fcf552b2536e1e14c89a3d1ba3ed5149d238c",
+    "reason": "Restaurar a sequência SQL registrada como aplicada; não executar nem reparar histórico remoto."
+  },
+  {
+    "version": "20260718123000",
+    "path": "supabase/migrations/20260718123000_recebimentos_presencial.sql",
+    "publishedSourceSha256": "00d63068c2e6830b5cd6484261711f9489b031cecabbe7efde785f44fc98f696",
+    "reconciledSourceSha256": "2305912e134a46abb1dd0b2f033aeb58702f1bfd0d1a006e3ee52aeb843e7c3f",
+    "remoteStatementsSha256": "9f170c2add1680b79b60ef449e7b25bb1fb6eb7647dca4c78ffd511a9eac587b",
+    "reason": "Restaurar a sequência SQL registrada como aplicada; não executar nem reparar histórico remoto."
+  },
+  {
+    "version": "20260718173000",
+    "path": "supabase/migrations/20260718173000_integracao_financeira_recebimentos.sql",
+    "publishedSourceSha256": "50222e599a9436b3821986fbae738b66cf5ab781cb0b22aa118f3760ff053c89",
+    "reconciledSourceSha256": "eb6e5305957dd3eb713cb6c57f9a76ac0e387eaa85d162a3fedb2de18d042a2a",
+    "remoteStatementsSha256": "d9299fc10571a43d847ffd0210ba5d7a882d86639527b6e056427fe2222e1ef3",
+    "reason": "Restaurar a sequência SQL registrada como aplicada; não executar nem reparar histórico remoto."
+  },
+  {
+    "version": "20260801090000",
+    "path": "supabase/migrations/20260801090000_avisos_vencimento_assinatura.sql",
+    "publishedSourceSha256": "4cfda20b7e22a4781cf3dac13695429ccbb7454f32e8e795181e0223eb364a4d",
+    "reconciledSourceSha256": "ce5826188b07b11438b08095736ed95e3d611dd26cb60869a442aaa3a2fa96eb",
+    "remoteStatementsSha256": "98dad1e3f6e4fad2748ef75cae80e49fd36e2887507897fbaa06b0bd0691b9d1",
+    "reason": "Restaurar a sequência SQL registrada como aplicada; não executar nem reparar histórico remoto."
+  },
+  {
+    "version": "20260905152000",
+    "path": "supabase/migrations/20260905152000_vendas_comercial.sql",
+    "publishedSourceSha256": "228fdbe8acbc669dfa999edcfd392f0de3fba421ce6bebbcf343b97d9f870734",
+    "reconciledSourceSha256": "89b3601c108c89091986ee8a4932d032f05334775158e4c07260a85b22a0f28a",
+    "remoteStatementsSha256": "1b3e73dea9a06f5894291c5e4fcdccced98d2f32355a84bb270aeca9a8cc38b7",
+    "reason": "Restaurar a sequência SQL registrada como aplicada; não executar nem reparar histórico remoto."
+  },
+  {
+    "version": "20260907143000",
+    "path": "supabase/migrations/20260907143000_limpa_observacoes_tecnicas_clientes.sql",
+    "publishedSourceSha256": "1355bfc8af7fe109f5c52ad3b0311e619e42a15b1a836fedce081958c7edcd76",
+    "reconciledSourceSha256": "7a17cd27096d276e549412b8318e09103fb3ecfc83f2462ab796682b3f65aa2e",
+    "remoteStatementsSha256": "4023c1119d4c89984675bb8ce6e5e0887c1f3760c1ab5baaa4ae998563160ba3",
+    "reason": "Restaurar a sequência SQL registrada como aplicada; não executar nem reparar histórico remoto."
+  }
+]

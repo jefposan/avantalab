@@ -1,13 +1,15 @@
-## 3.2.0.309 — Despesas: modelo Excel com cadastro atual do perfil
-
 ## 3.2.0.310 - 2026-11-04
 
 - Candidato isolado de reconciliação da main com a produção 3.2.0.309, preservando arquivos nativos e histórico da main.
 - Publicação de produção exige SHA exato da main remota, identidade oficial e plano de migrações versionado no mesmo commit.
-- Migrações sem registro remoto ficam fora do candidato; validação e evidências pendentes são documentadas na auditoria.
-- SQLs históricos já publicados, sem registro de aplicação remoto, preservados exclusivamente como fixtures de testes com hashes de procedência.
+- Identificadores ausentes no registro remoto são tratados como lacuna de rastreabilidade, sem inferir ausência de estrutura ou funcionalidade.
+- Auditoria dos 15 SQLs confirma recursos presentes e usados; fontes históricas do produto preservadas em supabase/historico-sem-registro, com bytes e proveniência mantidos. Removida a classificação provisória de material exclusivo de testes.
+- Auditoria das 19 divergências históricas: seis fontes SQL reconciliadas ao registro aplicado, cinco perdas de dólares reproduzidas, duas equivalências de formatação e seis registros sem SQL recuperados/corroborados por evidências externas.
+- Verificador offline e testes impedem mudanças silenciosas nas fontes históricas auditadas; nenhuma execução de SQL remoto pelo verificador.
 - Sem publicação, promoção ou aplicação de banco nesta preparação.
 
+
+## 3.2.0.309 — Despesas: modelo Excel com cadastro atual do perfil
 
 - Cada download consulta os tipos de despesa atuais do perfil e atualiza a lista usada na importação, compartilhada pelos centros de custo.
 - Preserva nomes completos como Água / Energia. Falha na consulta impede gerar um modelo com lista antiga.

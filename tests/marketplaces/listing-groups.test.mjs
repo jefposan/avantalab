@@ -14,7 +14,7 @@ test('consulta agrupa antes de paginar, respeita empresa/filtros e preserva o sa
  create table marketplace_listing_operations(empresa_id uuid,connection_id uuid,provider_listing_id text,search_text text,status text,snapshot jsonb,operational_status text,operations jsonb);
  create table marketplace_products(id uuid,empresa_id uuid,name text,ean text,pictures jsonb,stock_quantity int,listing_stock_review_at timestamptz,archived_at timestamptz);
  create table marketplace_product_links(empresa_id uuid,connection_id uuid,provider_listing_id text,product_id uuid);`);
- await db.exec(readFileSync('tests/fixtures/sql-historico/20261023060000_marketplace_grouped_listings.sql','utf8'));
+ await db.exec(readFileSync('supabase/historico-sem-registro/20261023060000_marketplace_grouped_listings.sql','utf8'));
  const company=crypto.randomUUID(),otherCompany=crypto.randomUUID(),a=crypto.randomUUID(),b=crypto.randomUUID(),product=crypto.randomUUID();
  await db.query('insert into marketplace_products values($1,$2,$3,$4,$5,2,null,null)',[product,company,'Calculadora','7897013526107','[]']);
  const insert=async(companyId,connection,id,productId,status='active',title='Calculadora')=>{

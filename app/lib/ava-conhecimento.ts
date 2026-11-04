@@ -1,3 +1,5 @@
+// Auditoria 3.2.0.310: 15 fontes SQL ligadas a recursos ativos preservadas; organização documental sem impacto operacional.
+// Auditoria 3.2.0.310: reconciliação de arquivos históricos de migração; sem impacto operacional e sem reaplicação no banco.
 // Revisão 3.2.0.310: reconciliação de fontes e pipeline; sem impacto operacional na orientação da Ava.
 // Revisão 3.2.0.307: Custos usa exclusão lógica: retira o cadastro das operações, preserva composição, preços, versões e lançamentos anteriores e o identifica como Excluído nos históricos.
 // Revisão 3.2.0.305: impressão nativa e download PDF/TXT em Marketplaces Web.

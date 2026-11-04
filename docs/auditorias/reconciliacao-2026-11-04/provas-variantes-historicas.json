@@ -1,0 +1,186 @@
+{
+  "scope": "Rascunhos históricos são dados de auditoria, não migrações novas nem comandos para execução.",
+  "clientNotesDrafts": [
+    {
+      "sourceFile": "/Users/JEFF/.codex/sessions/2026/09/07/rollout-2026-09-07T10-30-55-01a07c10-8fc4-76e1-b089-b7fffdc40dac.jsonl.zst",
+      "line": 23,
+      "path": "/Users/JEFF/avantalab/supabase/migrations/20260907143000_limpa_observacoes_tecnicas_clientes.sql",
+      "sql": "-- Remove somente a anotação técnica criada pelo importador MySQL legado.\n-- Observações manuais e qualquer texto fora deste formato permanecem intactos.\nupdate public.vendas_mobile_clientes\nset observacoes = null,\n    atualizado_em = now()\nwhere observacoes ~* '^Importado de tridium_mysql_20260715; cliente legado #[0-9]+(; profissão: .+)?\\.$';\n",
+      "sha256": "1355bfc8af7fe109f5c52ad3b0311e619e42a15b1a836fedce081958c7edcd76",
+      "matchesRemoteIgnoringWhitespaceComments": false
+    },
+    {
+      "sourceFile": "/Users/JEFF/.codex/sessions/2026/09/07/rollout-2026-09-07T15-54-26-01a07d38-bfa0-7631-a927-419b368227ed.jsonl.zst",
+      "line": 2,
+      "path": "/Users/JEFF/avantalab/supabase/migrations/20260907143000_limpa_observacoes_tecnicas_clientes.sql.pending",
+      "sql": "-- Remove somente a anotação técnica criada pelo importador MySQL legado.\n-- Observações manuais e qualquer texto fora deste formato permanecem intactos.\nupdate public.vendas_mobile_clientes\nset observacoes = null,\n    atualizado_em = now()\nwhere observacoes ~* '^Importado de tridium_mysql_20260715; cliente legado #[0-9]+(; profissão: .+)?\\\\.$';\n",
+      "sha256": "7a17cd27096d276e549412b8318e09103fb3ecfc83f2462ab796682b3f65aa2e",
+      "matchesRemoteIgnoringWhitespaceComments": true
+    }
+  ],
+  "historicalGitMatches": [
+    {
+      "version": "20260708143000",
+      "file": "supabase/migrations/20260708143000_caixinhas_movimentos.sql",
+      "currentMatches": false,
+      "historicalMatches": []
+    },
+    {
+      "version": "20260718123000",
+      "file": "supabase/migrations/20260718123000_recebimentos_presencial.sql",
+      "currentMatches": false,
+      "historicalMatches": [
+        "3b691f1b6f71b98df1f8a5d4b0d376f413a02f01"
+      ]
+    },
+    {
+      "version": "20260718173000",
+      "file": "supabase/migrations/20260718173000_integracao_financeira_recebimentos.sql",
+      "currentMatches": false,
+      "historicalMatches": [
+        "3b691f1b6f71b98df1f8a5d4b0d376f413a02f01"
+      ]
+    },
+    {
+      "version": "20260801090000",
+      "file": "supabase/migrations/20260801090000_avisos_vencimento_assinatura.sql",
+      "currentMatches": false,
+      "historicalMatches": []
+    },
+    {
+      "version": "20260905152000",
+      "file": "supabase/migrations/20260905152000_vendas_comercial.sql",
+      "currentMatches": false,
+      "historicalMatches": []
+    },
+    {
+      "version": "20260907143000",
+      "file": "supabase/migrations/20260907143000_limpa_observacoes_tecnicas_clientes.sql",
+      "currentMatches": false,
+      "historicalMatches": []
+    },
+    {
+      "version": "20261026020000",
+      "file": "supabase/migrations/20261026020000_marketplace_ean_picture_gallery.sql",
+      "currentMatches": true,
+      "historicalMatches": []
+    },
+    {
+      "version": "20261026030000",
+      "file": "supabase/migrations/20261026030000_marketplace_preparation_content.sql",
+      "currentMatches": true,
+      "historicalMatches": []
+    }
+  ],
+  "functionEvolution": [
+    {
+      "version": "20260718123000",
+      "function": "recebimentos_baixar",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": []
+    },
+    {
+      "version": "20260718123000",
+      "function": "recebimentos_devolver",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": []
+    },
+    {
+      "version": "20260718123000",
+      "function": "recebimentos_registrar_divergencia",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": []
+    },
+    {
+      "version": "20260718123000",
+      "function": "recebimentos_estornar",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": []
+    },
+    {
+      "version": "20260718173000",
+      "function": "proteger_receita_recebimentos_gestao",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": [
+        "20260906210000_vendas_operacao_integrada.sql"
+      ]
+    },
+    {
+      "version": "20260718173000",
+      "function": "recebimentos_obter_integracao_financeira",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": []
+    },
+    {
+      "version": "20260718173000",
+      "function": "recebimentos_integrar_financeiro",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": [
+        "20260718270000_integracao_automatica_e_vencimento_unico_recebimentos.sql"
+      ]
+    },
+    {
+      "version": "20260905152000",
+      "function": "vendas_reservar_numero_operacao",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": []
+    },
+    {
+      "version": "20261005200000",
+      "function": "sincronizar_catalogo_vendas_mobile_rpc",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": [
+        "20261006150000_independencia_destinos_catalogo.sql"
+      ]
+    },
+    {
+      "version": "20261022010000",
+      "function": "marketplace_listing_catalog_import",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": [
+        "20261022180000_marketplace_product_delete_simple.sql"
+      ]
+    },
+    {
+      "version": "20261022010000",
+      "function": "marketplace_import_choose_local",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": []
+    },
+    {
+      "version": "20261027010000",
+      "function": "marketplace_catalog_completion_claim",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": [
+        "20261027030000_catalog_photo_selection.sql",
+        "20261027030000_catalog_photo_selection.sql",
+        "20261027020000_catalog_full_confirmation.sql"
+      ]
+    },
+    {
+      "version": "20261027020000",
+      "function": "marketplace_catalog_confirm_full",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": [
+        "20261027030000_catalog_photo_selection.sql"
+      ]
+    },
+    {
+      "version": "20261027020000",
+      "function": "marketplace_catalog_apply_full_local",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": [
+        "20261027030000_catalog_photo_selection.sql"
+      ]
+    },
+    {
+      "version": "20261027020000",
+      "function": "marketplace_catalog_completion_claim",
+      "preservedAs": [],
+      "laterDefinitionsMatchingCurrent": [
+        "20261027030000_catalog_photo_selection.sql",
+        "20261027030000_catalog_photo_selection.sql"
+      ]
+    }
+  ]
+}

@@ -24,7 +24,8 @@
     "test": "node scripts/executar-testes.mjs",
     "test:seguranca": "node scripts/executar-testes.mjs tests/admin tests/usuarios tests/perfis tests/modulos tests/infra tests/mobile/oauth-nativo-confiavel.test.mjs tests/mobile/sessao-unica-supabase.test.mjs tests/mobile/recuperacao-sessao-perfil.test.mjs tests/mobile/usuarios-acessos.test.mjs tests/avantavendas/login-persistencia-oauth.test.mjs",
     "lint": "eslint",
-    "publicar:vercel": "node scripts/publicar-vercel.mjs"
+    "publicar:vercel": "node scripts/publicar-vercel.mjs",
+    "verificar:historico-migracoes": "node docs/auditorias/reconciliacao-2026-11-04/auditar-registros.mjs"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.15.5",

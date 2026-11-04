@@ -1,10 +1,9 @@
--- Integra manualmente o total mensal baixado do Recebimentos Presenciais ao
+-- Integra manualmente o total mensal baixado do Recebimentos Presencial ao
 -- faturamento do Gestão. A receita criada é rastreável e protegida contra
 -- edição/exclusão manual no Financeiro.
 
 alter table public.faturamentos_entradas
   add column if not exists origem_etiqueta text;
-
 create table if not exists public.recebimentos_integracao_financeira (
   empresa_id uuid primary key references public.empresas(id) on delete cascade,
   nome_entrada text not null default 'Recebimentos em campo',
@@ -14,7 +13,6 @@ create table if not exists public.recebimentos_integracao_financeira (
   check (char_length(btrim(nome_entrada)) between 1 and 120),
   check (char_length(btrim(titulo_etiqueta)) between 1 and 40)
 );
-
 create table if not exists public.recebimentos_receitas_gestao (
   empresa_id uuid not null references public.empresas(id) on delete cascade,
   ano integer not null check (ano between 2000 and 2200),
@@ -28,20 +26,16 @@ create table if not exists public.recebimentos_receitas_gestao (
   atualizado_por uuid references auth.users(id) on delete set null,
   primary key (empresa_id, ano, mes)
 );
-
 alter table public.recebimentos_integracao_financeira enable row level security;
 alter table public.recebimentos_receitas_gestao enable row level security;
-
 drop policy if exists recebimentos_integracao_financeira_select on public.recebimentos_integracao_financeira;
 create policy recebimentos_integracao_financeira_select
   on public.recebimentos_integracao_financeira for select to authenticated
   using (public.recebimentos_pode_gerir(empresa_id));
-
 drop policy if exists recebimentos_receitas_gestao_select on public.recebimentos_receitas_gestao;
 create policy recebimentos_receitas_gestao_select
   on public.recebimentos_receitas_gestao for select to authenticated
   using (public.recebimentos_pode_gerir(empresa_id));
-
 create or replace function public.proteger_receita_recebimentos_gestao()
 returns trigger
 language plpgsql
@@ -52,20 +46,18 @@ begin
     return coalesce(new, old);
   end if;
   if tg_op = 'INSERT' and new.tipo_obs = 'recebimentos_sistema' then
-    raise exception 'A receita do Recebimentos Presenciais é controlada pelo módulo.';
+    raise exception 'A receita do Recebimentos Presencial é controlada pelo módulo.';
   end if;
   if tg_op in ('UPDATE', 'DELETE') and old.tipo_obs = 'recebimentos_sistema' then
-    raise exception 'A receita do Recebimentos Presenciais é controlada pelo módulo.';
+    raise exception 'A receita do Recebimentos Presencial é controlada pelo módulo.';
   end if;
   return coalesce(new, old);
 end;
 $$;
-
 drop trigger if exists proteger_receita_recebimentos_gestao_trigger on public.faturamentos_entradas;
 create trigger proteger_receita_recebimentos_gestao_trigger
 before insert or update or delete on public.faturamentos_entradas
 for each row execute function public.proteger_receita_recebimentos_gestao();
-
 create or replace function public.recebimentos_obter_integracao_financeira(
   p_empresa_id uuid,
   p_ano integer,
@@ -104,7 +96,6 @@ begin
   );
 end;
 $$;
-
 create or replace function public.recebimentos_integrar_financeiro(
   p_empresa_id uuid,
   p_ano integer,
@@ -203,7 +194,6 @@ begin
   );
 end;
 $$;
-
 revoke all on function public.recebimentos_obter_integracao_financeira(uuid, integer, integer) from public;
 grant execute on function public.recebimentos_obter_integracao_financeira(uuid, integer, integer) to authenticated;
 revoke all on function public.recebimentos_integrar_financeiro(uuid, integer, integer, text, text) from public;
