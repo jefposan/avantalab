@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import { AdaptiveModuleLogo } from '@/app/components/ModuloHeader';
@@ -39,7 +39,6 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
         router.replace('/gestao?abrirModulo=recebimentos_presencial');
         return;
       }
-      if (contextoInicial?.podeGerenciarModulo) return;
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) {
@@ -66,12 +65,13 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
     return () => { ativo = false; };
   }, [contextoInicial, empresaId, router]);
 
-  const repo = useMemo(() => acesso ? criarRepoSupabase(acesso.empresa.id) : null, [acesso]);
-  const inicioHref = empresaId ? `/gestao?empresaId=${encodeURIComponent(empresaId)}` : '/gestao';
+  const empresaDoRepo = acesso?.empresa.id;
+  const repo = useMemo(() => empresaDoRepo ? criarRepoSupabase(empresaDoRepo) : null, [empresaDoRepo]);
+  const inicioHref = empresaId ? `/gestao?inicio=1&empresaId=${encodeURIComponent(empresaId)}` : '/gestao';
 
   useEffect(() => {
-    router.prefetch(inicioHref);
-  }, [inicioHref, router]);
+    router.prefetch(empresaId ? destinoInicioModulo(empresaId) : inicioHref);
+  }, [inicioHref, empresaId, router]);
 
   if (erro) return (
     <main className={styles.acessoModuloEstado}>
@@ -84,13 +84,12 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
     </main>
   );
   if (!acesso || !repo) {
-    if (contextoInicial) return <TransicaoNavegacaoInterna destino="Operações de Campo" empresa={contextoInicial.empresa} />;
-    return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" />;
+    return <TransicaoNavegacaoInterna destino="Operações de Campo" empresa={contextoInicial?.empresa} />;
   }
 
   const retornarInicio = () => {
     if (solicitarRetornoAoModuloHospedeiro()) return;
-    router.push(inicioHref);
+    router.push(empresaId ? destinoInicioModulo(empresaId) : inicioHref);
   };
 
   return (

@@ -1,25 +1,39 @@
 import { isValidEan, normalizeEan } from './ean.ts';
 
 export type CatalogAttribute = { id: string; name: string; value: string; valueId?: string };
-export type CatalogCandidate = { id: string; name: string; domainId: string; picture: string | null; source?: 'mercadolivre_catalog' | 'profile_catalog' | 'marketplace_listing' | 'local_product' };
+export type CatalogCandidate = {
+  id: string;
+  name: string;
+  domainId: string;
+  picture: string | null;
+  source?: 'mercadolivre_catalog' | 'profile_catalog' | 'marketplace_listing' | 'local_product';
+  /** Evidência retornada pela ficha, usada só na escolha explícita de ambiguidade. */
+  attributes?: CatalogAttribute[];
+  gtins?: string[];
+  eanStatus?: 'confirmed' | 'unreported' | 'divergent';
+};
 export type CatalogPreparationIssue = { code: string; message: string };
+export type PublicationAttributeField={id:string;name:string;values:Array<{id:string;name:string}>;units?:string[];maxLength?:number};
 export type CatalogPreparation = {
   status: 'found' | 'not_found';
   ean: string;
   copySource?: { connectionId: string; listingId: string };
   localProductId?: string;
+  localProductRevision?:number;
+  referencePriceCents?:number|null;
   query?: string;
   gtins?: string[];
   product?: CatalogCandidate & { attributes: CatalogAttribute[]; pictures: string[]; description: string };
   candidates?: CatalogCandidate[];
-  categories?: Array<{ id: string; name: string }>;
+  categories?: Array<{ id: string; name: string; path?: string }>;
   categoryId?: string;
   listingTypes?: Array<{ id: string; name: string }>;
   shippingModes?: Array<{ id: string; name: string }>;
   conditions?: Array<{ id: string; name: string }>;
   requiredAttributes?: Array<{ id: string; name: string; values: Array<{ id: string; name: string }> }>;
+  optionalAttributes?: PublicationAttributeField[];
   presetAttributes?: CatalogAttribute[];
-  constraints?: { minimumPrice?: number; maximumPrice?: number; maxDescriptionLength: number };
+  constraints?: { minimumPrice?: number; maximumPrice?: number; maxTitleLength?: number; maxDescriptionLength: number };
   blockingIssues?: CatalogPreparationIssue[];
   warnings?: string[];
   notice?: string;
@@ -28,10 +42,14 @@ export type CatalogPreparation = {
 export type PublicationForm = {
   ean: string; productId: string; categoryId: string; price: number; stock: number;
   listingType: string; shippingMode: string; condition: string; warrantyType: string;
-  warrantyTime?: string; description?: string; pictureUrl?: string;
+  warrantyTime?: string; description?: string; pictureUrl?: string; additionalPictures?:string[];
   attributes?: Record<string, string>;
   copySource?: { connectionId: string; listingId: string };
   localProductId?: string;
+  freeShipping?: boolean;
+  packageDimensions?: import('../publication-shipping').PackageDimensions;
+  shippingQuoteToken?: string;
+  acknowledgeUnavailableShippingCost?: boolean;
 };
 
 export function validEan(input: unknown): string | null {
@@ -55,6 +73,17 @@ export function catalogGtins(attributes: unknown): string[] {
 
 export function safeText(value: unknown, max = 180): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
+}
+
+export const WARRANTY_TIME_HELP = 'Informe a quantidade e a unidade da garantia. Ex.: 3 meses. Use dias, meses ou anos.';
+/** Não presume unidade para um número isolado; singular é normalizado só no envio. */
+export function warrantyDuration(value: unknown) {
+  const match = safeText(value, 40).toLocaleLowerCase('pt-BR').match(/^(\d+)\s*(dias?|m[eê]s|meses|anos?)$/);
+  if (!match) return null;
+  const quantity = Number(match[1]);
+  if (!Number.isSafeInteger(quantity) || quantity < 1) return null;
+  const unit = match[2].startsWith('dia') ? 'dias' : match[2].startsWith('ano') ? 'anos' : 'meses';
+  return { text: `${quantity} ${unit}`, days: quantity * (unit === 'anos' ? 365 : unit === 'meses' ? 30 : 1) };
 }
 
 export function safeCatalogImage(value: unknown): string | null {
@@ -103,6 +132,10 @@ export function publicationErrors(form: PublicationForm, preparation: CatalogPre
   const sameLocal = !!preparation.localProductId && preparation.localProductId === form.localProductId;
   if ((!((sameCopy || sameLocal) && !preparation.ean && !form.ean) && !validEan(form.ean)) || form.ean !== preparation.ean) errors.ean = 'Valide novamente o EAN.';
   if (!preparation.product || form.productId !== preparation.product.id) errors.productId = 'Valide novamente o produto.';
+  const titleLimit = preparation.constraints?.maxTitleLength;
+  // O nome oficial do catálogo é controlado pelo ML. O limite de título da
+  // categoria não autoriza renomear essa ficha; /items/validate decide o envio.
+  if (titleLimit && preparation.product && preparation.product.source !== 'mercadolivre_catalog' && Array.from(preparation.product.name).length > titleLimit) errors.title = `O nome do produto tem ${Array.from(preparation.product.name).length} caracteres; esta categoria permite até ${titleLimit}. Ajuste o nome antes de publicar.`;
   if (!form.categoryId || !preparation.categories?.some((option) => option.id === form.categoryId)) errors.categoryId = 'Selecione uma categoria confirmada para este produto.';
   if (!Number.isFinite(form.price) || form.price <= 0 || Math.abs(Math.round(form.price * 100) - form.price * 100) > 0.0001) errors.price = 'Informe um preço válido em reais e centavos.';
   else if (preparation.constraints?.minimumPrice != null && form.price < preparation.constraints.minimumPrice) errors.price = `O preço mínimo desta categoria é R$ ${preparation.constraints.minimumPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`;
@@ -112,12 +145,11 @@ export function publicationErrors(form: PublicationForm, preparation: CatalogPre
   if (!preparation.shippingModes?.some((option) => option.id === form.shippingMode)) errors.shippingMode = 'Escolha uma forma de envio permitida para esta conta e categoria.';
   if (!preparation.conditions?.some((option) => option.id === form.condition)) errors.condition = 'Escolha uma condição permitida para esta categoria.';
   if (!['none', 'seller', 'factory'].includes(form.warrantyType)) errors.warrantyType = 'Selecione a garantia.';
-  if (form.warrantyType !== 'none' && !safeText(form.warrantyTime, 40)) errors.warrantyTime = 'Informe o prazo da garantia.';
+  if (form.warrantyType !== 'none' && !warrantyDuration(form.warrantyTime)) errors.warrantyTime = WARRANTY_TIME_HELP;
   if (form.condition === 'refurbished' && form.warrantyType === 'none') errors.warrantyType = 'Produto recondicionado precisa ter garantia.';
   if (form.condition === 'refurbished' && form.warrantyType !== 'none' && safeText(form.warrantyTime, 40)) {
-    const warranty = safeText(form.warrantyTime, 40).toLocaleLowerCase('pt-BR').match(/^(\d+)\s*(dia|dias|m[eê]s|meses|ano|anos)$/);
-    const days = warranty ? Number(warranty[1]) * (/ano/.test(warranty[2]) ? 365 : /m[eê]s|meses/.test(warranty[2]) ? 30 : 1) : 0;
-    if (days < 90) errors.warrantyTime = 'Produto recondicionado precisa ter garantia mínima de 90 dias.';
+    const warranty = warrantyDuration(form.warrantyTime);
+    if (warranty && warranty.days < 90) errors.warrantyTime = 'Produto recondicionado precisa ter garantia mínima de 90 dias.';
   }
   const descriptionLimit = preparation.constraints?.maxDescriptionLength || 50000;
   if (form.description && form.description.length > descriptionLimit) errors.description = `A descrição deve ter até ${descriptionLimit.toLocaleString('pt-BR')} caracteres.`;
@@ -127,6 +159,12 @@ export function publicationErrors(form: PublicationForm, preparation: CatalogPre
   for (const attribute of preparation.requiredAttributes || []) {
     const value = form.attributes?.[attribute.id]?.trim();
     if (!value || (attribute.values.length > 0 && !attribute.values.some((option) => option.id === value))) errors[`attribute:${attribute.id}`] = `Informe ${attribute.name}.`;
+  }
+  for(const attribute of preparation.optionalAttributes||[]){
+    const value=form.attributes?.[attribute.id]?.trim();if(!value)continue;
+    if(value.length>(attribute.maxLength||1000))errors[`attribute:${attribute.id}`]=`${attribute.name}: reduza para até ${attribute.maxLength||1000} caracteres.`;
+    else if(attribute.values.length&&!attribute.values.some(option=>option.id===value))errors[`attribute:${attribute.id}`]=`${attribute.name}: selecione uma opção válida.`;
+    else if(attribute.units?.length&&!attribute.units.some(unit=>value.endsWith(` ${unit}`)))errors[`attribute:${attribute.id}`]=`${attribute.name}: informe o número e uma unidade: ${attribute.units.join(', ')}.`;
   }
   return errors;
 }

@@ -1,0 +1,16 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {registerHooks} from 'node:module';
+const mock=s=>({url:'data:text/javascript,'+encodeURIComponent(s),shortCircuit:true});const hooks=registerHooks({resolve(s,c,next){
+ if(s==='next/server')return mock('export const NextResponse={json:(v,o)=>Response.json(v,o)}');
+ if(s.endsWith('/management-access'))return mock(`export class MarketplaceError extends Error{constructor(status,code,message){super(message);this.status=status;this.code=code}};export async function authorizeMarketplace(req,id,permission){if(permission!=='manage'||id!=='company'||req.headers.get('authorization')!=='Bearer manager')throw new MarketplaceError(403,'forbidden','Negado');return{db:{},empresaId:id,usuario:{id:'actor'}}};export const managementFailure=e=>Response.json({message:e.message},{status:e.status||503})`);
+ if(s.endsWith('/local-products'))return mock('export async function getLocalProduct(db,c,id){if(c!=="company"||id!=="product")throw Object.assign(Error("Outro produto"),{status:404});return{id}}');
+ if(s.endsWith('/mercadolivre-management'))return mock('export async function loadConnection(db,c,id){if(c!=="company"||id!=="account")throw Object.assign(Error("Outra conta"),{status:403});return{id}};export async function uploadMercadoLivrePicture(db,c,bytes,mime){globalThis.photoUploads++;return{id:"photo-valid",secure_url:"https://http2.mlstatic.com/foto.jpg"}}');
+ if(s.endsWith('/product-photo-source'))return mock('export async function productPhotoInput(body){if(body.base64!=="validated")throw Error("Foto inválida");return{bytes:new Uint8Array([1]),mime:"image/jpeg"}}');
+ if(s.endsWith('/listing-content'))return mock('export const object=v=>v||{},rows=v=>Array.isArray(v)?v:[],pictureId=v=>v==="photo-valid",pictureUrl=v=>typeof v==="string"&&v.startsWith("https://http2.mlstatic.com/")?v:""');
+ if(s.endsWith('/catalog-photo-receipt'))return mock('export function signCatalogPhoto(scope,photo){globalThis.photoScope=scope;return"signed"}');return next(s,c);
+}});
+const {POST}=await import('../../app/api/modulos/marketplaces/catalogo/ficha/foto/route.ts');hooks.deregister();
+test('upload exige gestão, produto e conta da empresa; devolve comprovante da sessão sem publicar anúncio',async()=>{
+ globalThis.photoUploads=0;const req=(body,token='manager')=>new Request('http://local',{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({empresaId:'company',productId:'product',connectionId:'account',base64:'validated',...body})});
+ assert.equal((await POST(req({},'viewer'))).status,403);assert.equal((await POST(req({empresaId:'other'}))).status,403);assert.equal((await POST(req({productId:'other'}))).status,404);assert.equal((await POST(req({connectionId:'other'}))).status,403);assert.equal((await POST(req({base64:'bad'}))).status,400);assert.equal(globalThis.photoUploads,0);
+ const response=await POST(req({actorId:'forjado'}));assert.equal(response.status,200);assert.equal((await response.json()).receipt,'signed');assert.deepEqual(globalThis.photoScope,{company:'company',actor:'actor',product:'product'});assert.equal(globalThis.photoUploads,1);
+});

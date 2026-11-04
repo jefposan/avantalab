@@ -43,6 +43,20 @@ if (manifesto) {
   }
 
   const componentes = await ler('docs/padrao-avanta/componentes.md');
+  const moeda = await ler('app/components/CampoMoeda.tsx');
+  if (!componentes.includes('CampoMoeda.tsx') || !moeda.includes('data-av-money="true"') ||
+      !moeda.includes('formatarMoedaDigitada') || !moeda.includes('posicionarCursorMoeda')) {
+    falhas.push('Contrato oficial de campo monetário ausente ou não documentado.');
+  }
+  const acaoCompacta = await ler('app/components/BotaoAcaoCompacto.tsx');
+  const cssAcaoCompacta = await ler('app/components/BotaoAcaoCompacto.module.css');
+  await ler('app/lib/cores-avanta.ts');
+  if (!componentes.includes('BotaoAcaoCompacto.tsx') || !acaoCompacta.includes('data-av-action="compact"')) {
+    falhas.push('Componente oficial de ações compactas ausente ou não documentado.');
+  }
+  for (const medida of ['min-height:44px;min-width:44px', 'min-height:32px', '.face svg { display:block']) {
+    if (!cssAcaoCompacta.includes(medida)) falhas.push(`Contrato de ação compacta ausente: ${medida}`);
+  }
   if (!componentes.includes('Sem essa solicitação, não impor AvantaCard')) {
     falhas.push('A regra condicional de uso do AvantaCard não está documentada.');
   }

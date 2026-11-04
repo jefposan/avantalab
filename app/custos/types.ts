@@ -52,6 +52,8 @@ export type ProdutoCustos = {
   item_lc116: string;
   municipio_prestacao: string;
   aliquota_iss: number;
+  /** Exclusão lógica: o cadastro não participa mais das operações, mas identifica históricos. */
+  excluido_em: string;
   atualizado_em: string;
 };
 
@@ -137,6 +139,21 @@ export type PrecoTabelaItem = {
   preco: number;
   atualizado_em: string;
 };
+
+export type TipoReajusteTabela = 'percentual' | 'valor';
+
+export type ResultadoReajusteTabelas = {
+  reajuste_id: string;
+  tabelas_atualizadas: number;
+  precos_atualizados: number;
+};
+
+export function calcularPrecoReajustado(precoAtual: number, tipo: TipoReajusteTabela, valor: number) {
+  const base = Number.isFinite(precoAtual) ? Math.max(0, precoAtual) : 0;
+  const ajuste = Number.isFinite(valor) ? Math.max(0, valor) : 0;
+  const resultado = tipo === 'percentual' ? base * (1 + ajuste / 100) : base + ajuste;
+  return Math.round((resultado + Number.EPSILON) * 100) / 100;
+}
 
 export type ColunaExportacaoTabelaPreco = {
   codigo: string;
@@ -225,7 +242,7 @@ export function novoProduto(tipo: TipoItem, catalogoId: string): ProdutoCustos {
     unidade_tributavel: tipo === 'produto' ? 'un' : 'serviço', cfop_padrao: '', cst: '', csosn: '', cst_pis: '',
     cst_cofins: '', cst_ibs_cbs: '', classificacao_ibs_cbs: '', codigo_tributacao_nacional: '',
     codigo_tributacao_municipal: '', nbs: '', item_lc116: '', municipio_prestacao: '', aliquota_iss: 0,
-    atualizado_em: new Date().toISOString(),
+    excluido_em: '', atualizado_em: new Date().toISOString(),
   };
 }
 

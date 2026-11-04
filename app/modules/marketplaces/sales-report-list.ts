@@ -1,0 +1,4 @@
+import type {FinancialValue} from './sales-financial';
+export type MonthlySaleRow={id:string;revision:string;orderId:string;date:string;provider:string;account:string;warehouse:string;status:string;included:boolean;gross:number|null;units:number;items:{title:string;quantity:number;unitPrice:number|null}[];financial:FinancialValue|null};
+export type MonthlySalesPage={rows:MonthlySaleRow[];total:number;page:number;pageSize:number;confirmedGross:number;confirmedOrders:number;missingGross:number};
+export function monthlySaleStatus(status:string){return ({paid:'Confirmada',confirmed:'Confirmada',cancelled:'Cancelada',refunded:'Estornada',partially_refunded:'Estorno parcial',pending_cancel:'Cancelamento pendente',payment_required:'Aguardando pagamento',payment_in_process:'Pagamento em análise',partially_paid:'Pagamento parcial',invalid:'Inválida'} as Record<string,string>)[status]||'Em conferência';}

@@ -1,0 +1,94 @@
+/* O cabeçalho se adapta ao card, não apenas à largura da janela. */
+.card {
+  container: dashboard-card / inline-size;
+  min-width: 0;
+}
+
+.cardHeader.cardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  text-align: left;
+}
+
+.cardHeader > :first-child {
+  flex: 1 1 150px;
+  min-width: 0;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.cardHeader > :first-child > :global(.truncate) {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.cardHeader > :last-child {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.fixedActions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+@container dashboard-card (max-width: 600px) {
+  .cardHeader.cardHeader {
+    gap: 4px;
+    padding: 12px 16px;
+  }
+
+  .cardHeader > :first-child {
+    flex-basis: 100%;
+    text-align: left;
+  }
+
+  .cardHeader > :last-child {
+    position: relative;
+    flex: 1 1 100%;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding-right: 72px;
+  }
+
+  .cardHeader .fixedActions {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    min-height: 32px;
+    width: 64px;
+    justify-content: flex-end;
+  }
+
+  .monthPicker {
+    min-height: 32px;
+    justify-content: center;
+  }
+
+  .monthLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .monthPicker select {
+    height: 24px;
+    border-radius: 8px;
+  }
+}

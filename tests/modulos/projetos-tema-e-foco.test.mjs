@@ -39,7 +39,7 @@ test('AvantaProjetos recebe o tema salvo no perfil, sem depender do sistema oper
   assert.match(cliente, /access\.empresa\.temaEscuro \? 'ON' : 'OFF'/);
   assert.match(estilos, /\.settingsSection \{ display: flex; align-items: center; justify-content: space-between; gap: 10px;/);
   assert.match(estilos, /\.settingsThemeSwitch \{ display: inline-flex; width: 104px; min-width: 104px;/);
-  assert.match(cliente, /TelaCarregandoAcesso/);
+  assert.match(cliente, /TransicaoNavegacaoInterna/);
   assert.match(cliente, /Ajustes do AvantaProjetos/);
   assert.match(cliente, /Voltar ao início do AvantaLab/);
   assert.match(cliente, /<Icon name="back" size=\{16\} \/> Início/);
@@ -151,7 +151,7 @@ test('conta reúne projetos compartilhados de empresas diferentes sem liberar o 
   assert.match(indiceCompartilhados, /access: share\.acesso/);
   assert.match(compartilhadosProjetos, /listarProjetosCompartilhados\(db, auth\.user\.id\)/);
   assert.match(listarModulos, /projetosCompartilhados = \(await listarProjetosCompartilhados\(acesso\.db, acesso\.usuario\.id\)\)\.length/);
-  assert.match(gestao, /!modulosAtivos\.includes\('projetos'\) && projetosCompartilhados > 0/);
+  assert.match(gestao, /!modulosAtivos\.includes\('projetos'\) && modulosLiberados\.includes\('projetos'\) && projetosCompartilhados > 0/);
   assert.match(gestao, />Compartilhado<\/span>/);
   assert.match(cliente, /if \(!accessResponse\.ok && projects\.length > 0\) \{ setSharedOnly\(true\); return; \}/);
   assert.match(cliente, /sharedAccessOnly/);

@@ -25,6 +25,7 @@ import { corEhClara } from '../lib/formatters';
 import AvantaCard, { criarAvantaShellPreset } from './AvantaCard';
 import DraggableModalCard from './DraggableModalCard';
 import Tooltip from './Tooltip';
+import styles from './Dashboard.module.css';
 
 const HandleContext = createContext<Record<string, any> | null>(null);
 
@@ -1024,8 +1025,8 @@ const mostrarComparativoResumoDash =
   };
 
   const SeletorMesCard = ({ id, value, onChange, ariaLabel }: { id: string; value: string; onChange: (mes: string) => void; ariaLabel: string }) => (
-    <label htmlFor={id} className="flex shrink-0 flex-col items-start gap-1 text-left">
-      <span className="text-[8px] font-black uppercase leading-none tracking-[0.12em] text-white/80">
+    <label htmlFor={id} className={`${styles.monthPicker} flex shrink-0 flex-col items-start gap-1 text-left`}>
+      <span className={`${styles.monthLabel} text-[8px] font-black uppercase leading-none tracking-[0.12em] text-white/80`}>
         Selecione o mês
       </span>
       <span className="relative block">
@@ -1243,12 +1244,14 @@ const mostrarComparativoResumoDash =
     ) : null,
 
     controlePonto: pontoDisponivel ? (
-      <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="flex items-center justify-between gap-3 px-5 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+      <div className={`${styles.card} ${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className={`${styles.cardHeader} flex items-center justify-between gap-3 px-5 py-3 text-sm font-bold uppercase tracking-wider`} style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span className="min-w-0 truncate">Controle de ponto</span>
           <div className="flex items-center gap-2">
-            <DragHandle tone="light" />
-            <BotaoOpcoesCard id="controlePonto" tone="light" />
+            <div className={styles.fixedActions}>
+              <DragHandle tone="light" />
+              <BotaoOpcoesCard id="controlePonto" tone="light" />
+            </div>
           </div>
         </div>
         <div className="p-4">
@@ -1295,8 +1298,8 @@ const mostrarComparativoResumoDash =
     ) : null,
 
     saldo: (
-      <div className={`${bgCard} card-radius-avantalab relative w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="flex items-center justify-between gap-3 rounded-tl-[12px] rounded-tr-[26px] px-6 py-3 text-center text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+      <div className={`${styles.card} ${bgCard} card-radius-avantalab relative w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className={`${styles.cardHeader} flex items-center justify-between gap-3 rounded-tl-[12px] rounded-tr-[26px] px-6 py-3 text-center text-sm font-bold uppercase tracking-wider`} style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span className="min-w-0 truncate">Saldo do mês</span>
           <div className="flex items-center gap-2">
             <SeletorMesCard id="mes-saldo-dashboard" value={meses[saldoCardMesIdx]} onChange={(mes) => setSaldoCardMesIdx(meses.indexOf(mes))} ariaLabel="Selecionar mês do saldo" />
@@ -1314,8 +1317,10 @@ const mostrarComparativoResumoDash =
                 ))}
               </select>
             )}
-            <DragHandle tone="light" />
-            <BotaoOpcoesCard id="saldo" tone="light" />
+            <div className={styles.fixedActions}>
+              <DragHandle tone="light" />
+              <BotaoOpcoesCard id="saldo" tone="light" />
+            </div>
           </div>
         </div>
         <div className="p-5 space-y-2.5">
@@ -1405,9 +1410,9 @@ const mostrarComparativoResumoDash =
     ),
 
     insightsAva: (
-      <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
+      <div className={`${styles.card} ${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
         <div
-          className="flex items-center justify-between gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider"
+          className={`${styles.cardHeader} flex items-center justify-between gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider`}
           style={{
             background: darkMode ? '#071A2B' : '#FFFFFF',
             color: darkMode ? '#FFFFFF' : '#0F172A',
@@ -1429,8 +1434,10 @@ const mostrarComparativoResumoDash =
             <span className={`truncate ${darkMode ? 'text-white drop-shadow-sm' : 'text-slate-950'}`}>Insights da Ava</span>
           </div>
           <div className="flex items-center gap-2">
-            <DragHandle tone={darkMode ? 'light' : 'dark'} />
-            <BotaoOpcoesCard id="insightsAva" tone={darkMode ? 'light' : 'dark'} />
+            <div className={styles.fixedActions}>
+              <DragHandle tone={darkMode ? 'light' : 'dark'} />
+              <BotaoOpcoesCard id="insightsAva" tone={darkMode ? 'light' : 'dark'} />
+            </div>
           </div>
         </div>
         <div className="space-y-3 p-5">
@@ -1473,8 +1480,8 @@ const mostrarComparativoResumoDash =
     ),
 
     caixinha: (
-      <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="flex items-center justify-between gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+      <div className={`${styles.card} ${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className={`${styles.cardHeader} flex items-center justify-between gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider`} style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>{nomeCaixinha}</span>
           <div className="flex items-center gap-2">
             <button
@@ -1500,8 +1507,10 @@ const mostrarComparativoResumoDash =
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={caixinhaRecolhida ? 'm6 9 6 6 6-6' : 'm18 15-6-6-6 6'} /></svg>
             </button>
-            <DragHandle tone="light" />
-            <BotaoOpcoesCard id="caixinha" tone="light" />
+            <div className={styles.fixedActions}>
+              <DragHandle tone="light" />
+              <BotaoOpcoesCard id="caixinha" tone="light" />
+            </div>
           </div>
         </div>
         <div className="space-y-4 p-5">
@@ -1626,13 +1635,13 @@ const mostrarComparativoResumoDash =
         ref={cardPerfisRef}
         data-card-perfis
         data-card-perfis-expandido={cols.full.includes('meusPerfis') ? 'true' : 'false'}
-        className={`${bgCard} card-radius-avantalab flex w-full flex-col overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`}
+        className={`${styles.card} ${bgCard} card-radius-avantalab flex w-full flex-col overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`}
         style={{ borderColor: corPrimaria, height: alturaCardPerfis ? `${alturaCardPerfis}px` : undefined }}
       >
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
-          <span className="truncate">{cols.full.includes('meusPerfis') ? 'Meus perfis' : 'Perfis'}</span>
-          <SeletorMesCard id="mes-perfis-dashboard" value={mesPerfis} onChange={setMesPerfis} ariaLabel="Selecionar mês de Meus perfis" />
+        <div className={`${styles.cardHeader} grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider`} style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <span className="truncate">Meus perfis</span>
           <div className="flex items-center justify-end gap-2">
+            <SeletorMesCard id="mes-perfis-dashboard" value={mesPerfis} onChange={setMesPerfis} ariaLabel="Selecionar mês de Meus perfis" />
             <span className="inline-flex h-6 min-w-[76px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-white/15 px-2 text-[9px] font-black leading-none text-white">
               {perfisDashboard.length} perfil{perfisDashboard.length === 1 ? '' : 's'}
             </span>
@@ -1654,8 +1663,10 @@ const mostrarComparativoResumoDash =
                 </svg>
               )}
             </button>
-            <DragHandle tone="light" />
-            <BotaoOpcoesCard id="meusPerfis" tone="light" />
+            <div className={styles.fixedActions}>
+              <DragHandle tone="light" />
+              <BotaoOpcoesCard id="meusPerfis" tone="light" />
+            </div>
           </div>
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
@@ -1843,11 +1854,11 @@ const mostrarComparativoResumoDash =
     ),
 
     centrosCusto: centrosCustoAtivo ? (
-      <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+      <div className={`${styles.card} ${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className={`${styles.cardHeader} grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider`} style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span className="truncate">Centros de custo</span>
-          <SeletorMesCard id="mes-centros-custo-dashboard" value={mesCentrosCusto} onChange={setMesCentrosCusto} ariaLabel="Selecionar mês de Centros de custo" />
           <div className="flex items-center justify-end gap-2">
+            <SeletorMesCard id="mes-centros-custo-dashboard" value={mesCentrosCusto} onChange={setMesCentrosCusto} ariaLabel="Selecionar mês de Centros de custo" />
             <span className="inline-flex h-6 min-w-[72px] items-center justify-center whitespace-nowrap rounded-full bg-white/15 px-2 text-[9px] font-black leading-none text-white">{centrosCustoDashboard.length} centro{centrosCustoDashboard.length === 1 ? '' : 's'}</span>
             <button
               type="button"
@@ -1867,8 +1878,10 @@ const mostrarComparativoResumoDash =
                 </svg>
               )}
             </button>
-            <DragHandle tone="light" />
-            <BotaoOpcoesCard id="centrosCusto" tone="light" />
+            <div className={styles.fixedActions}>
+              <DragHandle tone="light" />
+              <BotaoOpcoesCard id="centrosCusto" tone="light" />
+            </div>
           </div>
         </div>
         <div className="space-y-3 p-3">
@@ -1908,13 +1921,15 @@ const mostrarComparativoResumoDash =
     ) : null,
 
     resumoFinanceiro: (
-      <div className={`${bgCard} card-radius-avantalab w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+      <div className={`${styles.card} ${bgCard} card-radius-avantalab w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className={`${styles.cardHeader} text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center`} style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>Resumo Financeiro</span>
           <div className="flex items-center gap-2">
             <SeletorMesCard id="mes-resumo-financeiro-dashboard" value={mesResumoDash} onChange={setMesResumoDash} ariaLabel="Selecionar mês do resumo financeiro" />
-            <DragHandle tone="light" />
-            <BotaoOpcoesCard id="resumoFinanceiro" tone="light" />
+            <div className={styles.fixedActions}>
+              <DragHandle tone="light" />
+              <BotaoOpcoesCard id="resumoFinanceiro" tone="light" />
+            </div>
           </div>
         </div>
         <div className="p-5 space-y-2.5">
@@ -1957,8 +1972,8 @@ const mostrarComparativoResumoDash =
     ),
 
     evolucaoMensal: (
-      <div className={`${bgCard} card-radius-avantalab w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-4">
+      <div className={`${styles.card} ${bgCard} card-radius-avantalab w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className={`${styles.cardHeader} flex items-start justify-between gap-3 px-5 pb-3 pt-4`}>
           <div className="min-w-0">
             <h3 className={`text-base font-black ${textStrong}`}>Evolução mensal</h3>
             <p className={`mt-0.5 text-[11px] font-semibold ${textMuted}`}>
@@ -1981,8 +1996,10 @@ const mostrarComparativoResumoDash =
                 <option key={ano} value={ano} className="bg-white text-slate-800">{ano}</option>
               ))}
             </select>
-            <DragHandle />
-            <BotaoOpcoesCard id="evolucaoMensal" />
+            <div className={styles.fixedActions}>
+              <DragHandle />
+              <BotaoOpcoesCard id="evolucaoMensal" />
+            </div>
           </div>
         </div>
 
@@ -2075,12 +2092,14 @@ const mostrarComparativoResumoDash =
     ),
 
     registrarEntradas: (
-      <div className={bgCard + " card-radius-avantalab w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
-        <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+      <div className={styles.card + " " + bgCard + " card-radius-avantalab w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
+        <div className={`${styles.cardHeader} text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center`} style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>REGISTRAR ENTRADAS</span>
           <div className="flex items-center gap-2">
-            <DragHandle tone="light" />
-            <BotaoOpcoesCard id="registrarEntradas" tone="light" />
+            <div className={styles.fixedActions}>
+              <DragHandle tone="light" />
+              <BotaoOpcoesCard id="registrarEntradas" tone="light" />
+            </div>
           </div>
         </div>
         <div className="p-5">

@@ -40,6 +40,7 @@ export async function validarLimiteDeUsuarios(
     // têm acesso à Gestão; portanto não consomem a franquia de usuários.
     .neq('perfil', 'funcionario_ponto');
   if (error) throw error;
+  if (count === null || !Number.isSafeInteger(count) || count < 0) throw new Error('Não foi possível conferir a franquia de usuários.');
   const limite = PLANOS_COMERCIAIS[plano].limites.usuarios;
   if ((count || 0) < limite) return { permitido: true };
   const sugestao = plano === 'free'

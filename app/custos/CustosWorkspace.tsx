@@ -11,7 +11,7 @@ import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero, normaliz
 import { supabase } from '@/app/lib/supabase';
 import type { CustosAccess } from './CustosClient';
 import TabelasPrecosView from './TabelasPrecosView';
-import { alterarPublicacaoAvantaVendasCatalogo, alterarStatusCatalogoEmpresa, aplicarAcaoLoteCatalogo, carregarCustos, carregarFornecedoresCustos, criarCatalogoComProdutos, enviarImagemProduto, moverProdutosParaCatalogo, salvarCatalogoEmpresa, salvarDocumentoCustos, salvarPrecoTabela, salvarProdutoCustos, type AcaoLoteCatalogo } from './repository';
+import { alterarPublicacaoAvantaVendasCatalogo, alterarStatusCatalogoEmpresa, aplicarAcaoLoteCatalogo, carregarCustos, carregarFornecedoresCustos, criarCatalogoComProdutos, enviarImagemProduto, excluirProdutoCustos, moverProdutosParaCatalogo, salvarCatalogoEmpresa, salvarDocumentoCustos, salvarPrecoTabela, salvarProdutoCustos, type AcaoLoteCatalogo } from './repository';
 import { validarPlanilhaCatalogo, type ProdutoImportadoCatalogo } from './importacao-catalogo';
 import {
   calcularComposicao, composicaoVazia, documentoVazio, novoProduto, precoEfetivoTabela, proximoCodigo, sugerirCodigosEmpresa,
@@ -58,6 +58,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
   const [abaPendente, setAbaPendente] = useState<Aba | null>(null);
   const [solicitacaoInicioProdutos, setSolicitacaoInicioProdutos] = useState(0);
   const carregamentoRef = useRef(0);
+  const empresaProntaRef = useRef('');
   const revisaoRef = useRef(0);
 
   const recarregar = useCallback(async (silencioso = false) => {
@@ -74,12 +75,13 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
       setPrecosTabela(dados.precosTabela);
       setDocumento(dados.documento);
       revisaoRef.current = dados.revisao;
-      setProdutoAtivoId((atual) => dados.produtos.some((produto) => produto.id === atual) ? atual : dados.produtos[0]?.id || '');
+      const disponiveis = dados.produtos.filter((produto) => !produto.excluido_em);
+      setProdutoAtivoId((atual) => disponiveis.some((produto) => produto.id === atual) ? atual : disponiveis[0]?.id || '');
     } catch (falha) { setErro(erroTexto(falha)); }
-    finally { if (chamada === carregamentoRef.current && !silencioso) setCarregando(false); }
+    finally { if (chamada === carregamentoRef.current) { empresaProntaRef.current = companyId; setCarregando(false); } }
   }, [access.podeEditar, companyId]);
 
-  useEffect(() => { const timer = window.setTimeout(() => void recarregar(), 0); return () => window.clearTimeout(timer); }, [recarregar]);
+  useEffect(() => { const timer = window.setTimeout(() => void recarregar(empresaProntaRef.current === companyId), 0); return () => window.clearTimeout(timer); }, [companyId, recarregar]);
   useEffect(() => {
     let ativo = true;
     void carregarFornecedoresCustos(companyId).then((lista) => { if (ativo) setFornecedores(lista); }).catch(() => { if (ativo) setFornecedores([]); });
@@ -115,7 +117,8 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
   const salvarProduto = (produto: ProdutoCustos) => salvarProdutoCustos(produto);
   const enviarImagem = (arquivo: File) => enviarImagemProduto(companyId, arquivo);
   const selecionarProduto = (id: string) => setProdutoAtivoId(id);
-  const produtoAtivo = produtos.find((produto) => produto.id === produtoAtivoId) || produtos[0];
+  const produtosDisponiveis = produtos.filter((produto) => !produto.excluido_em);
+  const produtoAtivo = produtosDisponiveis.find((produto) => produto.id === produtoAtivoId) || produtosDisponiveis[0];
   const abrirAba = (proximaAba: Aba) => {
     if (proximaAba === aba) {
       if (proximaAba === 'produtos') setSolicitacaoInicioProdutos((atual) => atual + 1);
@@ -141,16 +144,16 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
       <div className={styles.feedbackBar} aria-live="polite">
         {erro && <div className={styles.error}><span>{erro}</span><button type="button" onClick={() => void recarregar()}>Tentar novamente</button></div>}
       </div>
-      {aba === 'visao' && <VisaoGeral produtos={produtos} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => abrirAba('produtos')} onAtualizar={() => void recarregar()} />}
+      {aba === 'visao' && <VisaoGeral produtos={produtosDisponiveis} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => abrirAba('produtos')} onAtualizar={() => void recarregar()} />}
       {aba === 'catalogos' && <CatalogosView companyId={companyId} catalogos={catalogos} fornecedores={fornecedores} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onErro={setErro} />}
-      {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} catalogos={catalogos} produtos={produtos} fornecedores={fornecedores} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} solicitacaoInicio={solicitacaoInicioProdutos} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onErro={setErro} />}
-      {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtos} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onErro={setErro} />}
-      {aba === 'recursos' && <RecursosView catalogoId={catalogoId} documento={documento} produtos={produtos} fornecedores={fornecedores} setProdutos={setProdutos} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} podeEditar={access.podeEditar} onErro={setErro} />}
+      {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} catalogos={catalogos} produtos={produtosDisponiveis} fornecedores={fornecedores} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} solicitacaoInicio={solicitacaoInicioProdutos} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onErro={setErro} />}
+      {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtosDisponiveis} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onErro={setErro} />}
+      {aba === 'recursos' && <RecursosView catalogoId={catalogoId} documento={documento} produtos={produtosDisponiveis} fornecedores={fornecedores} setProdutos={setProdutos} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} podeEditar={access.podeEditar} onErro={setErro} />}
       {aba === 'simulacoes' && <SimulacoesView documento={documento} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onErro={setErro} />}
       {aba === 'historico' && <HistoricoView produtos={produtos} documento={documento} produtoAtivoId={produtoAtivoId} onSelecionar={selecionarProduto} />}
     </section>
     </div>
-    <CarregamentoDadosModulo ativo={carregando} titulo="Preparando Custos e Precificação" mensagem="Carregando o cadastro compartilhado e as composições…" corPrimaria="var(--brand)" />
+    <CarregamentoDadosModulo ativo={carregando} titulo="Preparando Custos e Precificação" mensagem="Carregando os dados do módulo…" corPrimaria="var(--brand)" temaEscuro={access.empresa.temaEscuro} />
     <ModalConfirmacao aberto={Boolean(abaPendente)} titulo="Descartar alterações?" mensagem="Há alterações não salvas neste produto ou serviço. Se continuar, elas serão perdidas." textoCancelar="Continuar editando" textoConfirmar="Descartar e sair" corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => setAbaPendente(null)} aoConfirmar={descartarAoNavegar} />
   </div>;
 }
@@ -340,6 +343,8 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
   const [referenciaEdicao, setReferenciaEdicao] = useState(() => JSON.stringify({ rascunho, composicao }));
   const [salvando, setSalvando] = useState(false);
   const [confirmarInativacao, setConfirmarInativacao] = useState(false);
+  const [produtoParaExcluir, setProdutoParaExcluir] = useState<ProdutoCustos | null>(null);
+  const [erroExclusao, setErroExclusao] = useState('');
   const [confirmarDescarte, setConfirmarDescarte] = useState(false);
   const [confirmarRetornoInicio, setConfirmarRetornoInicio] = useState(false);
   const [produtoPendenteId, setProdutoPendenteId] = useState('');
@@ -491,6 +496,30 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
     try { const salvo = await onSalvarProduto({ ...rascunho, ativo: false }); setProdutos((atuais) => atuais.map((produto) => produto.id === salvo.id ? salvo : produto)); setRascunho(salvo); registrarReferenciaEdicao(salvo, composicao); }
     catch (falha) { onErro(erroTexto(falha)); } finally { setSalvando(false); }
   };
+  const solicitarExclusao = (produto: ProdutoCustos) => {
+    setMenuAcao(null);
+    setErroExclusao('');
+    setProdutoParaExcluir(produto);
+  };
+  const excluirCadastro = async () => {
+    if (!produtoParaExcluir) return;
+    setSalvando(true);
+    setErroExclusao('');
+    onErro('');
+    try {
+      await excluirProdutoCustos(companyId, produtoParaExcluir.id);
+      const restantes = produtos.filter((produto) => produto.id !== produtoParaExcluir.id);
+      setProdutos(restantes);
+      onSelecionar(restantes[0]?.id || '');
+      setProdutoParaExcluir(null);
+      await onRecarregar();
+      irParaInicioProdutos();
+    } catch (falha) {
+      setErroExclusao(erroTexto(falha));
+    } finally {
+      setSalvando(false);
+    }
+  };
   const carregarImagem = async (arquivo?: File) => {
     if (!arquivo) return; setSalvando(true);
     try { alterar('imagem_url', await onEnviarImagem(arquivo)); }
@@ -546,7 +575,7 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
     if (menuAcao?.produtoId === produtoId) { setMenuAcao(null); return; }
     const limites = acionador.getBoundingClientRect();
     const larguraMenu = 212;
-    const alturaMenu = 112;
+    const alturaMenu = 154;
     const abreAbaixo = window.innerHeight - limites.bottom >= alturaMenu + 12;
     setMenuAcao({
       produtoId,
@@ -617,12 +646,13 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
         <button type="button" className={`${styles.secondaryButton} ${styles.batchActionButton}`} disabled={!podeEditar || processandoLote} onClick={() => setProdutosSelecionados([])}>Limpar seleção</button>
         <button type="button" className={`${styles.primaryButton} ${styles.batchActionButton}`} disabled={!podeEditar || processandoLote || acaoSelecionadaIndisponivel} onClick={solicitarAcaoLote}>{processandoLote ? (acaoLote === 'mover_catalogo' ? 'Movendo…' : 'Aplicando…') : acaoLote === 'mover_catalogo' ? 'Mover' : 'Confirmar'}</button>
       </div>}
-      <div className={styles.tableWrap}><table className={styles.catalogProductsTable}><colgroup><col /><col /><col /><col /><col /><col /><col /><col /></colgroup><thead><tr><th className={styles.selectionHeader}><button type="button" disabled={!podeEditar || !idsListaFiltrada.length || processandoLote} aria-label={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} title={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} onClick={alternarTodosListados}>{todosListadosSelecionados ? '−' : '✓'}</button></th><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th>Catálogo</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => { const catalogoProduto = catalogos.find((catalogo) => catalogo.id === produto.catalogo_id); return <tr key={produto.id} className={produtosSelecionados.includes(produto.id) ? styles.selectedRow : undefined}><td className={styles.selectionCell}><input type="checkbox" checked={produtosSelecionados.includes(produto.id)} disabled={!podeEditar || processandoLote} onChange={() => alternarSelecaoProduto(produto.id)} aria-label={`Selecionar ${produto.nome}`} /></td><td title={produto.sku}><b>{produto.sku}</b></td><td title={produto.nome}><b>{produto.nome}</b><small>{produto.unidade}</small></td><td title={[produto.marca, produto.categoria].filter(Boolean).join(' · ')}>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${produto.ativo ? styles.statusActive : styles.statusInactive}`}>{produto.ativo ? 'Ativo' : 'Inativo'}</span></td><td title={catalogoProduto?.nome || 'Catálogo não localizado'}><b>{catalogoProduto?.nome || 'Catálogo não localizado'}</b><small>{catalogoProduto?.ativo ? (produto.disponivel_catalogo ? 'No Vendas' : 'Em estudo') : 'Catálogo desativado'}</small></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar || processandoLote} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcao?.produtoId === produto.id} onClick={(evento) => alternarMenuAcoes(produto.id, evento.currentTarget)}>•••</button>{menuAcao?.produtoId === produto.id && <div ref={menuAcoesRef} className={`${styles.contextMenu} ${styles.contextMenuFloating}`} style={{ top: menuAcao.top, left: menuAcao.left }}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button></div>}</td></tr>; })}{!listaFiltrada.length && <tr><td colSpan={8} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
+      <div className={styles.tableWrap}><table className={styles.catalogProductsTable}><colgroup><col /><col /><col /><col /><col /><col /><col /><col /></colgroup><thead><tr><th className={styles.selectionHeader}><button type="button" disabled={!podeEditar || !idsListaFiltrada.length || processandoLote} aria-label={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} title={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} onClick={alternarTodosListados}>{todosListadosSelecionados ? '−' : '✓'}</button></th><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th>Catálogo</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => { const catalogoProduto = catalogos.find((catalogo) => catalogo.id === produto.catalogo_id); return <tr key={produto.id} className={produtosSelecionados.includes(produto.id) ? styles.selectedRow : undefined}><td className={styles.selectionCell}><input type="checkbox" checked={produtosSelecionados.includes(produto.id)} disabled={!podeEditar || processandoLote} onChange={() => alternarSelecaoProduto(produto.id)} aria-label={`Selecionar ${produto.nome}`} /></td><td title={produto.sku}><b>{produto.sku}</b></td><td title={produto.nome}><b>{produto.nome}</b><small>{produto.unidade}</small></td><td title={[produto.marca, produto.categoria].filter(Boolean).join(' · ')}>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${produto.ativo ? styles.statusActive : styles.statusInactive}`}>{produto.ativo ? 'Ativo' : 'Inativo'}</span></td><td title={catalogoProduto?.nome || 'Catálogo não localizado'}><b>{catalogoProduto?.nome || 'Catálogo não localizado'}</b><small>{catalogoProduto?.ativo ? (produto.disponivel_catalogo ? 'No Vendas' : 'Em estudo') : 'Catálogo desativado'}</small></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar || processandoLote} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcao?.produtoId === produto.id} onClick={(evento) => alternarMenuAcoes(produto.id, evento.currentTarget)}>•••</button>{menuAcao?.produtoId === produto.id && <div ref={menuAcoesRef} className={`${styles.contextMenu} ${styles.contextMenuFloating}`} style={{ top: menuAcao.top, left: menuAcao.left }}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button><button type="button" className={styles.dangerMenuAction} onClick={() => solicitarExclusao(produto)}>Excluir cadastro</button></div>}</td></tr>; })}{!listaFiltrada.length && <tr><td colSpan={8} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
     </section>
     <Modal open={Boolean(precosDoProduto)} onClose={() => !salvando && setPrecosDoProduto(null)} title="Atualizar listas de preços" description={precosDoProduto ? `${precosDoProduto.sku} · ${precosDoProduto.nome}` : ''}>
       {precosDoProduto && <div className={styles.productPriceList}>{tabelas.filter((tabela) => tabela.ativo).map((tabela) => <label key={tabela.id}><span>{tabela.nome}{tabela.padrao && <small>Preço principal</small>}</span><MoneyInput value={valoresTabela[tabela.id] ?? 0} onChange={(valor) => setValoresTabela((atuais) => ({ ...atuais, [tabela.id]: valor }))} label={`Preço ${tabela.nome}`} disabled={salvando || !podeEditar} /></label>)}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => setPrecosDoProduto(null)}>Cancelar</button><button type="button" className={styles.primaryButton} disabled={salvando || !podeEditar} onClick={() => void salvarListasPrecos()}>{salvando ? 'Salvando…' : 'Salvar preços'}</button></div></div>}
     </Modal>
     <ModalConfirmacao aberto={confirmarAcaoLote} titulo={`${detalheAcaoLote.rotulo}?`} mensagem={detalheAcaoLote.confirmacao || ''} textoCancelar="Cancelar" textoConfirmar={detalheAcaoLote.rotulo} carregando={processandoLote} corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => { if (!processandoLote) setConfirmarAcaoLote(false); }} aoConfirmar={() => void executarAcaoLote()} />
+    <ModalConfirmacao aberto={Boolean(produtoParaExcluir)} titulo={`Excluir ${produtoParaExcluir?.nome || 'cadastro'}?`} mensagem={erroExclusao ? `A exclusão não foi concluída: ${erroExclusao}` : 'O cadastro deixará de aparecer nas listas e não poderá mais ser usado. Composição, preços, versões de custos e todos os lançamentos anteriores serão preservados nos históricos.'} textoCancelar="Cancelar" textoConfirmar="Excluir cadastro" carregando={salvando} corPrimaria="var(--custos-brand)" variante="destrutiva" aoCancelar={() => { if (!salvando) setProdutoParaExcluir(null); }} aoConfirmar={() => void excluirCadastro()} />
   </>;
 
   return <>
@@ -661,10 +691,11 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
       <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Formação do preço</h2><p>Percentuais próprios deste produto ou serviço.</p></div></div><div className={styles.priceParams}><Field label="Custos indiretos"><PercentInput value={composicao.indiretos} onChange={(valor) => setComposicao({ ...composicao, indiretos: valor })} /></Field><Field label="Impostos"><PercentInput value={composicao.impostos} onChange={(valor) => setComposicao({ ...composicao, impostos: valor })} /></Field><Field label="Taxas e comissões"><PercentInput value={composicao.taxas} onChange={(valor) => setComposicao({ ...composicao, taxas: valor })} /></Field><Field label="Margem desejada"><PercentInput value={composicao.margem} onChange={(valor) => setComposicao({ ...composicao, margem: valor })} /></Field></div>
         <div className={styles.priceResults}><div><span>Custo direto</span><b>{formatarMoeda(calculo.direto)}</b></div><div><span>Custo total</span><b>{formatarMoeda(calculo.total)}</b></div><div className={styles.priceHighlight}><span>Venda interna calculada</span><strong>{calculo.valido ? formatarMoeda(calculo.preco) : 'Revisar percentuais'}</strong></div><div><span>Preço de venda da empresa</span><b>{formatarMoeda(rascunho.preco_venda)}</b><button type="button" className={styles.linkButton} disabled={!calculo.valido} onClick={() => alterar('preco_venda', calculo.preco)}>Usar preço calculado</button></div></div>
       </section>
-      <footer className={styles.saveBar}>{rascunho.id && rascunho.ativo ? <button type="button" className={styles.dangerLink} onClick={() => setConfirmarInativacao(true)}>Inativar cadastro</button> : <span />}
+      <footer className={styles.saveBar}>{rascunho.id ? <div className={styles.saveDangerActions}>{rascunho.ativo && <button type="button" className={styles.dangerLink} onClick={() => setConfirmarInativacao(true)}>Inativar cadastro</button>}<button type="button" className={styles.dangerLink} onClick={() => solicitarExclusao(rascunho)}>Excluir cadastro</button></div> : <span />}
         <div><small>Salvar registra o cadastro e a composição em uma única ação.</small><button type="button" className={styles.secondaryButton} onClick={voltarParaLista}>Cancelar</button><button type="button" className={styles.primaryButton} onClick={() => void salvar()}>Salvar</button></div></footer>
     </fieldset>
     <ModalConfirmacao aberto={confirmarInativacao} titulo={`Inativar ${rascunho.nome || 'cadastro'}?`} mensagem="O item ficará inativo no Catálogo e em Custos. Composição e histórico serão preservados para consulta e eventual reativação." textoCancelar="Manter ativo" textoConfirmar="Inativar" carregando={salvando} corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => setConfirmarInativacao(false)} aoConfirmar={() => void inativar()} />
+    <ModalConfirmacao aberto={Boolean(produtoParaExcluir)} titulo={`Excluir ${produtoParaExcluir?.nome || 'cadastro'}?`} mensagem={erroExclusao ? `A exclusão não foi concluída: ${erroExclusao}` : 'O cadastro deixará de aparecer nas listas e não poderá mais ser usado. Composição, preços, versões de custos e todos os lançamentos anteriores serão preservados nos históricos.'} textoCancelar="Cancelar" textoConfirmar="Excluir cadastro" carregando={salvando} corPrimaria="var(--custos-brand)" variante="destrutiva" aoCancelar={() => { if (!salvando) setProdutoParaExcluir(null); }} aoConfirmar={() => void excluirCadastro()} />
     <ModalConfirmacao aberto={confirmarDescarte} titulo="Descartar alterações?" mensagem={produtoPendenteId ? 'As mudanças ainda não foram salvas. Se continuar, a edição será descartada e o outro item será aberto.' : 'As mudanças ainda não foram salvas. Se continuar, a edição será descartada e a lista será aberta.'} textoCancelar="Continuar editando" textoConfirmar="Descartar alterações" corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => { setConfirmarDescarte(false); setProdutoPendenteId(''); }} aoConfirmar={descartarEdicao} />
     <Modal open={confirmarRetornoInicio} onClose={() => setConfirmarRetornoInicio(false)} title="Salvar antes de voltar à lista?" description="Há alterações não salvas neste produto ou serviço.">
       <div className={styles.formActions}><button type="button" className={styles.dangerLink} disabled={salvando} onClick={descartarERetornarInicio}>Descartar</button><button type="button" className={styles.primaryButton} disabled={salvando} onClick={() => void salvarERetornarInicio()}>{salvando ? 'Salvando…' : 'Salvar e ir à lista'}</button></div>
@@ -792,7 +823,7 @@ function SimulacoesView({ documento, onDocumento, podeEditar, onErro }: { docume
 
 function HistoricoView({ produtos, documento, produtoAtivoId, onSelecionar }: { produtos: ProdutoCustos[]; documento: DocumentoCustos; produtoAtivoId: string; onSelecionar: (id: string) => void }) {
   const versoes = documento.historico.filter((versao) => !produtoAtivoId || versao.produtoId === produtoAtivoId);
-  return <><PageHeader title="Histórico de custos" description="Compare versões registradas sempre que a composição alterar valores." /><section className={styles.panel}><div className={styles.panelTitle}><div><h2>Produto ou serviço</h2><p>O histórico permanece mesmo se o cadastro for inativado.</p></div><label className={`${styles.search} ${styles.historyProductSelector}`}><span>Selecionar</span><select value={produtoAtivoId} onChange={(e) => onSelecionar(e.target.value)}><option value="">Todos</option>{produtos.map((produto) => <option key={produto.id} value={produto.id}>{produto.sku} · {produto.nome}</option>)}</select></label></div><div className={styles.tableWrap}><table><thead><tr><th>Data</th><th>Cadastro</th><th className={styles.numeric}>Custo direto</th><th className={styles.numeric}>Custo total</th><th className={styles.numeric}>Preço sugerido</th><th className={styles.numeric}>Variação</th></tr></thead><tbody>{versoes.map((versao, indice) => { const produto = produtos.find((item) => item.id === versao.produtoId); const anterior = versoes.slice(indice + 1).find((item) => item.produtoId === versao.produtoId); const variacao = anterior?.custoTotal ? (versao.custoTotal / anterior.custoTotal - 1) * 100 : null; return <tr key={versao.id}><td>{new Date(versao.criadoEm).toLocaleString('pt-BR')}</td><td><b>{produto?.sku || '—'}</b><small>{produto?.nome || 'Cadastro não localizado'}</small></td><td className={styles.numeric}>{formatarMoeda(versao.custoDireto)}</td><td className={styles.numeric}><b>{formatarMoeda(versao.custoTotal)}</b></td><td className={styles.numeric}>{formatarMoeda(versao.precoSugerido)}</td><td className={styles.numeric}>{variacao === null ? 'Versão inicial' : `${variacao >= 0 ? '+' : ''}${variacao.toFixed(2)}%`}</td></tr>; })}{!versoes.length && <tr><td colSpan={6} className={styles.empty}>Nenhuma versão registrada para esta seleção.</td></tr>}</tbody></table></div></section></>;
+  return <><PageHeader title="Histórico de custos" description="Compare versões registradas sempre que a composição alterar valores." /><section className={styles.panel}><div className={styles.panelTitle}><div><h2>Produto ou serviço</h2><p>O histórico permanece mesmo se o cadastro for inativado ou excluído.</p></div><label className={`${styles.search} ${styles.historyProductSelector}`}><span>Selecionar</span><select value={produtoAtivoId} onChange={(e) => onSelecionar(e.target.value)}><option value="">Todos</option>{produtos.map((produto) => <option key={produto.id} value={produto.id}>{produto.sku} · {produto.nome}{produto.excluido_em ? ' — excluído' : ''}</option>)}</select></label></div><div className={styles.tableWrap}><table><thead><tr><th>Data</th><th>Cadastro</th><th className={styles.numeric}>Custo direto</th><th className={styles.numeric}>Custo total</th><th className={styles.numeric}>Preço sugerido</th><th className={styles.numeric}>Variação</th></tr></thead><tbody>{versoes.map((versao, indice) => { const produto = produtos.find((item) => item.id === versao.produtoId); const anterior = versoes.slice(indice + 1).find((item) => item.produtoId === versao.produtoId); const variacao = anterior?.custoTotal ? (versao.custoTotal / anterior.custoTotal - 1) * 100 : null; return <tr key={versao.id}><td>{new Date(versao.criadoEm).toLocaleString('pt-BR')}</td><td><b>{produto?.sku || '—'}</b><small>{produto ? `${produto.nome}${produto.excluido_em ? ' · Excluído' : ''}` : 'Cadastro não localizado'}</small></td><td className={styles.numeric}>{formatarMoeda(versao.custoDireto)}</td><td className={styles.numeric}><b>{formatarMoeda(versao.custoTotal)}</b></td><td className={styles.numeric}>{formatarMoeda(versao.precoSugerido)}</td><td className={styles.numeric}>{variacao === null ? 'Versão inicial' : `${variacao >= 0 ? '+' : ''}${variacao.toFixed(2)}%`}</td></tr>; })}{!versoes.length && <tr><td colSpan={6} className={styles.empty}>Nenhuma versão registrada para esta seleção.</td></tr>}</tbody></table></div></section></>;
 }
 
 function RecursoComposicaoPicker({ recursos, recursoId, disabled = false, onSelecionar }: { recursos: RecursoCusto[]; recursoId: string; disabled?: boolean; onSelecionar: (recursoId: string) => void }) {

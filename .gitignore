@@ -54,3 +54,10 @@ backups/
 
 # Referência local preservada da reconstrução do AvantaVendas
 /app/avantavendas/documentacao/referencia_tridium/
+
+# Distribuição mobile gerada automaticamente durante o build.
+/public/mobile-runtime/
+/app/avantavendas/runtime-compacto/
+
+# Recibos e trava locais da fila de publicação (não são artefatos do produto).
+/output/pipeline/

@@ -38,6 +38,8 @@ test('edições financeiras usam revisão e Mobile acompanha receitas em tempo r
   assert.match(web, /revisaoEsperada: lancamentoAtual\?\.revisao/);
   assert.match(mobile, /table: 'faturamentos_entradas'/);
   assert.match(mobile, /table: 'faturamentos'/);
-  assert.match(mobile, /Esta receita foi alterada em outro dispositivo/);
-  assert.match(mobile, /Esta despesa foi alterada em outro dispositivo/);
+  const fila = await readFile(new URL('../../supabase/migrations/20261020190000_edicoes_financeiras_idempotentes.sql', import.meta.url), 'utf8');
+  assert.match(fila, /v_receita\.revisao <> p_revisao[\s\S]*?outro dispositivo/);
+  assert.match(fila, /v_despesa\.revisao <> p_revisao[\s\S]*?outro dispositivo/);
+  assert.match(mobile, /codigo === '40001'[\s\S]*?não sobrescreveu o servidor/);
 });

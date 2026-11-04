@@ -35,8 +35,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `MAJOR`: mudanca estrutural, banco, fluxo principal ou incompatibilidade. Exemplo: `1.1.0` para `2.0.0`.
 - `MICRO`: ajustes finos, texto, rótulos, pequenas correcoes visuais ou refinamentos
   da entrega atual. Exemplo: `1.3.6` para `1.3.6.01`, depois `1.3.6.02`.
-- Depois da `1.3.5`, agrupar os ajustes grandes atuais na base `1.3.6`;
-  micro ajustes subsequentes devem avançar apenas a quarta casa.
+- Sequência oficial retomada em `3.1.0.02` após `3.1.0.01`, por solicitação
+  do responsável em 15/10/2026. Os identificadores `4.0.0` a `4.0.0.30`
+  permanecem somente no histórico, sem rollback funcional.
+- Correções e refinamentos da entrega atual avançam somente MICRO na quarta
+  casa. Não elevar MAJOR por ajuste pequeno, migração aditiva ou refinamento
+  de fluxo; mudança estrutural/incompatível exige aprovação explícita.
 - Atualizar tambem o `CHANGELOG.md` com resumo da alteracao.
 
 ## Conhecimento da Ava
@@ -72,3 +76,28 @@ This version has breaking changes — APIs, conventions, and file structure may 
   cada movimento do ponteiro.
 - Preservar teclado, foco, cancelamento e `prefers-reduced-motion` em toda nova
   aplicação do padrão.
+
+## Comunicação de publicação
+
+- A identificação deve aparecer na lista/detalhe visível da Vercel, não apenas em metadados personalizados. Em pacotes isolados, criar um snapshot Git local da entrega com mensagem `VERSÃO — Módulo: resumo`, sem alterar ou publicar o Git da raiz. Enviar a identificação Git reconhecida pelo provedor e conferir o retorno. `avantaVersion`/`avantaSummary` sozinhos não atendem este requisito.
+
+- Toda publicação deve incluir a versão oficial e um resumo descritivo, em português, do que foi corrigido ou adicionado. Usar `VERSÃO — Módulo: resumo das alterações`, refletindo somente o conteúdo do pacote enviado.
+- Incluir versão e resumo no provedor de publicação, no registro da entrega e na comunicação ao responsável; não deixar somente no changelog. Em pacote isolado/CLI sem commit descritivo, enviar metadados suportados (inclusive na Vercel). Se o destino não oferecer campo, registrar a limitação e vincular o resumo ao identificador da publicação, sem omissão silenciosa.
+- Preferência do responsável: avisar assim que o envio à Vercel terminar e o build estiver rodando, liberando a conversa para outros ajustes; não aguardar a conclusão do build para dar esse aviso.
+- Distinguir sempre enviado/em build de publicado. Quando a publicação já estiver autorizada, usar promoção automática após build aprovado ou registrar explicitamente qualquer promoção manual pendente. Nunca afirmar que está no ar antes de confirmar isso.
+
+## Publicações nativas — Gestão e AvantaVendas
+
+- Antes de qualquer próximo upload às lojas, seguir
+  `planejamento/proxima-publicacao-nativa.md`: revisar conjuntamente Gestão e
+  AvantaVendas em iOS e Android, evitando incluir recurso compartilhado em um
+  app e esquecer de avaliar o outro.
+- Pendência expressa do responsável: incluir suporte nativo à resposta tátil
+  na Gestão no próximo envio já necessário; não gerar publicação isolada agora.
+- Inventariar os recursos nativos oferecidos pelas plataformas e antecipar os
+  pertinentes ao produto. Não interpretar isso como autorização para adicionar
+  indiscriminadamente plugins, permissões ou coleta de dados. Registrar os
+  recursos incluídos, adiados e não aplicáveis, com justificativa.
+- Conferir o suporte no binário final, não apenas no código-fonte; distinguir
+  recurso nativo, permissão do sistema e ativação posterior pela Web. Preservar
+  fallback para versões instaladas sem o recurso e testar sem bloquear navegação.

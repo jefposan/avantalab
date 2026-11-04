@@ -14,6 +14,7 @@ type Props = {
   returnTooltipPosition?: 'top' | 'bottom';
   children?: ReactNode;
   className?: string;
+  productFocusNavigation?: boolean;
 };
 
 const LOGO_SAMPLE_LIMIT = 256;
@@ -142,9 +143,9 @@ export function AdaptiveModuleLogo({ src, alt, className = styles.moduleLogo, fr
 }
 
 /** Reuses the consolidated module header, including its responsive/dark styles. */
-export default function ModuloHeader({ empresa, onBack, returnLabel = 'Início', returnAriaLabel = 'Voltar ao Dashboard do AvantaLab', returnTooltip, returnTooltipPosition = 'top', children, className = '' }: Props) {
+export default function ModuloHeader({ empresa, onBack, returnLabel = 'Início', returnAriaLabel = 'Voltar ao início do AvantaLab', returnTooltip, returnTooltipPosition = 'top', children, className = '', productFocusNavigation = false }: Props) {
   const back = <button type="button" onClick={onBack} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</button>;
-  return <header className={`${styles.root} ${styles.moduleHeader} ${empresa.temaEscuro ? styles.dark : ''} ${className}`} style={{ '--custos-brand': empresa.corPrimaria, minHeight: 'var(--module-header-height)' } as CSSProperties}>
+  return <header data-product-focus-navigation={productFocusNavigation || undefined} className={`${styles.root} ${styles.moduleHeader} ${empresa.temaEscuro ? styles.dark : ''} ${className}`} style={{ '--custos-brand': empresa.corPrimaria, minHeight: 'var(--module-header-height)' } as CSSProperties}>
     {returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back}
     <div className={styles.moduleIdentity}>
       {empresa.logoUrl ? <AdaptiveModuleLogo key={empresa.logoUrl} src={empresa.logoUrl} alt={empresa.nome} frameClassName={styles.moduleLogoFrame} /> : <span>{empresa.nome}</span>}

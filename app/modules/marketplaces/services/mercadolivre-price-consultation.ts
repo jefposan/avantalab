@@ -6,6 +6,11 @@ import type { SellerConnection } from './mercadolivre-management';
 import { lookupProfileCatalogByEan } from './profile-catalog';
 import { consultOpenAIWebPrices, type WebPriceOffer } from './openai-web-price-search';
 import { selectReferencePriceCents } from './price-reference';
+import { completeProductFacts } from './web-product-facts';
+import { DEFAULT_PRICE_PERCENTAGES, suggestedPriceCents, type PricePercentages } from '../price-settings';
+import { priceSearchDetails } from '../price-offer-identity';
+import { productRegistrationName } from '../product-registration-name';
+import type { PriceSearchControl } from './price-search-control';
 
 export type PriceSuggestions = {
   market: number;
@@ -14,7 +19,7 @@ export type PriceSuggestions = {
   ideal: number;
 };
 
-export type PriceSampleSource = 'manual_reference' | 'google_shopping' | 'openai_web_search';
+export type PriceSampleSource = 'manual_reference' | 'google_shopping' | 'openai_web_search' | 'local_reference';
 
 export type PriceConsultationResult = {
   status: 'found' | 'not_found' | 'choose';
@@ -25,13 +30,18 @@ export type PriceConsultationResult = {
     name: string;
     description: string;
     image: string | null;
+    pictures?: string[];
     attributes: Array<{ id: string; name: string; value: string }>;
+    sources?:string[];
   };
   candidates?: Array<{ id: string; name: string; picture: string | null }>;
   prices?: PriceSuggestions;
   sample?: { count: number; minimum: number; maximum: number; source: PriceSampleSource; offers?: WebPriceOffer[] };
   pendingPriceTaskId?: string;
   historyId?: string;
+  localProductId?: string;
+  localProductRevision?: number;
+  referenceStatus?: 'saved' | 'missing' | 'preserved';
   consultedAt?: string;
   notice?: string;
 };
@@ -43,19 +53,20 @@ function priceInCents(value: unknown) {
     : null;
 }
 
-export function calculatePriceSuggestions(pricesInCents: readonly number[]): PriceSuggestions {
+export function calculatePriceSuggestions(pricesInCents: readonly number[], percentages: PricePercentages = DEFAULT_PRICE_PERCENTAGES): PriceSuggestions {
   // Preços excepcionalmente altos costumam ser anúncios fora do mercado. A
-  // referência comercial é formada pelas até cinco menores ofertas válidas,
+  // referência comercial é formada por até oito ofertas válidas comprovadas,
   // inclusive quando a fonte externa trouxer mais resultados.
   const values = selectReferencePriceCents(pricesInCents);
   if (!values.length) throw new Error('Nenhum preço válido para calcular as sugestões.');
   const marketCents = Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-  const amount = (factor: number) => Math.round(marketCents * factor) / 100;
+  const suggestions = suggestedPriceCents(marketCents, percentages);
+  if (!suggestions) throw new Error('Percentuais inválidos para calcular as sugestões.');
   return {
     market: marketCents / 100,
-    minimum: amount(0.5),
-    medium: amount(0.7),
-    ideal: amount(0.9),
+    minimum: suggestions.minimum / 100,
+    medium: suggestions.medium / 100,
+    ideal: suggestions.ideal / 100,
   };
 }
 
@@ -68,6 +79,8 @@ export async function consultMercadoLivrePrice(
   db: SupabaseClient,
   connection: SellerConnection,
   input: { ean?: unknown; query?: unknown; productId?: unknown; manualPrice?: unknown; pendingPriceTaskId?: string },
+  percentages: PricePercentages = DEFAULT_PRICE_PERCENTAGES,
+  control?: PriceSearchControl,
 ): Promise<PriceConsultationResult> {
   let identification = await identifyMercadoLivreCatalog(db, connection, input);
 
@@ -99,6 +112,7 @@ export async function consultMercadoLivrePrice(
   }
 
   const product = identification.product;
+  const registrationName = product.id.startsWith('LOCAL:') ? product.name : productRegistrationName(product.name, product.attributes);
   const manualCents = input.manualPrice === undefined ? null : priceInCents(input.manualPrice);
   if (input.manualPrice !== undefined && manualCents == null) {
     throw new MarketplaceError(400, 'invalid_manual_price', 'Informe um preço válido, com até duas casas decimais.');
@@ -110,14 +124,15 @@ export async function consultMercadoLivrePrice(
     query,
     product: {
       id: product.id,
-      name: product.name,
-      description: product.description,
+      name: registrationName,
+      description: product.description || (registrationName !== product.name ? product.name : ''),
       image: product.pictures[0] || product.picture,
+      pictures: product.pictures,
       attributes: product.attributes,
     },
   };
   if (manualCents != null) {
-    const prices = calculatePriceSuggestions([manualCents]);
+    const prices = calculatePriceSuggestions([manualCents], percentages);
     return {
       ...base,
       prices,
@@ -126,16 +141,18 @@ export async function consultMercadoLivrePrice(
     };
   }
 
-  const lookup = await consultOpenAIWebPrices({ ean, productName: product.name });
+  const lookup = await consultOpenAIWebPrices({ ean, productName: product.name, ...priceSearchDetails(product.attributes,product.name) }, control);
+  const enriched={...base,ean:ean||lookup.product?.ean||null,product:completeProductFacts(base.product,lookup.product)};
   if (!lookup.sample) return {
-    ...base,
-    notice: 'Produto localizado, mas a pesquisa com IA não encontrou ofertas atuais e comprováveis neste momento.',
+    ...enriched,
+    notice: 'Produto localizado, mas nenhuma oferta com preço e disponibilidade pôde ser confirmada na origem. Nenhum preço sem comprovação foi usado.',
   };
-  const prices = calculatePriceSuggestions(lookup.sample.pricesInCents);
+  const prices = calculatePriceSuggestions(lookup.sample.pricesInCents, percentages);
   return {
-    ...base,
+    ...enriched,
     prices,
     sample: { count: lookup.sample.count, minimum: lookup.sample.minimum, maximum: lookup.sample.maximum, source: 'openai_web_search', offers: lookup.sample.offers },
-    notice: `Referência calculada no servidor com ${lookup.sample.count} menor${lookup.sample.count === 1 ? '' : 'es'} oferta${lookup.sample.count === 1 ? '' : 's'} comprovada${lookup.sample.count === 1 ? '' : 's'} pela pesquisa web com IA.`,
+    ...(lookup.researchedAt ? { consultedAt: lookup.researchedAt } : {}),
+    notice: lookup.fromCache ? 'Preços e fontes da pesquisa recente reaproveitados. Nenhuma nova consulta paga foi feita.' : `Referência calculada com ${lookup.sample.count} oferta(s) pesquisada(s) e suas fontes.`,
   };
 }

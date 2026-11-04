@@ -4,7 +4,7 @@ import { fixtureDetails, renderPostSale } from './post-sale-render-harness.mjs';
 
 test('apresentação mostra retorno, destino, dinheiro, valor, prazo e horário em português', () => {
   const html = renderPostSale();
-  for (const expected of ['Pós-venda · Mercado Livre', '11/10/2026, 11:45', '20,15', 'Depósito do Mercado Livre', 'Revisar o produto', '13/10/2026, 09:00', 'Dinheiro retido', 'não confirma pagamento', 'Atualizar pós-venda']) assert.ok(html.includes(expected), expected);
+  for (const expected of ['Pós-venda · Mercado Livre', '11/10/26, 11:45', '20,15', 'Depósito do Mercado Livre', 'Revisar o produto', '13/10/26, 09:00', 'Dinheiro retido', 'não confirma pagamento', 'Atualizar pós-venda']) assert.ok(html.includes(expected), expected);
   assert.match(html, /target="_blank" rel="noopener noreferrer"/);
   assert.match(html, /na mesma conta desta venda/);
 });

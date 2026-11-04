@@ -45,6 +45,8 @@ export async function POST(request: Request) {
 
     const corpo = await request.json().catch(() => null);
     const empresaId = typeof corpo?.empresaId === 'string' ? corpo.empresaId.trim() : '';
+    const centroCustoId = corpo?.centroCustoId == null || corpo?.centroCustoId === '' ? null : corpo.centroCustoId;
+    if (centroCustoId !== null && (typeof centroCustoId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(centroCustoId))) return NextResponse.json({erro:true,mensagem:'Centro de custo inválido. Reabra a importação no centro desejado.'},{status:400});
     const loteChave = typeof corpo?.loteChave === 'string' ? corpo.loteChave.trim() : '';
     const lancamentos = Array.isArray(corpo?.lancamentos) ? corpo.lancamentos as LancamentoRecebido[] : [];
     if (!empresaId || !loteChave || !lancamentos.length || lancamentos.length > 500) {
@@ -62,8 +64,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ erro: true, mensagem: 'Revise data, tipo, descrição e valor antes de confirmar.' }, { status: 400 });
     }
 
-    const { data, error } = await supabase.rpc('importar_lancamentos_despesas_rpc', {
+    const { data, error } = await supabase.rpc('importar_lancamentos_despesas_contexto_rpc', {
       p_empresa_id: empresaId,
+      p_centro_custo_id: centroCustoId,
       p_lote_chave: loteChave,
       p_lancamentos: lancamentos,
     });

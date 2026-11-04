@@ -20,7 +20,8 @@ const recursosEssenciais = [
   `${caminhoRecursos}/assets/receipts/avantalab-payment-receipt-bg.webp?v=${AVANTAVENDAS_VERSION}`,
   `${caminhoRecursos}/assets/receipts/avantalab-receipt-bg.webp?v=${AVANTAVENDAS_VERSION}`,
   `${caminhoRecursos}/app.js?v=${AVANTAVENDAS_VERSION}`,
-  '/images/logo-avantalab-oficial.png',
+  `${caminhoRecursos}/assets/logo-avantavendas-positivo.png?v=marca-20261025-v2`,
+  `${caminhoRecursos}/assets/logo-avantavendas-negativo.png?v=marca-20261025-v2`,
   '/images/avanta-vendas-pwa-180.png',
   '/images/avanta-vendas-pwa-192.png',
   '/images/avanta-vendas-pwa-512.png',
@@ -36,19 +37,34 @@ const RECURSOS_ESSENCIAIS = ${JSON.stringify(recursosEssenciais)};
 
 async function guardarResposta(cache, requisicao, resposta) {
   if (!resposta || !resposta.ok) return resposta;
-  await cache.put(requisicao, resposta.clone());
+  try { await cache.put(requisicao, resposta.clone()); } catch { /* Sem quota, continuar pela rede. */ }
   return resposta;
 }
 
+async function buscarRecursoVersionado(requisicao) {
+  // Apenas recursos estáticos com URL versionada. Nunca sessão, APIs ou dados
+  // financeiros. A busca exata inclui ?v= para não misturar publicações.
+  try {
+    const existente = await caches.match(requisicao);
+    if (existente && existente.ok) return existente;
+  } catch { /* Armazenamento indisponível não impede a abertura. */ }
+  return buscarComFallback(requisicao);
+}
+
 async function buscarComFallback(requisicao, fallback) {
-  const cache = await caches.open(NOME_CACHE);
   try {
     const resposta = await fetch(requisicao, { cache: 'no-store' });
-    return await guardarResposta(cache, requisicao, resposta);
+    try {
+      const cache = await caches.open(NOME_CACHE);
+      await guardarResposta(cache, requisicao, resposta);
+    } catch { /* Cache indisponível: preservar a resposta recebida. */ }
+    return resposta;
   } catch {
-    return (await caches.match(requisicao))
-      || (fallback ? await caches.match(fallback) : undefined)
-      || Response.error();
+    try {
+      return (await caches.match(requisicao))
+        || (fallback ? await caches.match(fallback) : undefined)
+        || Response.error();
+    } catch { return Response.error(); }
   }
 }
 
@@ -69,9 +85,13 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const chaves = await caches.keys();
+    // Manter a publicação anterior para documentos já abertos. O limite vale
+    // só para nossos caches estáticos, sem tocar IndexedDB ou outros sistemas.
+    const anteriores = chaves.filter((chave) => chave.startsWith(PREFIXO_CACHE) && chave !== NOME_CACHE);
+    const preservar = anteriores.slice(-1);
     await Promise.all(
       chaves
-        .filter((chave) => chave.startsWith(PREFIXO_CACHE) && chave !== NOME_CACHE)
+        .filter((chave) => chave.startsWith(PREFIXO_CACHE) && chave !== NOME_CACHE && !preservar.includes(chave))
         .map((chave) => caches.delete(chave)),
     );
     await self.clients.claim();
@@ -88,6 +108,11 @@ self.addEventListener('fetch', (event) => {
   // navegação seguir diretamente para a rede evita servir a tela do Vendas
   // ou um documento antigo como fallback durante a troca de sistema.
   if (url.pathname.startsWith('/avantavendas/gestao')) return;
+
+  if (url.pathname.startsWith('/avantavendas/recursos/') && url.searchParams.get('v')) {
+    event.respondWith(buscarRecursoVersionado(event.request));
+    return;
+  }
 
   if (event.request.mode === 'navigate') {
     event.respondWith(buscarComFallback(event.request, '/avantavendas'));

@@ -17,6 +17,8 @@ test('cadastro usa campos permitidos, EAN opcional e fotos HTTPS, sem copiar seg
 test('anúncio importado mantém quantidade apenas como dado da ficha, sem confirmar saldo', () => {
   const imported=productFromSnapshot({title:'Produto',ean:'',price:100,stock:7,category:'MLB123',shipping:{mode:'me2'}});
   assert.equal(imported.stock_quantity,undefined); assert.equal(imported.publication_form.stock,7); assert.equal(imported.ean,null);
+  const withPhotos=productFromSnapshot({title:'Produto',price:100,shipping:{mode:'me2'},pictures:['https://http2.mlstatic.com/a.jpg','javascript:bad']});
+  assert.deepEqual(withPhotos.pictures,['https://http2.mlstatic.com/a.jpg']);assert.equal(withPhotos.publication_form.pictureUrl,'https://http2.mlstatic.com/a.jpg');
   const saved=productFromPreparation({ean:'',price:120,stock:4,description:'Completa',attributes:{BRAND:'Marca'},copySource:{connectionId:'private',listingId:'MLB1'}},{name:'Produto',pictures:['https://example.com/foto.jpg'],attributes:[]});
   assert.equal(saved.publication_form.copySource,undefined); assert.equal(saved.price_cents,12000); assert.equal(saved.description,'Completa');
 });
@@ -62,6 +64,10 @@ test('RPC real: isolamento, estoque pendente/zero, idempotência, concorrência 
     const draftKey=crypto.randomUUID(); const draft=await command('draft',{name:'Novo',stock_quantity:0,physical_confirmation:true},draftKey);
     assert.equal((await command('draft',{name:'Alterado',stock_quantity:80,physical_confirmation:true},draftKey)).product_id,draft.product_id);
     assert.equal(await stock(draft.product_id),0);
+    await command('update',{product_id:draft.product_id,revision:1,name:'Manual',pictures:['https://example.com/manual.jpg'],price_cents:19900});
+    await command('enrich',{product_id:draft.product_id,revision:2,pictures:['https://http2.mlstatic.com/remote.jpg']});
+    const manual=(await db.query('select pictures,price_cents,stock_quantity from marketplace_products where id=$1',[draft.product_id])).rows[0];
+    assert.deepEqual(manual.pictures,['https://example.com/manual.jpg']);assert.equal(manual.price_cents,19900);assert.equal(manual.stock_quantity,0);
     const secured=await db.query("select relname,relrowsecurity from pg_class where relname in ('marketplace_products','marketplace_product_links','marketplace_stock_movements','marketplace_product_operations')");
     assert.equal(secured.rows.length,4); assert.ok(secured.rows.every(r=>r.relrowsecurity));
     const rights=await db.query("select has_function_privilege('authenticated','marketplace_product_command(uuid,uuid,text,jsonb,uuid)','EXECUTE') as exec, has_table_privilege('anon','marketplace_products','SELECT') as read");

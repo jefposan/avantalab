@@ -6,6 +6,7 @@ import { defaultInitialStockSelections, stockSourceKey, type InitialStockRow } f
 import { marketplaceClientRequest } from './Anunciados';
 import MarketplaceSelect from './MarketplaceSelect';
 import styles from './marketplaces.module.css';
+import { marketplaceDateTimeLabel } from '@/app/modules/marketplaces/date-format';
 
 export default function InitialStockLoad({ companyId, dark, brand, onBusyChange, onUpdated, onClose }: {
   companyId: string; dark: boolean; brand: string; onBusyChange: (busy: boolean) => void; onUpdated: () => Promise<void>; onClose: () => void;
@@ -80,7 +81,8 @@ export default function InitialStockLoad({ companyId, dark, brand, onBusyChange,
   }
 
   return <section className={styles.localSection} aria-labelledby="initial-stock-title">
-    <h3 id="initial-stock-title">Carga inicial de estoque</h3>
+    <h3 id="initial-stock-title">Carga inicial do estoque Online</h3>
+    <p className={styles.help}>Esta carga preenche somente o estoque vinculado ao Online. Não inclui as unidades reservadas aos estoques offline.</p>
     <p className={styles.help}>Usa a quantidade atual de um anúncio ativo por produto. Zerados e inativos ficam de fora. Saldos locais já definidos são mantidos.</p>
     <p className={styles.help}>Vincule os anúncios iguais antes desta carga. Não some as quantidades das contas.</p>
     {phase === 'loading' && <p role="status">Consultando anúncios… {progress} cadastros conferidos.</p>}
@@ -98,7 +100,7 @@ export default function InitialStockLoad({ companyId, dark, brand, onBusyChange,
         <strong>{row.name}</strong>
         {row.warning && <p className={styles.connectionMessage} role="alert">{row.warning}</p>}
         {!!row.sources.length && <MarketplaceSelect id={`initial-stock-${row.productId}`} label="Anúncio que fornece o estoque inicial" value={selections[row.productId] || ''}
-          options={[{ value: '', label: 'Não carregar este produto' }, ...row.sources.map(source => ({ value: stockSourceKey(source), label: `${source.quantity} un. · ${source.accountName} · ${source.listingId}`, detail: `Consulta em ${new Date(source.checkedAt).toLocaleString('pt-BR')}` }))]}
+          options={[{ value: '', label: 'Não carregar este produto' }, ...row.sources.map(source => ({ value: stockSourceKey(source), label: `${source.quantity} un. · ${source.accountName} · ${source.listingId}`, detail: `Consulta em ${marketplaceDateTimeLabel(source.checkedAt)}` }))]}
           placeholder="Escolha um anúncio, sem somar contas" disabled={phase === 'saving'} onChange={value => {
             setSelections(previous => ({ ...previous, [row.productId]: value })); requestKeys.current[row.productId] = crypto.randomUUID();
           }} />}

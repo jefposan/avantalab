@@ -59,8 +59,21 @@ exigir(
 exigir(
   gestao.includes("import TelaCarregandoAcesso, { FundoAcessoResponsivo }") &&
     !gestao.includes('function TelaCarregandoSistema(') &&
-    gestao.includes('mensagem="Preparando seu perfil financeiro..."'),
-  'A entrada e a preparação do perfil precisam usar a mesma cena compartilhada.',
+    gestao.includes('loginSocialEmAndamento') &&
+    gestao.includes('<TelaCarregandoAcesso'),
+  'A autenticação inicial precisa usar a cena oficial compartilhada.',
+);
+exigir(
+  gestao.includes("carregandoPerfil ? 'Confirmando acesso…' : 'Confirmar acesso'") &&
+    gestao.includes('inert={carregandoPerfil || carregandoCentroCusto') &&
+    gestao.includes('Atualizando dados deste perfil… Você pode navegar pelas abas.') &&
+    !gestao.includes('if (carregandoPerfil && !modalSelecionarEmpresa)'),
+  'Preparação financeira deve manter seleção e navegação, protegendo somente a região de dados.',
+);
+exigir(
+  gestao.includes('!cadastroPerfilCarregado || (COBRANCA_ATIVA && !estadoCarregado)') &&
+    gestao.includes('precisaPaywallEmpresa(estadoAcesso) || bloqueioWebPessoal'),
+  'Navegação rápida não pode remover os gates de cadastro e plano.',
 );
 exigir(
   carregamento.includes('data-avantalab-acesso-carregando="1"') &&

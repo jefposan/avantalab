@@ -2,10 +2,11 @@ import { supabase } from '@/app/lib/supabase';
 import type { ProdutoImportadoCatalogo } from './importacao-catalogo';
 import {
   documentoVazio, normalizarDocumento, type CatalogoEmpresa, type DocumentoCustos, type FornecedorCustos, type PrecoTabelaItem,
-  type ProdutoCustos, type ResumoImportacaoCadastro, type TabelaPreco,
+  type ProdutoCustos, type ResumoImportacaoCadastro, type ResultadoReajusteTabelas, type TabelaPreco, type TipoReajusteTabela,
 } from './types';
 
-const CAMPOS_PRODUTO = 'id,catalogo_id,sku,tipo_item,nome,marca,categoria,descricao,preco_custo,preco_venda,unidade,imagem_url,codigo_barras,ativo,disponivel_catalogo,habilitado_fiscal,fornecedor_id,ncm,cest,origem_mercadoria,unidade_tributavel,cfop_padrao,cst,csosn,cst_pis,cst_cofins,cst_ibs_cbs,classificacao_ibs_cbs,codigo_tributacao_nacional,codigo_tributacao_municipal,nbs,item_lc116,municipio_prestacao,aliquota_iss,atualizado_em';
+const CAMPOS_PRODUTO_BASE = 'id,catalogo_id,sku,tipo_item,nome,marca,categoria,descricao,preco_custo,preco_venda,unidade,imagem_url,codigo_barras,ativo,disponivel_catalogo,habilitado_fiscal,fornecedor_id,ncm,cest,origem_mercadoria,unidade_tributavel,cfop_padrao,cst,csosn,cst_pis,cst_cofins,cst_ibs_cbs,classificacao_ibs_cbs,codigo_tributacao_nacional,codigo_tributacao_municipal,nbs,item_lc116,municipio_prestacao,aliquota_iss,atualizado_em';
+const CAMPOS_PRODUTO = CAMPOS_PRODUTO_BASE.replace(',atualizado_em', ',excluido_em,atualizado_em');
 
 const texto = (valor: unknown) => String(valor || '');
 const mapearCatalogo = (linha: Record<string, unknown>): CatalogoEmpresa => ({
@@ -26,8 +27,17 @@ const mapearProduto = (linha: Record<string, unknown>): ProdutoCustos => ({
   cst_ibs_cbs: texto(linha.cst_ibs_cbs), classificacao_ibs_cbs: texto(linha.classificacao_ibs_cbs),
   codigo_tributacao_nacional: texto(linha.codigo_tributacao_nacional), codigo_tributacao_municipal: texto(linha.codigo_tributacao_municipal),
   nbs: texto(linha.nbs), item_lc116: texto(linha.item_lc116), municipio_prestacao: texto(linha.municipio_prestacao),
-  aliquota_iss: Number(linha.aliquota_iss) || 0, atualizado_em: texto(linha.atualizado_em),
+  aliquota_iss: Number(linha.aliquota_iss) || 0, excluido_em: texto(linha.excluido_em), atualizado_em: texto(linha.atualizado_em),
 });
+
+async function consultarProdutosCustos(catalogoIds: string[]) {
+  const consulta = () => supabase.from('vendas_mobile_catalogo_produtos').select(CAMPOS_PRODUTO).in('catalogo_id', catalogoIds).order('nome');
+  const resultado = await consulta();
+  if (!resultado.error || !resultado.error.message.toLowerCase().includes('excluido_em')) return resultado;
+  // Compatibilidade durante a aplicação coordenada da migração: a página
+  // continua legível, mas a exclusão lógica só é liberada após a coluna existir.
+  return supabase.from('vendas_mobile_catalogo_produtos').select(CAMPOS_PRODUTO_BASE).in('catalogo_id', catalogoIds).order('nome');
+}
 
 export async function carregarCustos(empresaId: string, podeEditar: boolean) {
   const tabelaPadrao = await supabase.rpc('custos_garantir_tabela_padrao_rpc', { p_empresa_id: empresaId });
@@ -59,7 +69,7 @@ export async function carregarCustos(empresaId: string, podeEditar: boolean) {
   }
 
   const [produtosResultado, documentoResultado, tabelasResultado, precosResultado] = await Promise.all([
-    supabase.from('vendas_mobile_catalogo_produtos').select(CAMPOS_PRODUTO).in('catalogo_id', catalogos.map((item) => item.id)).order('nome'),
+    consultarProdutosCustos(catalogos.map((item) => item.id)),
     supabase.from('custos_documentos').select('documento,revisao').eq('empresa_id', empresaId).maybeSingle(),
     supabase.from('custos_tabelas_preco').select('id,empresa_id,codigo,nome,descricao,padrao,ativo,atualizado_em').eq('empresa_id', empresaId).order('padrao', { ascending: false }).order('nome'),
     supabase.from('custos_tabela_preco_itens').select('tabela_preco_id,produto_id,preco,atualizado_em'),
@@ -146,6 +156,27 @@ export async function salvarPrecoTabela(empresaId: string, tabelaId: string, pro
     p_empresa_id: empresaId, p_tabela_id: tabelaId, p_produto_id: produtoId, p_preco: preco,
   });
   if (error) throw new Error(error.message || 'Não foi possível atualizar o preço.');
+}
+
+export async function aplicarReajusteTabelas(
+  empresaId: string,
+  reajusteId: string,
+  tabelaIds: string[],
+  tipo: TipoReajusteTabela,
+  valor: number,
+) {
+  const ids = [...new Set(tabelaIds.filter(Boolean))];
+  if (!ids.length) throw new Error('Selecione ao menos uma tabela de preços.');
+  if (!Number.isFinite(valor) || valor <= 0) throw new Error('Informe um reajuste maior que zero.');
+  const { data, error } = await supabase.rpc('custos_aplicar_reajuste_tabelas_rpc', {
+    p_empresa_id: empresaId,
+    p_reajuste_id: reajusteId,
+    p_tabela_ids: ids,
+    p_tipo: tipo,
+    p_valor: valor,
+  });
+  if (error) throw new Error(error.message || 'Não foi possível aplicar o reajuste.');
+  return data as ResultadoReajusteTabelas;
 }
 
 export type AcaoLoteCatalogo = 'publicar_catalogo' | 'retirar_catalogo' | 'ativar' | 'inativar' | 'mover_catalogo';
@@ -245,6 +276,16 @@ export async function salvarProdutoCustos(produto: ProdutoCustos) {
     throw new Error('Não foi possível salvar o produto ou serviço.');
   }
   return mapearProduto(data as unknown as Record<string, unknown>);
+}
+
+export async function excluirProdutoCustos(empresaId: string, produtoId: string) {
+  if (!empresaId || !produtoId) throw new Error('Selecione um produto ou serviço válido para excluir.');
+  const { data, error } = await supabase.rpc('custos_excluir_produto_rpc', {
+    p_empresa_id: empresaId,
+    p_produto_id: produtoId,
+  });
+  if (error) throw new Error(error.message || 'Não foi possível excluir o produto ou serviço.');
+  return data as { produto_id: string; excluido: boolean; excluido_em: string };
 }
 
 export async function enviarImagemProduto(empresaId: string, arquivo: File) {

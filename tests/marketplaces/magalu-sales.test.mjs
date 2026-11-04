@@ -18,6 +18,7 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   return next(specifier, context);
 } });
 const model = await import('../../app/modules/marketplaces/magalu-sales-model.ts');
+const { magaluCatalogPresence } = await import('../../app/modules/marketplaces/magalu-catalog-presence.ts');
 const { readMagaluPostSale } = await import('../../app/modules/marketplaces/services/magalu-post-sale.ts');
 const { magaluPostSaleForSale, syncMagaluSales } = await import('../../app/modules/marketplaces/services/magalu-sales.ts');
 const { magaluRequest, magaluCatalogRequest, loadMagaluCatalogConnection, loadMagaluConnection } = await import('../../app/modules/marketplaces/services/magalu-request.ts');
@@ -66,9 +67,27 @@ function fixture() {
   return { db, connection };
 }
 
+test('consulta de anúncios Magalu usa só leitura da primeira página e separa ausência de 403', async () => {
+  const { db, connection } = fixture();
+  let calls = 0;
+  globalThis.fetch = async (url, options) => {
+    calls++;
+    assert.equal(String(url), 'https://api.magalu.com/seller/v1/portfolios/skus?_limit=1&_offset=0');
+    assert.equal(options.method, 'GET');
+    assert.equal(options.redirect, 'error');
+    assert.equal(options.headers['X-Tenant-Id'], seller);
+    return Response.json({ results: [], meta: { page: { offset: 0, count: 0, limit: 1 }, links: { next: null } } });
+  };
+  assert.equal(magaluCatalogPresence(await magaluRequest(db, connection, '/seller/v1/portfolios/skus?_limit=1&_offset=0')), 'empty');
+  assert.equal(calls, 1);
+  await assert.rejects(magaluRequest(db, connection, '/seller/v1/portfolios/skus?_limit=100&_offset=0'), error => error.code === 'invalid_resource');
+  globalThis.fetch = async () => new Response(null, { status: 403 });
+  await assert.rejects(magaluRequest(db, connection, '/seller/v1/portfolios/skus?_limit=1&_offset=0'), error => error.status === 403 && error.code === 'magalu_403');
+});
+
 test('normalização preserva código longo, moeda, comprador e não exporta CPF nem baixa estoque', () => {
   const sale = model.normalizeMagaluOrder(order(), seller); assert.equal(sale.total,1425); assert.equal(sale.status,'paid'); assert.equal(sale.shipmentStatus,'handling'); assert.equal(sale.orderId.length,44);
-  assert.deepEqual(sale.inventoryLines,[]); assert.ok(!JSON.stringify(sale).includes('never-export'));
+  assert.deepEqual(sale.inventoryLines,[{listingId:'SKU1',variationId:'',quantity:1,title:'Purificador'}]); assert.ok(!JSON.stringify(sale).includes('never-export'));
   assert.equal(model.magaluMoney({currency:'USD',normalizer:100,total:100}),null); assert.equal(model.magaluMoney({currency:'BRL',normalizer:0,total:100}),null);
 });
 test('vendedor, código, UUID, datas e quantidades divergentes falham fechados', () => {
@@ -78,6 +97,7 @@ test('várias entregas não são dadas como entregues enquanto um pacote aguarda
   const source = order(); source.deliveries[0].status='delivered'; source.deliveries.push({...structuredClone(source.deliveries[0]),id:eventId,status:'approved'});
   assert.equal(model.normalizeMagaluOrder(source,seller).shipmentStatus,'handling'); source.deliveries[1].status='cancelled';
   assert.equal(model.normalizeMagaluOrder(source,seller).shipmentStatus,'delivered'); assert.equal(model.normalizeMagaluOrder(source,seller).warnings.length,1);
+  assert.equal(model.normalizeMagaluOrder(source,seller).inventoryLines[0].quantity,1,'pacote já cancelado não ganha uma nova baixa');
   source.deliveries[1].status='future_status'; assert.equal(model.normalizeMagaluOrder(source,seller).shipmentStatus,null);
 });
 test('pagina somente no domínio/rota reconhecidos e não confunde count com total', () => {

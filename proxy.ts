@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { protegerApiPorLiberacao } from './app/lib/acessos-usuario-servidor';
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    try { return await protegerApiPorLiberacao(request) || NextResponse.next(); }
+    catch { return NextResponse.json({ mensagem: 'Não foi possível verificar suas liberações. Tente novamente.' }, { status: 503 }); }
+  }
   const host = (
     request.headers.get('x-forwarded-host') ??
     request.headers.get('host') ??
@@ -31,5 +36,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/',
+  matcher: ['/', '/api/:path*'],
 };

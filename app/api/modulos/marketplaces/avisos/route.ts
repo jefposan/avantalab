@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server';
 import { authorizeMarketplace, managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
 import { uuidIsValid } from '@/app/modules/marketplaces/services/listing-model';
+import { readInventoryNotices } from '@/app/modules/marketplaces/services/inventory-notices';
 export const runtime = 'nodejs';
 const headers = { 'Cache-Control': 'no-store' };
 export async function GET(request: Request) {
   try {
-    const { db, empresaId, usuario } = await authorizeMarketplace(request, new URL(request.url).searchParams.get('empresaId'));
+    const url = new URL(request.url);
+    const { db, empresaId, usuario } = await authorizeMarketplace(request, url.searchParams.get('empresaId'));
     const result = await db.rpc('marketplace_live_feed', { p_empresa: empresaId, p_user: usuario.id });
     if (result.error) throw new MarketplaceError(503, 'live_feed_unavailable', 'Os avisos automáticos ainda não puderam ser consultados. Confira a configuração da sincronização.');
-    return NextResponse.json(result.data, { headers });
+    if (url.searchParams.get('scope') === 'sales') return NextResponse.json({ ...result.data, checkedAt: new Date().toISOString() }, { headers });
+    let details;
+    try {
+      const notices = await readInventoryNotices(db, empresaId);
+      // Total público acompanha os avisos aplicáveis, não itens de fila ignorados por estado.
+      details = { notices, noticesUnavailable: false, pendingStock: notices.filter(notice=>notice.source==='stock').length };
+    }
+    catch { details = { notices: [], noticesUnavailable: true }; }
+    return NextResponse.json({ ...result.data, ...details, checkedAt: new Date().toISOString() }, { headers });
   } catch (error) { return managementFailure(error); }
 }
 export async function POST(request: Request) {

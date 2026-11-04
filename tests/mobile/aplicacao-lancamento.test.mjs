@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const raiz = new URL('../..', import.meta.url);
 
-test('alterações de lançamento bloqueiam a tela e comunicam o progresso', async () => {
+test('operações legadas comunicam progresso; edição usa fila sem bloquear a tela', async () => {
   const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
 
   assert.match(mobile, /aplicacaoLancamento: false/);
@@ -14,11 +14,11 @@ test('alterações de lançamento bloqueiam a tela e comunicam o progresso', asy
   assert.match(mobile, /function concluirAplicacaoLancamentoMobile\(mensagem\)[\s\S]*?mostrarToast\(mensagem\)/);
   assert.match(mobile, /function aplicacaoLancamentoHtml\(\)[\s\S]*?bg-slate-950\/85[\s\S]*?role="dialog"[\s\S]*?aria-modal="true"[\s\S]*?aria-busy="true"[\s\S]*?aria-label="' \+ titulo \+ '"[\s\S]*?role="status"[\s\S]*?aria-live="assertive"[\s\S]*?animate-spin/);
   assert.match(mobile, /processandoNotaHtml\(\) \+\n\s*aplicacaoLancamentoHtml\(\)/);
-  assert.match(mobile, /async function excluirLancamentoSelecionado\(\)[\s\S]*?iniciarAplicacaoLancamentoMobile\(\)[\s\S]*?concluirAplicacaoLancamentoMobile\(/);
-  assert.match(mobile, /async function salvarEdicaoLancamentoSelecionado\(confirmarPrevista\)[\s\S]*?iniciarAplicacaoLancamentoMobile\(\)[\s\S]*?concluirAplicacaoLancamentoMobile\(/);
+  assert.match(mobile, /async function excluirLancamentoSelecionado\(\)[\s\S]*?await enfileirarExclusaoFinanceiraMobile\(/);
+  assert.match(mobile, /async function salvarEdicaoLancamentoSelecionado\(confirmarPrevista\)[\s\S]*?await enfileirarEdicaoFinanceiraMobile\(/);
 });
 
-test('despesa prevista só fecha após a confirmação do registro atualizado', async () => {
+test('despesa prevista usa aplicação local durável sem aguardar o servidor', async () => {
   const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
   const inicio = mobile.indexOf('async function salvarEdicaoLancamentoSelecionado(confirmarPrevista)');
   const fim = mobile.indexOf('function periodoFinanceiroHojeMobile()', inicio);
@@ -27,8 +27,8 @@ test('despesa prevista só fecha após a confirmação do registro atualizado', 
   assert.match(mobile, /lancamentoSalvoConfirmado: null/);
   assert.match(mobile, /function aplicarDespesaPrevistaSalvaMobile\(registro\)/);
   assert.match(mobile, /function preservarDespesaPrevistaSalvaContraLeituraAntigaMobile\(\)/);
-  assert.match(salvar, /if \(despesa\.error \|\| !despesa\.data\)[\s\S]*?return;/);
-  assert.match(salvar, /if \(eraPrevista \|\| ehFuturaEditada\) \{[\s\S]*?aplicarDespesaPrevistaSalvaMobile\(despesa\.data\)[\s\S]*?state\.modalAcao = null[\s\S]*?concluirAplicacaoLancamentoMobile\('Despesa atualizada\.'\)[\s\S]*?render\(\)[\s\S]*?return;/);
+  assert.match(salvar, /await enfileirarEdicaoFinanceiraMobile/);
+  assert.doesNotMatch(salvar, /await carregarDados|iniciarAplicacaoLancamentoMobile/);
 });
 
 test('leitura antiga preserva apenas a despesa prevista já confirmada', async () => {
@@ -107,6 +107,8 @@ test('linhas de despesas e receitas abrem a ação sem erro de contexto', async 
   };
   const contexto = {
     state,
+    edicoesDoPerfilMobile: () => [],
+    edicaoPendenteBloqueiaAcaoMobile: () => false,
     ehReceitaSincronizada: () => false,
     render: () => { renderizacoes += 1; },
   };

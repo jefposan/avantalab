@@ -10,11 +10,11 @@ test('os três rodapés reutilizam o botão oficial dentro do conteúdo ocultáv
     ['ProductsStock', 'products-content', 'expanded', 'setExpanded(false)'],
   ]) {
     const source = readFileSync(new URL(`../../app/marketplaces/${file}.tsx`, import.meta.url), 'utf8');
-    const content = source.indexOf(`<div id="${id}" hidden={!${state}}>`);
+    const content = source.indexOf(file === 'ProductsStock' ? '<div id={warehouseId ?' : `<div id="${id}" hidden={!${state}}`);
     const footer = source.indexOf('${styles.panelFooterActions}', content);
     assert.ok(content > 0 && footer > content);
     const button = source.slice(footer, source.indexOf('</div>', footer));
-    assert.match(button, /BotaoExpandirCard variante="painel" modo="lista"/);
+    assert.match(button, /BotaoExpandirCard variante="painel" somenteIcone modo="lista"/);
     assert.ok(button.includes(`controlsId="${id}"`));
     assert.ok(button.includes(`collapseMarketplacePanel('${id}', () => ${close})`));
     assert.doesNotMatch(button, /setQuery|setPage|setDetailId|setOpen|cancelEditing/);

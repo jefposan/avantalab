@@ -1,3 +1,5 @@
+import { limparPreviaModulos } from './retorno-modulos';
+
 export type ContextoNavegacaoModulo = {
   destino: string;
   empresaId: string;
@@ -88,6 +90,7 @@ export function consumirNavegacaoModulo(destino: string, empresaId?: string): Co
 
 /** Remove o contexto visual junto com o encerramento explícito da sessão. */
 export function limparNavegacaoModulos() {
+  limparPreviaModulos();
   if (typeof window === 'undefined') return;
   try {
     window.sessionStorage.removeItem(CHAVE_CONTEXTO_NAVEGACAO);

@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
 import { useEffect, useState } from 'react';
-import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
 import ModuloHeader from '@/app/components/ModuloHeader';
@@ -22,7 +22,7 @@ export type CustosAccess = {
 
 export default function CustosClient({ companyId, initialNewType, returnTo, initialContext }: { companyId: string; initialNewType?: 'produto'; returnTo?: 'vendas'; initialContext?: ContextoNavegacaoModulo | null }) {
   const router = useRouter();
-  const returnHref = returnTo === 'vendas' && companyId ? `/vendas?empresaId=${encodeURIComponent(companyId)}` : companyId ? `/gestao?empresaId=${encodeURIComponent(companyId)}` : '/gestao';
+  const returnHref = returnTo === 'vendas' && companyId ? `/vendas?empresaId=${encodeURIComponent(companyId)}` : companyId ? `/gestao?inicio=1&empresaId=${encodeURIComponent(companyId)}` : '/gestao';
   const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('custos', companyId));
   const [access, setAccess] = useState<CustosAccess | null>(() => contextoInicial ? {
     empresa: { id: contextoInicial.empresaId, ...contextoInicial.empresa },
@@ -42,7 +42,6 @@ export default function CustosClient({ companyId, initialNewType, returnTo, init
         router.replace('/gestao?abrirModulo=custos');
         return;
       }
-      if (contextoInicial) return;
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) { setError('Sua sessão não está disponível. Volte ao AvantaLab e entre novamente.'); return; }
@@ -63,13 +62,12 @@ export default function CustosClient({ companyId, initialNewType, returnTo, init
   }, [mensagem]);
 
   useEffect(() => {
-    router.prefetch(returnHref);
-  }, [returnHref, router]);
+    router.prefetch(returnTo === 'vendas' ? returnHref : destinoInicioModulo(companyId));
+  }, [returnHref, returnTo, companyId, router]);
 
   if (error) return <main className={styles.accessState}><div><span aria-hidden="true">◇</span><h1>Custos e Precificação</h1><p>{error}</p><button type="button" onClick={() => router.push('/gestao')}>‹ Início</button></div></main>;
   if (!access) {
-    if (contextoInicial) return <TransicaoNavegacaoInterna destino="Custos e Precificação" empresa={contextoInicial.empresa} />;
-    return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" />;
+    return <TransicaoNavegacaoInterna destino="Custos e Precificação" empresa={contextoInicial?.empresa} />;
   }
 
   const alterarTema = async () => {
@@ -96,10 +94,10 @@ export default function CustosClient({ companyId, initialNewType, returnTo, init
     } finally { setAtualizandoTema(false); }
   };
   const returnLabel = returnTo === 'vendas' ? 'Voltar' : 'Início';
-  const returnAriaLabel = returnTo === 'vendas' ? 'Voltar para Vendas e Serviços' : 'Voltar ao Dashboard do AvantaLab';
+  const returnAriaLabel = returnTo === 'vendas' ? 'Voltar para Vendas e Serviços' : 'Voltar ao início do AvantaLab';
   const voltar = () => {
     if (solicitarRetornoAoModuloHospedeiro()) return;
-    router.push(returnHref);
+    router.push(returnTo === 'vendas' ? returnHref : destinoInicioModulo(companyId));
   };
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{ '--custos-brand': access.empresa.corPrimaria } as React.CSSProperties}>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeMarketplace, managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
-import { magaluCatalogScopesGranted } from '@/app/modules/marketplaces/services/magalu-oauth';
+import { magaluCatalogAuthorizationEnabled, magaluCatalogScopesGranted } from '@/app/modules/marketplaces/services/magalu-oauth';
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
@@ -16,7 +16,9 @@ export async function GET(request: Request) {
       magalu_catalog_authorized: account.provider === 'magalu' ? magaluCatalogScopesGranted(scopes) : false,
       local_label: byId.get(account.id)?.local_label ?? null, local_label_updated_at: byId.get(account.id)?.updated_at ?? null,
     }));
-    return NextResponse.json({ accounts, labelsAvailable: !labelsError, canConnect: podeGerenciar, canManage: ['gestor_master', 'administrador', 'operador_completo'].includes(vinculo.perfil || '') }, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json({ accounts, labelsAvailable: !labelsError, canConnect: podeGerenciar,
+      magaluCatalogAuthorizationEnabled: magaluCatalogAuthorizationEnabled(),
+      canManage: ['gestor_master', 'administrador', 'operador_completo'].includes(vinculo.perfil || '') }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) { return managementFailure(error); }
 }
 

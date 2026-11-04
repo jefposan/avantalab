@@ -1,0 +1,7 @@
+[
+  "config.js",
+  "supabase-client.js",
+  "app.js",
+  "payment-receipt-v2.js",
+  "order-receipt-v2.js"
+]

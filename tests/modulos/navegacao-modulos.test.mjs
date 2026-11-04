@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { criarHrefModuloEmbutido } from '../../app/lib/navegacao-modulos.ts';
+import { readFileSync } from 'node:fs';
+import ts from 'typescript';
+import vm from 'node:vm';
+const contexto = { exports: {}, URL, require: () => ({ limparPreviaModulos() {} }) };
+Object.defineProperty(contexto, 'window', { get: () => globalThis.window });
+vm.runInNewContext(ts.transpileModule(readFileSync('app/lib/navegacao-modulos.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, contexto);
+const { criarHrefModuloEmbutido } = contexto.exports;
 
 test('navegação embutida não transporta logotipo em data URI pela URL', () => {
   const windowAnterior = globalThis.window;

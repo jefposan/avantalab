@@ -16,12 +16,17 @@ const semCachePwa = [
 ];
 
 const nextConfig: NextConfig = {
+  // PGlite é usado somente pela prévia local bloqueada em produção; mantém URLs/WASM nativos do Node.
+  serverExternalPackages: ['@electric-sql/pglite'],
   devIndicators: false,
   turbopack: {
     root: process.cwd(),
   },
   outputFileTracingIncludes: {
-    "/avantavendas/recursos/*": ["./app/avantavendas/sistema/**/*"],
+    "/avantavendas/recursos/*": [
+      "./app/avantavendas/sistema/**/*",
+      "./app/avantavendas/runtime-compacto/*.js",
+    ],
     "/api/modulos/vendas/**/*": ["./schemas/nfe/**/*"],
   },
   async redirects() {
@@ -45,6 +50,7 @@ const nextConfig: NextConfig = {
       { source: "/mobile", headers: semCachePwa },
       { source: "/mobile/versao", headers: semCachePwa },
       { source: "/mobile-app.js", headers: semCachePwa },
+      { source: "/mobile-runtime/:path*", headers: semCachePwa },
       { source: "/mobile-supabase.js", headers: semCachePwa },
       { source: "/mobile-sw.js", headers: semCachePwa },
       { source: "/avantavendas", headers: semCachePwa },
@@ -53,6 +59,16 @@ const nextConfig: NextConfig = {
       { source: "/avantavendas/sw.js", headers: semCachePwa },
       { source: "/avantavendas/versao", headers: semCachePwa },
     ];
+  },
+  async rewrites() {
+    return {
+      // beforeFiles preserva URLs, bootstrap e SW; dev mantém fonte legível.
+      beforeFiles: process.env.NODE_ENV === 'production'
+        ? [{ source: '/mobile-app.js', destination: '/mobile-runtime/mobile-app.js' }]
+        : [],
+      afterFiles: [],
+      fallback: [],
+    };
   },
 };
 

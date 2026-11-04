@@ -1,5 +1,47 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.23.1 - 2026-10-26
+
+- LoadingPontos permanece animado com reduzir movimentos ativado por solicitação expressa do responsável. Exceção restrita ao indicador compartilhado de espera, sem mudar outros efeitos ou acrescentar recursos pesados.
+
+## 1.23.0 - 2026-10-25
+
+- LoadingPontos compartilhado, cor contextual e movimento reduzido, aplicado no acesso Web e CarregamentoDadosModulo.
+- Acesso e conferência de cadastro/plano mantêm a mesma cena sem botão Cancelar e voltar ao login; recuperação e cancelamento pelo provedor preservados.
+
+## 1.22.0 - 2026-10-23
+
+- CampoMoeda oficial: entrada por centavos, ponto nos milhares, vírgula e duas casas decimais durante digitação/colagem; foco e clique posicionam cursor à direita. Padrão obrigatório para campos monetários do AvantaLab, preservando vazio, labels, permissões e validação do servidor; não se aplica a EAN, quantidade ou percentual.
+
+## 1.21.0 - 2026-10-21
+
+- Toda publicação deve identificar versão oficial e resumo descritivo das correções/adições no provedor, no registro da entrega e na comunicação ao responsável. Pacotes isolados/CLI também devem incluir os metadados suportados; ausência de campo exige limitação registrada e resumo vinculado ao identificador da publicação.
+- Checklist exige conferir que o resumo corresponde ao pacote enviado. Estados em fila/em build/publicado continuam distintos, com aviso após o envio e sem esperar a conclusão do build.
+
+## 1.20.0 - 2026-10-19
+
+- Acrescentado BotaoAcaoCompacto compartilhado: face de 32px e alvo de 44px, variantes semânticas e ícones SVG centrados. Referência para ações compactas de cards/listas, aplicada inicialmente às configurações Web do AvantaPreços, sem conversão global.
+- Cabeçalhos coloridos derivados do perfil usam contraste por luminância. Campos mantêm suas medidas oficiais; não altera o padrão de autenticação.
+
+## 1.19.2 - 2026-10-14
+
+- Explicitada a navegação não bloqueante da Gestão: atualização regional, isolamento entre contextos, descarte de respostas antigas e resumos em segundo plano, sem remover gates de segurança.
+
+## 1.19.1 - 2026-10-14
+
+- Esclarecido o fundo da preparação autenticada: página real do módulo sob camada translúcida, preservando bloqueio de interação e autorização no servidor.
+
+## 1.19.0 - 2026-10-14
+
+- Preparação de módulos padronizada com `CarregamentoDadosModulo`, incluindo o adaptador `TransicaoNavegacaoInterna`, tema, cor do perfil e acessibilidade.
+- Confirmação de contexto e atualização visual não devem reiniciar o carregamento de dados já exibidos.
+
+## 1.18.0 - 2026-10-13
+
+- Liberações de Dashboard e módulos pertencem ao vínculo usuário/perfil e complementam o papel operacional.
+- Seleção oficial de módulos reutiliza `SelecaoModulos`; os campos usam `AcessosUsuarioCampos`.
+- Entrada e Início respeitam as áreas concedidas, com revalidação em APIs e RLS.
+
 ## 1.17.0 - 2026-09-23
 
 - Formalizado o campo oficial de busca: comparação tolerante a acentos,

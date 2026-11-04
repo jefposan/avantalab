@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { registerHooks } from 'node:module';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync,existsSync } from 'node:fs';
+import { resolve,dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 
@@ -11,9 +11,11 @@ const state = { db: null };
 globalThis.__listingDateOrderTest = state;
 const hooks = registerHooks({
   resolve(specifier, context, next) {
+    if (specifier === 'server-only') return { url: 'data:text/javascript,export {}', shortCircuit: true };
     if (specifier === 'next/server') return { url: 'data:text/javascript,export const NextResponse={json:(data,options)=>Response.json(data,options)}', shortCircuit: true };
     if (specifier.endsWith('/management-access')) return { url: `data:text/javascript,${encodeURIComponent('export async function authorizeMarketplace(request,empresaId){return {db:globalThis.__listingDateOrderTest.db,empresaId};} export class MarketplaceError extends Error {constructor(status,code,message){super(message);this.status=status;}} export function managementFailure(error){return Response.json({message:error.message},{status:error.status||500});}')}`, shortCircuit: true };
     if (specifier.startsWith('@/')) return { url: pathToFileURL(resolve(root, `${specifier.slice(2)}.ts`)).href, shortCircuit: true };
+    if(specifier.startsWith('.')&&context.parentURL?.startsWith('file:')){const p=resolve(dirname(new URL(context.parentURL).pathname),specifier);if(existsSync(p+'.ts'))return next(pathToFileURL(p+'.ts').href,context);}
     return next(specifier, context);
   },
   load(url, context, next) {
@@ -108,4 +110,16 @@ test('API rejeita conta inválida antes de consultar e usa ordem recente para pa
   const response = await GET(new Request(`https://example.test/api?empresaId=${company}&connectionId=${account}&order=title`));
   assert.equal(response.status, 200);
   assert.equal(state.db.calls[0][2].ascending, false);
+});
+
+test('atalho de pendência consulta somente o ID exato na empresa e conta autorizadas',async()=>{
+ state.db=database({all:true});
+ const request=(id,connection=account)=>new Request(`https://example.test/api?empresaId=${company}&connectionId=${connection}&listingId=${id}`);
+ const exact=await (await GET(request('MLB100010'))).json();
+ assert.equal(exact.total,1);assert.equal(exact.listings.length,1);assert.equal(exact.listings[0].connectionId,account);
+ for(const id of ['MLB10001','MLB999999','MLB222222']){
+  const absent=await (await GET(request(id))).json();assert.equal(absent.total,0);assert.deepEqual(absent.listings,[]);
+ }
+ const other=await (await GET(request('MLB222222',accountB))).json();assert.equal(other.total,1);assert.equal(other.listings[0].connectionId,accountB);
+ assert.equal((await GET(request('MLB100010','44444444-4444-4444-8444-444444444444'))).status,403);
 });

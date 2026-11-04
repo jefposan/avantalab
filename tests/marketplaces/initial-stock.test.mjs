@@ -169,7 +169,7 @@ test('endpoint exige gestão, usa empresa/ator autorizados; interface exige revi
 
 test('confirmação inicial precede a consulta; confirmação final permanece obrigatória antes da gravação',()=>{
   const products=readFileSync(new URL('../../app/marketplaces/ProductsStock.tsx',import.meta.url),'utf8');
-  assert.match(products,/onClick=\{\(\) => setStockLoadConfirmation\(true\)\}>Carregar estoque dos anúncios/);
+  assert.match(products,/onClick=\{\(\)\s*=>\s*setStockLoadConfirmation\(true\)\}>Carregar estoque dos anúncios/);
   assert.doesNotMatch(products,/onClick=\{\(\) => setStockLoadOpen\(true\)\}>Carregar estoque dos anúncios/);
   assert.match(products,/ModalConfirmacao aberto=\{stockLoadConfirmation\}/);
   assert.match(products,/Nada será salvo nesta consulta/);

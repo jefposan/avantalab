@@ -265,7 +265,7 @@ exigir(
     && aplicacao.includes("window.VendasDb.setSession(accessToken, refreshToken)")
     && aplicacao.includes("window.VendasDb.iniciarOAuthNativo(provedor, REDIRECT_OAUTH_NATIVO_VENDAS)")
     && aplicacao.includes("function entrarComApple() { return entrarComProvedorSocialVendas('apple'); }")
-    && aplicacao.includes('Cancelar e voltar ao login')
+    && aplicacao.includes('function cancelarLoginSocialVendas()')
     && !aplicacao.includes('let conectandoGoogle =')
     && cliente.includes('options: { redirectTo, skipBrowserRedirect: true }')
     && cliente.includes('requireClient().auth.exchangeCodeForSession(code)')
@@ -294,7 +294,9 @@ exigir(
   aplicacao.includes('function botaoTrocaPerfilVendas()')
     && aplicacao.includes('class="sales-profile-header-button" onclick="abrirContasVendas()"')
     && aplicacao.includes('Perfis de vendas. Perfil atual:')
-    && aplicacao.includes('acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, true)')
+    && aplicacao.includes('function acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)')
+    && aplicacao.includes('${botaoTrocaPerfilVendas()}')
+    && !aplicacao.includes('mostrarTrocaPerfil')
     && !aplicacao.includes("const mostrarTrocaPerfil = state.aba === 'dashboard';")
     && aplicacao.includes("${svgIcon('users')}")
     && !aplicacao.includes('icone-troca-gestao.png')
@@ -302,7 +304,7 @@ exigir(
     && estilos.includes('.sales-profile-header-button span {')
     && estilos.includes('.sales-profile-header-button:focus-visible')
     && estilos.includes('.dark-theme .sales-profile-header-button'),
-  'A sala de botões deve abrir os perfis de vendas com ícone de usuários e identificar o perfil ativo abaixo do ícone.',
+  'Todas as telas autenticadas e a sala de botões devem abrir os perfis de vendas pelo cabeçalho e identificar o perfil ativo abaixo do ícone.',
 );
 exigir(
   !aplicacao.includes('URL_APP_GESTAO')
@@ -396,7 +398,8 @@ exigir(
 exigir(
   aplicacao.includes('function compartilharCanvasComprovante(canvas, nomeArquivo, mensagem)')
     && aplicacao.includes('await navigator.share({ files: [arquivo], title: mensagem, text: mensagem });')
-    && aplicacao.includes("compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, 'Comprovante de pedido')")
+    && aplicacao.includes("compartilharCanvasComprovante(canvas, `${consignado ? 'consignado' : 'pedido'}-${String(venda.id).slice(0, 8)}.png`, titulo)")
+    && aplicacao.includes("const titulo = consignado ? 'Comprovante de consignado' : 'Comprovante de pedido'")
     && aplicacao.includes("compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, 'Comprovante de pagamento')")
     && compartilhamentoMaterial.includes('tentarCompartilharArquivosWebDivulgacao([arquivo])')
     && compartilhamentoWebMaterial.includes('navigator.share({ files: arquivos })')
@@ -408,9 +411,9 @@ exigir(
   'O seletor de perfis de vendas deve separar visualmente a lista de perfis das ações de criação e compartilhamento.',
 );
 exigir(
-  comprovantePedido.includes('function desenharRodapeEmPilula(ctx, conteudo, y)')
-    && comprovantePedido.includes("retangulo(ctx, xPilula, y - 47, larguraPilula, 72, 36, '#FFFFFF', '#DCE6F0')")
-    && comprovantePedido.includes('desenharRodapeEmPilula(ctx, `${titulo} • ${clienteExibido}`, yRodape)')
+  comprovantePedido.includes('function desenharRodapeEmPilula(ctx, conteudo, y, paleta = PALETA_PEDIDO)')
+    && comprovantePedido.includes("retangulo(ctx, xPilula, y - 47, larguraPilula, 72, 36, '#FFFFFF', paleta.divisor)")
+    && comprovantePedido.includes('desenharRodapeEmPilula(ctx, `${titulo} • ${clienteExibido}`, yRodape, paleta)')
     && !comprovantePedido.includes('yRodape + 35')
     && aplicacao.includes('const larguraPilulaRodape = Math.min(936')
     && aplicacao.includes("ctx.fillStyle = '#FFFFFF'; ctx.fill(); ctx.strokeStyle = '#DCE6F0'")
@@ -420,15 +423,15 @@ exigir(
     && aplicacao.includes('function detalheQuantidadeItemComprovante(item)')
     && aplicacao.includes("if (!Number.isFinite(quantidade) || quantidade < 2) return '';")
     && aplicacao.includes('secundario: detalheQuantidadeItemComprovante(item)')
-    && comprovantePedido.includes("retangulo(ctx, 44, 42, 992, 260, 36, '#063B72')")
-    && comprovantePedido.includes("retangulo(ctx, 236, 326, 608, 82, 26, '#F1FBF5', '#BDEBD3')")
+    && comprovantePedido.includes("retangulo(ctx, 44, 42, 992, 260, 36, paleta.cabecalho)")
+    && comprovantePedido.includes("retangulo(ctx, 236, 326, 608, 82, 26, paleta.sucessoFundo, paleta.sucessoBorda)")
     && comprovantePedido.includes("'Valor do pedido', 276, yPedido + 137")
     && comprovantePedido.includes("'Saldo atual', 276, ySaldo + 137")
     && comprovantePedido.includes("'Pedido registrado com sucesso!', 570, 367")
     && comprovantePedido.includes("alinhamento: 'center', largura: 460, linhaBase: 'middle'")
-    && comprovantePedido.includes("card(ctx, yPedido, alturaCardPedido, '', 'PEDIDO REGISTRADO')")
-    && comprovantePedido.includes("card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO')")
-    && comprovantePedido.includes("card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO')")
+    && comprovantePedido.includes("card(ctx, yPedido, alturaCardPedido, '', consignado ? 'CONSIGNADO REGISTRADO' : 'PEDIDO REGISTRADO', paleta)")
+    && comprovantePedido.includes("card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO', paleta)")
+    && comprovantePedido.includes("card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO', paleta)")
     && comprovantePedido.includes('const alturaResumo = 184')
     && comprovantePedido.includes("'Desconto concedido', 276, yPedido + 208")
     && comprovantePedido.includes('const altura = yRodape + MARGEM_INFERIOR_RODAPE;')
@@ -436,8 +439,8 @@ exigir(
     && comprovantePedido.includes('function desenharFundoAncoradoNoRodape(ctx, fundo, altura)')
     && comprovantePedido.includes('alturaFonte - alturaVisivel')
     && comprovantePedido.includes("const COR_BORDA_CARD = '#C7D8E8';")
-    && comprovantePedido.includes("card(ctx, yDetalhes, alturaDetalhes, '', titulo === 'Pedido consignado' ? 'DETALHES DO CONSIGNADO' : 'DETALHES DO PEDIDO')")
-    && comprovantePedido.includes("texto(ctx, titulo, LARGURA / 2, y + 43, { tamanho: 28, peso: 800, cor: '#0A2F6B', alinhamento: 'center', largura: 880, linhaBase: 'middle' })")
+    && comprovantePedido.includes("card(ctx, yDetalhes, alturaDetalhes, '', consignado ? 'DETALHES DO CONSIGNADO' : 'DETALHES DO PEDIDO', paleta)")
+    && comprovantePedido.includes("texto(ctx, titulo, LARGURA / 2, y + 43, { tamanho: 28, peso: 800, cor: paleta.forte, alinhamento: 'center', largura: 880, linhaBase: 'middle' })")
     && comprovantePedido.includes("icone(ctx, 'confirmado', 208, yPedido + 128")
     && comprovantePedido.includes("icone(ctx, 'grafico', 208, ySaldo + 128")
     && !comprovantePedido.includes("icone(ctx, 'itens',")
@@ -449,7 +452,7 @@ exigir(
     && aplicacao.includes('const complementoPrincipal = linhaPrincipal?.complemento;')
     && aplicacao.includes("complemento: { rotulo: 'Desconto concedido', valor: dadosComprovante.desconto }")
     && aplicacao.includes('const temSubtituloSaldo = Boolean(linhaSaldo.subtitulo)')
-    && aplicacao.includes("etiqueta: 'Pedido registrado com sucesso!'")
+    && aplicacao.includes("etiqueta: consignado ? 'Consignado registrado com sucesso!' : 'Pedido registrado com sucesso!'")
     && aplicacao.includes("ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', largura / 2, y + 13)")
     && aplicacao.includes("ctx.fillText('Situação após o lançamento', largura / 2, y + 13)")
     && aplicacao.includes("ctx.fillText('Resumo financeiro', largura / 2, y + 13)")
@@ -513,12 +516,17 @@ exigir(
 exigir(
   aplicacao.includes('function prepararExibicaoSalaBotoesNoDom()')
     && aplicacao.includes("sala.classList.add('is-loading-images')")
+    && aplicacao.includes("sala.classList.remove('images-ready')")
+    && aplicacao.includes("sala.classList.remove('is-loading-images')")
     && aplicacao.includes("sala.classList.add('images-ready')")
+    && aplicacao.includes('Promise.all(imagens.map(aguardarImagemSalaNoDom))')
+    && aplicacao.includes('if (revisao !== revisaoPreloaderSalaBotoes || !sala.isConnected) return;')
+    && aplicacao.includes('window.setTimeout(concluir, 7000)')
     && aplicacao.includes("'/avantavendas/recursos/assets/menu/13_Configurações.png'")
     && aplicacao.includes("'/avantavendas/recursos/assets/menu/14_Sair.png'")
-    && estilos.includes('.mobile-menu.is-loading-images .mobile-menu-card::before')
-    && estilos.includes('@keyframes vendas-button-preloader'),
-  'A sala deve manter loadings locais e revelar todos os botões somente depois que as imagens estiverem prontas.',
+    && estilos.includes('.mobile-menu.is-loading-images .mobile-menu-card img')
+    && !aplicacao.slice(aplicacao.indexOf('function prepararExibicaoSalaBotoesNoDom()'), aplicacao.indexOf('function itensSalaBotoesOrdenados()')).includes('image-pending'),
+  'A sala deve apresentar os botões juntos após as imagens, com preloader, limite de espera e descarte de conclusões antigas, sem alterar a geometria do Kanban.',
 );
 exigir(
   aplicacao.includes('function indiceMaisProximoSalaBotoes(')
@@ -557,7 +565,7 @@ exigir(
   'Uma aprovação por código deve ativar o novo vínculo comercial e reparar aprovações anteriores que ficaram inativas.',
 );
 exigir(
-  cliente.includes('async function assinarAtualizacoesVinculo(aoAtualizar)')
+  cliente.includes('async function assinarAtualizacoesVinculo(aoAtualizar, usuarioConfirmado = null)')
     && cliente.includes("table: 'vendas_mobile_solicitacoes_acesso', filter: `user_id=eq.${user.id}`")
     && cliente.includes("table: 'vendas_mobile_acessos', filter: `user_id=eq.${user.id}`")
     && cliente.includes("table: 'vendas_mobile_vinculos_comerciais', filter: `user_id=eq.${user.id}`")

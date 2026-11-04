@@ -1,6 +1,7 @@
 import 'server-only';
 import { MarketplaceError } from './management-access';
-import { selectReferencePriceCents } from './price-reference';
+// Contrato legado preservado: este adaptador não é usado na pesquisa atual.
+function selectReferencePriceCents(prices:readonly number[]){return prices.filter(value=>Number.isSafeInteger(value)&&value>0).sort((a,b)=>a-b).slice(0,5);}
 
 type JsonRecord = Record<string, unknown>;
 

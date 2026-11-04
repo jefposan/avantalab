@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import FiltroCompetencia from '@/app/recebimentos/components/FiltroCompetencia';
 import receiptStyles from '@/app/recebimentos/recebimentos.module.css';
 import CardExpandidoModal from '@/app/components/CardExpandidoModal';
+import CampoData from '@/app/components/CampoData';
+import { marketplaceDateLabel } from '@/app/modules/marketplaces/date-format';
 import DraggableModalCard from '@/app/components/DraggableModalCard';
 import { orderedSaleGroups, validSalePeriod, type SaleGroup, type SalePeriod } from '@/app/modules/marketplaces/sales-status';
 import MarketplaceSelect from './MarketplaceSelect';
@@ -16,10 +18,11 @@ export function monthPeriod(year: number, month: number): SalePeriod {
   return { start: `${prefix}-01`, end: `${prefix}-${new Date(year, month + 1, 0).getDate()}` };
 }
 
-export default function SalesFilters({ period, onPeriodChange, group, onGroupChange, counts, total, dark, brand }: {
+export default function SalesFilters({ period, onPeriodChange, group, onGroupChange, counts, total, dark, brand, notices }: {
   period: SalePeriod; onPeriodChange: (period: SalePeriod) => void;
   group: SaleGroup | ''; onGroupChange: (group: SaleGroup | '') => void;
   counts: Record<SaleGroup, number>; total: number; dark: boolean; brand: string;
+  notices?: ReactNode;
 }) {
   const [reference, setReference] = useState(() => ({ ano: new Date().getFullYear(), mes: new Date().getMonth() }));
   const [open, setOpen] = useState(false);
@@ -27,7 +30,7 @@ export default function SalesFilters({ period, onPeriodChange, group, onGroupCha
   const [error, setError] = useState('');
   const month = monthPeriod(reference.ano, reference.mes);
   const custom = !!period.start && (period.start !== month.start || period.end !== month.end);
-  const dateLabel = (iso: string) => iso.split('-').reverse().join('/');
+  const dateLabel = marketplaceDateLabel;
 
   function moveMonth(delta: number) {
     const date = new Date(reference.ano, reference.mes + delta, 1);
@@ -37,8 +40,9 @@ export default function SalesFilters({ period, onPeriodChange, group, onGroupCha
 
   return <>
     <div className={`${styles.salesFilters} ${dark ? receiptStyles.darkScope : ''}`} style={{ '--cp': brand, '--texto-primario': dark ? '#e2e8f0' : '#1e293b' } as CSSProperties}>
-      <div className={styles.headerPeriodGroup} role="group" aria-labelledby="sales-period-heading">
+      <div className={`${styles.headerPeriodGroup} ${notices ? styles.headerPeriodWithNotices : ''}`} role="group" aria-labelledby="sales-period-heading">
         <span id="sales-period-heading" className={styles.headerGroupLabel}>Período das vendas</span>
+        {notices && <div className={styles.headerPeriodNotices}>{notices}</div>}
         <div className={styles.salesDateFilters} data-mode={!period.start ? 'all' : custom ? 'custom' : 'month'}>
         <FiltroCompetencia referencia={reference} todos={!period.start} onMudarMes={moveMonth} onMostrarTodos={() => onPeriodChange({ start: '', end: '' })} todosLabel="Todo o período" tooltipPosition="bottom" />
         <Tooltip texto={custom ? `Vendas de ${dateLabel(period.start)} a ${dateLabel(period.end)}` : 'Escolher data inicial e final'} posicao="bottom"><button type="button" className={`${styles.refreshSales} ${styles.headerDateButton}`} aria-label={custom ? `Selecionar datas: ${dateLabel(period.start)} a ${dateLabel(period.end)}` : 'Selecionar datas'} aria-haspopup="dialog" aria-expanded={open} aria-pressed={custom} onClick={() => { setDraft(period.start ? period : month); setError(''); setOpen(true); }}><Icon name="calendar" size={16} /><span>{custom ? `${dateLabel(period.start)} – ${dateLabel(period.end)}` : 'Selecionar datas'}</span></button></Tooltip>
@@ -60,8 +64,8 @@ export default function SalesFilters({ period, onPeriodChange, group, onGroupCha
           }}>
             <p className={styles.help}>Selecione a data inicial e final da venda. Os dois dias serão incluídos.</p>
             <div className={styles.salesPeriodDates}>
-              <label>Data inicial<input type="date" required value={draft.start} onChange={(event) => setDraft({ ...draft, start: event.target.value })} aria-describedby={error ? 'sales-period-error' : undefined} /></label>
-              <label>Data final<input type="date" required value={draft.end} min={draft.start || undefined} onChange={(event) => setDraft({ ...draft, end: event.target.value })} aria-describedby={error ? 'sales-period-error' : undefined} /></label>
+              <label>Data inicial<CampoData anoCurto required value={draft.start} aria-label="Data inicial" onChange={start => setDraft(current => ({ ...current, start }))} aria-describedby={error ? 'sales-period-error' : undefined} /></label>
+              <label>Data final<CampoData anoCurto required value={draft.end} aria-label="Data final" min={draft.start || undefined} onChange={end => setDraft(current => ({ ...current, end }))} aria-describedby={error ? 'sales-period-error' : undefined} /></label>
             </div>
             {error && <p id="sales-period-error" className={styles.salesError} role="alert">{error}</p>}
             <div className={styles.salesPeriodActions}><button type="button" className={styles.refreshSales} onClick={() => setOpen(false)}>Cancelar</button><button type="submit" className={styles.primary}>Aplicar período</button></div>

@@ -7,10 +7,11 @@ export class MarketplaceError extends Error {
   status: number;
   code: string;
   fields?: Record<string, string>;
-  constructor(status: number, code: string, message: string, fields?: Record<string, string>) { super(message); this.status = status; this.code = code; this.fields = fields; }
+  details?: string;
+  constructor(status: number, code: string, message: string, fields?: Record<string, string>, details?: string) { super(message); this.status = status; this.code = code; this.fields = fields; this.details = details; }
 }
 export function managementFailure(error: unknown) {
-  return NextResponse.json({ message: error instanceof MarketplaceError ? error.message : 'Não foi possível concluir. Verifique a configuração do módulo ou tente novamente.', code: error instanceof MarketplaceError ? error.code : 'integration_unavailable', ...(error instanceof MarketplaceError && error.fields ? { fields: error.fields } : {}) },
+  return NextResponse.json({ message: error instanceof MarketplaceError ? error.message : 'Não foi possível concluir. Verifique a configuração do módulo ou tente novamente.', code: error instanceof MarketplaceError ? error.code : 'integration_unavailable', ...(error instanceof MarketplaceError && error.fields ? { fields: error.fields } : {}), ...(error instanceof MarketplaceError && error.details ? { details: error.details } : {}) },
     { status: error instanceof MarketplaceError ? error.status : 503, headers: { 'Cache-Control': 'no-store' } });
 }
 export async function authorizeMarketplace(request: Request, empresaId: unknown, permission: 'view' | 'manage' | 'connections' = 'view') {

@@ -5,6 +5,7 @@ import { listSales, markSalesSeen, processSaleNotifications } from '@/app/module
 import { loadSalesProvider } from '@/app/modules/marketplaces/services/sales-provider';
 import { syncMagaluSales } from '@/app/modules/marketplaces/services/magalu-sales';
 import { salesAccountAvailable } from '@/app/modules/marketplaces/magalu-sales-model';
+import {listDirectSales,directSaleAsMarketplace} from '@/app/modules/marketplaces/services/direct-sales';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -26,7 +27,18 @@ export async function GET(request: Request) {
       const selected = await loadSalesProvider(db, empresaId, params.get('connectionId'));
       ids.push(selected.connection.id); if (selected.provider === 'magalu') magaluIds.push(selected.connection.id);
     }
-    if (!ids.length) return NextResponse.json({ sales: [], awaitingUpdates: 0 }, { headers: { 'Cache-Control': 'no-store' } });
+    let directSales: Awaited<ReturnType<typeof listSales>> = [];
+    if(allAccounts){
+      try{directSales=(await listDirectSales(db,empresaId)).map(directSaleAsMarketplace);}
+      catch(e){if(e instanceof MarketplaceError&&e.code==='direct_sales_migration')warnings.push('Vendas diretas indisponíveis até atualizar o banco. As vendas online foram mantidas.');else throw e;}
+    }
+    if (!ids.length) return NextResponse.json({ sales: directSales, awaitingUpdates: 0, warnings }, { headers: { 'Cache-Control': 'no-store' } });
+    // Abertura rápida: dados já salvos, sem aguardar rede dos marketplaces.
+    if(params.get('localOnly')==='1'){
+      const [sales,pending]=await Promise.all([listSales(db,empresaId,ids),db.from('marketplace_sale_notifications').select('id',{count:'exact',head:true}).eq('empresa_id',empresaId).in('connection_id',ids).is('processed_at',null)]);
+      if(pending.error || pending.count==null)throw new MarketplaceError(503,'database','Não foi possível conferir as atualizações pendentes.');
+      return NextResponse.json({sales:[...sales,...directSales],awaitingUpdates:pending.count,warnings},{headers:{'Cache-Control':'no-store'}});
+    }
     // Só relê contas que possuem eventos prontos. O total conta pedidos, nunca a fila.
     const { data: queued, error: queueError } = await db.from('marketplace_sale_notifications').select('connection_id').eq('empresa_id', empresaId).is('processed_at', null).lte('next_attempt_at', new Date().toISOString());
     if (queueError) throw new MarketplaceError(503, 'database', 'Não foi possível atualizar os avisos de vendas.');
@@ -45,7 +57,7 @@ export async function GET(request: Request) {
     const sales = await listSales(db, empresaId, ids);
     const { count: awaitingUpdates, error: countError } = await db.from('marketplace_sale_notifications').select('id', { count: 'exact', head: true }).eq('empresa_id', empresaId).in('connection_id', ids).is('processed_at', null);
     if (countError) throw new MarketplaceError(503, 'database', 'Não foi possível conferir as atualizações pendentes.');
-    return NextResponse.json({ sales, awaitingUpdates: (awaitingUpdates || 0) + magaluPending, warnings: [...new Set(warnings)] }, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json({ sales: [...sales,...directSales], awaitingUpdates: (awaitingUpdates || 0) + magaluPending, warnings: [...new Set(warnings)] }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) { return managementFailure(error); }
 }
 

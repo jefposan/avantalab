@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { validarLiberacoes, liberacoesDoVinculo } from '@/app/lib/acessos-usuario';
+import { liberacoesPersistidasIguais } from '@/app/lib/usuarios-empresa-liberacoes';
 import { createClient } from '@supabase/supabase-js';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
 import { normalizarEmail, validarEmail } from '../../lib/email';
@@ -80,12 +82,14 @@ export async function POST(request: Request) {
     const emailEnviado = normalizarEmail(corpo.email);
     const perfil = String(corpo.perfil || '') as PerfilUsuario;
     const novaSenha = String(corpo.novaSenha || '').trim();
+    let liberacoes;
+    try { liberacoes = corpo.liberacoes === undefined ? null : validarLiberacoes(corpo.liberacoes, perfil); } catch (e) { return respostaErro((e as Error).message); }
 
     if (!acessoId) {
       return respostaErro('Usuario nao informado.');
     }
 
-    if (!validarNomeCompleto(nome)) {
+    if (corpo.nome !== undefined && !validarNomeCompleto(nome)) {
       return respostaErro('Informe o nome completo do usuario, com nome e sobrenome.', 400, 'nome');
     }
 
@@ -105,7 +109,7 @@ export async function POST(request: Request) {
 
     const { data: usuarioAlvo, error: erroUsuarioAlvo } = await supabaseAdmin
       .from('usuarios_empresa')
-      .select('id, empresa_id, user_id, nome, email, login, perfil, status')
+      .select('id, empresa_id, user_id, nome, email, login, perfil, status,dashboard_liberada,modulos_liberados')
       .eq('id', acessoId)
       .maybeSingle();
 
@@ -140,12 +144,27 @@ export async function POST(request: Request) {
     const solicitanteEhOperadorCompleto = permissao.perfil === 'operador_completo';
     const editandoProprioUsuario = usuarioAlvo.user_id === user.id;
     const alvoEhOperador = ['operador_completo', 'operador_simples'].includes(usuarioAlvo.perfil);
+    if (liberacoes && JSON.stringify(liberacoes) !== JSON.stringify(liberacoesDoVinculo(usuarioAlvo)) && !solicitanteEhGestorMaster && !(solicitanteEhAdministrador && alvoEhOperador)) return respostaErro('Você não pode alterar as liberações deste usuário.', 403);
 
     if (!solicitanteEhGestorMaster && !(
       (solicitanteEhAdministrador && (editandoProprioUsuario || alvoEhOperador)) ||
       (solicitanteEhOperadorCompleto && editandoProprioUsuario)
     )) {
       return respostaErro('Voce nao tem permissao para editar este usuario.', 403);
+    }
+
+    let loginAtualDaConta = usuarioAlvo.login || '';
+    if (!editandoProprioUsuario && corpo.login !== undefined && !loginAtualDaConta && usuarioAlvo.user_id) {
+      const conta = await supabaseAdmin.from('usuarios_contas').select('login').eq('user_id', usuarioAlvo.user_id).maybeSingle();
+      if (conta.error) return respostaErro('Não foi possível conferir o login da conta. Tente novamente.', 503);
+      loginAtualDaConta = conta.data?.login || '';
+    }
+    // Um vínculo empresarial não transfere a titularidade da conta global.
+    // Campos inalterados continuam aceitos para compatibilidade dos clientes.
+    if (!editandoProprioUsuario && (novaSenha
+      || emailEnviado !== normalizarEmail(usuarioAlvo.email)
+      || (corpo.login !== undefined && normalizarLogin(loginEnviado) !== normalizarLogin(loginAtualDaConta)))) {
+      return respostaErro('E-mail, login e senha só podem ser alterados pelo próprio titular da conta. Você pode editar o nome e os acessos deste perfil.', 403);
     }
 
     if (!solicitanteEhGestorMaster && perfil !== usuarioAlvo.perfil) {
@@ -185,18 +204,22 @@ export async function POST(request: Request) {
     }
 
     const atualizacao: {
-      nome: string;
+      nome?: string;
       perfil: PerfilUsuario;
       email?: string;
+      dashboard_liberada?: boolean;
+      modulos_liberados?: string[] | null;
+      areas_alteradas_por?: string;
     } = {
-      nome,
+      ...(corpo.nome !== undefined ? { nome } : {}),
       perfil,
+      ...(liberacoes ? { dashboard_liberada: perfil === 'gestor_master' || liberacoes.dashboard, modulos_liberados: perfil === 'gestor_master' ? null : liberacoes.modulos, areas_alteradas_por: user.id } : {}),
     };
     let loginNormalizado = '';
 
-    if (corpo.login === undefined && emailEnviado.includes('@')) {
+    if (editandoProprioUsuario && corpo.login === undefined && emailEnviado.includes('@')) {
       atualizacao.email = emailEnviado;
-    } else {
+    } else if (editandoProprioUsuario) {
       const login = normalizarLogin(corpo.login === undefined ? emailEnviado : loginEnviado);
 
       if (!login) {
@@ -206,7 +229,7 @@ export async function POST(request: Request) {
       loginNormalizado = login;
     }
 
-    if (corpo.login !== undefined && emailEnviado) {
+    if (editandoProprioUsuario && corpo.login !== undefined && emailEnviado) {
       atualizacao.email = emailEnviado;
     }
 
@@ -256,6 +279,18 @@ export async function POST(request: Request) {
     } catch (erroConsultaAuth) {
       console.error('Erro ao verificar e-mail no Auth:', erroConsultaAuth);
       return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
+    }
+
+    // O Auth é a fonte da verdade. Não salvar primeiro o e-mail do vínculo:
+    // uma falha nessa etapa precisa continuar sendo tentada na próxima chamada.
+    if (editandoProprioUsuario && emailEnviado !== normalizarEmail(user.email)) {
+      const { data: authAtualizado, error: erroAuth } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        email: emailEnviado,
+        email_confirm: true,
+      });
+      if (erroAuth || normalizarEmail(authAtualizado?.user?.email) !== emailEnviado) {
+        return respostaErro('Não foi possível confirmar o e-mail da conta. Confira seus dados e tente novamente.', 503, 'email');
+      }
     }
 
     const { data: usuarioAtualizado, error: erroAtualizar } = await supabaseAdmin
@@ -309,26 +344,22 @@ export async function POST(request: Request) {
       usuarioAtualizado.login = loginNormalizado;
     }
 
-    if (emailEnviado && emailEnviado.includes('@') && usuarioAlvo.user_id && emailEnviado !== String(usuarioAlvo.email || '').toLowerCase()) {
-      const { error: erroAuth } = await supabaseAdmin.auth.admin.updateUserById(usuarioAlvo.user_id, {
-        email: emailEnviado,
-        email_confirm: true,
-      });
-      if (erroAuth) return respostaErro(erroAuth.message || 'Nao foi possivel atualizar o e-mail da conta.', 500, 'email');
+    if (editandoProprioUsuario && emailEnviado && usuarioAlvo.user_id) {
+      // Também reconcilia uma tentativa anterior parcialmente concluída.
       const { error: erroVinculos } = await supabaseAdmin.from('usuarios_empresa').update({ email: emailEnviado }).eq('user_id', usuarioAlvo.user_id);
       if (erroVinculos) return respostaErro('O e-mail da conta foi atualizado, mas alguns vinculos nao puderam ser sincronizados.', 500);
     }
 
-    if (novaSenha && usuarioAlvo.user_id) {
+    if (editandoProprioUsuario && novaSenha && usuarioAlvo.user_id) {
       const { error: erroSenha } = await supabaseAdmin.auth.admin.updateUserById(usuarioAlvo.user_id, { password: novaSenha });
       if (erroSenha) return respostaErro('Os dados foram salvos, mas a senha nao pode ser atualizada.', 500, 'senha');
     }
 
-    if (usuarioAlvo.user_id) {
+    if (editandoProprioUsuario && usuarioAlvo.user_id) {
       const { error: erroDiretorio } = await supabaseAdmin
         .from('usuarios_contas')
         .update({
-          nome,
+          ...(corpo.nome !== undefined ? { nome } : {}),
           email: emailEnviado,
           ...(loginNormalizado ? { login: loginNormalizado } : {}),
           atualizado_em: new Date().toISOString(),
@@ -344,6 +375,15 @@ export async function POST(request: Request) {
       }
     }
 
+    if (liberacoes) {
+      const confirmado = await supabaseAdmin.from('usuarios_empresa')
+        .select('id,perfil,dashboard_liberada,modulos_liberados')
+        .eq('id', acessoId).eq('empresa_id', usuarioAlvo.empresa_id).maybeSingle();
+      if (confirmado.error || !confirmado.data || !liberacoesPersistidasIguais(confirmado.data, liberacoes)) {
+        return respostaErro('Não foi possível confirmar as liberações salvas. Atualize o usuário e confira os acessos antes de tentar novamente.', 503);
+      }
+      Object.assign(usuarioAtualizado, confirmado.data);
+    }
     return NextResponse.json({
       erro: false,
       usuario: usuarioAtualizado,

@@ -52,6 +52,7 @@ async function fixture() {
     create table usuarios_empresa(user_id uuid,empresa_id uuid,status text,perfil text);
     create table empresa_modulos(empresa_id uuid,modulo_id text,ativo boolean,expira_em timestamptz);
     create table marketplace_connections(id uuid primary key,empresa_id uuid,provider text,status text,seller_name text);
+    create table marketplace_connection_labels(connection_id uuid,empresa_id uuid,local_label text);
     create table marketplace_listings(id uuid primary key default gen_random_uuid(),empresa_id uuid,connection_id uuid,provider_listing_id text,search_text text,status text,snapshot jsonb,synced_at timestamptz default now());`);
   await db.exec(read('supabase/migrations/20261007230000_marketplace_sales_notifications.sql'));
   await db.exec(read('supabase/migrations/20261011200000_marketplace_local_products.sql'));
@@ -62,6 +63,8 @@ async function fixture() {
   await db.query("insert into marketplace_connections values($1,$2,'mercado_livre','connected','Conta A'),($3,$2,'mercado_livre','connected','Conta B'),($4,$5,'mercado_livre','connected','Outra empresa')",[conn,company,conn2,wrong,other]);
   await db.exec(read('supabase/migrations/20261012010000_marketplace_inventory_sync.sql'));
   await db.exec(read('supabase/migrations/20261012230000_marketplace_sales_history.sql'));
+  await db.exec("alter table marketplace_sale_alerts add column alert_kind text not null default 'new_sale'; alter table marketplace_connections add column last_error_code text;");
+  await db.exec(read('supabase/migrations/20261024150000_marketplace_inventory_protection.sql'));
   await db.query("update marketplace_inventory_settings set activated_at=now()-interval '2 days'");
   const command=async(action,data)=>(await db.query('select marketplace_product_command($1,$2,$3,$4,$5) as r',[company,actor,action,JSON.stringify(data),crypto.randomUUID()])).rows[0].r;
   const product=async(name='Produto',stock=8)=>{
@@ -72,8 +75,8 @@ async function fixture() {
   const link=async(product_id,connection_id=conn,provider_listing_id='MLB123456')=>command('link',{product_id,connection_id,provider:'mercado_livre',provider_listing_id,title:'Produto',reported_stock:8,status:'active'});
   const save=async(orderId='100',connection=conn,lines=[{listingId:'MLB123456',variationId:'',quantity:2,title:'Produto'}],patch={})=>{
     const snapshot={confirmedAt:new Date(Date.now()-3_600_000).toISOString(),providerUpdatedAt:new Date().toISOString(),inventoryLines:lines,...patch};
-    return db.query(`insert into marketplace_sales(empresa_id,connection_id,provider_order_id,status,snapshot)
-      values($1,$2,$3,$4,$5) on conflict(connection_id,provider_order_id) do update set status=excluded.status,snapshot=excluded.snapshot,updated_at=now() returning id`,[company,connection,orderId,patch.status||'paid',JSON.stringify(snapshot)]);
+    return db.query(`insert into marketplace_sales(empresa_id,connection_id,provider_order_id,status,shipment_status,label_status,snapshot)
+      values($1,$2,$3,$4,$5,$6,$7) on conflict(connection_id,provider_order_id) do update set status=excluded.status,shipment_status=excluded.shipment_status,label_status=excluded.label_status,snapshot=excluded.snapshot,updated_at=now() returning id`,[company,connection,orderId,patch.status||'paid',patch.shipmentStatus||null,patch.labelStatus||'unavailable',JSON.stringify(snapshot)]);
   };
   return {db,company,other,actor,second,conn,conn2,wrong,product,link,save,command,
     stock:async(id)=>(await db.query('select stock_quantity from marketplace_products where id=$1',[id])).rows[0].stock_quantity,
@@ -90,6 +93,20 @@ test('SQL real: uma baixa por item/pedido, saldo central para duas contas, audit
     assert.deepEqual(moves.rows.map(m=>[m.kind,m.actor_id,m.stock_before,m.stock_after]),[['sale',null,8,6],['sale',null,6,3]]);
     assert.equal((await f.feed()).alerts.length,2);
   }finally{await f.db.close();}
+});
+test('SQL real: duas vendas pendentes de outro MLB baixam 2→1→0 apenas uma vez após vincular',async()=>{
+ const f=await fixture();try{
+  const p=await f.product('Panificadora',2);await f.link(p);
+  const lines=[{listingId:'MLB654321',variationId:'',quantity:1,title:'Panificadora'}];
+  await f.save('201',f.conn,lines);await f.save('202',f.conn,lines);assert.equal(await f.stock(p),2);
+  await f.link(p,f.conn,'MLB654321');
+  const events=(await f.db.query('select id from marketplace_inventory_events order by order_id')).rows;
+  for(let round=0;round<3;round++)for(const event of events)await f.db.query('select marketplace_apply_inventory_event($1)',[event.id]);
+  assert.equal(await f.stock(p),0);
+  assert.deepEqual((await f.db.query("select stock_before,stock_after from marketplace_stock_movements where kind='sale' order by created_at,id")).rows.map(r=>[r.stock_before,r.stock_after]).sort((a,b)=>b[0]-a[0]),[[2,1],[1,0]]);
+  await f.save('201',f.conn,lines);await f.save('202',f.conn,lines);assert.equal(await f.stock(p),0);
+  assert.equal((await f.db.query("select count(*)::int as n from marketplace_stock_movements where kind='sale'")).rows[0].n,2);
+ }finally{await f.db.close();}
 });
 test('SQL real: histórico, saldo desconhecido, falta de vínculo e variações nunca dão baixa inventada',async()=>{
   const f=await fixture();try{
@@ -135,12 +152,17 @@ test('SQL real: cancelamento/devolução não encerrados permanecem ativos; conc
     assert.equal((await state()).operational_status,'inactive');
   }finally{await f.db.close();}
 });
-test('SQL real: cancelamento não repõe estoque, quantidade alterada gera pendência e saldo insuficiente não fica negativo',async()=>{
+test('SQL real: cancelamento antes da etiqueta devolve uma única reserva; após avanço logístico exige entrada física',async()=>{
   const f=await fixture();try{
     const p=await f.product('Produto',1);await f.link(p);await f.save();assert.equal(await f.stock(p),0);
-    await f.save('100',f.conn,undefined,{status:'cancelled'});assert.equal(await f.stock(p),0);assert.equal((await f.feed()).alerts.length,0);
+    await f.save('100',f.conn,undefined,{status:'cancelled',shipmentStatus:'cancelled',labelStatus:'unavailable'});assert.equal(await f.stock(p),1);assert.equal((await f.feed()).alerts.length,0);
+    await f.save('100',f.conn,undefined,{status:'cancelled',shipmentStatus:'cancelled',labelStatus:'unavailable'});assert.equal(await f.stock(p),1);
+    assert.deepEqual((await f.db.query("select kind from marketplace_stock_movements where kind in ('sale','sale_reversal') order by created_at,id")).rows.map(r=>r.kind),['sale','sale_reversal']);
+    await f.save('200',f.conn,undefined,{status:'paid'});assert.equal(await f.stock(p),0);
+    await f.save('200',f.conn,undefined,{status:'cancelled',shipmentStatus:'shipped',labelStatus:'unavailable'});assert.equal(await f.stock(p),0);
+    assert.equal((await f.db.query("select issue from marketplace_inventory_events where order_id='200'")).rows[0].issue,'cancelled_requires_manual_return');
     await f.save('100',f.conn,[{listingId:'MLB123456',variationId:'',quantity:3,title:'Alterado'}]);assert.equal(await f.stock(p),0);
-    const event=(await f.db.query('select issue,shortfall,quantity from marketplace_inventory_events')).rows[0];
+    const event=(await f.db.query("select issue,shortfall,quantity from marketplace_inventory_events where order_id='100'")).rows[0];
     assert.deepEqual(event,{issue:'order_quantity_changed',shortfall:1,quantity:2});
   }finally{await f.db.close();}
 });

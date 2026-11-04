@@ -30,13 +30,12 @@ test('retorno revela o Dashboard antes de sincronizar o histórico', () => {
   assert.ok(retorno.indexOf('window.history.back()') > retorno.indexOf('setModuloEmbutido(null)'));
 });
 
-test('módulos pulam a validação visual redundante quando recebem contexto interno, mas recuperam a marca ausente', () => {
-  assert.match(custos, /if \(contextoInicial\) return;\s*const \{ data \} = await supabase\.auth\.getSession\(\)/);
-  assert.match(recebimentos, /if \(contextoInicial\?\.podeGerenciarModulo\) return;\s*const \{ data \} = await supabase\.auth\.getSession\(\)/);
-  assert.match(projetos, /if \(contextoInicial\) \{[\s\S]*?\/api\/modulos\/projetos\/compartilhados[\s\S]*?return;\s*\}\s*const \[accessResponse/);
-  assert.match(marketplaces, /async function loadIdentity\(\) \{[\s\S]*?if \(context\?\.empresa\.logoUrl\) return;/);
-  assert.match(marketplaces, /const needsAccessValidation = !context;/);
-  assert.match(marketplaces, /if \(!needsAccessValidation\) return;/);
+test('contexto visual preserva a aparência, mas não dispensa revalidação da concessão', () => {
+  assert.doesNotMatch(custos, /if \(contextoInicial\) return;/);
+  assert.doesNotMatch(recebimentos, /if \(contextoInicial\?\.podeGerenciarModulo\) return;/);
+  assert.doesNotMatch(projetos, /if \(contextoInicial\) \{[\s\S]*?return;\s*\}\s*const \[accessResponse/);
+  assert.doesNotMatch(marketplaces, /if \(context\?\.empresa\.logoUrl\) return;/);
+  assert.match(marketplaces, /if \(!context\) \{\s*setAccessState\('loading'\);/);
 
   for (const fonte of [custos, projetos, recebimentos, marketplaces]) {
     assert.match(fonte, /\/api\/modulos\/acesso/);

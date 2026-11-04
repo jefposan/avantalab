@@ -1,0 +1,3 @@
+/* Only the offers route owns this solid canvas; other PWAs keep their shell. */
+html:has([data-ofertas-viewport]){min-height:100%;background-color:#fff;background-image:none;color-scheme:light}
+body:has([data-ofertas-viewport]){background-color:#fff;background-image:none}

@@ -12,6 +12,8 @@ type CardExpandidoModalProps = {
   rotulo: string;
   onFechar: () => void;
   children: ReactNode;
+  variante?: 'centralizado' | 'avisos' | 'compacto';
+  darkMode?: boolean;
 };
 
 export default function CardExpandidoModal({
@@ -19,6 +21,8 @@ export default function CardExpandidoModal({
   rotulo,
   onFechar,
   children,
+  variante = 'centralizado',
+  darkMode = false,
 }: CardExpandidoModalProps) {
   const dialogoRef = useRef<HTMLDivElement | null>(null);
   const onFecharRef = useRef(onFechar);
@@ -77,7 +81,7 @@ export default function CardExpandidoModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[12000] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-[2px]"
+      className={variante === 'avisos' ? 'fixed inset-0 z-[12000] bg-black/40' : 'fixed inset-0 z-[12000] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-[2px]'}
       onClick={onFechar}
     >
       <div
@@ -86,7 +90,11 @@ export default function CardExpandidoModal({
         aria-modal="true"
         aria-label={rotulo}
         tabIndex={-1}
-        className="max-h-[calc(100dvh-2rem)] w-[min(94vw,1400px)] overflow-hidden rounded-[24px] outline-none"
+        className={variante === 'avisos'
+          ? `fixed inset-x-3 top-[92px] max-h-[calc(100dvh-108px)] w-auto max-w-sm overflow-hidden rounded-2xl border shadow-2xl outline-none sm:left-auto sm:right-4 sm:w-80 xl:right-8 ${darkMode ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'}`
+          : variante==='compacto'
+          ? 'max-h-[calc(100dvh-2rem)] w-[min(94vw,480px)] overflow-y-auto rounded-[18px] outline-none'
+          : 'max-h-[calc(100dvh-2rem)] w-[min(94vw,1400px)] overflow-hidden rounded-[24px] outline-none'}
         onClick={(evento) => evento.stopPropagation()}
       >
         {children}

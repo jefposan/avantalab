@@ -5,11 +5,15 @@ import type { ListingEditor, ListingTypeOption } from '../listing-editor';
 import { validateChanges } from '../listing-editor';
 import { mercadoLivreEditPolicy, stockModelFromResponse, titleAssociationFromResponse } from './mercadolivre-edit-policy';
 import { listingIdIsValid, normalizeListing, objectValue, uuidIsValid } from './listing-model';
-import { estimateMercadoLivreListingTypeFee, mlRequest, recordPublishedListing, type SellerConnection } from './mercadolivre-management';
+import { estimateMercadoLivreListingTypeFee, mlRequest, recordPublishedListing, saveListing, type SellerConnection } from './mercadolivre-management';
 import { MarketplaceError } from './management-access';
+import {reconcileListingEdits} from './listing-edit-confirmation';
 import type { SaveListingInput } from './listing-edit-adapters';
+import {commonListingRevisionState,individualListingRevisionState} from '../listing-edit-revision';
 
-async function freshEditor(db: SupabaseClient, connection: SellerConnection, id: unknown) {
+type EditorPurpose = 'individual' | 'product-common';
+
+async function freshEditor(db: SupabaseClient, connection: SellerConnection, id: unknown, purpose: EditorPurpose = 'individual') {
   if (!listingIdIsValid(id)) throw new MarketplaceError(400, 'invalid_item', 'Identificador de anúncio inválido.');
   const item = objectValue(await mlRequest(db, connection, `/items/${id}`));
   normalizeListing(item, connection.seller_reference); // Nunca consultar dados complementares de anúncio alheio.
@@ -28,13 +32,20 @@ async function freshEditor(db: SupabaseClient, connection: SellerConnection, id:
   const linked = await db.from('marketplace_product_links').select('product_id').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider_listing_id', id).maybeSingle();
   if (linked.error) throw new MarketplaceError(503, 'inventory_database', 'Não foi possível conferir o estoque local deste anúncio.');
   if (linked.data) {
-    const local = await db.from('marketplace_products').select('stock_quantity').eq('empresa_id', connection.empresa_id).eq('id', linked.data.product_id).is('archived_at', null).maybeSingle();
+    const local = await db.from('marketplace_products').select('stock_quantity,listing_stock_review_at').eq('empresa_id', connection.empresa_id).eq('id', linked.data.product_id).is('archived_at', null).maybeSingle();
     if (local.error) throw new MarketplaceError(503, 'inventory_database', 'Não foi possível conferir o estoque local deste anúncio.');
-    if (local.data?.stock_quantity != null && editor.fields.stock.editable) editor.fields.stock = { ...editor.fields.stock, editable: false,
-      reason: 'Estoque unificado. Ajuste o saldo em Produtos e estoque para atualizar os anúncios vinculados.', notice: `Saldo local: ${local.data.stock_quantity} unidade(s).` };
+    if ((local.data?.stock_quantity != null || local.data?.listing_stock_review_at) && editor.fields.stock.editable) editor.fields.stock = { ...editor.fields.stock, editable: false,
+      reason: 'Estoque unificado. Ajuste o saldo em Produtos e estoque para atualizar os anúncios vinculados.', notice: local.data.listing_stock_review_at ? 'Estoque a confirmar. Confira a quantidade física Online no cadastro local.' : `Saldo local: ${local.data.stock_quantity} unidade(s).` };
+    if (purpose === 'individual') {
+      for (const field of ['title', 'listingType', 'description'] as const) {
+        if (editor.fields[field].editable) editor.fields[field] = { ...editor.fields[field], editable: false,
+          reason: 'Dado comum do produto. Abra Ver estoque e edite em Qualidade do anúncio para aplicar a todos os anúncios vinculados.' };
+      }
+    }
   }
-  const revision = createHash('sha256').update(JSON.stringify({ connection: connection.id, updated: item.last_updated, editor })).digest('hex');
-  return { editor: { ...editor, revision } as ListingEditor, descriptionExists: description.exists, titleWriteField: item.user_product_id ? 'family_name' : 'title' };
+  const revisionState=purpose==='product-common'?commonListingRevisionState(connection.id,item,editor):individualListingRevisionState(connection.id,item,editor);
+  const revision = createHash('sha256').update(JSON.stringify(revisionState)).digest('hex');
+  return { editor: { ...editor, revision } as ListingEditor, item, descriptionExists: description.exists, titleWriteField: item.user_product_id ? 'family_name' : 'title' };
 }
 
 const listingTypeNames: Record<string, string> = { gold_special: 'Clássico', gold_pro: 'Premium', gold_premium: 'Premium', free: 'Grátis' };
@@ -124,7 +135,16 @@ async function priceAutomation(db: SupabaseClient, connection: SellerConnection,
 }
 
 export async function readMercadoLivreEditor(db: SupabaseClient, connection: SellerConnection, id: unknown) {
-  return (await freshEditor(db, connection, id)).editor;
+  const editor=(await freshEditor(db, connection, id)).editor;
+  await reconcileListingEdits(db,connection.empresa_id,connection.id,editor.id,editor.values);
+  return editor;
+}
+
+/** Uso interno da edição única do produto; nunca é exposto pelo editor individual. */
+export async function readCommonMercadoLivreEditor(db: SupabaseClient, connection: SellerConnection, id: unknown) {
+  const editor=(await freshEditor(db, connection, id, 'product-common')).editor;
+  await reconcileListingEdits(db,connection.empresa_id,connection.id,editor.id,editor.values);
+  return editor;
 }
 
 export async function saveMercadoLivreEditor(db: SupabaseClient, connection: SellerConnection, actor: string, input: SaveListingInput) {
@@ -134,7 +154,7 @@ export async function saveMercadoLivreEditor(db: SupabaseClient, connection: Sel
   const { changes, errors } = validateChanges(editor, input.changes);
   if (Object.keys(errors).length) throw new MarketplaceError(400, 'invalid_fields', Object.values(errors).join(' '), errors);
   const { data: audit, error } = await db.from('marketplace_listing_actions').insert({ empresa_id: connection.empresa_id, connection_id: connection.id,
-    provider_listing_id: editor.id, action: 'edit', request_key: input.requestKey, actor_id: actor }).select('id').single();
+    provider_listing_id: editor.id, action: 'edit', request_key: input.requestKey, actor_id: actor,request_payload:{changes} }).select('id').single();
   if (error || !audit) throw new MarketplaceError(error?.code === '23505' ? 409 : 503, error?.code === '23505' ? 'duplicate_edit' : 'edit_audit_unavailable',
     error?.code === '23505' ? 'Outra edição está em processamento ou esta tentativa já foi registrada. Recarregue o anúncio antes de repetir.' : 'A edição ainda não foi habilitada no banco deste ambiente. Nenhum dado foi enviado ao marketplace.');
   let applied = false;
@@ -159,16 +179,52 @@ export async function saveMercadoLivreEditor(db: SupabaseClient, connection: Sel
       await mlRequest(db, connection, `/items/${editor.id}/description?api_version=2`, descriptionExists ? 'PUT' : 'POST', { plain_text: changes.description });
       applied = true;
     }
-    const listing = await recordPublishedListing(db, connection, editor.id);
-    const confirmed = await readMercadoLivreEditor(db, connection, editor.id);
-    if (Object.entries(changes).some(([key, value]) => confirmed.values[key as keyof typeof changes] !== value)) throw new MarketplaceError(409, 'edit_not_confirmed', 'O marketplace não confirmou todos os valores enviados.');
-    const recorded = await db.from('marketplace_listing_actions').update({ status: 'succeeded' }).eq('id', audit.id);
+    const confirmed = await freshEditor(db, connection, editor.id);
+    if (Object.entries(changes).some(([key, value]) => confirmed.editor.values[key as keyof typeof changes] !== value)) throw new MarketplaceError(409, 'edit_not_confirmed', 'O marketplace não confirmou todos os valores enviados.');
+    // Persistir e devolver o MESMO retrato validado; uma leitura anterior ao recálculo
+    // do ML não pode voltar como sucesso com o preço antigo.
+    const listing = await saveListing(db, connection, confirmed.item);
+    await reconcileListingEdits(db,connection.empresa_id,connection.id,editor.id,confirmed.editor.values);
+    const recorded = await db.from('marketplace_listing_actions').update({ status: 'succeeded',error_code:null }).eq('empresa_id',connection.empresa_id).eq('connection_id',connection.id).eq('id', audit.id);
     if (recorded.error) throw new MarketplaceError(503, 'audit_update_failed', 'Não foi possível registrar a confirmação.');
     return { listing };
   } catch (failure) {
     const uncertain = applied || (failure instanceof MarketplaceError && failure.code === 'mutation_uncertain');
     await db.from('marketplace_listing_actions').update({ status: uncertain ? 'uncertain' : 'failed', error_code: failure instanceof MarketplaceError ? failure.code : 'integration' }).eq('id', audit.id);
     if (uncertain) throw new MarketplaceError(409, 'edit_uncertain', 'A alteração pode ter sido aplicada, total ou parcialmente. Recarregue a edição e confira os valores no marketplace antes de tentar novamente.');
+    throw failure;
+  }
+}
+
+/** Aplicação interna já validada pelo escopo de produto em product-common-content. */
+export async function saveCommonMercadoLivreEditor(db: SupabaseClient, connection: SellerConnection, actor: string, input: SaveListingInput) {
+  if (!uuidIsValid(input.requestKey) || typeof input.revision !== 'string' || !/^[a-f0-9]{64}$/.test(input.revision)) throw new MarketplaceError(400, 'invalid_edit', 'Edição inválida. Reabra o produto.');
+  const { editor, descriptionExists } = await freshEditor(db, connection, input.id, 'product-common');
+  if (editor.revision !== input.revision) throw new MarketplaceError(409, 'edit_conflict', 'O anúncio ou suas permissões mudaram. Recarregue a edição antes de salvar; seus valores foram preservados.');
+  const { changes, errors } = validateChanges(editor, input.changes);
+  if (Object.keys(errors).length) throw new MarketplaceError(400, 'invalid_fields', Object.values(errors).join(' '), errors);
+  if (Object.keys(changes).some(field=>!['title','listingType','description'].includes(field))) throw new MarketplaceError(400, 'invalid_fields', 'A edição única preserva preço e estoque.');
+  const { data: audit, error } = await db.from('marketplace_listing_actions').insert({ empresa_id: connection.empresa_id, connection_id: connection.id,
+    provider_listing_id: editor.id, action: 'edit', request_key: input.requestKey, actor_id: actor,request_payload:{changes,commonProduct:true} }).select('id').single();
+  if (error || !audit) throw new MarketplaceError(error?.code === '23505' ? 409 : 503, error?.code === '23505' ? 'duplicate_edit' : 'edit_audit_unavailable', error?.code === '23505' ? 'Outra edição está em processamento ou esta tentativa já foi registrada. Recarregue o produto antes de repetir.' : 'Não foi possível reservar o histórico. Nenhum dado foi enviado ao marketplace.');
+  let applied=false;
+  try {
+    const locked=await freshEditor(db,connection,input.id,'product-common');
+    if(locked.editor.revision!==input.revision)throw new MarketplaceError(409,'edit_conflict','O anúncio mudou durante a edição. Recarregue antes de salvar.');
+    const body:Record<string,unknown>={};
+    if(changes.title!==undefined)body[locked.titleWriteField]=changes.title;
+    if(Object.keys(body).length){await mlRequest(db,connection,`/items/${editor.id}`,'PUT',body);applied=true;}
+    if(changes.listingType!==undefined){await mlRequest(db,connection,`/items/${editor.id}/listing_type`,'POST',{id:changes.listingType});applied=true;}
+    if(changes.description!==undefined){await mlRequest(db,connection,`/items/${editor.id}/description?api_version=2`,descriptionExists?'PUT':'POST',{plain_text:changes.description});applied=true;}
+    const listing=await recordPublishedListing(db,connection,editor.id),confirmed=await readCommonMercadoLivreEditor(db,connection,editor.id);
+    if(Object.entries(changes).some(([key,value])=>confirmed.values[key as keyof typeof changes]!==value))throw new MarketplaceError(409,'edit_not_confirmed','O marketplace não confirmou todos os valores enviados.');
+    const recorded=await db.from('marketplace_listing_actions').update({status:'succeeded',error_code:null}).eq('empresa_id',connection.empresa_id).eq('connection_id',connection.id).eq('id',audit.id);
+    if(recorded.error)throw new MarketplaceError(503,'audit_update_failed','Não foi possível registrar a confirmação.');
+    return {listing};
+  }catch(failure){
+    const uncertain=applied||(failure instanceof MarketplaceError&&failure.code==='mutation_uncertain');
+    await db.from('marketplace_listing_actions').update({status:uncertain?'uncertain':'failed',error_code:failure instanceof MarketplaceError?failure.code:'integration'}).eq('id',audit.id);
+    if(uncertain)throw new MarketplaceError(409,'edit_uncertain','A alteração pode ter sido aplicada, total ou parcialmente. Recarregue o produto e confira os valores no marketplace antes de tentar novamente.');
     throw failure;
   }
 }

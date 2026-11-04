@@ -1,0 +1,10 @@
+.install { width:100%;margin-top:10px;color:#16466a;font-family:var(--av-font-family,inherit); }
+.button { width:100%; }
+.button > span { background:rgba(255,255,255,.9);border-color:#a8c6dc;color:#064573; }
+.instructions { margin-top:8px;padding:12px;border:1px solid #d0e0ec;border-radius:12px;background:rgba(255,255,255,.96);color:#253a4c;font-size:12px;line-height:1.5; }
+.instructions h2 { margin:0 0 5px;font-size:13px;font-weight:600; }
+.instructions h2:not(:first-child) { margin-top:12px; }
+.instructions ol { padding-left:18px;margin:0; }
+.instructions li+li { margin-top:4px; }
+.install p { margin:6px 0;font-size:12px;line-height:1.5; }
+.install .error { color:#a12a2a; }

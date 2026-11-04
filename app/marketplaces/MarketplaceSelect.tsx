@@ -6,24 +6,28 @@ import Tooltip from '@/app/components/Tooltip';
 
 export type MarketplaceSelectOption = { value: string; label: string; detail?: string };
 
-type Props = {
+type BaseProps = {
   id?: string;
   label: string;
   ariaLabel?: string;
-  value: string;
   options: MarketplaceSelectOption[];
   placeholder: string;
   disabled?: boolean;
   error?: string;
   className?: string;
-  onChange: (value: string) => void;
   tooltipText?: string;
   tooltipPosition?: 'top' | 'bottom';
   leadingIcon?: ReactNode;
   detailAsBadge?: boolean;
 };
 
-export default function MarketplaceSelect({ id, label, ariaLabel, value, options, placeholder, disabled = false, error, className = '', onChange, tooltipText, tooltipPosition = 'top', leadingIcon, detailAsBadge = false }: Props) {
+type Props = BaseProps & (
+  | { value: string; onChange: (value: string) => void; values?: never; onValuesChange?: never }
+  | { values: string[]; onValuesChange: (values: string[]) => void; value?: never; onChange?: never }
+);
+
+export default function MarketplaceSelect(props: Props) {
+  const { id, label, ariaLabel, options, placeholder, disabled = false, error, className = '', tooltipText, tooltipPosition = 'top', leadingIcon, detailAsBadge = false } = props;
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -33,7 +37,10 @@ export default function MarketplaceSelect({ id, label, ariaLabel, value, options
   const labelId = `${generatedId}-label`;
   const valueId = `${generatedId}-value`;
   const errorId = `${generatedId}-error`;
-  const selected = options.find((option) => option.value === value);
+  const values = props.values;
+  const selected = values === undefined ? options.find((option) => option.value === props.value) : undefined;
+  const selectedLabels = values?.map(value => options.find(option => option.value === value)?.label).filter((value): value is string => Boolean(value));
+  const visibleValue = values === undefined ? '' : !selectedLabels?.length ? placeholder : selectedLabels.length === 1 ? selectedLabels[0] : `${selectedLabels.length} marketplaces`;
   const visibleOpen = open && !disabled;
 
   useEffect(() => {
@@ -88,7 +95,7 @@ export default function MarketplaceSelect({ id, label, ariaLabel, value, options
           if (event.key === 'End' && visibleOpen) { event.preventDefault(); focusOption('last'); }
         }}
       >
-        <span id={valueId} className={leadingIcon || detailAsBadge ? styles.selectValueWithIcon : undefined}>{leadingIcon}{detailAsBadge && selected ? <><span>{selected.label}</span>{selected.detail && <small className={styles.selectCount}>{selected.detail}</small>}</> : selected ? `${selected.label}${selected.detail ? ` · ${selected.detail}` : ''}` : placeholder}</span>
+        <span id={valueId} className={leadingIcon || detailAsBadge ? styles.selectValueWithIcon : undefined}>{leadingIcon}{values !== undefined ? visibleValue : detailAsBadge && selected ? <><span>{selected.label}</span>{selected.detail && <small className={styles.selectCount}>{selected.detail}</small>}</> : selected ? `${selected.label}${selected.detail ? ` · ${selected.detail}` : ''}` : placeholder}</span>
         <span aria-hidden="true">▾</span>
       </button>;
   return <div ref={root} className={`${styles.selectField} ${className}`.trim()}>
@@ -99,6 +106,7 @@ export default function MarketplaceSelect({ id, label, ariaLabel, value, options
         id={listId}
         className={styles.selectList}
         role="listbox"
+        aria-multiselectable={values === undefined ? undefined : true}
         aria-label={label || ariaLabel || placeholder}
         onKeyDown={(event) => {
           if (event.key === 'ArrowDown') { event.preventDefault(); focusOption('next'); }
@@ -113,9 +121,17 @@ export default function MarketplaceSelect({ id, label, ariaLabel, value, options
           type="button"
           className={styles.selectOption}
           role="option"
-          aria-selected={option.value === value}
-          onClick={() => { onChange(option.value); setOpen(false); trigger.current?.focus(); }}
-        ><span>{option.label}</span>{option.detail && <small>{option.detail}</small>}</button>)}
+          aria-selected={values === undefined ? option.value === props.value : option.value ? values.includes(option.value) : values.length === 0}
+          onClick={() => {
+            if (values !== undefined) {
+              props.onValuesChange(option.value ? values.includes(option.value) ? values.filter(value => value !== option.value) : [...values, option.value] : []);
+              return;
+            }
+            props.onChange(option.value);
+            setOpen(false);
+            trigger.current?.focus();
+          }}
+        ><span className={styles.selectOptionMain}><span>{option.label}</span>{values !== undefined && (option.value ? values.includes(option.value) : values.length === 0) && <span aria-hidden="true">✓</span>}</span>{option.detail && <small>{option.detail}</small>}</button>)}
       </div>}
     </div>
     {error && <small id={errorId} className={styles.selectError} role="alert">{error}</small>}

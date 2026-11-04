@@ -7,7 +7,7 @@ const gestao = readFileSync('app/gestao/page.tsx', 'utf8');
 const tabela = readFileSync('app/components/TabelaLancamentosDespesa.tsx', 'utf8');
 
 test('despesas fixas contínuas preservam uma janela idempotente de três meses futuros', () => {
-  assert.match(banco, /garantirFixasDoMesAtual\(empresaId: string, mesesAdiante = 3\)/);
+  assert.match(banco, /garantirFixasDoMesAtual\(empresaId: string, mesesAdiante = 3, cliente = supabase\)/);
   assert.match(banco, /const horizonte = Math\.max\(1, Math\.min\(60, Math\.trunc\(mesesAdiante\) \|\| 3\)\)/);
   assert.match(banco, /Array\.from\(\{ length: horizonte \+ 1 \}/);
   assert.match(banco, /l\.recorrencia_id === rec\.id/);

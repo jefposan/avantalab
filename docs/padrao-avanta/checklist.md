@@ -30,6 +30,12 @@
       pendências, cancelamento, comprovante e perda de rede foram testados.
 - [ ] Ava e manuais operacionais foram revisados.
 - [ ] `app/lib/version.ts` e `CHANGELOG.md` foram avaliados/atualizados.
+- [ ] Toda publicação inclui versão oficial e resumo descritivo do que foi
+      corrigido/adicionado no provedor, no registro da entrega e na comunicação.
+      Pacote isolado/CLI tem os metadados suportados; limitações do destino
+      estão explícitas e o resumo está vinculado ao identificador da publicação.
+- [ ] Resumo confere com o pacote enviado; estado em fila/em build/publicado é
+      informado corretamente, sem aguardar o build para avisar sobre o envio.
 - [ ] `npm run verificar:padrao-avanta` passou.
 - [ ] `npm run verificar:ava` passou.
 - [ ] Build, lint e testes proporcionais ao risco passaram.

@@ -5,7 +5,9 @@ import { normalizarTexto } from '@/app/lib/formatters';
 import { refreshMercadoLivreToken } from './mercadolivre-oauth';
 import { openMarketplaceSecret, sealMarketplaceSecret } from './secret-vault';
 import { MarketplaceError } from './management-access';
+import { mercadoLivreValidationError, isWarningOnlyPrevalidation } from './mercadolivre-validation-error';
 import { actionBody, listingIdIsValid, normalizeListing, objectValue, uuidIsValid, type ListingAction } from './listing-model';
+import { fiscalProviderProblem, isFiscalPath } from './fiscal-provider-error';
 
 export type ListingTypeFeeEstimate = { fee: number | null; percent: number | null; notice?: string };
 
@@ -89,41 +91,31 @@ async function accessToken(db: SupabaseClient, initial: SellerConnection, force 
   throw new MarketplaceError(409, 'refresh_busy', 'A conexão está sendo renovada. Aguarde alguns segundos.');
 }
 
-export async function mlRequest(db: SupabaseClient, connection: SellerConnection, path: string, method = 'GET', body?: unknown): Promise<unknown> {
+export async function mlRequest(db: SupabaseClient, connection: SellerConnection, path: string, method = 'GET', body?: unknown, options?: { xml: string }): Promise<unknown> {
   if (!path.startsWith('/') || path.startsWith('//')) throw new Error('Invalid API path');
   let token = await accessToken(db, connection);
   for (let attempt = 0; attempt < 2; attempt++) {
     let response: Response;
     try {
-      response = await fetch(`https://api.mercadolibre.com${path}`, { method, cache: 'no-store', signal: AbortSignal.timeout(8_000),
-        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(/^\/shipments\/\d+/.test(path) ? { 'X-Format-New': 'true' } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
-        ...(body ? { body: JSON.stringify(body) } : {}) });
+      response = await fetch(`https://api.mercadolibre.com${path}`, { method, cache: 'no-store', redirect: isFiscalPath(path) ? 'error' : 'follow', signal: AbortSignal.timeout(8_000),
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(/^\/shipments\/\d+/.test(path) ? { 'X-Format-New': 'true' } : {}), ...(/^\/users\/\d+\/shipping_modes$/.test(path) && method === 'POST' ? { 'X-Format-New': 'true', 'x-multichannel': 'true' } : {}), ...(options || body ? { 'Content-Type': options ? 'application/xml' : 'application/json' } : {}) },
+        ...(options ? { body: options.xml } : body ? { body: JSON.stringify(body) } : {}) });
     } catch {
       throw new MarketplaceError(503, method === 'GET' ? 'provider_unavailable' : 'mutation_uncertain', method === 'GET' ? 'Mercado Livre indisponível. Tente novamente.' : 'A resposta do Mercado Livre não chegou. Atualize a lista antes de repetir a ação.');
     }
     if (response.status === 401 && attempt === 0) { token = await accessToken(db, connection, true); continue; }
     if (!response.ok) {
+      if (isFiscalPath(path)) throw fiscalProviderProblem(response.status, await response.json().catch(() => null), response.headers.get('x-request-id') || response.headers.get('x-correlation-id'));
       if (method === 'GET' && response.status === 403 && path.startsWith('/post-purchase/')) {
         const denied = objectValue(await response.json().catch(() => null));
         // Reconhecer apenas código documentado; nunca enviar mensagem/cause brutos.
         if (denied.code === 'PA_UNAUTHORIZED_RESULT_FROM_POLICIES') throw new MarketplaceError(403, 'provider_policy_403', 'A política de acesso do Mercado Livre recusou a consulta de pós-venda. Confira as permissões funcionais e a autorização da conta.');
       }
-      if (method !== 'GET' && [400, 409].includes(response.status)) {
-        const problem = objectValue(await response.json().catch(() => null));
-        const fields: Record<string, string> = {};
-        const names: Record<string, string> = { title: 'title', family_name: 'title', price: 'price', available_quantity: 'stock', plain_text: 'description', category_id: 'categoryId', listing_type_id: 'listingType', condition: 'condition', item_condition: 'condition', shipping: 'shippingMode', mode: 'shippingMode', sale_terms: 'warrantyType', warranty_type: 'warrantyType', warranty_time: 'warrantyTime', pictures: 'pictureUrl', catalog_product_id: 'productId', attributes: 'attributes' };
-        const labels: Record<string, string> = { title: 'título', price: 'preço', stock: 'estoque', description: 'descrição', categoryId: 'categoria', listingType: 'tipo de anúncio', shippingMode: 'forma de envio', condition: 'condição', warrantyType: 'garantia', warrantyTime: 'prazo da garantia', pictureUrl: 'imagem', productId: 'produto', attributes: 'atributos obrigatórios' };
-        for (const cause of (Array.isArray(problem.cause) ? problem.cause : [])) {
-          const references = objectValue(cause).references;
-          for (const reference of (Array.isArray(references) ? references : [])) {
-            if (typeof reference !== 'string') continue;
-            const normalized = reference.toLowerCase().replace(/^(item|body)\./, '').replace(/\[[^\]]*\]/g, '').split('.');
-            const field = normalized.map((part) => names[part]).find(Boolean);
-            if (field) fields[field] = `O Mercado Livre recusou ${labels[field] === 'descrição' ? 'a descrição' : labels[field] === 'imagem' ? 'a imagem' : `o campo ${labels[field]}`}. Confira as regras e o valor informado.`;
-          }
-        }
-        // Não repassar mensagens arbitrárias do provedor, tokens ou outros campos.
-        if (Object.keys(fields).length) throw new MarketplaceError(400, 'invalid_fields', 'Revise os campos indicados pelo Mercado Livre.', fields);
+      if (method !== 'GET' && [400, 409, 422].includes(response.status)) {
+        const problem = await response.json().catch(() => null);
+        const diagnostic = mercadoLivreValidationError(problem, response.status, body);
+        if (isWarningOnlyPrevalidation(problem, response.status, path, method)) return { validatedWithWarnings: true, details: diagnostic.details, warningCodes: (objectValue(problem).cause as Array<Record<string, unknown>>).map(cause => cause.code) };
+        throw new MarketplaceError(400, 'invalid_fields', diagnostic.message, diagnostic.fields, diagnostic.details);
       }
       throw new MarketplaceError([403, 429].includes(response.status) ? response.status : 409, `provider_${response.status}`,
         response.status === 403 ? 'O Mercado Livre negou este recurso. A conexão segue ativa; confira as permissões funcionais do aplicativo e da conta.' : response.status === 429 ? 'Limite de consultas do Mercado Livre. Aguarde antes de tentar novamente.' : 'O Mercado Livre recusou a operação. Atualize os dados e confira o anúncio na plataforma.');
@@ -135,23 +127,36 @@ export async function mlRequest(db: SupabaseClient, connection: SellerConnection
 }
 
 /** Busca documentos do Mercado Livre sem expor o token ao navegador. */
-export async function mlBinaryRequest(db: SupabaseClient, connection: SellerConnection, path: string) {
+/** Upload isolado: não associa a foto a nenhum anúncio antes da confirmação do editor. */
+export async function uploadMercadoLivrePicture(db: SupabaseClient, connection: SellerConnection, bytes: Uint8Array, mime: string) {
+  const form = new FormData();
+  form.append('file', new Blob([new Uint8Array(bytes)], { type: mime }), mime === 'image/png' ? 'foto.png' : 'foto.jpg');
+  let response: Response;
+  try { response = await fetch('https://api.mercadolibre.com/pictures/items/upload', { method:'POST', cache:'no-store', signal:AbortSignal.timeout(20_000), headers:{Authorization:`Bearer ${await accessToken(db,connection)}`}, body:form }); }
+  catch { throw new MarketplaceError(503,'upload_uncertain','Não foi possível confirmar o envio da foto. Nenhum anúncio foi alterado.'); }
+  if(!response.ok)throw new MarketplaceError(response.status===403?403:409,'picture_upload_failed','O Mercado Livre não aceitou a foto. Confira formato, resolução e permissões da conta. Nenhum anúncio foi alterado.');
+  return response.json();
+}
+
+export async function mlBinaryRequest(db: SupabaseClient, connection: SellerConnection, path: string, format: 'pdf' | 'xml' | 'json' | 'zip' = 'pdf') {
   if (!path.startsWith('/') || path.startsWith('//')) throw new Error('Invalid API path');
   let token = await accessToken(db, connection);
   for (let attempt = 0; attempt < 2; attempt++) {
     let response: Response;
     try {
-      response = await fetch(`https://api.mercadolibre.com${path}`, { cache: 'no-store', signal: AbortSignal.timeout(12_000), headers: { Authorization: `Bearer ${token}`, Accept: 'application/pdf' } });
+      response = await fetch(`https://api.mercadolibre.com${path}`, { cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(12_000), headers: { Authorization: `Bearer ${token}`, Accept: format === 'zip' ? 'application/zip' : format === 'pdf' ? 'application/pdf' : format === 'xml' ? 'application/xml' : 'application/json' } });
     } catch { throw new MarketplaceError(503, 'provider_unavailable', 'Mercado Livre indisponível. Tente imprimir novamente.'); }
     if (response.status === 401 && attempt === 0) { token = await accessToken(db, connection, true); continue; }
     if (!response.ok) {
+      if (isFiscalPath(path)) throw fiscalProviderProblem(response.status, await response.json().catch(() => null), response.headers.get('x-request-id') || response.headers.get('x-correlation-id'));
       if (response.status === 400) throw new MarketplaceError(409, 'label_unavailable', 'A etiqueta ainda não está disponível para este envio.');
       throw new MarketplaceError([403, 429].includes(response.status) ? response.status : 503, `provider_${response.status}`, 'Não foi possível obter a etiqueta no Mercado Livre.');
     }
     const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('pdf')) throw new MarketplaceError(503, 'invalid_label', 'O Mercado Livre não devolveu uma etiqueta em PDF.');
+    if (format === 'zip' ? !/^(application\/(zip|x-zip-compressed|octet-stream))(;|$)/i.test(contentType) : !contentType.includes(format)) throw new MarketplaceError(503, 'invalid_label', 'O Mercado Livre não devolveu o documento no formato solicitado.');
     const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.length < 5 || bytes.length > 15 * 1024 * 1024 || String.fromCharCode(...bytes.slice(0, 5)) !== '%PDF-') throw new MarketplaceError(503, 'invalid_label', 'O Mercado Livre devolveu um arquivo de etiqueta inválido. Tente novamente.');
+    if (bytes.length < 5 || bytes.length > 15 * 1024 * 1024 || (format === 'pdf' && String.fromCharCode(...bytes.slice(0, 5)) !== '%PDF-')) throw new MarketplaceError(503, 'invalid_label', 'O Mercado Livre devolveu um arquivo de documento inválido. Tente novamente.');
+    if (format === 'zip' && (bytes.length < 22 || bytes[0] !== 0x50 || bytes[1] !== 0x4b || bytes[2] !== 0x03 || bytes[3] !== 0x04)) throw new MarketplaceError(503, 'invalid_label', 'O Mercado Livre não devolveu um pacote de etiqueta térmica válido.');
     return bytes;
   }
   throw new MarketplaceError(409, 'reconnect', 'Reconecte esta conta para imprimir a etiqueta.');
@@ -200,6 +205,16 @@ async function estimates(db: SupabaseClient, connection: SellerConnection, item:
 
 export async function saveListing(db: SupabaseClient, connection: SellerConnection, item: Record<string, unknown>, includeEstimates = true) {
   const snapshot = normalizeListing(item, connection.seller_reference, includeEstimates ? await estimates(db, connection, item) : {});
+  if(!includeEstimates){
+    const previous=await db.from('marketplace_listings').select('snapshot').eq('empresa_id',connection.empresa_id).eq('connection_id',connection.id).eq('provider_listing_id',snapshot.id).maybeSingle();
+    if(previous.error)throw new MarketplaceError(503,'database','Não foi possível conferir o retrato anterior do anúncio.');
+    const old=objectValue(previous.data?.snapshot);
+    if(old.price===snapshot.price&&old.listingType===snapshot.listingType&&JSON.stringify(old.shipping)===JSON.stringify(snapshot.shipping)){
+      snapshot.feeEstimate=typeof old.feeEstimate==='number'?old.feeEstimate:null;
+      snapshot.feePercent=typeof old.feePercent==='number'?old.feePercent:null;
+      snapshot.freightEstimate=typeof old.freightEstimate==='number'?old.freightEstimate:null;
+    }
+  }
   const { error } = await db.from('marketplace_listings').upsert({ empresa_id: connection.empresa_id, connection_id: connection.id,
     provider: 'mercado_livre', provider_listing_id: snapshot.id, title: snapshot.title,
     search_text: normalizarTexto([snapshot.title, snapshot.id, snapshot.ean, snapshot.sku].filter(Boolean).join(' ')),
@@ -287,20 +302,47 @@ export async function manageListing(db: SupabaseClient, connection: SellerConnec
     throw new MarketplaceError(400, 'invalid_action', 'Confirmação ou ação inválida.');
   const item = objectValue(await mlRequest(db, connection, `/items/${input.id}`));
   const current = normalizeListing(item, connection.seller_reference);
-  let body;
+  // Mesmo uma ação incompatível precisa corrigir o retrato local já defasado.
+  await saveListing(db,connection,item,false);
+  let body, resumeQuantity: number | null = null;
   try { body = actionBody(input.action as ListingAction, current.status, current.substatus); }
   catch (error) { throw new MarketplaceError(409, 'invalid_state', error instanceof Error ? error.message : 'Ação não permitida.'); }
+  if(input.action==='resume'){
+    const linked=await db.from('marketplace_product_links').select('product_id').eq('empresa_id',connection.empresa_id).eq('connection_id',connection.id).eq('provider_listing_id',input.id).maybeSingle();
+    if(linked.error)throw new MarketplaceError(503,'inventory_database','Não foi possível conferir o saldo Online.');
+    if(linked.data){
+      const local=await db.from('marketplace_products').select('stock_quantity,listing_stock_review_at').eq('empresa_id',connection.empresa_id).eq('id',linked.data.product_id).is('archived_at',null).maybeSingle();
+      if(local.error)throw new MarketplaceError(503,'inventory_database','Não foi possível conferir o saldo Online.');
+      if(local.data?.listing_stock_review_at)throw new MarketplaceError(409,'import_stock_review','Confirme a quantidade física Online antes de reativar este anúncio.');
+      if(typeof local.data?.stock_quantity!=='number'||local.data.stock_quantity<=0)throw new MarketplaceError(409,'insufficient_stock','Sem estoque Online disponível para reativar este anúncio.');
+      // A reativação só pode tornar o anúncio comprável depois de o saldo atual
+      // ter sido aceito e relido. Nunca reabre com a quantidade antiga remota.
+      resumeQuantity=local.data.stock_quantity;
+    }
+  }
   const { data: event, error } = await db.from('marketplace_listing_actions').insert({ empresa_id: connection.empresa_id,
     connection_id: connection.id, provider_listing_id: input.id, action: input.action, request_key: input.requestKey, actor_id: actor }).select('id').single();
   if (error) throw new MarketplaceError(error.code === '23505' ? 409 : 503, error.code === '23505' ? 'duplicate_action' : 'database', 'A ação não foi reenviada. Atualize a lista antes de tentar novamente.');
   let providerSucceeded = false;
   try {
+    if (resumeQuantity != null) {
+      await mlRequest(db, connection, `/items/${input.id}`, 'PUT', { available_quantity: resumeQuantity });
+      providerSucceeded = true;
+      const quantityObserved=objectValue(await mlRequest(db, connection, `/items/${input.id}`));
+      if(quantityObserved.id!==input.id||String(quantityObserved.seller_id)!==connection.seller_reference||quantityObserved.available_quantity!==resumeQuantity)
+        throw new MarketplaceError(409,'remote_stock_unconfirmed','O Mercado Livre ainda não confirmou o saldo antes da reativação.');
+    }
     await mlRequest(db, connection, `/items/${input.id}`, 'PUT', body);
     providerSucceeded = true;
-    await recordPublishedListing(db, connection, input.id);
-    const { error: eventError } = await db.from('marketplace_listing_actions').update({ status: 'succeeded' }).eq('id', event.id).eq('empresa_id', connection.empresa_id);
+    const updated=await recordPublishedListing(db, connection, input.id);
+    const observedStatus=updated.substatus.includes('deleted')?'deleted':updated.status;
+    const observation=await db.rpc('marketplace_observe_listing',{p_empresa:connection.empresa_id,p_connection:connection.id,p_listing:updated.id,p_quantity:updated.stock,p_status:observedStatus});
+    if(observation.error)throw new Error('Listing link persistence failed');
+    const expected=({pause:'paused',resume:'active',close:'closed',delete:'deleted'} as Record<string,string>)[String(input.action)];
+    const pending=observedStatus!==expected;
+    const { error: eventError } = await db.from('marketplace_listing_actions').update({ status: pending?'uncertain':'succeeded',error_code:pending?'remote_status_unconfirmed':null }).eq('id', event.id).eq('empresa_id', connection.empresa_id);
     if (eventError) throw new Error('Audit persistence failed');
-    return { success: true };
+    return { success: !pending,pending };
   } catch (error) {
     const uncertain = providerSucceeded || (error instanceof MarketplaceError && error.code === 'mutation_uncertain');
     await db.from('marketplace_listing_actions').update({ status: uncertain ? 'uncertain' : 'failed', error_code: error instanceof MarketplaceError ? error.code : 'persistence' }).eq('id', event.id).eq('empresa_id', connection.empresa_id);

@@ -15,7 +15,7 @@ test('vendas chegam por webhook validado, são enfileiradas e relidas no provedo
   assert.match(webhook, /parseSaleNotification/);
   assert.match(webhook, /queueSaleNotification/);
   assert.match(webhook, /status: 503/);
-  assert.match(service, /\['orders_v2', 'orders', 'shipments', 'items'\]/);
+  assert.match(service, /\['orders_v2', 'orders', 'shipments', 'items', 'invoices'\]/);
   assert.match(service, /await mlRequest\(db, connection, `\/orders\/\$\{id\}`\)/);
   assert.match(service, /processSaleNotifications/);
   assert.match(route, /authorizeMarketplace\(request, params\.get\('empresaId'\)\)/);
@@ -23,7 +23,7 @@ test('vendas chegam por webhook validado, são enfileiradas e relidas no provedo
 
 test('contadores e etiquetas são isolados por conta e a impressão fica no AvantaLab', () => {
   assert.match(client, /pendingSales\[account\.id\]/);
-  assert.match(client, /<Vendas companyId=\{companyId\} accountId=\{salesAccount\}/);
+  assert.match(client, /<Vendas companyId=\{companyId\} view=\{salesView\} onViewChange=\{selectSalesView\} accountId=\{salesAccount\}/);
   assert.match(sales, /\/api\/modulos\/marketplaces\/vendas\/etiqueta/);
   assert.match(sales, /URL\.createObjectURL/);
   assert.match(sales, /labelActionText/);
@@ -33,7 +33,7 @@ test('contadores e etiquetas são isolados por conta e a impressão fica no Avan
   assert.match(saleStatus, /Reimprimir etiqueta/);
   assert.match(service, /'ready_to_print', 'printed'/);
   assert.match(label, /authorizeMarketplace\(request, body\.empresaId, 'manage'\)/);
-  assert.match(label, /Content-Type': 'application\/pdf'/);
+  assert.match(label, /'Content-Type': format === 'zpl2' \? 'text\/plain; charset=utf-8' : 'application\/pdf'/);
   assert.match(service, /snapshot.labelStatus !== 'ready'/);
   assert.match(service, /orders\/\$\{data.provider_order_id\}/);
   assert.match(sales, /labelPreview\?\.saleId === sale\.id/);

@@ -1,0 +1,62 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createDirectSalesFixture} from '../../app/modules/marketplaces/dev/direct-sales-fixture.ts';
+test('venda direta: transação, preço real, mês, saldo específico, recibo, cancelamento e devolução auditada',async()=>{
+ const f=await createDirectSalesFixture();try{
+  const {db,company,actor,editor,product,online,offline,command}=f;
+  const balance=async id=>(await f.balances()).find(w=>w.id===id);
+  const sale=async id=>(await db.query('select * from marketplace_direct_sales where id=$1',[id])).rows[0];
+  const payload=async(w=offline,q=2)=>({warehouseId:w,productId:product,quantity:q,revision:(await balance(w)).revision,unitPriceCents:15000,soldOn:'2026-09-18',note:'Balcão'});
+  const key=crypto.randomUUID(),p=await payload(),r=await command('sell',p,key);
+  assert.equal((await balance(offline)).quantity,6);assert.equal((await balance(online)).quantity,10);
+  assert.equal((await sale(r.saleId)).total_cents,30000);assert.equal(new Date((await sale(r.saleId)).sold_on).toISOString().slice(0,10),'2026-09-18');
+  assert.deepEqual(await command('sell',p,key),r);assert.equal((await balance(offline)).quantity,6);
+  await assert.rejects(command('sell',{...p,quantity:1},key),/outros dados/);
+  await assert.rejects(command('sell',p),/Saldo atualizado/);
+  await assert.rejects(command('sell',await payload(offline,99)),/Saldo insuficiente/);
+  assert.equal((await db.query('select count(*)::int n from marketplace_direct_sales')).rows[0].n,1);
+  assert.equal((await db.query('select count(*)::int n from queued')).rows[0].n,0);
+  await assert.rejects(command('sell',await payload(),crypto.randomUUID(),editor),/Sem permissão/);
+  await db.query('update marketplace_price_users set can_register_sales=true where user_id=$1',[editor]);
+  const second=await command('sell',await payload(offline,1),crypto.randomUUID(),editor);
+  await db.query('update marketplace_price_users set can_register_sales=false where user_id=$1',[editor]);
+  await assert.rejects(command('cancel',{saleId:second.saleId,saleRevision:1,quantity:0,note:'Cancelamento'},crypto.randomUUID(),editor),/Sem permissão/);
+  const cancelKey=crypto.randomUUID(),c={saleId:r.saleId,saleRevision:1,quantity:0,note:'Cliente desistiu'};
+  await command('cancel',c,cancelKey);await command('cancel',c,cancelKey);
+  assert.equal((await sale(r.saleId)).status,'cancelled');assert.equal((await balance(offline)).quantity,5,'cancelamento sem retorno não repõe');
+  const ret={saleId:r.saleId,saleRevision:2,quantity:1,warehouseId:online,revision:(await balance(online)).revision,note:'Unidade recebida e conferida'};
+  const rk=crypto.randomUUID();await command('return',ret,rk);await command('return',ret,rk);
+  assert.equal((await balance(online)).quantity,11);assert.equal((await balance(offline)).quantity,5);
+  assert.equal((await sale(r.saleId)).returned_quantity,1);
+  await assert.rejects(command('return',{...ret,saleRevision:3,revision:(await balance(online)).revision,quantity:2}),/já devolvida/);
+  assert.equal((await balance(online)).quantity,11);
+  await command('return',{...ret,saleRevision:3,revision:(await balance(online)).revision});
+  assert.equal((await sale(r.saleId)).returned_quantity,2);
+  await assert.rejects(command('return',{...ret,saleRevision:4,revision:(await balance(online)).revision}),/já devolvida/);
+  // Devolução pode entrar em estoque ativo que ainda não possui linha deste produto.
+  const empty=(await db.query('select marketplace_warehouse_command($1,$2,$3,$4,$5) r',[company,actor,'create',JSON.stringify({name:'Recebimento'}),crypto.randomUUID()])).rows[0].r.warehouseId;
+  await command('cancel',{saleId:second.saleId,saleRevision:1,quantity:1,warehouseId:empty,revision:1,note:'Recebido em outro estoque'});
+  assert.equal((await balance(empty)).quantity,1);
+  await command('withdraw',{warehouseId:offline,productId:product,revision:(await balance(offline)).revision,quantity:1,reason:'damage',note:'Avaria constatada'},crypto.randomUUID(),editor);
+  assert.equal((await balance(offline)).quantity,4);
+  assert.equal((await db.query('select count(*)::int n from marketplace_direct_sales')).rows[0].n,2,'outra saída não cria venda');
+  assert.equal((await db.query("select count(*)::int n from marketplace_warehouse_movements where kind='sale_return'")).rows[0].n,3);
+  const q=(await db.query('select count(*)::int n from queued')).rows[0].n;
+  await command('sell',await payload(online,1));assert.equal((await balance(online)).quantity,11);
+  assert.equal((await db.query('select count(*)::int n from queued')).rows[0].n,q+1,'somente operação online enfileira');
+  const foreign=crypto.randomUUID();await assert.rejects(command('sell',{...await payload(),warehouseId:foreign}),/Estoque não encontrado/);
+  await assert.rejects(command('sell',await payload(),crypto.randomUUID(),actor,f.other),/Sem permissão/);
+  await assert.rejects(command('sell',{...await payload(),unitPriceCents:-1}),/preço/);
+  await assert.rejects(command('sell',{...await payload(),quantity:1.5}),/inteira/);
+  await assert.rejects(command('sell',{...await payload(),soldOn:'2999-01-01'}),/data/);
+  // Rejeitar uma venda após movimentar o saldo deve desfazer toda a transação.
+  const before=(await balance(offline)).quantity;
+  await db.exec(`create function fail_direct_sale() returns trigger language plpgsql as $$begin raise exception 'falha simulada';end$$;create trigger fail_direct_sale before insert on marketplace_direct_sales for each row execute function fail_direct_sale();`);
+  await assert.rejects(command('sell',await payload()),/falha simulada/);assert.equal((await balance(offline)).quantity,before);
+  const rights=(await db.query("select has_function_privilege('authenticated','marketplace_direct_sale_command(uuid,uuid,text,jsonb,uuid)','execute') rpc,has_table_privilege('anon','marketplace_direct_sales','select') table_read,relrowsecurity rls from pg_class where relname='marketplace_direct_sales'")).rows[0];
+  assert.deepEqual(rights,{rpc:false,table_read:false,rls:true});
+  await db.query('delete from marketplace_price_users where user_id=$1',[editor]);
+  assert.equal((await db.query('select count(*)::int n from marketplace_direct_sales')).rows[0].n,3,'vendas continuam no perfil depois de excluir acesso');
+  await assert.rejects(command('sell',await payload(),crypto.randomUUID(),editor),/Sem permissão/);
+ }finally{await f.db.close();}
+});

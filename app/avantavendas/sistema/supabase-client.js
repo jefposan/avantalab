@@ -66,6 +66,21 @@
   let canalAtualizacoesCatalogo = null;
   let contaCanalAtualizacoesCatalogo = '';
   let renovacaoSessaoPendente = null;
+  let consultaUsuarioPendente = null;
+  let geracaoIdentidadeSessao = 0;
+  let identidadeSessaoConhecida = '';
+
+  // Compartilhar somente consultas simultâneas, nunca uma autorização duradoura.
+  // Callback síncrono: não consultar o SDK enquanto ele notifica a sessão.
+  client?.auth.onAuthStateChange?.((evento, sessao) => {
+    const identidade = String(sessao?.user?.id || '');
+    if (evento === 'SIGNED_OUT' || evento === 'USER_UPDATED'
+      || (identidade && identidade !== identidadeSessaoConhecida)) {
+      geracaoIdentidadeSessao += 1;
+      consultaUsuarioPendente = null;
+    }
+    identidadeSessaoConhecida = identidade;
+  });
 
   function contaAtivaId() { try { return localStorage.getItem(contaAtivaStorageKey) || ''; } catch { return ''; } }
   function definirContaAtiva(contaId) { try { contaId ? localStorage.setItem(contaAtivaStorageKey, contaId) : localStorage.removeItem(contaAtivaStorageKey); } catch { /* armazenamento indisponível */ } }
@@ -145,16 +160,7 @@
     return refreshSession();
   }
 
-  async function currentUser() {
-    let sessao;
-    try {
-      sessao = await ensureSession();
-    } catch (error) {
-      if (erroRedeAutenticacao(error)) throw error;
-      return null;
-    }
-    if (!sessao) return null;
-
+  async function consultarUsuarioNoServidor(sessao) {
     const primeiraLeitura = await requireClient().auth.getUser();
     if (!primeiraLeitura.error && primeiraLeitura.data.user) return primeiraLeitura.data.user;
     // Uma queda de rede não é rejeição do token. Não forçar sua rotação nem
@@ -174,6 +180,36 @@
       return null;
     }
     return segundaLeitura.data.user || null;
+  }
+
+  async function currentUser() {
+    let sessao;
+    try { sessao = await ensureSession(); } catch (error) {
+      if (erroRedeAutenticacao(error)) throw error;
+      return null;
+    }
+    if (!sessao) return null;
+    const identidade = String(sessao.user?.id || '');
+    if (identidade && identidade !== identidadeSessaoConhecida) {
+      if (identidadeSessaoConhecida) geracaoIdentidadeSessao += 1;
+      identidadeSessaoConhecida = identidade;
+      consultaUsuarioPendente = null;
+    }
+    if (consultaUsuarioPendente && consultaUsuarioPendente.token === sessao.access_token) return consultaUsuarioPendente.promessa;
+    const geracao = geracaoIdentidadeSessao;
+    const consulta = { token: sessao.access_token, promessa: null };
+    consulta.promessa = consultarUsuarioNoServidor(sessao).then((user) => {
+      if (geracao !== geracaoIdentidadeSessao) {
+        const erro = new Error('A sessão mudou durante a consulta. Tente novamente.');
+        erro.code = 'AVANTAVENDAS_SESSAO_ALTERADA';
+        throw erro;
+      }
+      return user;
+    }).finally(() => {
+      if (consultaUsuarioPendente === consulta) consultaUsuarioPendente = null;
+    });
+    consultaUsuarioPendente = consulta;
+    return consulta.promessa;
   }
 
   async function hasSession() {
@@ -322,6 +358,8 @@
   }
 
   async function signOut() {
+    geracaoIdentidadeSessao += 1;
+    consultaUsuarioPendente = null;
     await cancelarAtualizacoesVinculo();
     await cancelarAtualizacoesCatalogo();
     // Revoga somente a sessão armazenada pelo AvantaVendas neste aparelho.
@@ -338,8 +376,8 @@
     usuarioCanalAtualizacoesVinculo = '';
   }
 
-  async function assinarAtualizacoesVinculo(aoAtualizar) {
-    const user = await currentUser();
+  async function assinarAtualizacoesVinculo(aoAtualizar, usuarioConfirmado = null) {
+    const user = usuarioConfirmado || await currentUser();
     if (!user || typeof aoAtualizar !== 'function') {
       await cancelarAtualizacoesVinculo();
       return false;
@@ -370,9 +408,9 @@
     contaCanalAtualizacoesCatalogo = '';
   }
 
-  async function assinarAtualizacoesCatalogo(aoAtualizar) {
+  async function assinarAtualizacoesCatalogo(aoAtualizar, usuarioConfirmado = null) {
     const contaId = contaAtivaId();
-    const user = await currentUser();
+    const user = usuarioConfirmado || await currentUser();
     if (!user || !contaId || typeof aoAtualizar !== 'function') {
       await cancelarAtualizacoesCatalogo();
       return false;
@@ -414,8 +452,8 @@
     return { ...data, empresa_nome: consulta?.empresa_nome || null };
   }
 
-  async function buscarAcessoVendas() {
-    const user = await currentUser();
+  async function buscarAcessoVendas(usuarioConfirmado = null) {
+    const user = usuarioConfirmado || await currentUser();
     atualizarProgresso('access', 1, 4, 'Identificando seu acesso');
     if (!user) {
       atualizarProgresso('access', 4, 4, 'Sessão não encontrada');
@@ -637,7 +675,7 @@
     const user = contextoPreparado?.user || await currentUser();
     if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], agenda: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true };
 
-    const acessoVendas = contextoPreparado?.acessoVendas || await buscarAcessoVendas();
+    const acessoVendas = contextoPreparado?.acessoVendas || await buscarAcessoVendas(user);
     if (!acessoVendas.acesso) {
       atualizarProgresso('data', 1, 1, 'Conta do Vendas não liberada');
       return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], agenda: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true, ...acessoVendas };
@@ -666,7 +704,7 @@
 
     let contasVendas = Array.isArray(contextoPreparado?.contasVendas)
       ? contextoPreparado.contasVendas
-      : await listarContasVendas();
+      : (Array.isArray(acessoVendas.contasVendas) ? acessoVendas.contasVendas : await listarContasVendas());
     if (!contasVendas.length) {
       atualizarProgresso('data', 0, 1, 'Preparando sua conta de vendas');
       const contaInicial = await garantirContaVendas();

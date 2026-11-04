@@ -12,6 +12,10 @@ type ArquivoBackupRemoto = {
   lastModifiedDateTime?: string;
   modifiedTime?: string;
   createdTime?: string;
+  appProperties?: { avantaEmpresaId?: string };
+  parents?: string[];
+  parentReference?: { id?: string };
+  mimeType?: string;
 };
 
 const PREFIXO = 'v1';
@@ -72,7 +76,7 @@ export function urlAutorizacaoBackup(provedor: ProvedorBackupNuvem, requestUrl: 
 }
 
 async function respostaJson(url: string, init: RequestInit) {
-  const resposta = await fetch(url, init);
+  const resposta = await fetch(url, { ...init, signal: AbortSignal.timeout(20_000) });
   const dados = await resposta.json().catch(() => ({}));
   if (!resposta.ok) throw new Error(String(dados.error_description || dados.error?.message || dados.error || 'Não foi possível concluir a comunicação com a nuvem.'));
   return dados;
@@ -114,36 +118,74 @@ async function garantirPastaGoogle(accessToken: string) {
   return String(criado.id);
 }
 
-export async function enviarBackupNuvem(provedor: ProvedorBackupNuvem, accessToken: string, pastaId: string, nome: string, arquivo: ArrayBuffer) {
+function prefixoEmpresa(empresaId: string) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(empresaId)) throw new Error('Perfil de backup inválido.');
+  return `avanta-${empresaId.toLowerCase()}__`;
+}
+
+function nomeDoPerfil(nome: unknown, empresaId: string) {
+  return typeof nome === 'string' && nome.startsWith(prefixoEmpresa(empresaId)) && /\.xlsx$/i.test(nome);
+}
+
+function arquivoDoPerfil(item: ArquivoBackupRemoto, empresaId: string, provedor: ProvedorBackupNuvem, pastaId: string) {
+  return nomeDoPerfil(item.name, empresaId) && (provedor === 'google_drive'
+    ? item.appProperties?.avantaEmpresaId === empresaId.toLowerCase() && item.parents?.includes(pastaId) && item.mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    : Boolean(item.file));
+}
+
+export async function enviarBackupNuvem(provedor: ProvedorBackupNuvem, accessToken: string, pastaId: string, nome: string, arquivo: ArrayBuffer, empresaId: string) {
+  // Namespace é derivado do perfil autorizado pelo servidor, nunca do nome enviado.
+  const nomeRemoto = prefixoEmpresa(empresaId) + nome;
   if (provedor === 'onedrive') {
-    return respostaJson(`https://graph.microsoft.com/v1.0/me/special/approot:/${encodeURIComponent(nome)}:/content`, { method: 'PUT', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }, body: arquivo });
+    return respostaJson(`https://graph.microsoft.com/v1.0/me/special/approot:/${encodeURIComponent(nomeRemoto)}:/content`, { method: 'PUT', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }, body: arquivo });
   }
   const limite = `avantalab-${randomBytes(12).toString('hex')}`;
-  const meta = JSON.stringify({ name: nome, parents: [pastaId] });
+  const meta = JSON.stringify({ name: nomeRemoto, parents: [pastaId], appProperties: { avantaEmpresaId: empresaId.toLowerCase() } });
   const corpo = new Blob([`--${limite}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${limite}\r\nContent-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n\r\n`, arquivo, `\r\n--${limite}--`]);
   return respostaJson('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,createdTime,size', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': `multipart/related; boundary=${limite}` }, body: corpo });
 }
 
-export async function listarBackupsNuvem(provedor: ProvedorBackupNuvem, accessToken: string, pastaId: string) {
+export async function listarBackupsNuvem(provedor: ProvedorBackupNuvem, accessToken: string, pastaId: string, empresaId: string) {
+  const prefixo = prefixoEmpresa(empresaId);
   if (provedor === 'onedrive') {
-    const dados = await respostaJson('https://graph.microsoft.com/v1.0/me/special/approot/children?$select=id,name,size,lastModifiedDateTime,file&$orderby=lastModifiedDateTime desc', { headers: { Authorization: `Bearer ${accessToken}` } });
-    return ((dados.value || []) as ArquivoBackupRemoto[])
-      .filter((item) => item.file && /\.xlsx$/i.test(item.name || ''))
-      .map((item) => ({ id: item.id, nome: item.name, tamanho: Number(item.size || 0), criadoEm: item.lastModifiedDateTime }));
+    const itens: ArquivoBackupRemoto[] = [];
+    let proxima = 'https://graph.microsoft.com/v1.0/me/special/approot/children?$select=id,name,size,lastModifiedDateTime,file&$orderby=lastModifiedDateTime desc';
+    const visitadas = new Set<string>();
+    while (proxima) {
+      if (new URL(proxima).origin !== 'https://graph.microsoft.com' || visitadas.has(proxima)) throw new Error('Não foi possível confirmar a listagem da nuvem.');
+      visitadas.add(proxima);
+      const dados = await respostaJson(proxima, { headers: { Authorization: `Bearer ${accessToken}` } });
+      itens.push(...(dados.value || []));
+      proxima = typeof dados['@odata.nextLink'] === 'string' ? dados['@odata.nextLink'] : '';
+    }
+    return itens
+      .filter((item) => arquivoDoPerfil(item, empresaId, provedor, pastaId))
+      .map((item) => ({ id: item.id, nome: item.name!.slice(prefixo.length), tamanho: Number(item.size || 0), criadoEm: item.lastModifiedDateTime }));
   }
   const url = new URL('https://www.googleapis.com/drive/v3/files');
-  url.searchParams.set('q', `'${pastaId}' in parents and trashed = false and mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'`);
-  url.searchParams.set('fields', 'files(id,name,size,createdTime,modifiedTime)'); url.searchParams.set('orderBy', 'createdTime desc');
+  url.searchParams.set('q', `'${pastaId}' in parents and trashed = false and mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and appProperties has { key='avantaEmpresaId' and value='${empresaId.toLowerCase()}' }`);
+  url.searchParams.set('fields', 'files(id,name,size,createdTime,modifiedTime,parents,mimeType,appProperties)'); url.searchParams.set('orderBy', 'createdTime desc');
   const dados = await respostaJson(url.toString(), { headers: { Authorization: `Bearer ${accessToken}` } });
   return ((dados.files || []) as ArquivoBackupRemoto[])
-    .map((item) => ({ id: item.id, nome: item.name, tamanho: Number(item.size || 0), criadoEm: item.modifiedTime || item.createdTime }));
+    .filter((item) => arquivoDoPerfil(item, empresaId, provedor, pastaId))
+    .map((item) => ({ id: item.id, nome: item.name!.slice(prefixo.length), tamanho: Number(item.size || 0), criadoEm: item.modifiedTime || item.createdTime }));
 }
 
-export async function baixarBackupNuvem(provedor: ProvedorBackupNuvem, accessToken: string, id: string) {
+export async function baixarBackupNuvem(provedor: ProvedorBackupNuvem, accessToken: string, id: string, pastaId: string, empresaId: string) {
+  prefixoEmpresa(empresaId);
+  const headers = { Authorization: `Bearer ${accessToken}` };
+  const metadados = await respostaJson(provedor === 'google_drive'
+    ? `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?fields=id,name,parents,mimeType,appProperties,trashed`
+    : `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(id)}?$select=id,name,file,parentReference,deleted`, { headers });
+  if (metadados.id !== id || metadados.trashed || metadados.deleted || !arquivoDoPerfil(metadados, empresaId, provedor, pastaId)) throw new Error('Este arquivo não foi identificado como backup deste perfil.');
+  if (provedor === 'onedrive') {
+    const raiz = await respostaJson('https://graph.microsoft.com/v1.0/me/special/approot?$select=id', { headers });
+    if (!raiz.id || metadados.parentReference?.id !== raiz.id) throw new Error('O backup não pertence à pasta autorizada.');
+  }
   const url = provedor === 'google_drive'
     ? `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media`
     : `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(id)}/content`;
-  const resposta = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }, redirect: 'follow' });
+  const resposta = await fetch(url, { headers, redirect: 'follow', signal: AbortSignal.timeout(20_000) });
   if (!resposta.ok) throw new Error('Não foi possível baixar o backup da nuvem.');
   return resposta.arrayBuffer();
 }

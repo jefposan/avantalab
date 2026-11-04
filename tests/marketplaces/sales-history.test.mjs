@@ -34,10 +34,12 @@ class Query {
   limit(value) { this.max=value; return this; }
   update(value) { this.updateValue=value; return this; }
   maybeSingle() { this.single = true; return this; }
+  insert(value) { this.insertValue=value;return this; }
   upsert(value, options) { this.value = value; this.options = options; return this; }
   then(ok, bad) { return Promise.resolve().then(() => {
     if (this.db.fail === this.table) return { error: {} };
     const rows = this.db.tables[this.table] ||= [];
+    if(this.insertValue)rows.push({id:crypto.randomUUID(),...structuredClone(this.insertValue)});
     if (this.value) {
       const old = rows.find(row => this.table === 'marketplace_sale_notifications' ? row.id === this.value.id :
         row.connection_id === this.value.connection_id && (this.table !== 'marketplace_sales' || row.provider_order_id === this.value.provider_order_id));

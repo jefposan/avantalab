@@ -1,3 +1,4 @@
+import { mercadoLivrePictures } from '../product-photos.ts';
 export type ListingAction = 'pause' | 'resume' | 'close' | 'delete';
 export type ListingSnapshot = {
   id: string; title: string; status: string; substatus: string[]; permalink: string | null;
@@ -6,9 +7,11 @@ export type ListingSnapshot = {
   shipping: { mode: string; logisticType: string; free: boolean | null; dimensions: string | null; pickup: boolean | null };
   feeEstimate: number | null; feePercent: number | null; freightEstimate: number | null;
   attributes: { name: string; value: string }[];
-  variations: { id: string; price: number | null; stock: number | null; attributes: string }[];
+  variations: { id: string; price: number | null; stock: number | null; attributes: string; ean?: string | null }[];
   createdAt: string | null; endsAt: string | null; updatedAt: string | null; syncedAt: string;
   warnings: string[];
+  description?:string;
+  pictures?: string[];
 };
 export const listingIdIsValid = (id: unknown): id is string => typeof id === 'string' && /^MLB\d{6,20}$/.test(id);
 export const uuidIsValid = (id: unknown): id is string => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -22,7 +25,8 @@ export function actionBody(action: ListingAction, status: string, substatus: str
   if (action === 'pause' && status === 'active') return { status: 'paused' };
   if (action === 'resume' && status === 'paused') return { status: 'active' };
   if (action === 'close' && ['active', 'paused'].includes(status)) return { status: 'closed' };
-  if (action === 'delete' && status === 'closed') return { deleted: 'true' };
+  // Exceção documentada pelo ML: under_review/forbidden permite excluir direto.
+  if (action === 'delete' && (status === 'closed' || status === 'under_review' && substatus.includes('forbidden'))) return { deleted: 'true' };
   throw new Error('Ação incompatível com a situação atual. Atualize a lista; para excluir, encerre primeiro.');
 }
 
@@ -42,11 +46,13 @@ export function normalizeListing(item: Record<string, unknown>, seller: string, 
     price: numberValue(item.price), currency: textValue(item.currency_id) || 'BRL', stock: numberValue(item.available_quantity), sold: numberValue(item.sold_quantity),
     category: textValue(item.category_id), listingType: textValue(item.listing_type_id), condition: textValue(item.condition),
     ean: attribute('GTIN'), sku: textValue(item.seller_custom_field) || attribute('SELLER_SKU'),
+    pictures: mercadoLivrePictures(item),
     shipping: { mode: textValue(shipping.mode), logisticType: textValue(shipping.logistic_type), free: typeof shipping.free_shipping === 'boolean' ? shipping.free_shipping : null,
       dimensions: textValue(shipping.dimensions) || null, pickup: typeof shipping.local_pick_up === 'boolean' ? shipping.local_pick_up : null },
     feeEstimate: numberValue(estimates.fee), feePercent: numberValue(estimates.percent), freightEstimate: numberValue(estimates.freight),
     attributes: attrs.map((attr) => ({ name: textValue(attr.name) || textValue(attr.id), value: textValue(attr.value_name) })).filter((attr) => attr.value),
     variations: arrayValue(item.variations).map(objectValue).map((variation) => ({ id: String(variation.id || ''), price: numberValue(variation.price), stock: numberValue(variation.available_quantity),
+      ean: textValue(arrayValue(variation.attributes).map(objectValue).find(attr => attr.id === 'GTIN')?.value_name) || null,
       attributes: arrayValue(variation.attribute_combinations).map(objectValue).map((attr) => `${textValue(attr.name)}: ${textValue(attr.value_name)}`).join(' · ') })),
     createdAt: textValue(item.date_created) || null, endsAt: textValue(item.stop_time) || null, updatedAt: textValue(item.last_updated) || null,
     syncedAt: new Date().toISOString(), warnings: estimates.warnings || [],

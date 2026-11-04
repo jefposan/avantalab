@@ -26,7 +26,7 @@ test('nome no seletor sem campo duplicado; lápis antecede renovar e edição ex
   const client=read('app/marketplaces/MarketplacesClient.tsx');
   const editor=read('app/marketplaces/AccountIdentification.tsx');
   assert.doesNotMatch(listing,/aria-label="Identificação da conta"|styles.accountIdentification/);
-  assert.match(listing,/label="Publicar na conta"[^\n]*name: accountDisplayName\(account\), detail: accountReferenceDetail\(account\)/);
+  assert.match(listing,/label="Conta"[^\n]*name: accountDisplayName\(account\), detail: accountReferenceDetail\(account\)/);
   assert.doesNotMatch(listing,/<AccountIdentification|conexoes\/identificacao/);
   assert.ok(client.indexOf('id={`edit-account-${account.id}`}')<client.indexOf('id={`renew-account-${account.id}`}'));
   assert.match(client,/<Icon name="edit" size=\{18\}/);

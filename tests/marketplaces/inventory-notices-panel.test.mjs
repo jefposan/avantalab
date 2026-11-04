@@ -1,0 +1,61 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
+import {runInNewContext} from 'node:vm';
+import ts from 'typescript';
+import * as feedHelpers from '../../app/modules/marketplaces/live-feed.ts';
+import {inventoryNoticeTarget} from '../../app/modules/marketplaces/notice-navigation.ts';
+const require=createRequire(import.meta.url);
+test('alerta abre somente por clique, fecha durante atualização e renova contador sem abrir ou reconhecer avisos',()=>{
+  const values=[],effects=[];let index=0,first=true;
+  const window=new EventTarget();
+  class CustomEvent extends Event{constructor(name,options){super(name);this.detail=options.detail;}}
+  const hooks={useCallback:fn=>fn,useState(initial){const key=index++;if(!(key in values))values[key]=initial;return[values[key],next=>{values[key]=typeof next==='function'?next(values[key]):next;}];},useEffect(effect){if(first)effects.push(effect);}};
+  const exports={};const source=ts.transpileModule(readFileSync('app/marketplaces/InventoryNotices.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+  runInNewContext(source,{exports,window,CustomEvent,requestAnimationFrame:fn=>fn(),require(name){
+    if(name==='react')return hooks;
+    if(name==='./StockSync')return{StockSyncDialog:'sync-dialog'};
+    if(name==='./ImportStockChoice')return{default:'import-stock-choice'};
+    if(name==='./Anunciados')return{marketplaceClientRequest:async()=>({})};
+    if(name.endsWith('/live-feed'))return feedHelpers;
+    if(name.endsWith('/notice-navigation'))return{inventoryNoticeTarget};
+    if(name.endsWith('.module.css'))return{default:new Proxy({},{get:(_,k)=>k})};
+    if(name.endsWith('/corTextoSobreFundo')||name.endsWith('/cores-avanta'))return{corTextoSobreFundo:()=> '#fff'};
+    if(name.endsWith('/Tooltip'))return{default:'tooltip'};
+    if(name.endsWith('/CardExpandidoModal'))return{default:'panel'};
+    if(name.endsWith('/BotaoAcaoCompacto'))return{default:'button'};
+    if(name.endsWith('/Icon'))return{Icon:'svg'};
+    return require(name);
+  }});
+  let feed={enabled:true,workerHealthy:true,notices:[{id:'1',code:'queued'}],pendingStock:1,pendingSales:0};let tree;
+  const adjusted=[];
+  function render(){index=0;tree=exports.default({companyId:'company',feed,unavailable:false,brand:'#003E73',onAdjust:notice=>adjusted.push(notice)});first=false;}
+  function all(n){return Array.isArray(n)?n.flatMap(all):n&&typeof n==='object'?[n,...all(n.props?.children)]:[];}
+  const find=fn=>{const node=all(tree).find(fn);assert.ok(node);return node;};
+  const trigger=()=>find(n=>n.props?.className==='inventoryAlertButton');
+  const panel=()=>find(n=>n.type==='panel');
+  let focused=0;const open=()=>trigger().props.onClick({currentTarget:{focus(){focused++;}}});
+  render();effects.forEach(fn=>fn());assert.equal(panel().props.aberto,false);
+  assert.equal(trigger().props['aria-expanded'],false);open();render();assert.equal(panel().props.aberto,true);assert.equal(focused,1);
+  assert.equal(panel().props.variante,'avisos');
+  let reads=0;window.addEventListener('avanta:marketplace-refresh-notices',()=>reads++);
+  find(n=>n.props?.children==='Atualizar avisos').props.onClick();assert.equal(reads,1);
+  window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state',{detail:{companyId:'company',loading:true,error:''}}));render();
+  assert.equal(find(n=>n.props?.children==='Atualizando…').props.disabled,true);
+  find(n=>n.props?.['aria-label']==='Fechar pendências').props.onClick();render();assert.equal(panel().props.aberto,false);
+  feed={...feed,notices:[],pendingStock:0};
+  window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state',{detail:{companyId:'company',loading:false,error:''}}));render();assert.equal(panel().props.aberto,false);
+  assert.equal(trigger().props['data-has-notices'],false);
+  window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state',{detail:{companyId:'foreign',loading:false,error:'Falha externa'}}));render();assert.equal(trigger().props['data-has-notices'],false);
+  window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state',{detail:{companyId:'company',loading:false,error:'Falha de consulta'}}));render();assert.equal(trigger().props['data-has-notices'],true);assert.equal(panel().props.aberto,false);
+  open();render();panel().props.onFechar();render();assert.equal(panel().props.aberto,false);
+  const notice={id:'stock:1',source:'stock',code:'stock_divergence',productId:'product-1',connectionId:'account',provider:'mercado_livre'};
+  feed={...feed,notices:[notice],pendingStock:1};open();render();
+  const list=find(n=>n.type===exports.InventoryNoticeList);
+  tree=exports.InventoryNoticeList(list.props);
+  find(n=>n.props?.children==='Conferir e ajustar').props.onClick();render();
+  assert.equal(panel().props.aberto,false);assert.deepEqual(adjusted,[notice]);
+  assert.equal(feed.notices.length,1,'abrir não resolve/apaga a pendência');
+  assert.equal(reads,1,'conferir não dispara atualização ou sincronização');
+});

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { authorizeMarketplace, managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
+import { removePriceUser } from '@/app/modules/marketplaces/services/price-user-removal';
 
 export const runtime = 'nodejs';
 
@@ -12,10 +13,12 @@ function validate(body: Record<string, unknown>, passwordRequired: boolean) {
   const nome = String(body.nome || '').trim().replace(/\s+/g, ' ');
   const login = normalizeLogin(body.login);
   const senha = String(body.senha || '');
+  if (body.can_register_sales !== undefined && typeof body.can_register_sales !== 'boolean') throw new MarketplaceError(400, 'invalid_sales_permission', 'Selecione ou desmarque Registrar vendas.');
+  if (body.can_edit_stock !== undefined && typeof body.can_edit_stock !== 'boolean') throw new MarketplaceError(400, 'invalid_stock_permission', 'Selecione ou desmarque Editar estoque.');
   if (nome.length < 2) throw new MarketplaceError(400, 'invalid_name', 'Informe o nome do usuário.', { nome: 'Informe o nome do usuário.' });
   if (!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(login)) throw new MarketplaceError(400, 'invalid_login', 'Use um login de 3 a 40 caracteres, com letras, números, ponto, hífen ou sublinhado.', { login: 'Informe um login válido.' });
   if ((passwordRequired || senha) && senha.length < 8) throw new MarketplaceError(400, 'invalid_password', 'A senha deve ter pelo menos 8 caracteres.', { senha: 'Use pelo menos 8 caracteres.' });
-  return { nome, login, senha };
+  return { nome, login, senha, ...(typeof body.can_register_sales === 'boolean' ? { can_register_sales: body.can_register_sales } : {}), ...(typeof body.can_edit_stock === 'boolean' ? { can_edit_stock: body.can_edit_stock } : {}) };
 }
 
 async function manager(request: Request, empresaId: unknown) {
@@ -26,7 +29,7 @@ export async function GET(request: Request) {
   try {
     const empresaId = new URL(request.url).searchParams.get('empresaId');
     const { db } = await manager(request, empresaId);
-    const { data, error } = await db.from('marketplace_price_users').select('id,user_id,nome,login,ativo,created_at,updated_at').eq('empresa_id', empresaId).order('nome');
+    const { data, error } = await db.from('marketplace_price_users').select('id,user_id,nome,login,ativo,can_edit_stock,can_register_sales,created_at,updated_at').eq('empresa_id', empresaId).order('nome');
     if (error) throw new MarketplaceError(503, 'database', 'Não foi possível carregar os usuários do AvantaPreços.');
     return NextResponse.json({ users: data || [] }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) { return managementFailure(error); }
@@ -47,7 +50,7 @@ export async function POST(request: Request) {
       await db.auth.admin.deleteUser(auth.user.id);
       throw new MarketplaceError(accountError.code === '23505' ? 409 : 503, 'account_create', accountError.code === '23505' ? 'Este login já está em uso.' : 'Não foi possível registrar o login.');
     }
-    const { data, error } = await db.from('marketplace_price_users').insert({ empresa_id: empresaId, user_id: auth.user.id, nome: values.nome, login: values.login, email, created_by: usuario.id }).select('id,user_id,nome,login,ativo,created_at,updated_at').single();
+    const { data, error } = await db.from('marketplace_price_users').insert({ empresa_id: empresaId, user_id: auth.user.id, nome: values.nome, login: values.login, email, created_by: usuario.id, can_edit_stock: values.can_edit_stock === true, can_register_sales: values.can_register_sales === true }).select('id,user_id,nome,login,ativo,can_edit_stock,can_register_sales,created_at,updated_at').single();
     if (error || !data) {
       await db.auth.admin.deleteUser(auth.user.id);
       throw new MarketplaceError(error?.code === '23505' ? 409 : 503, 'user_create', error?.code === '23505' ? 'Este login já está em uso.' : 'Não foi possível vincular o acesso à empresa.');
@@ -73,7 +76,7 @@ export async function PATCH(request: Request) {
     const now = new Date().toISOString();
     const [{ error: accountError }, { data, error }] = await Promise.all([
       db.from('usuarios_contas').update({ nome: values.nome, login: values.login, atualizado_em: now }).eq('user_id', target.user_id),
-      db.from('marketplace_price_users').update({ nome: values.nome, login: values.login, updated_at: now }).eq('id', id).eq('empresa_id', empresaId).select('id,user_id,nome,login,ativo,created_at,updated_at').single(),
+      db.from('marketplace_price_users').update({ nome: values.nome, login: values.login, updated_at: now, ...(values.can_register_sales !== undefined ? { can_register_sales: values.can_register_sales } : {}), ...(values.can_edit_stock !== undefined ? { can_edit_stock: values.can_edit_stock } : {}) }).eq('id', id).eq('empresa_id', empresaId).select('id,user_id,nome,login,ativo,can_edit_stock,can_register_sales,created_at,updated_at').single(),
     ]);
     if (accountError || error || !data) throw new MarketplaceError(503, 'user_update', 'Não foi possível salvar as alterações.');
     return NextResponse.json({ user: data });
@@ -83,12 +86,7 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { db, empresaId } = await manager(request, body.empresaId);
-    const id = String(body.id || '');
-    const { data: target, error } = await db.from('marketplace_price_users').select('user_id').eq('id', id).eq('empresa_id', empresaId).maybeSingle();
-    if (error || !target) throw new MarketplaceError(404, 'not_found', 'Usuário não encontrado nesta empresa.');
-    const { error: authError } = await db.auth.admin.deleteUser(target.user_id);
-    if (authError) throw new MarketplaceError(503, 'auth_delete', 'Não foi possível excluir o acesso.');
-    return NextResponse.json({ success: true });
+    const { db, empresaId, usuario } = await manager(request, body.empresaId);
+    return NextResponse.json(await removePriceUser(db, empresaId, body.id, usuario.id));
   } catch (error) { return managementFailure(error); }
 }

@@ -1,0 +1,7 @@
+{
+  "baseDeploymentId": "dpl_Dq1wCBwU92G354cov6BCiN4qrYt9",
+  "version": "3.2.0.309",
+  "scope": "Despesas: modelo Excel com tipos atuais do perfil e reconhecimento nos centros de custo.",
+  "migrations": [],
+  "reconciliationStatus": "blocked-audit"
+}

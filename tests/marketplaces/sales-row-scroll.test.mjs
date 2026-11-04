@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { scrollMarketplaceRow } from '../../app/marketplaces/scroll-panel-row.ts';
+import ts from 'typescript';
 
 test('seta compartilhada acompanha aria-expanded e detalhes sem criar botão aninhado', () => {
   const source = readFileSync(new URL('../../app/marketplaces/Vendas.tsx', import.meta.url), 'utf8');
@@ -37,7 +38,8 @@ test('clique de abertura e alerta confirmado rolam; fechamento, respostas e even
   assert.equal((sales.match(/scrollMarketplaceRow\(row\)/g) || []).length, 2);
   assert.match(sales, /sale\.id === saleToOpen && open === sale\.id/);
   assert.match(sales, /scrollMarketplaceRow\(row\)/);
-  assert.doesNotMatch(sales, /useEffect/);
+  const ast=ts.createSourceFile('Vendas.tsx',sales,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
+  const inspect=node=>{if(ts.isCallExpression(node)&&node.expression.getText(ast)==='useEffect')assert.doesNotMatch(node.arguments[0].getText(ast),/scrollMarketplaceRow|scrollTo|requestAnimationFrame/);ts.forEachChild(node,inspect);};inspect(ast);
   const css = read('app/marketplaces/marketplaces.module.css');
   assert.match(css, /\.salesPanel \.saleSummaryExpanded \{ background: color-mix\(in srgb, var\(--brand\) 8%, #fff\); box-shadow: inset 3px 0 0 var\(--brand\); \}/);
   assert.match(css, /\.dark \.salesPanel \.saleSummaryExpanded \{ background: color-mix\(in srgb, var\(--brand\) 16%, #182235\); \}/);

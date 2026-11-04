@@ -24,6 +24,7 @@ import { normalizarStatusTemporal } from './cobranca-fluxo';
 import { normalizarPlanoComercial, PLANOS_COMERCIAIS, resolverPlanoCortesia, type PlanoComercial } from './planos-comerciais';
 import { papelPodeConsumirQuotaDePerfis } from './perfis-quota';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { consultarPorIds } from './consultas-por-ids-servidor';
 
 function servico() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -180,21 +181,63 @@ export async function autenticarPerfilCobrancaDetalhado(
 // Preserva o contrato dos demais endpoints; o cadastro usa o resultado
 // detalhado para distinguir sessão expirada, vínculo negado e falha de rede.
 export async function autenticarPerfilCobranca(request: Request, empresaId: string, exigirGestao = false) {
-  return (await autenticarPerfilCobrancaDetalhado(request, empresaId, exigirGestao)).acesso;
+  const acesso = (await autenticarPerfilCobrancaDetalhado(request, empresaId, exigirGestao)).acesso;
+  if (!acesso) return null;
+  const { conferirLiberacao } = await import('./acessos-usuario-servidor');
+  const { areaDaApi } = await import('./acessos-usuario');
+  const url = new URL(request.url);
+  const area = areaDaApi(url.pathname, url.searchParams.get('moduloId'));
+  return await conferirLiberacao(acesso.db, acesso.usuario.id, empresaId, area) ? acesso : null;
 }
 
-export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAcesso | null> {
+export type EmpresaEstadoAcesso = { id: string; tipo_perfil: string | null; created_at: string | null; assinatura_origem_empresa_id: string | null };
+type AssinaturaEstado = { empresa_id: string; tipo_perfil?: string | null; status: string; valido_ate: string | null; trial_fim: string | null; plano: string | null; ciclo: string | null };
+type AdicionalEstado = { empresa_id: string; status: string; valido_ate: string | null };
+type LeiturasEstadoAcesso = {
+  empresas: Map<string, EmpresaEstadoAcesso>;
+  assinaturas: Map<string, AssinaturaEstado>;
+  adicionais: Map<string, AdicionalEstado>;
+};
+
+function indexarEstadoUnico<T extends { empresa_id: string }>(linhas: T[]) {
+  const mapa = new Map<string, T>();
+  for (const linha of linhas) {
+    if (mapa.has(linha.empresa_id)) throw new Error('Não foi possível confirmar a assinatura do perfil.');
+    mapa.set(linha.empresa_id, linha);
+  }
+  return mapa;
+}
+
+/** Apenas leituras desta requisição. A decisão continua no mesmo resolvedor de assinatura. */
+export async function resolverEstadosAcessoEmLote(db: SupabaseClient, empresas: EmpresaEstadoAcesso[]) {
+  const ids = empresas.map(e => e.id);
+  const origens = empresas.map(e => e.assinatura_origem_empresa_id).filter((id): id is string => Boolean(id));
+  const derivados = empresas.filter(e => e.assinatura_origem_empresa_id).map(e => e.id);
+  const [assinaturas, adicionais] = await Promise.all([
+    consultarPorIds<AssinaturaEstado>(db, 'assinaturas', 'empresa_id,tipo_perfil,status,valido_ate,trial_fim,plano,ciclo', 'empresa_id', [...ids, ...origens]),
+    consultarPorIds<AdicionalEstado>(db, 'assinaturas_perfis_adicionais', 'empresa_id,status,valido_ate', 'empresa_id', derivados),
+  ]);
+  const leituras: LeiturasEstadoAcesso = {
+    empresas: new Map(empresas.map(e => [e.id, e])),
+    assinaturas: indexarEstadoUnico(assinaturas),
+    adicionais: indexarEstadoUnico(adicionais),
+  };
+  return new Map(await Promise.all(empresas.map(async empresa => [empresa.id, await resolverEstadoAcesso(empresa.id, leituras)] as const)));
+}
+
+export async function resolverEstadoAcesso(empresaId: string, leituras?: LeiturasEstadoAcesso, leituraEstrita = false): Promise<EstadoAcesso | null> {
   if (!empresaId) return null;
-  const db = servico();
+  const db = leituras ? null : servico();
 
   // O tipo do perfil vem SEMPRE da tabela `empresas` (fonte da verdade) —
   // a coluna tipo_perfil da assinatura pode estar desatualizada/errada.
-  const { data: emp } = await db
+  const { data: emp, error: erroEmpresa } = leituras ? { data: leituras.empresas.get(empresaId) || null, error: null } : await db!
     .from('empresas')
     .select('tipo_perfil, created_at, assinatura_origem_empresa_id')
     .eq('id', empresaId)
     .maybeSingle();
 
+  if (leituraEstrita && erroEmpresa) throw new Error('Não foi possível conferir o perfil e a assinatura.');
   if (!emp) return null; // sem info → o "cérebro" trata como fail-open (não bloqueia)
 
   const tipoPerfil: TipoPerfil = emp.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
@@ -207,11 +250,12 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
     // recorrência própria. O vínculo com a origem só libera acesso após a
     // confirmação da Asaas; isso impede que uma empresa pendente use o plano
     // assinatura de origem antes de pagar.
-    const { data: perfilAdicional } = await db
+    const { data: perfilAdicional, error: erroAdicional } = leituras ? { data: leituras.adicionais.get(empresaId) || null, error: null } : await db!
       .from('assinaturas_perfis_adicionais')
       .select('status, valido_ate')
       .eq('empresa_id', empresaId)
       .maybeSingle();
+    if (leituraEstrita && erroAdicional) throw new Error('Não foi possível conferir a assinatura adicional.');
     if (perfilAdicional) {
       const adicionalVigente = perfilAdicional.status === 'ativa'
         || ((perfilAdicional.status === 'cancelada' || perfilAdicional.status === 'inadimplente')
@@ -228,11 +272,12 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
         };
       }
     }
-    const { data: assinaturaOrigem } = await db
+    const { data: assinaturaOrigem, error: erroOrigem } = leituras ? { data: leituras.assinaturas.get(emp.assinatura_origem_empresa_id) || null, error: null } : await db!
       .from('assinaturas')
       .select('status, valido_ate, trial_fim, plano, ciclo')
       .eq('empresa_id', emp.assinatura_origem_empresa_id)
       .maybeSingle();
+    if (leituraEstrita && erroOrigem) throw new Error('Não foi possível conferir a assinatura de origem.');
     if (assinaturaOrigem) {
       const planoOrigem = normalizarPlanoComercial(assinaturaOrigem.plano);
       const statusOrigem = normalizarStatusTemporal(
@@ -254,11 +299,12 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
   }
 
   // 1) Já existe assinatura registrada? Ela é a fonte da verdade do STATUS.
-  const { data: assin } = await db
+  const { data: assin, error: erroAssinatura } = leituras ? { data: leituras.assinaturas.get(empresaId) || null, error: null } : await db!
     .from('assinaturas')
     .select('tipo_perfil, status, valido_ate, trial_fim, plano, ciclo')
     .eq('empresa_id', empresaId)
     .maybeSingle();
+  if (leituraEstrita && erroAssinatura) throw new Error('Não foi possível conferir a assinatura.');
 
   if (assin) {
     // Cortesias atuais respeitam o plano escolhido no Admin. Registros antigos
@@ -299,30 +345,33 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
 // Benefício cruzado: quem ASSINA o plano Empresa (status 'ativa') ganha o
 // Premium Pessoal nos perfis pessoais em que é gestor/administrador.
 // (Trial de empresa NÃO libera — só assinatura paga.)
-export async function usuarioTemEmpresaAssinante(userId: string): Promise<boolean> {
+export async function usuarioTemEmpresaAssinante(userId: string, leituraEstrita = false): Promise<boolean> {
   if (!userId) return false;
   const db = servico();
-  const { data: vinculos } = await db
+  const { data: vinculos, error: erroVinculos } = await db
     .from('usuarios_empresa')
     .select('empresa_id, perfil, status')
     .eq('user_id', userId)
     .eq('status', 'ativo')
     .in('perfil', ['gestor_master', 'administrador']);
+  if (leituraEstrita && erroVinculos) throw new Error('Não foi possível conferir os vínculos da assinatura.');
   const ids = (vinculos || []).map((v) => v.empresa_id).filter(Boolean);
   if (!ids.length) return false;
-  const { data: assinaturas } = await db
+  const { data: assinaturas, error: erroAssinaturas } = await db
     .from('assinaturas')
     .select('empresa_id')
     .in('empresa_id', ids)
     .eq('status', 'ativa');
+  if (leituraEstrita && erroAssinaturas) throw new Error('Não foi possível conferir o benefício de assinatura.');
   const empresasAssinantes = (assinaturas || []).map((assinatura) => assinatura.empresa_id).filter(Boolean);
   if (!empresasAssinantes.length) return false;
-  const { count } = await db
+  const { count, error: erroContagem } = await db
     .from('empresas')
     .select('id', { count: 'exact', head: true })
     .in('id', empresasAssinantes)
     .eq('tipo_perfil', 'empresa')
     .is('assinatura_origem_empresa_id', null);
+  if (leituraEstrita && (erroContagem || !Number.isSafeInteger(count))) throw new Error('Não foi possível conferir o benefício de assinatura.');
   return (count || 0) > 0;
 }
 
@@ -332,12 +381,14 @@ export async function usuarioTemEmpresaAssinante(userId: string): Promise<boolea
 export async function resolverEstadoAcessoParaUsuario(
   empresaId: string,
   userId: string,
+  leituraEstrita = false,
 ): Promise<EstadoAcesso | null> {
-  const estado = await resolverEstadoAcesso(empresaId);
+  const estado = await resolverEstadoAcesso(empresaId, undefined, leituraEstrita);
+  if (!estado && leituraEstrita) throw new Error('Não foi possível conferir a assinatura do perfil.');
   if (!estado) return estado;
 
   const db = servico();
-  const { data: vinculoRevisao } = await db
+  const { data: vinculoRevisao, error: erroRevisao } = await db
     .from('usuarios_empresa')
     .select('id')
     .eq('empresa_id', empresaId)
@@ -346,6 +397,7 @@ export async function resolverEstadoAcessoParaUsuario(
     .in('email', emailsContaRevisaoLojas())
     .limit(1)
     .maybeSingle();
+  if (leituraEstrita && erroRevisao) throw new Error('Não foi possível conferir a modalidade de acesso.');
 
   // A conta fornecida à Apple precisa permitir a exploração completa do app,
   // mas não pode fingir que uma assinatura foi comprada. O modo de revisão
@@ -379,6 +431,7 @@ export async function resolverEstadoAcessoParaUsuario(
     .in('loja', ['apple_app_store', 'google_play'])
     .eq('entitlement_id', 'pessoal_premium')
     .order('atualizado_em', { ascending: false });
+  if (leituraEstrita && erroLoja) throw new Error('Não foi possível conferir a assinatura da loja.');
   const assinaturaLoja = (assinaturasLoja || []).find((item) => {
     const validaAte = item.valido_ate ? new Date(item.valido_ate) : null;
     return ['ativa', 'cancelada', 'inadimplente'].includes(item.status)
@@ -394,7 +447,7 @@ export async function resolverEstadoAcessoParaUsuario(
     };
   }
 
-  if (await usuarioTemEmpresaAssinante(userId)) {
+  if (await usuarioTemEmpresaAssinante(userId, leituraEstrita)) {
     return { ...estado, status: 'cortesia', validoAte: null, plano: 'pessoal_premium', ciclo: null };
   }
   return estado;

@@ -101,6 +101,7 @@ type TabelaLancamentosDespesaProps = {
   handleValorChange: (e: ChangeEvent<HTMLInputElement>) => void;
   adicionarDespesa: () => void | Promise<void>;
   despesasCadastradas: DespesaCadastrada[];
+  atualizarTiposModelo?: () => Promise<string[]>;
   buscaLancamento: string;
   setBuscaLancamento: (valor: string) => void;
   // Busca premium bloqueada no plano Pessoal grátis: o campo mostra o cadeado
@@ -171,6 +172,7 @@ export default function TabelaLancamentosDespesa({
   handleValorChange,
   adicionarDespesa,
   despesasCadastradas,
+  atualizarTiposModelo,
   buscaLancamento,
   setBuscaLancamento,
   buscaBloqueada = false,
@@ -307,6 +309,7 @@ export default function TabelaLancamentosDespesa({
         }}
       >
         <CardLancamentoDespesa
+          atualizarTiposModelo={atualizarTiposModelo}
           corPrimaria={corPrimaria}
           darkMode={darkMode}
           textStrong={textStrong}

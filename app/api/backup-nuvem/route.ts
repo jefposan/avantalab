@@ -33,7 +33,8 @@ async function tokenAtual(ctx: Contexto, empresaId: string) {
   const provedor = conexao.provedor as ProvedorBackupNuvem;
   const refresh = decifrarBackupNuvem(conexao.refresh_token_cifrado);
   const renovado = await renovarTokenBackup(provedor, refresh);
-  await ctx.admin.from('backup_nuvem_conexoes').update({ access_token_cifrado: cifrarBackupNuvem(renovado.accessToken), refresh_token_cifrado: cifrarBackupNuvem(renovado.refreshToken), expira_em: renovado.expiraEm, atualizado_em: new Date().toISOString(), ultimo_erro: null }).eq('empresa_id', empresaId);
+  const salvo = await ctx.admin.from('backup_nuvem_conexoes').update({ access_token_cifrado: cifrarBackupNuvem(renovado.accessToken), refresh_token_cifrado: cifrarBackupNuvem(renovado.refreshToken), expira_em: renovado.expiraEm, atualizado_em: new Date().toISOString(), ultimo_erro: null }).eq('empresa_id', empresaId);
+  if (salvo.error) throw new Error('Não foi possível guardar a renovação da conexão. Tente novamente antes de enviar o backup.');
   return { provedor, accessToken: renovado.accessToken, pastaId: String(conexao.pasta_id || '') };
 }
 
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
   if (!ctx) return falha('Acesso permitido apenas a usuários autorizados do perfil.', 403);
   try {
     if (url.searchParams.get('acao') === 'arquivos') {
-      const token = await tokenAtual(ctx, empresaId); const arquivos = await listarBackupsNuvem(token.provedor, token.accessToken, token.pastaId);
+      const token = await tokenAtual(ctx, empresaId); const arquivos = await listarBackupsNuvem(token.provedor, token.accessToken, token.pastaId, empresaId);
       return NextResponse.json({ arquivos, provedor: token.provedor });
     }
     const { data } = await ctx.admin.from('backup_nuvem_conexoes').select('provedor,email,criado_em,ultimo_envio_em,ultimo_erro').eq('empresa_id', empresaId).maybeSingle();
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
     }
     if (acao === 'enviar') {
       const arquivo = corpo.get('arquivo'); if (!(arquivo instanceof File) || !/\.xlsx$/i.test(arquivo.name) || arquivo.size > 25 * 1024 * 1024) return falha('Selecione um backup Excel de até 25 MB.');
-      const token = await tokenAtual(ctx, empresaId); const resultado = await enviarBackupNuvem(token.provedor, token.accessToken, token.pastaId, arquivo.name.replace(/[^a-zA-Z0-9._ -]/g, '_'), await arquivo.arrayBuffer());
+      const token = await tokenAtual(ctx, empresaId); const resultado = await enviarBackupNuvem(token.provedor, token.accessToken, token.pastaId, arquivo.name.replace(/[^a-zA-Z0-9._ -]/g, '_'), await arquivo.arrayBuffer(), empresaId);
       await ctx.admin.from('backup_nuvem_conexoes').update({ ultimo_envio_em: new Date().toISOString(), ultimo_erro: null }).eq('empresa_id', empresaId);
       return NextResponse.json({ arquivo: { id: resultado.id, nome: resultado.name || arquivo.name } });
     }

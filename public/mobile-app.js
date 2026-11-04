@@ -52,6 +52,7 @@
   }
 
   function deveRedirecionarMobileParaWeb() {
+    if (ehLojaNativaMobile()) return false;
     var standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       window.navigator.standalone;
@@ -148,6 +149,7 @@
   }
 
   function restaurarCacheGestaoMobile(cache) {
+    if (somenteModulosNoAppNativo()) return false;
     var dados = cache && cache.dados;
     if (!dados || !Array.isArray(dados.lancamentos) || !Array.isArray(dados.entradas) || !Array.isArray(dados.despesas)) return false;
     state.lancamentos = dados.lancamentos;
@@ -204,17 +206,6 @@
   // O bridge React só é usado dentro do Capacitor. O PWA mantém o OAuth por
   // redirecionamento https normal. A sessão é aplicada neste cliente para que
   // toda a Gestão Mobile continue usando a mesma instância de autenticação.
-  function retornoOAuthCanceladoMobile(retorno) {
-    if (retorno.status === 'cancelado') return true;
-    var mensagem = String(retorno.mensagem || '').toLowerCase();
-    return mensagem.indexOf('auth session missing') >= 0 ||
-      mensagem.indexOf('access_denied') >= 0 ||
-      mensagem.indexOf('access denied') >= 0 ||
-      mensagem.indexOf('cancelado') >= 0 ||
-      mensagem.indexOf('cancelled') >= 0 ||
-      mensagem.indexOf('canceled') >= 0;
-  }
-
   function processarRetornoOAuthNativoMobile(retorno) {
     // Em uma abertura fria o deep link pode chegar antes deste arquivo. Mantém
     // o retorno até que o estado da Gestão Mobile esteja pronto para recebê-lo.
@@ -222,46 +213,34 @@
       window.__avantalabUltimoRetornoOAuthNativoMobile = retorno;
       return;
     }
-    var provedor = retorno.provider === 'apple' ? 'Apple' : 'Google';
+    delete window.__avantalabUltimoRetornoOAuthNativoMobile;
+    var identificador = String(retorno.tentativa);
+    if (state.oauthRetornoProcessado === identificador) return;
+    state.oauthRetornoProcessado = identificador;
+    state.tentativaLogin = Number(state.tentativaLogin || 0) + 1;
 
-    if (retorno.status === 'concluido' && retorno.accessToken && retorno.refreshToken) {
-      db.auth.setSession({
-        access_token: retorno.accessToken,
-        refresh_token: retorno.refreshToken,
-      }).then(function (resposta) {
-        var usuario = resposta.data && resposta.data.session && resposta.data.session.user;
-        if (resposta.error || !usuario) {
-          state.carregando = false;
-          state.loginAcao = '';
-          limparPreferenciaSessaoMobile();
-          setErro(mensagemErro(resposta.error, 'Não foi possível concluir o login social.'));
-          return;
-        }
-        void concluirLoginSocialNativoMobile(usuario);
-      }).catch(function (erro) {
-        state.carregando = false;
-        state.loginAcao = '';
-        limparPreferenciaSessaoMobile();
-        setErro(mensagemErro(erro, 'Não foi possível concluir o login social.'));
-      });
+    if (retorno.status === 'concluido' && retorno.usuario && retorno.usuario.id) {
+      // A ponte já confirmou/persistiu a sessão no cliente compartilhado.
+      // Nunca repetir setSession (/auth/v1/user) depois do retorno confirmado.
+      atualizarProgressoAcessoMobile('auth', 1, 1, 'Sessão confirmada');
+      void concluirLoginSocialNativoMobile(retorno.usuario);
       return;
     }
 
     state.carregando = false;
     state.loginAcao = '';
-    limparPreferenciaSessaoMobile();
     limparLoginSocialPendenteMobile();
-    if (retornoOAuthCanceladoMobile(retorno)) {
-      // Cancelar a confirmação do provedor volta para um login limpo. Nunca
-      // expomos mensagens técnicas da sessão OAuth dentro do card de acesso.
+    if (retorno.status === 'cancelado') {
+      limparPreferenciaSessaoMobile();
       state.erro = '';
       state.mensagem = '';
       state.telaAcesso = 'login';
+      state.pronto = true;
       render();
       return;
     }
     if (retorno.status === 'erro') {
-      setErro('Não foi possível concluir o login com ' + provedor + '. Tente novamente.');
+      exibirFalhaDeAcessoMobile(retorno.mensagem || 'Não foi possível concluir o login social. Confira a conexão e tente novamente.');
       return;
     }
     render();
@@ -272,10 +251,16 @@
   // restaurada e deixar a tela de preparação em ciclo. Este caminho replica a
   // continuação do login por e-mail a partir da sessão já confirmada.
   async function concluirLoginSocialNativoMobile(usuario) {
+    window.__avantalabAberturaOAuthMobile = true;
+    try { await continuarLoginSocialNativoMobile(usuario); }
+    finally { window.__avantalabAberturaOAuthMobile = false; }
+  }
+
+  async function continuarLoginSocialNativoMobile(usuario) {
     var tentativaLogin = Number(state.tentativaLogin || 0) + 1;
     state.tentativaLogin = tentativaLogin;
     limparLoginSocialPendenteMobile();
-    registrarPreferenciaSessaoMobile(state.manterConectado, false);
+    registrarPreferenciaSessaoMobile(state.manterConectado || sessaoPersistenteValidaMobile(), false);
     state.usuario = usuario;
     state.autenticado = true;
     state.carregando = true;
@@ -522,6 +507,9 @@
     usuariosEmpresa: [],
     usuariosCarregando: false,
     usuarioEditandoId: '',
+    usuarioLiberacoes: null,
+    editUsuarioLiberacoes: null,
+    usuariosConsulta: 0,
     usuarioModo: '',
     usuarioNome: '',
     usuarioEmail: '',
@@ -545,8 +533,25 @@
     // Falha bloqueante durante a preparação inicial. Mantém uma saída clara
     // para o usuário em vez de deixar a tela de progresso parada.
     falhaAcesso: '',
+    dashboardPerfilLiberado: '',
+    perfilModulosNativo: '',
+    modulosPerfilLiberados: [],
+    perfisDashboardLiberados: [],
     preparacaoAcessoInterrompida: false,
     dadosCriticosProntos: false,
+    aberturaProgressiva: false,
+    cargaPerfilGeracao: 0,
+    financeiroPeriodoPronto: '',
+    financeiroPeriodoErro: '',
+    financeiroCache: {},
+    financeiroCacheEpoca: 0,
+    financeiroPreCarga: '',
+    financeiroNavegacao: 0,
+    apoioFinanceiroPronto: false,
+    complementosDashboard: {},
+    complementosDashboardErros: {},
+    complementosDashboardTentativa: '',
+    complementosDashboardEmAndamento: false,
     mensagem: '',
     carregando: Boolean(loginSocialPendenteInicialMobile),
     loginAcao: loginSocialPendenteInicialMobile,
@@ -1142,7 +1147,8 @@
   db.auth.onAuthStateChange(function (evento, sessao) {
     if (sessao && (evento === 'SIGNED_IN' || evento === 'TOKEN_REFRESHED')) {
       renovarSessaoPersistenteMobile();
-    } else if (evento === 'SIGNED_OUT' && state.pronto && !recuperacaoSessaoMobilePromise) {
+    } else if (evento === 'SIGNED_OUT' && state.pronto && !recuperacaoSessaoMobilePromise &&
+      !(typeof window.__avantalabOAuthNativoMobileEmAndamento === 'function' && window.__avantalabOAuthNativoMobileEmAndamento())) {
       window.location.replace(destinoLogoutMobile());
     }
   });
@@ -1263,6 +1269,10 @@
     registrarDiagnosticoAcessoMobile('restauracao_sessao', erro);
     state.usuario = null;
     state.autenticado = false;
+    state.perfilProgressivoPronto = '';
+    state.financeiroCache = {};
+    state.financeiroCacheEpoca = Number(state.financeiroCacheEpoca || 0) + 1;
+    state.financeiroPreCarga = '';
     state.carregando = false;
     state.pronto = true;
     state.telaAcesso = 'login';
@@ -1504,7 +1514,7 @@
       || state.cadastroPerfilErroCodigo === 'perfil_nao_autorizado';
     return telaLoginWrapper(
       '<div class="px-5 py-6 text-center">' +
-        '<h2 class="text-base font-black text-slate-900">Não foi possível verificar o cadastro</h2>' +
+        '<h2 class="text-base font-black text-slate-900">' + (perfilBloqueado ? 'Acesso ao perfil indisponível' : 'Não foi possível confirmar o acesso') + '</h2>' +
         '<p class="mt-2 text-sm font-semibold leading-relaxed text-slate-600">' + escapeHtml(state.cadastroPerfilErro || 'Confira sua conexão e tente novamente.') + '</p>' +
         (perfilBloqueado
           ? '<div class="mt-4 grid gap-2"><button id="cp-trocar-perfil" type="button" class="h-11 rounded-xl bg-[#003E73] px-5 text-xs font-black uppercase tracking-wide text-white">Trocar perfil</button><button id="cp-entrar-novamente" type="button" class="h-11 rounded-xl border border-slate-300 px-5 text-xs font-black text-slate-700">Entrar novamente</button></div>'
@@ -2204,7 +2214,7 @@
     // Nesse caso não comparar com a lista em memória do ano anterior.
     if (Number(ano) !== Number(state.ano)) {
       var consulta = db.from('lancamentos')
-        .select('id, mes, dia, despesa_nome, descricao, valor, status')
+        .select('id, created_at, mes, dia, despesa_nome, descricao, valor, status')
         .eq('empresa_id', empresaId).eq('ano', Number(ano))
         .eq('mes', mes).eq('valor', Number(valor));
       if (state.centrosCustoAtivo && !state.centroCustoTodosSelecionado) {
@@ -2969,6 +2979,8 @@
   }
 
   function cardDashboardPermitido(id) {
+    // A concessão financeira pertence ao perfil atual, não à conta inteira.
+    if (somenteModulosNoAppNativo() && id !== 'controlePonto') return false;
     if (id === 'controlePonto') return podeGerenciarPontoMobile();
     // O Principal nasce junto com a ativação, mas não deve criar um card
     // redundante. O resumo aparece somente depois que houver ao menos um
@@ -3096,6 +3108,7 @@
 
   async function confirmarModuloVendasMobileNoPerfil(empresaId, repararAcesso) {
     if (!empresaId) return { data: false, error: new Error('Perfil não identificado.') };
+    if (state.dashboardPerfilLiberado === empresaId && state.modulosPerfilLiberados.indexOf('vendas_mobile') < 0) return { data: false, error: null };
     // A instalação salva em empresa_modulos é a fonte de verdade. A permissão
     // operacional do gestor é reparada separadamente e nunca pode fazer um
     // módulo já instalado voltar a aparecer como desativado.
@@ -3321,8 +3334,8 @@
     state.ano = String(ano);
     state.agendaDiaSelecionado = null;
     state.agendaFormAberto = false;
-    if (String(state.ano) !== anoAnterior) {
-      carregarDados();
+    if (ehLojaNativaMobile() || String(state.ano) !== anoAnterior) {
+      carregarDados({ trocaPeriodo: true });
     } else {
       render();
     }
@@ -3337,7 +3350,7 @@
     state.agendaDiaSelecionado = null;
     state.agendaFormAberto = false;
     state.busca = '';
-    carregarDados();
+    carregarDados({ trocaPeriodo: true });
   }
 
   function salvarUltimoPerfilMobile(empresaId) {
@@ -3363,6 +3376,24 @@
     if (!empresaSelecionada) return false;
 
     state.empresa = empresaSelecionada;
+    if (ehLojaNativaMobile()) window.dispatchEvent(new CustomEvent('avantalab:close-native-modules'));
+    state.perfilModulosNativo = '';
+    state.dashboardPerfilLiberado = '';
+    state.modulosPerfilLiberados = [];
+    state.usuariosConsulta = (state.usuariosConsulta || 0) + 1;
+    state.usuariosEmpresa = [];
+    state.usuariosCarregando = false;
+    state.usuarioEditandoId = '';
+    state.editUsuarioLiberacoes = null;
+    state.usuarioLiberacoes = null;
+    state.usuarioExistenteResultado = null;
+    state.vinculandoUsuarioExistente = false;
+    state.pronto = false;
+    state.visao = 'home';
+    state.modalLancamento = null;
+    state.modalAcao = null;
+    state.modalMenu = '';
+    state.menuAberto = false;
     state.resumoPerfilDestaqueId = empresaSelecionada.id;
     state.resumoPerfilExibidoId = '';
     state.centroCustoResumoExibidoId = '';
@@ -3399,6 +3430,7 @@
   }
 
   function abrirAgendaMobile() {
+    if (somenteModulosNoAppNativo()) return;
     if (premiumPessoalBloqueadoMobile()) {
       abrirPremiumMobile('agenda');
       return;
@@ -3562,6 +3594,7 @@
 
   function configurarRealtimeFinanceiroMobile() {
     try {
+      if (somenteModulosNoAppNativo()) return;
       if (!state.empresa || !state.empresa.id) return;
       var empresaId = state.empresa.id;
       if (window._avaRealtimeFinanceiroEmpresaId === empresaId) return;
@@ -3572,19 +3605,19 @@
         .channel('financeiro_sync_' + empresaId)
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'lancamentos', filter: 'empresa_id=eq.' + empresaId },
-          function () { carregarDados(); })
+          function () { agendarAtualizacaoFinanceiraMobile(); })
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'caixinhas_movimentos', filter: 'empresa_id=eq.' + empresaId },
           function () { carregarDados(); })
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
-          function () { carregarRecorrencias(); carregarDados(); })
+          function () { carregarRecorrencias(); agendarAtualizacaoFinanceiraMobile(); })
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'faturamentos_entradas', filter: 'empresa_id=eq.' + empresaId },
-          function () { carregarDados(); })
+          function () { agendarAtualizacaoFinanceiraMobile(); })
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'faturamentos', filter: 'empresa_id=eq.' + empresaId },
-          function () { carregarDados(); })
+          function () { agendarAtualizacaoFinanceiraMobile(); })
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'configuracoes', filter: 'empresa_id=eq.' + empresaId },
           function () { sincronizarCentrosCustoMobile(); })
@@ -3593,7 +3626,7 @@
           function () { sincronizarCentrosCustoMobile(); })
         .on('broadcast',
           { event: 'financeiro_atualizado' },
-          function () { carregarRecorrencias(); carregarDados(); })
+          function () { carregarRecorrencias(); agendarAtualizacaoFinanceiraMobile(); })
         .subscribe();
     } catch (e) {}
   }
@@ -3750,6 +3783,7 @@
         .eq('empresa_id', empresaId),
     ]);
 
+    if (!state.autenticado || !state.empresa || state.empresa.id !== empresaId) return;
     if (respostas[0].error || respostas[1].error) {
       state.pontoResumoCarregando = false;
       if (renderizar !== false) render();
@@ -3875,11 +3909,13 @@
 
   function iniciarAplicacaoLancamentoMobile(mensagem) {
     if (state.aplicacaoLancamento) return false;
+    invalidarCacheFinanceiroMobile();
     state.aplicacaoLancamento = true;
     state.aplicacaoLancamentoMensagem = mensagem || 'Aplicando alteração';
     state.carregando = true;
     state.erro = '';
     state.lancamentoErro = '';
+    if (state.modalAcao) state.modalAcao.erro = '';
     render();
     return true;
   }
@@ -3899,10 +3935,444 @@
     mostrarToast(mensagem);
   }
 
+  // Outbox durável: a confirmação local libera a tela; só o recibo do servidor
+  // encerra a pendência. Sem tokens, sem histórico e isolada por usuário/perfil.
+  var edicoesFinanceirasMobile = [];
+  var edicoesConfirmadasMobile = [];
+  var edicoesEmGravacaoMobile = {};
+  var contextoEdicoesFinanceirasMobile = '';
+  var carregandoEdicoesFinanceirasMobile = null;
+  var geracaoEdicoesFinanceirasMobile = 0;
+  var enviandoEdicoesFinanceirasMobile = false;
+  var timerEdicoesFinanceirasMobile = null;
+
+  function contextoEdicaoFinanceiraMobile() {
+    return state.autenticado && state.usuario && state.empresa && !somenteModulosNoAppNativo()
+      ? state.usuario.id + ':' + state.empresa.id : '';
+  }
+
+  function edicoesDoPerfilMobile() {
+    var contexto = contextoEdicaoFinanceiraMobile();
+    return edicoesFinanceirasMobile.filter(function (e) { return e.usuarioId + ':' + e.empresaId === contexto; });
+  }
+
+  function edicaoPendenteBloqueiaAcaoMobile(tipo, id) {
+    if (tipo === 'caixinha' || !edicoesDoPerfilMobile().some(function (e) {
+      return (e.tipo === 'receita') === (tipo === 'receita') && (String(e.registroId) === String(id)
+        || (e.projecoes || []).concat(e.originais || [], e.resultadoServidor ? e.resultadoServidor.registros : []).some(function (l) { return String(l.id) === String(id); })
+        || (e.acao === 'incluir' && (tipo === 'receita' ? state.entradas : state.lancamentos).some(function (l) { return String(l.id) === String(id) && l.operacaoMobileId === e.id; })));
+    })) return false;
+    mostrarToast('Este lançamento tem uma edição aguardando envio. Confira o aviso de sincronização.');
+    return true;
+  }
+
+  function armazenamentoEdicoesFinanceirasMobile(acao, edicao) {
+    return new Promise(function (resolve, reject) {
+      var cancelado = false;
+      var pedido = window.indexedDB.open('avantalab.gestao_mobile.edicoes.v1', 1);
+      pedido.onupgradeneeded = function () { pedido.result.createObjectStore('pendentes', { keyPath: 'id' }); };
+      pedido.onerror = function () { reject(pedido.error); };
+      pedido.onblocked = function () { cancelado = true; reject(new Error('Armazenamento local ocupado.')); };
+      pedido.onsuccess = function () {
+        var banco = pedido.result, resultado;
+        if (cancelado) { banco.close(); return; }
+        try {
+        banco.onversionchange = function () { banco.close(); };
+        var tx = banco.transaction('pendentes', acao === 'ler' ? 'readonly' : 'readwrite');
+        var store = tx.objectStore('pendentes');
+        var consulta = acao === 'ler' ? store.getAll() : acao === 'remover' ? store.delete(edicao.id) : store.put(edicao);
+        consulta.onsuccess = function () { resultado = consulta.result; };
+        tx.oncomplete = function () { banco.close(); resolve(resultado); };
+        tx.onabort = tx.onerror = function () { banco.close(); reject(tx.error || new Error('Não foi possível guardar a edição neste aparelho.')); };
+        } catch (erro) { banco.close(); reject(erro); }
+      };
+    });
+  }
+
+  function prepararEdicoesFinanceirasMobile() {
+    var contexto = contextoEdicaoFinanceiraMobile();
+    if (!contexto || !state.dadosCriticosProntos) return Promise.resolve();
+    if (contextoEdicoesFinanceirasMobile === contexto) return carregandoEdicoesFinanceirasMobile || Promise.resolve();
+    contextoEdicoesFinanceirasMobile = contexto;
+    var geracao = ++geracaoEdicoesFinanceirasMobile;
+    carregandoEdicoesFinanceirasMobile = armazenamentoEdicoesFinanceirasMobile('ler').then(function (lista) {
+      if (geracao !== geracaoEdicoesFinanceirasMobile) return;
+      if (contexto !== contextoEdicaoFinanceiraMobile()) { contextoEdicoesFinanceirasMobile = ''; return; }
+      edicoesFinanceirasMobile = (lista || []).filter(function (e) {
+        return (e.versao === 1 || (e.versao === 2 && (e.acao === 'incluir' || e.acao === 'excluir'))) && e.usuarioId + ':' + e.empresaId === contexto && e.id && e.dados && e.original && e.projecao;
+      });
+      aplicarEdicoesPendentesMobile();
+      render();
+      agendarEnvioEdicoesFinanceirasMobile(0);
+    }).catch(function () {
+      // Falhar fechado na próxima edição: nunca prometer envio sem persistência.
+      if (geracao === geracaoEdicoesFinanceirasMobile) contextoEdicoesFinanceirasMobile = '';
+    }).finally(function () { if (geracao === geracaoEdicoesFinanceirasMobile) carregandoEdicoesFinanceirasMobile = null; });
+    return carregandoEdicoesFinanceirasMobile;
+  }
+
+  function aplicarEdicoesPendentesMobile() {
+    // Uma consulta iniciada antes do envio pode terminar depois do recibo.
+    // Mantém a revisão confirmada sem ressuscitar registros excluídos.
+    var contexto = contextoEdicaoFinanceiraMobile();
+    edicoesConfirmadasMobile = edicoesConfirmadasMobile.filter(function (e) { return e.ate > Date.now(); }).slice(-100);
+    edicoesConfirmadasMobile.forEach(function (e) {
+      if (e.movimento) { if (e.contexto === contexto) aplicarMovimentoLocalMobile(e.movimento); return; }
+      if (e.contexto !== contexto || e.ano !== Number(state.ano)) return;
+      var lista = e.receita ? state.entradas : state.lancamentos;
+      var i = lista.findIndex(function (l) { return String(l.id) === String(e.projecao.id); });
+      if (i < 0 || Number(lista[i].revisao || 1) >= Number(e.projecao.revisao)) return;
+      if (e.receita) {
+        if (lista[i].status !== 'prevista') state.faturamentos[lista[i].mes] = Math.max(0, Number(state.faturamentos[lista[i].mes] || 0) - Number(lista[i].valor || 0));
+        if (e.projecao.status !== 'prevista') state.faturamentos[e.projecao.mes] = Number(state.faturamentos[e.projecao.mes] || 0) + Number(e.projecao.valor || 0);
+      }
+      lista[i] = Object.assign({}, e.projecao);
+    });
+    edicoesDoPerfilMobile().forEach(function (edicao) {
+      if (edicao.acao) { aplicarMovimentoLocalMobile(edicao); return; }
+      var receita = edicao.tipo === 'receita', lista = receita ? state.entradas : state.lancamentos;
+      var indice = (lista || []).findIndex(function (l) { return String(l.id) === String(edicao.registroId); });
+      var anterior = indice >= 0 ? lista[indice] : null;
+      var visivel = Number(state.ano) === edicao.ano && (!ehLojaNativaMobile() || state.mes === edicao.projecao.mes);
+      if (receita) {
+        // Projeção relativa ao registro que está na lista, não um incremento
+        // repetido a cada render/leitura. Evita somar duas vezes após Realtime.
+        if (anterior && anterior.status !== 'prevista') state.faturamentos[anterior.mes] = Math.max(0, Number(state.faturamentos[anterior.mes] || 0) - Number(anterior.valor || 0));
+        if (visivel && edicao.projecao.status !== 'prevista') state.faturamentos[edicao.projecao.mes] = Number(state.faturamentos[edicao.projecao.mes] || 0) + Number(edicao.projecao.valor || 0);
+      }
+      if (indice >= 0) lista.splice(indice, 1);
+      if (visivel) lista.push(Object.assign({}, edicao.projecao));
+    });
+  }
+
+  function registroFinanceiroDaFilaMobile(r, tipo) {
+    return { id: r.id, criadoEm: r.created_at || null, ano: Number(r.ano), mes: r.mes, dia: Number(r.dia), valor: Number(r.valor),
+      despesa: r.despesa_nome ? formatarDescricao(r.despesa_nome) : '', origem: r.origem || '', descricao: r.descricao || '',
+      status: r.status, tipo: r.tipo_obs, recorrenciaId: r.recorrencia_id || null, notaArquivoPath: r.nota_arquivo_path || null,
+      centroCustoId: r.centro_custo_id || null, revisao: Number(r.revisao || 1),
+      operacaoMobileId: r.operacao_mobile_id || null, operacaoMobileIndice: Number(r.operacao_mobile_indice || 0) };
+  }
+
+  function aplicarMovimentoLocalMobile(e) {
+    var receita = e.tipo === 'receita', lista = receita ? state.entradas : state.lancamentos;
+    var recibo = e.resultadoServidor;
+    var linhas = e.acao === 'excluir' ? e.originais : recibo
+      ? recibo.registros.map(function (r) { return registroFinanceiroDaFilaMobile(r, e.tipo); }) : e.projecoes;
+    linhas.forEach(function (linha) {
+      var visivel = Number(linha.ano || e.ano) === Number(state.ano) && (!ehLojaNativaMobile() || linha.mes === state.mes);
+      var indices = [];
+      lista.forEach(function (l, i) {
+        if (String(l.id) === String(linha.id) || (e.acao === 'incluir' && l.operacaoMobileId === e.id && Number(l.operacaoMobileIndice) === Number(linha.operacaoMobileIndice))) indices.push(i);
+      });
+      if (e.acao === 'excluir' && recibo && indices.some(function (i) { return Number(lista[i].revisao || 1) > Number(linha.revisao || 1); })) return;
+      // Se o Realtime já trouxe a inclusão, conserva o registro real (e edições
+      // mais novas), removendo somente a cópia provisória do mesmo envio.
+      var real = e.acao === 'incluir' && indices.map(function (i) { return lista[i]; }).find(function (l) { return String(l.id).indexOf('local:') !== 0; });
+      var destino = real && (!recibo || Number(real.revisao || 1) >= Number(linha.revisao || 1)) ? real : linha;
+      if (receita) indices.forEach(function (i) { var l = lista[i]; if (l.status !== 'prevista') state.faturamentos[l.mes] = Math.max(0, Number(state.faturamentos[l.mes] || 0) - Number(l.valor || 0)); });
+      indices.reverse().forEach(function (i) { lista.splice(i, 1); });
+      if (e.acao === 'incluir' && visivel) {
+        lista.push(Object.assign({}, destino));
+        if (receita && destino.status !== 'prevista') state.faturamentos[destino.mes] = Number(state.faturamentos[destino.mes] || 0) + Number(destino.valor || 0);
+      }
+    });
+  }
+
+  async function enfileirarMovimentoFinanceiroMobile(tipo, acao, dados, originais, projecoes, anexo) {
+    var contexto = contextoEdicaoFinanceiraMobile(), modal = state.modalAcao;
+    var formulario = Number(state.lancamentoFormularioGeracao || 0), formularioAberto = Boolean(state.modalLancamento);
+    var chave = contexto + ':' + tipo + ':' + acao + ':' + (acao === 'incluir' ? 'novo' : originais.map(function (l) { return l.id; }).sort().join(','));
+    var chavesRegistros = originais.map(function (l) { return contexto + ':' + tipo + ':' + l.id; });
+    if (edicoesEmGravacaoMobile[chave] || chavesRegistros.some(function (c) { return edicoesEmGravacaoMobile[c]; }) || (modal && modal.enfileirando)) return false;
+    edicoesEmGravacaoMobile[chave] = true;
+    chavesRegistros.forEach(function (c) { edicoesEmGravacaoMobile[c] = true; });
+    if (modal) modal.enfileirando = true;
+    try {
+      await prepararEdicoesFinanceirasMobile();
+      if (!contexto || contexto !== contextoEdicaoFinanceiraMobile() || !state.dadosCriticosProntos || state.paywallAtivo || state.validacaoTelefoneObrigatoria) return false;
+      if (contextoEdicoesFinanceirasMobile !== contexto) throw new Error('armazenamento');
+      if (acao === 'excluir' && originais.some(function (l) { return edicaoPendenteBloqueiaAcaoMobile(tipo, l.id); })) return false;
+      var bytes = new Uint8Array(16); window.crypto.getRandomValues(bytes);
+      bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
+      var id = Array.from(bytes, function (b) { return b.toString(16).padStart(2, '0'); }).join('').replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
+      var linhas = (projecoes || []).map(function (l, i) { return Object.assign({}, l, { id: 'local:' + id + ':' + i, operacaoMobileId: id, operacaoMobileIndice: i, revisao: 1, criadoEm: acao === 'incluir' ? new Date().toISOString() : l.criadoEm }); });
+      // Clientes anteriores aceitam somente versão 1: em uma recuperação da
+      // interface devem preservar/ignorar estes pedidos, nunca tratá-los como edição.
+      var e = { versao: 2, id: id, usuarioId: state.usuario.id, empresaId: state.empresa.id, tipo: tipo, acao: acao,
+        registroId: acao === 'incluir' ? linhas[0].id : String(originais[0].id), ano: Number(dados.ano || state.ano), anoOriginal: Number(state.ano),
+        dados: dados, originais: originais.map(function (l) { return Object.assign({ ano: Number(state.ano) }, l); }), projecoes: linhas,
+        original: originais[0] || {}, projecao: linhas[0] || originais[0], anexo: anexo || null,
+        criadoEm: Date.now(), tentativas: 0, erro: '', bloqueada: false };
+      await armazenamentoEdicoesFinanceirasMobile('gravar', e);
+      if (contexto !== contextoEdicaoFinanceiraMobile()) return false;
+      edicoesFinanceirasMobile.push(e);
+      invalidarCacheFinanceiroMobile(); aplicarEdicoesPendentesMobile();
+      if (state.modalAcao === modal) state.modalAcao = null;
+      state.erro = ''; state.lancamentoErro = '';
+      // A projeção já atualizou a tela. Confirmar uma única vez, após o recibo.
+      agendarEnvioEdicoesFinanceirasMobile(0);
+      if (acao === 'incluir' && (formulario !== Number(state.lancamentoFormularioGeracao || 0) || (formularioAberto && !state.modalLancamento))) return false;
+      return true;
+    } catch (erro) {
+      var mensagem = 'Não foi possível guardar a operação no aparelho. Nada foi enviado. Mantenha o formulário e tente novamente.';
+      if (state.modalLancamento) setErroLancamentoMobile(mensagem); else setErro(mensagem);
+      return false;
+    } finally { delete edicoesEmGravacaoMobile[chave]; chavesRegistros.forEach(function (c) { delete edicoesEmGravacaoMobile[c]; }); if (modal) modal.enfileirando = false; }
+  }
+
+  async function enfileirarExclusaoFinanceiraMobile(tipo, itens) {
+    if (!itens || !itens.length) return false;
+    if (tipo === 'despesa' && state.empresa.perfil && itens.some(function (l) {
+      var permitidos = l.tipo === 'fixa' || l.recorrenciaId ? ['gestor_master','administrador','operador_completo'] : ['gestor_master','administrador'];
+      return permitidos.indexOf(state.empresa.perfil) < 0;
+    })) { setErro('Seu acesso não permite excluir esta despesa.'); return false; }
+    if (tipo === 'despesa' && itens.some(function (l) { return (state.caixinhaMovimentos || []).some(function (m) { return String(m.lancamentoId) === String(l.id); }); })) {
+      mostrarToast('Este lançamento está vinculado à Caixinha. Exclua o aporte pela Caixinha para manter o saldo correto.'); return false;
+    }
+    var ok = await enfileirarMovimentoFinanceiroMobile(tipo, 'excluir', { registros: itens.map(function (l) { return { id: String(l.id), revisao: Number(l.revisao || 1) }; }) }, itens, []);
+    if (ok) render(true);
+    return ok;
+  }
+
+  async function enviarMovimentoFinanceiroMobile(e, sessao, contexto) {
+    if (!e.resultadoServidor) {
+      var r = await promessaMobileComPrazo(db.rpc('aplicar_movimento_financeiro_mobile_rpc', {
+        p_operacao_id: e.id, p_empresa_id: e.empresaId, p_tipo: e.tipo, p_acao: e.acao, p_dados: e.dados, p_usuario_id: e.usuarioId,
+      }), 20000);
+      if (r.error) throw r.error;
+      if (!r.data || r.data.acao !== e.acao || r.data.tipo !== e.tipo || !Array.isArray(r.data.registros) || !Array.isArray(r.data.originais)
+        || (e.acao === 'incluir' && (r.data.registros.length !== e.projecoes.length || r.data.registros.some(function (l, i) { return l.operacao_mobile_id !== e.id || Number(l.operacao_mobile_indice) !== i || l.empresa_id !== e.empresaId; })))
+        || (e.acao === 'excluir' && (r.data.originais.length !== e.originais.length || e.originais.some(function (l) { return !r.data.originais.some(function (o) { return String(o.id) === String(l.id) && o.empresa_id === e.empresaId; }); })))) throw new Error('Confirmação incompleta.');
+      e.resultadoServidor = r.data;
+      // Recibo local ANTES dos anexos: uma retomada nunca recria o lançamento.
+      await armazenamentoEdicoesFinanceirasMobile('gravar', e);
+      if (contexto === contextoEdicaoFinanceiraMobile()) { aplicarMovimentoLocalMobile(e); render(); }
+    }
+    if (contexto !== contextoEdicaoFinanceiraMobile()) return;
+    var temNotas = e.tipo === 'despesa' && e.acao === 'excluir' && e.resultadoServidor.originais.some(function (l) { return l.nota_arquivo_path; });
+    if (e.anexo || temNotas) {
+      var corpo, metodo = e.anexo ? 'POST' : 'DELETE';
+      var headers = { Authorization: 'Bearer ' + sessao.access_token };
+      if (e.anexo) { corpo = new FormData(); corpo.append('operacaoId', e.id); corpo.append('arquivo', e.anexo, e.anexo.name || 'nota'); }
+      else { headers['Content-Type'] = 'application/json'; corpo = JSON.stringify({ operacaoId: e.id }); }
+      var resposta = await promessaMobileComPrazo(fetch('/api/lancamentos/operacao-anexos?empresaId=' + encodeURIComponent(e.empresaId), { method: metodo, headers: headers, body: corpo }), 20000);
+      var nota = await resposta.json();
+      if (!resposta.ok || nota.erro) { var erro = new Error('Lançamento confirmado; anexo aguardando sincronização.'); erro.code = resposta.status === 403 || resposta.status === 409 ? '42501' : ''; throw erro; }
+      if (nota.registro) e.resultadoServidor.registros[0] = nota.registro;
+    }
+    await armazenamentoEdicoesFinanceirasMobile('remover', e);
+    edicoesFinanceirasMobile = edicoesFinanceirasMobile.filter(function (l) { return l.id !== e.id; });
+    if (contexto !== contextoEdicaoFinanceiraMobile()) return;
+    invalidarCacheFinanceiroMobile(); state.complementosDashboard = {}; state.complementosDashboardTentativa = '';
+    aplicarMovimentoLocalMobile(e);
+    edicoesConfirmadasMobile.push({ contexto: contexto, movimento: Object.assign({}, e, { anexo: null }), ate: Date.now() + 120000 });
+    mostrarToast(e.acao === 'excluir' ? 'Lançamento excluído.' : 'Lançamento salvo.');
+    notificarFinanceiroAtualizadoMobile(); void atualizarPeriodoAposEdicaoMobile(); render();
+  }
+
+  async function enfileirarEdicaoFinanceiraMobile(tipo, item, dados, projecao) {
+    var contexto = contextoEdicaoFinanceiraMobile();
+    var chaveGravacao = contexto + ':' + (tipo === 'receita' ? 'receita' : 'despesa') + ':' + item.id;
+    if (edicoesEmGravacaoMobile[chaveGravacao]) return false;
+    var modal = state.modalAcao;
+    if (modal && modal.enfileirando) return false;
+    edicoesEmGravacaoMobile[chaveGravacao] = true;
+    if (modal) modal.enfileirando = true;
+    try {
+    await prepararEdicoesFinanceirasMobile();
+    if (contextoEdicoesFinanceirasMobile !== contexto) { setErro('Não foi possível guardar a edição no aparelho. Nada foi enviado. Mantenha o formulário e tente novamente.'); return false; }
+    if (!contexto || contexto !== contextoEdicaoFinanceiraMobile() || !state.dadosCriticosProntos || state.paywallAtivo || state.validacaoTelefoneObrigatoria) return false;
+    if (edicoesDoPerfilMobile().some(function (e) { return String(e.registroId) === String(item.id) && (e.tipo === 'receita') === (tipo === 'receita'); })) {
+      setErro('Este lançamento já tem uma edição pendente de envio. Aguarde a confirmação ou revise a pendência.'); return false;
+    }
+    var bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
+    var identificador = Array.from(bytes, function (b) { return b.toString(16).padStart(2, '0'); }).join('').replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
+    var edicao = {
+      versao: 1, id: identificador, usuarioId: state.usuario.id, empresaId: state.empresa.id,
+      tipo: tipo, registroId: String(item.id), revisao: Number(item.revisao || 1),
+      ano: Number(dados.ano), anoOriginal: Number(state.ano), dados: dados, original: Object.assign({}, item), projecao: Object.assign({}, projecao, { criadoEm: item.criadoEm || null }),
+      criadoEm: Date.now(), tentativas: 0, erro: '', bloqueada: false,
+    };
+    try { await armazenamentoEdicoesFinanceirasMobile('gravar', edicao); }
+    catch (erro) { setErro('Não foi possível guardar a edição no aparelho. Nada foi enviado. Mantenha o formulário e tente novamente.'); return false; }
+    if (contexto !== contextoEdicaoFinanceiraMobile()) return false;
+    edicoesFinanceirasMobile.push(edicao);
+    invalidarCacheFinanceiroMobile();
+    aplicarEdicoesPendentesMobile();
+    state.modalAcao = null;
+    state.erro = '';
+    // Não anunciar sucesso local e depois repetir a confirmação remota.
+    render(true);
+    agendarEnvioEdicoesFinanceirasMobile(0);
+    return true;
+    } finally { delete edicoesEmGravacaoMobile[chaveGravacao]; if (modal) modal.enfileirando = false; }
+  }
+
+  function agendarEnvioEdicoesFinanceirasMobile(atraso) {
+    if (timerEdicoesFinanceirasMobile) window.clearTimeout(timerEdicoesFinanceirasMobile);
+    timerEdicoesFinanceirasMobile = window.setTimeout(function () {
+      timerEdicoesFinanceirasMobile = null;
+      void enviarEdicoesFinanceirasMobile();
+    }, atraso || 0);
+  }
+
+  async function enviarEdicoesFinanceirasMobile() {
+    if (enviandoEdicoesFinanceirasMobile || !contextoEdicaoFinanceiraMobile() || !state.dadosCriticosProntos || state.paywallAtivo || navigator.onLine === false) return;
+    enviandoEdicoesFinanceirasMobile = true;
+    var contexto = contextoEdicaoFinanceiraMobile(), repetir = false;
+    try {
+      var fila = edicoesDoPerfilMobile().filter(function (e) { return !e.bloqueada; });
+      for (var i = 0; i < fila.length && contexto === contextoEdicaoFinanceiraMobile(); i++) {
+        var edicao = fila[i];
+        try {
+          // Confere o dono da sessão local, inclusive depois de logout/login.
+          var sessao = await db.auth.getSession();
+          if (contexto !== contextoEdicaoFinanceiraMobile() || !sessao.data || !sessao.data.session || sessao.data.session.user.id !== edicao.usuarioId) break;
+          if (edicao.acao) { await enviarMovimentoFinanceiroMobile(edicao, sessao.data.session, contexto); continue; }
+          var r = await promessaMobileComPrazo(db.rpc('aplicar_edicao_financeira_mobile_rpc', {
+            p_operacao_id: edicao.id, p_empresa_id: edicao.empresaId, p_tipo: edicao.tipo,
+            p_registro_id: edicao.registroId, p_revisao: edicao.revisao, p_dados: edicao.dados,
+            p_usuario_id: edicao.usuarioId,
+          }), 20000);
+          if (r.error) throw r.error;
+          if (!r.data || !r.data.registro || String(r.data.registro.id) !== edicao.registroId) throw new Error('Confirmação incompleta.');
+          // Retirar só depois de persistir o recibo. Repetir o mesmo ID após
+          // fechamento/perda da resposta retorna o recibo sem reaplicar valores.
+          await armazenamentoEdicoesFinanceirasMobile('remover', edicao);
+          edicoesFinanceirasMobile = edicoesFinanceirasMobile.filter(function (e) { return e.id !== edicao.id; });
+          if (contexto === contextoEdicaoFinanceiraMobile()) {
+            invalidarCacheFinanceiroMobile();
+            state.complementosDashboard = {}; state.complementosDashboardTentativa = '';
+            edicoesConfirmadasMobile.push({ contexto: contexto, ano: edicao.ano, receita: edicao.tipo === 'receita',
+              projecao: Object.assign({}, edicao.projecao, { revisao: Number(r.data.registro.revisao), status: r.data.registro.status, tipo: r.data.registro.tipo_obs,
+                mes: r.data.registro.mes, dia: Number(r.data.registro.dia), valor: Number(r.data.registro.valor),
+                descricao: r.data.registro.descricao || '', despesa: r.data.registro.despesa_nome || edicao.projecao.despesa, origem: r.data.registro.origem || edicao.projecao.origem }), ate: Date.now() + 120000 });
+            if (edicao.tipo !== 'receita' && Number(state.ano) === edicao.ano) aplicarDespesaPrevistaSalvaMobile(r.data.registro);
+            else state.entradas = state.entradas.map(function (l) { return String(l.id) === edicao.registroId ? Object.assign({}, edicao.projecao, { revisao: Number(r.data.registro.revisao) }) : l; });
+            mostrarToast('Alteração salva.');
+            notificarFinanceiroAtualizadoMobile();
+            void atualizarPeriodoAposEdicaoMobile();
+          }
+        } catch (erro) {
+          edicao.tentativas++;
+          var codigo = String(erro.code || '');
+          edicao.bloqueada = /^(40001|42501|P0002|22|23|PGRST202)/.test(codigo);
+          edicao.erro = edicao.resultadoServidor ? 'Lançamento confirmado no servidor; falta sincronizar o anexo. A pendência foi mantida neste aparelho.'
+            : codigo === '40001' ? 'Alterado em outro dispositivo. Sua edição não sobrescreveu o servidor.'
+            : codigo === 'PGRST202' ? 'O servidor precisa da atualização de edição em segundo plano. Sua alteração está guardada no aparelho.'
+            : edicao.bloqueada ? 'Envio não confirmado. Revise o acesso ou os dados antes de tentar novamente.'
+              : 'Aguardando conexão. A edição está guardada neste aparelho.';
+          try { await armazenamentoEdicoesFinanceirasMobile('gravar', edicao); } catch (e) {}
+          repetir = repetir || !edicao.bloqueada;
+          if (contexto === contextoEdicaoFinanceiraMobile()) render();
+        }
+      }
+    } finally {
+      enviandoEdicoesFinanceirasMobile = false;
+      if (contexto !== contextoEdicaoFinanceiraMobile()) agendarEnvioEdicoesFinanceirasMobile(0);
+      else if (repetir) agendarEnvioEdicoesFinanceirasMobile(Math.min(60000, 2000 * Math.pow(2, Math.min(5, edicoesDoPerfilMobile().reduce(function (n,e) { return Math.max(n,e.tentativas); },0)))));
+    }
+  }
+
+  async function atualizarPeriodoAposEdicaoMobile() {
+    if (!contextoEdicaoFinanceiraMobile() || !state.dadosCriticosProntos) return;
+    var contexto = contextoEdicaoFinanceiraMobile(), ano = Number(state.ano), mes = state.mes, epoca = state.financeiroCacheEpoca;
+    try {
+      var dados = await obterFinanceiroPeriodoCacheMobile(state.empresa.id, ano, mes);
+      if (contexto !== contextoEdicaoFinanceiraMobile() || Number(state.ano) !== ano || state.mes !== mes || epoca !== state.financeiroCacheEpoca) return;
+      aplicarFinanceiroPeriodoMobile(dados, mes);
+      render();
+    } catch (erro) { /* mantém a projeção e a fila; sem bloquear navegação */ }
+  }
+
+  function agendarAtualizacaoFinanceiraMobile() {
+    if (!state.dadosCriticosProntos || !contextoEdicaoFinanceiraMobile()) return;
+    if (window._avaAtualizacaoFinanceiraTimer) window.clearTimeout(window._avaAtualizacaoFinanceiraTimer);
+    var contexto = contextoEdicaoFinanceiraMobile();
+    invalidarCacheFinanceiroMobile();
+    window._avaAtualizacaoFinanceiraTimer = window.setTimeout(function () {
+      if (contexto === contextoEdicaoFinanceiraMobile()) void atualizarPeriodoAposEdicaoMobile();
+    }, 250);
+  }
+
+  function avisoEdicoesFinanceirasMobileHtml() {
+    // Envio normal é silencioso. Exibir somente pendências que pedem atenção,
+    // sem confundir uma operação ainda na fila com salvamento confirmado.
+    var lista = edicoesDoPerfilMobile().filter(function (e) {
+      return e.bloqueada || e.erro || navigator.onLine === false;
+    });
+    if (!lista.length) return '';
+    var bloqueadas = lista.some(function (e) { return e.bloqueada; });
+    return '<aside role="status" aria-live="polite" class="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">'
+      + '<p>' + (bloqueadas ? 'Há operação pendente. Confira abaixo o que falta sincronizar.' : lista.length + ' alteração(ões) aguardando envio. Você pode continuar usando o app.') + '</p>'
+      + lista.filter(function (e) { return e.erro; }).map(function (e) { return '<p class="mt-1">' + escapeHtml(e.projecao.despesa || e.projecao.origem) + ': ' + escapeHtml(e.erro) + '</p>'
+        + '<div class="flex flex-wrap gap-2"><button type="button" data-reenviar-edicao="' + escapeHtml(e.id) + '" class="min-h-11 underline">Tentar envio</button>'
+        + (e.bloqueada && !e.resultadoServidor ? '<button type="button" data-descartar-edicao="' + escapeHtml(e.id) + '" class="min-h-11 underline">Descartar edição local</button>' : '') + '</div>'; }).join('') + '</aside>';
+  }
+
+  async function resolverEdicaoFinanceiraMobile(id, descartar) {
+    if (enviandoEdicoesFinanceirasMobile) return;
+    var contexto = contextoEdicaoFinanceiraMobile();
+    var edicao = edicoesDoPerfilMobile().find(function (e) { return e.id === id; });
+    if (!edicao) return;
+    try {
+      if (descartar && edicao.bloqueada && !edicao.resultadoServidor) {
+        var escolha = await solicitarDialogoSistemaMobile({
+          titulo: 'Descartar edição local?', rotulo: 'Edição não confirmada',
+          mensagem: 'Somente a alteração pendente neste aparelho será descartada. Os dados do servidor não serão alterados.',
+          variante: 'alerta', acoes: [
+            { valor: 'manter', rotulo: 'Manter pendência', estilo: 'secundaria' },
+            { valor: 'descartar', rotulo: 'Descartar edição', estilo: 'perigosa' },
+          ],
+        });
+        if (escolha !== 'descartar' || contexto !== contextoEdicaoFinanceiraMobile() || enviandoEdicoesFinanceirasMobile) return;
+        await armazenamentoEdicoesFinanceirasMobile('remover', edicao);
+        edicoesFinanceirasMobile = edicoesFinanceirasMobile.filter(function (e) { return e.id !== id; });
+        if (contexto !== contextoEdicaoFinanceiraMobile()) return;
+        if (edicao.acao) {
+          // Descartar pendência recusada é somente local; nunca envia exclusão
+          // compensatória de um lançamento que o servidor já confirmou.
+          var listaMovimento = edicao.tipo === 'receita' ? state.entradas : state.lancamentos;
+          if (edicao.acao === 'incluir') edicao.projecoes.forEach(function (l) {
+            var i = listaMovimento.findIndex(function (atual) { return String(atual.id) === String(l.id); });
+            if (i >= 0) { var removido = listaMovimento.splice(i, 1)[0]; if (edicao.tipo === 'receita' && removido.status !== 'prevista') state.faturamentos[removido.mes] = Math.max(0, Number(state.faturamentos[removido.mes] || 0) - Number(removido.valor || 0)); }
+          });
+          else edicao.originais.forEach(function (l) {
+            if (Number(l.ano) !== Number(state.ano) || (ehLojaNativaMobile() && l.mes !== state.mes) || listaMovimento.some(function (atual) { return String(atual.id) === String(l.id); })) return;
+            listaMovimento.push(Object.assign({}, l));
+            if (edicao.tipo === 'receita' && l.status !== 'prevista') state.faturamentos[l.mes] = Number(state.faturamentos[l.mes] || 0) + Number(l.valor || 0);
+          });
+          invalidarCacheFinanceiroMobile(); void atualizarPeriodoAposEdicaoMobile(); render(); return;
+        }
+        var receita = edicao.tipo === 'receita', lista = receita ? state.entradas : state.lancamentos;
+        var i = lista.findIndex(function (l) { return String(l.id) === edicao.registroId; });
+        if (i >= 0) {
+          if (receita && lista[i].status !== 'prevista') state.faturamentos[lista[i].mes] = Math.max(0, Number(state.faturamentos[lista[i].mes] || 0) - Number(lista[i].valor || 0));
+          lista.splice(i, 1);
+        }
+        if (Number(state.ano) === Number(edicao.anoOriginal || edicao.ano) && (!ehLojaNativaMobile() || state.mes === edicao.original.mes)) {
+          lista.push(Object.assign({}, edicao.original));
+          if (receita && edicao.original.status !== 'prevista') state.faturamentos[edicao.original.mes] = Number(state.faturamentos[edicao.original.mes] || 0) + Number(edicao.original.valor || 0);
+        }
+        mostrarToast('Edição local descartada. Os dados do servidor serão consultados novamente.');
+        invalidarCacheFinanceiroMobile();
+        await atualizarPeriodoAposEdicaoMobile();
+      } else {
+        edicao.bloqueada = false; edicao.erro = ''; edicao.tentativas = 0;
+        await armazenamentoEdicoesFinanceirasMobile('gravar', edicao);
+        agendarEnvioEdicoesFinanceirasMobile(0);
+      }
+      render();
+    } catch (erro) { mostrarToast('Não foi possível atualizar a pendência neste aparelho. Tente novamente.'); }
+  }
+
   function aplicarDespesaPrevistaSalvaMobile(registro) {
     if (!registro || !registro.id || !state.empresa) return false;
     var atualizada = {
       id: registro.id,
+      criadoEm: registro.created_at || null,
       mes: registro.mes,
       dia: Number(registro.dia),
       despesa: formatarDescricao(registro.despesa_nome),
@@ -3913,12 +4383,15 @@
       recorrenciaId: registro.recorrencia_id || null,
       notaArquivoPath: registro.nota_arquivo_path || null,
       centroCustoId: registro.centro_custo_id ? String(registro.centro_custo_id) : null,
+      operacaoMobileId: registro.operacao_mobile_id || null,
+      operacaoMobileIndice: Number(registro.operacao_mobile_indice || 0),
       revisao: Number(registro.revisao || 1),
     };
     var encontrou = false;
     state.lancamentos = (state.lancamentos || []).map(function (item) {
       if (String(item.id) !== String(atualizada.id)) return item;
       encontrou = true;
+      atualizada.criadoEm = atualizada.criadoEm || item.criadoEm || null;
       return atualizada;
     });
     if (!encontrou) return false;
@@ -3959,8 +4432,10 @@
 
   async function sincronizarAgendaSupabase(renderizar) {
     if (!state.usuario || !state.usuario.id) return;
+    var usuarioAgendaId = state.usuario.id;
     try {
       var resposta = await db.from('agenda_itens').select('*').eq('user_id', state.usuario.id);
+      if (!state.autenticado || !state.usuario || state.usuario.id !== usuarioAgendaId) return;
       if (resposta.error) return;
 
       var remotos = (resposta.data || []).map(normalizarItemAgenda);
@@ -3978,6 +4453,7 @@
         var soLocais = locais.filter(function (l) { return !idsRemotos[String(l.id)]; });
         for (var i = 0; i < soLocais.length; i++) {
           await gravarItemAgendaSupabase(soLocais[i]);
+          if (!state.autenticado || !state.usuario || state.usuario.id !== usuarioAgendaId) return;
         }
         state.agendaItens = remotos.concat(soLocais.map(normalizarItemAgenda));
         try { localStorage.setItem('avantalab_mobile_agenda_migrada', '1'); } catch (e) {}
@@ -4175,6 +4651,8 @@
   function seloTipoHtml(item) {
     if (!item) return '';
     var selos = [];
+    var envio = edicoesDoPerfilMobile().find(function (e) { return String(e.registroId) === String(item.id); });
+    if (envio) selos.push({ txt: envio.bloqueada ? 'Não confirmado' : 'Envio pendente', cls: 'bg-amber-100 text-amber-900' });
     var tipos = {
       fixa: { txt: 'Fixa', cls: 'bg-indigo-100 text-indigo-700' },
       parcela: { txt: 'Parcela', cls: 'bg-violet-100 text-violet-700' },
@@ -4194,10 +4672,11 @@
   }
 
   function dadosMes(mes) {
-    var lancamentos = lancamentosDoCentroCustoAtualMobile().filter(function (item) {
+    var complemento = ehLojaNativaMobile() && state.complementosDashboard && state.complementosDashboard[mes];
+    var lancamentos = (complemento ? complemento.lancamentos.filter(itemPertenceAoCentroCustoAtualMobile) : lancamentosDoCentroCustoAtualMobile()).filter(function (item) {
       return item.mes === mes && item.status !== 'cancelada';
     });
-    var entradas = entradasDoCentroCustoAtualMobile().filter(function (item) { return item.mes === mes; });
+    var entradas = (complemento ? complemento.entradas.filter(itemPertenceAoCentroCustoAtualMobile) : entradasDoCentroCustoAtualMobile()).filter(function (item) { return item.mes === mes; });
     var mesIndice = indiceMes(mes);
     var despesasRealizadas = 0;
     var despesasFuturas = 0;
@@ -4208,7 +4687,7 @@
         despesasRealizadas += item.valor;
       }
     });
-    var temTotalDefinido = Object.prototype.hasOwnProperty.call(state.faturamentos, mes);
+    var temTotalDefinido = Boolean(complemento) || Object.prototype.hasOwnProperty.call(state.faturamentos, mes);
     // Receita "prevista" (data futura, nao confirmada) nao entra no efetivado, so na previsao.
     // Passando o dia sem confirmar, e considerada efetivada (lazy, igual as despesas).
     var receitasNaoPrevistas = 0;
@@ -4225,7 +4704,7 @@
     });
     // `faturamentos` é o consolidado do perfil. No contexto de um centro,
     // a receita efetivada vem apenas das entradas daquele centro.
-    var receitasBase = state.centrosCustoAtivo ? receitasNaoPrevistas : (temTotalDefinido ? state.faturamentos[mes] : receitasNaoPrevistas);
+    var receitasBase = state.centrosCustoAtivo ? receitasNaoPrevistas : (temTotalDefinido ? (complemento ? complemento.faturamento : state.faturamentos[mes]) : receitasNaoPrevistas);
     var receitas = receitasBase + receitasPrevistasPassadas;
     var receitasPrevistas = receitasPrevistasFuturas;
 
@@ -4244,6 +4723,16 @@
   }
 
   function dadosMesAnterior() {
+    if (ehLojaNativaMobile() && state.mes === meses[0] && state.historicoDezembroAnterior) {
+      var anterior = state.historicoDezembroAnterior;
+      var anoAnterior = Number(state.ano) - 1;
+      var entradas = anterior.entradas.filter(itemPertenceAoCentroCustoAtualMobile);
+      var despesas = anterior.lancamentos.filter(itemPertenceAoCentroCustoAtualMobile).filter(function (l) { return l.status !== 'cancelada' && l.status !== 'prevista' && !dataFutura(anoAnterior, 11, l.dia); }).reduce(function (t, l) { return t + l.valor; }, 0);
+      var realizadas = entradas.filter(function (e) { return e.status !== 'prevista'; }).reduce(function (t, e) { return t + e.valor; }, 0);
+      var previstasPassadas = entradas.filter(function (e) { return e.status === 'prevista' && !dataFutura(anoAnterior, 11, e.dia) && !ehDataHoje(anoAnterior, 11, e.dia); }).reduce(function (t, e) { return t + e.valor; }, 0);
+      var receitas = (state.centrosCustoAtivo ? realizadas : anterior.faturamento) + previstasPassadas;
+      return { mes: meses[11], despesas: despesas, receitas: receitas, saldo: receitas - despesas };
+    }
     var indice = indiceMes(state.mes) - 1;
     if (indice < 0) indice = 11;
     return dadosMes(meses[indice]);
@@ -4286,6 +4775,13 @@
   }
 
   function setErro(texto) {
+    if (state.modalAcao) {
+      state.modalAcao.erro = texto || '';
+      state.erro = '';
+      state.mensagem = '';
+      render();
+      return;
+    }
     state.erro = texto || '';
     state.mensagem = '';
     render();
@@ -4398,8 +4894,12 @@
 
   function iniciarPeriodoLancamentoMobile() {
     var hoje = new Date();
-    state.lancamentoMesIndice = hoje.getMonth();
-    state.lancamentoAno = hoje.getFullYear();
+    var indiceDashboard = meses.indexOf(state.mes);
+    var anoDashboard = Number(state.ano);
+    // Copia o contexto uma vez por abertura. O seletor do formulário continua
+    // independente e nunca altera o período da dashboard.
+    state.lancamentoMesIndice = Number.isInteger(indiceDashboard) && indiceDashboard >= 0 && indiceDashboard < 12 ? indiceDashboard : hoje.getMonth();
+    state.lancamentoAno = Number.isInteger(anoDashboard) && anoDashboard > 0 && anoDashboard <= 9998 ? anoDashboard : hoje.getFullYear();
   }
 
   function mudarPeriodoLancamentoMobile(delta) {
@@ -4421,6 +4921,8 @@
   }
 
   function prepararNovoLancamentoMobile() {
+    if (ehLojaNativaMobile() && (!financeiroMesProntoMobile() || !state.apoioFinanceiroPronto)) return false;
+    state.lancamentoFormularioGeracao = Number(state.lancamentoFormularioGeracao || 0) + 1;
     if (state.centrosCustoAtivo && state.centroCustoTodosSelecionado) {
       var principal = centroCustoPrincipalMobile();
       if (principal) selecionarCentroCustoMobile(principal.id);
@@ -4436,6 +4938,10 @@
       state.entradaDia = diaHojeLancamentoMobile();
       state.entradaDiaAutoHoje = true;
     }
+    var limite = maxDias(meses[state.lancamentoMesIndice], state.lancamentoAno);
+    ['despesaDia', 'entradaDia'].forEach(function (chave) {
+      if (Number(state[chave]) > limite) state[chave] = String(limite);
+    });
   }
 
   function limparRascunhoLancamentoMobile() {
@@ -4599,6 +5105,7 @@
   }
 
   function abrirModalMenu(nome) {
+    if (somenteModulosNoAppNativo() && ['despesasFixas', 'centrosCusto', 'caixinha', 'exportar', 'agenda'].indexOf(nome) >= 0) return;
     state.menuAberto = false;
     state.modalMenu = nome;
     if (nome === 'gerenciar') state.empresaExclusaoAberta = false;
@@ -4830,6 +5337,8 @@
   }
 
   function abrirLancamentoPelaNavegacao() {
+    if (somenteModulosNoAppNativo()) return;
+    if (ehLojaNativaMobile() && (!financeiroMesProntoMobile() || !state.apoioFinanceiroPronto)) { mostrarToast('Aguarde os dados necessários para lançar.'); return; }
     cancelarJanelasMobile();
     state.visao = 'home';
     state.busca = '';
@@ -4884,6 +5393,7 @@
   }
 
   function mesesComDadosExportacaoMobile() {
+    if (ehLojaNativaMobile()) return meses.slice();
     var comDados = {};
     lancamentosDoCentroCustoAtualMobile().forEach(function (item) {
       if (item && item.status !== 'cancelada' && item.mes) comDados[item.mes] = true;
@@ -4895,17 +5405,18 @@
   }
 
   function anosComDadosExportacaoMobile() {
+    if (ehLojaNativaMobile()) return Array.from({ length: Math.max(1, new Date().getFullYear() - 2023) }, function (_, i) { return String(2024 + i); });
     return mesesComDadosExportacaoMobile().length ? [String(state.ano)] : [];
   }
 
-  function linhasExportacaoMesMobile(mesSelecionado, filtros, anoSelecionado) {
+  function linhasExportacaoMesMobile(mesSelecionado, filtros, anoSelecionado, periodo) {
     var mes = mesSelecionado || state.mes;
     var indice = indiceMes(mes) + 1;
     var prefixoData = String(anoSelecionado || state.ano || new Date().getFullYear());
     var data = function (dia) {
       return String(dia || '').padStart(2, '0') + '/' + String(indice).padStart(2, '0') + '/' + prefixoData;
     };
-    var despesas = lancamentosDoCentroCustoAtualMobile()
+    var despesas = (periodo ? periodo.lancamentos.filter(itemPertenceAoCentroCustoAtualMobile) : lancamentosDoCentroCustoAtualMobile())
       .filter(function (item) { return item.mes === mes && item.status !== 'cancelada'; })
       .map(function (item) {
         return {
@@ -4915,7 +5426,7 @@
           status: item.status === 'prevista' ? 'Prevista' : 'Realizada', valor: Number(item.valor || 0),
         };
       });
-    var receitas = entradasDoCentroCustoAtualMobile()
+    var receitas = (periodo ? periodo.entradas.filter(itemPertenceAoCentroCustoAtualMobile) : entradasDoCentroCustoAtualMobile())
       .filter(function (item) { return item.mes === mes; })
       .map(function (item) {
         return {
@@ -4942,7 +5453,8 @@
     render();
   }
 
-  function exportarLancamentosMesMobile(formato) {
+  async function exportarLancamentosMesMobile(formato) {
+    if (state.exportacaoMesProcessando) return;
     var filtros = {
       despesas: Boolean(state.exportacaoIncluirDespesas),
       receitas: Boolean(state.exportacaoIncluirReceitas),
@@ -4954,7 +5466,20 @@
     }
     var mes = state.exportacaoMesSelecionado || state.mes;
     var ano = state.exportacaoAnoSelecionado || state.ano;
-    var linhas = linhasExportacaoMesMobile(mes, filtros, ano);
+    var periodo;
+    if (ehLojaNativaMobile()) {
+      var empresaRelatorio = state.empresa && state.empresa.id;
+      var geracaoRelatorio = state.cargaPerfilGeracao;
+      state.exportacaoMesProcessando = formato; render();
+      try {
+        await validarLeituraFinanceiraProgressivaMobile(empresaRelatorio);
+        periodo = await buscarFinanceiroPeriodoMobile(empresaRelatorio, Number(ano), mes);
+        if (!state.autenticado || !state.empresa || state.empresa.id !== empresaRelatorio || geracaoRelatorio !== state.cargaPerfilGeracao) return;
+        if (premiumPessoalBloqueadoMobile()) periodo.entradas = periodo.entradas.filter(function (e) { return e.tipo !== 'vendas_mobile_sistema'; });
+      } catch (erro) { state.exportacaoMesProcessando = ''; mostrarToast('Não foi possível carregar o relatório. Tente novamente.'); render(); return; }
+      state.exportacaoMesProcessando = '';
+    }
+    var linhas = linhasExportacaoMesMobile(mes, filtros, ano, periodo);
     if (!linhas.length) {
       mostrarToast('Não há lançamentos com estes filtros neste mês.');
       return;
@@ -5024,6 +5549,7 @@
   }
 
   async function executarAtalhoInferior(tipo) {
+    if (somenteModulosNoAppNativo() && (tipo === 'agenda' || tipo === 'despesasFixas')) return;
     cancelarJanelasMobile();
     state.visao = 'home';
     state.busca = '';
@@ -5825,10 +6351,12 @@
       if (renderizar !== false) render();
       return;
     }
+    var usuarioNotificacoesId = state.usuario.id;
     try {
       var resposta = await db
         .from('notificacoes')
         .select('id', { count: 'exact', head: true });
+      if (!state.autenticado || !state.usuario || state.usuario.id !== usuarioNotificacoesId) return;
       if (resposta.error) return;
       state.notificacoesNaoLidas = resposta.count || 0;
       atualizarBadgeApp(state.notificacoesNaoLidas);
@@ -6220,7 +6748,8 @@
     var resposta;
     var dados;
     try {
-      var retornoSessao = await requisitarJsonMobile('/api/cobranca/sessoes', {
+      var solicitarSessao = typeof ehLojaNativaMobile === 'function' && ehLojaNativaMobile() ? requisitarAcessoProgressivoMobile : requisitarJsonMobile;
+      var retornoSessao = await solicitarSessao('/api/cobranca/sessoes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
         body: JSON.stringify({ empresaId: empresaIdSessao, dispositivoId: idDispositivoSessaoMobile(), acao: acao }),
@@ -6231,7 +6760,7 @@
       // Sem conexão não há fila de escrita: o app mantém apenas leitura local.
       return { ativa: false, temporaria: true };
     }
-    if (!state.empresa || state.empresa.id !== empresaIdSessao) return { ativa: false, obsoleta: true };
+    if (!state.autenticado || !state.empresa || state.empresa.id !== empresaIdSessao) return { ativa: false, obsoleta: true };
     if (resposta.status === 401) {
       var tokenRenovado = await recuperarSessaoExpiradaMobile(token).catch(function () { return ''; });
       if (tokenRenovado && !revalidada) return confirmarSessaoDispositivoMobile(acao, true);
@@ -6256,8 +6785,10 @@
     if (state.sessaoDispositivoTimer) window.clearInterval(state.sessaoDispositivoTimer);
     state.sessaoDispositivoEmpresa = state.empresa.id;
     state.sessaoDispositivoTimer = window.setInterval(function () {
-      confirmarSessaoDispositivoMobile('verificar');
-    }, 8000);
+      if (state.sessaoDispositivoVerificando) return;
+      state.sessaoDispositivoVerificando = true;
+      confirmarSessaoDispositivoMobile('verificar').finally(function () { state.sessaoDispositivoVerificando = false; });
+    }, ehLojaNativaMobile() ? 30000 : 8000);
     if (!state.sessaoDispositivoVisibilidadeInstalada) {
       state.sessaoDispositivoVisibilidadeInstalada = true;
       document.addEventListener('visibilitychange', function () {
@@ -6537,25 +7068,75 @@
 
   async function carregarUsuariosMobile() {
     if (!state.empresa || !podeGerenciarUsuarios()) return;
-
+    var empresaId = state.empresa.id;
+    var consulta = ++state.usuariosConsulta;
+    var atual = function () { return state.empresa && state.empresa.id === empresaId && state.usuariosConsulta === consulta; };
     state.usuariosCarregando = true;
     render();
-
-    var resposta = await db.rpc('listar_usuarios_empresa_contas_rpc', {
-      p_empresa_id: state.empresa.id,
-    });
-
-    // Funcionários do Controle de Ponto não são usuários do sistema — não listar.
-    state.usuariosEmpresa = resposta.error ? [] : (resposta.data || []).filter(function (u) { return u && u.perfil !== 'funcionario_ponto'; });
-    state.usuariosCarregando = false;
-    render();
+    try {
+      var token = await tokenSessao();
+      if (!token) throw new Error('Sessão não encontrada. Entre novamente.');
+      var resposta = await fetch('/api/usuarios-empresa?empresaId=' + encodeURIComponent(empresaId), { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+      var dados = await lerResposta(resposta);
+      if (!resposta.ok || !Array.isArray(dados.usuarios)) throw new Error(dados.mensagem || 'Não foi possível carregar os acessos.');
+      if (!atual()) return false;
+      state.usuariosEmpresa = dados.usuarios;
+      return true;
+    } catch (erro) {
+      if (!atual()) return false;
+      state.usuariosEmpresa = [];
+      state.erro = erro.message || 'Não foi possível carregar os acessos. Tente novamente.';
+      return false;
+    } finally {
+      if (atual()) { state.usuariosCarregando = false; render(); }
+    }
   }
+
+  function podeAlterarAcessosUsuarioMobile(usuario) {
+    return Boolean(state.empresa && (state.empresa.perfil === 'gestor_master' ||
+      (state.empresa.perfil === 'administrador' && usuario && ['operador_simples', 'operador_completo'].indexOf(usuario.perfil) >= 0)));
+  }
+
+  function validarAcessosUsuarioMobile(value, perfil) {
+    if (!window.__avantaAcessosUsuario) throw new Error('Aguarde a preparação dos acessos e tente novamente.');
+    return window.__avantaAcessosUsuario.validar(value, perfil);
+  }
+
+  window.addEventListener('avantalab:acessos-usuario-prontos', function () {
+    if (state.modalMenu !== 'usuario') return;
+    if (state.usuarioEditandoId && !state.editUsuarioLiberacoes) {
+      var usuario = state.usuariosEmpresa.find(function (u) { return u.id === state.usuarioEditandoId; });
+      if (usuario && typeof usuario.dashboard_liberada === 'boolean') state.editUsuarioLiberacoes = window.__avantaAcessosUsuario.doVinculo(usuario);
+    }
+    render();
+  });
+
+  function acessosUsuarioSlotMobile(contexto, perfil, usuario) {
+    var editar = contexto === 'editar';
+    var value = editar ? state.editUsuarioLiberacoes : state.usuarioLiberacoes;
+    if (!value && !editar && window.__avantaAcessosUsuario) value = state.usuarioLiberacoes = window.__avantaAcessosUsuario.padrao();
+    if (!value) return '<p role="status" class="text-xs text-slate-500">Preparando acessos do usuário…</p>';
+    var disabled = Boolean(state.carregando || state.vinculandoUsuarioExistente || (editar && !podeAlterarAcessosUsuarioMobile(usuario)));
+    var dados = { contexto: contexto, empresaId: state.empresa.id, acessoId: editar ? state.usuarioEditandoId : '', perfil: perfil || 'operador_simples', disabled: disabled, value: value };
+    return '<div data-mobile-acessos-usuario="' + escapeHtml(JSON.stringify(dados)) + '"></div>';
+  }
+
+  window.addEventListener('avantalab:usuario-liberacoes', function (evento) {
+    var dados = evento.detail;
+    if (!dados || !state.empresa || state.empresa.id !== dados.empresaId || state.carregando || state.vinculandoUsuarioExistente) return;
+    if (dados.contexto === 'editar') {
+      var usuario = state.usuariosEmpresa.find(function (u) { return u.id === state.usuarioEditandoId; });
+      if (dados.acessoId !== state.usuarioEditandoId || !podeAlterarAcessosUsuarioMobile(usuario)) return;
+      state.editUsuarioLiberacoes = dados.value;
+    } else if (podeGerenciarUsuarios() && ((dados.contexto === 'criar' && state.usuarioModo === 'criar') || (dados.contexto === 'existente' && state.usuarioModo === 'existente'))) state.usuarioLiberacoes = dados.value;
+  });
 
   function abrirCriarUsuarioMobile() {
     // Premium Pessoal: usuários internos são recurso pago no plano grátis.
     if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('usuarios_internos'); return; }
     restaurarRascunhoUsuarioMobile();
     state.usuarioModo = 'criar';
+    state.usuarioLiberacoes = null;
     state.usuarioExistenteTermo = '';
     state.usuarioExistenteResultado = null;
     state.usuarioExistentePerfil = 'operador_simples';
@@ -6581,6 +7162,7 @@
     // Premium Pessoal: usuários internos são recurso pago no plano grátis.
     if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('usuarios_internos'); return; }
     state.usuarioModo = 'existente';
+    state.usuarioLiberacoes = null;
     state.usuarioEditandoId = '';
     state.usuarioSenha = '';
     state.usuarioExistenteTermo = '';
@@ -6648,6 +7230,9 @@
 
   async function confirmarVinculoUsuarioExistenteMobile() {
     if (!state.empresa || !state.usuarioExistenteResultado || !podeGerenciarUsuarios()) return;
+    if (state.vinculandoUsuarioExistente) return;
+    var empresaVinculoId = state.empresa.id;
+    var usuarioVinculoId = state.usuarioExistenteResultado.id;
 
     var perfil = campo('usuario-existente-perfil') || state.usuarioExistentePerfil;
 
@@ -6657,12 +7242,17 @@
     }
 
     state.usuarioExistentePerfil = perfil;
+    var liberacoes;
+    try { liberacoes = validarAcessosUsuarioMobile(state.usuarioLiberacoes, perfil); } catch (erro) { setErro(erro.message || 'Aguarde os acessos e tente novamente.'); return; }
     state.vinculandoUsuarioExistente = true;
     state.erro = '';
     render();
 
+    var resposta, resultado;
+    try {
     var token = await tokenSessao();
-    var resposta = await fetch('/api/vincular-usuario-existente', {
+    if (!token) throw new Error('Sessão não encontrada. Entre novamente.');
+    resposta = await fetch('/api/vincular-usuario-existente', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -6670,12 +7260,20 @@
       },
       body: JSON.stringify({
         acao: 'vincular',
-        empresaId: state.empresa.id,
-        userId: state.usuarioExistenteResultado.id,
+        liberacoes: liberacoes,
+        empresaId: empresaVinculoId,
+        userId: usuarioVinculoId,
         perfil: perfil,
       }),
     });
-    var resultado = await lerResposta(resposta);
+    resultado = await lerResposta(resposta);
+    } catch (erro) {
+      if (!state.empresa || state.empresa.id !== empresaVinculoId) return;
+      state.vinculandoUsuarioExistente = false;
+      setErro('Não foi possível salvar o vínculo. Confira a conexão e tente novamente.');
+      return;
+    }
+    if (!state.empresa || state.empresa.id !== empresaVinculoId) return;
 
     state.vinculandoUsuarioExistente = false;
 
@@ -6694,6 +7292,7 @@
 
   async function criarUsuarioMobile() {
     if (!state.empresa || !podeGerenciarUsuarios() || state.carregando) return;
+    var empresaCriacaoId = state.empresa.id;
 
     var nome = campo('usuario-nome').trim();
     var email = campo('usuario-email').trim().toLowerCase();
@@ -6737,6 +7336,9 @@
       return;
     }
 
+    var liberacoes;
+    try { liberacoes = validarAcessosUsuarioMobile(state.usuarioLiberacoes, perfil); } catch (erro) { setErro(erro.message || 'Aguarde os acessos e tente novamente.'); return; }
+
     state.carregando = true;
     state.erro = '';
     render();
@@ -6752,22 +7354,25 @@
           Authorization: 'Bearer ' + token,
         },
         body: JSON.stringify({
-          empresaId: state.empresa.id,
+          empresaId: empresaCriacaoId,
           nome: nome,
           email: email,
           login: login,
           senha: senha,
           perfil: perfil,
+          liberacoes: liberacoes,
         }),
       });
       resultado = await lerResposta(resposta);
     } catch (erroCriacaoUsuario) {
+      if (!state.empresa || state.empresa.id !== empresaCriacaoId) return;
       console.error('Falha ao consultar disponibilidade do usuario:', erroCriacaoUsuario);
       state.carregando = false;
       setErro('Nao foi possivel consultar o servidor. Verifique a conexao e tente novamente.');
       return;
     }
 
+    if (!state.empresa || state.empresa.id !== empresaCriacaoId) return;
     state.carregando = false;
 
     if (!resposta.ok || resultado.erro) {
@@ -6803,6 +7408,7 @@
     state.editUsuarioLogin = String(usuario && usuario.login || '');
     state.editUsuarioEmail = emailRealUsuario(usuario || {});
     state.editUsuarioPerfil = String(usuario && usuario.perfil || 'operador_simples');
+    state.editUsuarioLiberacoes = usuario && typeof usuario.dashboard_liberada === 'boolean' && window.__avantaAcessosUsuario ? window.__avantaAcessosUsuario.doVinculo(usuario) : null;
     state.editUsuarioSenha = '';
     state.editUsuarioConfirmarSenha = '';
     state.erro = '';
@@ -6811,6 +7417,8 @@
 
   async function salvarUsuarioMobile() {
     if (!state.usuarioEditandoId || state.carregando) return;
+    var empresaEdicaoId = state.empresa && state.empresa.id;
+    var acessoEdicaoId = state.usuarioEditandoId;
 
     var nome = campo('edit-usuario-nome').trim();
     var login = campo('edit-usuario-login').trim().toLowerCase();
@@ -6829,6 +7437,10 @@
     state.editUsuarioPerfil = perfil;
     state.editUsuarioSenha = senha;
     state.editUsuarioConfirmarSenha = confirmarSenha;
+    var liberacoes;
+    if (podeAlterarAcessosUsuarioMobile(usuarioEmEdicao)) {
+      try { liberacoes = validarAcessosUsuarioMobile(state.editUsuarioLiberacoes, perfil); } catch (erro) { setErro(erro.message || 'Aguarde os acessos e tente novamente.'); return; }
+    }
 
     if (!nome || !email || !login) {
       var campoEdicaoObrigatorio = !nome ? 'nome' : !email ? 'email' : 'login';
@@ -6875,7 +7487,8 @@
           Authorization: 'Bearer ' + tok,
         },
         body: JSON.stringify({
-          acessoId: state.usuarioEditandoId,
+          acessoId: acessoEdicaoId,
+          liberacoes: liberacoes,
           nome: nome,
           login: login,
           email: email,
@@ -6885,12 +7498,14 @@
       });
       resposta = await lerResposta(respostaHttp);
     } catch (erroEdicaoUsuario) {
+      if (!state.empresa || state.empresa.id !== empresaEdicaoId || state.usuarioEditandoId !== acessoEdicaoId) return;
       console.error('Falha ao consultar disponibilidade do usuario:', erroEdicaoUsuario);
       state.carregando = false;
       setErro('Nao foi possivel consultar o servidor. Verifique a conexao e tente novamente.');
       return;
     }
 
+    if (!state.empresa || state.empresa.id !== empresaEdicaoId || state.usuarioEditandoId !== acessoEdicaoId) return;
     state.carregando = false;
 
     if (!respostaHttp.ok || resposta.erro) {
@@ -6909,14 +7524,17 @@
     state.editUsuarioPerfil = 'operador_simples';
     state.editUsuarioSenha = '';
     state.editUsuarioConfirmarSenha = '';
-    state.loginConta = login;
+    state.editUsuarioLiberacoes = null;
     if (state.empresa && String(state.empresa.acessoId) === String(acessoEditadoId)) {
+      state.loginConta = login;
       state.empresa.login = login;
       state.empresa.email = email;
       state.empresa.usuario_nome = nome;
+      if (resposta.usuario && resposta.usuario.perfil) state.empresa.perfil = resposta.usuario.perfil;
+      await carregarDados();
+      return;
     }
-    await carregarUsuariosMobile();
-    mostrarToast('Usuario atualizado.');
+    if (await carregarUsuariosMobile()) mostrarToast('Usuario atualizado.');
   }
 
   async function excluirUsuarioMobile(id) {
@@ -7250,7 +7868,7 @@
             lancsBanco.push(ins.data);
             if (Number(ins.data.ano) === Number(anoCarregado)) {
               novos.push({
-                id: ins.data.id, mes: ins.data.mes, dia: Number(ins.data.dia),
+                id: ins.data.id, criadoEm: ins.data.created_at || null, mes: ins.data.mes, dia: Number(ins.data.dia),
                 despesa: ins.data.despesa_nome, descricao: ins.data.descricao || '',
                 valor: Number(ins.data.valor || 0), status: ins.data.status || null,
                 tipo: ins.data.tipo_obs || null, recorrenciaId: ins.data.recorrencia_id || null,
@@ -7403,8 +8021,9 @@
   }
 
   async function carregarResumoPerfisMobile() {
+    if (somenteModulosNoAppNativo()) return false;
     var solicitacao = ++state.resumoPerfisSolicitacao;
-    var perfis = state.empresas || [];
+    var perfis = (state.empresas || []).filter(function (perfil) { return state.perfisDashboardLiberados.indexOf(perfil.id) >= 0; });
     var ids = perfis.map(function (empresa) { return empresa.id; }).filter(Boolean);
     if (!ids.length) {
       if (solicitacao !== state.resumoPerfisSolicitacao) return false;
@@ -7471,7 +8090,7 @@
     while (true) {
       var resposta = await db
         .from('lancamentos')
-        .select('id, mes, dia, despesa_nome, descricao, valor, status, tipo_obs, recorrencia_id, nota_arquivo_path, centro_custo_id, revisao')
+        .select('id, created_at, mes, dia, despesa_nome, descricao, valor, status, tipo_obs, recorrencia_id, nota_arquivo_path, centro_custo_id, revisao, ano, operacao_mobile_id, operacao_mobile_indice')
         .eq('empresa_id', empresaId)
         .eq('ano', ano)
         .order('dia', { ascending: true })
@@ -7492,7 +8111,598 @@
     return todos;
   }
 
-  async function carregarDados() {
+  function somenteModulosNoAppNativo() {
+    return ehLojaNativaMobile() && Boolean(state.empresa && state.perfilModulosNativo === state.empresa.id && state.dashboardPerfilLiberado !== state.empresa.id);
+  }
+
+  async function prepararModulosAppNativo(acesso) {
+    var id = state.empresa.id;
+    var usuarioId = state.usuario && state.usuario.id;
+    state.perfilModulosNativo = '';
+    state.pronto = false;
+    state.dadosCriticosProntos = false;
+    state.modulosPerfilLiberados = (acesso.modulos || []).map(function (m) { return m.id; });
+    state.lancamentos = [];
+    state.faturamentos = {};
+    state.entradas = [];
+    state.caixinhaMovimentos = [];
+    state.despesas = [];
+    state.recorrencias = [];
+    state.resumoPerfis = [];
+    state.notificacoes = [];
+    state.notificacoesNaoLidas = 0;
+    state.resumoPerfisSolicitacao += 1;
+    state.centrosCusto = [];
+    state.centrosCustoAtivo = false;
+    state.chatIAAberto = false;
+    state.tourAberto = false;
+    state.menuAberto = false;
+    state.modalMenu = '';
+    state.modalLancamento = null;
+    state.modalAcao = null;
+    state.visao = 'home';
+    state.dashboardOpcoesId = '';
+    state.paywallSelecionando = false;
+    state.pontoModuloAtivo = state.modulosPerfilLiberados.indexOf('ponto') >= 0;
+    state.vendasMobileModuloAtivo = state.modulosPerfilLiberados.indexOf('vendas_mobile') >= 0;
+    state.darkMode = acesso.empresa.temaEscuro;
+    state.logoUrl = acesso.empresa.logoUrl || '';
+    // Não restaura cache, assinatura financeira, agenda, recorrências ou resumos.
+    if (window._avaRealtimeFinanceiro) { db.removeChannel(window._avaRealtimeFinanceiro); window._avaRealtimeFinanceiro = null; }
+    window._avaRealtimeFinanceiroEmpresaId = '';
+    var sessao = await confirmarSessaoDispositivoMobile(state.sessaoDispositivoEmpresa === id ? 'verificar' : 'entrar');
+    if (!state.empresa || state.empresa.id !== id || !state.autenticado || !state.usuario || state.usuario.id !== usuarioId) return;
+    if (!sessao.ativa) {
+      state.falhaAcesso = sessao.mensagem || 'Não foi possível confirmar o acesso neste aparelho. Tente novamente.';
+    } else {
+      state.sessaoDispositivoEmpresa = id;
+      state.perfilModulosNativo = id;
+      state.falhaAcesso = '';
+      iniciarControleSessaoDispositivoMobile();
+    }
+    state.validacaoTelefoneObrigatoria = state.empresa.telefone_confirmado !== true && !ehContaRevisaoAppAppleMobile(state.usuario);
+    if (state.validacaoTelefoneObrigatoria) state.telefoneObrigatorio = state.empresa.telefone || '';
+    if (!state.falhaAcesso && !state.validacaoTelefoneObrigatoria) {
+      await finalizarBarraPreparacaoMobile();
+      if (!state.empresa || state.empresa.id !== id || !state.autenticado || !state.usuario || state.usuario.id !== usuarioId) return;
+    }
+    state.pronto = true;
+    state.carregando = false;
+    state.dadosCriticosProntos = true;
+    render();
+    if (typeof window.__avantalabConfirmarAcessoMobile === 'function') window.__avantalabConfirmarAcessoMobile();
+  }
+
+  function abrirConteudoVendasMobile() {
+    if (!state.empresa || !state.empresa.id || !state.vendasMobileModuloAtivo || !podeGerenciarConteudoVendas()) return;
+    window.dispatchEvent(new CustomEvent('avantalab:open-vendas-conteudo', {
+      detail: { empresaId: state.empresa.id, nomeEmpresa: nomeEmpresa(state.empresa), darkMode: state.darkMode, corPrimaria: '#003E73' },
+    }));
+  }
+
+  function contextoProgressivoMobile(geracao, empresaId, usuarioId) {
+    return state.autenticado && state.usuario && state.usuario.id === usuarioId && state.empresa && state.empresa.id === empresaId && state.cargaPerfilGeracao === geracao;
+  }
+
+  function financeiroPeriodoChaveMobile(ano, mes) {
+    return String(state.usuario && state.usuario.id) + ':' + String(state.empresa && state.empresa.id) + ':' + String(ano) + ':' + mes;
+  }
+
+  // Apenas memória desta sessão; nunca grava financeiro no armazenamento do aparelho.
+  // Uma gravação/Realtime ou preparação de outro perfil invalida também leituras em voo.
+  function invalidarCacheFinanceiroMobile() {
+    state.financeiroCacheEpoca = Number(state.financeiroCacheEpoca || 0) + 1;
+    state.financeiroCache = {};
+    state.financeiroPreCarga = '';
+  }
+
+  function financeiroCacheVigenteMobile(empresaId, usuarioId, epoca) {
+    return state.autenticado && state.usuario && state.usuario.id === usuarioId
+      && state.empresa && state.empresa.id === empresaId
+      && Number(state.financeiroCacheEpoca || 0) === epoca
+      && state.dashboardPerfilLiberado === empresaId && !somenteModulosNoAppNativo()
+      && !state.paywallAtivo && !state.validacaoTelefoneObrigatoria
+      && !(state.cadastroPerfilStatus && state.cadastroPerfilStatus.completo === false);
+  }
+
+  function obterFinanceiroPeriodoCacheMobile(empresaId, ano, mes) {
+    var usuarioId = state.usuario && state.usuario.id, epoca = Number(state.financeiroCacheEpoca || 0);
+    var chave = financeiroPeriodoChaveMobile(ano, mes);
+    var cache = state.financeiroCache || (state.financeiroCache = {});
+    var entrada = cache[chave];
+    if (entrada && (entrada.promessa || Date.now() - entrada.em < 120000)) return entrada.promessa || Promise.resolve(entrada.dados);
+    entrada = cache[chave] = {};
+    entrada.promessa = buscarFinanceiroPeriodoMobile(empresaId, ano, mes).then(function (dados) {
+      if (financeiroCacheVigenteMobile(empresaId, usuarioId, epoca) && cache[chave] === entrada) {
+        entrada.dados = dados; entrada.em = Date.now(); entrada.promessa = null;
+        // Limite de um ano + virada; não acumula histórico ilimitado em celulares lentos.
+        var antigas = Object.keys(cache).filter(function (k) { return k !== chave && !cache[k].promessa; }).sort(function (a, b) { return cache[a].em - cache[b].em; });
+        while (Object.keys(cache).length > 14 && antigas.length) delete cache[antigas.shift()];
+      }
+      return dados;
+    }, function (erro) { if (cache[chave] === entrada) delete cache[chave]; throw erro; });
+    return entrada.promessa;
+  }
+
+  function agendarPreCargaFinanceiroMobile() {
+    if (!ehLojaNativaMobile() || !state.dadosCriticosProntos || !financeiroMesProntoMobile() || somenteModulosNoAppNativo()) return;
+    var empresaId = state.empresa.id, usuarioId = state.usuario.id, ano = Number(state.ano), mes = state.mes;
+    var epoca = Number(state.financeiroCacheEpoca || 0);
+    var assinatura = usuarioId + ':' + empresaId + ':' + ano + ':' + epoca;
+    if (state.financeiroPreCarga === assinatura) return;
+    state.financeiroPreCarga = assinatura;
+    var indice = indiceMes(mes), fila = [];
+    // Prioriza os vizinhos; o restante do ano só começa depois da dashboard pronta.
+    for (var distancia = 1; distancia < 12; distancia++) {
+      [indice - distancia, indice + distancia].forEach(function (i) { if (i >= 0 && i < 12 && fila.indexOf(meses[i]) < 0) fila.push(meses[i]); });
+    }
+    window.setTimeout(async function () {
+      var acessoEm = 0;
+      for (var i = 0; i < fila.length; i++) {
+        if (!financeiroCacheVigenteMobile(empresaId, usuarioId, epoca) || Number(state.ano) !== ano || state.financeiroPreCarga !== assinatura) return;
+        try {
+          if (!acessoEm || Date.now() - acessoEm >= 30000) {
+            await validarLeituraFinanceiraProgressivaMobile(empresaId);
+            acessoEm = Date.now();
+          }
+          if (!financeiroCacheVigenteMobile(empresaId, usuarioId, epoca)) return;
+          await obterFinanceiroPeriodoCacheMobile(empresaId, ano, fila[i]);
+        } catch (erro) {
+          // Falha de rede não apaga o mês visível nem cria uma tempestade de retries.
+          if (state.financeiroPreCarga === assinatura) state.financeiroPreCarga = '';
+          return;
+        }
+        await new Promise(function (resolve) { window.setTimeout(resolve, 150); });
+      }
+    }, 0);
+  }
+
+  async function carregarPeriodoPreparadoMobile() {
+    var empresaId = state.empresa.id, usuarioId = state.usuario.id, ano = Number(state.ano), mes = state.mes;
+    var epoca = Number(state.financeiroCacheEpoca || 0);
+    var navegacao = state.financeiroNavegacao = Number(state.financeiroNavegacao || 0) + 1;
+    var vigente = function () { return financeiroCacheVigenteMobile(empresaId, usuarioId, epoca) && state.financeiroNavegacao === navegacao && Number(state.ano) === ano && state.mes === mes; };
+    state.financeiroPeriodoErro = '';
+    state.complementosDashboardTentativa = ''; state.complementosDashboardEmAndamento = false;
+    state.complementosDashboard = {}; state.complementosDashboardErros = {}; state.historicoDezembroAnterior = null;
+    // Cache pronto é aplicado antes do primeiro render: não há flash de carregamento.
+    var entrada = (state.financeiroCache || {})[financeiroPeriodoChaveMobile(ano, mes)];
+    if (!entrada || !entrada.dados || Date.now() - entrada.em >= 120000) render();
+    try {
+      var dados = await obterFinanceiroPeriodoCacheMobile(empresaId, ano, mes);
+      if (!vigente()) return;
+      aplicarFinanceiroPeriodoMobile(dados, mes);
+      state.financeiroPeriodoPronto = financeiroPeriodoChaveMobile(ano, mes);
+      render();
+      agendarPreCargaFinanceiroMobile();
+    } catch (erro) {
+      if (!vigente()) return;
+      state.financeiroPeriodoErro = 'Não foi possível consultar este mês. Confira sua conexão.';
+      render();
+    }
+  }
+
+  function financeiroMesProntoMobile() {
+    return !ehLojaNativaMobile() || somenteModulosNoAppNativo() || state.financeiroPeriodoPronto === financeiroPeriodoChaveMobile(state.ano, state.mes);
+  }
+
+  function statusPeriodoMobileHtml() {
+    return '<section class="rounded-2xl bg-white p-4 text-slate-800 shadow-sm" role="status" aria-live="polite"><p class="flex items-center gap-2 text-sm font-bold">' + (state.financeiroPeriodoErro ? 'Não foi possível atualizar este mês' : 'Atualizando mês… ' + indicadorCardAutomaticoMobileHtml(false)) + '</p>' + (state.financeiroPeriodoErro ? '<p class="mt-2 text-xs text-slate-500">Sua sessão foi mantida. Confira sua conexão e tente novamente.</p><button data-periodo-recarregar type="button" class="mt-3 min-h-11 rounded-xl bg-cyan-700 px-4 text-xs font-bold text-white">Tentar novamente</button>' : '') + '</section>';
+  }
+
+  // Tentativas limitadas somente em falhas transitórias; 401/403 nunca viram sucesso.
+  async function requisitarAcessoProgressivoMobile(url, opcoes) {
+    for (var tentativa = 0; tentativa < 2; tentativa++) {
+      try {
+        var retorno = await requisitarJsonMobile(url, opcoes, tentativa ? 30000 : 20000);
+        if (retorno.resposta.status < 500 || tentativa) return retorno;
+      } catch (erro) { if (tentativa) throw erro; }
+      await new Promise(function (resolve) { window.setTimeout(resolve, 500); });
+    }
+  }
+
+  async function buscarFinanceiroPeriodoMobile(empresaId, ano, mes, resumido) {
+    async function paginas(tabela, colunas) {
+      var todos = [], inicio = 0, resposta;
+      do {
+        resposta = await promessaMobileComPrazo(db.from(tabela).select(colunas).eq('empresa_id', empresaId).eq('ano', ano).eq('mes', mes).order('id', { ascending: true }).range(inicio, inicio + 999), 30000);
+        if (resposta.error || !Array.isArray(resposta.data)) throw new Error('Não foi possível consultar os dados do mês.');
+        todos = todos.concat(resposta.data); inicio += 1000;
+      } while (resposta.data.length === 1000);
+      return todos;
+    }
+    // Três fontes do mês, em paralelo; paginação completa sem carregar outros meses.
+    var respostas = await Promise.all([
+      paginas('lancamentos', resumido ? 'id, created_at, mes, dia, valor, status, centro_custo_id' : 'id, created_at, mes, dia, despesa_nome, descricao, valor, status, tipo_obs, recorrencia_id, nota_arquivo_path, centro_custo_id, revisao, ano, operacao_mobile_id, operacao_mobile_indice'),
+      paginas('faturamentos_entradas', resumido ? 'id, created_at, mes, dia, valor, status, tipo_obs, centro_custo_id' : 'id, created_at, mes, dia, origem, valor, status, tipo_obs, centro_custo_id, revisao, ano, operacao_mobile_id, operacao_mobile_indice'),
+      promessaMobileComPrazo(db.from('faturamentos').select('mes, valor').eq('empresa_id', empresaId).eq('ano', ano).eq('mes', mes), 30000),
+    ]);
+    var lancamentos = respostas[0], entradas = respostas[1], faturamento = respostas[2];
+    if (faturamento.error || !Array.isArray(faturamento.data)) throw new Error('Não foi possível consultar o faturamento.');
+    return {
+      lancamentos: lancamentos.filter(function (l) { return l.status !== 'cancelada'; }).map(function (l) { return { id: l.id, criadoEm: l.created_at || null, mes: l.mes, dia: Number(l.dia), despesa: formatarDescricao(l.despesa_nome), descricao: l.descricao || '', valor: Number(l.valor || 0), status: l.status, tipo: l.tipo_obs, recorrenciaId: l.recorrencia_id, notaArquivoPath: l.nota_arquivo_path, centroCustoId: l.centro_custo_id ? String(l.centro_custo_id) : null, ano: Number(l.ano || state.ano), operacaoMobileId: l.operacao_mobile_id || null, operacaoMobileIndice: Number(l.operacao_mobile_indice || 0), revisao: Number(l.revisao || 1) }; }),
+      entradas: entradas.map(function (e) { return { id: e.id, criadoEm: e.created_at || null, mes: e.mes, dia: Number(e.dia), origem: e.origem, valor: Number(e.valor || 0), status: e.status, tipo: e.tipo_obs, centroCustoId: e.centro_custo_id ? String(e.centro_custo_id) : null, ano: Number(e.ano || state.ano), operacaoMobileId: e.operacao_mobile_id || null, operacaoMobileIndice: Number(e.operacao_mobile_indice || 0), revisao: Number(e.revisao || 1) }; }),
+      faturamento: faturamento.data.reduce(function (total, f) { return total + Number(f.valor || 0); }, 0),
+    };
+  }
+
+  function aplicarFinanceiroPeriodoMobile(dados, mes) {
+    state.lancamentos = dados.lancamentos.slice();
+    state.entradas = dados.entradas.slice();
+    var oculta = premiumPessoalBloqueadoMobile() ? dados.entradas.filter(function (e) { return e.tipo === 'vendas_mobile_sistema'; }).reduce(function (t, e) { return t + e.valor; }, 0) : 0;
+    state.receitaVendasOcultaPorMes = {}; state.receitaVendasOcultaPorMes[mes] = oculta;
+    if (oculta) state.entradas = state.entradas.filter(function (e) { return e.tipo !== 'vendas_mobile_sistema'; });
+    state.faturamentos = {}; state.faturamentos[mes] = Math.max(0, dados.faturamento - oculta);
+    aplicarEdicoesPendentesMobile();
+  }
+
+  async function carregarDadosProgressivosMobile(opcoes) {
+    if (!state.autenticado || !state.usuario || !state.empresa) return;
+    var empresaId = state.empresa.id, usuarioId = state.usuario.id, ano = Number(state.ano), mes = state.mes;
+    var preparado = state.perfilProgressivoPronto === usuarioId + ':' + empresaId && state.dadosCriticosProntos;
+    var revalidar = !preparado || Date.now() - Number(state.perfilProgressivoConfirmadoEm || 0) >= 30000;
+    if (opcoes && opcoes.trocaPeriodo && preparado && !revalidar && state.dashboardPerfilLiberado === empresaId && !state.paywallAtivo && !deveExibirCadastroPerfilMobile()) return carregarPeriodoPreparadoMobile();
+    if (!opcoes || !opcoes.trocaPeriodo || !preparado) invalidarCacheFinanceiroMobile();
+    var geracao = state.cargaPerfilGeracao = (state.cargaPerfilGeracao || 0) + 1;
+    var vigente = function () { return contextoProgressivoMobile(geracao, empresaId, usuarioId); };
+    var etapasConcluidas = 0, totalEtapasPreparacao = 8;
+    function avancarPreparacao(rotulo) {
+      if (!preparado && vigente() && state.mes === mes && Number(state.ano) === ano) atualizarProgressoAcessoMobile('data', ++etapasConcluidas, totalEtapasPreparacao, rotulo);
+    }
+    function acompanharPreparacao(promessa, rotulo, valida) {
+      return Promise.resolve(promessa).then(function (resultado) {
+        if (!valida || valida(resultado)) avancarPreparacao(rotulo);
+        return resultado;
+      });
+    }
+    state.aberturaProgressiva = !preparado;
+    state.financeiroPeriodoErro = '';
+    state.falhaAcesso = '';
+    state.complementosDashboard = {}; state.complementosDashboardErros = {};
+    state.complementosDashboardTentativa = ''; state.complementosDashboardEmAndamento = false;
+    state.historicoDezembroAnterior = null; state.caixinhaProgressivaContexto = '';
+    state.pronto = true;
+    state.carregando = false;
+    if (!preparado) {
+      state.financeiroPeriodoPronto = '';
+      state.chatIAAberto = false;
+      state.modalLancamento = null; state.modalAcao = null; state.modalMenu = ''; state.menuAberto = false;
+      state.historicoDezembroAnterior = null;
+      state.apoioFinanceiroPronto = false;
+      state.lancamentos = []; state.entradas = []; state.faturamentos = {};
+      state.caixinhaMovimentos = [];
+      state.caixinhaProgressivaContexto = '';
+      state.resumoPerfis = []; state.resumoPerfisCarregando = true;
+      state.dadosCriticosProntos = false;
+    }
+    state.caixinhaProgressivaContexto = '';
+    if (!preparado && Number((window.__AVANTALAB_MOBILE_PROGRESSO__ || {}).valor) >= 100 && typeof window.__avantalabReiniciarProgressoMobile === 'function') window.__avantalabReiniciarProgressoMobile('Preparando acesso');
+    render();
+    try {
+      var token = await tokenSessao();
+      if (!vigente()) return;
+      if (!token) { await recuperarSessaoExpiradaMobile(''); throw new Error('Não foi possível confirmar a sessão.'); }
+      if (!preparado) {
+        atualizarProgressoAcessoMobile('auth', 1, 1, 'Sessão confirmada');
+        atualizarProgressoAcessoMobile('profiles', 1, 1, 'Perfil selecionado');
+      }
+      // Mesmo nas atualizações, o servidor continua sendo a autoridade das concessões.
+      var areasRetorno = await requisitarAcessoProgressivoMobile('/api/acessos-usuario?empresaId=' + encodeURIComponent(empresaId) + '&logos=dashboard', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+      if (!vigente()) return;
+      if (areasRetorno.resposta.status === 401) { await recuperarSessaoExpiradaMobile(token); throw new Error('Tente confirmar o acesso novamente.'); }
+      if (!areasRetorno.resposta.ok) {
+        if (areasRetorno.resposta.status === 403) { invalidarCacheFinanceiroMobile(); state.perfilProgressivoPronto = ''; state.dashboardPerfilLiberado = ''; state.dadosCriticosProntos = false; }
+        throw new Error(areasRetorno.json.mensagem || 'Não foi possível confirmar as permissões.');
+      }
+      var acesso = (areasRetorno.json.perfis || []).find(function (p) { return p.empresa.id === empresaId; });
+      if (!acesso) {
+        invalidarCacheFinanceiroMobile();
+        state.perfilProgressivoPronto = ''; state.dashboardPerfilLiberado = ''; state.dadosCriticosProntos = false;
+        throw new Error('Este perfil não está disponível para sua conta.');
+      }
+      if (!preparado) atualizarProgressoAcessoMobile('access', 1, 1, 'Permissões confirmadas');
+      if (!acesso.dashboard) totalEtapasPreparacao = 2;
+      avancarPreparacao('Permissões confirmadas');
+      if (!acesso.dashboard) {
+        invalidarCacheFinanceiroMobile();
+        state.perfilProgressivoPronto = '';
+        state.aberturaProgressiva = false;
+        state.dashboardPerfilLiberado = '';
+        await prepararModulosAppNativo(acesso);
+        return;
+      }
+      state.dashboardPerfilLiberado = empresaId;
+      state.perfilModulosNativo = '';
+      state.perfisDashboardLiberados = [empresaId];
+      state.modulosPerfilLiberados = (acesso.modulos || []).map(function (m) { return m.id; });
+      state.pontoModuloAtivo = state.modulosPerfilLiberados.indexOf('ponto') >= 0;
+      state.vendasMobileModuloAtivo = state.modulosPerfilLiberados.indexOf('vendas_mobile') >= 0;
+      if (state.empresa.telefone_confirmado !== true && !ehContaRevisaoAppAppleMobile(state.usuario)) {
+        state.validacaoTelefoneObrigatoria = true; state.telefoneObrigatorio = state.empresa.telefone || '';
+        state.aberturaProgressiva = false; render(); return;
+      }
+      state.validacaoTelefoneObrigatoria = false;
+      // Nenhuma leitura financeira antes de sessão, vínculo, plano e cadastro confirmados.
+      if (revalidar) {
+        var verificacoes = await Promise.all([
+          acompanharPreparacao(confirmarSessaoDispositivoMobile(state.sessaoDispositivoEmpresa === empresaId ? 'verificar' : 'entrar'), 'Aparelho confirmado', function (r) { return r.ativa === true; }),
+          acompanharPreparacao(requisitarAcessoProgressivoMobile('/api/cobranca/estado?empresaId=' + encodeURIComponent(empresaId), { headers: { Authorization: 'Bearer ' + token } }), 'Plano confirmado', function (r) { return r.resposta.ok && typeof r.json.precisaPaywall === 'boolean'; }),
+          acompanharPreparacao(requisitarAcessoProgressivoMobile('/api/perfil-cadastro?empresaId=' + encodeURIComponent(empresaId), { headers: { Authorization: 'Bearer ' + token } }), 'Cadastro confirmado', function (r) { return r.resposta.ok && r.json.ok === true && typeof r.json.completo === 'boolean'; }),
+        ]);
+        if (!vigente()) return;
+        if (!verificacoes[0].ativa) throw new Error(verificacoes[0].mensagem || 'Não foi possível confirmar o acesso neste aparelho. Sua sessão foi mantida; tente novamente.');
+        if (!verificacoes[1].resposta.ok || !verificacoes[2].resposta.ok) throw new Error('Não foi possível confirmar o perfil agora. Sua sessão foi mantida; tente novamente.');
+        if (typeof verificacoes[1].json.precisaPaywall !== 'boolean' || verificacoes[2].json.ok !== true || typeof verificacoes[2].json.completo !== 'boolean') throw new Error('A confirmação do perfil veio incompleta. Tente novamente.');
+        var cobranca = verificacoes[1].json;
+        state.paywallAtivo = Boolean(cobranca.precisaPaywall);
+        state.paywallEstado = cobranca.estado || null; state.paywallPrecos = cobranca.precos || null;
+        state.paywallNome = nomeEmpresa(state.empresa);
+        state.paywallFaturaUrl = (cobranca.faturaPendente && cobranca.faturaPendente.invoiceUrl) || '';
+        state.paywallVerificado = true; state.paywallPerfilVerificado = empresaId;
+        state.cadastroPerfilStatus = verificacoes[2].json; state.cadastroPerfilDados = verificacoes[2].json.cadastro;
+        state.cadastroPerfilEmpresaId = empresaId; state.cadastroPerfilVerificado = true;
+        state.cadastroPerfilErro = ''; state.cadastroPerfilErroCodigo = '';
+        state.sessaoDispositivoEmpresa = empresaId;
+        iniciarControleSessaoDispositivoMobile();
+        if (state.paywallAtivo || deveExibirCadastroPerfilMobile()) { state.aberturaProgressiva = false; render(); return; }
+        state.perfilProgressivoPronto = usuarioId + ':' + empresaId;
+        state.perfilProgressivoConfirmadoEm = Date.now();
+      }
+      if (state.paywallAtivo || deveExibirCadastroPerfilMobile()) { state.aberturaProgressiva = false; render(); return; }
+      // A cena única só sai quando o mês principal está pronto. Os complementos
+      // não substituem a dashboard por outra tela nem exigem clique para carregar.
+      if (ehContaRevisaoAppAppleMobile(state.usuario)) {
+        await prepararDadosContaRevisaoMobile();
+        if (!vigente()) return;
+      }
+      // Configurações/centros são necessários para não exibir totais ou lançar no centro errado.
+      var principal = await Promise.all([
+        acompanharPreparacao(obterFinanceiroPeriodoCacheMobile(empresaId, ano, mes), 'Dados do mês prontos'),
+        acompanharPreparacao(promessaMobileComPrazo(db.from('configuracoes').select('duplicados_ativo, centros_custo_ativo').eq('empresa_id', empresaId).maybeSingle(), 30000), 'Configurações prontas', function (r) { return !r.error; }),
+        acompanharPreparacao(promessaMobileComPrazo(db.from('centros_custo').select('id, nome, ativo, is_principal').eq('empresa_id', empresaId).order('nome'), 30000), 'Centros de custo prontos', function (r) { return !r.error; }),
+      ]);
+      if (!vigente() || state.mes !== mes || Number(state.ano) !== ano) return;
+      if (principal[1].error || principal[2].error) throw new Error('Não foi possível confirmar os centros de custo.');
+      var dados = principal[0];
+      aplicarFinanceiroPeriodoMobile(dados, mes);
+      state.duplicadosAtivo = !principal[1].data || principal[1].data.duplicados_ativo !== false;
+      state.centrosCustoAtivo = Boolean(principal[1].data && principal[1].data.centros_custo_ativo);
+      state.centrosCusto = state.centrosCustoAtivo ? (principal[2].data || []).map(function (c) { return { id: String(c.id), nome: c.nome, ativo: c.ativo !== false, is_principal: c.is_principal === true }; }) : [];
+      sincronizarCentroCustoSelecionadoMobile();
+      state.financeiroPeriodoPronto = financeiroPeriodoChaveMobile(ano, mes);
+      if (!preparado) {
+        // A oitava etapa é aplicar o mês/contexto. Os 100% são pintados ainda
+        // no mesmo card; não há espera fixa nem carga secundária nesta barreira.
+        await finalizarBarraPreparacaoMobile();
+        if (!vigente() || state.mes !== mes || Number(state.ano) !== ano) return;
+      }
+      state.aberturaProgressiva = false;
+      state.dadosCriticosProntos = true;
+      render();
+      if (typeof window.__avantalabConfirmarAcessoMobile === 'function') window.__avantalabConfirmarAcessoMobile();
+      agendarPreCargaFinanceiroMobile();
+      await carregarSecundariosProgressivosMobile(vigente, empresaId);
+    } catch (erro) {
+      if (!vigente()) return;
+      state.financeiroPeriodoPronto = '';
+      state.aberturaProgressiva = false;
+      state.carregando = false;
+      if (!preparado || !state.perfilProgressivoPronto || state.perfilProgressivoPronto !== usuarioId + ':' + empresaId) {
+        state.falhaAcesso = erro.message || 'Não foi possível confirmar o acesso agora. Tente novamente.';
+      } else state.financeiroPeriodoErro = erro.message || 'Falha ao atualizar o mês.';
+      render();
+    }
+  }
+
+  async function carregarSecundariosProgressivosMobile(vigente, empresaId) {
+    // Uma tarefa por vez evita disputar banda/CPU com o mês no aparelho lento.
+    var tarefas = [
+      async function () {
+        var r = await promessaMobileComPrazo(db.from('despesas_cadastradas').select('id, nome, categoria').eq('empresa_id', empresaId).order('nome'), 30000);
+        if (!vigente()) return;
+        if (r.error) throw r.error;
+        state.despesas = ordenarDespesasAlfabeticamenteMobile((r.data || []).map(function (d) { return { id: d.id, nome: formatarDescricao(d.nome), categoria: formatarDescricao(d.categoria || 'Sem categoria') }; }));
+        state.apoioFinanceiroPronto = true;
+      },
+      async function () {
+        var chave = usuarioIdManutencao() + ':' + empresaId + ':' + new Date().toISOString().slice(0, 10);
+        if (state.manutencaoProgressivaDia === chave || !podeGerenciarUsuarios()) return;
+        var token = await tokenSessao();
+        if (!vigente()) return;
+        var r = await requisitarJsonMobile('/api/mobile/preparar-recorrencias', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ empresaId: empresaId }) }, 30000);
+        if (!vigente() || !r.resposta.ok) return;
+        state.manutencaoProgressivaDia = chave;
+        // Atualiza somente os valores do mês, sem reiniciar a abertura, as
+        // permissões, configurações ou os complementos que já estão em andamento.
+        var ano = Number(state.ano), mes = state.mes;
+        invalidarCacheFinanceiroMobile();
+        var dados = await obterFinanceiroPeriodoCacheMobile(empresaId, ano, mes);
+        if (vigente() && Number(state.ano) === ano && state.mes === mes) {
+          aplicarFinanceiroPeriodoMobile(dados, mes);
+          agendarPreCargaFinanceiroMobile();
+        }
+      },
+      async function () {
+        if (cardsDashboardVisiveis().indexOf('meusPerfis') < 0) { state.resumoPerfisCarregando = false; return; }
+        var token = await tokenSessao();
+        var r = await requisitarAcessoProgressivoMobile('/api/acessos-usuario?logos=adiadas', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+        if (!vigente()) return;
+        if (!r.resposta.ok) throw new Error('Não foi possível confirmar os perfis do comparativo.');
+        state.perfisDashboardLiberados = (r.json.perfis || []).filter(function (p) { return p.dashboard === true; }).map(function (p) { return p.empresa.id; });
+        await carregarResumoPerfisMobile();
+      },
+      function () { return carregarResumoPontoMobile(false); },
+      function () { return carregarNotificacoesNaoLidas(false); },
+      function () { return sincronizarAgendaSupabase(false); },
+    ];
+    for (var i = 0; i < tarefas.length && vigente(); i++) {
+      try { await promessaMobileComPrazo(Promise.resolve().then(tarefas[i]), 30000); }
+      catch (e) { console.warn('Atualização secundária adiada:', e); }
+      if (vigente()) agendarRenderSegundoPlanoMobile(empresaId);
+    }
+    if (!vigente()) return;
+    configurarRealtimeFinanceiroMobile(); configurarRealtimeAgendaMobile(); configurarRealtimePontoMobile(); configurarRealtimeNotificacoesMobile();
+    configurarRealtimeAprovacoesVendasMobile();
+  }
+
+  function usuarioIdManutencao() { return String(state.usuario && state.usuario.id); }
+
+  function indicadorCardAutomaticoMobileHtml(erro) {
+    return '<span class="inline-flex shrink-0 items-center" role="status" aria-live="polite"' + (erro ? '' : ' aria-busy="true"') + '>' + (erro
+      ? '<span class="text-[10px] font-semibold">Atualização indisponível</span>'
+      : '<span aria-hidden="true" class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent motion-reduce:animate-none"></span><span class="sr-only">Atualizando automaticamente</span>') + '</span>';
+  }
+
+  function saldoAnteriorProntoMobile() {
+    if (!ehLojaNativaMobile()) return true;
+    var indice = indiceMes(state.mes);
+    return Boolean(indice === 0 ? state.historicoDezembroAnterior : state.complementosDashboard && state.complementosDashboard[meses[indice - 1]]);
+  }
+
+  function evolucaoProntaMobile() {
+    if (!ehLojaNativaMobile()) return true;
+    var indice = indiceMes(state.mes);
+    return meses.slice(Math.max(0, indice - 5), indice).every(function (mes) { return Boolean(state.complementosDashboard && state.complementosDashboard[mes]); });
+  }
+
+  function caixinhaDashboardProntaMobile() {
+    return !ehLojaNativaMobile() || state.caixinhaProgressivaContexto === String(state.usuario && state.usuario.id) + ':' + String(state.empresa && state.empresa.id);
+  }
+
+  function agendarComplementosDashboardMobile() {
+    if (!ehLojaNativaMobile() || !state.autenticado || !state.usuario || !state.empresa || !state.dadosCriticosProntos || state.aberturaProgressiva || !financeiroMesProntoMobile() || somenteModulosNoAppNativo() || state.complementosDashboardEmAndamento) return;
+    var visiveis = cardsDashboardVisiveis();
+    var assinatura = financeiroPeriodoChaveMobile(state.ano, state.mes) + ':' + state.cargaPerfilGeracao + ':' + visiveis.join(',');
+    if (state.complementosDashboardTentativa === assinatura) return;
+    state.complementosDashboardTentativa = assinatura;
+    state.complementosDashboardEmAndamento = true;
+    var geracao = state.cargaPerfilGeracao, empresaId = state.empresa.id, usuarioId = state.usuario.id, ano = Number(state.ano), mes = state.mes;
+    window.setTimeout(function () {
+      void carregarComplementosDashboardMobile(geracao, empresaId, usuarioId, ano, mes, visiveis);
+    }, 0);
+  }
+
+  async function carregarComplementosDashboardMobile(geracao, empresaId, usuarioId, ano, mes, visiveis) {
+    var vigente = function () { return contextoProgressivoMobile(geracao, empresaId, usuarioId) && Number(state.ano) === ano && state.mes === mes; };
+    // Somente dependências dos cards visíveis: mês anterior ou janela de seis
+    // meses do gráfico. Nunca transfere o ano completo para abrir a dashboard.
+    var indice = indiceMes(mes), periodos = [];
+    if (visiveis.indexOf('saldo') >= 0 && !saldoAnteriorProntoMobile()) periodos.push({ ano: indice ? ano : ano - 1, mes: meses[indice ? indice - 1 : 11] });
+    if (visiveis.indexOf('evolucaoDespesas') >= 0 || visiveis.indexOf('evolucaoReceitas') >= 0) {
+      meses.slice(Math.max(0, indice - 5), indice).forEach(function (m) {
+        if (!(state.complementosDashboard && state.complementosDashboard[m]) && !periodos.some(function (p) { return p.ano === ano && p.mes === m; })) periodos.push({ ano: ano, mes: m });
+      });
+    }
+    var precisaCaixinha = (visiveis.indexOf('caixinha') >= 0 || visiveis.indexOf('insightsAva') >= 0) && !caixinhaDashboardProntaMobile();
+    async function executar(chave, tarefa) {
+      for (var tentativa = 0; tentativa < 2 && vigente(); tentativa++) {
+        try { await tarefa(); if (vigente()) { delete state.complementosDashboardErros[chave]; render(); } return; }
+        catch (erro) {
+          if (!vigente()) return;
+          if (tentativa) { state.complementosDashboardErros[chave] = true; render(); }
+          else await new Promise(function (resolve) { window.setTimeout(resolve, 1500); });
+        }
+      }
+    }
+    try {
+      if (!vigente()) return;
+      if (periodos.length || precisaCaixinha) await validarLeituraFinanceiraProgressivaMobile(empresaId);
+      if (!vigente()) return;
+      for (var i = 0; i < periodos.length && vigente(); i++) {
+        var periodo = periodos[i];
+        await executar(periodo.mes, async function () {
+          var fonte = await obterFinanceiroPeriodoCacheMobile(empresaId, periodo.ano, periodo.mes);
+          var dados = Object.assign({}, fonte, { lancamentos: fonte.lancamentos.slice(), entradas: fonte.entradas.slice() });
+          if (!vigente()) return;
+          if (premiumPessoalBloqueadoMobile()) {
+            var oculta = dados.entradas.filter(function (e) { return e.tipo === 'vendas_mobile_sistema'; }).reduce(function (t, e) { return t + e.valor; }, 0);
+            dados.faturamento = Math.max(0, dados.faturamento - oculta);
+            dados.entradas = dados.entradas.filter(function (e) { return e.tipo !== 'vendas_mobile_sistema'; });
+          }
+          if (periodo.ano !== ano) state.historicoDezembroAnterior = dados;
+          else state.complementosDashboard[periodo.mes] = dados;
+        });
+      }
+      if (vigente() && precisaCaixinha) {
+        await executar('caixinha', async function () {
+          var movimentos = [], inicio = 0, r;
+          do {
+            r = await promessaMobileComPrazo(db.from('caixinhas_movimentos').select('id, lancamento_id, tipo, descricao, valor, data_movimento, criado_em').eq('empresa_id', empresaId).order('id').range(inicio, inicio + 999), 30000);
+            if (!vigente()) return;
+            if (r.error || !Array.isArray(r.data)) throw new Error('Caixinha indisponível.');
+            movimentos = movimentos.concat(r.data); inicio += 1000;
+          } while (r.data.length === 1000);
+          state.caixinhaMovimentos = movimentos.map(function (m) { return { id: m.id, lancamentoId: m.lancamento_id, tipo: m.tipo, descricao: m.descricao, valor: Number(m.valor || 0), dataMovimento: m.data_movimento, criadoEm: m.criado_em }; });
+          state.caixinhaProgressivaContexto = usuarioId + ':' + empresaId;
+        });
+      }
+    } catch (erro) {
+      if (vigente()) {
+        periodos.forEach(function (p) { state.complementosDashboardErros[p.mes] = true; });
+        if (precisaCaixinha) state.complementosDashboardErros.caixinha = true;
+      }
+    } finally {
+      if (vigente()) { state.complementosDashboardEmAndamento = false; render(); }
+    }
+  }
+
+  async function validarLeituraFinanceiraProgressivaMobile(empresaId) {
+    if (!state.autenticado || !state.dadosCriticosProntos || !state.empresa || state.empresa.id !== empresaId || state.dashboardPerfilLiberado !== empresaId || somenteModulosNoAppNativo()) throw new Error('Acesso financeiro indisponível.');
+    var usuarioId = state.usuario && state.usuario.id;
+    var epoca = Number(state.financeiroCacheEpoca || 0);
+    var token = await tokenSessao();
+    var r = await requisitarAcessoProgressivoMobile('/api/acessos-usuario?empresaId=' + encodeURIComponent(empresaId) + '&logos=adiadas', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+    if (!state.autenticado || !state.usuario || state.usuario.id !== usuarioId || !state.empresa || state.empresa.id !== empresaId || Number(state.financeiroCacheEpoca || 0) !== epoca) throw new Error('O contexto financeiro mudou.');
+    if (r.resposta.status === 401 || r.resposta.status === 403 || (r.resposta.ok && !(r.json.perfis || []).some(function (p) { return p.empresa.id === empresaId && p.dashboard === true; }))) {
+      invalidarCacheFinanceiroMobile();
+      state.dashboardPerfilLiberado = ''; state.perfilProgressivoPronto = '';
+      state.financeiroPeriodoPronto = ''; state.dadosCriticosProntos = false;
+      state.lancamentos = []; state.entradas = []; state.faturamentos = {};
+      state.complementosDashboard = {}; state.historicoDezembroAnterior = null;
+      state.falhaAcesso = 'O acesso financeiro deste perfil precisa ser confirmado novamente.';
+      render();
+    }
+    if (!r.resposta.ok || !(r.json.perfis || []).some(function (p) { return p.empresa.id === empresaId && p.dashboard === true; })) throw new Error('Não foi possível confirmar sua permissão financeira.');
+  }
+
+  async function carregarDados(opcoes) {
+    if (ehLojaNativaMobile()) return carregarDadosProgressivosMobile(opcoes);
+    // A seleção é resolvida antes de qualquer leitura financeira, também em
+    // sessões restauradas, troca de perfil e retorno do aplicativo.
+    if (state.empresa) {
+      try {
+        var sessaoAreas = await db.auth.getSession();
+        var tokenAreas = sessaoAreas.data && sessaoAreas.data.session && sessaoAreas.data.session.access_token;
+        if (!tokenAreas) return;
+        var empresaAreasId = state.empresa.id;
+        var respostaAreas = await fetch('/api/acessos-usuario?logos=adiadas', { headers: { Authorization: 'Bearer ' + tokenAreas }, cache: 'no-store' });
+        var areas = await respostaAreas.json();
+        if (!state.empresa || state.empresa.id !== empresaAreasId || !state.autenticado) return;
+        if (!respostaAreas.ok) throw new Error(areas.mensagem || 'Não foi possível confirmar seus acessos.');
+        state.perfisDashboardLiberados = (areas.perfis || []).filter(function (perfil) { return perfil.dashboard === true; }).map(function (perfil) { return perfil.empresa.id; });
+        state.resumoPerfis = (state.resumoPerfis || []).filter(function (perfil) { return state.perfisDashboardLiberados.indexOf(perfil.id) >= 0; });
+        var acessoAreas = (areas.perfis || []).find(function (perfil) { return perfil.empresa.id === state.empresa.id; });
+        if (!acessoAreas || acessoAreas.dashboard !== true) {
+          state.dashboardPerfilLiberado = '';
+          state.lancamentos = [];
+          if (ehLojaNativaMobile()) {
+            if (!acessoAreas) throw new Error('Este perfil não está disponível para sua conta.');
+            await prepararModulosAppNativo(acessoAreas);
+            return;
+          }
+          window.location.replace('/modulos?entrada=1&empresaId=' + encodeURIComponent(state.empresa.id));
+          return;
+        }
+        state.dashboardPerfilLiberado = state.empresa.id;
+        state.perfilModulosNativo = '';
+        state.modulosPerfilLiberados = (acessoAreas.modulos || []).map(function (modulo) { return modulo.id; });
+      } catch (erroAreas) {
+        state.falhaAcesso = erroAreas.message || 'Não foi possível confirmar seus acessos.';
+        state.carregando = false;
+        render();
+        return;
+      }
+    }
     if (!state.empresa) return;
     var exibeTelaPreparacao = !state.pronto || state.paywallPerfilVerificado !== state.empresa.id;
     if (exibeTelaPreparacao) state.dadosCriticosProntos = false;
@@ -7624,7 +8834,7 @@
     var resultadosPromise = Promise.all([
       acompanharEtapaDados(buscarLancamentosAnoMobile(empresaId, ano), 'Carregando despesas e lançamentos'),
       acompanharEtapaDados(db.from('faturamentos').select('mes, valor').eq('empresa_id', empresaId).eq('ano', ano), 'Carregando faturamentos'),
-      acompanharEtapaDados(db.from('faturamentos_entradas').select('id, mes, dia, origem, valor, status, tipo_obs, centro_custo_id, revisao').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
+      acompanharEtapaDados(db.from('faturamentos_entradas').select('id, created_at, mes, dia, origem, valor, status, tipo_obs, centro_custo_id, revisao, ano, operacao_mobile_id, operacao_mobile_indice').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
       acompanharEtapaDados(db.from('despesas_cadastradas').select('id, nome, categoria').eq('empresa_id', empresaId).order('nome', { ascending: true }), 'Carregando categorias de despesas'),
       acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo, centros_custo_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
       acompanharEtapaDados(db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true), 'Carregando módulos'),
@@ -7693,6 +8903,7 @@
       return;
     }
 
+    if (!state.autenticado || !state.empresa || state.empresa.id !== empresaId || state.dashboardPerfilLiberado !== empresaId) return;
     var cadastroPerfilOk = verificacoesPerfil[1];
     if (!cadastroPerfilOk && !state.paywallAtivo) {
       state.carregando = false;
@@ -7700,7 +8911,7 @@
       render();
       return;
     }
-    if (!state.autenticado || !state.empresa || state.empresa.id !== empresaId) return;
+    if (!state.autenticado || !state.empresa || state.empresa.id !== empresaId || somenteModulosNoAppNativo()) return;
     // Guarda o dia da carga (São Paulo) — usado para só recarregar ao voltar
     // ao app quando o dia virou (despesas previstas do novo dia).
     try { state.diaUltimoCarregamento = dataHoraPontoMobile().data; } catch (e) {}
@@ -7710,6 +8921,7 @@
     }).map(function (item) {
       return {
         id: item.id,
+        criadoEm: item.created_at || null,
         mes: item.mes,
         dia: Number(item.dia),
         despesa: formatarDescricao(item.despesa_nome),
@@ -7720,7 +8932,7 @@
         recorrenciaId: item.recorrencia_id || null,
         notaArquivoPath: item.nota_arquivo_path || null,
         centroCustoId: item.centro_custo_id ? String(item.centro_custo_id) : null,
-        revisao: Number(item.revisao || 1),
+        ano: Number(item.ano || state.ano), operacaoMobileId: item.operacao_mobile_id || null, operacaoMobileIndice: Number(item.operacao_mobile_indice || 0), revisao: Number(item.revisao || 1),
       };
     });
     preservarDespesaPrevistaSalvaContraLeituraAntigaMobile();
@@ -7748,6 +8960,7 @@
     }).map(function (item) {
       return {
         id: item.id,
+        criadoEm: item.created_at || null,
         mes: item.mes,
         dia: Number(item.dia),
         origem: item.origem,
@@ -7755,7 +8968,7 @@
         status: item.status || null,
         tipo: item.tipo_obs || null,
         centroCustoId: item.centro_custo_id ? String(item.centro_custo_id) : null,
-        revisao: Number(item.revisao || 1),
+        ano: Number(item.ano || state.ano), operacaoMobileId: item.operacao_mobile_id || null, operacaoMobileIndice: Number(item.operacao_mobile_indice || 0), revisao: Number(item.revisao || 1),
       };
     });
 
@@ -7789,8 +9002,8 @@
     sincronizarCentroCustoSelecionadoMobile();
 
     var modulosAtivosMobile = (resultados[5] && resultados[5].data) || [];
-    state.pontoModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'ponto'; });
-    state.vendasMobileModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'vendas_mobile'; });
+    state.pontoModuloAtivo = state.modulosPerfilLiberados.indexOf('ponto') >= 0 && modulosAtivosMobile.some(function (item) { return item.modulo_id === 'ponto'; });
+    state.vendasMobileModuloAtivo = state.modulosPerfilLiberados.indexOf('vendas_mobile') >= 0 && modulosAtivosMobile.some(function (item) { return item.modulo_id === 'vendas_mobile'; });
     state.caixinhaMovimentos = ((resultados[6] && resultados[6].data) || []).map(function (item) {
       return {
         id: item.id,
@@ -7846,6 +9059,7 @@
     var anoResumo = String(state.ano);
     var mesResumo = state.mes;
     window.setTimeout(function () {
+      if (somenteModulosNoAppNativo() || !state.empresa || state.empresa.id !== empresaIdResumo) return;
       carregarResumoPerfisMobile().then(function () {
         if (
           state.empresa && state.empresa.id === empresaIdResumo &&
@@ -7859,6 +9073,7 @@
     // Sincronizações complementares começam somente depois de a tela principal
     // estar disponível. Uma falha isolada aqui não interrompe o acesso.
     window.setTimeout(function () {
+      if (somenteModulosNoAppNativo() || !state.empresa || state.empresa.id !== empresaIdResumo) return;
       var executarSegundoPlano = function (descricao, tarefa) {
         try {
           Promise.resolve(tarefa()).catch(function (erro) {
@@ -8049,9 +9264,9 @@
     registrarPreferenciaSessaoMobile(state.manterConectado, true);
     render();
 
-    if (typeof window.__avantalabAbrirOAuthNativoMobile === 'function') {
+    if (ehLojaNativaMobile()) {
       try {
-        await window.__avantalabAbrirOAuthNativoMobile('google');
+        await abrirLoginSocialNativoMobile('google');
       } catch (error) {
         state.carregando = false;
         state.loginAcao = '';
@@ -8087,6 +9302,34 @@
 
   function loginSocialMobileEmAndamento() {
     return state.loginAcao === 'google' || state.loginAcao === 'apple';
+  }
+
+  async function abrirLoginSocialNativoMobile(provedor) {
+    window.__avantalabPonteOAuthMobilePendente = true;
+    var revisao = Number(state.tentativaLogin || 0);
+    var timerPonte;
+    try {
+      var abrir = await promessaMobileComPrazo(new Promise(function (resolver, rejeitar) {
+        function verificar() {
+          if (revisao !== Number(state.tentativaLogin || 0)) { rejeitar(new Error('tentativa_encerrada')); return; }
+          if (typeof window.__avantalabAbrirOAuthNativoMobile === 'function') {
+            resolver(window.__avantalabAbrirOAuthNativoMobile); return;
+          }
+          timerPonte = window.setTimeout(verificar, 100);
+        }
+        verificar();
+      }), 45000, 'Não foi possível preparar o login do aplicativo. Tente novamente.');
+      if (revisao === Number(state.tentativaLogin || 0)) await abrir(provedor);
+    } catch (erro) {
+      if (revisao !== Number(state.tentativaLogin || 0)) return;
+      state.carregando = false;
+      state.loginAcao = '';
+      limparLoginSocialPendenteMobile();
+      exibirFalhaDeAcessoMobile('Não foi possível preparar o login social. Confira a conexão e tente novamente.');
+    } finally {
+      window.__avantalabPonteOAuthMobilePendente = false;
+      if (timerPonte) window.clearTimeout(timerPonte);
+    }
   }
 
   function cancelarLoginSocialMobile() {
@@ -8129,9 +9372,9 @@
     registrarPreferenciaSessaoMobile(state.manterConectado, true);
     render();
 
-    if (typeof window.__avantalabAbrirOAuthNativoMobile === 'function') {
+    if (ehLojaNativaMobile()) {
       try {
-        await window.__avantalabAbrirOAuthNativoMobile('apple');
+        await abrirLoginSocialNativoMobile('apple');
       } catch (error) {
         state.carregando = false;
         state.loginAcao = '';
@@ -8910,6 +10153,8 @@
   }
 
   async function sair() {
+    invalidarCacheFinanceiroMobile();
+    if (ehLojaNativaMobile()) window.dispatchEvent(new CustomEvent('avantalab:close-native-modules'));
     var destinoLogout = destinoLogoutMobile();
     try {
       await db.auth.signOut({ scope: 'local' });
@@ -9294,6 +10539,8 @@
   async function salvarDespesa(ignorarAvisoDuplicado) {
     if (!state.empresa || state.lancandoDespesa || state.aplicacaoLancamento) return;
 
+    var contexto = contextoEdicaoFinanceiraMobile();
+    var formulario = Number(state.lancamentoFormularioGeracao || 0), formularioAberto = Boolean(state.modalLancamento);
     var periodo = periodoLancamentoMobile();
     var dia = Number(campo('despesa-dia'));
     var nome = campo('despesa-nome');
@@ -9333,76 +10580,31 @@
 
     if (!ignorarAvisoDuplicado && !await confirmarDespesasMesmoValorMobile(valor, periodo.mes, periodo.ano)) return;
 
-    if (!iniciarAplicacaoLancamentoMobile('Salvando despesa')) return;
+    if (contexto !== contextoEdicaoFinanceiraMobile() || formulario !== Number(state.lancamentoFormularioGeracao || 0) || (formularioAberto && !state.modalLancamento)) return;
     state.lancandoDespesa = true;
-
-    var totalParcelas = (state.formParcelar && state.formParcelas >= 2) ? state.formParcelas : 1;
-    var mesIndex = periodo.indice;
-    var ok = true;
-    var primeiroLancamentoId = null;
-
-    for (var p = 0; p < totalParcelas; p++) {
-      var idxMes = (mesIndex + p) % 12;
-      var anosExtra = Math.floor((mesIndex + p) / 12);
-      var mesParc = meses[idxMes];
-      var anoParc = periodo.ano + anosExtra;
-      var descBase = formatarDescricao(descricao);
-      var descParc = totalParcelas > 1
-        ? (descBase ? descBase + ' (' + (p + 1) + '/' + totalParcelas + ')' : '(' + (p + 1) + '/' + totalParcelas + ')')
-        : descBase;
-
-      var ehFuturo = dataFutura(anoParc, idxMes, dia);
-      var ehParcelado = totalParcelas > 1;
-      // Parcela: valor e data definidos -> nao pede confirmacao (so badge).
-      // Avulso futuro: "previsto" -> pede confirmacao na data.
-      var tipoLanc = ehParcelado ? 'parcela' : (ehFuturo ? 'previsto' : null);
-      var statusLanc = (!ehParcelado && ehFuturo) ? 'prevista' : null;
-
-      var resposta = await db
-        .from('lancamentos')
-        .insert({
-          empresa_id: state.empresa.id,
-          ano: anoParc,
-          mes: mesParc,
-          dia: dia,
-          despesa_nome: nome,
-          descricao: descParc,
-          valor: valor,
-          status: statusLanc,
-          tipo_obs: tipoLanc,
-          centro_custo_id: centroCustoId,
-        })
-        .select()
-        .single();
-
-      if (resposta.error) {
-        ok = false;
-        state.lancandoDespesa = false;
-        falharAplicacaoLancamentoMobile('Nao foi possivel salvar a despesa.');
-        return;
+    try {
+      var totalParcelas = (state.formParcelar && state.formParcelas >= 2) ? Number(state.formParcelas) : 1;
+      if (!Number.isInteger(totalParcelas) || totalParcelas < 1 || totalParcelas > 120) { setErroLancamentoMobile('Informe até 120 parcelas.'); return; }
+      var dados = { ano: periodo.ano, mes: periodo.mes, dia: dia, valor: valor, despesa_nome: nome,
+        descricao: formatarDescricao(descricao), centro_custo_id: centroCustoId, parcelas: totalParcelas,
+        prevista: totalParcelas === 1 && dataFutura(periodo.ano, periodo.indice, dia) };
+      var projecoes = [];
+      for (var p = 0; p < totalParcelas; p++) {
+        var ano = periodo.ano + Math.floor((periodo.indice + p) / 12), mes = meses[(periodo.indice + p) % 12];
+        projecoes.push({ ano: ano, mes: mes, dia: Math.min(dia, maxDias(mes, ano)), despesa: nome,
+          descricao: dados.descricao + (totalParcelas > 1 ? (dados.descricao ? ' ' : '') + '(' + (p + 1) + '/' + totalParcelas + ')' : ''),
+          valor: valor, status: dados.prevista ? 'prevista' : null, tipo: totalParcelas > 1 ? 'parcela' : dados.prevista ? 'previsto' : null, centroCustoId: centroCustoId });
       }
-      if (!primeiroLancamentoId && resposta.data) primeiroLancamentoId = resposta.data.id;
-    }
-
-    if (primeiroLancamentoId && state.notaArquivoPendente) {
-      var nota = await arquivarNotaLancamentoMobile(primeiroLancamentoId, state.notaArquivoPendente);
-      if (nota.erro) mostrarToast('Despesa salva, mas a nota nao foi arquivada.');
-    }
-
-    state.lancandoDespesa = false;
-    state.formParcelar = false;
-    state.formParcelas = 2;
-    state.notaArquivoPendente = null;
-    limparRascunhoLancamentoMobile();
-    state.modalLancamento = false;
-    state.tipoLancamento = 'despesa';
-    state.erro = '';
-    await carregarDados();
-    concluirAplicacaoLancamentoMobile(totalParcelas > 1 ? 'Despesa parcelada em ' + totalParcelas + 'x.' : 'Despesa lancada.');
+      if (!await enfileirarMovimentoFinanceiroMobile('despesa', 'incluir', dados, [], projecoes, state.notaArquivoPendente)) return;
+      state.formParcelar = false; state.formParcelas = 2; state.notaArquivoPendente = null;
+      limparRascunhoLancamentoMobile(); state.modalLancamento = false; state.tipoLancamento = 'despesa'; state.erro = '';
+      render(true);
+    } finally { state.lancandoDespesa = false; if (state.modalLancamento && contexto === contextoEdicaoFinanceiraMobile()) render(); }
   }
 
   async function salvarAporteCaixinhaMobile() {
     if (!state.empresa || state.caixinhaSalvando) return;
+    if (!caixinhaDashboardProntaMobile()) { mostrarToast('A Caixinha está atualizando automaticamente.'); return; }
 
     var dataTexto = campo('caixinha-data');
     var descricao = campo('caixinha-descricao') || 'Reserva';
@@ -9490,6 +10692,7 @@
 
   async function salvarSaldoInicialCaixinhaMobile() {
     if (!state.empresa || state.caixinhaSaldoInicialSalvando) return;
+    if (!caixinhaDashboardProntaMobile()) { mostrarToast('A Caixinha está atualizando automaticamente.'); return; }
 
     var valorTexto = campo('caixinha-saldo-inicial');
     var valor = normalizarValor(valorTexto);
@@ -9551,6 +10754,7 @@
 
   async function excluirSaldoInicialCaixinhaMobile() {
     if (!state.empresa || state.caixinhaSaldoInicialSalvando) return;
+    if (!caixinhaDashboardProntaMobile()) { mostrarToast('A Caixinha está atualizando automaticamente.'); return; }
     state.caixinhaSaldoInicialSalvando = true;
     state.erro = '';
     render();
@@ -9588,6 +10792,7 @@
 
   async function resetarCaixinhaMobile() {
     if (!state.empresa || state.carregando) return;
+    if (!caixinhaDashboardProntaMobile()) { mostrarToast('A Caixinha está atualizando automaticamente.'); return; }
 
     var movimentos = state.caixinhaMovimentos || [];
     if (!movimentos.length) {
@@ -9697,6 +10902,7 @@
   }
 
   async function sincronizarCentrosCustoMobile() {
+    if (somenteModulosNoAppNativo()) return false;
     if (!state.empresa || state.centroCustoSalvando) return false;
     var empresaId = state.empresa.id || state.empresa.empresa_id;
     var resposta = await db.from('configuracoes').select('centros_custo_ativo').eq('empresa_id', empresaId).maybeSingle();
@@ -9881,77 +11087,14 @@
       return;
     }
 
-    if (!iniciarAplicacaoLancamentoMobile('Salvando receita')) return;
-
-    // Receita com data futura -> "prevista": nao entra no total efetivado agora
-    // (entra so na previsao). Ao confirmar, e somada ao total do mes.
-    var ehFutura = dataFutura(periodo.ano, periodo.indice, dia);
-
-    var resposta = await db
-      .from('faturamentos_entradas')
-      .insert({
-        empresa_id: state.empresa.id,
-        ano: periodo.ano,
-        mes: periodo.mes,
-        dia: dia,
-        origem: formatarDescricao(origem),
-        valor: valor,
-        status: ehFutura ? 'prevista' : null,
-        tipo_obs: ehFutura ? 'previsto' : null,
-        criado_por: state.usuario ? state.usuario.id : null,
-        centro_custo_id: centroCustoId,
-      })
-      .select()
-      .single();
-
-    if (resposta.error) {
-      falharAplicacaoLancamentoMobile('Nao foi possivel salvar a receita.');
-      return;
-    }
-
-    // Com centros ativos, o gatilho do banco recalcula o total consolidado
-    // a partir das entradas de todos os centros. Evita somar duas vezes.
-    if (!ehFutura && !state.centrosCustoAtivo) {
-      var totalExistente = await db
-        .from('faturamentos')
-        .select('valor')
-        .eq('empresa_id', state.empresa.id)
-        .eq('ano', periodo.ano)
-        .eq('mes', periodo.mes)
-        .maybeSingle();
-      if (totalExistente.error) {
-        falharAplicacaoLancamentoMobile('Receita salva, mas o total do mês não pode ser atualizado agora.');
-        return;
-      }
-      var totalAtual = totalExistente.data ? Number(totalExistente.data.valor || 0) : 0;
-      var total = await db
-        .from('faturamentos')
-        .upsert(
-          {
-            empresa_id: state.empresa.id,
-            ano: periodo.ano,
-            mes: periodo.mes,
-            valor: totalAtual + valor,
-            referencia_total_mensal: false,
-          },
-          { onConflict: 'empresa_id,ano,mes' }
-        )
-        .select()
-        .single();
-
-      if (total.error) {
-        falharAplicacaoLancamentoMobile('Receita salva, mas o total do mês não foi atualizado.');
-        return;
-      }
-    }
-
-    state.modalLancamento = false;
-    state.tipoLancamento = 'despesa';
-    limparRascunhoLancamentoMobile();
-    state.erro = '';
-    state.lancamentoErro = '';
-    await carregarDados();
-    concluirAplicacaoLancamentoMobile('Receita lançada.');
+    var futura = dataFutura(periodo.ano, periodo.indice, dia);
+    var dados = { ano: periodo.ano, mes: periodo.mes, dia: dia, origem: formatarDescricao(origem), valor: valor,
+      centro_custo_id: centroCustoId, prevista: futura };
+    var projecao = { ano: periodo.ano, mes: periodo.mes, dia: dia, origem: dados.origem, valor: valor,
+      status: futura ? 'prevista' : null, tipo: futura ? 'previsto' : null, centroCustoId: centroCustoId };
+    if (!await enfileirarMovimentoFinanceiroMobile('receita', 'incluir', dados, [], [projecao])) return;
+    state.modalLancamento = false; state.tipoLancamento = 'despesa'; limparRascunhoLancamentoMobile();
+    state.erro = ''; state.lancamentoErro = ''; render(true);
   }
 
   async function salvarCategoriaDespesa() {
@@ -10351,13 +11494,20 @@
   }
 
   async function salvarEdicaoEmpresaMobile() {
-    if (!state.empresa || !podeGerenciarUsuarios()) return;
+    if (!state.empresa || !podeGerenciarUsuarios() || state.empresaAcao === 'editar') return;
 
     var nome = campo('editar-empresa-nome').trim();
     var login = campo('editar-empresa-login').trim().toLowerCase();
     var senha = campo('editar-empresa-senha').trim();
 
     var tipoPerfil = normalizarTipoPerfil(state.editEmpresaTipoPerfil);
+    var empresaEdicao = state.empresa;
+    var loginAnterior = String(empresaEdicao.login || empresaEdicao.email || '').trim().toLowerCase();
+    var acessoAlterado = login !== loginAnterior;
+    // Preservar o rascunho mesmo se a rede falhar ou o formulário renderizar.
+    state.editEmpresaNome = nome;
+    state.editEmpresaLogin = login;
+    state.editEmpresaSenha = senha;
 
     if (!nome) {
       setErro('Informe o nome do perfil financeiro.');
@@ -10379,6 +11529,7 @@
     state.erro = '';
     render();
 
+    try {
     var tok = await tokenSessao();
     if (!tok) {
       state.carregando = false;
@@ -10390,7 +11541,7 @@
     var respostaEmpresaHttp = await fetch('/api/atualizar-empresa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
-      body: JSON.stringify({ empresaId: state.empresa.id, nome: nome, tipoPerfil: tipoPerfil }),
+      body: JSON.stringify({ empresaId: empresaEdicao.id, nome: nome, tipoPerfil: tipoPerfil }),
     });
     var respostaEmpresa = await lerResposta(respostaEmpresaHttp);
 
@@ -10401,6 +11552,7 @@
       return;
     }
 
+    if (acessoAlterado) {
     var respostaUsuarioHttp = await fetch('/api/atualizar-usuario-empresa', {
       method: 'POST',
       headers: {
@@ -10408,10 +11560,10 @@
         Authorization: 'Bearer ' + tok,
       },
       body: JSON.stringify({
-        acessoId: state.empresa.acessoId,
-        nome: state.empresa.usuario_nome || nome,
-        email: login,
-        perfil: state.empresa.perfil || 'operador_simples',
+        acessoId: empresaEdicao.acessoId,
+        email: login.indexOf('@') >= 0 ? login : emailRealUsuario(empresaEdicao),
+        ...(login.indexOf('@') >= 0 ? {} : { login: login }),
+        perfil: empresaEdicao.perfil || 'operador_simples',
       }),
     });
     var respostaUsuario = await lerResposta(respostaUsuarioHttp);
@@ -10419,8 +11571,9 @@
     if (!respostaUsuarioHttp.ok || respostaUsuario.erro) {
       state.carregando = false;
       state.empresaAcao = '';
-      setErro(respostaUsuario.mensagem || 'Nao foi possivel atualizar o acesso.');
+      setErro('O perfil foi salvo, mas o acesso não foi atualizado. ' + (respostaUsuario.mensagem || 'Tente novamente.'));
       return;
+    }
     }
 
     if (senha) {
@@ -10431,7 +11584,7 @@
           Authorization: 'Bearer ' + tok,
         },
         body: JSON.stringify({
-          acessoId: state.empresa.acessoId,
+          acessoId: empresaEdicao.acessoId,
           novaSenha: senha,
         }),
       });
@@ -10457,6 +11610,11 @@
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
     mostrarToast('Dados atualizados.');
+    } catch (error) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro('Não foi possível concluir a atualização. O perfil pode ter sido salvo; confira antes de tentar novamente.');
+    }
   }
 
   async function excluirEmpresaMobile(modo) {
@@ -10512,6 +11670,7 @@
   }
 
   function abrirAcaoLancamento(tipo, id) {
+    if (edicaoPendenteBloqueiaAcaoMobile(tipo, id)) return;
     // A mesma ação atende despesas, receitas e aportes. Define o contexto
     // antes de decidir a tela para que o toque não interrompa com erro.
     var caixinha = tipo === 'caixinha';
@@ -10525,6 +11684,7 @@
 
     state.modalAcao = {
       tipo: tipo,
+      erro: '',
       // Previsões pedem uma decisão explícita (editar ou aceitar hoje).
       // Registros já efetivados seguem direto para a edição.
       modo: !caixinha && item.status !== 'prevista' ? 'editar' : 'opcoes',
@@ -10658,128 +11818,55 @@
 
   async function excluirLancamentoSelecionado() {
     if (!state.modalAcao || !state.modalAcao.item || !state.empresa) return;
-
-    var tipo = state.modalAcao.tipo;
-    var item = state.modalAcao.item;
-
-    if (tipo === 'caixinha') {
-      await excluirAporteCaixinhaSelecionadoMobile(item);
-      return;
-    }
-
-    if (tipo === 'receita' && ehReceitaSincronizada(item)) {
-      state.modalAcao = null;
-      render();
-      return;
-    }
-
-    // Detectar parcelas pendentes (padrao X/N na descricao)
+    var contexto = contextoEdicaoFinanceiraMobile(), modal = state.modalAcao;
+    var tipo = modal.tipo, item = modal.item;
+    if (edicaoPendenteBloqueiaAcaoMobile(tipo, item.id)) return;
+    if (tipo === 'caixinha') { await excluirAporteCaixinhaSelecionadoMobile(item); return; }
+    if (tipo === 'receita' && ehReceitaSincronizada(item)) return;
+    var itens = [item];
     if (tipo !== 'receita') {
-      var matchParcela = (item.descricao || '').match(/\((\d+)\/(\d+)\)$/);
-      if (matchParcela) {
-        var totalN = parseInt(matchParcela[2], 10);
-        var parcelasGrupo = state.lancamentos.filter(function(l) {
-          if (l.despesa !== item.despesa) return false;
+      var parcela = (item.descricao || '').match(/\((\d+)\/(\d+)\)$/);
+      if (parcela) {
+        var base = (item.descricao || '').replace(/\s*\(\d+\/\d+\)$/, '');
+        var inicio = Number(state.ano) * 12 + meses.indexOf(item.mes) - Number(parcela[1]);
+        var grupo = state.lancamentos.filter(function (l) {
           var m = (l.descricao || '').match(/\((\d+)\/(\d+)\)$/);
-          return m && parseInt(m[2], 10) === totalN;
+          return m && (!item.operacaoMobileId || l.operacaoMobileId === item.operacaoMobileId) && l.despesa === item.despesa && Number(l.valor) === Number(item.valor)
+            && (l.centroCustoId || '') === (item.centroCustoId || '') && Number(m[2]) === Number(parcela[2])
+            && (l.descricao || '').replace(/\s*\(\d+\/\d+\)$/, '') === base
+            && Number(state.ano) * 12 + meses.indexOf(l.mes) - Number(m[1]) === inicio;
         });
-        var pendentes = parcelasGrupo.filter(function(l) { return l.id !== item.id; });
-        if (pendentes.length > 0) {
-          var resp = await solicitarDialogoSistemaMobile({
-            titulo: 'Excluir despesa parcelada',
-            rotulo: 'Escolha o alcance',
-            mensagem:
-              'Este lançamento faz parte de um parcelamento em ' + totalN + 'x. Há ' +
-              pendentes.length + ' parcela(s) pendente(s).\n\nEscolha exatamente o que deseja excluir.',
-            variante: 'destrutiva',
-            acoes: [
-              { valor: 'cancelar', rotulo: 'Não excluir', estilo: 'secundaria' },
+        // Planos legados não possuem identificador. Se a mesma posição aparece
+        // duas vezes, não presumir que são um só parcelamento.
+        var posicoes = grupo.map(function (l) { return Number((l.descricao || '').match(/\((\d+)\/(\d+)\)$/)[1]); });
+        if (posicoes.some(function (p, i) { return posicoes.indexOf(p) !== i; })) grupo = [item];
+        if (grupo.length > 1) {
+          var escolha = await solicitarDialogoSistemaMobile({ titulo: 'Excluir despesa parcelada', rotulo: 'Escolha o alcance',
+            mensagem: 'Há ' + grupo.length + ' parcelas deste plano na lista carregada. Escolha exatamente quais excluir.', variante: 'destrutiva',
+            acoes: [{ valor: 'cancelar', rotulo: 'Não excluir', estilo: 'secundaria' },
               { valor: 'somente-esta', rotulo: 'Excluir somente esta', estilo: 'perigosa' },
-              { valor: 'todas', rotulo: 'Excluir todas (' + parcelasGrupo.length + ')', estilo: 'perigosa' },
-            ],
-          });
-          if (resp === 'cancelar') return;
-          iniciarAplicacaoLancamentoMobile();
-          var parcelasParaExcluir = resp === 'todas' ? parcelasGrupo : [item];
-          for (var i = 0; i < parcelasParaExcluir.length; i++) {
-            var parcela = parcelasParaExcluir[i];
-            if (!(await removerNotaLancamentoMobile(parcela.id))) {
-              falharAplicacaoLancamentoMobile('Nao foi possivel remover a nota da despesa.');
-              return;
-            }
-            var exclusaoParcela = await db.from('lancamentos').delete().eq('id', parcela.id).eq('empresa_id', state.empresa.id);
-            if (exclusaoParcela.error) {
-              falharAplicacaoLancamentoMobile('Nao foi possivel excluir a despesa.');
-              return;
-            }
-          }
-          state.modalAcao = null;
-          await carregarDados();
-          concluirAplicacaoLancamentoMobile(resp === 'todas' ? 'Parcelas excluidas.' : 'Despesa excluida.');
-          return;
+              { valor: 'todas', rotulo: 'Excluir as ' + grupo.length + ' parcelas exibidas', estilo: 'perigosa' }] });
+          if (escolha !== 'somente-esta' && escolha !== 'todas') return;
+          itens = escolha === 'todas' ? grupo : [item];
         }
       }
-    }
-
-    var ehFixa = tipo !== 'receita' && (item.tipo === 'fixa' || item.recorrenciaId);
-    if (ehFixa) {
-      var escolhaFixa = await solicitarExclusaoDespesaFixaMobile();
-      if (escolhaFixa === 'cancelar') return;
-      if (escolhaFixa === 'abrir-fixas') {
-        state.modalAcao = null;
-        abrirModalMenuDespesasFixas();
-        return;
+      if (item.tipo === 'fixa' || item.recorrenciaId) {
+        var fixa = await solicitarExclusaoDespesaFixaMobile();
+        if (fixa === 'abrir-fixas' && contexto === contextoEdicaoFinanceiraMobile()) { state.modalAcao = null; abrirModalMenuDespesasFixas(); return; }
+        if (fixa !== 'excluir-mes') return;
       }
     }
-
-    iniciarAplicacaoLancamentoMobile();
-
-    if (tipo === 'receita') {
-      var apagada = await db.from('faturamentos_entradas').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
-      if (apagada.error) {
-        falharAplicacaoLancamentoMobile('Nao foi possivel excluir a receita.');
-        return;
-      }
-
-      // Prevista nao entrou no total efetivado; nao subtrair.
-      if (item.status !== 'prevista') {
-        var totalAtual = state.faturamentos[state.mes] || 0;
-        await db
-          .from('faturamentos')
-          .upsert(
-            {
-              empresa_id: state.empresa.id,
-              ano: Number(state.ano),
-              mes: state.mes,
-              valor: Math.max(0, totalAtual - Number(item.valor || 0)),
-            },
-            { onConflict: 'empresa_id,ano,mes' }
-          );
-      }
-    } else {
-      var removida = ehFixa
-        ? (await removerNotaLancamentoMobile(item.id)
-          ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', item.id).eq('empresa_id', state.empresa.id)
-          : { error: { message: 'Nao foi possivel remover a nota.' } })
-        : (await removerNotaLancamentoMobile(item.id)
-          ? await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id)
-          : { error: { message: 'Nao foi possivel remover a nota.' } });
-      if (removida.error) {
-        falharAplicacaoLancamentoMobile('Nao foi possivel excluir a despesa.');
-        return;
-      }
-    }
-
-    state.modalAcao = null;
-    await carregarDados();
-    concluirAplicacaoLancamentoMobile(tipo === 'receita' ? 'Receita excluida.' : 'Despesa excluida.');
+    if (contexto !== contextoEdicaoFinanceiraMobile() || modal !== state.modalAcao) return;
+    await enfileirarExclusaoFinanceiraMobile(tipo === 'receita' ? 'receita' : 'despesa', itens);
   }
 
   async function salvarEdicaoLancamentoSelecionado(confirmarPrevista) {
     if (!state.modalAcao || !state.modalAcao.item || !state.empresa) return;
+    if (state.aplicacaoLancamento || state.modalAcao.enfileirando) return;
 
     var tipo = state.modalAcao.tipo;
     var item = state.modalAcao.item;
+    var empresaInicial = state.empresa.id, modalInicial = state.modalAcao;
 
     if (tipo === 'caixinha') {
       await salvarEdicaoAporteCaixinhaSelecionadoMobile(item);
@@ -10815,6 +11902,13 @@
     var totalParcelas = parcelamentoOriginal ? Number(campo('editar-total-parcelas')) : 1;
     var descricaoBase = tipo === 'receita' ? '' : formatarDescricao(descricao);
 
+    // O diálogo e a espera reconstroem o DOM. Preserva a edição, sem alterar o
+    // registro original usado na comparação/concorrência e na identificação do plano.
+    state.modalAcao.rascunho = {
+      dia: diaInformado, valor: valor, origem: origem, despesa: despesaNome,
+      descricao: descricao, parcelaAtual: parcelaAtual, totalParcelas: totalParcelas,
+    };
+
     if ((!confirmarAgora && (!dia || dia < 1 || dia > limite)) || valor <= 0) {
       setErro('Informe dia e valor validos.');
       return;
@@ -10839,11 +11933,11 @@
     ));
 
     if (tipo === 'despesa' && !await confirmarDespesasMesmoValorMobile(valor, mesDestino, anoDestino, item.id)) return;
+    if (!state.empresa || state.empresa.id !== empresaInicial || state.modalAcao !== modalInicial) return;
 
     if (sequenciaMudou) {
       var confirmarReorganizacao = await solicitarDialogoSistemaMobile({
-        titulo: 'Reorganizar parcelamento?',
-        rotulo: 'Confirmar alteração',
+        titulo: 'Reorganizar parcelamento?', rotulo: 'Confirmar alteração',
         mensagem: 'Esta despesa passará a ser a parcela ' + parcelaAtual + '/' + totalParcelas + '. As parcelas seguintes serão reprogramadas a partir desta data; as anteriores permanecerão como estão.',
         variante: 'alerta',
         acoes: [
@@ -10852,165 +11946,27 @@
         ],
       });
       if (confirmarReorganizacao !== 'reorganizar') return;
-
-      iniciarAplicacaoLancamentoMobile();
-      var reorganizacao = await db.rpc('reorganizar_parcelamento_despesa_rpc', {
-        p_empresa_id: state.empresa.id,
-        p_lancamento_id: item.id,
-        p_ano: anoDestino,
-        p_mes: mesDestino,
-        p_dia: dia,
-        p_despesa_nome: despesaNome,
-        p_descricao_base: descricaoBase,
-        p_valor: valor,
-        p_parcela_atual: parcelaAtual,
-        p_total_parcelas: totalParcelas,
-      });
-      if (reorganizacao.error) {
-        falharAplicacaoLancamentoMobile('Não foi possível reorganizar as parcelas: ' + (reorganizacao.error.message || reorganizacao.error.code || 'erro'));
-        return;
-      }
-
-      state.modalAcao = null;
-      await carregarDados();
-      concluirAplicacaoLancamentoMobile('Parcelamento reorganizado a partir da parcela ' + parcelaAtual + '/' + totalParcelas + '.');
-      return;
+      if (!state.empresa || state.empresa.id !== empresaInicial || state.modalAcao !== modalInicial) return;
     }
-
-    var descricaoFinal = parcelamentoOriginal
-      ? descricaoComParcelamentoMobile(descricaoBase, parcelaAtual, totalParcelas)
-      : descricaoBase;
-
-    // O render de "Salvando..." reconstrói o formulário. Mantém no modal os
-    // valores recém-digitados para não exibir novamente os dados antigos
-    // enquanto a atualização é enviada ao banco. `item` continua apontando
-    // para o registro original, necessário para calcular diferenças de receita.
-    state.modalAcao.item = Object.assign({}, item, tipo === 'receita'
-      ? {
-          dia: dia,
-          origem: formatarDescricao(origem),
-          valor: valor,
-        }
-        : {
-          dia: dia,
-          despesa: despesaNome,
-          descricao: descricaoFinal,
-          valor: valor,
-        });
-    iniciarAplicacaoLancamentoMobile();
-
-    if (tipo === 'receita') {
-      // Receita prevista nao entra no total efetivado; entao ao editar uma prevista
-      // nao mexemos no total do mes (so quando ela ja esta efetivada).
-      var receita = await db
-        .from('faturamentos_entradas')
-        .update({
-          ano: anoDestino,
-          mes: mesDestino,
-          dia: dia,
-          origem: formatarDescricao(origem),
-          valor: valor,
-          status: confirmarAgora ? 'confirmada' : (eraPrevista ? 'prevista' : (item.status || null)),
-          tipo_obs: confirmarAgora ? null : (eraPrevista ? 'previsto' : (item.tipo || null)),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', item.id)
-        .eq('empresa_id', state.empresa.id)
-        .eq('revisao', Number(item.revisao || 1))
-        .select()
-        .single();
-
-      if (receita.error) {
-        falharAplicacaoLancamentoMobile(receita.error.code === 'PGRST116'
-          ? 'Esta receita foi alterada em outro dispositivo. Atualize a lista e revise os dados antes de salvar novamente.'
-          : 'Nao foi possivel editar a receita.');
-        return;
-      }
-
-      if (!eraPrevista || confirmarAgora) {
-        var totalAtual = state.faturamentos[mesDestino] || 0;
-        if (confirmarAgora && !state.centrosCustoAtivo) {
-          var faturamentoAtual = await db
-            .from('faturamentos')
-            .select('valor')
-            .eq('empresa_id', state.empresa.id)
-            .eq('ano', anoDestino)
-            .eq('mes', mesDestino)
-            .maybeSingle();
-          if (faturamentoAtual.error) {
-            falharAplicacaoLancamentoMobile('Nao foi possivel preparar a confirmacao da receita.');
-            return;
-          }
-          totalAtual = Number((faturamentoAtual.data && faturamentoAtual.data.valor) || 0);
-        }
-        var diferenca = confirmarAgora ? valor : (valor - Number(item.valor || 0));
-        await db
-          .from('faturamentos')
-          .upsert(
-            {
-              empresa_id: state.empresa.id,
-              ano: anoDestino,
-              mes: mesDestino,
-              valor: Math.max(0, totalAtual + diferenca),
-            },
-            { onConflict: 'empresa_id,ano,mes' }
-          );
-      }
-    } else {
-      var ehFixaEditada = item.tipo === 'fixa' || Boolean(item.recorrenciaId);
-      var ehParcelaEditada = item.tipo === 'parcela';
-      var ehFuturaEditada = dataFutura(anoDestino, indiceMes(mesDestino), dia);
-      var continuavaPrevista = eraPrevista;
-      var tipoEditado = confirmarAgora
-        ? (item.tipo === 'previsto' ? null : (item.tipo || null))
-        : ehFixaEditada
-        ? 'fixa'
-        : (ehParcelaEditada
-          ? 'parcela'
-          : (ehFuturaEditada || (continuavaPrevista && item.tipo === 'previsto') ? 'previsto' : null));
-      var statusEditado = confirmarAgora
-        ? 'confirmada'
-        : (ehFuturaEditada || continuavaPrevista ? 'prevista' : (item.status || null));
-      var despesa = await db
-        .from('lancamentos')
-        .update({
-          ano: anoDestino,
-          mes: mesDestino,
-          dia: dia,
-          despesa_nome: despesaNome,
-          descricao: descricaoFinal,
-          valor: valor,
-          status: statusEditado,
-          tipo_obs: tipoEditado,
-        })
-        .eq('id', item.id)
-        .eq('empresa_id', state.empresa.id)
-        .eq('revisao', Number(item.revisao || 1))
-        .select()
-        .single();
-
-      if (despesa.error || !despesa.data) {
-        falharAplicacaoLancamentoMobile(despesa.error && despesa.error.code === 'PGRST116'
-          ? 'Esta despesa foi alterada em outro dispositivo. Atualize a lista e revise os dados antes de salvar novamente.'
-          : 'Nao foi possivel editar a despesa: ' + ((despesa.error && (despesa.error.message || despesa.error.code)) || 'a confirmação do banco não foi recebida'));
-        return;
-      }
-
-      // Para uma despesa prevista, só fecha depois de receber o registro
-      // atualizado. A cópia confirmada também impede que uma leitura anterior
-      // ao salvar volte a mostrar os dados antigos.
-      if (eraPrevista || ehFuturaEditada) {
-        aplicarDespesaPrevistaSalvaMobile(despesa.data);
-        state.modalAcao = null;
-        concluirAplicacaoLancamentoMobile('Despesa atualizada.');
-        render();
-        return;
-      }
+    var descricaoFinal = parcelamentoOriginal ? descricaoComParcelamentoMobile(descricaoBase, parcelaAtual, totalParcelas) : descricaoBase;
+    var ehFuturaEditada = dataFutura(anoDestino, indiceMes(mesDestino), dia);
+    var tipoEditado = tipo === 'receita'
+      ? (confirmarAgora ? null : (eraPrevista ? 'previsto' : (item.tipo || null)))
+      : confirmarAgora ? (item.tipo === 'previsto' ? null : (item.tipo || null))
+        : item.tipo === 'fixa' || item.recorrenciaId ? 'fixa'
+          : item.tipo === 'parcela' ? 'parcela' : (ehFuturaEditada || eraPrevista && item.tipo === 'previsto' ? 'previsto' : null);
+    var statusEditado = confirmarAgora ? 'confirmada' : (eraPrevista || tipo !== 'receita' && ehFuturaEditada ? 'prevista' : (item.status || null));
+    var dados = { ano: anoDestino, mes: mesDestino, dia: dia, valor: valor, status: statusEditado, tipo_obs: tipoEditado };
+    if (tipo === 'receita') dados.origem = formatarDescricao(origem);
+    else { dados.despesa_nome = despesaNome; dados.descricao = descricaoFinal; }
+    if (sequenciaMudou) {
+      dados.descricao_base = descricaoBase;
+      dados.parcela_atual = parcelaAtual; dados.total_parcelas = totalParcelas;
     }
-
-    state.modalAcao = null;
-    await carregarDados();
-    concluirAplicacaoLancamentoMobile(confirmarAgora ? (tipo === 'receita' ? 'Receita confirmada com a data de hoje.' : 'Despesa confirmada com a data de hoje.') : (tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.'));
+    var projecao = Object.assign({}, item, {
+      mes: mesDestino, dia: dia, valor: valor, status: statusEditado, tipo: tipoEditado,
+    }, tipo === 'receita' ? { origem: dados.origem } : { despesa: despesaNome, descricao: descricaoFinal });
+    await enfileirarEdicaoFinanceiraMobile(sequenciaMudou ? 'parcelamento' : tipo, item, dados, projecao);
   }
 
   function periodoFinanceiroHojeMobile() {
@@ -11019,6 +11975,7 @@
   }
 
   async function aceitarPrevistaHojeMobile(tipo, id) {
+    if (edicaoPendenteBloqueiaAcaoMobile(tipo, id)) return;
     if (!state.empresa) return;
     var receita = tipo === 'receita';
     var lista = receita ? (state.entradas || []) : (state.lancamentos || []);
@@ -11027,62 +11984,15 @@
     if (receita && ehReceitaSincronizada(item)) return;
 
     var hoje = periodoFinanceiroHojeMobile();
-    var totalDestino = 0;
-    if (receita && !state.centrosCustoAtivo) {
-      var faturamentoAtual = await db
-        .from('faturamentos')
-        .select('valor')
-        .eq('empresa_id', state.empresa.id)
-        .eq('ano', hoje.ano)
-        .eq('mes', hoje.mes)
-        .maybeSingle();
-      if (faturamentoAtual.error) {
-        falharAplicacaoLancamentoMobile('Nao foi possivel preparar a confirmacao da receita.');
-        return;
-      }
-      totalDestino = Number((faturamentoAtual.data && faturamentoAtual.data.valor) || 0) + Number(item.valor || 0);
-    }
-
-    iniciarAplicacaoLancamentoMobile();
-    var resposta = receita
-      ? await db.from('faturamentos_entradas').update({
-          ano: hoje.ano,
-          mes: hoje.mes,
-          dia: hoje.dia,
-          status: 'confirmada',
-          tipo_obs: null,
-          updated_at: new Date().toISOString(),
-        }).eq('id', item.id).eq('empresa_id', state.empresa.id)
-      : await db.from('lancamentos').update({
-          ano: hoje.ano,
-          mes: hoje.mes,
-          dia: hoje.dia,
-          status: 'confirmada',
-          tipo_obs: item.tipo === 'previsto' ? null : (item.tipo || null),
-          updated_at: new Date().toISOString(),
-        }).eq('id', item.id).eq('empresa_id', state.empresa.id);
-
-    if (resposta.error) {
-      falharAplicacaoLancamentoMobile('Nao foi possivel aceitar este lancamento.');
-      return;
-    }
-
-    if (receita && !state.centrosCustoAtivo) {
-      var faturamentoSalvo = await db.from('faturamentos').upsert(
-        { empresa_id: state.empresa.id, ano: hoje.ano, mes: hoje.mes, valor: totalDestino },
-        { onConflict: 'empresa_id,ano,mes' }
-      );
-      if (faturamentoSalvo.error) {
-        state.modalAcao = null;
-        await carregarDados();
-        falharAplicacaoLancamentoMobile('Receita aceita, mas o total do mes nao foi atualizado. Atualize e confira o faturamento.');
-        return;
-      }
-    }
-
-    state.modalAcao = null;
-    await carregarDados();
-    concluirAplicacaoLancamentoMobile(receita ? 'Receita aceita com a data de hoje.' : 'Despesa aceita com a data de hoje.');
+    var tipoConfirmado = receita || item.tipo === 'previsto' ? null : (item.tipo || null);
+    var dados = {
+      ano: hoje.ano, mes: hoje.mes, dia: hoje.dia, status: 'confirmada',
+      valor: Number(item.valor), tipo_obs: tipoConfirmado,
+    };
+    if (receita) dados.origem = item.origem;
+    else { dados.despesa_nome = item.despesa; dados.descricao = item.descricao || ''; }
+    var projecao = Object.assign({}, item, { mes: hoje.mes, dia: hoje.dia, status: 'confirmada', tipo: tipoConfirmado });
+    await enfileirarEdicaoFinanceiraMobile(tipo, item, dados, projecao);
   }
 
   async function confirmarDespesaPrevista(id) {
@@ -11090,16 +12000,19 @@
   }
 
   async function excluirDespesaPrevista(id) {
+    if (edicaoPendenteBloqueiaAcaoMobile('despesa', id)) return;
     if (!state.empresa) return;
+    var contexto = contextoEdicaoFinanceiraMobile();
     var despesaPrevista = (state.lancamentos || []).find(function(l) { return String(l.id) === String(id); });
     var ehFixaPrevista = despesaPrevista && (despesaPrevista.tipo === 'fixa' || despesaPrevista.recorrenciaId);
     if (ehFixaPrevista) {
       var escolhaFixa = await solicitarExclusaoDespesaFixaMobile();
-      if (escolhaFixa === 'cancelar') return;
+      if (contexto !== contextoEdicaoFinanceiraMobile()) return;
       if (escolhaFixa === 'abrir-fixas') {
         abrirModalMenuDespesasFixas();
         return;
       }
+      if (escolhaFixa !== 'excluir-mes') return;
     } else {
       var escolhaPrevista = await solicitarDialogoSistemaMobile({
         titulo: 'Excluir despesa prevista',
@@ -11113,23 +12026,12 @@
       });
       if (escolhaPrevista !== 'confirmar') return;
     }
-    iniciarAplicacaoLancamentoMobile();
-    var resp = ehFixaPrevista
-      ? (await removerNotaLancamentoMobile(id)
-        ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', id).eq('empresa_id', state.empresa.id)
-        : { error: { message: 'Nao foi possivel remover a nota.' } })
-      : (await removerNotaLancamentoMobile(id)
-        ? await db.from('lancamentos').delete().eq('id', id).eq('empresa_id', state.empresa.id)
-        : { error: { message: 'Nao foi possivel remover a nota.' } });
-    if (resp.error) {
-      falharAplicacaoLancamentoMobile('Nao foi possivel excluir a despesa.');
-      return;
-    }
-    await carregarDados();
-    concluirAplicacaoLancamentoMobile('Despesa excluida.');
+    if (contexto !== contextoEdicaoFinanceiraMobile() || !despesaPrevista) return;
+    await enfileirarExclusaoFinanceiraMobile('despesa', [despesaPrevista]);
   }
 
   function ajustarDespesaPrevista(id) {
+    if (edicaoPendenteBloqueiaAcaoMobile('despesa', id)) return;
     var despesa = (state.lancamentos || []).find(function (item) { return String(item.id) === String(id); });
     if (!despesa) return;
     // O aviso abre diretamente na edição. Evita a renderização intermediária
@@ -11144,7 +12046,9 @@
   }
 
   async function excluirReceitaPrevista(id) {
+    if (edicaoPendenteBloqueiaAcaoMobile('receita', id)) return;
     if (!state.empresa) return;
+    var contexto = contextoEdicaoFinanceiraMobile();
     var entrada = (state.entradas || []).find(function (e) { return String(e.id) === String(id); });
     if (!entrada || ehReceitaSincronizada(entrada)) return;
     var escolha = await solicitarDialogoSistemaMobile({
@@ -11158,17 +12062,12 @@
       ],
     });
     if (escolha !== 'confirmar') return;
-    iniciarAplicacaoLancamentoMobile();
-    var resp = await db.from('faturamentos_entradas').delete().eq('id', id).eq('empresa_id', state.empresa.id);
-    if (resp.error) {
-      falharAplicacaoLancamentoMobile('Nao foi possivel excluir a receita.');
-      return;
-    }
-    await carregarDados();
-    concluirAplicacaoLancamentoMobile('Receita excluida.');
+    if (contexto !== contextoEdicaoFinanceiraMobile()) return;
+    await enfileirarExclusaoFinanceiraMobile('receita', [entrada]);
   }
 
   function editarReceitaPrevista(id) {
+    if (edicaoPendenteBloqueiaAcaoMobile('receita', id)) return;
     var entrada = (state.entradas || []).find(function (e) { return String(e.id) === String(id); });
     if (!entrada || ehReceitaSincronizada(entrada)) return;
     state.modalAcao = { tipo: 'receita', modo: 'editar', item: entrada };
@@ -11283,6 +12182,15 @@
     );
   }
 
+  function renderLoadingPreparacaoMobile() {
+    // Template do LoadingPontos oficial; animação mantida no CSS compartilhado.
+    var template = typeof document !== 'undefined' && document.getElementById('gestaoAccessLoadingTemplate');
+    // Após hidratação, React pode montar o filho no elemento template em vez
+    // de template.content; innerHTML fica vazio nesse caso.
+    return (template && (template.innerHTML || (template.firstElementChild && template.firstElementChild.outerHTML)))
+      || '<span class="gestao-access-loader" aria-hidden="true"></span>';
+  }
+
   function telaCarregandoMobile() {
     var parametrosAcesso = new URLSearchParams(window.location.search);
     var acessoDireto = parametrosAcesso.get('entrar') === '1' || parametrosAcesso.get('cadastro') === '1';
@@ -11306,12 +12214,12 @@
     return (
       cenaAcessoGestaoMobile(
         '<div class="gestao-access-card" role="status" aria-live="polite" aria-busy="true">' +
-          '<span class="gestao-access-loader" aria-hidden="true"></span>' +
+          renderLoadingPreparacaoMobile() +
           '<h1>Preparando acesso</h1>' +
           '<p><span id="mobileAccessProgressLabel">' + escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo') + '</span></p>' +
           '<div class="gestao-access-progress" aria-label="Carregando acesso"><i id="mobileAccessProgressBar" style="width:' + Number(progresso.valor || 5) + '%"></i></div>' +
           '<b id="mobileAccessProgressValue" class="gestao-access-progress-value">' + Number(progresso.valor || 5) + '%</b>' +
-          '<button id="mobileAccessContinueButton" type="button" onclick="window.__avantalabConcluirAcessoMobile && window.__avantalabConcluirAcessoMobile()" class="mt-3 hidden h-10 w-full rounded-xl bg-cyan-700 px-4 text-xs font-black uppercase tracking-wide text-white">Continuar</button>' +
+          (ehLojaNativaMobile() ? '' : '<button id="mobileAccessContinueButton" type="button" onclick="window.__avantalabConcluirAcessoMobile && window.__avantalabConcluirAcessoMobile()" class="mt-3 hidden h-10 w-full rounded-xl bg-cyan-700 px-4 text-xs font-black uppercase tracking-wide text-white">Continuar</button>') +
           acaoCancelarLoginSocial +
         '</div>'
       )
@@ -11320,6 +12228,18 @@
 
   function telaPreparacaoAcessoMobileVisivel() {
     return root.getAttribute('data-avantalab-mobile-preparando') === '1';
+  }
+
+  async function finalizarBarraPreparacaoMobile() {
+    atualizarProgressoAcessoMobile('data', 1, 1, 'Acesso pronto');
+    var barra = typeof document !== 'undefined' && document.getElementById('mobileAccessProgressBar');
+    if (barra) {
+      // Só o último trecho dispensa a transição CSS de 240ms. O navegador
+      // desenha a barra cheia no próximo quadro, sem atrasar a abertura por timer.
+      barra.style.transition = 'none';
+      barra.style.width = '100%';
+    }
+    await aguardarPinturaProgressoMobile(0);
   }
 
   function concluirAcessoMobile() {
@@ -11360,6 +12280,7 @@
       temporizadorLiberacaoAcessoMobile = null;
       if (!telaPreparacaoAcessoMobileVisivel()) return;
       if (concluirAcessoMobile()) return;
+      if (ehLojaNativaMobile()) return;
 
       var botaoContinuar = document.getElementById('mobileAccessContinueButton');
       if (botaoContinuar) botaoContinuar.classList.remove('hidden');
@@ -11606,6 +12527,25 @@
     return '';
   }
 
+  function alertaDashboardMobileHtml() {
+    // Erro de um formulário/modal nunca é duplicado por trás dele.
+    if (state.modalAcao || state.modalLancamento || state.modalMenu || state.menuAberto) { state.alertaDashboardChave = ''; return ''; }
+    if (!state.erro && !state.mensagem) { state.alertaDashboardChave = ''; return ''; }
+    var chave = financeiroPeriodoChaveMobile(state.ano, state.mes) + ':' + state.erro + ':' + state.mensagem;
+    if (state.alertaDashboardChave !== chave) {
+      state.alertaDashboardChave = chave;
+      var erro = state.erro, mensagem = state.mensagem;
+      window.setTimeout(function () {
+        if (state.alertaDashboardChave !== chave || state.modalAcao || state.modalLancamento || state.modalMenu || state.menuAberto) return;
+        state.alertaDashboardChave = '';
+        if (state.erro === erro) state.erro = '';
+        if (state.mensagem === mensagem) state.mensagem = '';
+        render();
+      }, 6000);
+    }
+    return alertaHtml().replace('mt-4', '');
+  }
+
   function inputHtml(id, label, type, placeholder, value, compacto, placeholderCentralizado) {
     var altura = compacto ? 'h-8' : 'h-10';
     var placeholderCompacto = compacto ? ' placeholder:text-sm' : '';
@@ -11838,7 +12778,7 @@
                 '<button id="mes-proximo" type="button" class="flex h-7 w-full items-center justify-center text-[#082B57] active:bg-[#082B57]/10" aria-label="Proximo mes"><span class="text-lg font-black leading-none">&rsaquo;</span></button>' +
               '</div>' +
             '</div>' +
-            insightDespesasHtml(atual, anterior) +
+            (somenteModulosNoAppNativo() || !financeiroMesProntoMobile() || !saldoAnteriorProntoMobile() ? '' : insightDespesasHtml(atual, anterior)) +
           '</div>' +
         '</header>' +
         '<div id="mobile-profile-pill" class="pointer-events-auto absolute left-1/2 z-0 flex items-center gap-1.5 rounded-[0_0_14px_14px] border-0 py-1.5 text-white shadow-[0_8px_18px_rgba(8,47,73,0.24)] ' + (exibeCentroCustoNoPerfil ? 'w-[calc(100%-24px)] max-w-md justify-center px-3' : 'w-max px-5') + '" style="top:calc(100% - 6px);max-width:calc(100% - 24px);opacity:' + (window._avaProfilePillTranslucent ? '0.25' : '1') + ';transform:translate(-50%,var(--profile-pill-y,0%));transition:opacity .24s ease,transform .28s cubic-bezier(.22,1,.36,1);will-change:opacity,transform;">' +
@@ -11853,8 +12793,9 @@
         '<div id="mobile-main-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 82px);-webkit-overflow-scrolling:touch;">' +
         '<div class="mx-auto grid w-full min-w-0 max-w-md grid-cols-1 gap-3 px-3 pt-11 sm:px-4">' +
           avisoCarenciaMobileHtml() +
-          alertaHtml().replace('mt-4', '') +
-          (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +
+          alertaDashboardMobileHtml() +
+          avisoEdicoesFinanceirasMobileHtml() +
+          (!financeiroMesProntoMobile() && state.visao !== 'agenda' ? statusPeriodoMobileHtml() : (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual)))) +
           (state.visao === 'agenda' ? '' : rodapeMobileHtml()) +
         '</div></div>' +
         (opcoesDashboardAberta ? menuOpcoesCardDashboardHtml() : '') +
@@ -11920,8 +12861,9 @@
 
   function itemNavegacaoInferiorHtml(id, tipo, rotulo, ativo) {
     if (tipo === 'nenhum') return '<span class="min-w-0" aria-hidden="true"></span>';
-    var premiumInativo = premiumPessoalBloqueadoMobile() && tipo === 'agenda';
-    return '<button id="' + id + '" type="button" class="flex min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[10px] font-black transition-colors ' + (premiumInativo ? 'text-slate-300 grayscale' : (ativo ? 'text-cyan-700' : 'text-slate-400')) + '" aria-label="' + escapeHtml(rotulo) + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
+    var acessoBloqueado = somenteModulosNoAppNativo() && (tipo === 'agenda' || tipo === 'despesasFixas');
+    var premiumInativo = acessoBloqueado || (premiumPessoalBloqueadoMobile() && tipo === 'agenda');
+    return '<button id="' + id + '" type="button"' + (acessoBloqueado ? ' disabled' : '') + ' class="flex min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[10px] font-black transition-colors ' + (premiumInativo ? 'text-slate-300 grayscale' : (ativo ? 'text-cyan-700' : 'text-slate-400')) + '" aria-label="' + escapeHtml(rotulo) + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
       '<span class="flex h-7 items-center justify-center">' + iconeNavegacaoInferior(tipo) + '</span>' +
       '<span class="max-w-full truncate">' + escapeHtml(rotulo) + '</span>' +
     '</button>';
@@ -11950,7 +12892,7 @@
         '<span class="pointer-events-none absolute left-2 right-2 top-0 h-0.5 overflow-visible"><span data-nav-indicador data-nav-destino="' + indiceAtivo + '" class="block h-0.5 w-1/5 rounded-full bg-cyan-600 transition-transform duration-300 ease-out" style="transform:translateX(' + (indiceAnterior * 100) + '%)"></span></span>' +
         itemNavegacaoInferiorHtml('nav-home', 'home', 'Início', indiceAtivo === 0) +
         itemNavegacaoInferiorHtml('nav-atalho-esquerdo', esquerdo, rotuloAtalhoInferior(esquerdo), indiceAtivo === 1) +
-        '<button id="nav-lancamento" type="button" class="relative flex min-w-0 flex-col items-center justify-end pb-1 text-[10px] font-black text-cyan-700" aria-label="Lançar despesa ou receita">' +
+        '<button id="nav-lancamento" type="button"' + (somenteModulosNoAppNativo() ? ' disabled aria-disabled="true"' : '') + ' class="relative flex min-w-0 flex-col items-center justify-end pb-1 text-[10px] font-black text-cyan-700 disabled:opacity-40" aria-label="Lançar despesa ou receita">' +
           '<span class="absolute bottom-[22px] flex h-[58px] w-[58px] items-center justify-center rounded-full border-4 ' + (state.darkMode ? 'border-slate-900' : 'border-white') + ' bg-cyan-600 text-white shadow-lg shadow-cyan-900/25">' + iconeMaisGeometricoMobile() + '</span>' +
           '<span>Lançar</span>' +
         '</button>' +
@@ -12057,6 +12999,7 @@
   }
 
   function meusPerfisCardHtml() {
+    if (somenteModulosNoAppNativo()) return '';
     var perfis = state.resumoPerfis || [];
     var cardId = 'meusPerfis';
     var totalReceitas = perfis.reduce(function (total, perfil) { return total + Number(perfil.receitas || 0); }, 0);
@@ -12271,27 +13214,31 @@
   }
 
   function homeHtml(atual, anterior) {
-    var banner = avisoConfirmarHtml();
-    var cards = {
-      saldo: saldoTopoHtml(atual, anterior),
-      meusPerfis: meusPerfisCardHtml(),
-      centrosCusto: centrosCustoCardHtml(),
-      insightsAva: insightsAvaHtml(atual),
-      caixinha: caixinhaCardHtml(atual),
-      ia: perguntaIaHtml(),
-      agenda: agendaResumoHtml(),
-      categorias: graficoCategoriaHtml(atual),
-      tipos: graficoTipoDespesaHtml(atual),
-      ultimasDespesas: ultimasDespesasHtml(atual.lancamentos),
-	      ultimasReceitas: ultimasReceitasHtml(entradasReceitaVisiveis(atual)),
-      totais: totaisHtml(atual),
-      controlePonto: controlePontoCardHtml(),
-      evolucaoDespesas: evolucaoHtml('despesas'),
-      evolucaoReceitas: evolucaoHtml('receitas'),
+    if (!financeiroMesProntoMobile()) return statusPeriodoMobileHtml();
+    var restrito = somenteModulosNoAppNativo();
+    var banner = restrito ? '' : avisoConfirmarHtml();
+    // Mesma grade e mesmos cards do início, sem substituir financeiro por seleção.
+    var cards = restrito ? { controlePonto: function () { return controlePontoCardHtml(); } } : {
+      saldo: function () { return saldoTopoHtml(atual, anterior); },
+      meusPerfis: function () { return meusPerfisCardHtml(); },
+      centrosCusto: function () { return centrosCustoCardHtml(); },
+      insightsAva: function () { return insightsAvaHtml(atual); },
+      caixinha: function () { return caixinhaCardHtml(atual); },
+      ia: function () { return perguntaIaHtml(); },
+      agenda: function () { return agendaResumoHtml(); },
+      categorias: function () { return graficoCategoriaHtml(atual); },
+      tipos: function () { return graficoTipoDespesaHtml(atual); },
+      ultimasDespesas: function () { return ultimasDespesasHtml(atual.lancamentos); },
+	      ultimasReceitas: function () { return ultimasReceitasHtml(entradasReceitaVisiveis(atual)); },
+      totais: function () { return totaisHtml(atual); },
+      controlePonto: function () { return controlePontoCardHtml(); },
+      evolucaoDespesas: function () { return evolucaoHtml('despesas'); },
+      evolucaoReceitas: function () { return evolucaoHtml('receitas'); },
     };
 
     var visiveis = cardsDashboardVisiveis();
     if (!visiveis.length) {
+      if (restrito) return '';
       return (
         banner +
         '<section class="rounded-2xl border border-cyan-100 bg-white p-4 text-center shadow-sm">' +
@@ -12312,7 +13259,7 @@
             ? 'border border-cyan-300/50 bg-cyan-300/15 text-cyan-100 shadow-lg shadow-slate-950/25'
             : 'border border-cyan-200 bg-white text-cyan-700 shadow-md shadow-cyan-950/15');
         return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative min-w-0 max-w-full pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
-          cards[id] +
+          cards[id]() +
           (menuDisponivel ? '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 right-12 z-40 flex h-7 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-600 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' : '') +
           (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 z-40 flex h-7 w-8 select-none touch-none cursor-grab items-center justify-center rounded-full text-[11px] font-black leading-none active:cursor-grabbing ' + estiloPuxador + '" aria-label="Segure e arraste para mudar a posição de ' + escapeHtml(tituloCardDashboard(id)) + '" title="Segure e arraste para mudar a posição">&vellip;&vellip;</button>') +
         '</div>';
@@ -12409,9 +13356,9 @@
       });
     }
 
-    if (caixinha.saldo > 0) {
+    if (caixinhaDashboardProntaMobile() && caixinha.saldo > 0) {
       insights.push({ tom: 'bom', titulo: 'Reserva em andamento', texto: 'Sua Caixinha ja soma ' + dinheiro(caixinha.saldo) + '. Aportes recorrentes ajudam a transformar sobra em patrimonio.' });
-    } else if (resultadoConsiderado > 0) {
+    } else if (caixinhaDashboardProntaMobile() && resultadoConsiderado > 0) {
       insights.push({ tom: 'neutro', titulo: 'Proximo passo', texto: possuiPrevisoes ? 'Mesmo considerando os lancamentos previstos, este pode ser um bom momento para iniciar sua Caixinha.' : 'Como houve sobra no mes, este pode ser um bom momento para iniciar sua Caixinha.' });
     }
 
@@ -12468,16 +13415,18 @@
   }
 
   function saldoTopoHtml(atual, anterior) {
+    var pronto = saldoAnteriorProntoMobile();
+    var erro = state.complementosDashboardErros && state.complementosDashboardErros[meses[(indiceMes(state.mes) + 11) % 12]];
     var cardId = 'saldo';
     // Inicial = saldo do mes anterior. Final = Inicial + (receitas - despesas realizadas).
     // Previsto = Final - despesas futuras do mes.
-    var inicial = anterior.saldo;
-    var final = inicial + atual.saldo;
-    var previsto = inicial + atual.saldoPrevisto;
+    var inicial = pronto ? anterior.saldo : null;
+    var final = pronto ? inicial + atual.saldo : null;
+    var previsto = pronto ? inicial + atual.saldoPrevisto : null;
     return (
       '<section class="rounded-2xl px-4 pb-6 pt-4 text-white shadow-lg" style="background:#003E73">' +
         '<div class="mb-3 flex items-center justify-between gap-3">' +
-          '<h2 class="text-sm font-black tracking-wide text-white">Saldo do m&ecirc;s</h2>' +
+          '<h2 class="flex items-center gap-2 text-sm font-black tracking-wide text-white">Saldo do m&ecirc;s' + (pronto ? '' : indicadorCardAutomaticoMobileHtml(erro)) + '</h2>' +
           botaoVisibilidadeValoresHtml(cardId, true) +
         '</div>' +
         '<div class="grid grid-cols-3 gap-2 text-center">' +
@@ -12513,6 +13462,7 @@
   }
 
   function caixinhaCardHtml(atual) {
+    var pronto = caixinhaDashboardProntaMobile();
     var cardId = 'caixinha';
     var resumo = caixinhaResumo(atual);
     var escuro = state.darkMode;
@@ -12539,7 +13489,7 @@
       '<section class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">' +
         '<div class="flex items-center justify-between gap-3 bg-cyan-700 px-4 py-3 text-white">' +
           '<div class="min-w-0">' +
-            '<h2 class="text-sm font-black tracking-wide text-white">Caixinha</h2>' +
+            '<h2 class="flex items-center gap-2 text-sm font-black tracking-wide text-white">Caixinha' + (pronto ? '' : indicadorCardAutomaticoMobileHtml(state.complementosDashboardErros && state.complementosDashboardErros.caixinha)) + '</h2>' +
             '<p class="mt-0.5 truncate text-[11px] font-semibold text-cyan-100">Reserva e investimentos do perfil</p>' +
           '</div>' +
           '<div class="flex items-center gap-1">' + botaoVisibilidadeValoresHtml(cardId, true) + '<button id="toggle-caixinha-recolhida" type="button" aria-label="' + (state.caixinhaRecolhida ? 'Expandir Caixinha' : 'Recolher Caixinha') + '" class="flex h-10 w-10 items-center justify-center rounded-xl text-white/85 active:bg-white/15"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="' + (state.caixinhaRecolhida ? 'm6 9 6 6 6-6' : 'm18 15-6-6-6 6') + '"></path></svg></button></div>' +
@@ -12548,14 +13498,14 @@
         '<div class="grid grid-cols-2 gap-2">' +
           '<div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">' +
             '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Saldo</p>' +
-            '<strong class="mt-1 block truncate text-base font-black text-emerald-600">' + valorFinanceiroCardHtml(resumo.saldo, cardId) + '</strong>' +
+            '<strong class="mt-1 block truncate text-base font-black text-emerald-600">' + (pronto ? valorFinanceiroCardHtml(resumo.saldo, cardId) : '&mdash;') + '</strong>' +
           '</div>' +
           '<div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">' +
             '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Aportes no mês</p>' +
-            '<strong class="mt-1 block truncate text-base font-black text-slate-900">' + valorFinanceiroCardHtml(resumo.aportesMes, cardId) + '</strong>' +
+            '<strong class="mt-1 block truncate text-base font-black text-slate-900">' + (pronto ? valorFinanceiroCardHtml(resumo.aportesMes, cardId) : '&mdash;') + '</strong>' +
           '</div>' +
         '</div>' +
-        (state.caixinhaRecolhida ? '' : '<div class="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">' +
+        (!pronto || state.caixinhaRecolhida ? '' : '<div class="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">' +
           '<div class="mb-2 flex items-center justify-between gap-2">' +
             '<span class="min-w-0"><span class="block text-[10px] font-black uppercase tracking-wide text-slate-500">Aporte inicial</span><span class="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">Valor que ja existia antes do AvantaLab</span></span>' +
             '<strong class="shrink-0 text-xs font-black text-emerald-600">' + valorFinanceiroCardHtml(resumo.saldoInicial, cardId) + '</strong>' +
@@ -12580,7 +13530,7 @@
     return (
       '<div class="min-w-0">' +
         '<p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">' + rotulo + '</p>' +
-        '<strong class="mt-1 block truncate text-sm font-black ' + cor + '">' + valorFinanceiroCardHtml(valor, cardId) + '</strong>' +
+        '<strong class="mt-1 block truncate text-sm font-black ' + cor + '">' + (valor == null ? '&mdash;' : valorFinanceiroCardHtml(valor, cardId)) + '</strong>' +
       '</div>'
     );
   }
@@ -13018,7 +13968,20 @@
     return (lista || []).slice().sort(function (a, b) {
       var diaA = Number(a && a.dia) || 0;
       var diaB = Number(b && b.dia) || 0;
-      return ordem === 'asc' ? diaA - diaB : diaB - diaA;
+      var porDia = ordem === 'asc' ? diaA - diaB : diaB - diaA;
+      if (porDia) return porDia;
+      // A direção escolhida vale somente entre dias. No mesmo dia, a última
+      // inclusão fica acima; editar/confirmar não altera a data de criação.
+      var criacaoA = Date.parse(a && (a.criadoEm || a.created_at) || '') || 0;
+      var criacaoB = Date.parse(b && (b.criadoEm || b.created_at) || '') || 0;
+      if (criacaoA !== criacaoB) return criacaoB - criacaoA;
+      // IDs sequenciais de despesas desempatarão inclusões no mesmo instante.
+      var idA = String(a && a.id || ''), idB = String(b && b.id || '');
+      if (/^\d+$/.test(idA) && /^\d+$/.test(idB)) {
+        idA = idA.replace(/^0+(?=\d)/, ''); idB = idB.replace(/^0+(?=\d)/, '');
+        return idB.length - idA.length || (idA < idB ? 1 : idA > idB ? -1 : 0);
+      }
+      return 0;
     });
   }
 
@@ -13130,6 +14093,7 @@
   }
 
   function evolucaoHtml(tipo) {
+    var pronto = evolucaoProntaMobile();
     var indiceAtual = indiceMes(state.mes);
     var inicio = Math.max(0, indiceAtual - 5);
     var lista = meses.slice(inicio, indiceAtual + 1).map(function (mes) {
@@ -13152,17 +14116,17 @@
       '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
         '<div class="mb-3 flex items-center justify-between gap-3">' +
           '<h2 class="text-sm font-black">Evolucao das ' + (tipo === 'despesas' ? 'despesas' : 'receitas') + '</h2>' +
-          '<span class="shrink-0 text-xs font-black ' + (tipo === 'despesas' ? 'text-red-600' : 'text-emerald-600') + '">' + (valorSelecionado != null ? dinheiro(valorSelecionado) : '') + '</span>' +
+          (pronto ? '<span class="shrink-0 text-xs font-black ' + (tipo === 'despesas' ? 'text-red-600' : 'text-emerald-600') + '">' + (valorSelecionado != null ? dinheiro(valorSelecionado) : '') + '</span>' : indicadorCardAutomaticoMobileHtml(Object.keys(state.complementosDashboardErros || {}).some(function (k) { return k !== 'caixinha'; }))) +
         '</div>' +
         '<div class="flex h-28 items-end gap-2">' +
-          lista.map(function (item) {
+          (pronto ? lista.map(function (item) {
             var altura = Math.max(8, Math.round((item.valor / max) * 100));
             var sel = item.mes === mesSelecionado;
             var corBarra = sel ? corForte : cor;
             var classeBtn = 'flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-0.5 py-1 transition' + (sel ? (tipo === 'despesas' ? ' bg-red-50 ring-1 ring-red-200' : ' bg-emerald-50 ring-1 ring-emerald-200') : '');
             var classeLabel = 'text-[9px] font-bold ' + (sel ? (tipo === 'despesas' ? 'text-red-700' : 'text-emerald-700') : 'text-slate-400');
             return '<button type="button" data-evolucao-tipo="' + escapeHtml(tipo) + '" data-evolucao-mes="' + escapeHtml(item.mes) + '" data-evolucao-valor="' + escapeHtml(item.valor) + '" class="' + classeBtn + '"><div class="flex h-24 w-full items-end"><div class="w-full rounded-t-md ' + corBarra + '" style="height:' + altura + '%"></div></div><span class="' + classeLabel + '">' + item.mes.slice(0, 3) + '</span></button>';
-          }).join('') +
+          }).join('') : '<div class="h-full w-full rounded-xl bg-slate-100/40" aria-hidden="true"></div>') +
         '</div>' +
       '</section>'
     );
@@ -13406,7 +14370,7 @@
 	            '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar lançamento">' + iconeFecharGeometricoMobile() + '</button>' +
 	          '</div>' +
 	          '<div class="min-h-0 overflow-y-auto p-4 overscroll-contain">' +
-	            alertaHtml().replace('mt-4', 'mb-3') +
+	            (acao.erro ? '<p role="alert" class="mb-3 rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">' + escapeHtml(acao.erro) + '</p>' : '') +
 	            (acao.modo === 'editar'
 	              ? modalEditarLancamentoHtml(acao)
 	              : (acao.modo === 'excluir' ? modalConfirmarExclusaoLancamentoHtml(acao) : modalOpcoesLancamentoHtml(acao))) +
@@ -13494,13 +14458,18 @@
 	  }
 
   function modalEditarLancamentoHtml(acao) {
-    var item = acao.item;
+    var item = Object.assign({}, acao.item, acao.rascunho || {});
     var escuro = !!state.darkMode;
     var rotuloCampo = escuro ? 'text-slate-300' : 'text-slate-600';
     var selectCampo = escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900';
     var parcelamento = acao.tipo === 'despesa' && item.tipo === 'parcela'
-      ? lerParcelamentoEditavelMobile(item.descricao)
+      ? lerParcelamentoEditavelMobile(acao.item.descricao)
       : null;
+    if (parcelamento && acao.rascunho) parcelamento = {
+      descricaoBase: acao.rascunho.descricao,
+      parcelaAtual: acao.rascunho.parcelaAtual,
+      totalParcelas: acao.rascunho.totalParcelas,
+    };
     var blocoParcelamento = parcelamento
       ? '<section class="rounded-2xl border border-violet-200 bg-violet-50 p-3" aria-label="Editar parcelamento">' +
           '<p class="text-[10px] font-black uppercase tracking-[0.14em] text-violet-800">Parcelamento</p>' +
@@ -14034,6 +15003,7 @@
   }
 
   function menuBotaoHtml(id, titulo, subtitulo, desativado, visualInativo) {
+    if (somenteModulosNoAppNativo() && ['menu-agenda', 'menu-despesas-fixas', 'menu-exportar-mes', 'menu-centros-custo', 'menu-categorias'].indexOf(id) >= 0) desativado = true;
     var estilos = {
       'menu-agenda': ['linear-gradient(90deg,#E5F9FC 0%,#F9FEFF 100%)', '#C4EEF4', '#D5F8FC', '#087B94'],
       'menu-avisos': ['linear-gradient(90deg,#E8F4FF 0%,#FAFCFF 100%)', '#C9E3FA', 'linear-gradient(135deg,#7DD3FC,#2563EB)', '#FFFFFF'],
@@ -14411,6 +15381,7 @@
         '</div>' +
         '<label for="usuario-perfil" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo de usuario</label>' +
         '<select id="usuario-perfil" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold outline-none"><option value="">Selecione</option>' + opcoesPerfilHtml(state.usuarioPerfil || '', false) + '</select>' +
+        acessosUsuarioSlotMobile('criar', state.usuarioPerfil) +
         '<button id="criar-usuario-mobile" type="button"' + (state.carregando ? ' disabled' : '') + ' class="h-12 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white disabled:cursor-wait disabled:opacity-60">' + (state.carregando ? 'Verificando...' : 'Criar usuario') + '</button>' +
       '</div>'
     );
@@ -14437,7 +15408,8 @@
                 '<p><span class="font-black text-slate-900">Login:</span><br>' + escapeHtml(loginVisivelUsuario(usuario)) + '</p>' +
               '</div>' +
               '<label class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil de acesso</label>' +
-              '<select id="usuario-existente-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(state.usuarioExistentePerfil || 'operador_simples', true) + '</select>' +
+              '<select id="usuario-existente-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(state.usuarioExistentePerfil || 'operador_simples', !!(state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
+              acessosUsuarioSlotMobile('existente', state.usuarioExistentePerfil) +
               '<button id="confirmar-vinculo-usuario-existente-mobile" type="button" class="h-10 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.vinculandoUsuarioExistente ? 'Vinculando...' : 'Confirmar vinculo') + '</button>' +
               '<button id="limpar-usuario-existente-mobile" type="button" class="h-10 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
             '</div>'
@@ -14447,22 +15419,25 @@
   }
 
   function editarUsuarioHtml(usuario) {
+    var identidadePropria = !!(state.empresa && String(state.empresa.acessoId) === String(state.usuarioEditandoId));
+    var somenteLeitura = identidadePropria ? '' : ' readonly';
     return (
       '<div class="grid gap-2 rounded-2xl bg-cyan-50 p-3">' +
         '<div class="flex items-center justify-between gap-2"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Editar usuario</p><button id="cancelar-edicao-usuario" type="button" class="text-[10px] font-black text-slate-500">Cancelar</button></div>' +
-        '<p class="text-xs font-semibold leading-relaxed text-slate-500">Nome, email, login e tipo sao obrigatorios. A nova senha e opcional.</p>' +
+        '<p class="text-xs font-semibold leading-relaxed text-slate-500">' + (identidadePropria ? 'Nome, email, login e tipo sao obrigatorios. A nova senha e opcional.' : 'Email, login e senha sao alterados pelo titular. Aqui voce administra nome e acessos deste perfil.') + '</p>' +
         '<label for="edit-usuario-nome" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Nome completo</label>' +
         '<input id="edit-usuario-nome" value="' + escapeHtml(state.editUsuarioNome || '') + '" placeholder="Nome e sobrenome" autocomplete="name" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<label for="edit-usuario-email" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Email</label>' +
-        '<input id="edit-usuario-email" type="email" inputmode="email" value="' + escapeHtml(state.editUsuarioEmail || '') + '" placeholder="usuario@empresa.com.br" autocomplete="email" autocapitalize="none" spellcheck="false" oninput="this.value=this.value.toLowerCase()" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<input id="edit-usuario-email"' + somenteLeitura + ' type="email" inputmode="email" value="' + escapeHtml(state.editUsuarioEmail || '') + '" placeholder="usuario@empresa.com.br" autocomplete="email" autocapitalize="none" spellcheck="false" oninput="this.value=this.value.toLowerCase()" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<label for="edit-usuario-login" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Login</label>' +
-        '<input id="edit-usuario-login" value="' + escapeHtml(state.editUsuarioLogin || '') + '" placeholder="Login" autocomplete="username" autocapitalize="none" spellcheck="false" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<input id="edit-usuario-login"' + somenteLeitura + ' value="' + escapeHtml(state.editUsuarioLogin || '') + '" placeholder="Login" autocomplete="username" autocapitalize="none" spellcheck="false" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<label for="edit-usuario-perfil" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Tipo de usuario</label>' +
-        '<select id="edit-usuario-perfil" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(state.editUsuarioPerfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
-        '<label for="edit-usuario-senha" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Nova senha (opcional)</label>' +
+        '<select id="edit-usuario-perfil"' + (state.empresa && state.empresa.perfil === 'gestor_master' ? '' : ' disabled') + ' style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(state.editUsuarioPerfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
+        (state.editUsuarioLiberacoes ? acessosUsuarioSlotMobile('editar', state.editUsuarioPerfil, usuario) : '') +
+        (identidadePropria ? '<label for="edit-usuario-senha" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Nova senha (opcional)</label>' +
         campoSenhaSimplesHtml('edit-usuario-senha', 'Minimo de 8 caracteres', 'h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioSenha || '') +
         '<label for="edit-usuario-confirmar-senha" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Confirmar nova senha</label>' +
-        campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Repita a nova senha', 'h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioConfirmarSenha || '') +
+        campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Repita a nova senha', 'h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioConfirmarSenha || '') : '') +
         '<button id="salvar-usuario-mobile" type="button"' + (state.carregando ? ' disabled' : '') + ' class="h-12 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white disabled:cursor-wait disabled:opacity-60">' + (state.carregando ? 'Verificando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );
@@ -14494,7 +15469,7 @@
           var status = carregando
             ? '<span class="shrink-0 text-[10px] font-black uppercase tracking-wide text-blue-700">Carregando perfil...</span>'
             : (perfilAtual
-              ? '<span class="shrink-0 rounded-full bg-slate-200 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-slate-600">Perfil em uso</span>'
+              ? '<span class="avanta-perfil-em-uso" aria-label="Perfil em uso"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="m7 12 3 3 7-7" fill="none" stroke="var(--av-perfil-em-uso-superficie)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Em uso</span></span>'
               : '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/35 bg-white/15 text-white" aria-hidden="true"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="m9 18 6-6-6-6"/></svg></span>');
           var classeDetalhe = carregando ? 'text-cyan-700' : (perfilAtual ? 'text-slate-500' : 'text-white/80');
           return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" aria-pressed="' + (carregando ? 'true' : 'false') + '" aria-current="' + (perfilAtual ? 'page' : 'false') + '"' + (bloqueado ? ' disabled' : '') + estiloDisponivel + ' class="empresa-opcao rounded-2xl border-2 px-4 py-3 text-left transition duration-200 active:scale-[0.98] active:translate-y-px disabled:active:translate-y-0 disabled:active:scale-100 ' + classeVisual + '"><span class="flex items-center justify-between gap-3"><span class="min-w-0 truncate text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span>' + status + '</span><span class="mt-0.5 block text-xs font-semibold ' + classeDetalhe + '">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + (empresa.assinatura_origem_empresa_id ? ' &middot; Perfil vinculado' : '') + '</span></button>';
@@ -14945,7 +15920,7 @@
   }
 
   function configurarResumoHtml() {
-    var ordem = normalizarOrdemDashboard(state.dashboardOrdem).filter(cardDashboardPermitido);
+    var ordem = normalizarOrdemDashboard(state.dashboardOrdem).filter(function (id) { return somenteModulosNoAppNativo() || cardDashboardPermitido(id); });
     var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
 
     return (
@@ -14953,10 +15928,11 @@
         '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-[11px] font-semibold leading-relaxed text-cyan-900">Escolha quais cards aparecem no dashboard. Para mudar a posição, use Ordenar cards.</p>' +
         '<div class="grid gap-1">' +
           ordem.map(function (id) {
-            var visivel = ocultos.indexOf(id) < 0;
-            return '<button type="button" data-dashboard-toggle="' + escapeHtml(id) + '" class="flex min-h-[34px] items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-left">' +
+            var bloqueado = !cardDashboardPermitido(id);
+            var visivel = !bloqueado && ocultos.indexOf(id) < 0;
+            return '<button type="button" data-dashboard-toggle="' + escapeHtml(id) + '"' + (bloqueado ? ' disabled aria-disabled="true"' : '') + ' class="flex min-h-[34px] items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-left disabled:opacity-50">' +
               '<div class="flex min-w-0 flex-1 items-center gap-2"><p class="truncate text-[11px] font-black text-slate-900">' + escapeHtml(tituloCardDashboard(id)) + '</p><span class="shrink-0 text-[9px] font-semibold ' + (visivel ? 'text-emerald-600' : 'text-rose-600') + '">' + (visivel ? 'Ativado' : 'Desativado') + '</span></div>' +
-              '<span class="relative h-5 w-9 shrink-0 rounded-full p-0.5 transition-colors ' + (visivel ? 'bg-emerald-500' : 'bg-rose-500') + '">' +
+              (bloqueado ? '<span class="text-[9px] text-slate-600">Sem permissão</span>' : '') + '<span class="relative h-5 w-9 shrink-0 rounded-full p-0.5 transition-colors ' + (visivel ? 'bg-emerald-500' : 'bg-rose-500') + '">' +
                 '<span class="block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ' + (visivel ? 'translate-x-4' : 'translate-x-0') + '"></span>' +
               '</span>' +
             '</button>';
@@ -14968,6 +15944,7 @@
   }
 
   function alternarCardResumo(id) {
+    if (!cardDashboardPermitido(id)) return;
     var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
     var index = ocultos.indexOf(id);
     if (index >= 0) {
@@ -15100,6 +16077,7 @@
   }
 
   async function carregarRecorrencias() {
+    if (somenteModulosNoAppNativo()) return;
     if (!state.empresa) return;
     var empresaId = state.empresa.id || state.empresa.empresa_id;
     var consulta = db.from('recorrencias').select('*').eq('empresa_id', empresaId).order('dia', { ascending: true });
@@ -15209,7 +16187,7 @@
     if (novosLancamentos.length) {
       state.lancamentos = novosLancamentos.map(function(item) {
         return {
-          id: item.id, mes: item.mes, dia: Number(item.dia), despesa: formatarDescricao(item.despesa_nome),
+          id: item.id, criadoEm: item.created_at || null, mes: item.mes, dia: Number(item.dia), despesa: formatarDescricao(item.despesa_nome),
           descricao: item.descricao || '', valor: Number(item.valor || 0),
           status: item.status || null, tipo: item.tipo_obs || null, recorrenciaId: item.recorrencia_id || null,
           centroCustoId: item.centro_custo_id ? String(item.centro_custo_id) : null,
@@ -15817,17 +16795,24 @@
       _scrollContainers['menu-botoes-scroll'] = window._avaMenuScrollTravado;
     }
     root.setAttribute('data-avantalab-mobile-ready', '1');
-    if (state.pronto) root.removeAttribute('data-avantalab-mobile-preparando');
+    aplicarEdicoesPendentesMobile();
+    void prepararEdicoesFinanceirasMobile();
+    // Autenticar não encerra a preparação: manter a mesma cena padrão até
+    // confirmar o perfil. Depois dela, abrir a dashboard sem outra tela de espera.
+    var preparacaoProgressiva = ehLojaNativaMobile() && state.autenticado && (!state.pronto || state.aberturaProgressiva);
+    if (state.pronto && !preparacaoProgressiva) root.removeAttribute('data-avantalab-mobile-preparando');
     else root.setAttribute('data-avantalab-mobile-preparando', '1');
     if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
     removerChatIAOverlay();
     var telaAtual;
     if (previaConfirmacaoCelular) telaAtual = telaTelefoneObrigatorioMobile(true);
-    else if (!state.pronto || (state.carregando && loginSocialMobileEmAndamento())) telaAtual = telaCarregandoMobile();
+    else if (!state.pronto || preparacaoProgressiva || (state.carregando && loginSocialMobileEmAndamento())) telaAtual = telaCarregandoMobile();
     else if (state.falhaAcesso) telaAtual = telaAvisoMobile('Não foi possível concluir o acesso', state.falhaAcesso);
     else if (!state.autenticado) telaAtual = state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin();
     else if (ehFuncionarioPontoMobile()) telaAtual = telaRedirecionandoPonto();
+    else if (state.empresa && state.dashboardPerfilLiberado !== state.empresa.id && !somenteModulosNoAppNativo()) telaAtual = telaCarregandoMobile();
     else if (state.validacaoTelefoneObrigatoria) telaAtual = telaTelefoneObrigatorioMobile(false);
+    else if (somenteModulosNoAppNativo()) telaAtual = state.paywallSelecionando ? telaPaywallSelecaoMobile() : telaApp();
     else if (state.paywallCadastroCiclo) telaAtual = telaCadastroPerfilMobile('paywall');
     else if (state.paywallAtivo) telaAtual = telaPaywallMobile();
     else if (state.cadastroPerfilErro && state.paywallSelecionando) telaAtual = telaPaywallSelecaoMobile();
@@ -15837,11 +16822,13 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml();
+    var bloquearCamadasProgressivas = preparacaoProgressiva;
+    root.innerHTML = telaAtual + (bloquearCamadasProgressivas ? '' : (somenteModulosNoAppNativo() ? dialogoSistemaMobileHtml() : (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml()));
     window.dispatchEvent(new CustomEvent('avantalab:theme-changed', {
       detail: { dark: Boolean(state.autenticado && state.darkMode) }
     }));
     sincronizarProgressoAcessoMobile();
+    agendarComplementosDashboardMobile();
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
     var indicadorNav = document.querySelector('[data-nav-indicador]');
@@ -15894,6 +16881,9 @@
     bind('cp-fechar-edicao', fecharEdicaoCadastroPerfilMobile);
     bind('cp-cancelar-edicao', fecharEdicaoCadastroPerfilMobile);
     bind('cp-tentar-novamente', carregarDados);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-periodo-recarregar]'), function (botao) { botao.addEventListener('click', carregarDados); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-reenviar-edicao]'), function (botao) { botao.addEventListener('click', function () { void resolverEdicaoFinanceiraMobile(botao.getAttribute('data-reenviar-edicao'), false); }); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-descartar-edicao]'), function (botao) { botao.addEventListener('click', function () { void resolverEdicaoFinanceiraMobile(botao.getAttribute('data-descartar-edicao'), true); }); });
     bind('cp-trocar-perfil', function () { state.paywallSelecionando = true; render(); });
     bind('cp-entrar-novamente', sair);
     bindChange('cp-tipo-empresa', function () { capturarCadastroPerfilMobile(); state.cadastroPerfilDados.documento = ''; render(); });
@@ -16163,17 +17153,7 @@
       fecharMenuLateralAnimado(function () { abrirModalMenu('ajudaCategorias'); });
     });
     bind('menu-vendas-mobile', function () {
-      fecharMenuLateralAnimado(function () {
-        if (!state.empresa || !state.empresa.id || !podeGerenciarConteudoVendas()) return;
-        window.dispatchEvent(new CustomEvent('avantalab:open-vendas-conteudo', {
-          detail: {
-            empresaId: state.empresa.id,
-            nomeEmpresa: nomeEmpresa(state.empresa),
-            darkMode: !!state.darkMode,
-            corPrimaria: '#003E73'
-          }
-        }));
-      });
+      fecharMenuLateralAnimado(abrirConteudoVendasMobile);
     });
     bind('aba-aprovacoes-vendas-pendentes', function () { state.aprovacoesVendasAba = 'pendentes'; render(); });
     bind('aba-aprovacoes-vendas-vinculos', function () { state.aprovacoesVendasAba = 'vinculos'; render(); });
@@ -16523,11 +17503,13 @@
     bindChange('usuario-perfil', function () {
       state.usuarioPerfil = this.value || '';
       salvarRascunhoUsuarioMobile();
+      render();
     });
+    bindChange('usuario-existente-perfil', function () { state.usuarioExistentePerfil = this.value || 'operador_simples'; render(); });
     bindInput('edit-usuario-nome', function () { state.editUsuarioNome = this.value || ''; });
     bindInput('edit-usuario-login', function () { state.editUsuarioLogin = this.value || ''; });
     bindInput('edit-usuario-email', function () { state.editUsuarioEmail = this.value || ''; });
-    bindChange('edit-usuario-perfil', function () { state.editUsuarioPerfil = this.value || 'operador_simples'; });
+    bindChange('edit-usuario-perfil', function () { state.editUsuarioPerfil = this.value || 'operador_simples'; render(); });
     bindInput('edit-usuario-senha', function () { state.editUsuarioSenha = this.value || ''; });
     bindInput('edit-usuario-confirmar-senha', function () { state.editUsuarioConfirmarSenha = this.value || ''; });
     bind('feedback-sugestao', function () { abrirFormularioFeedbackMobile('sugestao'); });
@@ -17246,7 +18228,7 @@
 
     bindChange('mes', function () {
       state.mes = campo('mes');
-      render();
+      if (ehLojaNativaMobile()) carregarDados(); else render();
     });
 
     bindChange('ano', function () {
@@ -18261,15 +19243,18 @@
   }
 
   async function iniciar() {
+    // Retorno a frio pode concluir antes deste inicializador. Ele não pode
+    // apagar a continuação/erro nem sobrescrever a sessão por um snapshot antigo.
+    var revisaoInicializacao = Number(state.tentativaLogin || 0);
     var etapaAcessoMobile = 'preparacao';
-    state.falhaAcesso = '';
+    if (!state.oauthRetornoProcessado) state.falhaAcesso = '';
     state.preparacaoAcessoInterrompida = false;
     if (window.__avantalabDestinoPushNativoMobile) {
       consumirDestinoPushNativoMobile(window.__avantalabDestinoPushNativoMobile);
     }
     prepararOrigemAcessoMobile();
     window._avaProfilePillHidden = false;
-    if (typeof window.__avantalabReiniciarProgressoMobile === 'function') {
+    if (!state.oauthRetornoProcessado && typeof window.__avantalabReiniciarProgressoMobile === 'function') {
       window.__avantalabReiniciarProgressoMobile('Validando sua sessão');
     }
 
@@ -18359,6 +19344,7 @@
     // Ao voltar ao app (apos receber um push), reconfere as nao lidas
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) return;
+      void prepararEdicoesFinanceirasMobile().then(function () { agendarEnvioEdicoesFinanceirasMobile(0); });
       if (state.autenticado) registrarAtividadeGestaoMobile();
       carregarNotificacoesNaoLidas();
       // Congela a tela ao trocar de janela e voltar: só recarrega os dados se
@@ -18467,6 +19453,7 @@
 
     render();
 
+    if (ehLojaNativaMobile() && state.oauthRetornoProcessado) return;
     try {
       if (deveEncerrarSessaoSalvaMobile()) {
         etapaAcessoMobile = 'encerramento_sessao_temporaria';
@@ -18494,6 +19481,12 @@
         );
         if (sessao && sessao.error) throw sessao.error;
       } catch (erroSessao) {
+        if (ehLojaNativaMobile() && (state.oauthRetornoProcessado ||
+          (typeof window.__avantalabOAuthNativoMobileEmAndamento === 'function' && window.__avantalabOAuthNativoMobileEmAndamento()))) return;
+        if (ehLojaNativaMobile() && !(erroSessao && (erroSessao.name === 'AuthSessionMissingError' || erroSessao.status === 401 || erroSessao.status === 403))) {
+          exibirFalhaDeAcessoMobile('Não foi possível restaurar o acesso agora. Sua sessão foi preservada. Confira sua conexão e tente novamente.');
+          return;
+        }
         limparSessaoLocalMobile();
         limparPreferenciaSessaoMobile();
         abrirLoginAposFalhaSessaoMobile(erroSessao);
@@ -18505,6 +19498,10 @@
         1,
         sessao.data.session && sessao.data.session.user ? 'Sessão restaurada' : 'Sessão não encontrada'
       );
+      if (ehLojaNativaMobile() && (
+        revisaoInicializacao !== Number(state.tentativaLogin || 0) ||
+        (typeof window.__avantalabOAuthNativoMobileEmAndamento === 'function' && window.__avantalabOAuthNativoMobileEmAndamento())
+      )) return;
       if (sessao.data.session && sessao.data.session.user) {
         limparLoginSocialPendenteMobile();
         state.loginAcao = '';
@@ -18565,6 +19562,7 @@
         // sessão restaurada, esta rota deve exibir o próprio login, nunca
         // voltar à landing e criar um ciclo de navegação.
         state.autenticado = false;
+        state.perfilProgressivoPronto = '';
         state.telaAcesso = 'login';
         state.pronto = true;
         if (loginSocialMobileEmAndamento()) {
@@ -18638,6 +19636,14 @@
     mostrarToast(detalhe.sucesso
       ? (detalhe.entrega === 'compartilhado' ? 'Arquivo disponibilizado para salvar ou compartilhar.' : 'Download do arquivo iniciado.')
       : (detalhe.mensagem || 'Não foi possível exportar o arquivo.'));
+  });
+
+  window.addEventListener('online', function () {
+    void prepararEdicoesFinanceirasMobile().then(function () { agendarEnvioEdicoesFinanceirasMobile(0); });
+    if (!ehLojaNativaMobile() || !state.autenticado || !state.empresa) return;
+    state.complementosDashboardTentativa = '';
+    if (state.financeiroPeriodoErro || state.falhaAcesso) void carregarDados();
+    else agendarComplementosDashboardMobile();
   });
 
   iniciarQuandoPaginaEstiverPronta();

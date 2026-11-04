@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { validarLiberacoes } from '@/app/lib/acessos-usuario';
 import { createClient } from '@supabase/supabase-js';
 import { COBRANCA_ATIVA, podeUsar } from '../../lib/cobranca';
 import { resolverEstadoAcessoParaUsuario } from '../../lib/cobranca-servidor';
@@ -183,6 +184,8 @@ export async function POST(request: Request) {
     const corpo = await request.json();
     const acao = String(corpo.acao || '').trim();
     const empresaId = String(corpo.empresaId || '').trim();
+    let liberacoes;
+    try { liberacoes = corpo.liberacoes === undefined ? null : validarLiberacoes(corpo.liberacoes, String(corpo.perfil || '')); } catch (e) { return respostaErro((e as Error).message); }
 
     if (!empresaId) {
       return respostaErro('Empresa nao informada.');
@@ -202,10 +205,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Cobrança: gerenciar usuários é recurso do Premium Pessoal (fail-open em falha).
-    if (COBRANCA_ATIVA) {
+    // A busca não concede acesso. Novos vínculos exigem conferência comercial.
+    if (COBRANCA_ATIVA && acao === 'vincular') {
       try {
-        const estado = await resolverEstadoAcessoParaUsuario(empresaId, user.id);
+        const estado = await resolverEstadoAcessoParaUsuario(empresaId, user.id, true);
+        if (!estado) throw new Error('Assinatura não confirmada.');
         if (!podeUsar('usuarios_internos', estado)) {
           return respostaErro('Adicionar usuários faz parte do Premium Pessoal. Assine para desbloquear.', 403);
         }
@@ -213,6 +217,7 @@ export async function POST(request: Request) {
         if (!limite.permitido) return respostaErro(limite.mensagem, 409);
       } catch (erroCobranca) {
         console.error('Erro ao validar Premium (vincular usuário):', erroCobranca);
+        return respostaErro('Não foi possível conferir o plano ou a franquia de usuários. Tente novamente em instantes; os acessos existentes foram preservados.', 503);
       }
     }
 
@@ -268,6 +273,10 @@ export async function POST(request: Request) {
         return respostaErro('Selecione um perfil de acesso valido.');
       }
 
+      if (perfil === 'gestor_master' && permissao.perfil !== 'gestor_master') {
+        return respostaErro('Somente o Gestor Master pode conceder esse papel.', 403);
+      }
+
       const vinculoExistente = await buscarVinculoExistente(
         supabaseAdmin,
         empresaId,
@@ -308,6 +317,7 @@ export async function POST(request: Request) {
           login: null,
           perfil,
           status: 'ativo',
+          ...(liberacoes ? { dashboard_liberada: perfil === 'gestor_master' || liberacoes.dashboard, modulos_liberados: perfil === 'gestor_master' ? null : liberacoes.modulos, areas_alteradas_por: user.id } : {}),
         })
         .select()
         .single();

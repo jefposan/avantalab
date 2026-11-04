@@ -9,7 +9,7 @@ em popup antes de qualquer gravação.
 
 Ao lado de **Arquivo**, **Modelo Excel** baixa
 `/modelos/modelo-importacao-despesas-avantalab.xlsx`, personalizado no
-navegador com os tipos cadastrados no perfil ativo. A primeira aba possui Data,
+navegador com os tipos cadastrados no perfil ativo, consultados novamente no banco em cada download. A consulta também atualiza a lista usada na revisão/importação; falhas impedem gerar arquivo com dados antigos. Os nomes completos são preservados e compartilhados pelos centros de custo do perfil. A primeira aba possui Data,
 Tipo de despesa, Descrição e Valor, e as linhas da coluna Tipo de despesa
 recebem uma lista suspensa. A aba de orientações e exemplos fica separada para
 não criar dados demonstrativos. O importador localiza automaticamente a linha

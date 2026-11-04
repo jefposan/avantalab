@@ -2,6 +2,11 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Calculadora from '@/app/components/Calculadora';
+import AcessosUsuarioCampos from '@/app/components/AcessosUsuarioCampos';
+import SeloPerfilEmUso from '@/app/components/SeloPerfilEmUso';
+import ModuloHeader from '@/app/components/ModuloHeader';
+import { buscarAcessosUsuario } from '@/app/modulos/MeusModulos';
+import { destinoAposLogin, liberacoesDoVinculo } from '@/app/lib/acessos-usuario';
 import Dashboard from '@/app/components/Dashboard';
 import BalancoGeral from '@/app/components/BalancoGeral';
 import Graficos from '@/app/components/Graficos';
@@ -38,6 +43,8 @@ import PontosRestauracaoModal from '@/app/components/PontosRestauracaoModal';
 import { DestinoBackupNuvemModal, RestaurarDaNuvemModal, type DestinoBackup } from '@/app/components/BackupNuvemModals';
 import PremiumPessoalModal from '@/app/components/PremiumPessoalModal';
 import TelaCarregandoAcesso, { FundoAcessoResponsivo } from '@/app/components/TelaCarregandoAcesso';
+import { reiniciarAcessoLocal } from '@/app/lib/reiniciar-acesso-local';
+import { validarSessaoEntrada, MENSAGEM_FALHA_VALIDACAO_ENTRADA } from '@/app/lib/validar-sessao-entrada';
 import ModalAprovacoes, { type AcessoVendasAprovado, type SolicitacaoAprovacao } from '@/app/components/ModalAprovacoes';
 import NovidadesVendasModal from '@/app/components/NovidadesVendasModal';
 import { COBRANCA_ATIVA, assinaturaVigente, emCarencia, precisaPaywallEmpresa, precisaPaywallWebPessoal, precisaUpgradePessoal, type DadosCobrancaAssinatura, type EstadoAcesso, type Recurso } from '@/app/lib/cobranca';
@@ -70,7 +77,8 @@ import {
   type SubAcaoGerenciarPerfil,
 } from '@/app/lib/perfis-quota';
 import { modulosPaginaTotalAtivos, obterRegistroModulo } from '@/app/lib/modulos-registro';
-import { criarHrefModuloEmbutido, limparNavegacaoModulos, MENSAGEM_RETORNO_MODULO_EMBUTIDO, prepararNavegacaoModulo } from '@/app/lib/navegacao-modulos';
+import { consumirNavegacaoModulo, criarHrefModuloEmbutido, limparNavegacaoModulos, MENSAGEM_RETORNO_MODULO_EMBUTIDO, prepararNavegacaoModulo } from '@/app/lib/navegacao-modulos';
+import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import { resolverAcessoComercialModulo } from '@/app/lib/modulos-acesso-comercial';
 import { validarSessaoDoDispositivo } from '@/app/lib/sessao-acesso-cliente';
 import {
@@ -453,6 +461,16 @@ export default function AppGestao() {
     fecharEdicaoEmpresaAtual,
     salvarEdicaoEmpresaAtual,
   } = empresas;
+  const { usuarioLiberacoes, setUsuarioLiberacoes, editUsuarioLiberacoes, setEditUsuarioLiberacoes } = empresas;
+  const [dashboardLiberada, setDashboardLiberada] = useState(false);
+  const [modulosLiberados, setModulosLiberados] = useState<string[]>([]);
+  const [perfisDashboardLiberados, setPerfisDashboardLiberados] = useState<string[]>([]);
+  const [areaIntegradaRestrita, setAreaIntegradaRestrita] = useState<string | null>(null);
+  useEffect(() => {
+    if (!areaIntegradaRestrita || !empresaId) return;
+    if (areaIntegradaRestrita === 'ponto') abrirPontoIntegrado();
+    else abrirConteudoVendasIntegrado();
+  }, [areaIntegradaRestrita, empresaId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [duplicadosAtivo, setDuplicadosAtivo] = useState(true);
   const [iniciarValoresOcultos, setIniciarValoresOcultos] = useState(true);
@@ -562,6 +580,7 @@ export default function AppGestao() {
   // --- ESTADOS PRINCIPAIS ---
 
 const [mounted, setMounted] = useState(false);
+const [erroPreparacaoAcesso, setErroPreparacaoAcesso] = useState('');
 const [moduloEmbutido, setModuloEmbutido] = useState<{ id: string; nome: string; href: string } | null>(null);
 const moduloEmbutidoRef = useRef<HTMLIFrameElement | null>(null);
 const [isTelaMobile, setIsTelaMobile] = useState(false);
@@ -583,16 +602,24 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     const params = new URLSearchParams(window.location.search);
     const moduloId = params.get('modulo');
     const modulo = moduloId ? obterRegistroModulo(moduloId) : null;
-    if (!moduloId || !modulo || modulo.navegacao.modo !== 'pagina_total' || !modulo.navegacao.rota || !empresaId) {
+    if (!moduloId || !modulo || !modulosLiberados.includes(moduloId) || modulo.navegacao.modo !== 'pagina_total' || !modulo.navegacao.rota || !empresaId) {
       setModuloEmbutido(null);
       return;
     }
-    setModuloEmbutido({
+    setModuloEmbutido(atual => {
+      // Revalidar concessões não deve remover o contexto da URL e remontar o iframe.
+      // A validação de acesso acima continua fechando módulos revogados.
+      if (atual?.id === modulo.id) {
+        const destinoAtual = new URL(atual.href, window.location.origin);
+        if (destinoAtual.pathname === modulo.navegacao.rota && destinoAtual.searchParams.get('empresaId') === empresaId) return atual;
+      }
+      return {
       id: modulo.id,
       nome: modulo.nome,
       href: `${modulo.navegacao.rota}?empresaId=${encodeURIComponent(empresaId)}`,
+      };
     });
-  }, [empresaId]);
+  }, [empresaId, modulosLiberados]);
 
   const fecharModuloEmbutido = useCallback(() => {
     const params = new URLSearchParams(window.location.search);
@@ -851,7 +878,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
       setCicloCadastroPaywall(null);
       setPlanoCadastroPaywall(null);
       setCadastroPerfilErro('');
-      if (!acessoLiberado || !empresaId) {
+      if (!acessoLiberado || !empresaId || !dashboardLiberada) {
         setCadastroPerfilStatus(null);
         setCadastroPerfilCarregado(true);
         return;
@@ -976,7 +1003,7 @@ const [codigoVinculoCarregando, setCodigoVinculoCarregando] = useState(false);
   const [ultimoBackupEm, setUltimoBackupEm] = useState<string | null>(null);
   const [corPrimaria, setCorPrimaria] = useState('#003E73');
   const [corTemporaria, setCorTemporaria] = useState('#003E73');
-  const [statusConfig, setStatusConfig] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [statusConfig, setStatusConfig] = useState<'idle' | 'error'>('idle');
   const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(false);
   const [mesAtivo, setMesAtivo] = useState<string | null>(null);
 const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
@@ -1005,6 +1032,11 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [logoSettings, setLogoSettings] = useState({ scale: 100, x: 0, y: 0 });
   const [modalLogo, setModalLogo] = useState(false);
   const [carregandoPerfil, setCarregandoPerfil] = useState(false);
+  const cargaPerfilRef = useRef(0);
+  const contextoFinanceiroRef = useRef('');
+  const [erroDadosFinanceiros, setErroDadosFinanceiros] = useState('');
+  useEffect(() => () => { cargaPerfilRef.current += 1; }, []);
+  const [erroAcessoPerfil, setErroAcessoPerfil] = useState('');
   const [modoSelecaoPerfil, setModoSelecaoPerfil] = useState<'entrada' | 'troca'>('entrada');
   const [modalModulos, setModalModulos] = useState(false);
   const [modulosCatalogo, setModulosCatalogo] = useState<Modulo[]>([]);
@@ -1195,37 +1227,40 @@ useEffect(() => {
 }, []);
 
 const podeInserirLancamentos =
+  dashboardLiberada && (
   perfilUsuario === 'gestor_master' ||
   perfilUsuario === 'administrador' ||
   perfilUsuario === 'operador_completo' ||
-  perfilUsuario === 'operador_simples';
+  perfilUsuario === 'operador_simples');
 
 const podeEditarLancamentos =
+  dashboardLiberada && (
   perfilUsuario === 'gestor_master' ||
   perfilUsuario === 'administrador' ||
-  perfilUsuario === 'operador_completo';
+  perfilUsuario === 'operador_completo');
 
 const podeExcluirLancamentos =
-  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+  dashboardLiberada && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador');
 
 const podeGerenciarPonto =
-  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+  modulosLiberados.includes('ponto') && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador');
 
 const podeGerenciarRecebimentos =
-  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+  modulosLiberados.includes('recebimentos_presencial') && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador');
 
 const podeAcessarAjustes =
-  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+  dashboardLiberada && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador');
 
 const podeGerenciarModulos =
-  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+  dashboardLiberada && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador');
 
 // O Operador Completo pode trabalhar com os conteúdos do Vendas já instalado,
 // mas não ganha permissões administrativas nem de instalação de módulos.
 const podeAcessarVendasMobileWeb =
+  modulosLiberados.includes('vendas_mobile') && (
   perfilUsuario === 'gestor_master' ||
   perfilUsuario === 'administrador' ||
-  perfilUsuario === 'operador_completo';
+  perfilUsuario === 'operador_completo');
 
 // Qualquer usuario autenticado pode criar seu proprio perfil (empresa ou pessoal),
 // independente do papel (gestor_master, administrador, operador_completo, operador_simples).
@@ -1803,15 +1838,78 @@ useEffect(() => {
 }, []);
 
 const carregarEmpresaSelecionada = async (empresa: EmpresaUsuarioResumo) => {
+  const carga = ++cargaPerfilRef.current;
+  const atual = () => carga === cargaPerfilRef.current;
   setCarregandoPerfil(true);
+  setErroDadosFinanceiros('');
+  setErroAcessoPerfil('');
+  let acesso;
+  try {
+    const acessos = await buscarAcessosUsuario(empresa.id, { logoAposDashboard: true });
+    if (!atual()) return;
+    acesso = acessos.find(p => p.empresa.id === empresa.id);
+    if (!acesso) throw new Error('Este perfil não está disponível.');
+    // Os demais vínculos já vieram no login; não recarregar seus planos/configurações.
+    const ids = empresasDoUsuario.filter(p => p.id !== empresa.id && (p.perfil === 'gestor_master' || p.dashboard_liberada === true)).map(p => p.id);
+    setPerfisDashboardLiberados(acesso.dashboard ? [...ids, empresa.id] : ids);
+  } catch (error) {
+    if (!atual()) return;
+    setCarregandoPerfil(false);
+    setAcessoLiberado(false);
+    setErroAcessoPerfil(error instanceof Error ? error.message : 'Não foi possível abrir o perfil. Tente novamente.');
+    throw error;
+  }
+  setModulosLiberados(acesso.modulos.map(m => m.id));
+  const area = new URLSearchParams(window.location.search).get('areaModulo');
+  if (!acesso.dashboard) {
+    const sessao = await validarSessaoDoDispositivo(empresa.id, 'entrar');
+    if (!atual()) return;
+    if (!sessao.ok || !sessao.ativa) { setCarregandoPerfil(false); setAcessoLiberado(false); throw new Error(sessao.mensagem || 'Não foi possível confirmar sua sessão no perfil.'); }
+    if (area && ['ponto', 'vendas_mobile'].includes(area) && acesso.modulos.some(m => m.id === area)) {
+      setAreaIntegradaRestrita(area);
+      setEmpresaId(empresa.id);
+      setNomeEmpresaAtual(acesso.empresa.nome);
+      setNomeUsuarioAtual(acesso.nomeUsuario);
+      setPerfilUsuario(acesso.perfil as PerfilAcessoUsuario);
+      setAcessoUsuarioAtualId(empresa.acessoId || empresa.acesso_id || null);
+      setDarkMode(acesso.empresa.temaEscuro);
+      setCorPrimaria(acesso.empresa.corPrimaria);
+      setLogoUrl(acesso.empresa.logoUrl || '');
+      setModulosAtivos(acesso.modulos.map(m => m.id));
+      setModalSelecionarEmpresa(false);
+      setAcessoLiberado(true);
+      setCarregandoPerfil(false);
+      return;
+    }
+    const retorno = new URLSearchParams(window.location.search).get('inicio') === '1';
+    router.replace(retorno ? `/modulos?empresaId=${encodeURIComponent(empresa.id)}` : destinoAposLogin(empresa.id, false, acesso.modulos.map(m => m.id)));
+    return;
+  }
+  try {
+  setAreaIntegradaRestrita(null);
+  setDashboardLiberada(true);
   setEstadoAcesso(null);
   setEstadoCarregado(false);
   // Fecha o card de selecao na hora (antes do trabalho assincrono)
   setModalSelecionarEmpresa(false);
   setModoSelecaoPerfil('entrada');
   setModalEmpresasAberto(false);
-  // Rede de seguranca: nunca deixar o loading preso
-  setTimeout(() => setCarregandoPerfil(false), 12000);
+  // Uma troca limpa o contexto anterior antes de montar o novo financeiro.
+  setLancamentos([]);
+  setLancamentosConsolidados([]);
+  setCaixinhaMovimentos([]);
+  setFaturamentos({});
+  setFaturamentosConsolidados({});
+  setFaturamentosEntradas([]);
+  setFaturamentosEntradasConsolidados([]);
+  setDespesasCadastradas([]);
+  setResumoPerfisDashboard([]);
+  setResumoCentrosCustoDashboard([]);
+  setPontoResumoDia([]);
+  setLogoUrl(acesso.empresa.logoUrl || '');
+  setLogoSettings({ scale: 100, x: 0, y: 0 });
+  setCorPrimaria(acesso.empresa.corPrimaria);
+  setDarkMode(acesso.empresa.temaEscuro);
   const mesAtual = meses[new Date().getMonth()];
 setMesResumoDash(mesAtual);
 setMesPerfisDashboard(mesAtual);
@@ -1833,12 +1931,15 @@ setMesFaturamento(mesAtual);
   setDashboardExpandidos([]);
   setPerfilUsuario(empresa.perfil || null);
   setAcessoUsuarioAtualId(empresa.acessoId || empresa.acesso_id || null);
-  // Libera o acesso já aqui (com carregandoPerfil ativo, o gate mostra a tela de
-  // carregamento). Evita a "corrida" em que carregandoPerfil zera antes do fim e
-  // o render cai na tela de login/início enquanto os dados ainda carregam.
+  // Monta a estrutura autorizada; apenas a área financeira aguarda os dados.
   setAcessoLiberado(true);
+  setMounted(true);
+  setCarregandoSistema(false);
 
-  const { data: usuarioLogado } = await supabase.auth.getUser();
+  const { data: sessaoLocal } = await supabase.auth.getSession();
+  if (!atual()) return;
+  const usuarioLogado = { user: sessaoLocal.session?.user || null };
+  if (!usuarioLogado.user) throw new Error('Sessão indisponível.');
   if (usuarioLogado.user) {
     void supabase.rpc('registrar_atividade_aplicativo', { p_aplicativo: 'gestao' }).then(({ error }) => {
       if (error && !/function|schema cache|does not exist/i.test(error.message || '')) console.warn('Não foi possível registrar a atividade na Gestão.', error);
@@ -1849,6 +1950,7 @@ const emailLogado = usuarioLogado.user?.email || '';
 
 if (emailLogado.trim().toLowerCase() === 'teste@teste.com.br') {
   await prepararDadosContaRevisao(empresa.id, usuarioLogado.user?.id || '', emailLogado);
+  if (!atual()) return;
 }
 
 setEmailUsuarioAtual(emailLogado);
@@ -1889,13 +1991,17 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
   return;
 }
 
-  // Resetar logo antes de carregar a nova empresa (evita contaminação entre empresas)
-  setLogoUrl('');
-  setLogoSettings({ scale: 100, x: 0, y: 0 });
-
-  const resultadoConfiguracoes = await buscarConfiguracoes(empresa.id);
+  const [resultadoConfiguracoes, despesas] = await Promise.all([
+    buscarConfiguracoes(empresa.id),
+    buscarDespesasCadastradas(empresa.id),
+  ]);
+  if (!atual()) return;
   const config = resultadoConfiguracoes.configuracao;
-  const despesas = await buscarDespesasCadastradas(empresa.id);
+  if (resultadoConfiguracoes.erro) {
+    setErroDadosFinanceiros('Não foi possível preparar as configurações deste perfil. Tente novamente.');
+    setCarregandoPerfil(false);
+    return;
+  }
 
   if (config) {
     if (config.cor_primaria) {
@@ -1943,6 +2049,7 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
 
   if (config?.centros_custo_ativo === true) {
     const listaCentros = await buscarCentrosCusto(empresa.id);
+    if (!atual()) return;
     setCentrosCusto(listaCentros);
     const centrosAtivos = listaCentros.filter((centro) => centro.ativo);
     const chaveUltimoCentro = `avantalab.gestao.centro-custo.ultimo.v2:${empresa.id}`;
@@ -1973,9 +2080,16 @@ setAcessoNaoConfigurado(false);
 setAcessoLiberado(true);
 setModalSelecionarEmpresa(false);
 
-  const moduloSolicitado = new URLSearchParams(window.location.search).get('abrirModulo');
+  const moduloSolicitado = new URLSearchParams(window.location.search).get('abrirModulo') || area;
   if (moduloSolicitado === 'custos') {
     router.replace(`/custos?empresaId=${encodeURIComponent(empresa.id)}`);
+  }
+  if (moduloSolicitado === 'ponto' && acesso.modulos.some(m => m.id === 'ponto')) setTimeout(() => abrirPontoIntegrado(), 0);
+  if (moduloSolicitado === 'vendas_mobile' && acesso.modulos.some(m => m.id === 'vendas_mobile')) setModalNovidadesVendas(true);
+  } catch {
+    if (!atual()) return;
+    setErroDadosFinanceiros('Não foi possível preparar os dados deste perfil. Tente novamente.');
+    setCarregandoPerfil(false);
   }
 };
 
@@ -1985,12 +2099,55 @@ setModalSelecionarEmpresa(false);
   // 1. Carrega Configurações Globais do Supabase
 
 useEffect(() => {
+  let entradaAtiva = true;
   const carregarConfiguracoesIniciais = async () => {
     setMounted(true);
     setCarregandoSistema(true);
     setMensagemCarregamentoSistema('Verificando acesso...');
 
     const paramsConfirmacao = new URLSearchParams(window.location.search);
+    // Entrada de módulo não reinicia o login nem consulta todos os vínculos.
+    const areaInterna = paramsConfirmacao.get('areaModulo');
+    const empresaInterna = paramsConfirmacao.get('empresaId');
+    if (empresaInterna && (areaInterna === 'ponto' || areaInterna === 'vendas_mobile')) {
+      setAreaIntegradaRestrita(areaInterna);
+      const previa = consumirNavegacaoModulo(areaInterna, empresaInterna);
+      const aplicar = (contexto: { empresa: { nome: string; corPrimaria: string; temaEscuro: boolean; logoUrl?: string }; perfil: string; nomeUsuario?: string }) => {
+        setEmpresaId(empresaInterna);
+        setNomeEmpresaAtual(contexto.empresa.nome);
+        setNomeUsuarioAtual(contexto.nomeUsuario || '');
+        setPerfilUsuario(contexto.perfil as PerfilAcessoUsuario);
+        setDarkMode(contexto.empresa.temaEscuro);
+        setCorPrimaria(contexto.empresa.corPrimaria);
+        setLogoUrl(contexto.empresa.logoUrl || '');
+        setAreaIntegradaRestrita(areaInterna);
+        setModulosLiberados([areaInterna]);
+        setModulosAtivos([areaInterna]);
+        setModalSelecionarEmpresa(false);
+        setAcessoLiberado(true);
+        setCarregandoSistema(false);
+      };
+      const data = await validarSessaoEntrada(supabase.auth);
+      if (!entradaAtiva) return;
+      if (!data.session) { setCarregandoSistema(false); return; }
+      // Prévia somente visual; dados e operações continuam protegidos por API/RLS.
+      if (previa) aplicar(previa);
+      try {
+        const lista = await buscarAcessosUsuario(empresaInterna);
+        if (!entradaAtiva) return;
+        const acesso = lista.find(p => p.empresa.id === empresaInterna);
+        if (!acesso?.modulos.some(m => m.id === areaInterna)) {
+          router.replace(`/modulos?empresaId=${encodeURIComponent(empresaInterna)}&retorno=1`);
+          return;
+        }
+        aplicar(acesso);
+      } catch {
+        if (!entradaAtiva) return;
+        // Falha de rede não é expiração de sessão. Oferece recuperação sem logout.
+        router.replace(`/modulos?empresaId=${encodeURIComponent(empresaInterna)}&retorno=1`);
+      }
+      return;
+    }
 const hashConfirmacao = new URLSearchParams(window.location.hash.replace('#', ''));
 
 const modoUrl = paramsConfirmacao.get('modo');
@@ -2029,46 +2186,8 @@ if (paramsConfirmacao.get('confirmado') === '1') {
       return;
     }
 
-    const { data: sessaoAtual, error: erroSessaoAtual } = await supabase.auth.getSession();
-
-    const voltarAoLoginAposSessaoInvalida = async (mensagem: string) => {
-      try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
-      setAcessoNaoConfigurado(false);
-      setAcessoLiberado(false);
-      setModalSelecionarEmpresa(false);
-      setModoRedefinirSenha(false);
-      setEmailConfirmado(false);
-      setEmpresaId(null);
-      setNomeEmpresaAtual('');
-      setPerfilUsuario(null);
-      setModoAuth('login');
-      setAuthErro(mensagem);
-      setMounted(true);
-      setCarregandoSistema(false);
-    };
-
-    if (erroSessaoAtual) {
-      await voltarAoLoginAposSessaoInvalida(
-        'Não foi possível validar sua sessão. Entre novamente.'
-      );
-      return;
-    }
-
-    if (sessaoAtual.session) {
-      const { data: usuarioValidado, error: erroUsuarioValidado } =
-        await supabase.auth.getUser();
-
-      if (
-        erroUsuarioValidado ||
-        !usuarioValidado.user ||
-        usuarioValidado.user.id !== sessaoAtual.session.user.id
-      ) {
-        await voltarAoLoginAposSessaoInvalida(
-          'Sua sessão não é mais válida. Entre novamente.'
-        );
-        return;
-      }
-    }
+    const sessaoAtual = await validarSessaoEntrada(supabase.auth);
+    if (!entradaAtiva) return;
 
     let empresa = null;
 
@@ -2185,9 +2304,9 @@ setMensagemCarregamentoSistema('Carregando empresa...');
      } catch (e) {
        console.error('Erro ao carregar pagina ja logada; voltando ao login:', e);
        // Falha de carregamento em pagina ja logada -> SEMPRE login, nunca cadastro/onboarding.
-       await voltarAoLoginAposSessaoInvalida(
-         'Não foi possível carregar seus dados. Faça login novamente.'
-       );
+       setErroAcessoPerfil('Não foi possível carregar seu perfil. Tente novamente.');
+       setCarregandoSistema(false);
+       router.replace('/modulos');
        return;
      }
     }
@@ -2202,14 +2321,21 @@ setMensagemCarregamentoSistema('Carregando empresa...');
     setCarregandoSistema(false);
   };
 
-  carregarConfiguracoesIniciais();
+  void carregarConfiguracoesIniciais().catch(() => {
+    if (!entradaAtiva) return;
+    setMounted(true);
+    setCarregandoSistema(false);
+    setErroPreparacaoAcesso(MENSAGEM_FALHA_VALIDACAO_ENTRADA);
+  });
+  return () => { entradaAtiva = false; };
 }, []);
 
   // 2. Carrega Dados Financeiros do Ano
   // 2. Carrega Dados Financeiros do Ano pelo Supabase
 useEffect(() => {
-  if (!mounted || !empresaId) return;
+  if (!mounted || !empresaId || !dashboardLiberada || !configuracoesCarregadas) return;
   let ativo = true;
+  const carga = cargaPerfilRef.current;
 
   const carregarDadosFinanceiros = async () => {
     const ano = Number(anoSelecionado);
@@ -2218,20 +2344,32 @@ useEffect(() => {
       if (ativo) setCarregandoCentroCusto(false);
       return;
     }
-    if (centrosCustoAtivo) setCarregandoCentroCusto(true);
+    const chaveContexto = `${empresaId}:${ano}:${contextoCentroCustoId || ''}`;
+    if (contextoFinanceiroRef.current !== chaveContexto) {
+      contextoFinanceiroRef.current = chaveContexto;
+      setCarregandoCentroCusto(true);
+      setLancamentos([]);
+      setLancamentosConsolidados([]);
+      setCaixinhaMovimentos([]);
+      setFaturamentos({});
+      setFaturamentosConsolidados({});
+      setFaturamentosEntradas([]);
+      setFaturamentosEntradasConsolidados([]);
+    }
 
     // Mantém a receita consolidada do Vendas Mobile atualizada a cada acesso
     // ao perfil, sem bloquear o restante do carregamento caso o módulo não exista.
-    await supabase.rpc('atualizar_receita_vendas_mobile_gestao_rpc', { p_empresa_id: empresaId });
-    await garantirFixasDoMesAtual(empresaId);
-    const lancamentosBanco = await buscarLancamentos(empresaId, ano, contextoCentroCustoId);
-    const caixinhaBanco = await buscarCaixinhaMovimentos(empresaId, ano);
-    const faturamentosBanco = await buscarFaturamentos(empresaId, ano);
-    const faturamentosEntradasBanco = await buscarFaturamentosEntradas(
-      empresaId,
-      ano,
-      contextoCentroCustoId,
-    );
+    await Promise.all([
+      supabase.rpc('atualizar_receita_vendas_mobile_gestao_rpc', { p_empresa_id: empresaId }),
+      garantirFixasDoMesAtual(empresaId),
+    ]);
+    if (!ativo || carga !== cargaPerfilRef.current) return;
+    const [lancamentosBanco, caixinhaBanco, faturamentosBanco, faturamentosEntradasBanco] = await Promise.all([
+      buscarLancamentos(empresaId, ano, contextoCentroCustoId),
+      buscarCaixinhaMovimentos(empresaId, ano),
+      buscarFaturamentos(empresaId, ano),
+      buscarFaturamentosEntradas(empresaId, ano, contextoCentroCustoId),
+    ]);
     const [lancamentosConsolidadosBanco, faturamentosEntradasConsolidadosBanco] = centrosCustoAtivo
       ? await Promise.all([
         buscarLancamentos(empresaId, ano),
@@ -2239,7 +2377,9 @@ useEffect(() => {
       ])
       : [lancamentosBanco, faturamentosEntradasBanco];
 
-    if (!ativo) return;
+    if (!ativo || carga !== cargaPerfilRef.current) return;
+
+    setErroDadosFinanceiros('');
 
     setLancamentos(
       lancamentosBanco.map((l: RegistroSupabase) => ({
@@ -2338,26 +2478,29 @@ useEffect(() => {
     );
   };
 
-  carregarDadosFinanceiros().finally(() => {
-    if (!ativo) return;
+  carregarDadosFinanceiros().catch(() => {
+    if (ativo && carga === cargaPerfilRef.current) setErroDadosFinanceiros('Não foi possível atualizar os dados financeiros. Tente novamente.');
+  }).finally(() => {
+    if (!ativo || carga !== cargaPerfilRef.current) return;
     setCarregandoPerfil(false);
     setCarregandoCentroCusto(false);
   });
 
   return () => { ativo = false; };
-}, [anoSelecionado, mounted, empresaId, centrosCustoAtivo, centroCustoSelecionadoId, revisaoDadosFinanceiros]);
+}, [anoSelecionado, mounted, empresaId, dashboardLiberada, configuracoesCarregadas, centrosCustoAtivo, centroCustoSelecionadoId, revisaoDadosFinanceiros]);
 
 useEffect(() => {
-  if (!mounted || !empresaId || empresasDoUsuario.length === 0) {
+  if (!mounted || !empresaId || !dashboardLiberada || empresasDoUsuario.length === 0) {
     setResumoPerfisDashboard([]);
     return;
   }
+  if (carregandoPerfil || !configuracoesCarregadas) return;
 
   let cancelado = false;
 
   const carregarResumoPerfis = async () => {
     const ano = Number(anoSelecionado);
-    const ids = Array.from(new Set(empresasDoUsuario.map((empresa) => String(empresa.id || '')).filter(Boolean)));
+    const ids = Array.from(new Set(empresasDoUsuario.map((empresa) => String(empresa.id || '')).filter(id => perfisDashboardLiberados.includes(id))));
 
     if (ids.length === 0) {
       if (!cancelado) setResumoPerfisDashboard([]);
@@ -2427,7 +2570,7 @@ useEffect(() => {
       despesasHistorico.set(chaveHistorico(id, anoItem, mesItem), (despesasHistorico.get(chaveHistorico(id, anoItem, mesItem)) || 0) + valor);
     });
 
-    const resumo = empresasDoUsuario.map((empresa) => {
+    const resumo = empresasDoUsuario.filter(empresa => perfisDashboardLiberados.includes(String(empresa.id))).map((empresa) => {
       const id = String(empresa.id || '');
       const receitas = receitasPorPerfil.get(id) || 0;
       const despesas = despesasPorPerfil.get(id) || 0;
@@ -2454,15 +2597,16 @@ useEffect(() => {
   return () => {
     cancelado = true;
   };
-}, [anoSelecionado, mounted, empresaId, empresasDoUsuario, mesPerfisDashboard]);
+}, [anoSelecionado, mounted, empresaId, dashboardLiberada, empresasDoUsuario, perfisDashboardLiberados, mesPerfisDashboard, carregandoPerfil, configuracoesCarregadas]);
 
 // O card de centros sempre mostra todos os contextos do perfil, mesmo quando
 // a tela está filtrada em apenas um deles.
 useEffect(() => {
-  if (!mounted || !empresaId || !centrosCustoAtivo) {
+  if (!mounted || !empresaId || !dashboardLiberada || !centrosCustoAtivo) {
     setResumoCentrosCustoDashboard([]);
     return;
   }
+  if (carregandoPerfil || !configuracoesCarregadas) return;
 
   let cancelado = false;
   const mesResumo = mesCentrosCustoDashboard;
@@ -2508,7 +2652,7 @@ useEffect(() => {
 // A recarga financeira atualiza as duas fontes consolidadas abaixo. Ao observá-las,
 // o card volta a consultar todos os centros do perfil depois de cada lançamento,
 // edição, confirmação ou exclusão, sem depender da troca manual de mês/centro.
-}, [anoSelecionado, centrosCusto, centrosCustoAtivo, empresaId, faturamentosConsolidados, lancamentosConsolidados, mesCentrosCustoDashboard, mounted]);
+}, [anoSelecionado, centrosCusto, centrosCustoAtivo, empresaId, dashboardLiberada, faturamentosConsolidados, lancamentosConsolidados, mesCentrosCustoDashboard, mounted, carregandoPerfil, configuracoesCarregadas]);
 
   // 3. Salva Configurações Globais no Supabase
 useEffect(() => {
@@ -2519,16 +2663,9 @@ useEffect(() => {
     return () => window.clearTimeout(timerStatus);
   }
 
-  const timerInicial = window.setTimeout(() => {
-    setStatusConfig('saving');
-  }, 0);
-
   let ativo = true;
 
   const salvarConfiguracoes = async () => {
-    window.clearTimeout(timerInicial);
-    if (ativo) setStatusConfig('saving');
-
     const resultado = await salvarConfiguracoesBanco({
   empresaId,
   corPrimaria,
@@ -2540,16 +2677,7 @@ useEffect(() => {
 
     if (!ativo) return;
 
-    if (resultado) {
-  setStatusConfig('saved');
-
-
-  setTimeout(() => {
-    if (ativo) setStatusConfig('idle');
-  }, 2200);
-} else {
-  setStatusConfig('error');
-}
+    setStatusConfig(resultado ? 'idle' : 'error');
   };
 
   const timer = setTimeout(() => {
@@ -2558,7 +2686,6 @@ useEffect(() => {
 
   return () => {
     ativo = false;
-    window.clearTimeout(timerInicial);
     clearTimeout(timer);
   };
 }, [
@@ -3125,6 +3252,7 @@ useEffect(() => {
   }
 
   function acessarModuloInstalado(moduloId: string) {
+    if (!modulosLiberados.includes(moduloId)) { abrirAviso('Acesso não liberado', 'Este módulo não foi liberado para seu usuário.'); return; }
     if (!empresaId || !modulosAtivos.includes(moduloId)) {
       abrirAviso('Acesso indisponível', 'Este módulo não está instalado no perfil atual.', undefined, 'erro');
       return;
@@ -3169,6 +3297,7 @@ useEffect(() => {
   }
 
   function navegarParaModulo(moduloId: string, rota: string, empresaAtualId: string) {
+    if (!modulosLiberados.includes(moduloId)) { abrirAviso('Acesso não liberado', 'Este módulo não foi liberado para seu usuário.'); return; }
     const contexto = {
       destino: moduloId,
       empresaId: empresaAtualId,
@@ -6430,7 +6559,8 @@ const gerarBackupNoDestino = async (destino: DestinoBackup) => {
 };
 
 const recarregarDadosFinanceirosAtual = async () => {
-  if (!empresaId) return;
+  if (!empresaId || !dashboardLiberada) return;
+  const carga = cargaPerfilRef.current;
 
   const ano = Number(anoSelecionado);
   const contextoCentroCustoId = centrosCustoAtivo ? centroCustoSelecionadoId : undefined;
@@ -6457,6 +6587,8 @@ const recarregarDadosFinanceirosAtual = async () => {
       buscarFaturamentosEntradas(empresaId, ano),
     ])
     : [lancamentosBanco, faturamentosEntradasBanco];
+
+  if (carga !== cargaPerfilRef.current) return;
 
   setDespesasCadastradas(
     ordenarDespesasAlfabeticamente(despesasBanco.map((d: RegistroSupabase) => ({
@@ -6671,7 +6803,7 @@ useEffect(() => {
 
 // Agenda: sincroniza com o Supabase quando o perfil esta ativo
 useEffect(() => {
-  if (!mounted || !empresaId) return;
+  if (!mounted || !empresaId || !dashboardLiberada) return;
   const timerAgendaSync = window.setTimeout(() => {
     sincronizarAgendaSupabaseWeb();
   }, 0);
@@ -6681,7 +6813,7 @@ useEffect(() => {
 
 // Módulos: carrega catálogo e ativos quando o perfil esta ativo
 useEffect(() => {
-  if (!mounted || !empresaId) return;
+  if (!mounted || !empresaId || !dashboardLiberada) return;
   const timerModulos = window.setTimeout(() => {
     carregarModulos();
   }, 0);
@@ -6691,7 +6823,7 @@ useEffect(() => {
 
 // Financeiro: mantem lancamentos e despesas fixas sincronizados entre web/mobile.
 useEffect(() => {
-  if (!mounted || !empresaId) return;
+  if (!mounted || !empresaId || !dashboardLiberada) return;
 
   const canalFinanceiro = supabase
     .channel('financeiro_sync_' + empresaId)
@@ -6747,6 +6879,7 @@ useEffect(() => {
 
 // Controle de ponto: resumo do dia atualizado por Realtime.
 useEffect(() => {
+  if (carregandoPerfil || !configuracoesCarregadas) return;
   if (!mounted || !empresaId || !podeGerenciarPonto) {
     const timerPontoVazio = window.setTimeout(() => setPontoResumoDia([]), 0);
     return () => window.clearTimeout(timerPontoVazio);
@@ -6782,7 +6915,7 @@ useEffect(() => {
     supabase.removeChannel(canal);
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mounted, empresaId, podeGerenciarPonto]);
+}, [mounted, empresaId, podeGerenciarPonto, carregandoPerfil, configuracoesCarregadas]);
 
 // Agenda: atualiza em tempo real (mudancas em qualquer aparelho)
 useEffect(() => {
@@ -7904,9 +8037,11 @@ const resultadoVerificacaoSms = await lerRespostaApi(respostaVerificacaoSms);
 const usuarioOriginalEditando = usuariosEmpresa.find(
   (usuario) => usuario.id === usuarioEditandoId
 );
+const editandoIdentidadePropria = Boolean(usuarioEditandoId && usuarioEditandoId === acessoUsuarioAtualId);
 
 const dadosUsuarioAlterados = usuarioOriginalEditando
-  ? editUsuarioNome.trim() !== (usuarioOriginalEditando.nome || '').trim() ||
+  ? JSON.stringify(editUsuarioLiberacoes) !== JSON.stringify(liberacoesDoVinculo(usuarioOriginalEditando)) ||
+    editUsuarioNome.trim() !== (usuarioOriginalEditando.nome || '').trim() ||
     editUsuarioLogin.trim().toLowerCase() !== (usuarioOriginalEditando.login || '').toLowerCase() ||
     editUsuarioEmail.trim().toLowerCase() !== (String(usuarioOriginalEditando.email || '').includes('@usuarios.avantalab.local') ? '' : usuarioOriginalEditando.email || '').toLowerCase() ||
     editUsuarioPerfil !== usuarioOriginalEditando.perfil
@@ -7944,12 +8079,142 @@ const lancamentosMobile = [...lancamentosDoMes].sort(
 );
 const categoriasMobile = analiseDespesas.dados.slice(0, 4);
 
+useEffect(() => {
+  if (!empresaId || !acessoLiberado) return;
+  let ativo = true;
+  const conferir = async () => {
+    try {
+      const acessos = await buscarAcessosUsuario(empresaId);
+      const acesso = acessos.find(p => p.empresa.id === empresaId);
+      if (!ativo) return;
+      setPerfisDashboardLiberados(atual => {
+        const ids = atual.filter(id => id !== empresaId);
+        if (acesso?.dashboard) ids.push(empresaId);
+        return JSON.stringify(atual) === JSON.stringify(ids) ? atual : ids;
+      });
+      if (!acesso || (dashboardLiberada && !acesso.dashboard) || (areaIntegradaRestrita && !acesso.modulos.some(m => m.id === areaIntegradaRestrita))) {
+        setDashboardLiberada(false);
+        setAreaIntegradaRestrita(null);
+        setLancamentos([]); setFaturamentos({}); setFaturamentosEntradas([]); setCaixinhaMovimentos([]);
+        router.replace(`/modulos?empresaId=${encodeURIComponent(empresaId)}`);
+      } else if (acesso) setModulosLiberados(acesso.modulos.map(m => m.id));
+    } catch { /* As operações continuam falhando fechadas no servidor. */ }
+  };
+  const intervalo = window.setInterval(() => void conferir(), 30000);
+  const foco = () => void conferir();
+  window.addEventListener('focus', foco);
+  return () => { ativo = false; clearInterval(intervalo); window.removeEventListener('focus', foco); };
+}, [empresaId, acessoLiberado, dashboardLiberada, areaIntegradaRestrita, router]);
+
+const renderizarAviso = () => (modalAvisoAberto && (
+  <div
+    className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
+    onClick={fecharAviso}
+  >
+    <DraggableModalCard
+      className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div data-modal-drag-handle className="mb-4 flex cursor-grab items-center gap-3 active:cursor-grabbing">
+        <div
+  className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+    tipoAviso === 'sucesso'
+      ? 'bg-emerald-100 text-emerald-700'
+      : tipoAviso === 'erro'
+        ? 'bg-red-100 text-red-700'
+        : 'bg-amber-100 text-amber-700'
+  }`}
+>
+  {tipoAviso === 'sucesso' ? (
+    <span className="text-2xl font-black leading-none">✓</span>
+  ) : (
+    <span className="text-2xl font-black leading-none">!</span>
+  )}
+</div>
+
+        <div>
+          <h2 className="text-lg font-black text-slate-900">
+            {tituloAviso}
+          </h2>
+
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">
+            {mensagemAviso}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          onClick={fecharAviso}
+          className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white shadow-md transition hover:bg-slate-800 active:scale-[0.98] cursor-pointer"
+        >
+          Entendi
+        </button>
+      </div>
+    </DraggableModalCard>
+  </div>
+));
+const renderizarPonto = () => (<PontoAdminModal
+  rotuloFechar={areaIntegradaRestrita ? 'Início' : undefined}
+  key={`${abaInicialPontoAdmin}-${instanciaPontoAdmin}`}
+  aberto={modalPontoAdmin}
+  rascunhoEscopo={`${acessoUsuarioAtualId || 'acesso'}:${empresaId || 'perfil'}`}
+  abaInicial={abaInicialPontoAdmin}
+  relatorioInicial={relatorioInicialPonto}
+  onFechar={() => areaIntegradaRestrita ? router.push(`/modulos?empresaId=${encodeURIComponent(empresaId || '')}&retorno=1`) : setModalPontoAdmin(false)}
+  funcionarios={pontoFuncionarios}
+  carregando={pontoFuncCarregando}
+  onCriar={criarFuncionarioPonto}
+  onAtualizar={atualizarFuncionarioPonto}
+  onRedefinirSenha={redefinirSenhaPonto}
+  config={pontoConfig}
+  onSalvarConfig={salvarPontoConfig}
+  funcionariosFacial={pontoFuncionariosFacial}
+  cobrancaFacial={pontoCobrancaFacial}
+  onCalcularCobrancaFacial={calcularCobrancaFacialPonto}
+  onContratarCobrancaFacial={contratarCobrancaFacialPonto}
+  onCancelarCobrancaFacial={cancelarCobrancaFacialPonto}
+  onAtualizarCobrancaFacial={carregarFuncionariosFacialPonto}
+  onCarregarRegistros={carregarRegistrosPonto}
+  onCarregarAuditoria={carregarAuditoriaPonto}
+  onCarregarAssinatura={carregarAssinaturaPonto}
+  onBaixarAfd={baixarAfdPonto}
+  onCarregarDocumentosRepP={carregarDocumentosRepP}
+  onBaixarDocumentoRepP={baixarDocumentoRepP}
+  onPrepararManualRepP={prepararManualRepP}
+  onGerarEspelhoPonto={gerarEspelhoPonto}
+  diasNaoUteis={pontoDiasNaoUteis}
+  diasNaoUteisCarregando={pontoDiasNaoUteisCarregando}
+  onCriarDiaNaoUtil={criarDiaNaoUtilPonto}
+  onExcluirDiaNaoUtil={excluirDiaNaoUtilPonto}
+  darkMode={darkMode}
+/>
+);
+const renderizarConteudoVendas = () => (<NovidadesVendasModal
+  rotuloFechar={areaIntegradaRestrita ? 'Início' : undefined}
+  aberto={modalNovidadesVendas}
+  empresaId={empresaId}
+  nomeEmpresa={nomeEmpresaAtual}
+  darkMode={darkMode}
+  corPrimaria={corPrimaria}
+  onFechar={() => areaIntegradaRestrita ? router.push(`/modulos?empresaId=${encodeURIComponent(empresaId || '')}&retorno=1`) : setModalNovidadesVendas(false)}
+/>
+);
 const loginSocialEmAndamento = Boolean(loginSocialPendente);
 
+if (erroPreparacaoAcesso) return <TelaCarregandoAcesso mensagem={erroPreparacaoAcesso} erro={erroPreparacaoAcesso} onTentarNovamente={() => window.location.reload()} onEntrarNovamente={() => {
+  try {
+    reiniciarAcessoLocal(window.localStorage, process.env.NEXT_PUBLIC_SUPABASE_URL!);
+    window.location.reload();
+  } catch { setErroPreparacaoAcesso('Não foi possível reiniciar o acesso neste navegador. Verifique se o armazenamento do site está permitido e tente novamente.'); }
+}} />;
+
 if (!mounted || carregandoSistema || authLoading || loginSocialEmAndamento) {
+  if (areaIntegradaRestrita && !loginSocialEmAndamento) return <TransicaoNavegacaoInterna destino={areaIntegradaRestrita === 'ponto' ? 'Controle de Ponto' : 'Conteúdo AvantaVendas'} />;
   return (
     <TelaCarregandoAcesso
-      titulo={loginSocialEmAndamento ? 'Preparando acesso' : 'Carregando...'}
+      preparandoAcesso
       mensagem={
         loginSocialEmAndamento
           ? 'Aguardando a confirmação do login social.'
@@ -7967,6 +8232,17 @@ if (!mounted || carregandoSistema || authLoading || loginSocialEmAndamento) {
     />
   );
 }
+
+if (areaIntegradaRestrita && acessoLiberado) {
+  return <main className={`min-h-dvh ${darkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+    <ModuloHeader empresa={{ nome: nomeEmpresaAtual, corPrimaria, temaEscuro: darkMode, logoUrl }} onBack={() => router.push(`/modulos?empresaId=${encodeURIComponent(empresaId || '')}&retorno=1`)} returnAriaLabel="Voltar para Meus módulos" />
+    {areaIntegradaRestrita === 'ponto' ? renderizarPonto() : renderizarConteudoVendas()}
+    {renderizarAviso()}
+    <ModalConfirmacao aberto={modalConfirmacaoAberto} titulo={tituloConfirmacao} mensagem={mensagemConfirmacao} textoConfirmar={textoConfirmarConfirmacao} variante={varianteConfirmacao} carregando={confirmacaoCarregando} textoCancelar={textoCancelarConfirmacao} corPrimaria={corPrimaria} textoSobreCorPrimaria={textoSobreCorPrimaria} aoCancelar={fecharConfirmacao} aoConfirmar={confirmarAcao} />
+  </main>;
+}
+
+if (acessoLiberado && empresaId && !dashboardLiberada) return <TelaCarregandoAcesso titulo="Preparando seus módulos" mensagem="Encaminhando para sua área de acesso…" />;
 
 if (emailConfirmado) {
   return (
@@ -8244,7 +8520,7 @@ if (modalSelecionarEmpresa) {
               return (
                 <div
                   key={empresa.id}
-                  className="mr-1 w-[calc(100%-4px)] rounded-xl p-[2px] shadow-sm"
+                  className="avanta-perfil-opcao relative mr-1 w-[calc(100%-4px)] rounded-xl p-[2px] shadow-sm"
                   style={{
                     background: `linear-gradient(90deg, color-mix(in srgb, ${corPerfil} 14%, transparent) 0%, color-mix(in srgb, ${corPerfil} 78%, transparent) 100%)`,
                   }}
@@ -8254,6 +8530,7 @@ if (modalSelecionarEmpresa) {
                     disabled={perfilAtualInativo}
                     onClick={() => { if (!perfilAtualInativo) setEmpresaParaSelecionar(empresa); }}
                     aria-current={perfilAtualInativo ? 'true' : undefined}
+                    aria-describedby={perfilAtualInativo ? `perfil-em-uso-${empresa.id}` : undefined}
                     className="group relative w-full overflow-hidden rounded-[10px] px-3 py-2.5 text-left transition active:translate-y-px active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 disabled:active:scale-100"
                     style={{
                       backgroundColor: darkMode ? '#0f172a' : '#ffffff',
@@ -8270,8 +8547,8 @@ if (modalSelecionarEmpresa) {
                       }}
                     />
                     <div className="relative flex items-center justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm font-black">
+                      <div className="min-w-0">
+                        <h3 className="break-words text-sm font-black">
                           {empresa.nome || empresa.empresa_nome}
                         </h3>
 
@@ -8294,9 +8571,7 @@ if (modalSelecionarEmpresa) {
                       </div>
 
                       {perfilAtualInativo ? (
-                        <span className="shrink-0 rounded-full border border-current/60 bg-black/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide">
-                          Em uso
-                        </span>
+                        <span className="avanta-perfil-em-uso-reserva" aria-hidden="true" />
                       ) : (
                         <span
                           className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
@@ -8312,6 +8587,7 @@ if (modalSelecionarEmpresa) {
                       )}
                     </div>
                   </button>
+                  {perfilAtualInativo && <SeloPerfilEmUso id={`perfil-em-uso-${empresa.id}`} />}
                 </div>
               );
             })}
@@ -8345,15 +8621,21 @@ if (modalSelecionarEmpresa) {
 
           <button
             type="button"
-            disabled={!empresaParaSelecionar}
+            disabled={!empresaParaSelecionar || carregandoPerfil}
             onClick={async () => {
               if (!empresaParaSelecionar) return;
-              await carregarEmpresaSelecionada(empresaParaSelecionar);
+              try {
+                await carregarEmpresaSelecionada(empresaParaSelecionar);
+              } catch (error) {
+                setCarregandoPerfil(false);
+                setErroAcessoPerfil(error instanceof Error ? error.message : 'Não foi possível abrir o perfil. Tente novamente.');
+              }
             }}
             className="mt-3 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:bg-sky-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Confirmar acesso
+            {carregandoPerfil ? 'Confirmando acesso…' : 'Confirmar acesso'}
           </button>
+          {erroAcessoPerfil && <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-300">{erroAcessoPerfil}</p>}
         </div>
       </section>
     </main>
@@ -8517,18 +8799,6 @@ if (validacaoTelefoneObrigatoria) {
   );
 }
 
-  // Carregando um perfil recém-selecionado: mostra a tela de carregamento em vez
-  // de cair na tela de login enquanto o acesso ainda não foi liberado (evita o
-  // "flash" de login entre selecionar o perfil e a página carregar).
-  if (carregandoPerfil && !modalSelecionarEmpresa) {
-    return (
-      <TelaCarregandoAcesso
-        titulo="Carregando..."
-        mensagem="Preparando seu perfil financeiro..."
-      />
-    );
-  }
-
   if (!acessoLiberado) {
     return (
       <AuthCard
@@ -8608,21 +8878,7 @@ if (validacaoTelefoneObrigatoria) {
   // Cobrança: enquanto o estado de acesso não for conhecido, não renderiza o app
   // (evita o flash do conteúdo antes de o paywall bloquear).
   if (acessoLiberado && empresaId && (!cadastroPerfilCarregado || (COBRANCA_ATIVA && !estadoCarregado))) {
-    return (
-      <main className="avanta-access-scene relative overflow-hidden font-sans">
-        <FundoAcessoResponsivo />
-        <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" className="avanta-access-brand pointer-events-none relative z-10" />
-        <div className="absolute inset-0 bg-transparent" />
-        <section className="avanta-loading-stage relative z-10">
-          <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
-            <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
-              <span className="avanta-loading-spinner animate-spin" />
-            </div>
-            <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando…</p>
-          </div>
-        </section>
-      </main>
-    );
+    return <TelaCarregandoAcesso preparandoAcesso mensagem="Aguarde um instante." />;
   }
 
   // Cobrança: Empresa sem assinatura e Pessoal grátis não acessam a Gestão Web.
@@ -9126,41 +9382,7 @@ if (validacaoTelefoneObrigatoria) {
   cancelamentos={modulosCancelamentos}
 />
 
-<PontoAdminModal
-  key={`${abaInicialPontoAdmin}-${instanciaPontoAdmin}`}
-  aberto={modalPontoAdmin}
-  rascunhoEscopo={`${acessoUsuarioAtualId || 'acesso'}:${empresaId || 'perfil'}`}
-  abaInicial={abaInicialPontoAdmin}
-  relatorioInicial={relatorioInicialPonto}
-  onFechar={() => setModalPontoAdmin(false)}
-  funcionarios={pontoFuncionarios}
-  carregando={pontoFuncCarregando}
-  onCriar={criarFuncionarioPonto}
-  onAtualizar={atualizarFuncionarioPonto}
-  onRedefinirSenha={redefinirSenhaPonto}
-  config={pontoConfig}
-  onSalvarConfig={salvarPontoConfig}
-  funcionariosFacial={pontoFuncionariosFacial}
-  cobrancaFacial={pontoCobrancaFacial}
-  onCalcularCobrancaFacial={calcularCobrancaFacialPonto}
-  onContratarCobrancaFacial={contratarCobrancaFacialPonto}
-  onCancelarCobrancaFacial={cancelarCobrancaFacialPonto}
-  onAtualizarCobrancaFacial={carregarFuncionariosFacialPonto}
-  onCarregarRegistros={carregarRegistrosPonto}
-  onCarregarAuditoria={carregarAuditoriaPonto}
-  onCarregarAssinatura={carregarAssinaturaPonto}
-  onBaixarAfd={baixarAfdPonto}
-  onCarregarDocumentosRepP={carregarDocumentosRepP}
-  onBaixarDocumentoRepP={baixarDocumentoRepP}
-  onPrepararManualRepP={prepararManualRepP}
-  onGerarEspelhoPonto={gerarEspelhoPonto}
-  diasNaoUteis={pontoDiasNaoUteis}
-  diasNaoUteisCarregando={pontoDiasNaoUteisCarregando}
-  onCriarDiaNaoUtil={criarDiaNaoUtilPonto}
-  onExcluirDiaNaoUtil={excluirDiaNaoUtilPonto}
-  darkMode={darkMode}
-/>
-
+{renderizarPonto()}
 
 <SobreModal
   aberto={modalSobre}
@@ -9169,15 +9391,7 @@ if (validacaoTelefoneObrigatoria) {
   versaoAtual={APP_VERSION}
 />
 
-<NovidadesVendasModal
-  aberto={modalNovidadesVendas}
-  empresaId={empresaId}
-  nomeEmpresa={nomeEmpresaAtual}
-  darkMode={darkMode}
-  corPrimaria={corPrimaria}
-  onFechar={() => setModalNovidadesVendas(false)}
-/>
-
+{renderizarConteudoVendas()}
 <AssinaturaModal
   aberto={modalAssinatura}
   onFechar={() => setModalAssinatura(false)}
@@ -10334,55 +10548,7 @@ if (validacaoTelefoneObrigatoria) {
   </div>
 )}
 
-{modalAvisoAberto && (
-  <div
-    className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
-    onClick={fecharAviso}
-  >
-    <DraggableModalCard
-      className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div data-modal-drag-handle className="mb-4 flex cursor-grab items-center gap-3 active:cursor-grabbing">
-        <div
-  className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-    tipoAviso === 'sucesso'
-      ? 'bg-emerald-100 text-emerald-700'
-      : tipoAviso === 'erro'
-        ? 'bg-red-100 text-red-700'
-        : 'bg-amber-100 text-amber-700'
-  }`}
->
-  {tipoAviso === 'sucesso' ? (
-    <span className="text-2xl font-black leading-none">✓</span>
-  ) : (
-    <span className="text-2xl font-black leading-none">!</span>
-  )}
-</div>
-
-        <div>
-          <h2 className="text-lg font-black text-slate-900">
-            {tituloAviso}
-          </h2>
-
-          <p className="mt-1 text-sm leading-relaxed text-slate-600">
-            {mensagemAviso}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-5 flex justify-end">
-        <button
-          type="button"
-          onClick={fecharAviso}
-          className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white shadow-md transition hover:bg-slate-800 active:scale-[0.98] cursor-pointer"
-        >
-          Entendi
-        </button>
-      </div>
-    </DraggableModalCard>
-  </div>
-)}
+{renderizarAviso()}
 
 {usuarioEditandoId && (
   <div
@@ -10390,7 +10556,7 @@ if (validacaoTelefoneObrigatoria) {
     onClick={cancelarEdicaoUsuario}
   >
     <DraggableModalCard
-      className={`w-full max-w-xl overflow-hidden rounded-2xl border p-6 shadow-2xl ${
+      className={`flex max-h-[calc(100dvh-3rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
           : 'bg-white border-slate-200'
@@ -10399,7 +10565,7 @@ if (validacaoTelefoneObrigatoria) {
     >
       <div
         data-modal-drag-handle
-        className="-mx-6 -mt-6 mb-5 flex min-h-[96px] cursor-grab items-center justify-between gap-4 px-6 py-5 active:cursor-grabbing"
+        className="-mx-6 -mt-6 mb-4 flex shrink-0 cursor-grab items-center justify-between gap-4 px-6 py-4 active:cursor-grabbing"
         style={estiloTemaPrimario}
       >
         <div className="min-w-0">
@@ -10409,14 +10575,14 @@ if (validacaoTelefoneObrigatoria) {
           </h2>
 
           <p className="mt-1 text-sm opacity-80">
-            Nome, e-mail, login e tipo são obrigatórios. A nova senha é opcional.
+            {editandoIdentidadePropria ? 'Nome, e-mail, login e tipo são obrigatórios. A nova senha é opcional.' : 'E-mail, login e senha são alterados pelo titular da conta. Aqui você administra o nome e os acessos deste perfil.'}
           </p>
         </div>
 
         <button
           type="button"
           onClick={cancelarEdicaoUsuario}
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border text-lg font-black transition hover:bg-black/10"
+          className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border text-lg font-black transition hover:bg-black/10"
           style={{ borderColor: bordaSobreCorPrimaria, color: textoSobreCorPrimaria }}
           title="Fechar"
         >
@@ -10424,7 +10590,7 @@ if (validacaoTelefoneObrigatoria) {
         </button>
       </div>
 
-      <div className="space-y-3">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1">
         <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="editar-usuario-nome">
           Nome completo
           <input
@@ -10443,11 +10609,13 @@ if (validacaoTelefoneObrigatoria) {
           />
         </label>
 
-        <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="editar-usuario-email">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.4fr_1fr_1.2fr]">
+        <label className={`grid min-w-0 gap-1 text-xs font-bold ${textMuted}`} htmlFor="editar-usuario-email">
           E-mail
           <input
             id="editar-usuario-email"
             type="email"
+            readOnly={!editandoIdentidadePropria}
             value={editUsuarioEmail}
             onChange={(e) => setEditUsuarioEmail(normalizarEmail(e.target.value))}
             placeholder="usuario@empresa.com.br"
@@ -10466,6 +10634,7 @@ if (validacaoTelefoneObrigatoria) {
           <input
             id="editar-usuario-login"
             type="text"
+            readOnly={!editandoIdentidadePropria}
             value={editUsuarioLogin}
             onChange={(e) => setEditUsuarioLogin(e.target.value)}
             placeholder="Login"
@@ -10495,7 +10664,7 @@ if (validacaoTelefoneObrigatoria) {
                   | 'operador_simples'
               )
             }
-            disabled={usuarioOriginalEditando?.perfil === 'gestor_master' && perfilUsuario !== 'gestor_master'}
+            disabled={perfilUsuario !== 'gestor_master'}
             className={`h-11 w-full rounded-xl border px-3 text-sm font-bold outline-none disabled:cursor-not-allowed disabled:opacity-60 ${
               darkMode
                 ? 'bg-slate-900 border-slate-600 text-white'
@@ -10509,7 +10678,11 @@ if (validacaoTelefoneObrigatoria) {
           </select>
         </label>
 
-        <div
+        </div>
+
+        <AcessosUsuarioCampos value={editUsuarioLiberacoes} onChange={setEditUsuarioLiberacoes} perfil={editUsuarioPerfil} disabled={usuarioSalvando || (perfilUsuario !== 'gestor_master' && !['operador_simples', 'operador_completo'].includes(usuarioOriginalEditando?.perfil || ''))} />
+
+        {editandoIdentidadePropria && <div
           className={`rounded-xl border p-3 ${
             darkMode
               ? 'border-slate-700 bg-slate-900/50'
@@ -10521,7 +10694,7 @@ if (validacaoTelefoneObrigatoria) {
           </p>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
               <div className="relative">
                 <input
                   id="editar-usuario-senha"
@@ -10578,14 +10751,14 @@ if (validacaoTelefoneObrigatoria) {
           <p className={`mt-2 text-[11px] font-semibold ${textMuted}`}>
             A senha é salva imediatamente ao clicar em Redefinir senha.
           </p>
-        </div>
+        </div>}
       </div>
 
-      <div className="mt-5 flex justify-end gap-2">
+      <div className="mt-4 flex shrink-0 justify-end gap-2">
         <button
           type="button"
           onClick={cancelarEdicaoUsuario}
-          className={`rounded-xl border px-4 py-2 text-xs font-black uppercase transition cursor-pointer ${
+          className={`min-h-11 rounded-xl border px-4 py-2 text-xs font-black uppercase transition cursor-pointer ${
             darkMode
               ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
               : 'border-slate-300 text-slate-600 hover:bg-slate-100'
@@ -10598,7 +10771,7 @@ if (validacaoTelefoneObrigatoria) {
           type="button"
           disabled={!dadosUsuarioAlterados || usuarioSalvando}
           onClick={salvarEdicaoUsuario}
-          className={`rounded-xl px-5 py-2 text-xs font-black uppercase tracking-wide shadow-md transition ${
+          className={`min-h-11 rounded-xl px-5 py-2 text-xs font-black uppercase tracking-wide shadow-md transition ${
             dadosUsuarioAlterados && !usuarioSalvando
               ? 'cursor-pointer hover:brightness-110 active:scale-[0.98]'
               : 'cursor-not-allowed opacity-50'
@@ -10907,6 +11080,7 @@ if (validacaoTelefoneObrigatoria) {
               {usuarioSalvando ? 'Verificando...' : 'Criar'}
             </button>
           </div>
+          <AcessosUsuarioCampos value={usuarioLiberacoes} onChange={setUsuarioLiberacoes} perfil={usuarioPerfil} disabled={usuarioSalvando} />
         </div>
       ) : modoFormularioUsuario === 'existente' ? (
         <div
@@ -10979,6 +11153,7 @@ if (validacaoTelefoneObrigatoria) {
               <p className={`text-xs font-black uppercase tracking-wide ${textMuted}`}>
                 Usuário encontrado
               </p>
+              <AcessosUsuarioCampos value={usuarioLiberacoes} onChange={setUsuarioLiberacoes} perfil={perfilUsuarioExistente} disabled={vinculandoUsuarioExistente} />
 
               <div className="mt-3 grid gap-2 text-sm">
                 <p className={textMuted}>
@@ -11024,9 +11199,9 @@ if (validacaoTelefoneObrigatoria) {
                     Selecione o perfil de acesso
                   </option>
 
-                  <option value="gestor_master" className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}>
+                  {perfilUsuario === 'gestor_master' && <option value="gestor_master" className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}>
                     Gestor Master
-                  </option>
+                  </option>}
 
                   <option value="administrador" className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}>
                     Administrador
@@ -11381,7 +11556,7 @@ if (validacaoTelefoneObrigatoria) {
           </Tooltip>
         )}
 
-        {modulosPaginaTotalAtivos(modulosAtivos).filter((modulo) => modulo.id !== 'recebimentos_presencial').map((modulo) => (
+        {modulosPaginaTotalAtivos(modulosAtivos).filter((modulo) => modulo.id !== 'recebimentos_presencial' && modulosLiberados.includes(modulo.id)).map((modulo) => (
           <Tooltip key={modulo.id} texto={modulo.id === 'projetos' ? 'Crie e gerencie seus projetos, etapas, tarefas e responsáveis.' : `Abrir ${modulo.nome} em tela total.`} posicao="right" wrapperClassName="av-menu-gestao-atalho order-28 w-full">
             <button
               type="button"
@@ -11402,7 +11577,7 @@ if (validacaoTelefoneObrigatoria) {
           </Tooltip>
         ))}
 
-        {!modulosAtivos.includes('projetos') && projetosCompartilhados > 0 && (
+        {!modulosAtivos.includes('projetos') && modulosLiberados.includes('projetos') && projetosCompartilhados > 0 && (
           <Tooltip texto={`${projetosCompartilhados} projeto${projetosCompartilhados === 1 ? '' : 's'} compartilhado${projetosCompartilhados === 1 ? '' : 's'} com você.`} posicao="right" wrapperClassName="av-menu-gestao-atalho order-28 w-full">
             <button
               type="button"
@@ -11424,7 +11599,7 @@ if (validacaoTelefoneObrigatoria) {
         )}
 
         {/* 4. Ponto */}
-        {modulosAtivos.includes('ponto') && podeGerenciarPonto && (
+        {modulosAtivos.includes('ponto') && modulosLiberados.includes('ponto') && podeGerenciarPonto && (
           <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="right" wrapperClassName="av-menu-gestao-atalho order-30 w-full">
             <button
               onClick={abrirPontoIntegrado}
@@ -11440,7 +11615,7 @@ if (validacaoTelefoneObrigatoria) {
         )}
 
         {/* Operações de Campo usa um acesso dedicado para manter seu ícone e descrição. */}
-        {modulosAtivos.includes('recebimentos_presencial') && podeGerenciarRecebimentos && (
+        {modulosAtivos.includes('recebimentos_presencial') && modulosLiberados.includes('recebimentos_presencial') && podeGerenciarRecebimentos && (
           <Tooltip texto="Gerencie recebimentos, serviços, empresas e colaboradores em campo." posicao="right" wrapperClassName="av-menu-gestao-atalho order-40 w-full">
             <button
               onClick={() => {
@@ -11459,7 +11634,7 @@ if (validacaoTelefoneObrigatoria) {
         )}
 
         {/* 4b. Conteúdo AvantaVendas */}
-        {modulosAtivos.includes('vendas_mobile') && podeAcessarVendasMobileWeb && (
+        {modulosAtivos.includes('vendas_mobile') && modulosLiberados.includes('vendas_mobile') && podeAcessarVendasMobileWeb && (
           <Tooltip texto="Publique novidades, catálogo, fotos, vídeos e PDFs para a equipe do AvantaVendas." posicao="right" wrapperClassName="av-menu-gestao-atalho order-50 w-full">
             <button
               onClick={abrirConteudoVendasIntegrado}
@@ -11697,19 +11872,12 @@ if (validacaoTelefoneObrigatoria) {
         </div>
     )}
 
-          {statusConfig !== 'idle' && (
+          {statusConfig === 'error' && (
             <div
-              className={`order-[95] rounded-full px-3 py-0.5 text-center text-[10px] font-bold leading-tight ${
-                statusConfig === 'saving'
-                  ? 'bg-sky-50 text-sky-700'
-                  : statusConfig === 'saved'
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : 'bg-red-50 text-red-700'
-              }`}
+              role="status"
+              className="order-[95] rounded-full bg-red-50 px-3 py-0.5 text-center text-[10px] font-bold leading-tight text-red-700"
             >
-              {statusConfig === 'saving' && 'Salvando configurações.'}
-              {statusConfig === 'saved' && 'Configurações salvas'}
-              {statusConfig === 'error' && 'Erro ao salvar configurações'}
+              Erro ao salvar configurações
             </div>
           )}
         </div>
@@ -11727,6 +11895,11 @@ if (validacaoTelefoneObrigatoria) {
       />
 
       {/* RENDERIZAÇÃO CONDICIONAL DAS TELAS */}
+      {(carregandoPerfil || carregandoCentroCusto || erroDadosFinanceiros) && <div role={erroDadosFinanceiros ? 'alert' : 'status'} aria-live="polite" className={`mx-4 my-2 rounded-lg px-3 py-2 text-xs ${darkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>
+        {erroDadosFinanceiros || 'Atualizando dados deste perfil… Você pode navegar pelas abas.'}
+        {erroDadosFinanceiros && <button type="button" className="ml-3 min-h-11 underline" onClick={() => { const empresa = empresasDoUsuario.find(e => e.id === empresaId); if (empresa) void carregarEmpresaSelecionada(empresa).catch(() => undefined); }}>Tentar novamente</button>}
+      </div>}
+      <div aria-busy={carregandoPerfil || carregandoCentroCusto || undefined} inert={carregandoPerfil || carregandoCentroCusto || !configuracoesCarregadas || Boolean(erroDadosFinanceiros) || undefined}>
       {mesAtivo ? (
         <>
           <div
@@ -11903,6 +12076,19 @@ if (validacaoTelefoneObrigatoria) {
             <div className="mt-2 flex flex-col gap-6 xl:flex-row xl:items-start">
               <div onClick={() => setBlocoAtivo('despesa')} className="min-w-0 cursor-pointer transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'receita' ? 0.5 : 1 }}>
 <TabelaLancamentosDespesa
+              atualizarTiposModelo={async () => {
+                if (!empresaId) throw new Error('Selecione um perfil.');
+                const carga = cargaPerfilRef.current;
+                const { data, error } = await supabase.from('despesas_cadastradas')
+                  .select('nome, categoria').eq('empresa_id', empresaId).order('nome', { ascending: true });
+                if (error || carga !== cargaPerfilRef.current) throw new Error('Não foi possível atualizar os tipos do perfil.');
+                const atuais = ordenarDespesasAlfabeticamente((data || []).map((d) => ({
+                  nome: formatarNomeCategoria(d.nome),
+                  categoria: formatarNomeCategoria(d.categoria || ''),
+                })));
+                setDespesasCadastradas(atuais);
+                return atuais.map((d) => d.nome);
+              }}
               bgCard={bgCard}
               corPrimaria={corPrimaria}
               darkMode={darkMode}
@@ -12271,7 +12457,7 @@ if (validacaoTelefoneObrigatoria) {
         anoSelecionado={anoSelecionado}
         empresaId={empresaId}
         nomePerfilAtual={nomeEmpresaAtual}
-        resumoPerfis={resumoPerfisDashboard}
+        resumoPerfis={resumoPerfisDashboard.filter(p => perfisDashboardLiberados.includes(p.id))}
         centrosCustoAtivo={centrosCustoAtivo}
         centroCustoSelecionadoId={centroCustoSelecionadoId}
         centrosCusto={centrosCusto}
@@ -12359,28 +12545,7 @@ if (validacaoTelefoneObrigatoria) {
     </div>
   </main>
 )}
-
-      {carregandoPerfil && (
-        <div className="avanta-loading-stage fixed inset-0 z-[9500] !min-h-[100dvh] !items-center !justify-center !p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
-            <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
-              <span className="avanta-loading-spinner animate-spin" />
-            </div>
-            <p className="text-sm font-black uppercase tracking-wide text-sky-800">Carregando perfil...</p>
-          </div>
-        </div>
-      )}
-
-      {carregandoCentroCusto && !carregandoPerfil && (
-        <div className="avanta-loading-stage fixed inset-0 z-[9500] !min-h-[100dvh] !items-center !justify-center !p-4 bg-slate-950/35 backdrop-blur-[1px]" role="status" aria-live="polite" aria-label="Carregando centro de custo">
-          <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
-            <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
-              <span className="avanta-loading-spinner animate-spin" />
-            </div>
-            <p className="text-sm font-black uppercase tracking-wide text-white">Carregando centro de custo...</p>
-          </div>
-        </div>
-      )}
+      </div>
 
       {despesaRelatorioAberta && (
         <div
@@ -12478,6 +12643,10 @@ if (validacaoTelefoneObrigatoria) {
 />
 
 <ImportadorDespesasModal
+  key={`${empresaId}:${centrosCustoAtivo?centroCustoSelecionadoId:'perfil'}`}
+  centroCustoId={centrosCustoAtivo?centroCustoSelecionadoId:null}
+  centroCustoNome={centrosCustoAtivo?centrosCusto.find(c=>c.id===centroCustoSelecionadoId)?.nome:undefined}
+  centroObrigatorio={centrosCustoAtivo}
   arquivo={arquivoImportador}
   retomarRascunho={retomarRascunhoImportador}
   empresaId={empresaId || ''}

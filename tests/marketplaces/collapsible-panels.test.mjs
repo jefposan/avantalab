@@ -20,6 +20,7 @@ const stubs = new Map([
 ]);
 const hooks = registerHooks({
   resolve(specifier, context, next) {
+    if (specifier === 'next/image') return next('next/image.js', context);
     if (stubs.has(specifier)) return { url: `data:text/javascript,${encodeURIComponent(stubs.get(specifier))}`, shortCircuit: true };
     if (specifier.endsWith('.module.css')) return { url: 'data:text/javascript,export default new Proxy({}, {get:(_,key)=>key});', shortCircuit: true };
     if (specifier.startsWith('@/')) specifier = pathToFileURL(resolve(root, specifier.slice(2))).href;
@@ -47,7 +48,9 @@ const hooks = registerHooks({
 const { default: Toggle } = await import(pathToFileURL(resolve(root, 'app/components/BotaoExpandirCard.tsx')).href);
 const { default: Vendas } = await import(pathToFileURL(resolve(root, 'app/marketplaces/Vendas.tsx')).href);
 const { default: Anunciados } = await import(pathToFileURL(resolve(root, 'app/marketplaces/Anunciados.tsx')).href);
-const { default: ProductsStock } = await import(pathToFileURL(resolve(root, 'app/marketplaces/ProductsStock.tsx')).href);
+const { DirectSaleRow } = await import(pathToFileURL(resolve(root, 'app/marketplaces/DirectSalesHistory.tsx')).href);
+const { default: ProductsStock, LocalProductHeader, ProductDetail } = await import(pathToFileURL(resolve(root, 'app/marketplaces/ProductsStock.tsx')).href);
+const { ReferencePriceEditor } = await import(pathToFileURL(resolve(root, 'app/marketplaces/LocalProductPricing.tsx')).href);
 const { default: AvantaKanban } = await import(pathToFileURL(resolve(root, 'app/components/AvantaKanban.tsx')).href);
 const { default: DateOrderButton } = await import(pathToFileURL(resolve(root, 'app/marketplaces/DateOrderButton.tsx')).href);
 const { default: FiltroCompetencia } = await import(pathToFileURL(resolve(root, 'app/recebimentos/components/FiltroCompetencia.tsx')).href);
@@ -57,7 +60,67 @@ const { Icon: OfficialIcon } = await import(pathToFileURL(resolve(root, 'app/pro
 hooks.deregister();
 const render = (Component, props) => renderToStaticMarkup(React.createElement(Component, props));
 const noop = () => {};
-const salesProps = { companyId: 'empresa', accountId: '', onAccountChange: noop, group: '', onGroupChange: noop, counts: salesSummary([], '').byGroup, total: 0, accounts: [], sales: [], canManage: false, loading: false, error: '', awaitingUpdates: 0, onRefresh: noop, onSaleUpdated: noop, onExpandedChange: noop, dark: false, brand: '#003E73' };
+test('produto expandido separa cadastro, estoque, publicação e históricos sem ações soltas',()=>{
+ const product={id:'p',sku:'SKU-1',ean:'7891129598607',name:'Produto',description:'Descrição',pictures:[],price_cents:20000,stock_quantity:3,total_stock_quantity:5,revision:1,links:[],attributes:[],publication_form:{},allocations:[{warehouseId:'w',name:'Online',quantity:3}]};
+ const props={companyId:'company',canManage:true,accounts:[],preparationLocked:false,dark:false,brand:'#003e73',onPrepare:noop,request:async()=>({})};
+ const html=render(ProductDetail,{product,props,busy:false,onCommand:noop,onStockBusy:noop,onStockUpdated:noop});
+ for(const label of ['Cadastro do produto','Estoques do produto','Publicação do produto','Históricos do produto'])assert.ok(html.includes(`aria-label="${label}"`));
+ assert.match(html,/class="productSummaryFacts"/);assert.match(html,/class="productPublishRow"/);assert.match(html,/class="productHistoryGrid"/);
+ assert.match(html,/<details class="productDescription"><summary>Descrição e fotos/);
+ assert.match(html,/Todos os estoques.*5 un. físicas/);
+ const readonly=render(ProductDetail,{product,props:{...props,canManage:false},busy:false,onCommand:noop,onStockBusy:noop,onStockUpdated:noop});
+ assert.doesNotMatch(readonly,/Editar cadastro|Preparar anúncio|Confirmar estoque/);assert.match(readonly,/Anúncios vinculados/);
+ const css=readFileSync(resolve(root,'app/marketplaces/marketplaces.module.css'),'utf8');
+ assert.equal(css.split('.listingsPanel button:not([data-av-action="compact"]):not(.primary)').length-1,2,'claro e escuro excluem botões oficiais');
+ const stockCss=readFileSync(resolve(root,'app/marketplaces/price-product-stock.module.css'),'utf8');
+ assert.match(stockCss,/\.heading > div:not\(\.headingActions\)/);assert.match(stockCss,/button:not\(\[data-av-action="compact"\]\)/);
+});
+test('referência usa pílula reservada, guarda leitura/edição no mesmo espaço e mantém permissões',()=>{
+  const product={id:'produto',name:'Produto',price_cents:20000};
+  const html=render(ReferencePriceEditor,{product,disabled:false,canEdit:true,onSave:noop});
+  assert.match(html,/class="referencePriceShell"><span class="referencePrice"/);
+  assert.match(html,/Referência:/);assert.match(html,/200,00/);
+  assert.match(html,/aria-label="Editar preço de referência de Produto"/);
+  assert.doesNotMatch(html,/<input|<form/);
+  assert.doesNotMatch(render(ReferencePriceEditor,{product,disabled:false,canEdit:false,onSave:noop}),/<button/);
+  assert.match(render(ReferencePriceEditor,{product,disabled:true,canEdit:true,onSave:noop}),/disabled=""/);
+  const research=render(ReferencePriceEditor,{product,disabled:false,canEdit:true,onSave:noop,onResearch:noop});
+  assert.match(research,/aria-label="Pesquisar e atualizar referência de Produto"/);
+  assert.match(render(ReferencePriceEditor,{product,disabled:true,canEdit:true,onSave:noop,onResearch:noop,researching:true}),/aria-busy="true"/);
+  assert.doesNotMatch(render(ReferencePriceEditor,{product,disabled:false,canEdit:false,onSave:noop,onResearch:noop}),/Pesquisar e atualizar/);
+  const css=readFileSync(resolve(root,'app/marketplaces/marketplaces.module.css'),'utf8');
+  assert.match(css,/\.referencePrice,\.referencePriceEditor \{[^}]*height:32px;[^}]*border-radius:999px/);
+  assert.match(css,/\.referencePriceShell \{ width:220px;max-width:100%/);
+});
+test('card compacto preserva ações, separa estoque e referência/sugestões e exibe só canais confirmados',()=>{
+  const link=(provider,status,id)=>({id,connection_id:id,provider,provider_listing_id:id,status});
+  const product={id:'produto',name:'Nome completo do produto',sku:'SKU-1',ean:'7891129598607',description:'Descrição longa fica nos detalhes',pictures:[],price_cents:20000,stock_quantity:0,revision:1,links:[link('mercado_livre','active','a'),link('mercado_livre','paused','b'),link('magalu','PUBLISHED','c'),link('shopee','draft','d')]};
+  const props={product,expanded:false,canManage:true,busy:false,dark:false,brand:'#003E73',percentages:{minimum:50,medium:70,ideal:90},onToggle:noop,onCommand:noop};
+  const html=render(LocalProductHeader,props);
+  assert.match(html,/class="localProductFinancial"><div class="localProductNumbers"/);
+  assert.ok(html.indexOf('Referência:')<html.indexOf('aria-label="Preços de venda"'));
+  assert.match(html,/Online: 0 un\./);assert.match(html,/aria-label="Estoque do produto"/);assert.match(html,/aria-label="Preços sugeridos do produto"/);assert.doesNotMatch(html,/Descrição longa|anúncios vinculados|data-provider="shopee"/);
+  assert.equal((html.match(/data-provider="mercado_livre"/g)||[]).length,1,html);
+  assert.match(html,/data-provider="magalu"/);assert.doesNotMatch(html,/1 pausado/);
+  assert.match(html,/100,00/);assert.match(html,/140,00/);assert.match(html,/180,00/);
+  assert.match(html,/aria-label="Editar preço de referência de Nome completo do produto"/);
+  assert.match(html,/aria-label="Pesquisar e atualizar referência de Nome completo do produto"/);
+  assert.match(html,/aria-label="Expandir produto Nome completo do produto"/);
+  assert.match(html,/class="productSalePriceLabel">Mínimo <small>· 50%<\/small>/);
+  assert.doesNotMatch(render(LocalProductHeader,{...props,canManage:false}),/aria-label="Editar preço/);
+  assert.match(render(LocalProductHeader,{...props,busy:true}),/disabled=""/);
+  assert.match(render(LocalProductHeader,{...props,expanded:true}),/aria-label="Recolher produto/);
+  assert.match(render(LocalProductHeader,{...props,product:{...product,links:[],stock_quantity:null,price_cents:null},percentages:null}),/Sem publicação/);
+  assert.match(render(LocalProductHeader,{...props,product:{...product,links:[link('magalu','IN_REVIEW','d')]}}),/Sem anúncio ativo/);
+  const providers=['mercado_livre','magalu','shopee','tiktok_shop','casas_bahia','amazon'];
+  const all=render(LocalProductHeader,{...props,product:{...product,links:providers.map(provider=>link(provider,'active',provider))}});
+  assert.deepEqual(Array.from(all.matchAll(/data-provider="([^"]+)"/g),match=>match[1]),providers);
+  assert.doesNotMatch(all,/\+\d/);
+  const css=readFileSync(resolve(root,'app/marketplaces/marketplaces.module.css'),'utf8');
+  assert.match(css,/\.localProductChannels \{[^}]*display:grid;grid-template-columns:repeat\(4,max-content\)/);
+  assert.match(css,/\.localProductHeading \{[^}]*grid-template-columns:56px minmax\(180px,1fr\) minmax\(430px,1.4fr\) auto/);
+});
+const salesProps = { companyId: 'empresa', accountId: '', onAccountChange: noop, group: '', onGroupChange: noop, counts: salesSummary([], '').byGroup, total: 0, accounts: [], marketplaceOptions: [], selectedMarketplaces: [], onMarketplacesChange: noop, sales: [], canManage: false, loading: false, error: '', awaitingUpdates: 0, onRefresh: noop, onSaleUpdated: noop, onExpandedChange: noop, dark: false, brand: '#003E73' };
 
 test('ícone compartilhado refresh usa quatro traços completos e cantos arredondados', () => {
   const html = render(OfficialIcon, { name: 'refresh', size: 20 });
@@ -155,6 +218,26 @@ test('controle compartilhado associa conteúdo, nome do bloco e estado expandido
   }
 });
 
+test('Contas conectadas usa somente seta, preservando semântica, tema, alvo e acionamento', () => {
+  for (const expandido of [true, false]) for (const darkMode of [true, false]) {
+    const props = { variante: 'painel', modo: 'lista', somenteIcone: true, contexto: 'contas conectadas', controlsId: 'connected-accounts-content', expandido, darkMode, corPrimaria: '#cf0201', onClick: noop };
+    const html = render(Toggle, props);
+    const button = html.match(/<button\b[^>]*>([\s\S]*?)<\/button>/)[0];
+    assert.match(button, /aria-controls="connected-accounts-content"/);
+    assert.ok(button.includes(`aria-expanded="${expandido}"`));
+    assert.ok(button.includes(`aria-label="${expandido ? 'Recolher' : 'Expandir'} contas conectadas"`));
+    assert.match(button, /h-12 w-12 shrink-0/);
+    assert.match(button, /background-color:transparent/);
+    assert.match(button, /border-width:0;padding:0;width:48px;min-width:48px;box-shadow:none/);
+    assert.doesNotMatch(button, /<span/);
+    assert.ok(button.includes(expandido ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'));
+    let clicked = false, stopped = false;
+    Toggle({ ...props, onClick: () => { clicked = true; } }).props.children.props.onClick({ stopPropagation() { stopped = true; } });
+    assert.ok(clicked && stopped);
+  }
+  assert.match(render(Toggle, { variante: 'painel', expandido: false, onClick: noop }), /<span>Expandir<\/span>/);
+});
+
 test('variantes anteriores mantêm rótulos e acionamento sem propagação', () => {
   assert.match(render(Toggle, { expandido: false, onClick: noop }), /aria-label="Expandir card"/);
   assert.match(render(Toggle, { variante: 'rodape', modo: 'lista', expandido: true, onClick: noop }), /Recolher lista de lançamentos/);
@@ -184,15 +267,17 @@ test('Vendas recolhe só o conteúdo e mantém título, total, atualizar e filtr
   assert.ok(!expanded.includes('id="sales-content" hidden'));
 });
 
-test('Vendas agrupa conta e situação no mesmo trecho, com seleção controlada e layout responsivo', () => {
+test('Vendas agrupa conta, situação e canais no mesmo trecho, com layout responsivo', () => {
   const html = render(Vendas, { ...salesProps, expanded: true, group: 'delivered', counts: { ...salesProps.counts, delivered: 6 }, total: 10 });
   assert.match(html, /class="salesListFilters"/);
-  assert.match(html, /Conta das vendas/); assert.match(html, /Situação/);
+  assert.match(html, /Conta das vendas/); assert.match(html, /Situação/); assert.match(html, /Canal de venda/);
   assert.match(html, /Entregues/); assert.match(html, />6<\/small>/);
   assert.match(html, /Vale a última situação escolhida/);
-  assert.ok(html.indexOf('Conta das vendas') < html.indexOf('Vale a última situação escolhida'));
+  assert.ok(html.indexOf('Conta das vendas') < html.indexOf('Situação'));
+  assert.ok(html.indexOf('Situação') < html.indexOf('Canal de venda'));
+  assert.ok(html.indexOf('Canal de venda') < html.indexOf('Vale a última situação escolhida'));
   const css = readFileSync(resolve(root, 'app/marketplaces/marketplaces.module.css'), 'utf8');
-  assert.match(css, /\.salesListFilters \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.salesListFilters \{ display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(css, /@media \(max-width: 760px\) \{ \.salesListFilters \{ grid-template-columns: minmax\(0, 1fr\)/);
 });
 
@@ -212,39 +297,68 @@ test('Anunciados inicia recolhido com controle próprio no topo e filtros montad
   assert.match(source, /onPublishInAnotherAccount\(sourceAccountId, item.id, copyTargetId\)/);
 });
 
-test('Produtos e estoque inicia recolhido sem remover as ações da área expansível', () => {
+test('venda direta mostra canal, EAN, total e cancelamento sem etiqueta nem pós-venda de marketplace',()=>{
+  const direct={id:'direct-sale',productId:'product',warehouseId:'stock',warehouseName:'Saldão',productName:'Air Fryer',ean:'7897180598754',picture:null,quantity:2,unitPriceCents:14000,totalCents:28000,soldOn:'2026-10-19',status:'confirmed',returnedQuantity:0,note:'Balcão',cancellationNote:null,revision:1,createdAt:'2026-10-19T12:00:00Z',updatedAt:'2026-10-19T12:00:00Z'};
+  const sale={provider:'direct',directSale:direct,id:direct.id,connectionId:'warehouse:stock',orderId:direct.id,soldAt:'2026-10-19T12:00:00-03:00',status:'paid',shipmentId:null,shipmentStatus:null,shipmentSubstatus:null,labelStatus:'unavailable',seenAt:null,createdAt:direct.createdAt,updatedAt:direct.updatedAt,buyer:null,total:280,currency:'BRL',items:[]};
+  const html=render(Vendas,{...salesProps,expanded:true,sales:[sale],canManage:false});
+  assert.match(html,/Saldão.*Venda direta/);assert.match(html,/EAN:.*7897180598754/);assert.match(html,/Total confirmado nos filtros:.*280,00/);
+  assert.doesNotMatch(html,/Imprimir etiqueta|etiqueta ainda não foi liberada|Cancelar venda|Pós-venda/);
+  const cancelled=render(Vendas,{...salesProps,expanded:true,sales:[{...sale,status:'cancelled',directSale:{...direct,status:'cancelled'}}],canManage:false});
+  assert.match(cancelled,/Venda cancelada/);assert.match(cancelled,/Total confirmado nos filtros: <strong>R\$[^<]*0,00/);
+});
+
+test('situação da venda direta não sugere devolução inexistente e separa devolução real do cancelamento',()=>{
+  const sale={id:'sale',productId:'product',warehouseId:'stock',warehouseName:'SALDÃO',productName:'Chaleira',ean:'7898742840274',picture:null,quantity:1,unitPriceCents:11325,totalCents:11325,soldOn:'2026-10-20',status:'confirmed',returnedQuantity:0,note:'',cancellationNote:null,revision:1};
+  const props={companyId:'company',sale,request:()=>{throw Error('Render não acessa rede');},canSell:true,onUpdated:noop};
+  const confirmed=render(DirectSaleRow,props);assert.match(confirmed,/<p>Venda confirmada<\/p>/);assert.doesNotMatch(confirmed,/devolvi|Devolução/);assert.match(confirmed,/Cancelar venda/);
+  const cancelled=render(DirectSaleRow,{...props,sale:{...sale,status:'cancelled',cancellationNote:'Cliente desistiu'}});assert.match(cancelled,/<p>Venda cancelada<\/p>/);assert.doesNotMatch(cancelled,/Devolução (?:total|parcial)/);assert.match(cancelled,/Cliente desistiu/);assert.match(cancelled,/Registrar devolução/);
+  const partial=render(DirectSaleRow,{...props,sale:{...sale,status:'cancelled',quantity:2,returnedQuantity:1}});assert.match(partial,/Devolução parcial: 1 de 2 unidades\./);assert.match(partial,/Venda cancelada/);
+  const full=render(DirectSaleRow,{...props,sale:{...sale,status:'cancelled',returnedQuantity:1}});assert.match(full,/Devolução total: 1 unidade\./);assert.doesNotMatch(full,/Registrar devolução/);
+  const plural=render(DirectSaleRow,{...props,sale:{...sale,status:'cancelled',quantity:2,returnedQuantity:2}});assert.match(plural,/Devolução total: 2 unidades\./);
+  assert.match(confirmed,/<section class="saleSection" aria-label="Situação da venda"><h4>Situação da venda<\/h4>/);
+  assert.doesNotMatch(confirmed,/aria-label="Devoluções registradas"/);
+  assert.match(partial,/aria-label="Situação da venda"[^]*?<\/section><section class="saleSection" aria-label="Devoluções registradas"><h4>Devoluções<\/h4>/);
+  assert.match(cancelled,/Motivo do cancelamento: Cliente desistiu<\/p><\/section>/);
+  const css=readFileSync(resolve(root,'app/marketplaces/direct-sales.module.css'),'utf8');
+  assert.match(css,/\.saleSections \{[^}]*grid-template-columns:minmax\(0,1fr\)/);
+  assert.match(css,/\.saleSection \+ \.saleSection \{margin-top:18px;/);
+});
+
+test('Produtos inicia recolhido sem mostrar ações administrativas no cabeçalho', () => {
   const html = render(ProductsStock, { companyId: 'empresa', dark: false, brand: '#003E73', canManage: true, accounts: [], refreshKey: 0, preparationLocked: false, onPrepare: noop });
-  assert.match(html, /aria-label="Expandir produtos e estoque" aria-expanded="false"/);
+  assert.match(html, /aria-label="Expandir produtos cadastrados" aria-expanded="false"/);
   assert.match(html, /aria-controls="products-content"/);
   assert.match(html, /id="products-content" hidden=""/);
-  assert.ok(html.indexOf('Expandir produtos e estoque') < html.indexOf('Novo produto'));
-  assert.match(html, /Carregar estoque dos anúncios/);
+  assert.match(html,/Atualizar/);
+  assert.doesNotMatch(html,/Novo produto|Importar anúncios existentes|Recuperar fotos|Carregar estoque dos anúncios/);
 });
 
 test('cabeçalho de Anunciados reutiliza os estilos de Vendas sem sobrepor Expandir', () => {
   const props = { companyId: 'empresa', accountId: '', dark: false, brand: '#003E73', onAccountsLoaded: noop, onAccountSelectionLockedChange: noop, onPublishInAnotherAccount: noop };
   const announced = render(Anunciados, props);
   const sales = render(Vendas, { ...salesProps, expanded: true });
-  assert.match(announced, /class="refreshSales"[^>]*>Atualizar<\/button>/);
-  assert.match(sales, /class="refreshSales"[^>]*>Atualizar<\/button>/);
+  assert.match(announced, /data-av-action="compact"[^>]*><span[^>]*>Atualizar<\/span><\/button>/);
+  assert.match(sales, /data-av-action="compact"[^>]*><span[^>]*>Atualizar<\/span><\/button>/);
   for (const html of [announced, sales]) {
     assert.match(html, /min-h-12[^\"]*text-xs font-semibold/);
-    assert.match(html, /color:#003E73;background-color:#ffffff;border-color:#cbd5e1/);
+    assert.match(html, /color:#003E73;background-color:transparent;border-color:#cbd5e1;border-width:0/);
   }
   const css = readFileSync(resolve(root, 'app/marketplaces/marketplaces.module.css'), 'utf8');
   assert.equal((css.match(/:not\(:where\(\.panelHeadingActions button\)\)/g) || []).length, 2);
 });
 
-test('barra compacta dos produtos mantém busca e três ações juntas, respeitando permissões e mobile', () => {
+test('busca permanece local e ações ficam no cabeçalho somente expandido, respeitando permissões', () => {
   const props = { companyId: 'empresa', dark: false, brand: '#003E73', accounts: [], refreshKey: 0, preparationLocked: false, onPrepare: noop };
   const html = render(ProductsStock, { ...props, canManage: true });
-  const toolbar = html.slice(html.indexOf('class="localToolbar"'), html.indexOf('class="localProducts"'));
-  assert.match(toolbar, /id="local-product-search"/);
-  assert.match(toolbar, /Novo produto/);
-  assert.match(toolbar, /Importar anúncios existentes/);
-  assert.match(toolbar, /id="load-listing-stock-button"/);
-  assert.ok(!toolbar.includes('class="actionBar"'));
-  assert.equal((html.match(/id="load-listing-stock-button"/g) || []).length, 1);
+  assert.ok(html.indexOf('id="local-product-search"') < html.indexOf('id="products-content"'));
+  assert.match(html, /Ler EAN/);
+  const source=readFileSync(resolve(root,'app/marketplaces/ProductsStock.tsx'),'utf8');
+  assert.match(source,/const registeredActions=canManage&&!warehouseId&&expanded\?/);
+  assert.match(source,/Atualizar<\/BotaoAcaoCompacto><\/Tooltip>\{registeredActions\}<BotaoExpandirCard/);
+  assert.match(source,/registeredProductActions[\s\S]*Novo produto[\s\S]*Importar anúncios existentes[\s\S]*Recuperar fotos[\s\S]*Carregar estoque dos anúncios/);
+  assert.equal((source.match(/id="load-listing-stock-button"/g)||[]).length,1);
+  assert.doesNotMatch(source,/Busca automática nos cadastros desta empresa/);
+  assert.doesNotMatch(html,/Novo produto|Importar anúncios existentes|Recuperar fotos|load-listing-stock-button/);
   const readonly = render(ProductsStock, { ...props, canManage: false });
   assert.match(readonly, /id="local-product-search"/);
   for (const text of ['Novo produto', 'Importar anúncios existentes', 'load-listing-stock-button']) assert.ok(!readonly.includes(text));
@@ -259,7 +373,7 @@ test('controles do cabeçalho usam Tooltip oficial, sem balão nativo duplicado 
   for (const [file, text] of [['Anunciados.tsx', 'Atualizar anúncios das contas selecionadas'], ['Vendas.tsx', 'Atualizar vendas e envios']]) {
     const source = readFileSync(resolve(root, `app/marketplaces/${file}`), 'utf8');
     assert.match(source, /import Tooltip from '@\/app\/components\/Tooltip'/);
-    assert.ok(source.includes(`<Tooltip texto="${text}"><button`));
+    assert.ok(source.includes(`<Tooltip texto="${text}"><BotaoAcaoCompacto`));
   }
   const kanban = readFileSync(resolve(root, 'app/components/AvantaKanban.tsx'), 'utf8');
   assert.match(kanban, /import Tooltip from '\.\/Tooltip'/);
@@ -267,8 +381,22 @@ test('controles do cabeçalho usam Tooltip oficial, sem balão nativo duplicado 
   assert.ok(!kanban.includes('title={`Arrastar para organizar'));
 });
 
+test('abertura da página inicia contas, vendas, anúncios e produtos recolhidos', () => {
+  const client = readFileSync(resolve(root, 'app/marketplaces/MarketplacesClient.tsx'), 'utf8');
+  assert.match(client, /\[connectedAccountsExpanded, setConnectedAccountsExpanded\] = useState\(false\)/);
+  assert.match(client, /useMarketplacePanelGroup\(companyId\)/);
+  const expansion=readFileSync(resolve(root,'app/marketplaces/panel-expansion.ts'),'utf8');
+  assert.match(expansion,/useState<PanelExpansionState>\(\{companyId,active:''\}\)/);
+  assert.match(expansion,/\[localExpanded,setLocalExpanded\]=useState\(false\)/);
+  const announced = readFileSync(resolve(root, 'app/marketplaces/Anunciados.tsx'), 'utf8');
+  assert.match(announced, /\[panelExpanded, setPanelExpanded\] = usePanelExpansion\(/);
+  const products = readFileSync(resolve(root, 'app/marketplaces/ProductsStock.tsx'), 'utf8');
+  assert.match(products, /\[expanded, setExpanded\] = usePanelExpansion\(props\)/);
+  for (const source of [client, announced, products]) assert.ok(!/localStorage\.(?:getItem|setItem)\([^\n]*(?:Expanded|expanded)/.test(source));
+});
+
 test('sino expande Vendas antes de levar ao bloco, sem alterar escopo da conta de anúncios', () => {
   const source = readFileSync(resolve(root, 'app/marketplaces/MarketplacesClient.tsx'), 'utf8');
-  assert.match(source, /setSalesExpanded\(true\); setSalesAccount\(''\); setSalesSnapshot\(sales\); scrollToSales\(\)/);
+  assert.match(source, /setSalesExpanded\(true\); setSalesAccount\(''\); setSalesMarketplaces\(\[\]\); setSalesSnapshot\(sales\); scrollToSales\(\)/);
   assert.match(source, /expanded=\{salesExpanded\} onExpandedChange=\{setSalesExpanded\}/);
 });

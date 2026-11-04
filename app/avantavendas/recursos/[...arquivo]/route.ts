@@ -1,10 +1,14 @@
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
+import scriptsProprios from '../scripts-proprios.json';
+import { AVANTAVENDAS_VERSION } from '../../version';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const RAIZ_RECURSOS = path.resolve(process.cwd(), 'app/avantavendas/sistema');
+const RAIZ_COMPACTOS = path.resolve(process.cwd(), 'app/avantavendas/runtime-compacto');
+const SCRIPTS_COMPACTOS = new Set(scriptsProprios);
 const RECURSOS_PADRAO_AVANTA = new Map([
   [
     'avanta-voice-actions.js',
@@ -60,7 +64,15 @@ export async function GET(
     const informacoes = await stat(caminhoArquivo);
     if (!informacoes.isFile()) return respostaNaoEncontrada();
 
-    const conteudo = await readFile(caminhoArquivo);
+    const versaoPedida = new URL(request.url).searchParams.get('v');
+    // URLs anteriores preservam seus bytes originais/cache; a revisão atual
+    // entrega a formatação compacta sem mudar bootstrap, sessão ou permissões.
+    const usarCompacto = process.env.NODE_ENV === 'production'
+      && SCRIPTS_COMPACTOS.has(chaveRecurso)
+      && (!versaoPedida || versaoPedida === AVANTAVENDAS_VERSION);
+    const conteudo = usarCompacto
+      ? await readFile(path.resolve(RAIZ_COMPACTOS, chaveRecurso)).catch(() => readFile(caminhoArquivo))
+      : await readFile(caminhoArquivo);
     const extensao = path.extname(caminhoArquivo).toLowerCase();
     const recursoVersionado = new URL(request.url).searchParams.has('v');
     return new Response(conteudo, {

@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
+
+test('migração protege financeiro/RPC, módulos, múltiplos vínculos e alterações diretas', async () => {
+  const db = new PGlite();
+  const user='00000000-0000-4000-8000-000000000001', company='00000000-0000-4000-8000-000000000010', other='00000000-0000-4000-8000-000000000011';
+  try {
+    await db.exec(`create role anon; create role authenticated; create role service_role;
+      create schema auth;
+      create schema storage;
+      create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.user',true),'')::uuid$$;
+      create function auth.role() returns text language sql as $$select nullif(current_setting('request.role',true),'')$$;
+      create table empresas(id uuid primary key);
+      create table usuarios_empresa(id uuid primary key default gen_random_uuid(),empresa_id uuid references empresas(id),user_id uuid,perfil text,status text);
+      create table lancamentos(id uuid,empresa_id uuid,valor numeric);
+      create table projetos_documentos(id int,empresa_id uuid,conteudo text);
+      create table storage.objects(id int,bucket_id text,name text);
+      alter table storage.objects enable row level security;
+      create policy existente on storage.objects for all to authenticated using(true) with check(true);
+      grant usage on schema storage to authenticated; grant select on storage.objects to authenticated;
+      alter table lancamentos enable row level security; alter table projetos_documentos enable row level security;
+      create policy existente on lancamentos for all to authenticated using(true) with check(true);
+      create policy existente on projetos_documentos for all to authenticated using(true) with check(true);
+      create function financeiro_exemplo(p_empresa_id uuid) returns numeric language plpgsql security definer as $$begin return (select sum(valor) from lancamentos where empresa_id=p_empresa_id); end$$;
+      create function financeiro_por_id(p_lancamento_id uuid) returns numeric language plpgsql security definer as $$begin return 999; end$$;
+      grant usage on schema public,auth to authenticated; grant select,update on all tables in schema public to authenticated;
+      insert into empresas values('${company}'),('${other}');
+      insert into usuarios_empresa(empresa_id,user_id,perfil,status) values('${company}','${user}','administrador','ativo'),('${other}','${user}','administrador','ativo');
+      insert into lancamentos values('00000000-0000-4000-8000-000000000020','${company}',123),('00000000-0000-4000-8000-000000000021','${other}',456);
+      insert into projetos_documentos values(1,'${company}','autorizado');`);
+    await db.exec(`insert into storage.objects values(1,'notas-lancamentos','${company}/nota.jpg'),(2,'notas-lancamentos','${other}/nota.jpg');`);
+    await db.exec(readFileSync('supabase/migrations/20261014050000_usuario_areas_liberadas.sql','utf8'));
+    await db.exec(`update usuarios_empresa set dashboard_liberada=false,modulos_liberados=array['projetos'] where empresa_id='${company}'; set "request.user"='${user}'; set request.role='authenticated'; set role authenticated;`);
+    assert.deepEqual((await db.query('select valor from lancamentos')).rows,[{valor:'456'}]);
+    assert.equal((await db.query('select count(*)::int as n from projetos_documentos')).rows[0].n,1);
+    assert.deepEqual((await db.query('select id from storage.objects order by id')).rows,[{id:2}]);
+    await assert.rejects(db.query(`select financeiro_exemplo('${company}')`), /não foi liberada/);
+    await assert.rejects(db.query("select financeiro_por_id('00000000-0000-4000-8000-000000000020')"), /não foi liberada/);
+    assert.equal(Number((await db.query("select financeiro_por_id('00000000-0000-4000-8000-000000000021') as total")).rows[0].total),999);
+    assert.equal(Number((await db.query(`select financeiro_exemplo('${other}') as total`)).rows[0].total),456);
+    await assert.rejects(db.exec(`update usuarios_empresa set dashboard_liberada=true where empresa_id='${company}'`),/somente pela administração/);
+    await assert.rejects(db.exec(`update usuarios_empresa set perfil='gestor_master' where empresa_id='${company}'`),/Gestor Master/);
+    await db.exec(`reset role; set request.role='service_role'; update usuarios_empresa set modulos_liberados=array['custos'] where empresa_id='${company}'; set role authenticated;`);
+    assert.equal((await db.query('select count(*)::int as n from projetos_documentos')).rows[0].n,0);
+    await db.exec(`reset role; set "request.user"=''; update usuarios_empresa set perfil='gestor_master',dashboard_liberada=true,modulos_liberados=null where empresa_id='${company}'; set "request.user"='${user}'; set role authenticated;`);
+    assert.equal((await db.query('select count(*)::int as n from lancamentos')).rows[0].n,2);
+  } finally { await db.close(); }
+});

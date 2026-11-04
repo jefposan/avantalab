@@ -5,12 +5,15 @@ import type { PostSaleDetails } from '@/app/modules/marketplaces/post-sale';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import { marketplaceClientRequest } from './Anunciados';
 import styles from './marketplaces.module.css';
+import saleLayout from './sale-actions.module.css';
+import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
+import { Icon } from '@/app/projetos/components/Icon';
+import { marketplaceDateTime as date } from '@/app/modules/marketplaces/date-format';
 
-const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 const formatDate = (value: string) => Number.isFinite(Date.parse(value)) ? date.format(new Date(value)) : 'Data não informada';
 
-export default function SalePostSale({ companyId, saleId, connectionId, provider, onSaleUpdated }: {
-  companyId: string; saleId: string; connectionId: string; provider?: MarketplaceSale['provider']; onSaleUpdated: (sale: MarketplaceSale) => void;
+export default function SalePostSale({ companyId, saleId, connectionId, provider, accountName, onSaleUpdated }: {
+  companyId: string; saleId: string; connectionId: string; provider?: MarketplaceSale['provider']; accountName?: string; onSaleUpdated: (sale: MarketplaceSale) => void;
 }) {
   const [details, setDetails] = useState<PostSaleDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,18 +32,18 @@ export default function SalePostSale({ companyId, saleId, connectionId, provider
     return () => controller.abort();
   }, [companyId, saleId, connectionId, revision, onSaleUpdated]);
 
-  return <SalePostSaleView provider={provider} details={details} loading={loading} error={error} onRefresh={() => { setLoading(true); setError(''); setDetails(null); setRevision((value) => value + 1); }} />;
+  return <SalePostSaleView provider={provider} accountName={accountName} details={details} loading={loading} error={error} onRefresh={() => { setLoading(true); setError(''); setDetails(null); setRevision((value) => value + 1); }} />;
 }
 
 /** Apresentação sem acesso a sessão; permite validar todos os estados com dados simulados. */
-export function SalePostSaleView({ details, loading, error, onRefresh, provider }: {
-  details: PostSaleDetails | null; loading: boolean; error: string; onRefresh: () => void; provider?: MarketplaceSale['provider'];
+export function SalePostSaleView({ details, loading, error, onRefresh, provider, accountName }: {
+  details: PostSaleDetails | null; loading: boolean; error: string; onRefresh: () => void; provider?: MarketplaceSale['provider']; accountName?: string;
 }) {
   const magalu = (details?.provider || provider) === 'magalu';
   const name = magalu ? 'Magalu' : 'Mercado Livre';
   const platformLink = magalu ? 'https://seller.magalu.com' : 'https://www.mercadolivre.com.br/vendas';
-  return <div className={styles.postSale}>
-    <div className={styles.postSaleHeading}><h3>Pós-venda · {name}</h3><button type="button" className={styles.refreshSales} disabled={loading} onClick={onRefresh}>{loading ? 'Consultando…' : 'Atualizar pós-venda'}</button></div>
+  return <div className={`${styles.postSale} ${saleLayout.postSale}`}>
+    <div className={`${styles.postSaleHeading} ${saleLayout.postSaleHeading}`}><h3>Pós-venda · {name}</h3><BotaoAcaoCompacto aria-label="Atualizar pós-venda" disabled={loading} onClick={onRefresh}><Icon name="refresh" size={16} />{loading ? 'Consultando…' : 'Atualizar'}</BotaoAcaoCompacto></div>
     {loading && <p className={styles.salesScopeHelp} role="status">Consultando cancelamento, reclamações, devolução e reembolso no {name}…</p>}
     {error && <p className={styles.salesError} role="alert">{error} Não foi possível confirmar devolução ou reembolso. Tente Atualizar pós-venda.</p>}
     {details && <>
@@ -94,7 +97,7 @@ export function SalePostSaleView({ details, loading, error, onRefresh, provider 
       {!!details.financialEntries?.length && <section className={styles.claimDetails}><h4>Movimentações financeiras informadas</h4><p className={styles.salesScopeHelp}>São registros do Magalu; não representam, por si só, dinheiro recebido ou reembolso pago.</p>{details.financialEntries.map((entry, index) => <p className={styles.salesScopeHelp} key={index}>{entry.date && `${formatDate(entry.date)} · `}{entry.text} · {entry.value == null ? 'Valor em confirmação' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.value)} · {entry.statusText}</p>)}</section>}
     </>}
     <p className={styles.salesScopeHelp}>Este painel consulta informações; responder, aceitar devoluções ou solicitar reembolsos continua no {name}. Os filtros do cabeçalho classificam o pedido, não o envio de retorno.</p>
-    <a className={styles.postSaleLink} href={platformLink} target="_blank" rel="noopener noreferrer">Abrir vendas no {name} ↗</a>
-    <p className={styles.salesScopeHelp}>Na plataforma, entre na mesma conta desta venda e localize o número do pedido.</p>
+    <div className={saleLayout.postSaleFooter}><a className={`${styles.postSaleLink} ${saleLayout.accountLink}`} href={platformLink} target="_blank" rel="noopener noreferrer">Abrir no {name}{accountName ? ` · ${accountName}` : ''} ↗</a>
+    <p className={styles.salesScopeHelp}>Na plataforma, entre na mesma conta desta venda e localize o número do pedido.</p></div>
   </div>;
 }

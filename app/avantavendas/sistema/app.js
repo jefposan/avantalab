@@ -190,6 +190,13 @@ let atualizacaoVinculoForcada = false;
 let modoOfflineVendas = false;
 const INTERVALO_TENTATIVA_REDE_VENDAS_MS = 15000;
 let timerTentativaRedeVendas = null;
+let retomadaVendasPendente = null;
+let timerRetomadaVendas = null;
+let ultimaAtualizacaoRetomadaVendas = 0;
+let sincronizacaoRetomadaAguardandoTela = false;
+let complementosAcessoVendasPendente = null;
+let ultimaAtualizacaoComplementosVendas = 0;
+const CONTEXTO_RETOMADA_VENDAS_PREFIXO = 'avantalab.vendas_mobile.retomada.v1.';
 
 function carregarRascunhoCadastroVendas() {
   try {
@@ -550,6 +557,8 @@ let ignorarCliqueMaterialDivulgacaoAte = 0;
 let renderizacaoPdfMaterialAtual = 0;
 let temporizadorRedimensionamentoPdfMaterial = 0;
 let navegacaoInferiorBloqueadaAte = 0;
+let navegacaoInferiorPersistida = null;
+let acaoNavegacaoInferiorEmCurso = '';
 let estoqueProdutoAtualId = '';
 let estoqueMovimentosAtuais = [];
 let arrasteSalaBotoes = null;
@@ -1021,6 +1030,7 @@ async function salvarCacheVendas() {
       clientes: state.clientes,
       vendas: state.vendas,
       pagamentos: state.pagamentos,
+      agendaItens: state.agendaItens,
       conteudosVendas: state.conteudosVendas,
       divulgacaoPastas: state.divulgacaoPastas,
       divulgacaoMateriais: state.divulgacaoMateriais,
@@ -1276,6 +1286,7 @@ function restaurarCacheVendas(cache) {
   state.clientes = dados.clientes;
   state.vendas = dados.vendas;
   state.pagamentos = dados.pagamentos;
+  if (Array.isArray(dados.agendaItens)) state.agendaItens = dados.agendaItens;
   state.conteudosVendas = dados.conteudosVendas || null;
   state.divulgacaoPastas = dados.divulgacaoPastas || [];
   state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
@@ -1287,10 +1298,41 @@ function restaurarCacheVendas(cache) {
   state.vinculosComerciais = dados.vinculosComerciais || [];
   state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
   state.perfisFinanceiros = dados.perfisFinanceiros || [];
-  // O cache restaura dados, não a tela anterior: a nova abertura continua
-  // obrigatoriamente na sala de botões.
+  // O cache não concede acesso. Uma posição recente só é restaurada depois
+  // da confirmação da sessão e da conta no servidor.
   state.menuAberto = true;
   return true;
+}
+
+function chaveContextoRetomadaVendas() {
+  const contexto = chaveCacheVendas();
+  return contexto ? `${CONTEXTO_RETOMADA_VENDAS_PREFIXO}${contexto}` : '';
+}
+
+function salvarContextoRetomadaVendas() {
+  if (!state.autenticado || !state.acessoVendas || carregandoBackend || preparandoRecursosSala) return;
+  const chave = chaveContextoRetomadaVendas();
+  if (!chave) return;
+  try {
+    // Somente navegação, nunca campos, senha ou rascunhos de transações.
+    localStorage.setItem(chave, JSON.stringify({
+      atualizadoEm: Date.now(), aba: state.aba, menuAberto: state.menuAberto,
+      rolagem: posicaoRolagemPrincipalVendas(),
+    }));
+  } catch { /* A retomada em memória continua sem armazenamento local. */ }
+}
+
+function restaurarContextoRetomadaVendas() {
+  if (!state.autenticado || !state.acessoVendas || !state.moduloVendasAtivo || state.premiumVendasBloqueado) return null;
+  try {
+    const salvo = JSON.parse(localStorage.getItem(chaveContextoRetomadaVendas()) || 'null');
+    const abas = ['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'configuracoes', 'informacoes'];
+    const idade = Date.now() - Number(salvo?.atualizadoEm || 0);
+    if (!salvo || idade < 0 || idade > 6 * 60 * 60 * 1000 || !abas.includes(salvo.aba)) return null;
+    state.aba = salvo.aba;
+    state.menuAberto = salvo.menuAberto !== false;
+    return { rolagem: Math.max(0, Math.min(Number(salvo.rolagem) || 0, 10000000)) };
+  } catch { return null; }
 }
 
 function moeda(valor) {
@@ -1495,6 +1537,8 @@ const ICONES_SVG_ESTAVEIS = {
   lightbulb: '<path d="M9 18h6"/><path d="M10 22h4"/><path d="M8.2 14.4A6.2 6.2 0 1 1 15.8 14.4c-.8.7-1.3 1.5-1.5 2.6h-4.6c-.2-1.1-.7-1.9-1.5-2.6Z"/>',
   'chevron-up': '<path d="m6 15 6-6 6 6"/>',
   'chevron-down': '<path d="m6 9 6 6 6-6"/>',
+  'chevron-left': '<path d="m15 6-6 6 6 6"/>',
+  'chevron-right': '<path d="m9 6 6 6-6 6"/>',
   maximize: '<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>',
 };
 
@@ -1504,7 +1548,7 @@ function svgIconEstavel(nome, classe = '') {
 }
 
 function logoVendas() {
-  return `<span class="vendas-brand-logo"><img class="vendas-logo-claro" src="/avantavendas/recursos/assets/logo-vendas-claro.png" alt="AvantaLab — Cada venda, um avanço"><img class="vendas-logo-escuro" src="/avantavendas/recursos/assets/logo-vendas-escuro.png" alt="" aria-hidden="true"></span>`;
+  return `<span class="vendas-brand-logo" role="img" aria-label="AvantaVendas"><img class="vendas-logo-claro" src="/avantavendas/recursos/assets/logo-avantavendas-positivo.png?v=marca-20261025-v2" alt=""><img class="vendas-logo-escuro" src="/avantavendas/recursos/assets/logo-avantavendas-negativo.png?v=marca-20261025-v2" alt="" aria-hidden="true"></span>`;
 }
 
 function botaoAgendamentosHojeVendas(agendamentosHoje) {
@@ -1536,8 +1580,8 @@ function botaoTrocaPerfilVendas() {
   return `<button type="button" class="sales-profile-header-button" onclick="abrirContasVendas()" aria-label="Perfis de vendas. Perfil atual: ${escapeAttr(nomePerfil)}" title="Perfis de vendas">${svgIcon('users')}<span title="${escapeAttr(nomePerfil)}">${escapeHtml(nomePerfil)}</span></button>`;
 }
 
-function acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, mostrarTrocaPerfil = false) {
-  return `${avisoRedeOfflineVendas()}${botaoPendenciasSincronizacaoVendas()}${botaoAgendamentosHojeVendas(agendamentosHoje)}${botaoAniversariosHojeVendas(aniversariantesHoje)}${mostrarTrocaPerfil ? botaoTrocaPerfilVendas() : ''}`;
+function acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje) {
+  return `${avisoRedeOfflineVendas()}${botaoPendenciasSincronizacaoVendas()}${botaoAgendamentosHojeVendas(agendamentosHoje)}${botaoAniversariosHojeVendas(aniversariantesHoje)}${botaoTrocaPerfilVendas()}`;
 }
 
 function atualizarAcoesCabecalhoSistemaVendas() {
@@ -1546,7 +1590,7 @@ function atualizarAcoesCabecalhoSistemaVendas() {
   const cabecalho = app.querySelector('.system-header .system-header-actions');
   const menuMobile = app.querySelector('.mobile-menu-header .system-header-actions');
   if (cabecalho) cabecalho.innerHTML = acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje);
-  if (menuMobile) menuMobile.innerHTML = acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, true);
+  if (menuMobile) menuMobile.innerHTML = acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje);
 }
 
 function preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje, agendamentosHoje) {
@@ -2226,15 +2270,19 @@ function renderPreparandoAcessoEstavel() {
 }
 
 function renderMarcaAcesso() {
-  return `<div class="access-brand-zone"><img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional"></div>`;
+  return `<div class="access-brand-zone"><img src="/avantavendas/recursos/assets/logo-avantavendas-positivo.png?v=marca-20261025-v2" alt="AvantaVendas"></div>`;
+}
+
+function renderLoadingPreparacaoVendas() {
+  // O template é renderizado pelo próprio LoadingPontos oficial no servidor.
+  // Reutiliza sua marcação e o CSS global, sem cópia da animação no Vendas.
+  return (typeof document !== 'undefined' && document.getElementById('vendasAccessLoadingTemplate')?.innerHTML)
+    || '<span class="loader" aria-hidden="true"></span>';
 }
 
 function renderPreparandoAcesso() {
   const progresso = window.__AVANTALAB_VENDAS_PROGRESSO__ || { valor: 5, rotulo: 'Preparando recursos do aplicativo' };
-  const acaoCancelar = loginSocialPendente && !processandoRetornoOAuthNativoVendas
-    ? '<button type="button" class="preparing-access-cancel" onclick="cancelarLoginSocialVendas()">Cancelar e voltar ao login</button>'
-    : '';
-  return `<section class="login-screen preparing-access-screen">${renderMarcaAcesso()}<div class="preparing-access-card" role="status" aria-live="polite" aria-busy="true"><span class="loader" aria-hidden="true"></span><h1>Preparando acesso</h1><small id="accessProgressLabel">${escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo')}</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:${Number(progresso.valor || 5)}%"></i></div><b id="accessProgressValue" class="access-progress-value">${Number(progresso.valor || 5)}%</b>${acaoCancelar}</div></section>`;
+  return `<section class="login-screen preparing-access-screen">${renderMarcaAcesso()}<div class="preparing-access-card" role="status" aria-live="polite" aria-busy="true">${renderLoadingPreparacaoVendas()}<h1>Preparando acesso</h1><small id="accessProgressLabel">${escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo')}</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:${Number(progresso.valor || 5)}%"></i></div><b id="accessProgressValue" class="access-progress-value">${Number(progresso.valor || 5)}%</b></div></section>`;
 }
 
 function atualizarProgressoPreparacao(grupo, concluido, total, rotulo) {
@@ -2471,8 +2519,8 @@ const RECURSOS_SALA_BOTOES = [
   ...SALA_BOTOES_PADRAO.map(([, arquivo]) => `/avantavendas/recursos/assets/menu/${arquivo}`),
   '/avantavendas/recursos/assets/menu/13_Configurações.png',
   '/avantavendas/recursos/assets/menu/14_Sair.png',
-  '/avantavendas/recursos/assets/logo-vendas-claro.png',
-  '/avantavendas/recursos/assets/logo-vendas-escuro.png',
+  '/avantavendas/recursos/assets/logo-avantavendas-positivo.png?v=marca-20261025-v2',
+  '/avantavendas/recursos/assets/logo-avantavendas-negativo.png?v=marca-20261025-v2',
 ];
 
 function carregarImagemEssencial(url) {
@@ -2491,7 +2539,7 @@ function carregarImagemEssencial(url) {
     };
     imagem.onload = decodificar;
     imagem.onerror = concluir;
-    imagem.decoding = 'sync';
+    imagem.decoding = 'async';
     imagem.src = url;
     window.setTimeout(concluir, 7000);
   });
@@ -2836,7 +2884,7 @@ function renderMenuMobile() {
   const pendenciasVoz = solicitacoesVozPendentes();
   const vozIndisponivel = estaSemRedeVendas();
   return `<section class="mobile-menu is-loading-images" aria-label="Menu principal" aria-busy="true">
-    <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje, true)}</div></header>
+    <header class="mobile-menu-header${agendamentosHoje.length ? ' has-agenda-alert' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje, agendamentosHoje)}</div></header>
     ${pendenciasVoz.length ? `<button type="button" class="mobile-voice-pending-notice" onclick="abrirPendenciasSolicitacaoVoz()" aria-label="${pendenciasVoz.length} solicitação${pendenciasVoz.length === 1 ? '' : 'ões'} por voz pendente${pendenciasVoz.length === 1 ? '' : 's'}">
       <span class="mobile-voice-pending-icon">${svgIconEstavel('mic')}</span><span><b>${pendenciasVoz.length} solicitação${pendenciasVoz.length === 1 ? '' : 'ões'} pendente${pendenciasVoz.length === 1 ? '' : 's'}</b><small>Toque para concluir ou cancelar</small></span><i aria-hidden="true">${pendenciasVoz.length}</i>
     </button>` : ''}
@@ -3303,6 +3351,7 @@ function renderNavegacaoInferior() {
   const [esquerdo, rotuloEsquerdo, iconeEsquerdo] = dadosAtalhoInferiorVendas(atalhoInferiorVendasValido(state.atalhoInferiorEsquerdo, 'tema'));
   const [direito, rotuloDireito, iconeDireito] = dadosAtalhoInferiorVendas(atalhoInferiorVendasValido(state.atalhoInferiorDireito, 'agenda'));
   return `<nav id="vendas-bottom-nav" class="vendas-bottom-nav" aria-label="Navegação principal"><div class="vendas-bottom-nav-inner">
+    <span class="vendas-nav-indicador-trilho" aria-hidden="true"><span class="vendas-nav-indicador" style="transform:translateX(${indiceIndicadorNavegacaoInferior() * 100}%)"></span></span>
     ${itemNavegacaoInferior('nav-configuracoes', 'settings', 'Configurações', 'configuracoes')}
     ${itemNavegacaoInferior('nav-atalho-esquerdo', iconeEsquerdo, rotuloEsquerdo, esquerdo)}
     <button id="nav-novo" type="button" class="vendas-nav-add" onclick="acionarNavegacaoInferior(event, 'novo')" aria-label="Lançar pedido ou pagamento"><span>+</span><b>Lançar</b></button>
@@ -3320,23 +3369,84 @@ function assinaturaNavegacaoInferior() {
 
 function removerNavegacaoInferior() {
   document.getElementById('vendas-bottom-nav')?.remove();
+  navegacaoInferiorPersistida = null;
+  acaoNavegacaoInferiorEmCurso = '';
+}
+
+function indiceIndicadorNavegacaoInferior() {
+  const esquerdo = atalhoInferiorVendasValido(state.atalhoInferiorEsquerdo, 'tema');
+  const direito = atalhoInferiorVendasValido(state.atalhoInferiorDireito, 'agenda');
+  const acoes = ['configuracoes', esquerdo, 'novo', direito, 'inicio'];
+  if (acaoNavegacaoInferiorEmCurso) {
+    const indice = acoes.indexOf(acaoNavegacaoInferiorEmCurso);
+    if (indice >= 0) return indice;
+  }
+  if (state.menuAberto) return 4;
+  const indice = acoes.indexOf(state.aba);
+  return indice >= 0 ? indice : 4;
+}
+
+function atualizarIndicadorNavegacaoInferior() {
+  const indicador = document.querySelector('#vendas-bottom-nav .vendas-nav-indicador');
+  if (indicador) indicador.style.transform = `translateX(${indiceIndicadorNavegacaoInferior() * 100}%)`;
 }
 
 function sincronizarNavegacaoInferior() {
   const assinatura = assinaturaNavegacaoInferior();
-  const atual = document.getElementById('vendas-bottom-nav');
+  // Reutilizar o mesmo nó após render(): mantém a posição e a transição da linha.
+  const atual = document.getElementById('vendas-bottom-nav') || navegacaoInferiorPersistida;
   const destino = app.querySelector('.main-area');
   if (!destino) {
-    atual?.remove();
+    removerNavegacaoInferior();
     return;
   }
   if (atual?.dataset.assinatura === assinatura) {
-    if (atual.parentElement !== destino) destino.appendChild(atual);
+    if (atual.parentElement !== destino) {
+      destino.appendChild(atual);
+      // Após reconstruir o conteúdo, estabelecer a posição anterior antes do
+      // novo destino; sem isso o navegador elimina a transição ao reinserir o nó.
+      atual.querySelector('.vendas-nav-indicador')?.getBoundingClientRect();
+    }
+    atualizarIndicadorNavegacaoInferior();
     return;
   }
   if (atual) atual.remove();
   destino.insertAdjacentHTML('beforeend', renderNavegacaoInferior());
-  document.getElementById('vendas-bottom-nav')?.setAttribute('data-assinatura', assinatura);
+  navegacaoInferiorPersistida = document.getElementById('vendas-bottom-nav');
+  navegacaoInferiorPersistida?.setAttribute('data-assinatura', assinatura);
+}
+
+const preferenciasToqueTatilMenuVendas = new Map();
+
+function chaveToqueTatilMenuVendas() {
+  return `avantalab.avantavendas.toque-tatil.v1.${state.usuario?.id || 'local'}`;
+}
+
+function vibracaoMenuVendasAtiva() {
+  const chave = chaveToqueTatilMenuVendas();
+  if (preferenciasToqueTatilMenuVendas.has(chave)) return preferenciasToqueTatilMenuVendas.get(chave);
+  let ativa = true;
+  try { ativa = localStorage.getItem(chave) !== '0'; } catch { /* Memória local indisponível. */ }
+  preferenciasToqueTatilMenuVendas.set(chave, ativa);
+  return ativa;
+}
+
+function toqueTatilMenuVendas() {
+  if (!vibracaoMenuVendasAtiva()) return;
+  try {
+    if (typeof window.__avantavendasToqueTatil === 'function') {
+      // Nunca esperar a ponte: feedback opcional não pode atrasar a ação.
+      Promise.resolve(window.__avantavendasToqueTatil()).catch(() => undefined);
+    } else if (typeof navigator.vibrate === 'function') {
+      navigator.vibrate(12);
+    }
+  } catch { /* Sem suporte/permissão, a navegação continua normalmente. */ }
+}
+
+function alternarVibracaoMenuVendas(ativo) {
+  const chave = chaveToqueTatilMenuVendas();
+  preferenciasToqueTatilMenuVendas.set(chave, Boolean(ativo));
+  try { localStorage.setItem(chave, ativo ? '1' : '0'); } catch { /* Manter a escolha em memória nesta abertura. */ }
 }
 
 function acionarNavegacaoInferior(event, destino) {
@@ -3347,20 +3457,19 @@ function acionarNavegacaoInferior(event, destino) {
   const agora = Date.now();
   if (agora < navegacaoInferiorBloqueadaAte) return;
   navegacaoInferiorBloqueadaAte = agora + 420;
-  document.querySelectorAll('.vendas-nav-ripple').forEach((ripple) => ripple.remove());
-  const anel = document.createElement('i');
-  anel.className = 'vendas-nav-ripple';
-  const origem = botao.classList.contains('vendas-nav-add') ? botao.querySelector(':scope > span') : botao;
-  origem?.appendChild(anel);
-  anel.addEventListener('animationend', () => anel.remove(), { once: true });
-  window.setTimeout(() => {
+  toqueTatilMenuVendas();
+  acaoNavegacaoInferiorEmCurso = destino;
+  try {
     fecharCamadasNavegacao();
     if (destino === 'configuracoes') setAba('configuracoes');
     else if (destino === 'tema') alternarTema(!state.temaEscuro);
     else if (destino === 'novo') { render(); abrirAcoesRapidas(); }
     else if (['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao'].includes(destino)) setAba(destino);
     else if (destino === 'inicio') abrirSalaBotoes();
-  }, 130);
+    atualizarIndicadorNavegacaoInferior();
+  } finally {
+    acaoNavegacaoInferiorEmCurso = '';
+  }
 }
 
 function fecharCamadasAgenda() {
@@ -3382,12 +3491,16 @@ function abrirAcoesRapidas() {
 }
 
 async function sairSistema(destinoForcado = '') {
+  revisaoContaVendasAtiva += 1;
   const destinoLogout = destinoForcado || (origemAcessoVendas() === 'gestao' ? '/?entrar=1' : '/avantavendas?entrar=1');
   if (timerVerificacaoAprovacao) window.clearInterval(timerVerificacaoAprovacao);
   if (timerAtualizacaoVinculo) window.clearTimeout(timerAtualizacaoVinculo);
   timerVerificacaoAprovacao = null;
   timerAtualizacaoVinculo = null;
   limparTentativaRedeVendas();
+  window.clearTimeout(timerRetomadaVendas);
+  sincronizacaoRetomadaAguardandoTela = false;
+  try { localStorage.removeItem(chaveContextoRetomadaVendas()); } catch { /* armazenamento indisponível */ }
   void limparCacheVendas();
   limparAcessoOfflineVendas();
   await suspenderSincronizacaoPreferenciasVendas();
@@ -3477,6 +3590,7 @@ function concluirAcessoAutenticadoVendas() {
   // Ao sair do provedor, a preparação já está ativa antes de limpar a
   // intenção social. Não existe um estado intermediário que renderize login.
   limparLoginSocialPendenteVendas();
+  provedorOAuthNativoPendente = '';
   render();
   conclusaoAcessoVendas = (async () => {
     const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
@@ -3581,6 +3695,17 @@ async function prepararOAuthNativoVendas() {
         cancelarLoginSocialVendas();
       }, 500);
     }));
+    // Somente observar o ciclo já fornecido pelo Capacitor; não recarregar nem
+    // encerrar a WebView. O navegador continua coberto por focus/visibility.
+    const listaListeners = listenersOAuthNativoVendas;
+    void Promise.resolve().then(() => App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) agendarRetomadaVendas();
+        else salvarContextoRetomadaVendas();
+      })).then((listener) => {
+        if (listenersOAuthNativoVendas === listaListeners) listaListeners.push(listener);
+        else return listener?.remove?.();
+      }).catch(() => { /* Bridges antigos continuam por focus/visibility. */ });
+    // Esse observador opcional jamais é pré-requisito para abrir ou autenticar.
     const aberturaInicial = await App.getLaunchUrl?.();
     if (aberturaInicial?.url) await processarRetornoOAuthNativoVendas(aberturaInicial.url);
   })().catch((error) => {
@@ -4180,7 +4305,8 @@ async function reenviarPendenciasVendas() {
     if (houveAtualizacao) {
       revisaoDadosOperacionais += 1;
       await salvarCacheVendas();
-      render();
+      if (podeAplicarDadosRetomadaVendas()) render();
+      else sincronizacaoRetomadaAguardandoTela = true;
     }
   } finally {
     reenviandoPendenciasVendas = false;
@@ -4204,7 +4330,46 @@ function contextoContaVendasPermaneceAtual(revisao, contaId) {
     && (!contaId || contaVendasDoContextoAtual() === String(contaId));
 }
 
-async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacaoAteRecursos = false, preservarTelaAtual = false) {
+function agendarComplementosAcessoVendas() {
+  if (!state.autenticado || !state.acessoVendas || !backendAtivo || !navigator.onLine) return;
+  if (complementosAcessoVendasPendente || Date.now() - ultimaAtualizacaoComplementosVendas < 60000) return;
+  const usuarioId = state.usuario?.id;
+  const contaId = state.contaVendasAtiva?.id;
+  const revisao = revisaoContaVendasAtiva;
+  const contextoValido = () => state.autenticado && state.usuario?.id === usuarioId
+    && contextoContaVendasPermaneceAtual(revisao, contaId);
+  // Notificações e atividade nunca seguram o carregamento operacional.
+  const tarefa = {};
+  complementosAcessoVendasPendente = tarefa;
+  window.setTimeout(() => {
+    if (!contextoValido()) {
+      if (complementosAcessoVendasPendente === tarefa) complementosAcessoVendasPendente = null;
+      return;
+    }
+    ultimaAtualizacaoComplementosVendas = Date.now();
+    void Promise.allSettled([
+      Promise.resolve().then(() => window.VendasDb.registrarAtividadeAplicativo?.()),
+      comLimiteDeTempo(Promise.resolve().then(() => window.VendasDb.estadoNotificacoes?.(permiteSincronizarNotificacoesVendas())),
+        'Não foi possível conferir as notificações.', 8000).then((ativa) => {
+        if (!contextoValido()) return;
+        state.notificacoesAtivas = Boolean(ativa);
+        if (state.notificacoesAtivas) marcarPromptNotificacoesVendas('ativado');
+        avaliarPromptNotificacoesVendas();
+      }),
+    ]).finally(() => {
+      if (complementosAcessoVendasPendente === tarefa) complementosAcessoVendasPendente = null;
+    });
+  }, 250);
+}
+
+function podeAplicarDadosRetomadaVendas() {
+  const campo = document.activeElement;
+  const editando = campo instanceof HTMLElement && campo.matches('input, textarea, select, [contenteditable="true"]');
+  return !editando && !document.getElementById('sheetBackdrop') && mutacoesDadosEmAndamento === 0
+    && state.aba !== 'novo-pedido' && !state.agendaFormAberto && !state.agendaItemMovendo && !state.organizandoSalaBotoes && !arrasteCardsConfiguracoes;
+}
+
+async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacaoAteRecursos = false, preservarTelaAtual = false, retomada = false) {
   const revisaoAoIniciar = revisaoDadosOperacionais;
   const revisaoContaAoIniciar = revisaoContaVendasAtiva;
   const contaAoIniciar = contaVendasDoContextoAtual();
@@ -4224,7 +4389,20 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       }
     }
     const contaDaResposta = String(dados.contaVendasAtiva?.id || contaAoIniciar || '');
-    if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
+    if (requisicaoAtual !== requisicaoCarregamentoBackendVendas || !contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
+    if (retomada && !dados.user) {
+      invalidarSessaoRetomadaVendas();
+      return;
+    }
+    const acessoRecusado = !dados.user || !dados.acesso || dados.moduloAtivo === false || dados.premiumBloqueado === true;
+    if (retomada && acessoRecusado) {
+      limparAcessoOfflineVendas();
+      fecharSheet();
+    }
+    if (retomada && !acessoRecusado && (!podeAplicarDadosRetomadaVendas() || revisaoDadosOperacionais !== revisaoAoIniciar)) {
+      sincronizacaoRetomadaAguardandoTela = true;
+      return;
+    }
     state.autenticado = Boolean(dados.user);
     if (dados.user) {
       state.usuario = {
@@ -4234,16 +4412,13 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
         email: dados.user.email || state.usuario.email || '',
         telefone: dados.user.phone || dados.user.user_metadata?.telefone || dados.user.user_metadata?.phone || state.usuario.telefone || '',
       };
-      await Promise.allSettled([
-        window.VendasDb.registrarAtividadeAplicativo?.(),
-        Promise.resolve(window.VendasDb.estadoNotificacoes?.(permiteSincronizarNotificacoesVendas())).then((ativa) => {
-          state.notificacoesAtivas = Boolean(ativa);
-          if (state.notificacoesAtivas) marcarPromptNotificacoesVendas('ativado');
-        }),
-      ]);
-      if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
-      await inicializarPreferenciasVendasServidor(dados);
-      if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
+      if (requisicaoAtual !== requisicaoCarregamentoBackendVendas || !contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
+      if (!retomada || !preferenciasServidorCarregadas) await inicializarPreferenciasVendasServidor(dados);
+      if (requisicaoAtual !== requisicaoCarregamentoBackendVendas || !contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
+      if (retomada && !acessoRecusado && (!podeAplicarDadosRetomadaVendas() || revisaoDadosOperacionais !== revisaoAoIniciar)) {
+        sincronizacaoRetomadaAguardandoTela = true;
+        return;
+      }
       const houveAlteracaoDuranteCarga = revisaoDadosOperacionais !== revisaoAoIniciar;
       if (!houveAlteracaoDuranteCarga) {
         const agendaLocalLegada = [...(state.agendaItens || [])];
@@ -4274,9 +4449,10 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.contasVendas = dados.contasVendas || [];
       state.contaVendasAtiva = dados.contaVendasAtiva || null;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
-      await window.VendasDb.assinarAtualizacoesCatalogo?.(agendarAtualizacaoCatalogoPublicado);
+      await window.VendasDb.assinarAtualizacoesCatalogo?.(agendarAtualizacaoCatalogoPublicado, dados.user);
       if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
       await salvarCacheVendas();
+      ultimaAtualizacaoRetomadaVendas = Date.now();
     }
   } catch (error) {
     if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) return;
@@ -4286,11 +4462,16 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
   } finally {
     if (requisicaoAtual !== requisicaoCarregamentoBackendVendas) return;
     carregandoBackend = false;
-    provedorOAuthNativoPendente = '';
-    limparLoginSocialPendenteVendas();
-    render();
+    if (!retomada) {
+      provedorOAuthNativoPendente = '';
+      limparLoginSocialPendenteVendas();
+    }
+    if (!retomada || !state.autenticado || !state.acessoVendas || state.premiumVendasBloqueado || state.moduloVendasAtivo === false || podeAplicarDadosRetomadaVendas()) render();
+    else sincronizacaoRetomadaAguardandoTela = true;
     if (!manterPreparacaoAteRecursos) liberarAlturaPreparacao();
-    if (state.erroBackend) { toast(state.erroBackend); state.erroBackend = '';
+    if (state.erroBackend) {
+      if (!retomada) toast(state.erroBackend);
+      state.erroBackend = '';
     }
   }
 }
@@ -4447,10 +4628,8 @@ async function atualizarProdutos() {
 
 async function prepararSelecaoSistemaAntesDosDadosVendas() {
   prepararOrigemAcessoVendas();
-  const [user, acessoVendas] = await Promise.all([
-    window.VendasDb.currentUser(),
-    window.VendasDb.buscarAcessoVendas(),
-  ]);
+  const user = await window.VendasDb.currentUser();
+  const acessoVendas = await window.VendasDb.buscarAcessoVendas(user);
   let entradaPelaGestao = false;
   try { entradaPelaGestao = sessionStorage.getItem(ENTRADA_VENDAS_PELA_GESTAO_KEY) === '1'; } catch { /* armazenamento indisponível */ }
   state.autenticado = Boolean(user && acessoVendas.acesso);
@@ -4470,10 +4649,9 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
       email: user.email || state.usuario.email || '',
       telefone: user.phone || user.user_metadata?.telefone || user.user_metadata?.phone || state.usuario.telefone || '',
     };
-    void Promise.resolve(window.VendasDb.registrarAtividadeAplicativo?.()).catch(() => undefined);
   }
   try {
-    await window.VendasDb.assinarAtualizacoesVinculo?.(agendarAtualizacaoVinculoAprovado);
+    await window.VendasDb.assinarAtualizacoesVinculo?.(agendarAtualizacaoVinculoAprovado, user);
   } catch (error) {
     console.warn('O canal de atualização do vínculo não pôde ser iniciado; a verificação periódica continuará ativa.', error);
   }
@@ -4497,30 +4675,33 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
 
 async function carregarSistemaVendasCompleto() {
   const revisaoNavegacaoAoIniciar = revisaoNavegacaoManual;
+  let contextoRestaurado = null;
   carregandoBackend = true;
   preparandoRecursosSala = true;
   render();
   try {
-    const recursosSala = prepararRecursosSalaBotoes();
+    // Imagens não concedem acesso e não podem bloquear uma sessão autorizada.
+    void prepararRecursosSalaBotoes();
     const cache = await lerCacheVendas();
     const restauradoDoCache = restaurarCacheVendas(cache);
     if (restauradoDoCache) {
+      contextoRestaurado = restaurarContextoRetomadaVendas();
       dadosOperacionaisCarregando = false;
       atualizarProgressoPreparacao('data', 1, 1, 'Dados recentes restaurados');
-      await recursosSala;
       await concluirPreparacaoInicialVendas();
       carregandoBackend = false;
       preparandoRecursosSala = false;
       render();
+      if (contextoRestaurado) requestAnimationFrame(() => {
+        if (revisaoNavegacaoManual === revisaoNavegacaoAoIniciar) rolarConteudoPrincipalVendas(contextoRestaurado.rolagem);
+      });
       liberarAlturaPreparacao();
-      await carregarDadosBackend(false, true, true);
+      await carregarDadosBackend(false, true, true, true);
     } else {
-      // Na primeira abertura, dados e imagens independentes são buscados em
-      // paralelo. A Sala abre assim que suas imagens estiverem prontas; os
-      // dados restantes continuam com o percentual real dentro do módulo.
+      // Na primeira abertura, a sala autorizada abre sem esperar imagens.
+      // Os dados essenciais continuam com indicador local dentro do módulo.
       dadosOperacionaisCarregando = true;
       const dadosIniciais = carregarDadosBackend(false, true, true);
-      await recursosSala;
       await concluirPreparacaoInicialVendas();
       carregandoBackend = false;
       preparandoRecursosSala = false;
@@ -4535,18 +4716,19 @@ async function carregarSistemaVendasCompleto() {
     preparandoRecursosSala = false;
     // A sala é o destino inicial, mas uma navegação feita enquanto a atualização
     // em segundo plano termina tem prioridade e não pode ser sobrescrita.
-    if (revisaoNavegacaoManual === revisaoNavegacaoAoIniciar) {
+    if (!contextoRestaurado && revisaoNavegacaoManual === revisaoNavegacaoAoIniciar) {
       state.aba = 'dashboard';
       state.menuAberto = true;
     }
-    render();
+    if (podeAplicarDadosRetomadaVendas()) render();
+    else sincronizacaoRetomadaAguardandoTela = true;
     void atualizarIndicadoresSincronizacaoVendas();
     liberarAlturaPreparacao();
+    agendarComplementosAcessoVendas();
     window.setTimeout(() => {
       carregarConteudosSecundariosVendas(false).catch((error) => console.warn('Não foi possível carregar conteúdos secundários.', error));
       sincronizarCatalogoAutomaticamente().catch((error) => console.warn('Não foi possível sincronizar o catálogo em segundo plano.', error));
       reenviarPendenciasVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
-      avaliarPromptNotificacoesVendas();
     }, 160);
   }
 }
@@ -4629,8 +4811,8 @@ async function atualizarVinculoAprovadoAutomaticamente() {
 }
 
 async function inicializarApp() {
-  // A abertura sempre começa na sala de botões. A aba anterior vale somente
-  // durante a navegação da sessão e não é restaurada numa nova entrada.
+  // A sala continua sendo o destino padrão. Uma posição recente só será
+  // recuperada após confirmar acesso e restaurar o cache da mesma conta.
   state.aba = 'dashboard';
   state.menuAberto = true;
   state.busca = '';
@@ -5763,7 +5945,7 @@ function conteudoVisualizadorMaterialDivulgacao(materialId) {
   const acoesPdf = material.tipo === 'pdf'
     ? `<button type="button" class="material-pdf-fullscreen-toggle" onclick="alternarPdfTelaCheia()" aria-label="Visualizar PDF em tela cheia"><span class="material-pdf-enter-icon">${svgIconEstavel('maximize')}</span><span class="material-pdf-exit-label">${svgIcon('chevron-left')} Voltar</span></button><button type="button" class="primary material-share material-pdf-fullscreen-share" onclick="compartilharMaterialDivulgacao('${material.id}')" aria-busy="true" disabled>${svgIcon('save')}<span>Preparando...</span></button>`
     : '';
-  return `<div class="sheet-header${material.tipo === 'pdf' ? ' material-pdf-header' : ''}"><div><h2 title="${escapeAttr(tituloCabecalho)}">${escapeHtml(tituloCabecalho)}</h2><p class="muted small"><span class="material-preview-summary">${material.tipo === 'pdf' ? 'PDF · ' : ''}${indice + 1} de ${materiais.length} · ${instrucao}</span>${material.tipo === 'pdf' ? '<span id="materialPdfPageStatus" class="material-pdf-page-status" aria-live="polite">Preparando páginas...</span>' : ''}</p></div><div class="material-preview-header-actions">${acoesPdf}<button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}${preVisualizacao}${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><div class="material-share-actions"><button type="button" class="secondary" onclick="fecharSheet();ativarSelecaoMateriaisDivulgacao('${material.id}')">${svgIcon('check-circle')} Selecionar mais</button><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')" aria-busy="true" disabled>${svgIcon('save')}<span>Preparando material...</span></button></div>`;
+  return `<div class="sheet-header${material.tipo === 'pdf' ? ' material-pdf-header' : ''}"><div><h2 title="${escapeAttr(tituloCabecalho)}">${escapeHtml(tituloCabecalho)}</h2><p class="muted small"><span class="material-preview-summary">${material.tipo === 'pdf' ? 'PDF · ' : ''}${indice + 1} de ${materiais.length} · ${instrucao}</span>${material.tipo === 'pdf' ? '<span id="materialPdfPageStatus" class="material-pdf-page-status" aria-live="polite">Preparando páginas...</span>' : ''}</p></div><div class="material-preview-header-actions">${acoesPdf}<button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">${svgIconEstavel('chevron-left')}</button>` : ''}${preVisualizacao}${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">${svgIconEstavel('chevron-right')}</button>` : ''}</div><div class="material-share-actions"><button type="button" class="secondary" onclick="fecharSheet();ativarSelecaoMateriaisDivulgacao('${material.id}')">${svgIcon('check-circle')} Selecionar mais</button><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')" aria-busy="true" disabled>${svgIcon('save')}<span>Preparando material...</span></button></div>`;
 }
 
 function encerrarRenderizacaoPdfMaterial(container = document.querySelector('.material-preview-pdf')) {
@@ -6030,11 +6212,16 @@ function navegarMaterialDivulgacao(direcao) {
   const destino = materiais[indiceAtual + direcao];
   if (!destino) return;
   const conteudo = conteudoVisualizadorMaterialDivulgacao(destino.id);
-  const painel = document.querySelector('#sheetBackdrop.material-preview-backdrop .sheet');
+  const backdrop = document.querySelector('#sheetBackdrop.material-preview-backdrop');
+  const painel = backdrop?.querySelector('.sheet');
   if (!conteudo || !painel) return;
+  const expandido = backdrop.classList.contains('material-expanded') || backdrop.classList.contains('material-pdf-fullscreen');
   encerrarRenderizacaoPdfMaterial();
   divulgacaoMaterialAtualId = destino.id;
   painel.innerHTML = conteudo;
+  // Manter a ampliação ao passar entre tipos sem esconder o retorno do PDF.
+  backdrop.classList.toggle('material-expanded', expandido && destino.tipo !== 'pdf');
+  backdrop.classList.toggle('material-pdf-fullscreen', expandido && destino.tipo === 'pdf');
   void carregarPdfMaterialDivulgacao();
   void prepararCompartilhamentoMaterialDivulgacao(destino.id);
 }
@@ -6777,7 +6964,12 @@ function renderConfiguracoes() {
       <article class="settings-card settings-profile-card settings-sales-account-card"><h3>${svgIcon('users')} Conta de vendas</h3><p>Clientes, pedidos, pagamentos, agenda e permissões são separados por conta.</p><div class="settings-sales-account-field"><label for="contaVendasAtiva">Conta ativa:</label><select id="contaVendasAtiva" onchange="trocarContaVendas(this.value)">${contas.map((conta) => `<option value="${escapeAttr(conta.id)}" ${conta.id === contaAtiva?.id ? 'selected' : ''}>${escapeHtml(conta.nome)}${conta.empresa_nome ? ` · ${escapeHtml(conta.empresa_nome)}` : ''}</option>`).join('')}</select></div><div class="settings-receipt-name-field"><label for="nomeEmpresaComprovantes">Nome nos comprovantes:</label><div><input id="nomeEmpresaComprovantes" maxlength="80" autocomplete="organization" value="${escapeAttr(state.nomeEmpresaComprovantes || '')}" placeholder="${escapeAttr(contaAtiva?.nome || 'Nome da empresa')}" ${podeGerirDadosConta ? '' : 'disabled'}><button type="button" class="primary" onclick="salvarNomeEmpresaComprovantes()" ${podeGerirDadosConta ? '' : 'disabled'}>${svgIcon('save')} Salvar</button></div><small>Usado somente nos comprovantes deste perfil.</small></div><div class="settings-sales-account-role">${contaAtiva?.papel === 'proprietario' ? 'Você é o proprietário desta conta.' : `Seu acesso: ${escapeHtml(contaAtiva?.papel || 'vendedor')}.`}</div><div class="actions"><button class="secondary" onclick="abrirContasVendas()">${svgIcon('users')} Gerenciar contas</button></div></article>
       <article class="settings-card settings-profile-card"><h3>${svgIcon('user')} Dados do usuário</h3><dl><dt>Nome completo</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Empresa vinculada</dt><dd>${escapeHtml(empresa)}</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
       ${podeGerirDadosConta ? `<article class="settings-card settings-data-security-card"><h3>${svgIconEstavel('database')} Dados e segurança</h3><p>Backups e pontos de restauração pertencem somente ao perfil <b>${escapeHtml(contaAtiva?.nome || 'ativo')}</b>.</p><div class="settings-data-security-actions"><button class="primary" type="button" onclick="baixarBackupContaVendas()">${svgIconEstavel('download')} Fazer backup</button><button class="secondary" type="button" onclick="selecionarBackupContaVendas()" ${podeRestaurarDadosConta ? '' : 'disabled'}>${svgIconEstavel('rotate-ccw')} Restaurar backup</button><button class="secondary" type="button" onclick="abrirPontosRestauracaoVendas()">${svgIconEstavel('clock')} Pontos de restauração</button></div>${podeRestaurarDadosConta ? '<small>Uma cópia de segurança é criada automaticamente antes de cada restauração.</small>' : '<small>Administradores podem criar backups e pontos. A restauração é exclusiva do proprietário.</small>'}</article>` : ''}
-    <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions settings-shortcuts-actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
+    <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3>
+      <label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label>
+      <p>Alterne o tema da aplicação para maior conforto visual.</p>
+      <label class="switch-line settings-haptics-toggle"><span><b>Vibração do menu</b><small>Toque leve ao clicar, nos aparelhos compatíveis.</small></span><input type="checkbox" ${vibracaoMenuVendasAtiva() ? 'checked' : ''} onchange="alternarVibracaoMenuVendas(this.checked)"><i></i></label>
+      <div class="actions settings-shortcuts-actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div>
+    </article>
     <article class="settings-card settings-functions-card"><h3>${svgIcon('inbox')} Notificações</h3><label class="switch-line"><span><b>Receber avisos neste aparelho</b><small>Novidades e lembretes do AvantaVendas.</small></span><input type="checkbox" ${state.notificacoesAtivas ? 'checked' : ''} onchange="alternarNotificacoesVendas(this.checked,this)"><i></i></label><p>O navegador ou o sistema do aparelho solicitará sua autorização.</p></article>
     <article class="settings-card settings-functions-card"><h3>${svgIconEstavel('mic')} Funções</h3><label class="switch-line"><span><b>Solicitação por Voz</b><small>Mostra o botão de comandos por voz na Sala de Botões.</small></span><input type="checkbox" ${state.solicitacaoVozAtiva ? 'checked' : ''} onchange="alternarSolicitacaoVozVendas(this.checked,this)"><i></i></label><p>Recurso experimental. Toda inclusão exige sua confirmação e utiliza somente a conta de vendas ativa.</p></article>
     </div>
@@ -8307,7 +8499,7 @@ function mostrarCardPedidoCliente() {
       </section>
     </div>
     <footer class="client-transaction-footer ${rascunho.editandoId ? 'order-edit-footer' : ''}">${rascunho.editandoId ? `<button type="button" class="ghost" onclick="cancelarEdicaoPedido('${rascunho.editandoId}')">Cancelar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${rascunho.editandoId}')">Excluir</button>` : ''}<button id="finalizarPedidoClienteBotao" type="button" class="primary transaction-confirm-button" onclick="finalizarPedidoCliente()">${rascunho.editandoId ? 'Salvar pedido' : 'Finalizar pedido'} <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b></button></footer>
-  `, `sheet-backdrop-centered client-transaction-backdrop order-transaction-backdrop${rascunho.editandoId ? ' order-editing-backdrop' : ''}`);
+  `, `sheet-backdrop-centered client-transaction-backdrop order-transaction-backdrop${rascunho.tipo === 'consignado' ? ' consignment-transaction-backdrop' : ''}${rascunho.editandoId ? ' order-editing-backdrop' : ''}`);
   if (rascunho.permitirSelecaoCliente && !rascunho.clienteId) focarBuscaClienteLancamento('pedido');
 }
 
@@ -8637,9 +8829,13 @@ async function finalizarPedidoCliente() {
         custo_total: custoTotalPedido,
         desconto_tipo: rascunho.descontoTipo || 'valor',
         desconto_percentual: rascunho.descontoTipo === 'percentual' ? Number(rascunho.descontoPercentual || 0) : 0,
-        saldo_anterior: financeiroAnterior.debito,
-        credito_anterior: financeiroAnterior.credito,
-        saldo_final: saldoAtual,
+        // Consignação não gera débito: não gravar um retrato financeiro de
+        // outras vendas como se ele pertencesse a este consignado.
+        ...(rascunho.tipo === 'consignado' ? {} : {
+          saldo_anterior: financeiroAnterior.debito,
+          credito_anterior: financeiroAnterior.credito,
+          saldo_final: saldoAtual,
+        }),
       }),
       itens: rascunho.itens.map((item) => {
         const produto = state.produtos.find((registro) => registro.id === item.produto_id);
@@ -9220,7 +9416,7 @@ function abrirConsignadoCliente(venda, retornoClienteId = '', retornoAba = '', r
   const possuiItensDisponiveis = (venda.itens || []).some((item) => Number(item.quantidade || 0) > 0);
   sheet(`
     <div class="sheet-header">
-      <div><h2>Pedido Consignado</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div>
+      <div><h2>Comprovante de consignado</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div>
       <button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button>
     </div>
     <div class="consignment-view-layout">
@@ -9358,7 +9554,13 @@ async function gerarPedidoDoConsignado(pedidoId) {
     id: uuidPersistenciaVendas(), cliente_id: consignado.cliente_id, status: 'concluida', subtotal: subtotalPedido, desconto: 0, total: subtotalPedido, forma_pagamento: 'Venda', criado_em: new Date(`${dataPedido}T12:00:00`).toISOString(),
     observacoes: JSON.stringify({ avantalab_pedido: true, tipo: 'venda', descricao: 'Venda originada de consignado', consignado_origem_id: consignado.id }), itens: itensPedido,
   };
-  const consignadoAtualizado = { ...consignado, itens: restantes, subtotal: subtotalRestante, total: subtotalRestante, status: restantes.length ? 'concluida' : 'convertida', observacoes: JSON.stringify({ ...metadadosPedido(consignado), convertido_parcialmente: true }) };
+  const metadadosConsignado = { ...metadadosPedido(consignado), convertido_parcialmente: true };
+  // A conversão preserva os metadados operacionais, não saldos legados que
+  // nunca representaram uma cobrança deste consignado.
+  delete metadadosConsignado.saldo_anterior;
+  delete metadadosConsignado.credito_anterior;
+  delete metadadosConsignado.saldo_final;
+  const consignadoAtualizado = { ...consignado, itens: restantes, subtotal: subtotalRestante, total: subtotalRestante, status: restantes.length ? 'concluida' : 'convertida', observacoes: JSON.stringify(metadadosConsignado) };
   iniciarMutacaoDadosVendas();
   try {
     const botaoConfirmar = document.getElementById('consignadoConfirmarPedido');
@@ -9423,6 +9625,9 @@ function metadadosPedido(venda) {
 }
 
 function resumoComprovantePedido(venda) {
+  // Um consignado não tem resumo de dívida. Não usar seu retrato legado nem
+  // substituí-lo pelo saldo de hoje: ambos podem pertencer a outras vendas.
+  if (pedidoEhConsignado(venda)) return null;
   const metadados = metadadosPedido(venda);
   if (Object.prototype.hasOwnProperty.call(metadados, 'saldo_anterior') && Object.prototype.hasOwnProperty.call(metadados, 'saldo_final')) {
     const saldoAnterior = Number(metadados.saldo_anterior || 0);
@@ -9502,7 +9707,10 @@ function textoCanvasLimitado(ctx, texto, larguraMaxima) {
   return `${reduzido}…`;
 }
 
-function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalhes', cliente, data, etiqueta = '', temaEtiqueta = 'azul', linhas = [], resumo = [], resumoSemTitulo = false, ocultarDetalhes = false }) {
+function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalhes', cliente, data, etiqueta = '', temaEtiqueta = 'azul', tipo = 'pedido', linhas = [], resumo = [], resumoSemTitulo = false, ocultarDetalhes = false }) {
+  const consignado = tipo === 'consignado';
+  // Proteção adicional para chamadas antigas durante a atualização do PWA.
+  if (consignado) resumo = resumo.filter((linha) => linha.destaque === 'principal');
   const clienteExibido = primeiroNomeClienteComprovante(cliente);
   const linhasExibidas = linhas.slice(0, 44);
   if (linhas.length > linhasExibidas.length) linhasExibidas.push({ principal: `+ ${linhas.length - linhasExibidas.length} itens adicionais`, secundario: '', valor: '' });
@@ -9525,9 +9733,9 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   canvas.width = largura; canvas.height = altura;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Não foi possível gerar o comprovante.');
-  ctx.fillStyle = '#f3f7fb'; ctx.fillRect(0, 0, largura, altura);
+  ctx.fillStyle = consignado ? '#F8F5FC' : '#f3f7fb'; ctx.fillRect(0, 0, largura, altura);
   const gradiente = ctx.createLinearGradient(0, 0, largura, 228);
-  gradiente.addColorStop(0, '#0A1F44'); gradiente.addColorStop(1, '#1687D9');
+  gradiente.addColorStop(0, consignado ? '#48206D' : '#0A1F44'); gradiente.addColorStop(1, consignado ? '#8550B5' : '#1687D9');
   ctx.fillStyle = gradiente; ctx.fillRect(0, 0, largura, 228);
   const nomeEmpresa = String(empresa || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
   ctx.fillStyle = '#fff'; ctx.font = `900 ${nomeEmpresa.length > 28 ? 36 : nomeEmpresa.length > 20 ? 42 : 50}px Arial, sans-serif`; ctx.textAlign = 'center'; ctx.fillText(textoCanvasLimitado(ctx, nomeEmpresa.toUpperCase(), 900), largura / 2, 82); ctx.textAlign = 'left';
@@ -9539,8 +9747,8 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     const larguraEtiqueta = ctx.measureText(etiqueta).width + 66;
     const xEtiqueta = (largura - larguraEtiqueta) / 2;
     caminhoRetanguloArredondado(ctx, xEtiqueta, y - 33, larguraEtiqueta, 62, 31);
-    ctx.fillStyle = temaEtiqueta === 'verde' ? '#dcfce7' : '#dff4ff'; ctx.fill();
-    ctx.fillStyle = temaEtiqueta === 'verde' ? '#166534' : '#075985'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(etiqueta, largura / 2, y - 2); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; y += 116;
+    ctx.fillStyle = consignado ? '#F3EDF9' : temaEtiqueta === 'verde' ? '#dcfce7' : '#dff4ff'; ctx.fill();
+    ctx.fillStyle = consignado ? '#683893' : temaEtiqueta === 'verde' ? '#166534' : '#075985'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(etiqueta, largura / 2, y - 2); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; y += 116;
   }
 
   if (linhasRegulares.length) {
@@ -9548,7 +9756,7 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
       ctx.fillStyle = '#0A1F44'; ctx.font = '900 29px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Resumo financeiro', largura / 2, y + 13); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       y += 22;
     }
-    caminhoRetanguloArredondado(ctx, 48, y, 984, alturaResumoRegular, 26);
+    caminhoRetanguloArredondado(ctx, 48, y, 984, alturaBlocoResumoRegular, 26);
     ctx.fillStyle = '#fff'; ctx.fill();
     y += 45;
     linhasRegulares.forEach((linha, indice) => {
@@ -9572,8 +9780,8 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     const alturaDestaquePrincipal = complementoPrincipal ? 176 : 116;
     caminhoRetanguloArredondado(ctx, 48, y, 984, alturaDestaquePrincipal, 26);
     const destaqueGradiente = ctx.createLinearGradient(48, y, 1032, y + 116);
-    destaqueGradiente.addColorStop(0, '#075985'); destaqueGradiente.addColorStop(1, '#1687D9');
-    ctx.fillStyle = destaqueGradiente; ctx.fill(); ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.stroke();
+    destaqueGradiente.addColorStop(0, consignado ? '#683893' : '#075985'); destaqueGradiente.addColorStop(1, consignado ? '#8550B5' : '#1687D9');
+    ctx.fillStyle = destaqueGradiente; ctx.fill(); ctx.strokeStyle = consignado ? '#CFACF2' : '#38bdf8'; ctx.lineWidth = 3; ctx.stroke();
     const temSubtituloPrincipal = Boolean(linhaPrincipal.subtitulo);
     ctx.fillStyle = '#dff5ff'; ctx.font = '800 29px Arial, sans-serif'; ctx.fillText(linhaPrincipal.rotulo, 84, y + (temSubtituloPrincipal ? 45 : 70));
     if (linhaPrincipal.subtitulo) { ctx.fillStyle = '#bae6fd'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(textoCanvasLimitado(ctx, linhaPrincipal.subtitulo, 470), 84, y + 81); }
@@ -9589,7 +9797,7 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
     ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Situação após o lançamento', largura / 2, y + 13); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     y += 22;
     caminhoRetanguloArredondado(ctx, 48, y, 984, 124, 26);
-    ctx.fillStyle = '#073555'; ctx.fill(); ctx.strokeStyle = '#5ed7ff'; ctx.lineWidth = 4; ctx.stroke();
+    ctx.fillStyle = consignado ? '#48206D' : '#073555'; ctx.fill(); ctx.strokeStyle = consignado ? '#CFACF2' : '#5ed7ff'; ctx.lineWidth = 4; ctx.stroke();
     const temSubtituloSaldo = Boolean(linhaSaldo.subtitulo);
     ctx.fillStyle = '#e4f7ff'; ctx.font = '850 33px Arial, sans-serif'; ctx.fillText(linhaSaldo.rotulo, 84, y + (temSubtituloSaldo ? 49 : 72));
     if (temSubtituloSaldo) { ctx.fillStyle = '#bdeaff'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(linhaSaldo.subtitulo, 84, y + 86); }
@@ -9660,7 +9868,8 @@ async function compartilharPedido(pedidoId) {
   if (!venda) return false;
   await window.__avantalabCarregarComprovantesVendas?.().catch(() => undefined);
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
-  const resumo = resumoComprovantePedido(venda);
+  const consignado = pedidoEhConsignado(venda);
+  const resumo = consignado ? null : resumoComprovantePedido(venda);
   const desconto = Math.max(0, Number(venda.desconto || 0));
   const linhas = (venda.itens || []).map((item) => ({
     principal: item.produto_nome || 'Produto',
@@ -9668,18 +9877,21 @@ async function compartilharPedido(pedidoId) {
     secundario: detalheQuantidadeItemComprovante(item),
     valor: moeda(itemPedidoBonificado(item) ? 0 : Number(item.total ?? Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0))),
   }));
-  const titulo = pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido';
-  const tituloDetalhes = pedidoEhConsignado(venda) ? 'Detalhes do consignado' : 'Detalhes do pedido';
+  const titulo = consignado ? 'Comprovante de consignado' : 'Comprovante de pedido';
+  const tituloDetalhes = consignado ? 'Detalhes do consignado' : 'Detalhes do pedido';
   const dadosComprovante = {
     empresa: nomeEmpresaParaComprovantes(),
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(venda.criado_em),
-    saldoAnterior: moeda(resumo.creditoAnterior > 0 ? resumo.creditoAnterior : resumo.saldoAnterior),
-    saldoAnteriorCredito: resumo.creditoAnterior > 0,
+    ...(!consignado ? {
+      saldoAnterior: moeda(resumo.creditoAnterior > 0 ? resumo.creditoAnterior : resumo.saldoAnterior),
+      saldoAnteriorCredito: resumo.creditoAnterior > 0,
+      saldoAtual: moeda(resumo.saldoAtual),
+    } : {}),
     valorPedido: moeda(venda.total),
-    saldoAtual: moeda(resumo.saldoAtual),
     desconto: desconto > 0 ? moeda(desconto) : '',
     titulo,
+    tipo: consignado ? 'consignado' : 'pedido',
     itens: linhas,
   };
   // O V2 recebe somente dados já calculados e formatados pela mesma rotina.
@@ -9690,16 +9902,16 @@ async function compartilharPedido(pedidoId) {
       ...dadosComprovante,
       titulo,
       tituloDetalhes,
-      etiqueta: 'Pedido registrado com sucesso!',
+      etiqueta: consignado ? 'Consignado registrado com sucesso!' : 'Pedido registrado com sucesso!',
       temaEtiqueta: 'verde',
       linhas,
       resumo: [
-        { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior, credito: dadosComprovante.saldoAnteriorCredito },
-        { rotulo: titulo === 'Pedido consignado' ? 'Pedido consignado' : 'Valor do pedido', valor: dadosComprovante.valorPedido, destaque: 'principal', tituloDestaque: 'Pedido registrado', ...(desconto > 0 ? { complemento: { rotulo: 'Desconto concedido', valor: dadosComprovante.desconto } } : {}) },
-        { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
+        ...(!consignado ? [{ rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior, credito: dadosComprovante.saldoAnteriorCredito }] : []),
+        { rotulo: consignado ? 'Valor do consignado' : 'Valor do pedido', valor: dadosComprovante.valorPedido, destaque: 'principal', tituloDestaque: consignado ? 'Consignado registrado' : 'Pedido registrado', ...(desconto > 0 ? { complemento: { rotulo: 'Desconto concedido', valor: dadosComprovante.desconto } } : {}) },
+        ...(!consignado ? [{ rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' }] : []),
       ],
     });
-  const compartilhado = await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, 'Comprovante de pedido');
+  const compartilhado = await compartilharCanvasComprovante(canvas, `${consignado ? 'consignado' : 'pedido'}-${String(venda.id).slice(0, 8)}.png`, titulo);
   if (compartilhado) fecharSheet();
   return compartilhado;
 }
@@ -11148,6 +11360,7 @@ function fecharSheet(evento = null) {
     }
   }
   elementoRolagemAnteriorSheet = null;
+  if (sincronizacaoRetomadaAguardandoTela) agendarRetomadaVendas();
 }
 
 function escapeHtml(v) {
@@ -11216,60 +11429,107 @@ if (window.__VENDAS_MOBILE_EMBEDDED__) {
   }, 120000);
 }
 
-async function sincronizarAoReconectarVendas() {
-  atualizarAcoesCabecalhoSistemaVendas();
-  if (modoOfflineVendas) {
-    try {
-      const sessao = await window.VendasDb.refreshSession?.();
-      if (sessao) {
-        modoOfflineVendas = false;
-        limparTentativaRedeVendas();
-        await prepararSelecaoSistemaAntesDosDadosVendas();
-        await carregarDadosBackend(false, true, true);
-      } else {
-        agendarTentativaRedeVendas();
-        await atualizarIndicadoresSincronizacaoVendas();
-        return;
-      }
-    } catch {
-      agendarTentativaRedeVendas();
-      await atualizarIndicadoresSincronizacaoVendas();
-      return;
-    }
-  }
-  await reenviarPendenciasVendas();
-  await atualizarIndicadoresSincronizacaoVendas();
-  atualizarDisponibilidadeSolicitacaoVozVendas();
+function agendarRetomadaVendas() {
+  if (document.visibilityState === 'hidden') return;
+  window.clearTimeout(timerRetomadaVendas);
+  timerRetomadaVendas = window.setTimeout(() => {
+    timerRetomadaVendas = null;
+    void sincronizarAoReconectarVendas().catch((error) => console.warn('Não foi possível atualizar a sessão em segundo plano.', error));
+  }, 350);
 }
 
-window.addEventListener('online', () => {
+function invalidarSessaoRetomadaVendas() {
+  revisaoContaVendasAtiva += 1;
+  sincronizacaoRetomadaAguardandoTela = false;
+  limparAcessoOfflineVendas();
+  fecharSheet();
+  state.autenticado = false;
+  state.acessoVendas = null;
+  render();
+}
+
+async function sincronizarAoReconectarVendas() {
+  if (retomadaVendasPendente) return retomadaVendasPendente;
+  if (!backendAtivo || !navigator.onLine || !state.autenticado || !state.acessoVendas
+    || document.visibilityState === 'hidden' || carregandoBackend || preparandoRecursosSala
+    || loginSocialPendente || concluindoOAuthNativoVendas || processandoRetornoOAuthNativoVendas) return;
+  const revisao = revisaoContaVendasAtiva;
+  const contaId = contaVendasDoContextoAtual();
+  const usuarioId = state.usuario?.id;
+  const contextoValido = () => state.autenticado && state.usuario?.id === usuarioId
+    && contextoContaVendasPermaneceAtual(revisao, contaId);
+  const tarefa = executarRetomadaVendas();
+  retomadaVendasPendente = tarefa;
+  try { return await tarefa; } finally {
+    if (retomadaVendasPendente === tarefa) retomadaVendasPendente = null;
+  }
+
+  async function executarRetomadaVendas() {
+    // O SDK renova somente quando o token exige; voltar ao app não é um login.
+    let sessao;
+    try { sessao = await window.VendasDb.ensureSession?.(); } catch (error) {
+      if (!contextoValido()) return;
+      if (erroSessaoExpiradaVendas(error) || Number(error?.status) === 401 || Number(error?.status) === 403) invalidarSessaoRetomadaVendas();
+      else agendarTentativaRedeVendas();
+      return; // Falha de conexão não significa sessão revogada.
+    }
+    if (!contextoValido()) return;
+    if (!sessao || (sessao.user?.id && sessao.user.id !== usuarioId)) {
+      invalidarSessaoRetomadaVendas();
+      return;
+    }
+    renovarSessaoPersistenteVendas();
+    const reconectou = modoOfflineVendas;
+    modoOfflineVendas = false;
+    limparTentativaRedeVendas();
+    atualizarAcoesCabecalhoSistemaVendas();
+    if (!podeAplicarDadosRetomadaVendas()) {
+      sincronizacaoRetomadaAguardandoTela = true;
+      return;
+    }
+    await reenviarPendenciasVendas();
+    if (!contextoValido()) return;
+    if (reconectou || sincronizacaoRetomadaAguardandoTela || Date.now() - ultimaAtualizacaoRetomadaVendas >= 30000) {
+      if (!podeAplicarDadosRetomadaVendas()) {
+        sincronizacaoRetomadaAguardandoTela = true;
+        return;
+      }
+      sincronizacaoRetomadaAguardandoTela = false;
+      const rolagem = posicaoRolagemPrincipalVendas();
+      const navegacao = revisaoNavegacaoManual;
+      // Consulta fresca mantém RLS/permissões; nenhuma autenticação é pulada.
+      await carregarDadosBackend(false, true, true, true);
+      if (!contextoValido()) return;
+      if (navegacao === revisaoNavegacaoManual && podeAplicarDadosRetomadaVendas()) rolarConteudoPrincipalVendas(rolagem);
+    }
+    if (!contextoValido()) return;
+    agendarComplementosAcessoVendas();
+    await atualizarIndicadoresSincronizacaoVendas();
+    atualizarDisponibilidadeSolicitacaoVozVendas();
+  }
+}
+
+/* A reconexão usa o mesmo coordenador da retomada, sem reconstruir a sala. */
+function observarRetomadaVendas() {
+  atualizarAcoesCabecalhoSistemaVendas();
   atualizarDisponibilidadeSolicitacaoVozVendas();
-  void sincronizarAoReconectarVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
+  agendarRetomadaVendas();
   if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
-});
+}
+
+window.addEventListener('online', observarRetomadaVendas);
 window.addEventListener('offline', () => {
   modoOfflineVendas = true;
   atualizarAcoesCabecalhoSistemaVendas();
   atualizarDisponibilidadeSolicitacaoVozVendas();
 });
-window.addEventListener('focus', () => {
-  atualizarAcoesCabecalhoSistemaVendas();
-  atualizarDisponibilidadeSolicitacaoVozVendas();
-  if (navigator.onLine) void sincronizarAoReconectarVendas().catch(() => undefined);
-  if (solicitacaoVendasAguardandoAprovacao()) agendarAtualizacaoVinculoAprovado();
-});
+window.addEventListener('focus', observarRetomadaVendas);
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && state.autenticado) {
-    if (backendAtivo && navigator.onLine) {
-      void Promise.resolve(window.VendasDb.ensureSession?.())
-        .then((sessao) => { if (sessao) renovarSessaoPersistenteVendas(); })
-        .catch(() => undefined);
-    }
-    void Promise.resolve(window.VendasDb.registrarAtividadeAplicativo?.()).catch(() => undefined);
-  }
-  if (document.visibilityState === 'visible' && solicitacaoVendasAguardandoAprovacao()) {
-    agendarAtualizacaoVinculoAprovado();
-  }
+  if (document.visibilityState === 'hidden') salvarContextoRetomadaVendas();
+  else observarRetomadaVendas();
+});
+document.addEventListener('focusout', () => {
+  if (sincronizacaoRetomadaAguardandoTela) agendarRetomadaVendas();
 });
 
 window.setAba = setAba;
@@ -11328,6 +11588,7 @@ window.abrirSalaBotoes = abrirSalaBotoes;
 window.sairMenuMobile = sairMenuMobile;
 window.abrirAcoesRapidas = abrirAcoesRapidas;
 window.acionarNavegacaoInferior = acionarNavegacaoInferior;
+window.alternarVibracaoMenuVendas = alternarVibracaoMenuVendas;
 window.buscarCepCliente = buscarCepCliente;
 window.confirmarLimpezaEnderecoCliente = confirmarLimpezaEnderecoCliente;
 window.fecharConfirmacaoLimpezaEnderecoCliente = fecharConfirmacaoLimpezaEnderecoCliente;
@@ -11553,6 +11814,8 @@ document.addEventListener('keyup', (event) => {
 prepararSpriteIconesEstavel();
 assinarPersistenciaSessaoVendas();
 window.addEventListener('pagehide', (event) => {
+  salvarContextoRetomadaVendas();
+  window.clearTimeout(timerRetomadaVendas);
   if (event.persisted) return; // Preservar a página quando houver retorno pelo bfcache.
   assinaturaPersistenciaSessaoVendas?.unsubscribe?.();
   assinaturaPersistenciaSessaoVendas = null;

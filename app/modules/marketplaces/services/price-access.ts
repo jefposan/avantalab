@@ -35,12 +35,12 @@ export async function authorizePriceConsultation(request: Request, rawEmpresaId:
   const { user, db } = await requestUser(request);
   const [{ data: regular, error: regularError }, { data: dedicated, error: dedicatedError }] = await Promise.all([
     db.from('usuarios_empresa').select('id,perfil,status').eq('empresa_id', empresaId).eq('user_id', user.id).eq('status', 'ativo').maybeSingle(),
-    db.from('marketplace_price_users').select('id,ativo').eq('empresa_id', empresaId).eq('user_id', user.id).eq('ativo', true).maybeSingle(),
+    db.from('marketplace_price_users').select('id,ativo,can_edit_stock').eq('empresa_id', empresaId).eq('user_id', user.id).eq('ativo', true).maybeSingle(),
   ]);
   if (regularError || dedicatedError) throw new MarketplaceError(503, 'database', 'Não foi possível validar seu acesso ao AvantaPreços.');
   if (!regular && !dedicated) throw new MarketplaceError(403, 'forbidden', 'Este login não possui acesso ao AvantaPreços desta empresa.');
   if (!await activeModule(db, empresaId)) throw new MarketplaceError(403, 'module_inactive', 'O AvantaPreços está indisponível nesta empresa.');
-  return { db, empresaId, usuario: user, dedicated: Boolean(dedicated), perfil: regular?.perfil || 'consulta_precos' };
+  return { db, empresaId, usuario: user, dedicated: Boolean(dedicated), stockPermission: dedicated?.can_edit_stock === true, perfil: regular?.perfil || 'consulta_precos' };
 }
 
 export async function listPriceCompanies(request: Request) {

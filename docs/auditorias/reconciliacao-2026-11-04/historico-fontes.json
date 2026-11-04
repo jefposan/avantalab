@@ -1,0 +1,1935 @@
+[
+  {
+    "id": "dpl_EwBSHgkYAgVfrSmngeBtvLpgnGfo",
+    "sha": "027fd1e85dbad471146d0b1bb7556106f5787ced",
+    "source": "GitHub: árvore do próprio commit origin/main, disponível no clone; API de fontes Vercel retorna 404."
+  },
+  {
+    "id": "dpl_E81HTgsQ9ZNvTtwctyx7QNHLgjk9",
+    "sha": null,
+    "sourceFileCount": 1594,
+    "unchangedInCurrent": 1354,
+    "changedInCurrent": 210,
+    "absentInCurrent": 30
+  },
+  {
+    "id": "dpl_2wNp65QT771X3RYUmM5Ba68Jmck1",
+    "sha": null,
+    "sourceFileCount": 1597,
+    "unchangedInCurrent": 1365,
+    "changedInCurrent": 202,
+    "absentInCurrent": 30
+  },
+  {
+    "id": "dpl_C9yVseR4Ut8i4WxFtC93STnhP2vF",
+    "sha": null,
+    "sourceFileCount": 1598,
+    "unchangedInCurrent": 1366,
+    "changedInCurrent": 202,
+    "absentInCurrent": 30
+  },
+  {
+    "id": "dpl_4QsCJS6Wurx6c55huitPQAeMX5Wz",
+    "sha": null,
+    "sourceFileCount": 1599,
+    "unchangedInCurrent": 1368,
+    "changedInCurrent": 201,
+    "absentInCurrent": 30
+  },
+  {
+    "id": "dpl_E51CAhgM4gcqySGMJUUBRC4aDSjj",
+    "sha": null,
+    "sourceFileCount": 1600,
+    "unchangedInCurrent": 1369,
+    "changedInCurrent": 201,
+    "absentInCurrent": 30
+  },
+  {
+    "id": "dpl_7nH8YH6Z2xHh1fYGtSJK4rv9RGq9",
+    "sha": null,
+    "sourceFileCount": 1602,
+    "unchangedInCurrent": 1373,
+    "changedInCurrent": 199,
+    "absentInCurrent": 30
+  },
+  {
+    "id": "dpl_E45ZRjMyUrnuPAzvuYYJDeJXw93h",
+    "sha": null,
+    "sourceFileCount": 1605,
+    "unchangedInCurrent": 1375,
+    "changedInCurrent": 199,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_AxzYLE5YYcg6N8U2LhtaUoJ4ajZ9",
+    "sha": null,
+    "sourceFileCount": 1606,
+    "unchangedInCurrent": 1377,
+    "changedInCurrent": 198,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_Ate7SmyLzWJuqGjjm5t6kk8P1JAs",
+    "sha": null,
+    "sourceFileCount": 1606,
+    "unchangedInCurrent": 1379,
+    "changedInCurrent": 196,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_2ETpDLFG83ziJVRiU1tJgFDuCmWN",
+    "sha": null,
+    "sourceFileCount": 1606,
+    "unchangedInCurrent": 1381,
+    "changedInCurrent": 194,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_EBCrDerEop4Pru8tzrTPkfE53VMo",
+    "sha": null,
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9CDQ2cfCBtBCwjkn39GMVy7orkpn",
+    "sha": null,
+    "sourceFileCount": 1609,
+    "unchangedInCurrent": 1384,
+    "changedInCurrent": 194,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_HAViPLt2synBkGwdZaGt3C3rxVY7",
+    "sha": null,
+    "sourceFileCount": 1609,
+    "unchangedInCurrent": 1384,
+    "changedInCurrent": 194,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_2TTs25vxEDpi41wmoWH68DC38eBr",
+    "sha": null,
+    "sourceFileCount": 1609,
+    "unchangedInCurrent": 1384,
+    "changedInCurrent": 194,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_67qnAfSTkFLaxqicm2XGmr6xAzW7",
+    "sha": null,
+    "sourceFileCount": 1612,
+    "unchangedInCurrent": 1387,
+    "changedInCurrent": 194,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_5pJ4QNJjWWhdw2LMWDPpMcRsE7aN",
+    "sha": null,
+    "sourceFileCount": 1612,
+    "unchangedInCurrent": 1390,
+    "changedInCurrent": 191,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_22VVSuMYhJmVkZ6BwDPUBq1dgxRU",
+    "sha": null,
+    "sourceFileCount": 1614,
+    "unchangedInCurrent": 1392,
+    "changedInCurrent": 191,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_3CSPiKG9YotYjDqVcV6dzPps1ocM",
+    "sha": null,
+    "sourceFileCount": 1616,
+    "unchangedInCurrent": 1395,
+    "changedInCurrent": 190,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_4Goz2QPmAEPftmmMLkuyYXjcP6Z4",
+    "sha": null,
+    "sourceFileCount": 1616,
+    "unchangedInCurrent": 1398,
+    "changedInCurrent": 187,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_3KWmWgghMLQUAXy2qTMwzBP1kVuP",
+    "sha": null,
+    "sourceFileCount": 1616,
+    "unchangedInCurrent": 1398,
+    "changedInCurrent": 187,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_93SxtnwKmybTauStZyg9SHV3T99o",
+    "sha": null,
+    "sourceFileCount": 1621,
+    "unchangedInCurrent": 1398,
+    "changedInCurrent": 192,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_9pYqCRrr6fCTuhuxopriHKBWZHRY",
+    "sha": null,
+    "sourceFileCount": 1617,
+    "unchangedInCurrent": 1399,
+    "changedInCurrent": 187,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_8N4FDCrpAY4mJEmSupCENKsEHdsA",
+    "sha": null,
+    "sourceFileCount": 1622,
+    "unchangedInCurrent": 1400,
+    "changedInCurrent": 191,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_BLNFiy14cv94NmVyEpmzgPT4Z2Wp",
+    "sha": null,
+    "sourceFileCount": 1625,
+    "unchangedInCurrent": 1405,
+    "changedInCurrent": 189,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_FkfjuGxUvpDnxqo94RVK1RWa9tQZ",
+    "sha": null,
+    "sourceFileCount": 1628,
+    "unchangedInCurrent": 1413,
+    "changedInCurrent": 184,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_5MM8C9v7HJm8fCfoyhZ2kLzDr5aq",
+    "sha": null,
+    "sourceFileCount": 1628,
+    "unchangedInCurrent": 1413,
+    "changedInCurrent": 184,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_EekEKBUFSduYjYTDMBzUi3BUhjbD",
+    "sha": null,
+    "sourceFileCount": 1628,
+    "unchangedInCurrent": 1413,
+    "changedInCurrent": 184,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_EYKMpPCkenmog7EuTurLwVeiYpiW",
+    "sha": null,
+    "sourceFileCount": 1628,
+    "unchangedInCurrent": 1413,
+    "changedInCurrent": 184,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_D4wNMaM9GUrXYs1FYE66ysShcMqb",
+    "sha": null,
+    "sourceFileCount": 1628,
+    "unchangedInCurrent": 1413,
+    "changedInCurrent": 184,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_9wggZkqBDRT3Xy4bNHdB5P9N7U6a",
+    "sha": null,
+    "sourceFileCount": 1630,
+    "unchangedInCurrent": 1416,
+    "changedInCurrent": 183,
+    "absentInCurrent": 31
+  },
+  {
+    "id": "dpl_FLK71QrZiyRufDkPABPkhLQMtYPw",
+    "sha": null,
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_djiL4tFToPagz3YQzfZqhrJNNSvM",
+    "sha": null,
+    "sourceFileCount": 1619,
+    "unchangedInCurrent": 1425,
+    "changedInCurrent": 194,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_2g4EjyhWk29C1SLSfyK8x4MAzfRF",
+    "sha": null,
+    "sourceFileCount": 1620,
+    "unchangedInCurrent": 1426,
+    "changedInCurrent": 194,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_FXKanjRGFtdRBH9tCZTzRDuDj3y8",
+    "sha": null,
+    "sourceFileCount": 1626,
+    "unchangedInCurrent": 1440,
+    "changedInCurrent": 186,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_7k6qYAmAJucYLKinXVSEgNz9Z1W7",
+    "sha": null,
+    "sourceFileCount": 1629,
+    "unchangedInCurrent": 1443,
+    "changedInCurrent": 186,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9na28peM9hYbV4q9Gk1nrq3iknUf",
+    "sha": null,
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9gbVwmWcUiwc2yjyGFpoLkLDBYFN",
+    "sha": null,
+    "sourceFileCount": 1638,
+    "unchangedInCurrent": 1448,
+    "changedInCurrent": 190,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_GeXCv77y13wsmwHsQG2pXggidCzy",
+    "sha": null,
+    "sourceFileCount": 1650,
+    "unchangedInCurrent": 1452,
+    "changedInCurrent": 198,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_C54kW3rsUcov716XKFbRp5pnqygf",
+    "sha": null,
+    "sourceFileCount": 1660,
+    "unchangedInCurrent": 1459,
+    "changedInCurrent": 201,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4V5H2BNyn7RBkTMro5GeycHxjm5z",
+    "sha": null,
+    "sourceFileCount": 1676,
+    "unchangedInCurrent": 1464,
+    "changedInCurrent": 212,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_6rJzjEWQhLqnnCrQX1F7rXkbrUZA",
+    "sha": null,
+    "sourceFileCount": 1683,
+    "unchangedInCurrent": 1471,
+    "changedInCurrent": 212,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_GCE4DMf8zJAwAa59kupwRco1W6hq",
+    "sha": null,
+    "sourceFileCount": 1696,
+    "unchangedInCurrent": 1481,
+    "changedInCurrent": 215,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_Gu6ze5ZgonGfzY7seda4qfYzcocM",
+    "sha": null,
+    "sourceFileCount": 1707,
+    "unchangedInCurrent": 1491,
+    "changedInCurrent": 216,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_B9SPo3pDfjMZPwUm7rYVtPnc76pt",
+    "sha": null,
+    "sourceFileCount": 1720,
+    "unchangedInCurrent": 1498,
+    "changedInCurrent": 222,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4PdTKg9zjACVtEqRt4PTwyLobk2z",
+    "sha": null,
+    "sourceFileCount": 1723,
+    "unchangedInCurrent": 1502,
+    "changedInCurrent": 221,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_AQHMby1Rdn5r3Dw4qrFWGyGwryjc",
+    "sha": null,
+    "sourceFileCount": 1725,
+    "unchangedInCurrent": 1504,
+    "changedInCurrent": 221,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_A6uWihoemJHrgXAwNZS5UUBLPg82",
+    "sha": null,
+    "sourceFileCount": 1737,
+    "unchangedInCurrent": 1510,
+    "changedInCurrent": 227,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8FniZpRxa64QXn8mD9LiBixBVbBJ",
+    "sha": null,
+    "sourceFileCount": 1740,
+    "unchangedInCurrent": 1517,
+    "changedInCurrent": 223,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_sFKjAArf6vT5TWe9v3zQsX7Sc1Fn",
+    "sha": null,
+    "sourceFileCount": 1742,
+    "unchangedInCurrent": 1519,
+    "changedInCurrent": 223,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_2vVtz6VETgfT76SevU8FdsG7PYRA",
+    "sha": null,
+    "sourceFileCount": 1760,
+    "unchangedInCurrent": 1532,
+    "changedInCurrent": 228,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_2Bv5wCaLGXTbfQGh8MgnPAU2yNEG",
+    "sha": null,
+    "sourceFileCount": 1763,
+    "unchangedInCurrent": 1537,
+    "changedInCurrent": 226,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_7jtz5xKAnctCEnMqDyzdbKMH6nKL",
+    "sha": null,
+    "sourceFileCount": 1764,
+    "unchangedInCurrent": 1537,
+    "changedInCurrent": 227,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_FAiKiPmxHDktDzf6NEUYx79HtAbh",
+    "sha": null,
+    "sourceFileCount": 1767,
+    "unchangedInCurrent": 1539,
+    "changedInCurrent": 228,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_7HRimcctpwnpBWehG4suS89uh4zL",
+    "sha": null,
+    "sourceFileCount": 1771,
+    "unchangedInCurrent": 1547,
+    "changedInCurrent": 224,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_3TZJo3Hrg3bV3LSqZTqZkfiw2Z2Z",
+    "sha": null,
+    "sourceFileCount": 1779,
+    "unchangedInCurrent": 1553,
+    "changedInCurrent": 226,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_DyWVQU32qhPLgiRnSTMmovxhMNw6",
+    "sha": null,
+    "sourceFileCount": 1784,
+    "unchangedInCurrent": 1559,
+    "changedInCurrent": 225,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_E3Y42cuuwBPM5TGnTWCMziVWw5wt",
+    "sha": null,
+    "sourceFileCount": 1786,
+    "unchangedInCurrent": 1559,
+    "changedInCurrent": 227,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8sVwq43jtCkRimf1nzempY9NxtMA",
+    "sha": null,
+    "sourceFileCount": 1793,
+    "unchangedInCurrent": 1566,
+    "changedInCurrent": 227,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_2Ep2rwVmYzCHmf9Lm7Dx7xSZvmBF",
+    "sha": null,
+    "sourceFileCount": 1794,
+    "unchangedInCurrent": 1568,
+    "changedInCurrent": 226,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_e9AuXXseYmFV2F57vakf1CodiiTc",
+    "sha": null,
+    "sourceFileCount": 1794,
+    "unchangedInCurrent": 1568,
+    "changedInCurrent": 226,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BZ9qmj6mUa7P3ZVPgTficTL9Z6HR",
+    "sha": null,
+    "sourceFileCount": 1802,
+    "unchangedInCurrent": 1574,
+    "changedInCurrent": 228,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_Dj2HQWs3m5RtSK7Hz2F35VxRcDhy",
+    "sha": null,
+    "sourceFileCount": 1815,
+    "unchangedInCurrent": 1591,
+    "changedInCurrent": 224,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_AVktg6NnVbwzVqe2xroJnAiWP3CD",
+    "sha": null,
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9pXWivUeJiev4hWau8tMK5rntsgb",
+    "sha": null,
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BK6GKam3iEuR2a5zA7F6wj5pfJ3y",
+    "sha": null,
+    "sourceFileCount": 1839,
+    "unchangedInCurrent": 1614,
+    "changedInCurrent": 223,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_CRncxzpRxyzjzZMLoGDdLLoRau96",
+    "sha": null,
+    "sourceFileCount": 1839,
+    "unchangedInCurrent": 1614,
+    "changedInCurrent": 223,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_5hkQc33viuZD67GrUUsLnLLw9dde",
+    "sha": null,
+    "sourceFileCount": 1846,
+    "unchangedInCurrent": 1622,
+    "changedInCurrent": 222,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_AFhxMhAqBEfAcWiMGS7LqDLW4BJv",
+    "sha": null,
+    "sourceFileCount": 1854,
+    "unchangedInCurrent": 1627,
+    "changedInCurrent": 225,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_2xkhvgeqypEsNcnSMzX6z47Keq5C",
+    "sha": null,
+    "sourceFileCount": 1859,
+    "unchangedInCurrent": 1630,
+    "changedInCurrent": 227,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_6sWLGG4dY55ZcxbfYsr9NrW4v6bi",
+    "sha": null,
+    "sourceFileCount": 1864,
+    "unchangedInCurrent": 1635,
+    "changedInCurrent": 227,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_FTnMMRQUuzZLiT5iWeVuRarJKUT3",
+    "sha": null,
+    "sourceFileCount": 1866,
+    "unchangedInCurrent": 1637,
+    "changedInCurrent": 227,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_Hi4rENwobtGxkWzdvmDkCkLbx3CK",
+    "sha": null,
+    "sourceFileCount": 1866,
+    "unchangedInCurrent": 1637,
+    "changedInCurrent": 227,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_GrB5wNw19zXLE1G2Q1tA7ozNUPiH",
+    "sha": null,
+    "sourceFileCount": 1867,
+    "unchangedInCurrent": 1638,
+    "changedInCurrent": 227,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_67tNCn9RcZSNnWi8WeB2gH8eKnsT",
+    "sha": null,
+    "sourceFileCount": 1868,
+    "unchangedInCurrent": 1641,
+    "changedInCurrent": 225,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_Eou7vLdFtKj66bGFgCEyBxYUktwi",
+    "sha": null,
+    "sourceFileCount": 1868,
+    "unchangedInCurrent": 1641,
+    "changedInCurrent": 225,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_CZ12Yt2iQdckCdGG21wGYC3Uy3c3",
+    "sha": null,
+    "sourceFileCount": 1868,
+    "unchangedInCurrent": 1641,
+    "changedInCurrent": 225,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_2d1bTzyynkWCJEHKZqxjtoBGAsdX",
+    "sha": null,
+    "sourceFileCount": 1871,
+    "unchangedInCurrent": 1643,
+    "changedInCurrent": 226,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_BDSMjz3kiDxwfQkUC4t13aoHMrQv",
+    "sha": null,
+    "sourceFileCount": 1875,
+    "unchangedInCurrent": 1648,
+    "changedInCurrent": 225,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_Gqao8S8WcqkaCkW2xFunEuvyp7ka",
+    "sha": null,
+    "sourceFileCount": 1886,
+    "unchangedInCurrent": 1660,
+    "changedInCurrent": 224,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_69CuNixHV6H7MEJb4bk9DGjq3RWE",
+    "sha": "56ef6be0e91449887b31e78c8271d6861c8eeaa6",
+    "sourceFileCount": 1895,
+    "unchangedInCurrent": 1674,
+    "changedInCurrent": 219,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_8s3BsjTyEPYpnERkpBCkroc6Rzzq",
+    "sha": "918b8573809ad223de425dcf6ff30db6fb544da4",
+    "sourceFileCount": 1887,
+    "unchangedInCurrent": 1665,
+    "changedInCurrent": 220,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_FCj3v3xf2qvzSwvKYgprHR4Bd6uf",
+    "sha": "80b2f456a039e252e75661657bc0fb226d657dcc",
+    "sourceFileCount": 1901,
+    "unchangedInCurrent": 1684,
+    "changedInCurrent": 215,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_De2c3j18eDYaozxv78T6Pcj8fbmL",
+    "sha": "422bc98f352568e2729fd37734abddae0179c386",
+    "sourceFileCount": 1904,
+    "unchangedInCurrent": 1686,
+    "changedInCurrent": 216,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_8rJx6DQtEv2YUPKEitBYBywfanzN",
+    "sha": "96caf1c8d2289bba21b4f0ebbe9f3d4ca9e1aaf1",
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4ujZpsuDoRmRJjthCZsHVpnUZ1mf",
+    "sha": "acaf7eedf662bc6f2a74275c1975016836d85df7",
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_CpMxJEr2LeAko4Xn9mK6xX385NbJ",
+    "sha": "1b9a4d351c380352a038019dd3be20f89b3488cf",
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_AktAWMP61Db9TgyVk5ZEXyquZct1",
+    "sha": "3d61a862d1f70dccafd7d8087c1c5f350d7ff09d",
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_DmeSWTshZv99rcUyxWmgwKRVZ2dh",
+    "sha": "4baab7f60704e6a96ea9883b4216899df2daa79d",
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_oGqWSwKdxif4wBeg2pgQCnVSr5DX",
+    "sha": "fd69e4be39c4200a4eccf72f606a08c1145abf40",
+    "sourceFileCount": 0,
+    "unchangedInCurrent": 0,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4dgwvnKcT6fiHnA55N5CUx8znvkf",
+    "sha": "ef3e4be33333a755f4b90b76e61df666d945ac30",
+    "sourceFileCount": 1936,
+    "unchangedInCurrent": 1709,
+    "changedInCurrent": 225,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_5yXqYZCzU3pQagVTzF1rBY16uEwG",
+    "sha": null,
+    "sourceFileCount": 1945,
+    "unchangedInCurrent": 1722,
+    "changedInCurrent": 221,
+    "absentInCurrent": 2
+  },
+  {
+    "id": "dpl_4W8pa5vcvhhC7EmwGRA5ASEuvc57",
+    "sha": "cdb3923ed2de66ca1ea1fa5098b361b9c869f5ae",
+    "sourceFileCount": 1956,
+    "unchangedInCurrent": 1730,
+    "changedInCurrent": 226,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4WXdu8UnhKJq86Kcwbc4rAfa5LLL",
+    "sha": "bbfe7e742369c27fb54e82c14008e24267ccc87b",
+    "sourceFileCount": 1960,
+    "unchangedInCurrent": 1734,
+    "changedInCurrent": 226,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_CQYQZq3d73Q2pyJSiNz9qe614Sai",
+    "sha": "51f11853af6fdcce94b8c3d5005047cdb55aac7b",
+    "sourceFileCount": 1964,
+    "unchangedInCurrent": 1735,
+    "changedInCurrent": 229,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_7zCebDPgVbDhwBAucNcdRrbX189f",
+    "sha": "7c9c7da3acc3c3d735560f5e78fb83965b3adc54",
+    "sourceFileCount": 1964,
+    "unchangedInCurrent": 1737,
+    "changedInCurrent": 227,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_B47XDJVKkSy6zkWWKqy6JpwCwEQE",
+    "sha": "8ec4407102ca3e62dedfd767ac4cc4bed7f842bc",
+    "sourceFileCount": 1964,
+    "unchangedInCurrent": 1738,
+    "changedInCurrent": 226,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_CXWGQj9nZziiCLAAbJXsGVctrjef",
+    "sha": "9118b1baac279b71fe126dc3ae6ea7e941edd39f",
+    "sourceFileCount": 1965,
+    "unchangedInCurrent": 1739,
+    "changedInCurrent": 226,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8e8jET9bMEr5V7ZGngAdqJrxNiSt",
+    "sha": "87fe9ff0ca13224ec40f8e1c28d477cb910a4f6a",
+    "sourceFileCount": 1968,
+    "unchangedInCurrent": 1745,
+    "changedInCurrent": 223,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4tHidsayVtSset3qNtPnk1YCQvRx",
+    "sha": "8e8f54dfc1b1be322def8791c9583cab46475ffe",
+    "sourceFileCount": 1970,
+    "unchangedInCurrent": 1751,
+    "changedInCurrent": 219,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BFMaSVHpKWBc4WgZ7cSmkgMLxWLR",
+    "sha": "c5f15c3ef5db87fef392b12da20028353ed28d7f",
+    "sourceFileCount": 1970,
+    "unchangedInCurrent": 1751,
+    "changedInCurrent": 219,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_DGWfWXdtjgygp5h8Ji2NA23PWTLV",
+    "sha": "058bedd0aa5a45514109d18c8ab56278da289e8c",
+    "sourceFileCount": 1970,
+    "unchangedInCurrent": 1751,
+    "changedInCurrent": 219,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_ESK2o8PG6jMAGn8dBsEebohmobDB",
+    "sha": "1506d272e656e674557c213d44e0a26c894f1c3f",
+    "sourceFileCount": 1970,
+    "unchangedInCurrent": 1751,
+    "changedInCurrent": 219,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8QUHGhjxZ96Da9BGaXBe8MbG8hMb",
+    "sha": "da41ce13d95efd0b076bd0c0bceb9bf94f4302d2",
+    "sourceFileCount": 1971,
+    "unchangedInCurrent": 1752,
+    "changedInCurrent": 219,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_2KUPLMNq4EdFcJkybVmwUszbQZ6w",
+    "sha": "3ebb138a32fe64423293bd2ca6cf54089cb2585e",
+    "sourceFileCount": 1973,
+    "unchangedInCurrent": 1754,
+    "changedInCurrent": 219,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_2uonK979nVQpp1orHNwHfjExSuqf",
+    "sha": "e937414163204133463c6f8bb0052c5dc493f836",
+    "sourceFileCount": 1975,
+    "unchangedInCurrent": 1755,
+    "changedInCurrent": 220,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_HPExxZdJzVYu2pQEvtsgPzdWY2o9",
+    "sha": "a56a2331d96d8439226df282229f7ecca533ee73",
+    "sourceFileCount": 1977,
+    "unchangedInCurrent": 1757,
+    "changedInCurrent": 220,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_AHYfyn1NBuba6744pD5cxJfGsNBH",
+    "sha": "b23a74d24949395542077ec0ff563e065c6c3798",
+    "sourceFileCount": 1979,
+    "unchangedInCurrent": 1758,
+    "changedInCurrent": 221,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9XLiGb4F4K8bqT9pnWujEUrA6YYE",
+    "sha": "5a09f0a73384b910bdb554ab915eb5fca439b104",
+    "sourceFileCount": 1992,
+    "unchangedInCurrent": 1770,
+    "changedInCurrent": 222,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_AP3JUXUfmAAubmFe8MdvmtkmMwnm",
+    "sha": "345b24ed08e82b91da3827cc2d245dcce7fe30b5",
+    "sourceFileCount": 2004,
+    "unchangedInCurrent": 1777,
+    "changedInCurrent": 227,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_ELxXrJRHMhgm3bnUGy7EwNpAgvf2",
+    "sha": "d6df2577a198fcd62f9c79a50d5b23dc09616313",
+    "sourceFileCount": 2003,
+    "unchangedInCurrent": 1776,
+    "changedInCurrent": 227,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_2boHtcF2GitaynUMAQngjq2qSzLF",
+    "sha": "4f82889e8051392177d85f451b46ee64cd3b219b",
+    "sourceFileCount": 2006,
+    "unchangedInCurrent": 1778,
+    "changedInCurrent": 228,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BAAwsuWmJw2WtDhDZ6FnVBa3R52D",
+    "sha": "d330e21858497877b64f061162a86447c2928256",
+    "sourceFileCount": 2007,
+    "unchangedInCurrent": 1779,
+    "changedInCurrent": 228,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_6iqWrwyc1zvwSfiZ14eoUStyLDRF",
+    "sha": "93db16d1d9cdc632dcc2bf971de0eff212c09e1f",
+    "sourceFileCount": 2008,
+    "unchangedInCurrent": 1780,
+    "changedInCurrent": 228,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_HyL912TAGiE31bjestvTqB9wM6hQ",
+    "sha": "1eb52cf985c1f77ea314aae208350adb1517b5a8",
+    "sourceFileCount": 2012,
+    "unchangedInCurrent": 1785,
+    "changedInCurrent": 227,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_E2ah3J4h1Np9LqRdm4U9sxAPwdR3",
+    "sha": "4a6ce2aa614765daf630fd5998a8e0d3e2b4af37",
+    "sourceFileCount": 2012,
+    "unchangedInCurrent": 1786,
+    "changedInCurrent": 226,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8kmaYYtXyfp6JFivDPtCp7wddtKS",
+    "sha": "60b2fcfa33a90dec56a6a399367f541bb032f6e9",
+    "sourceFileCount": 2015,
+    "unchangedInCurrent": 1792,
+    "changedInCurrent": 223,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4mzM7YooHhrMf2U5aLcreK5J8fo4",
+    "sha": "1ff1457d914580332a4a8618c160258aff10c3ef",
+    "sourceFileCount": 2017,
+    "unchangedInCurrent": 1798,
+    "changedInCurrent": 219,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_LcAW2HTCjrkXV1X59B9vcYTNiakk",
+    "sha": "b928e49d8286b0842fe219aaa642559d6bcef7bb",
+    "sourceFileCount": 2018,
+    "unchangedInCurrent": 1798,
+    "changedInCurrent": 220,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_CDmFZXnc2urKfVxV6DUZMi7Kxp2W",
+    "sha": "13e34663362ba866c3154c2883ce64ee6c6d08c2",
+    "sourceFileCount": 2020,
+    "unchangedInCurrent": 1798,
+    "changedInCurrent": 222,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4msYTZ9bcdEgAzArc45RTyNZr3Rb",
+    "sha": "918d719b67b3693881366f7235e29db934b36ca8",
+    "sourceFileCount": 2020,
+    "unchangedInCurrent": 1800,
+    "changedInCurrent": 220,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8ZMkZDmVhi4EcyPUqBq6oTGbf1Q2",
+    "sha": "66a29a4d69926a992ebcb8a389dcc45b2a7280fb",
+    "sourceFileCount": 2020,
+    "unchangedInCurrent": 1801,
+    "changedInCurrent": 219,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9Pzmgia516DfUjx5pDqsrSi3k9Tb",
+    "sha": "cf0cf65a66c1c0c2869d6cc54dba0567750604cf",
+    "sourceFileCount": 2023,
+    "unchangedInCurrent": 1802,
+    "changedInCurrent": 221,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4RZhfVSAe7wKYbTG64KTxrDDUtna",
+    "sha": "d1a9624a5f987610a5f4eb0d4dfb634906a949b2",
+    "sourceFileCount": 2023,
+    "unchangedInCurrent": 1803,
+    "changedInCurrent": 220,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_CEZufa7haMnvwT5qqK9dLK3QtW1A",
+    "sha": "1af2456d4e6f4ba1e8bc9d34b7ca388703b78f8c",
+    "sourceFileCount": 2042,
+    "unchangedInCurrent": 1811,
+    "changedInCurrent": 231,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_21UD7vJ5LCcyj5m7TTet2B8pWi5H",
+    "sha": "18423ed5f03af50c56aac5863670850e9c913c53",
+    "sourceFileCount": 2042,
+    "unchangedInCurrent": 1812,
+    "changedInCurrent": 230,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_HUFQU8S5WoD9SkffwgY4X6dbTfiV",
+    "sha": "4f8080acdb56b52e8f9cd708b5ac31f80c405f55",
+    "sourceFileCount": 2044,
+    "unchangedInCurrent": 1814,
+    "changedInCurrent": 230,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_H3VHuudVs3u4CeEm2F75mcum9a72",
+    "sha": "a80abdc5b63c3ae196447af52003cfb3a1e04941",
+    "sourceFileCount": 2044,
+    "unchangedInCurrent": 1815,
+    "changedInCurrent": 229,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_Fh9NnzKhb6eYFbGFFCXupfAq6qjL",
+    "sha": "4012b23837ffecb6e77b200dcf24f7faf7734218",
+    "sourceFileCount": 2049,
+    "unchangedInCurrent": 1822,
+    "changedInCurrent": 227,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9GaMEqssmrK9miUBmRDXSC8EuER2",
+    "sha": "00e316f371db02802be0cb7a79f9a244bbdd6f95",
+    "sourceFileCount": 2058,
+    "unchangedInCurrent": 1824,
+    "changedInCurrent": 234,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8Qqpi73BkMCh5pDTkCXyTE93Aec8",
+    "sha": "e7b2c2badbb7e8571525e928ed912da253d4fb55",
+    "sourceFileCount": 2062,
+    "unchangedInCurrent": 1830,
+    "changedInCurrent": 232,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_HGkCTnpcxRpjov9FF2ybS385VnBv",
+    "sha": "b5589930898aed807d1a735598453af05f36deff",
+    "sourceFileCount": 2063,
+    "unchangedInCurrent": 1832,
+    "changedInCurrent": 231,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_Ew5GkatRNpzTV5D5UTNbE9wdf71K",
+    "sha": "d871f1955c3adbd3dd6022f254c59cb70405f946",
+    "sourceFileCount": 2079,
+    "unchangedInCurrent": 1842,
+    "changedInCurrent": 237,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_GD9xDeiKxJ32jLZL7cpUpqXcbxD5",
+    "sha": "b49684c17b71b50639c03e57e080a1486114c631",
+    "sourceFileCount": 2079,
+    "unchangedInCurrent": 1843,
+    "changedInCurrent": 236,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_6qKZhgyZLxqN15mLAg9FsS65ttEq",
+    "sha": "f87fadce6858a6450211a370522a04a444b0fa23",
+    "sourceFileCount": 2079,
+    "unchangedInCurrent": 1846,
+    "changedInCurrent": 233,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_F1kM7mbxhgkdpwSVUw5SYLmMmpts",
+    "sha": "0de7329d8a37840365c5ef408b342cc541e2c5ee",
+    "sourceFileCount": 2082,
+    "unchangedInCurrent": 1850,
+    "changedInCurrent": 232,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8nM1TobaAqXuZmDsv3aSd5aPoye4",
+    "sha": "87ee469dffc94c478569d574e8b49a4cdcc7583c",
+    "sourceFileCount": 2083,
+    "unchangedInCurrent": 1851,
+    "changedInCurrent": 232,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_2CWiZZt1To6tovxH4PPZRFYCkNyZ",
+    "sha": "99f85dcb4f1278607a49e40795805d6ff70b0f51",
+    "sourceFileCount": 2084,
+    "unchangedInCurrent": 1864,
+    "changedInCurrent": 220,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_EVYJrnPgfNQnXyHNk1RVfjc9hBZB",
+    "sha": "a8343b1276e49f1e7fc54c23c698029d8a5af8f4",
+    "sourceFileCount": 2089,
+    "unchangedInCurrent": 1873,
+    "changedInCurrent": 216,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_ACwfhaFJPWNZWT1E6E6RtyD5VKHr",
+    "sha": "ea3e6c90b24661ea4ffb5494dc095df4edccb857",
+    "sourceFileCount": 2091,
+    "unchangedInCurrent": 1877,
+    "changedInCurrent": 214,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_35yMw6kZUBQHnsXkhtSmApYPFNtL",
+    "sha": "186e4f2c48c559b5e80920e302895165b4e9170f",
+    "sourceFileCount": 2095,
+    "unchangedInCurrent": 1882,
+    "changedInCurrent": 213,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_A8ut6zZSdxmY41VWXEKNhXmzNbVQ",
+    "sha": "bf692ccf2ed8933d1b4577bf43febc0a8651c8aa",
+    "sourceFileCount": 2099,
+    "unchangedInCurrent": 1885,
+    "changedInCurrent": 214,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_D9uViT3iPv9orFvA1Sw2tSdnzmNo",
+    "sha": "3ee13a810587d4fb74d783b3ef967dc764bce77d",
+    "sourceFileCount": 2102,
+    "unchangedInCurrent": 1899,
+    "changedInCurrent": 203,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_FaK7ZNjW8XxeRE8KQFqSFriMtdqj",
+    "sha": "a14eaab4e1a788166708d3490b067d23dbfa7671",
+    "sourceFileCount": 2102,
+    "unchangedInCurrent": 1900,
+    "changedInCurrent": 202,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_FbCtHckLhb1Eu7aQ1AdbxySzNt4q",
+    "sha": "9772add944c2f7f1f7f82c2bcd71f196acd0d8d9",
+    "sourceFileCount": 2103,
+    "unchangedInCurrent": 1903,
+    "changedInCurrent": 200,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_86rE4VtrBExxXY7aYg9PuP9zuXu8",
+    "sha": "0815935afaf0b1168fa4a3a146a755d37fdd9c3e",
+    "sourceFileCount": 2103,
+    "unchangedInCurrent": 1903,
+    "changedInCurrent": 200,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_DmE6yqZGjV79SQngtc28pD4tNJNT",
+    "sha": "9c0849a8cdbb2e12471b877e0f63e88207baff59",
+    "sourceFileCount": 2103,
+    "unchangedInCurrent": 1904,
+    "changedInCurrent": 199,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_G31MrhLKm1stNgr2QAn8qC5sWTDw",
+    "sha": "b25951752fd3f70bcfd8f74b7f24604e219059a7",
+    "sourceFileCount": 2103,
+    "unchangedInCurrent": 1904,
+    "changedInCurrent": 199,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8mAucxBaV3ajSUBKR9N6VZAXPFAn",
+    "sha": "a420548edfebec9cc00712e8ab0a8300f9b6f7cb",
+    "sourceFileCount": 2103,
+    "unchangedInCurrent": 1906,
+    "changedInCurrent": 197,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9vY8sXN5TNpdzsoyq3ywrP7zXuTj",
+    "sha": "7829c46fba6c9b748be151649a907d503772603b",
+    "sourceFileCount": 2104,
+    "unchangedInCurrent": 1907,
+    "changedInCurrent": 197,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_3jLXnwC4AExdCURw4eRWY9d5JUGL",
+    "sha": "38e413aba93c13d3f72957ab59532407435f3073",
+    "sourceFileCount": 2114,
+    "unchangedInCurrent": 1914,
+    "changedInCurrent": 200,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8xedxSikn8GAGxuiUvLTRFfwPmhF",
+    "sha": "2a0bc70f041eb286b4c1c7fef4b253d82a06ed1a",
+    "sourceFileCount": 2127,
+    "unchangedInCurrent": 1931,
+    "changedInCurrent": 196,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_C3mhPSAL2Lvod2tdmXfuChdwMbMu",
+    "sha": "3528903edb4311471c7c49cd03988d53f939cfa1",
+    "sourceFileCount": 2126,
+    "unchangedInCurrent": 1931,
+    "changedInCurrent": 195,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_E64ThSDnnm8HWg7b21xgC9LWW3hs",
+    "sha": "9bb00889b9180b509c0d33090461568403137fd8",
+    "sourceFileCount": 2132,
+    "unchangedInCurrent": 1934,
+    "changedInCurrent": 198,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_DM8Crpd27gKQE2g2e2HUeHCVoFmw",
+    "sha": "9d7475f8406858063829abccb807b30ab176a96e",
+    "sourceFileCount": 2134,
+    "unchangedInCurrent": 1939,
+    "changedInCurrent": 195,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_HgHHRu1LaioEcAtuDSuSqAtHEHWo",
+    "sha": "4dd58306c6270f81ac348f026752bb1892cb3720",
+    "sourceFileCount": 2134,
+    "unchangedInCurrent": 1940,
+    "changedInCurrent": 194,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_3rdvgfLJC1HSsthXAs79MQrEQHXP",
+    "sha": "145a21e601cf10f9f3d883a7c04dd67ceac827e9",
+    "sourceFileCount": 2135,
+    "unchangedInCurrent": 1941,
+    "changedInCurrent": 194,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_FZADSsGgVBPbfmcewWxhpD1jqds3",
+    "sha": "5ec08afedccc79362e2e1793ada6bfa3c5f34438",
+    "sourceFileCount": 2140,
+    "unchangedInCurrent": 1943,
+    "changedInCurrent": 197,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_6UYrKoZ65DvrpYcztJmVZXvHDahC",
+    "sha": "4abd83d5d88e0a1dd27cae77379062bf1ebe4612",
+    "sourceFileCount": 2142,
+    "unchangedInCurrent": 1946,
+    "changedInCurrent": 196,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_F6xjds33cgPH9D7w4e2umf9pLt66",
+    "sha": "5d634eaca69051dc2030f77cfbc60d93854d5008",
+    "sourceFileCount": 2143,
+    "unchangedInCurrent": 1947,
+    "changedInCurrent": 196,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9zvwTL59d9gMbPfo8GUQnxhWcNfM",
+    "sha": "ced940b363a534d0b0789d8ec55a61ee968623fd",
+    "sourceFileCount": 2144,
+    "unchangedInCurrent": 1948,
+    "changedInCurrent": 196,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_HffxXHJWJDJ1hjecmMDU2N2mSzbN",
+    "sha": "2585838457f7d72ffe19cab5a06c95f406a9fb57",
+    "sourceFileCount": 2145,
+    "unchangedInCurrent": 1951,
+    "changedInCurrent": 194,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_CHkhS9qED164tAmLFL8jxT66ctYw",
+    "sha": "f4c9c99be5d32e5ad3737e743ed97d02f588b57c",
+    "sourceFileCount": 2145,
+    "unchangedInCurrent": 1951,
+    "changedInCurrent": 194,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_HGTcjczJ5EFY1Eg7TbRzavfxvYXe",
+    "sha": "c242c0b551eea57a79a3b8a08e91fa8d53d04fd9",
+    "sourceFileCount": 2147,
+    "unchangedInCurrent": 1953,
+    "changedInCurrent": 194,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BRsGzhpjNc3vWcQNQjAQ1BW2sgcE",
+    "sha": "eef90b65dafb9f265bce380040eda27fce295def",
+    "sourceFileCount": 2149,
+    "unchangedInCurrent": 1954,
+    "changedInCurrent": 195,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9BX53ZJgzUUC9BpLHu2nwLc78pQJ",
+    "sha": "81e2b5199590362f23475f15a5541e233249313a",
+    "sourceFileCount": 2166,
+    "unchangedInCurrent": 1977,
+    "changedInCurrent": 189,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BsUinJ8Pg3xzqKD6onzFr4ePjpGc",
+    "sha": "196095a9f2d729e104ba0799e3d04b849120e8f6",
+    "sourceFileCount": 2167,
+    "unchangedInCurrent": 1988,
+    "changedInCurrent": 179,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_DsLqSvVew2pEKfYaViLSbkW4FWVE",
+    "sha": "592413b44bf4b1fe3165c6483b44a86b07c94e49",
+    "sourceFileCount": 2167,
+    "unchangedInCurrent": 1990,
+    "changedInCurrent": 177,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_AnvuDiXzG1np1yrmvVRJ7QS9ou65",
+    "sha": "a61759ddd08415d745636536839766645638c921",
+    "sourceFileCount": 2167,
+    "unchangedInCurrent": 1995,
+    "changedInCurrent": 172,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_6w1syKpYjJJQFGMiSuCmf4RShXdb",
+    "sha": "081cb27ce3fbffa4ceac79e4794327d6db3a37ec",
+    "sourceFileCount": 2168,
+    "unchangedInCurrent": 2003,
+    "changedInCurrent": 165,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4aqTGZjJ9NJ7ZV3cAGK8y1t1fKjP",
+    "sha": "92186b683748e1e325b956c95040556f7e7b6012",
+    "sourceFileCount": 2169,
+    "unchangedInCurrent": 2008,
+    "changedInCurrent": 161,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_6GxXqXXazLoS6MqMAxUq7To3XoKX",
+    "sha": "4178cbcf636ea594d542172e15354b6d3a993852",
+    "sourceFileCount": 2172,
+    "unchangedInCurrent": 2017,
+    "changedInCurrent": 155,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_2y9qVui4iLUmVqbZXRJwftCTiwrc",
+    "sha": "0fa6d4582f21b808ec2ac204fe1fbde9b490bca3",
+    "sourceFileCount": 2173,
+    "unchangedInCurrent": 2019,
+    "changedInCurrent": 154,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_C29Zumhuyi7Fyf9XyDBd7h3VSnVn",
+    "sha": "70487aaa8edb34dfe0a4e6e06fc128f4aeeb4075",
+    "sourceFileCount": 2184,
+    "unchangedInCurrent": 2024,
+    "changedInCurrent": 160,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_5d17D2Tt5o9Z5LgDByGHXGSe7NAd",
+    "sha": "c54973c85530cd3c313a3edd05b54028480cfaa4",
+    "sourceFileCount": 2190,
+    "unchangedInCurrent": 2027,
+    "changedInCurrent": 163,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_FihyVKzedKNofigXGiwoNuWG8QH7",
+    "sha": "8d6478814b4b442f27034979823ce708b1a8aba4",
+    "sourceFileCount": 2191,
+    "unchangedInCurrent": 2031,
+    "changedInCurrent": 160,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_DuBhbQS1FsBE3bqk4XAi8V8arybC",
+    "sha": "a85d4e775a895060e6b7f4ae14628b82e216acbf",
+    "sourceFileCount": 2198,
+    "unchangedInCurrent": 2048,
+    "changedInCurrent": 150,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BjKycnxYwxceMvvnYgSAUvMApQo3",
+    "sha": "02e728fae225736d10d840c011ec8a6c3594d6a6",
+    "sourceFileCount": 2197,
+    "unchangedInCurrent": 2053,
+    "changedInCurrent": 144,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_CWQcCuEsiALFPQ3tbMYH9Evy5G37",
+    "sha": "a8b020ff05d7e00e4d7752fd6dd27f321c6b0561",
+    "sourceFileCount": 2215,
+    "unchangedInCurrent": 2068,
+    "changedInCurrent": 147,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BrQoX4qrMTxgydqTV5KRTeyCSqR7",
+    "sha": "e06e4bc6a1cf29e18c233efd5a0ef5ec52cf90a4",
+    "sourceFileCount": 2216,
+    "unchangedInCurrent": 2073,
+    "changedInCurrent": 143,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_DsUJMrUZC8kK8paSk6nZZD1mLPNk",
+    "sha": "da35a99d5718b98b491d01414267b71bd5268eef",
+    "sourceFileCount": 2225,
+    "unchangedInCurrent": 2079,
+    "changedInCurrent": 146,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_EQnsLurDCi15jBBrkzgD7wdzPfkj",
+    "sha": "8ff0e3a2a754789b0d850e71cfc6c2944944c3c7",
+    "sourceFileCount": 2226,
+    "unchangedInCurrent": 2084,
+    "changedInCurrent": 142,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_D9p9ELFoRQeNNHgVMBbf7MhD5i64",
+    "sha": "5d60a3a234de9e1d101f108460b0727d43660910",
+    "sourceFileCount": 2227,
+    "unchangedInCurrent": 2087,
+    "changedInCurrent": 140,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8E5zzcwvExfijfRwvuxzKeQNULvR",
+    "sha": "e6ec67d6c9c3b402d3650b761a1ebbd7d43a30cd",
+    "sourceFileCount": 2227,
+    "unchangedInCurrent": 2087,
+    "changedInCurrent": 140,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_32Ahs5Qih1NeKnb2qw2VaCwiq7CZ",
+    "sha": "f13aa3f2a4bb80ddc92a03b2a4cd18038f28e1a7",
+    "sourceFileCount": 2227,
+    "unchangedInCurrent": 2088,
+    "changedInCurrent": 139,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8X1vzVcHc45gzAkaRPUUJ9Nex1AK",
+    "sha": "ddd3ff1f270cf71b5efa2401cd4b8b31ae9aa13a",
+    "sourceFileCount": 2228,
+    "unchangedInCurrent": 2094,
+    "changedInCurrent": 134,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4kcaeNpyDDQAJDfY5fjZGsW8ZQXu",
+    "sha": "5dfb315e1f537a3ad19ec3580cf53f4ebe912a00",
+    "sourceFileCount": 2227,
+    "unchangedInCurrent": 2096,
+    "changedInCurrent": 131,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9WGiiFKcyA6DxmaUnJda8EADgR5F",
+    "sha": "b0c13b20257d1bc8ca066641c21e9626a4b527d3",
+    "sourceFileCount": 2228,
+    "unchangedInCurrent": 2102,
+    "changedInCurrent": 126,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_F4tB4HunyrhNPn5FjXAQP2C9XYas",
+    "sha": "c768f7f8355ae618a5f232fab0cb31dc03548fc9",
+    "sourceFileCount": 2230,
+    "unchangedInCurrent": 2107,
+    "changedInCurrent": 123,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_CKJyw2AXMHQNeQbnMhQGmACcUxb7",
+    "sha": "8e29312c2b083184123371cdf3b3733edfa42337",
+    "sourceFileCount": 2231,
+    "unchangedInCurrent": 2109,
+    "changedInCurrent": 122,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_Wb72YppUGDebnwQwDbHFLHBWCL5E",
+    "sha": "7c2cc7be1112e7e60d38aedc2bfcba766ff6e5bf",
+    "sourceFileCount": 2231,
+    "unchangedInCurrent": 2111,
+    "changedInCurrent": 120,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_GioUqRjCoseg5HrFXeWPaFGMjRG5",
+    "sha": "c155083d08e93814756521fc982c7d35bffe068a",
+    "sourceFileCount": 2236,
+    "unchangedInCurrent": 2118,
+    "changedInCurrent": 118,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9TXHQDPRm9eD1pybChk5bm8Fhmza",
+    "sha": "010b7506fdfe0ffb98f79447927fea4e7c887b40",
+    "sourceFileCount": 2235,
+    "unchangedInCurrent": 2119,
+    "changedInCurrent": 116,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9XGHuysiXjuL8rDnEiCqK9gzXMRd",
+    "sha": "eeb94ca8dcc4927acb9042a58bb2de96943166b2",
+    "sourceFileCount": 2240,
+    "unchangedInCurrent": 2134,
+    "changedInCurrent": 106,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_FPP9RhJL1hTkyhFkSWwafSaGUJ7w",
+    "sha": "159bb126d1424c1271a1998f6c8a3b4f4987d27d",
+    "sourceFileCount": 2245,
+    "unchangedInCurrent": 2139,
+    "changedInCurrent": 106,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_ET5oHmcyX1vtpSHkEhKFq7XtDBXz",
+    "sha": "1860c74ffa77988a2f9ea40ace84b5f3c948cdaf",
+    "sourceFileCount": 2245,
+    "unchangedInCurrent": 2140,
+    "changedInCurrent": 105,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_3xDg3Wh7UPJNPztqR9v6BijpgzFg",
+    "sha": "48b8f26bab322b6dc731bd8375efb2ff4db41a0f",
+    "sourceFileCount": 2245,
+    "unchangedInCurrent": 2142,
+    "changedInCurrent": 103,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_7kHWC9hybiCk1asGUDsuSyhCyeTK",
+    "sha": "0201b1f444aa4d0de24e976b241af3c1d1eb8736",
+    "sourceFileCount": 2245,
+    "unchangedInCurrent": 2142,
+    "changedInCurrent": 103,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_DxWkSQFHKy5QBdwnaFr5hxU2mr6C",
+    "sha": "708ec0ea3c1095168e745ba6366f65212a78d227",
+    "sourceFileCount": 2247,
+    "unchangedInCurrent": 2148,
+    "changedInCurrent": 99,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8w5a6z3oo6PsCZFf45oRUcJ4uXbD",
+    "sha": "523cfdb64424a096d3f0497542d2425ed73e2043",
+    "sourceFileCount": 2249,
+    "unchangedInCurrent": 2153,
+    "changedInCurrent": 96,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8LCGvZ8cAWmDZT7sgzJ3bu9CaU8o",
+    "sha": "fc0bcae8b9101ce21f094a207a2615d8c2ee91e2",
+    "sourceFileCount": 2249,
+    "unchangedInCurrent": 2153,
+    "changedInCurrent": 96,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_Fe6tQwqKFdCrnHUQ7CXAfwyWRdpS",
+    "sha": "f1fd479ab42e228baa6d11455a3acebf0aef4413",
+    "sourceFileCount": 2249,
+    "unchangedInCurrent": 2153,
+    "changedInCurrent": 96,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_5te7TcSdM4qzFxKXyw478Wuq6Jtd",
+    "sha": "cd7668fdf7050298a19156791473d17df8916bad",
+    "sourceFileCount": 2250,
+    "unchangedInCurrent": 2158,
+    "changedInCurrent": 92,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_3vWLu2NHND51fE2dsYrUVVhpWtJb",
+    "sha": "833134a076727144b6f4b27a5e34cd85bce92db7",
+    "sourceFileCount": 2252,
+    "unchangedInCurrent": 2162,
+    "changedInCurrent": 90,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4VUKMrv9zXYMRghrh1qTCDE663Vz",
+    "sha": "0f550fcae65a681eb3959fdf5151441fea0a5aaf",
+    "sourceFileCount": 2252,
+    "unchangedInCurrent": 2165,
+    "changedInCurrent": 87,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_CR21GzD5FeN7qTeSVbf3BVK6Kzs8",
+    "sha": "6c144652e6e7c069cac72ad71d9cd7013f75d6e6",
+    "sourceFileCount": 2252,
+    "unchangedInCurrent": 2165,
+    "changedInCurrent": 87,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_EwA9aQpbZKCgRxKYt2hN5XMuteN1",
+    "sha": "4b31f67ef02ad5c93baaa3b411484d0efab9d003",
+    "sourceFileCount": 2252,
+    "unchangedInCurrent": 2165,
+    "changedInCurrent": 87,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_DTKGAMz7X999TSWHWssSoAddxYbp",
+    "sha": "c5ad38b709c52dd84fb90bf0e5bd6428a17e213c",
+    "sourceFileCount": 2252,
+    "unchangedInCurrent": 2167,
+    "changedInCurrent": 85,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_2FewxiJmqy3LAU69Be5LqzXaNuaF",
+    "sha": "9acd0a4a996202f2808fce5117d6eecf94402346",
+    "sourceFileCount": 2252,
+    "unchangedInCurrent": 2167,
+    "changedInCurrent": 85,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9UeJWNXwLLJKSmZGGZSHYf4SABuW",
+    "sha": "ad202934e151c8c40cc6d86557b1f151fc4daa76",
+    "sourceFileCount": 2256,
+    "unchangedInCurrent": 2176,
+    "changedInCurrent": 80,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_EYoCXqJL3Y3m23neHPesFybshXez",
+    "sha": "9fada2b243329124d4fb4ee57a9840da9e00d3c1",
+    "sourceFileCount": 2259,
+    "unchangedInCurrent": 2177,
+    "changedInCurrent": 81,
+    "absentInCurrent": 1
+  },
+  {
+    "id": "dpl_BEBvXdbJtUBqwWD3aY3UHBCCYYMD",
+    "sha": "692abc3865d743093efec8a7c2d31a86c72a71f4",
+    "sourceFileCount": 2260,
+    "unchangedInCurrent": 2192,
+    "changedInCurrent": 68,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_FV45FbKA9Jnfy9SFo8avDrC7ZX6K",
+    "sha": "3606810800f52c62f27244655e369f5f0012d5ed",
+    "sourceFileCount": 2260,
+    "unchangedInCurrent": 2192,
+    "changedInCurrent": 68,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_EUk2MHLxNW9R5CeUNhQh7wFmEQZG",
+    "sha": "3e9918626fb5c46c62b3dd4bf8d130a4beca0a90",
+    "sourceFileCount": 2262,
+    "unchangedInCurrent": 2194,
+    "changedInCurrent": 68,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_oRCEK8Hw2tx6oxnLJBgGipT7KkUy",
+    "sha": "02a4aa787e948f86e9d0689e5149ea145bdf6c92",
+    "sourceFileCount": 2265,
+    "unchangedInCurrent": 2198,
+    "changedInCurrent": 67,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_6jkBNFfiC7js8RvFGm52dnW5nUZF",
+    "sha": "5e192048c776caccef1839c4f04b97502aff27e9",
+    "sourceFileCount": 2265,
+    "unchangedInCurrent": 2206,
+    "changedInCurrent": 59,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BoBKquY8Bu4JC7exp8LbFNiS8QDY",
+    "sha": "10a46904bbc2dfe4b34bfc25638844e878ac8220",
+    "sourceFileCount": 2265,
+    "unchangedInCurrent": 2208,
+    "changedInCurrent": 57,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_Bd12vFwmWr7BaviR48URdCF9pqbX",
+    "sha": "206308a37de6f5c224e52c15711d2d84cad2abad",
+    "sourceFileCount": 2265,
+    "unchangedInCurrent": 2210,
+    "changedInCurrent": 55,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8gRW6yhtb6R7PzzDT3appEdxXxpJ",
+    "sha": "cc3209607d38360eb564204e245fe0d09e813cd0",
+    "sourceFileCount": 2272,
+    "unchangedInCurrent": 2213,
+    "changedInCurrent": 59,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_HaBhwWoxidSpQ8fj7AgK9Z6AP1T3",
+    "sha": "32e818c11c5dcff0bd7e478808cf96a2f73a0072",
+    "sourceFileCount": 2272,
+    "unchangedInCurrent": 2214,
+    "changedInCurrent": 58,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_AkRzUMRRTrtBHJTFnLcHJNez51iK",
+    "sha": "1125557ba8d1e4bd717eabfbee1fa312a39920d8",
+    "sourceFileCount": 2272,
+    "unchangedInCurrent": 2216,
+    "changedInCurrent": 56,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BfWwad8jjrZmmm9fK3sEXX8uUYmH",
+    "sha": "55eee6cb17468b4a5f26011a60778ac8ac2c1ec6",
+    "sourceFileCount": 2272,
+    "unchangedInCurrent": 2218,
+    "changedInCurrent": 54,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_Gwp4UFvf8CVz2c4D6TKQ5EGU7Q58",
+    "sha": "5d88bfa9ad7e6c2be1ecd07f9797a573961a9bdc",
+    "sourceFileCount": 2272,
+    "unchangedInCurrent": 2220,
+    "changedInCurrent": 52,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_4qT2cpNwHHWA4adrh8ivw3hkeMai",
+    "sha": "7d5bc35779042eaf54640db653baab32a1797866",
+    "sourceFileCount": 2272,
+    "unchangedInCurrent": 2222,
+    "changedInCurrent": 50,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_BchqmfWhYFqQssojkhCfzNfHywUU",
+    "sha": "8f2eb212f5c43075083f1b104ef4b1e51d556712",
+    "sourceFileCount": 2278,
+    "unchangedInCurrent": 2228,
+    "changedInCurrent": 50,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_29TERNyQdY2AvFX5FkcjLR8bh7CC",
+    "sha": "b7b4da21b4d6b970263133178e602802aaa72959",
+    "sourceFileCount": 2279,
+    "unchangedInCurrent": 2234,
+    "changedInCurrent": 45,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_Da8i9XLRs3sZBhFgeD46SzPb8Y9p",
+    "sha": "682de76fb53bfad0a696966d2f0f8ee3ca50821d",
+    "sourceFileCount": 2292,
+    "unchangedInCurrent": 2237,
+    "changedInCurrent": 55,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_HijRKm4pxhbt2xG4337vEXbyATEg",
+    "sha": "846a6717e1eecb835ce1475d269206125ef85f54",
+    "sourceFileCount": 2293,
+    "unchangedInCurrent": 2241,
+    "changedInCurrent": 52,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_6EksJU55z7LDCVLGFha1ksyNCbTb",
+    "sha": "219b558e0101f7c9de0066310574201213bc549a",
+    "sourceFileCount": 2294,
+    "unchangedInCurrent": 2242,
+    "changedInCurrent": 52,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_3NRtF2mwAJUG9g2ynJkwYi5n5jZt",
+    "sha": "dc5f6848d6976686fa65d2ee2299074d28de83a0",
+    "sourceFileCount": 2294,
+    "unchangedInCurrent": 2242,
+    "changedInCurrent": 52,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_ESEAaS9B49oVK59QBSvsM6VPTpsb",
+    "sha": "42e02cc3fa309c5fcc82a79c14831c0aaa9a35bd",
+    "sourceFileCount": 2294,
+    "unchangedInCurrent": 2242,
+    "changedInCurrent": 52,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_WxJk4qCAsiqqRUDiEZGr1RqHu3KM",
+    "sha": "415c44cae4fb13ee2af6aae3909dba3d6b4532fb",
+    "sourceFileCount": 2295,
+    "unchangedInCurrent": 2243,
+    "changedInCurrent": 52,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_cqai67hGdquoVmvrCPFXToMke9LH",
+    "sha": "73d3d781693130fa69b6df93497159bb761d2a82",
+    "sourceFileCount": 2296,
+    "unchangedInCurrent": 2251,
+    "changedInCurrent": 45,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9xqjMH1Wj47ipfqAJhwfGurVZcNo",
+    "sha": "7b92f7e73b7e359f0c16a5dfd350bc2702751ecd",
+    "sourceFileCount": 2296,
+    "unchangedInCurrent": 2253,
+    "changedInCurrent": 43,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9LJALbU4t3uPoSEkvMHR2JZVGFG1",
+    "sha": "55bf0de7f19da33277bab25b7c3248a595242c15",
+    "sourceFileCount": 2299,
+    "unchangedInCurrent": 2257,
+    "changedInCurrent": 42,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_7uEhrZRx2qY53YkbYiAiu9oysend",
+    "sha": "e33e2ab166f57717ede5a356076c8b40e22c7823",
+    "sourceFileCount": 2301,
+    "unchangedInCurrent": 2269,
+    "changedInCurrent": 32,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_FnyNm73YV5sgHZYfLeiV23Y5z2r9",
+    "sha": "67f2ef60494a0be3214635e3b7bb6f47bba3f3e3",
+    "sourceFileCount": 2303,
+    "unchangedInCurrent": 2273,
+    "changedInCurrent": 30,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_9mAaBajrhEBNaAsjS5ZfLBie2PvA",
+    "sha": "778856c4d8e54cda185faf6bbb162efdd75cb0d7",
+    "sourceFileCount": 2305,
+    "unchangedInCurrent": 2278,
+    "changedInCurrent": 27,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_8Vj8qhe2AE15UfrU6owbQ1AvrTHb",
+    "sha": "69078b98f90c2925dadc07bb358a7d4a5d00f313",
+    "sourceFileCount": 2308,
+    "unchangedInCurrent": 2288,
+    "changedInCurrent": 20,
+    "absentInCurrent": 0
+  },
+  {
+    "id": "dpl_FVq7JqmRszgkUFxyq52Mb6Kfto1U",
+    "sha": "48ba5ee4af631ea825368b6c570b6680c882b306",
+    "sourceFileCount": 2318,
+    "unchangedInCurrent": 2291,
+    "changedInCurrent": 18,
+    "absentInCurrent": 9
+  },
+  {
+    "id": "dpl_CEd8CE3fpifjGPGkTRxAjAVQYuXs",
+    "sha": "475c89514c0c0b10a967612eca977dc1087a23d2",
+    "sourceFileCount": 2322,
+    "unchangedInCurrent": 2301,
+    "changedInCurrent": 12,
+    "absentInCurrent": 9
+  },
+  {
+    "id": "dpl_Dq1wCBwU92G354cov6BCiN4qrYt9",
+    "sha": "884bf1d716d5d203ded0828fe25fc7df92490fa9",
+    "sourceFileCount": 2314,
+    "unchangedInCurrent": 2314,
+    "changedInCurrent": 0,
+    "absentInCurrent": 0
+  }
+]

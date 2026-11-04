@@ -102,6 +102,10 @@ export async function POST(request: Request) {
       return respostaErro('Você não tem permissão para redefinir senhas.', 403);
     }
 
+    if (!proprio) {
+      return respostaErro('A senha da conta global só pode ser alterada pelo próprio titular. Oriente o usuário a recuperar o acesso na tela de login.', 403);
+    }
+
     const { error: erroAtualizarSenha } = await supabaseAdmin.auth.admin.updateUserById(
       usuarioAlvo.user_id,
       {

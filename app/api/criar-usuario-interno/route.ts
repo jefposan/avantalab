@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { validarLiberacoes } from '@/app/lib/acessos-usuario';
 import { createClient } from '@supabase/supabase-js';
 import { COBRANCA_ATIVA, podeUsar } from '../../lib/cobranca';
 import { resolverEstadoAcessoParaUsuario } from '../../lib/cobranca-servidor';
@@ -76,6 +77,8 @@ export async function POST(request: Request) {
     const loginOriginal = String(corpo.login || '').trim();
     const senha = String(corpo.senha || '');
     const perfil = String(corpo.perfil || '') as PerfilUsuario;
+    let liberacoes;
+    try { liberacoes = corpo.liberacoes === undefined ? null : validarLiberacoes(corpo.liberacoes, perfil); } catch (e) { return respostaErro((e as Error).message); }
 
     const login = normalizarLogin(loginOriginal);
 
@@ -123,10 +126,11 @@ export async function POST(request: Request) {
       return respostaErro('Você não tem permissão para criar usuários.', 403);
     }
 
-    // Cobrança: criar usuário é recurso do Premium Pessoal (fail-open em falha).
+    // Falha de leitura não autoriza novas concessões; acessos existentes não mudam.
     if (COBRANCA_ATIVA) {
       try {
-        const estado = await resolverEstadoAcessoParaUsuario(empresaId, user.id);
+        const estado = await resolverEstadoAcessoParaUsuario(empresaId, user.id, true);
+        if (!estado) throw new Error('Assinatura não confirmada.');
         if (!podeUsar('usuarios_internos', estado)) {
           return respostaErro('Criar usuários faz parte do Premium Pessoal. Assine para desbloquear.', 403);
         }
@@ -134,6 +138,7 @@ export async function POST(request: Request) {
         if (!limite.permitido) return respostaErro(limite.mensagem, 409);
       } catch (erroCobranca) {
         console.error('Erro ao validar Premium (criar usuário):', erroCobranca);
+        return respostaErro('Não foi possível conferir o plano ou a franquia de usuários. Tente novamente em instantes; os acessos existentes foram preservados.', 503);
       }
     }
 
@@ -262,6 +267,7 @@ export async function POST(request: Request) {
         login,
         perfil,
         status: 'ativo',
+        ...(liberacoes ? { dashboard_liberada: liberacoes.dashboard, modulos_liberados: liberacoes.modulos, areas_alteradas_por: user.id } : {}),
       })
       .select()
       .single();

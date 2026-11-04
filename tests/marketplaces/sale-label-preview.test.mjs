@@ -7,11 +7,11 @@ const css = readFileSync(new URL('../../app/marketplaces/marketplaces.module.css
 
 test('etiqueta do Mercado Livre permanece no AvantaLab e informa falha na própria tela', () => {
   assert.doesNotMatch(source, /window\.open\('about:blank'/);
-  assert.match(source, /URL\.createObjectURL\(pdf\)/);
+  assert.match(source, /URL\.createObjectURL\(file\)/);
   assert.match(source, /labelPreview\?\.saleId === sale\.id/);
-  assert.match(source, /<iframe title=\{`Etiqueta do Pedido #\$\{sale\.orderId\}`\} src=\{labelPreview\.url\}/);
+  assert.match(source, /<LabelNativePrint key=\{labelPreview\.url\} url=\{labelPreview\.url\}/);
+  assert.match(source,/!labelPreview\.downloadOnly && canManage && canPrintSaleLabel\(sale\)/);
   assert.match(source, /setPrintError\(err instanceof Error \? err\.message/);
-  assert.match(css, /\.labelPreview iframe \{[^}]*min-height:/);
 });
 
 test('linha identifica a plataforma e copia a referência completa do pedido', () => {

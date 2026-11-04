@@ -3,9 +3,31 @@ import MarketplaceMobileApp from './MarketplaceMobileApp';
 import './viewport-shell.css';
 
 export const metadata: Metadata = {
-  title: 'AvantaPreços — Consulta de preços | AvantaLab',
+  title: 'AvantaPreços — Consulta de preços',
   applicationName: 'AvantaPreços',
-  description: 'Consulte produtos e preços do Mercado Livre pelo EAN.',
+  description: 'Consulta rápida de produtos e preços por EAN.',
+  alternates: { canonical: 'https://avantalab.com.br/marketplaces/consulta' },
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    title: 'AvantaPreços',
+    description: 'Consulta rápida de produtos e preços por EAN.',
+    siteName: 'AvantaPreços',
+    url: 'https://avantalab.com.br/marketplaces/consulta',
+    images: [{
+      url: 'https://avantalab.com.br/images/avantaprecos-link-v1.jpg',
+      type: 'image/jpeg',
+      width: 1731,
+      height: 909,
+      alt: 'AvantaPreços — Consulta rápida de produtos e preços',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AvantaPreços',
+    description: 'Consulta rápida de produtos e preços por EAN.',
+    images: ['https://avantalab.com.br/images/avantaprecos-link-v1.jpg'],
+  },
   manifest: '/marketplaces/consulta/manifest.webmanifest',
   icons: {
     icon: [

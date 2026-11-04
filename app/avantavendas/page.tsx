@@ -3,7 +3,9 @@ import AvaMobileBridge from '../mobile/AvaMobileBridge';
 import AvantaVendasBootstrap from './AvantaVendasBootstrap';
 import NativePushNotificationsBridge from './NativePushNotificationsBridge';
 import NativeShareBridge from './NativeShareBridge';
+import NativeHapticsBridge from './NativeHapticsBridge';
 import { AVANTAVENDAS_VERSION } from './version';
+import LoadingPontos from '../components/LoadingPontos';
 
 const shareImage = 'https://vendas.avantalab.com.br/images/avantavendas-share-meta.jpg?v=20261001-01';
 
@@ -105,12 +107,12 @@ export default function AvantaVendasPage() {
         <section className="login-screen preparing-access-screen">
           <div className="access-brand-zone">
             <img
-              src="/images/logo-avantalab-oficial.png"
-              alt="AvantaLab — Do zero ao operacional"
+              src="/avantavendas/recursos/assets/logo-avantavendas-positivo.png?v=marca-20261025-v2"
+              alt="AvantaVendas"
             />
           </div>
           <div className="preparing-access-card" role="status" aria-live="polite" aria-busy="true">
-            <span className="loader" aria-hidden="true" />
+            <LoadingPontos />
             <h1>Preparando acesso</h1>
             <small id="accessProgressLabel">Iniciando o AvantaVendas</small>
             <div className="access-progress" aria-label="Carregando acesso">
@@ -120,6 +122,7 @@ export default function AvantaVendasPage() {
           </div>
         </section>
       </div>
+      <template id="vendasAccessLoadingTemplate"><LoadingPontos /></template>
       <AvantaVendasBootstrap
         assetVersion={assetVersion}
         caminhoRecursos={caminhoRecursos}
@@ -128,6 +131,7 @@ export default function AvantaVendasPage() {
       />
       <NativePushNotificationsBridge />
       <NativeShareBridge />
+      <NativeHapticsBridge />
       <AvaMobileBridge />
     </main>
   );

@@ -1,0 +1,66 @@
+.body {padding:16px;display:grid;gap:8px;font-size:13px;}
+.body p {margin:0;font-size:12px;}
+.form {display:grid;gap:12px;}
+.product {display:flex;gap:12px;align-items:center;padding-bottom:12px;border-bottom:1px solid color-mix(in srgb,currentColor 16%,transparent);}
+.product img,.product > span {width:64px;height:64px;object-fit:contain;flex:none;border-radius:10px;background:#fff;}
+.product > span {display:grid;place-items:center;color:#64748b;font-size:12px;}
+.product > div {display:grid;gap:4px;min-width:0;}
+.product strong {font-size:14px;line-height:1.3;}
+.product small {font-size:11px;opacity:.65;}
+.form label {display:grid;gap:4px;min-width:0;font-size:12px;}
+.form textarea,.form select,.form input {width:100%;min-width:0;box-sizing:border-box;min-height:44px;border:1px solid var(--direct-border,#cbd5e1);border-radius:12px;padding:8px;color:inherit;background:var(--direct-input,#fff);font:inherit;font-size:16px;}
+.form textarea {resize:vertical;line-height:1.35;font-size:14px;}
+.form .details { font-size: 14px; gap: 6px; }
+.form .details textarea { min-height: 110px; padding: 12px; font-size: 16px; line-height: 1.5; }
+.details small { font-size: 12px; line-height: 1.4; opacity: .8; }
+.form input {text-align:right;}
+.form :is(input,select,textarea):focus-visible {outline:2px solid var(--brand);outline-offset:2px;}
+.grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.pricing {display:grid;gap:5px;padding-top:12px;border-top:1px solid color-mix(in srgb,currentColor 16%,transparent);}
+.pricing > span {font-size:12px;opacity:.75;}
+.suggestions {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+.suggestions button {min-width:0;padding:2px 0;}
+.suggestions button > span {min-height:44px;flex-direction:column;gap:3px;font-size:11px;padding:5px 2px;border-color:transparent;}
+.suggestions button strong {font-size:13px;}
+.suggestions button[data-price-level=minimum] > span {background:#fff2ed;color:#873d21;}
+.suggestions button[data-price-level=medium] > span {background:#eef4fc;color:#24528a;}
+.suggestions button[data-price-level=ideal] > span {background:#eaf6ef;color:#17613d;}
+.actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.actions button {min-width:0;}
+.preview {display:block;width:100%;max-height:40dvh;object-fit:contain;border-radius:12px;background:#f2f6fa;}
+.share {width:100%;}
+.share > span {min-height:40px;}
+.error {color:var(--direct-error,#b42318);}
+.body[data-dark] .error {color:#ffb4ab;}
+
+.photoActions {display:flex;flex-wrap:wrap;gap:4px;}
+.caption {display:grid;gap:12px;padding:12px;border-radius:12px;background:color-mix(in srgb,var(--brand) 8%,transparent);overflow-wrap:anywhere;}
+.body .caption p {font-size:14px;line-height:1.5;white-space:pre-wrap;}
+.form input[hidden] {display:none;}
+
+.stockChooser {display:grid;gap:6px;padding-bottom:10px;border-bottom:1px solid var(--direct-border,#cbd5e1);}
+.stockOptions {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0;}
+.stockIndicator {display:flex;min-width:0;min-height:52px;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 4px;border-radius:12px;background:color-mix(in srgb,var(--brand) 6%,var(--direct-input,#fff));text-align:center;}
+.stockIndicator dt {max-width:100%;overflow-wrap:anywhere;font-size:12px;line-height:1.3;}
+.stockIndicator dd {margin:0;font-size:14px;font-weight:600;line-height:1.3;}
+
+/* Escopo exclusivo do link: mantém os demais modais e o post por imagem. */
+.shoppingDialog { max-height:calc(100dvh - 32px); }
+.shoppingPrices {display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;}
+.shoppingActions {grid-template-columns:repeat(3,minmax(0,1fr));}
+.shoppingCondition [role="listbox"] {top:auto;bottom:calc(100% + 5px);max-height:none;gap:0;padding:0;}
+.shoppingCondition [role="option"] {min-height:44px;}
+@media (max-width:600px), (max-height:650px) {
+ .shoppingDialog > header {padding:4px 12px;}
+ .shoppingDialog > header h2 {font-size:16px;}
+ .shoppingBody {padding:10px 12px;gap:6px;}
+ .shoppingBody > strong {font-size:13px;line-height:1.3;}
+ .shoppingBody .form {gap:6px;}
+ .shoppingBody .form textarea {font-size:16px;line-height:1.2;padding:6px 8px;resize:vertical;}
+ .shoppingBody .form label {font-size:12px;gap:3px;}
+ .shoppingBody [aria-haspopup="listbox"] {min-height:48px;font-size:13px;}
+ .shoppingBody [role="option"] {font-size:13px;}
+ .shoppingBody .actions {gap:4px;}
+}
+
+.caption a {color:inherit;text-decoration:underline;overflow-wrap:anywhere;}

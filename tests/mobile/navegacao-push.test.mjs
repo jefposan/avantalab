@@ -68,7 +68,7 @@ test('a abertura nativa usa uma sessão única e não fica presa em erro de aute
   assert.doesNotMatch(mobile, /db\.rpc\('registrar_atividade_aplicativo',[\s\S]{0,120}?\)\.catch\(/);
   assert.match(
     mobile,
-    /catch \(erroSessao\) \{\s*limparSessaoLocalMobile\(\);\s*limparPreferenciaSessaoMobile\(\);\s*abrirLoginAposFalhaSessaoMobile\(erroSessao\)/,
+    /catch \(erroSessao\) \{[\s\S]*?Sua sessão foi preservada[\s\S]*?limparSessaoLocalMobile\(\);\s*limparPreferenciaSessaoMobile\(\);\s*abrirLoginAposFalhaSessaoMobile\(erroSessao\)/,
   );
   assert.match(mobile, /state\.telaAcesso = 'login'/);
   assert.doesNotMatch(

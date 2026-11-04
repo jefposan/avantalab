@@ -39,6 +39,11 @@ function contextoEditor({ tipo = null, status = 'confirmada', dia = '8', erro = 
     confirmarDespesasMesmoValorMobile: async () => confirmarDuplicado,
     periodoFinanceiroHojeMobile: () => ({ ano: 2026, mes: 'OUTUBRO', dia: 7 }),
     setErro: (e) => eventos.push(e),
+    enfileirarEdicaoFinanceiraMobile: async (tipo,item,payload) => {
+      dados=payload;eventos.push(['revisao',item.revisao]);await pendente;
+      if(erro){eventos.push('erro');return false;}
+      state.modalAcao=null;eventos.push('aplicou');return true;
+    },
     iniciarAplicacaoLancamentoMobile: () => eventos.push('inicio'),
     falharAplicacaoLancamentoMobile: () => eventos.push('erro'),
     aplicarDespesaPrevistaSalvaMobile: () => eventos.push('aplicou'),
@@ -59,7 +64,7 @@ for (const tipo of [null, 'fixa', 'parcela']) {
     assert.equal(c.dados().tipo_obs, tipo || 'previsto');
     assert.equal(c.dados().valor, 90);
     assert.equal(c.dados().descricao, tipo === 'parcela' ? 'Caixas (2/3)' : 'Caixas');
-    assert.ok(c.state.modalAcao, 'o editor não pode fechar antes do banco');
+    assert.ok(c.state.modalAcao, 'o editor não pode fechar antes da gravação local');
     assert.ok(c.eventos.some((e) => Array.isArray(e) && e[0] === 'revisao' && e[1] === 7));
     c.resolverBanco(); await promessa;
     assert.equal(c.state.modalAcao, null);
@@ -86,7 +91,7 @@ test('mobile: Salvar previsto não interpreta evento de clique como Confirmar ho
   assert.match(mobile, /bind\('salvar-edicao-lancamento', function \(\) \{ salvarEdicaoLancamentoSelecionado\(false\); \}\)/);
 });
 
-test('mobile: erro de banco ou conflito mantém editor e não emite sucesso', async () => {
+test('mobile: falha de gravação local mantém editor e não emite sucesso', async () => {
   const c = contextoEditor({ tipo: 'parcela', erro: true });
   const p = c.ctx.salvar(false); await new Promise(setImmediate);
   c.resolverBanco(); await p;

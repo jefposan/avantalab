@@ -49,8 +49,8 @@ export function magaluPublicationErrors(form: MagaluPublicationForm, product: { 
   if (!safeText(form.title, 150) || form.title.length > 150) errors.title = 'Informe um título de até 150 caracteres.';
   if (!safeText(form.brand, 100) || form.brand.length > 100) errors.brand = 'Informe a marca de até 100 caracteres.';
   if (!safeText(form.description, 7000) || form.description.length > 7000) errors.description = 'Informe uma descrição de até 7.000 caracteres.';
-  if (!validEan(form.ean) || form.ean !== product.ean) errors.ean = 'Confirme o EAN válido do cadastro local.';
-  if (!safeHttpsImage(form.imageUrl) || !product.pictures.includes(form.imageUrl) || !/\.jpe?g(?:\?|$)/i.test(form.imageUrl)) errors.imageUrl = 'Selecione uma foto JPEG HTTPS do cadastro local.';
+  if (!validEan(form.ean) || (product.ean && form.ean !== product.ean)) errors.ean = 'Confirme o EAN válido do cadastro local.';
+  if (!safeHttpsImage(form.imageUrl) || (product.pictures.length > 0 && !product.pictures.includes(form.imageUrl)) || !/\.jpe?g(?:\?|$)/i.test(form.imageUrl)) errors.imageUrl = 'Informe uma foto JPEG HTTPS; se já cadastrada, selecione uma das fotos do produto.';
   if (!['NEW', 'USED', 'REMANUFACTURED'].includes(form.condition)) errors.condition = 'Selecione a condição do produto.';
   if (!Number.isSafeInteger(form.priceCents) || form.priceCents < 1 || form.priceCents > 99999999) errors.priceCents = 'Informe preço entre R$ 0,01 e R$ 999.999,99.';
   if (!Number.isSafeInteger(form.stock) || form.stock < 1 || form.stock > 99999 || product.stock_quantity == null || form.stock > product.stock_quantity) errors.stock = 'Informe uma quantidade entre 1 e o estoque físico confirmado.';

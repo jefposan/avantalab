@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { conferirLiberacao } from '@/app/lib/acessos-usuario-servidor';
 import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
@@ -35,6 +36,7 @@ async function acessoLancamento(request: Request, lancamentoId: string) {
     .eq('id', lancamentoId)
     .maybeSingle();
   if (erroLancamento || !lancamento) return null;
+  if (!await conferirLiberacao(admin, autenticacao.user.id, lancamento.empresa_id, 'dashboard')) return null;
 
   const { data: vinculo, error: erroVinculo } = await admin
     .from('usuarios_empresa')

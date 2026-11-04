@@ -219,7 +219,7 @@ test('perfil integrado não reutiliza contadores nem indicadores demonstrativos'
   assert.match(source, /let parentOrigin = window\.location\.origin/);
   assert.match(source, /if \(document\.referrer\) parentOrigin = new URL\(document\.referrer\)\.origin/);
   assert.match(integrated, /setPerfilCadastro\(\(current\) => String\(current\?\.empresa_id \|\| ''\) === perfilId \? current : null\)/);
-  assert.match(integrated, /const respostaPerfil = await aguardarComLimite\(fetch\(`\/api\/perfil-cadastro/);
+  assert.match(integrated, /const respostaPerfil = await aguardarComLimite\(fetch\(`\/api\/modulos\/vendas\/perfil/);
   assert.doesNotMatch(integrated, /buscarEmpresasDoUsuario/);
   assert.match(integrated, /UUID_PATTERN\.test\(solicitado\)/);
   assert.match(integrated, /setCorPrimaria\(typeof perfil\.corPrimaria/);

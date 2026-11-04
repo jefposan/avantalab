@@ -26,7 +26,7 @@ test('parâmetro de ordenação aceita apenas asc e desc e tem padrão recente',
   for (const value of ['desc', null, undefined, '', 'title', 'asc.nullsfirst', 'snapshot']) assert.equal(dateOrder(value), 'desc');
 });
 
-test('ordens independentes no topo, anúncios reiniciam paginação e preservam edição', () => {
+test('ordens independentes no topo, anúncios reiniciam paginação e não bloqueiam por ficha expandida', () => {
   const read = (file) => readFileSync(new URL(`../../app/marketplaces/${file}`, import.meta.url), 'utf8');
   const sales = read('Vendas.tsx'), listings = read('Anunciados.tsx');
   for (const [source, context] of [[sales, 'Vendas'], [listings, 'Anunciados']]) {
@@ -35,8 +35,8 @@ test('ordens independentes no topo, anúncios reiniciam paginação e preservam 
     assert.ok(source.indexOf('<DateOrderButton') < source.indexOf(`id="${context === 'Vendas' ? 'sales' : 'announced'}-content"`, source.indexOf('<DateOrderButton')));
   }
   assert.match(sales, /orderedSales\.map/);
-  assert.match(listings, /status, order, page: String\(page\)/);
-  assert.match(listings, /disabled=\{loading \|\| syncing \|\| acting \|\| !!expanded \|\| !!copyingListing\}/);
+  assert.match(listings, /status, order, quality:qualityFilter, page: String\(page\)/);
+  assert.match(listings, /disabled=\{loading \|\| acting\}/);
   assert.match(listings, /onChange=\{\(value\) => \{ setOrder\(value\); setPage\(1\); \}\}/);
   const route = readFileSync(new URL('../../app/api/modulos/marketplaces/anunciados/route.ts', import.meta.url), 'utf8');
   assert.match(route, /eq\('empresa_id', empresaId\)/);

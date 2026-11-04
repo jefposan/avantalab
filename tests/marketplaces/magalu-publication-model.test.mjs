@@ -37,6 +37,17 @@ test('Magalu recebe SKU, preço em centavos e estoque no canal oficial', () => {
   assert.deepEqual(bodies.stock, { channel: { id: MAGALU_CHANNEL_ID }, quantity: 2, type: 'AVAILABLE' });
 });
 
+test('Magalu permite completar foto e EAN ausentes no rascunho, sem dispensar saldo ou alterar dados existentes', () => {
+  const incomplete = { ...product, ean: null, pictures: [], stock_quantity: 0 };
+  const errors = magaluPublicationErrors(form, incomplete, attributes, datasheet);
+  assert.equal(errors.ean, undefined);
+  assert.equal(errors.imageUrl, undefined);
+  assert.ok(errors.stock);
+  assert.ok(magaluPublicationErrors({ ...form, imageUrl: 'http://example.com/foto.jpg' }, incomplete, attributes, datasheet).imageUrl);
+  assert.ok(magaluPublicationErrors({ ...form, ean: '123' }, incomplete, attributes, datasheet).ean);
+  assert.ok(magaluPublicationErrors({ ...form, imageUrl: 'https://other.example/a.jpg' }, product, attributes, datasheet).imageUrl);
+});
+
 test('atributos variáveis e ficha técnica usam a classificação da categoria', () => {
   const rows = { results: [{ name: 'cor', display_name: 'Cor', required: 'required', variation: true, choices: ['Azul'] },
     { name: 'Material', display_name: 'Material', required: 'recommended', variation: false }] };

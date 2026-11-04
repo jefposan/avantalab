@@ -1,215 +1,81 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
-import { supabase } from '../lib/supabase';
-
-type ProvedorOAuth = 'google' | 'apple';
-
-type RetornoOAuthMobile = {
-  status: 'concluido' | 'cancelado' | 'erro';
-  provider?: ProvedorOAuth;
-  accessToken?: string;
-  refreshToken?: string;
-  mensagem?: string;
-};
+import { APP_VERSION } from '../lib/version';
+import { criarControladorOAuthMobile, type ProvedorOAuthMobile, type RetornoOAuthMobile } from './oauth-nativo-controller';
 
 declare global {
   interface Window {
-    __avantalabAbrirOAuthNativoMobile?: (provedor: ProvedorOAuth) => Promise<void>;
+    __AVANTALAB_MOBILE_SUPABASE_CLIENT__?: SupabaseClient;
+    __avantalabAbrirOAuthNativoMobile?: (provedor: ProvedorOAuthMobile) => Promise<void>;
     __avantalabCancelarOAuthNativoMobile?: () => Promise<void>;
     __avantalabUltimoRetornoOAuthNativoMobile?: RetornoOAuthMobile;
+    __avantalabOAuthNativoMobileEmAndamento?: () => boolean;
+    __avantalabAberturaOAuthMobile?: boolean;
+    __avantalabPonteOAuthMobilePendente?: boolean;
+    __avantalabControladorOAuthMobile?: ReturnType<typeof criarControladorOAuthMobile>;
   }
 }
 
-const REDIRECT_OAUTH_NATIVO = 'br.com.avantalab.app://auth/callback';
-
-/**
- * O retorno OAuth pode chegar como query (`?code=…`) ou fragmento
- * (`#access_token=…`). Navegadores comuns deixam o Supabase processar ambos,
- * mas o deep link do Capacitor é tratado manualmente nesta ponte.
- */
-function lerParametroOAuth(url: URL, nome: string) {
-  return url.searchParams.get(nome)
-    ?? new URLSearchParams(url.hash.replace(/^#/, '')).get(nome);
-}
-
-function ehCancelamentoOAuth(mensagem: string) {
-  const normalizada = mensagem.trim().toLowerCase();
-  return [
-    'access_denied',
-    'access denied',
-    'user cancelled',
-    'user canceled',
-    'cancelado',
-    'cancelled',
-    'canceled',
-    'auth session missing',
-  ].some((trecho) => normalizada.includes(trecho));
-}
-
-function emitirRetorno(retorno: RetornoOAuthMobile) {
-  window.__avantalabUltimoRetornoOAuthNativoMobile = retorno;
-  window.dispatchEvent(new CustomEvent<RetornoOAuthMobile>('avantalab:oauth-nativo-mobile', {
-    detail: retorno,
-  }));
-}
-
-/**
- * Faz a ponte entre a Gestão Mobile imperativa e os plugins nativos.
- * No navegador ela não registra nada: o fluxo OAuth existente do PWA continua
- * usando a URL https da própria página.
- */
 export default function OAuthNativoMobileBridge() {
-  const provedorPendenteRef = useRef<ProvedorOAuth | null>(null);
-
+  const controlador = useRef<ReturnType<typeof criarControladorOAuthMobile> | null>(null);
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-
     let desmontado = false;
     const listeners: PluginListenerHandle[] = [];
-
-    const fecharNavegador = async () => {
-      try {
-        await Browser.close();
-      } catch {
-        // O navegador pode já estar fechado após o retorno pelo deep link.
-      }
-    };
-
-    const concluirRetorno = async (url: string) => {
-      const callbackUrl = new URL(url);
-      if (
-        callbackUrl.protocol !== 'br.com.avantalab.app:'
-        || callbackUrl.hostname !== 'auth'
-        || callbackUrl.pathname !== '/callback'
-      ) return;
-
-      const erroOAuth = lerParametroOAuth(callbackUrl, 'error_description')
-        ?? lerParametroOAuth(callbackUrl, 'error');
-      const codigo = lerParametroOAuth(callbackUrl, 'code');
-      let accessToken = lerParametroOAuth(callbackUrl, 'access_token');
-      let refreshToken = lerParametroOAuth(callbackUrl, 'refresh_token');
-      const aberturaPelaTrocaDeApp = callbackUrl.searchParams.get('origem') === 'vendas'
-        && !erroOAuth
-        && !codigo
-        && !accessToken
-        && !refreshToken;
-      if (aberturaPelaTrocaDeApp) return;
-
-      const provedor = provedorPendenteRef.current ?? undefined;
-      provedorPendenteRef.current = null;
-
-      try {
-        if (erroOAuth) throw new Error(erroOAuth);
-
-        if (codigo) {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(codigo);
-          if (error) throw error;
-          accessToken = data.session?.access_token ?? null;
-          refreshToken = data.session?.refresh_token ?? null;
-        } else if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (error) throw error;
-        }
-
-        if (!accessToken || !refreshToken) {
-          throw new Error('O provedor não retornou os dados necessários para concluir o login.');
-        }
-
-        emitirRetorno({
-          status: 'concluido',
-          provider: provedor,
-          accessToken,
-          refreshToken,
-        });
-      } catch (erro) {
-        const mensagem = erro instanceof Error
-          ? erro.message
-          : 'Não foi possível concluir o login social.';
-        emitirRetorno({
-          // Alguns provedores retornam um callback sem sessão quando a pessoa
-          // fecha sua confirmação. Isso é cancelamento, não um erro exibível.
-          status: ehCancelamentoOAuth(mensagem) ? 'cancelado' : 'erro',
-          provider: provedor,
-          mensagem,
-        });
-      } finally {
-        await fecharNavegador();
-      }
-    };
-
-    const guardarListener = async (listener: Promise<PluginListenerHandle>) => {
-      const handle = await listener;
-      if (desmontado) await handle.remove();
-      else listeners.push(handle);
-    };
-
-    window.__avantalabAbrirOAuthNativoMobile = async (provedor) => {
-      if (provedorPendenteRef.current) {
-        throw new Error('Já existe um login social em andamento.');
-      }
-
-      provedorPendenteRef.current = provedor;
-      try {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: provedor,
-          options: {
-            redirectTo: REDIRECT_OAUTH_NATIVO,
-            skipBrowserRedirect: true,
-          },
-        });
-        if (error) throw error;
-        if (!data.url) throw new Error('Não foi possível abrir o login social.');
-
-        await Browser.open({ url: data.url, presentationStyle: 'fullscreen' });
-      } catch (erro) {
-        provedorPendenteRef.current = null;
-        throw erro;
-      }
-    };
-
-    window.__avantalabCancelarOAuthNativoMobile = async () => {
-      provedorPendenteRef.current = null;
-      await fecharNavegador();
-    };
-
-    void (async () => {
-      await guardarListener(CapacitorApp.addListener('appUrlOpen', ({ url }) => {
-        void concluirRetorno(url);
-      }));
-      await guardarListener(Browser.addListener('browserFinished', () => {
-        const provedor = provedorPendenteRef.current;
-        if (!provedor) return;
-        provedorPendenteRef.current = null;
-        emitirRetorno({ status: 'cancelado', provider: provedor });
-      }));
-
-      const aberturaInicial = await CapacitorApp.getLaunchUrl();
-      if (aberturaInicial?.url) await concluirRetorno(aberturaInicial.url);
-    })().catch((erro) => {
-      const provedor = provedorPendenteRef.current ?? undefined;
-      provedorPendenteRef.current = null;
-      emitirRetorno({
-        status: 'erro',
-        provider: provedor,
-        mensagem: erro instanceof Error ? erro.message : 'Não foi possível preparar o login social.',
-      });
+    // O ref sobrevive ao ciclo setup/cleanup/setup do React.
+    controlador.current = window.__avantalabControladorOAuthMobile ??= criarControladorOAuthMobile({
+      cliente: () => window.__AVANTALAB_MOBILE_SUPABASE_CLIENT__,
+      abrir: (url) => Browser.open({ url, presentationStyle: 'fullscreen' }),
+      fechar: () => Browser.close(),
+      timer: (acao, ms) => setTimeout(acao, ms), limparTimer: (timer) => clearTimeout(timer),
+      estado: () => {},
+      diagnostico: (etapa, tentativa) => {
+        // Nunca registrar URL, token, código, erro bruto ou identidade.
+        try {
+          sessionStorage.setItem('avantalab.mobile.oauth.etapa', JSON.stringify({
+            etapa, tentativa, versao: APP_VERSION, em: Date.now(),
+          }));
+        } catch { /* Diagnóstico não bloqueia acesso. */ }
+      },
+      emitir: (retorno) => {
+        window.__avantalabUltimoRetornoOAuthNativoMobile = retorno;
+        window.dispatchEvent(new CustomEvent('avantalab:oauth-nativo-mobile', { detail: retorno }));
+      },
     });
-
+    const fluxo = controlador.current;
+    const guardarListener = async (p: Promise<PluginListenerHandle>) => {
+      const handle = await p;
+      if (desmontado) await handle.remove(); else listeners.push(handle);
+    };
+    const pronto = (async () => {
+      await guardarListener(CapacitorApp.addListener('appUrlOpen', ({ url }) => { void fluxo.receber(url); }));
+      await guardarListener(Browser.addListener('browserFinished', () => fluxo.navegadorFechado()));
+      if (desmontado) return;
+      const abertura = await CapacitorApp.getLaunchUrl();
+      if (!desmontado && abertura?.url) void fluxo.receber(abertura.url);
+    })();
+    // Só abrir depois de registrar os listeners de retorno.
+    window.__avantalabAbrirOAuthNativoMobile = async (provedor) => { await fluxo.iniciar(provedor, pronto); };
+    window.__avantalabCancelarOAuthNativoMobile = async () => { await fluxo.cancelar(); };
+    window.__avantalabOAuthNativoMobileEmAndamento = () => fluxo.ocupado() || window.__avantalabAberturaOAuthMobile === true;
+    void pronto.catch(() => {
+      window.dispatchEvent(new CustomEvent('avantalab:oauth-nativo-mobile', {
+        detail: { status: 'erro', tentativa: fluxo.estado().tentativa, mensagem: 'Não foi possível preparar o login social. Tente novamente.' },
+      }));
+    });
     return () => {
       desmontado = true;
       delete window.__avantalabAbrirOAuthNativoMobile;
       delete window.__avantalabCancelarOAuthNativoMobile;
-      for (const listener of listeners) void listener.remove();
+      delete window.__avantalabOAuthNativoMobileEmAndamento;
+      for (const handle of listeners) void handle.remove();
     };
   }, []);
-
   return null;
 }

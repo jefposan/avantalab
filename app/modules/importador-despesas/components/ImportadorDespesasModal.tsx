@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
+import { validarReciboImportacao } from '../lib/confirmacao';
+import {reconhecerTipoPlanilha,reconciliarTipoPlanilha} from '../lib/tipos-planilha';
 
 type TipoDocumento = 'automatico' | 'extrato-bancario' | 'fatura-cartao';
 type TipoDetectado = Exclude<TipoDocumento, 'automatico'>;
@@ -14,6 +16,8 @@ type DespesaRevisao = {
   valor: number;
   valorOriginal: number;
   tipo: string;
+  tipoInformado?: string;
+  tipoManual?: boolean;
   tipoSugeridoHistorico?: boolean;
   incluir: boolean;
   natureza: 'despesa' | 'estorno';
@@ -41,6 +45,9 @@ type Props = {
   arquivo: File | null;
   retomarRascunho?: boolean;
   empresaId: string;
+  centroCustoId?: string | null;
+  centroCustoNome?: string;
+  centroObrigatorio?: boolean;
   mesDestino: string;
   anoDestino: number;
   despesasCadastradas: Array<{ nome: string }>;
@@ -59,6 +66,7 @@ const CHAVE_RASCUNHO = 'avanta:importador-despesas:inline:v1';
 type RascunhoImportador = {
   versao: 1;
   empresaId: string;
+  centroCustoId?: string | null;
   mesDestino: string;
   anoDestino: number;
   loteChave: string;
@@ -100,9 +108,11 @@ function dataExibida(data: string) {
 }
 function parseData(valor: unknown) {
   if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
-    const ano = valor.getFullYear();
-    const mes = String(valor.getMonth() + 1).padStart(2, '0');
-    const dia = String(valor.getDate()).padStart(2, '0');
+    // O leitor Excel pode produzir meia-noite menos uma fração de milissegundo.
+    const data = new Date(Math.round(valor.getTime() / 1000) * 1000);
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
     return `${ano}-${mes}-${dia}`;
   }
   const texto = String(valor ?? '').trim();
@@ -128,7 +138,7 @@ function parseValor(valor: unknown) {
   const numero = Number(limpo.includes(',') ? limpo.replace(/\./g, '').replace(',', '.') : limpo);
   return negativo ? -numero : numero;
 }
-function normalizar(valor: unknown) { return String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+function normalizar(valor: unknown) { return String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g,' ').trim(); }
 function dividirLinha(linha: string, separador: string) {
   const partes: string[] = []; let atual = ''; let aspas = false;
   for (let indice = 0; indice < linha.length; indice += 1) {
@@ -147,7 +157,6 @@ function linhasTabulares(cabecalhos: string[], linhas: unknown[][], tiposValidos
   const valor = indice(['valor', 'amount', 'montante']);
   const tipoDespesa = nomes.findIndex((nome) => nome === 'tipo de despesa' || nome === 'tipo despesa' || nome.includes('categoria'));
   const natureza = nomes.findIndex((nome, posicao) => posicao !== tipoDespesa && (nome === 'tipo' || ['natureza', 'd/c', 'dc', 'movimento'].some((termo) => nome.includes(termo))));
-  const tiposPorNome = new Map(tiposValidos.map((tipo) => [normalizar(tipo), tipo]));
   return linhas.flatMap((linha) => {
     const valorDebito = debito >= 0 ? parseValor(linha[debito]) : Number.NaN;
     const valorGeral = valor >= 0 ? parseValor(linha[valor]) : Number.NaN;
@@ -163,8 +172,9 @@ function linhasTabulares(cabecalhos: string[], linhas: unknown[][], tiposValidos
     if (!linhaDoModelo && (!Number.isFinite(bruto) || bruto === 0 || entrada || !saida)) return [];
     const texto = String(descricao >= 0 ? linha[descricao] ?? '' : '').trim() || 'Despesa sem descrição';
     const valorLancamento = Number.isFinite(bruto) ? Math.abs(bruto) : 0;
-    const tipoInformado = tipoDespesa >= 0 ? tiposPorNome.get(normalizar(linha[tipoDespesa])) || '' : '';
-    return [{ id: id(), data: data >= 0 ? parseData(linha[data]) : '', descricao: texto, descricaoOriginal: texto, valor: valorLancamento, valorOriginal: valorLancamento, tipo: tipoInformado, incluir: true, natureza: 'despesa' as const }];
+    const tipoInformado = tipoDespesa >= 0 ? String(linha[tipoDespesa]??'').trim() : '';
+    const tipoReconhecido = reconhecerTipoPlanilha(tipoInformado,tiposValidos);
+    return [{ id: id(), data: data >= 0 ? parseData(linha[data]) : '', descricao: texto, descricaoOriginal: texto, valor: valorLancamento, valorOriginal: valorLancamento, tipo: tipoReconhecido, tipoInformado, incluir: true, natureza: 'despesa' as const }];
   });
 }
 function lerTexto(conteudo: string, tiposValidos: string[] = []) {
@@ -212,7 +222,10 @@ function AvisoFechavel({ tipo, children, onFechar }: { tipo: 'erro' | 'atencao';
   </div>;
 }
 
-export default function ImportadorDespesasModal({ arquivo, retomarRascunho = false, empresaId, mesDestino, anoDestino, despesasCadastradas, corPrimaria, darkMode, onFechar, onConcluido, onEstadoRascunho, onArquivoDescartado, onSessaoExpirada, onSolicitarDescarte }: Props) {
+export default function ImportadorDespesasModal({ arquivo, retomarRascunho = false, empresaId, centroCustoId = null, centroCustoNome, centroObrigatorio = false, mesDestino, anoDestino, despesasCadastradas, corPrimaria, darkMode, onFechar, onConcluido, onEstadoRascunho, onArquivoDescartado, onSessaoExpirada, onSolicitarDescarte }: Props) {
+  const tabelaRascunho = centroCustoId ? 'importador_despesas_rascunhos_centros' : 'importador_despesas_rascunhos';
+  const contextoCentro = centroCustoId ? {centro_custo_id:centroCustoId} : {};
+  const conflitoRascunho = `empresa_id,usuario_id,ano,mes${centroCustoId?',centro_custo_id':''}`;
   const [etapa, setEtapa] = useState<'analisando' | 'revisando' | 'confirmando'>('analisando');
   const [progresso, setProgresso] = useState(7);
   const [detalhe, setDetalhe] = useState('Preparando o documento…');
@@ -232,7 +245,14 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   const focoLinhas = useRef<Record<string, HTMLTableRowElement | null>>({});
   const progressoAtual = useRef(7);
   const emAnalise = useRef(false);
+  const emConfirmacao = useRef(false);
   const tipos = useMemo(() => despesasCadastradas.map((despesa) => despesa.nome).filter(Boolean), [despesasCadastradas]);
+  useEffect(()=>{
+    setItens(atuais=>{
+      const proximos=atuais.map(item=>reconciliarTipoPlanilha(item,tipos));
+      return proximos.some((item,index)=>item!==atuais[index])?proximos:atuais;
+    });
+  },[tipos,itens]);
   const despesas = useMemo(() => itens.filter((item) => item.natureza === 'despesa'), [itens]);
   const estornos = useMemo(() => itens.filter((item) => item.natureza === 'estorno'), [itens]);
   const selecionadas = useMemo(() => despesas.filter((item) => item.incluir), [despesas]);
@@ -260,7 +280,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
 
     if (!token) {
       onSessaoExpirada?.();
-      return null;
+      throw new Error('Sua sessão expirou. Entre novamente para concluir a importação.');
     }
 
     let resposta = await executar(token);
@@ -270,20 +290,20 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
     const tokenRenovado = error ? null : sessaoRenovada.session?.access_token;
     if (!tokenRenovado) {
       onSessaoExpirada?.();
-      return null;
+      throw new Error('Sua sessão expirou. Entre novamente para concluir a importação.');
     }
 
     resposta = await executar(tokenRenovado);
     if (resposta.status === 401) {
       onSessaoExpirada?.();
-      return null;
+      throw new Error('Sua sessão expirou. Entre novamente para concluir a importação.');
     }
 
     return resposta;
   };
 
   const sugerirTiposPeloHistorico = async (reconhecidos: DespesaRevisao[]) => {
-    const candidatos = reconhecidos.filter((item) => item.natureza === 'despesa' && item.descricao.trim());
+    const candidatos = reconhecidos.filter((item) => item.natureza === 'despesa' && item.descricao.trim() && !item.tipo && !item.tipoInformado?.trim());
     if (!candidatos.length || !empresaId) return reconhecidos;
     const resposta = await executarComSessao((token) => fetch('/api/importador-despesas/sugestoes', {
       method: 'POST',
@@ -298,7 +318,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
       .map((sugestao) => [sugestao.id, sugestao]));
     return reconhecidos.map((item) => {
       const sugestao = sugestoes.get(item.id);
-      return sugestao && !item.tipo ? { ...item, tipo: sugestao.tipo, tipoSugeridoHistorico: true } : item;
+      return sugestao && !item.tipo && !item.tipoInformado?.trim() ? { ...item, tipo: sugestao.tipo, tipoSugeridoHistorico: true } : item;
     });
   };
 
@@ -350,7 +370,8 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
       setDetalhe('Consultando sugestões do seu histórico…');
       encontrados = (await sugerirTiposPeloHistorico(encontrados)).map((item) => ({ ...item, data: dataNoMesDestino(item.data, mesDestino, anoDestino) }));
       setProgresso(100); setDetalhe('Análise concluída.');
-      const chaveLote = await sha256(await arquivo.arrayBuffer());
+      const hashArquivo = await sha256(await arquivo.arrayBuffer());
+      const chaveLote = centroCustoId ? await sha256(`${hashArquivo}|${centroCustoId}`) : hashArquivo;
       setItens(encontrados); setTipoDetectado(detectado); setTotalDocumento(total); setNomeArquivo(arquivo.name); setSalvoEm(''); setLoteChave(chaveLote);
       if (extensao === 'pdf') onArquivoDescartado?.();
       window.setTimeout(() => setEtapa('revisando'), 350);
@@ -363,68 +384,75 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   useEffect(() => { if (arquivo) void analisar('automatico'); }, [arquivo]);
 
   useEffect(() => {
-    if (!empresaId) return;
+    if (!empresaId || (centroObrigatorio && !centroCustoId)) return;
+    let ativo = true;
     const sincronizar = async () => {
       const { data: sessao } = await supabase.auth.getSession(); const usuarioId = sessao.session?.user.id;
       if (!usuarioId) return;
       const salvo = window.localStorage.getItem(CHAVE_RASCUNHO);
       const local = salvo ? JSON.parse(salvo) as RascunhoImportador : null;
-      if (local?.versao === 1 && local.empresaId === empresaId && local.mesDestino === mesDestino && local.anoDestino === anoDestino && Array.isArray(local.itens)) {
-        const { error } = await supabase.from('importador_despesas_rascunhos').upsert({ empresa_id: empresaId, usuario_id: usuarioId, ano: anoDestino, mes: mesDestino, dados: local, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id,usuario_id,ano,mes' });
+      if (local?.versao === 1 && local.empresaId === empresaId && (local.centroCustoId||null) === centroCustoId && local.mesDestino === mesDestino && local.anoDestino === anoDestino && Array.isArray(local.itens)) {
+        const { error } = await supabase.from(tabelaRascunho).upsert({ empresa_id: empresaId, usuario_id: usuarioId, ano: anoDestino, mes: mesDestino, ...contextoCentro, dados: local, atualizado_em: new Date().toISOString() }, { onConflict: conflitoRascunho });
         if (!error) window.localStorage.removeItem(CHAVE_RASCUNHO);
       }
-      const { data } = await supabase.from('importador_despesas_rascunhos').select('dados').eq('empresa_id', empresaId).eq('usuario_id', usuarioId).eq('ano', anoDestino).eq('mes', mesDestino).maybeSingle();
+      const { data, error: erroLeitura } = await supabase.from(tabelaRascunho).select('dados').eq('empresa_id', empresaId).eq('usuario_id', usuarioId).eq('ano', anoDestino).eq('mes', mesDestino).match(contextoCentro).maybeSingle();
+      if (!ativo) return;
+      if (erroLeitura) throw new Error('Não foi possível consultar o rascunho salvo.');
       const remoto = data?.dados as RascunhoImportador | null;
-      if (remoto?.versao === 1 && remoto.empresaId === empresaId && remoto.mesDestino === mesDestino && remoto.anoDestino === anoDestino && Array.isArray(remoto.itens)) { setRascunhoRemoto(remoto); onEstadoRascunho?.(true); }
+      if (remoto?.versao === 1 && remoto.empresaId === empresaId && (remoto.centroCustoId||null) === centroCustoId && remoto.mesDestino === mesDestino && remoto.anoDestino === anoDestino && Array.isArray(remoto.itens)) { setRascunhoRemoto(remoto); onEstadoRascunho?.(true); }
       else { setRascunhoRemoto(null); onEstadoRascunho?.(false); }
     };
-    void sincronizar();
-  }, [empresaId, mesDestino, anoDestino]);
+    void sincronizar().catch(()=>{if(ativo)setErro('Não foi possível consultar o rascunho salvo. Seus dados não foram apagados.');});
+    return()=>{ativo=false;};
+  }, [empresaId, centroCustoId, centroObrigatorio, mesDestino, anoDestino]);
 
   useEffect(() => {
     if (!retomarRascunho || arquivo) return;
     try {
       const salvo = window.localStorage.getItem(CHAVE_RASCUNHO);
       const rascunho = rascunhoRemoto || (salvo ? JSON.parse(salvo) as RascunhoImportador : null);
-      if (!rascunho || rascunho.versao !== 1 || rascunho.empresaId !== empresaId || rascunho.mesDestino !== mesDestino || rascunho.anoDestino !== anoDestino || !Array.isArray(rascunho.itens)) throw new Error('Não existe uma importação salva para este mês.');
+      if (!rascunho || rascunho.versao !== 1 || rascunho.empresaId !== empresaId || (rascunho.centroCustoId||null) !== centroCustoId || rascunho.mesDestino !== mesDestino || rascunho.anoDestino !== anoDestino || !Array.isArray(rascunho.itens)) throw new Error('Não existe uma importação salva para este mês.');
       setItens(rascunho.itens.map((item) => ({ ...item, valorOriginal: Number.isFinite(item.valorOriginal) ? item.valorOriginal : item.valor })));
       setLoteChave(rascunho.loteChave); setNomeArquivo(rascunho.nomeArquivo); setTipoDocumento(rascunho.tipoDocumento); setTipoDetectado(rascunho.tipoDetectado); setTotalDocumento(rascunho.totalDocumento); setSalvoEm(rascunho.salvoEm); setErro(''); setEtapa('revisando');
     } catch (causa) {
       setErro(causa instanceof Error ? causa.message : 'Não foi possível recuperar o rascunho.'); setEtapa('revisando'); onEstadoRascunho?.(false);
     }
-  }, [retomarRascunho, arquivo, empresaId, mesDestino, anoDestino, onEstadoRascunho, rascunhoRemoto]);
+  }, [retomarRascunho, arquivo, empresaId, centroCustoId, mesDestino, anoDestino, onEstadoRascunho, rascunhoRemoto]);
 
   const salvarRascunho = async () => {
+    if (centroObrigatorio && !centroCustoId) { setErro('Selecione o centro de custo antes de salvar a importação.'); return false; }
     if (!itens.length) { setErro('Aguarde a análise terminar antes de salvar o rascunho.'); return false; }
+    try {
     const chave = loteChave || crypto.randomUUID();
     const agora = new Date().toLocaleString('pt-BR');
-    const rascunho: RascunhoImportador = { versao: 1, empresaId, mesDestino, anoDestino, loteChave: chave, nomeArquivo: nomeArquivo || arquivo?.name || 'Documento importado', tipoDocumento, tipoDetectado, totalDocumento, itens, salvoEm: agora };
+    const rascunho: RascunhoImportador = { versao: 1, empresaId, centroCustoId, mesDestino, anoDestino, loteChave: chave, nomeArquivo: nomeArquivo || arquivo?.name || 'Documento importado', tipoDocumento, tipoDetectado, totalDocumento, itens, salvoEm: agora };
     const { data: sessao } = await supabase.auth.getSession();
     if (!sessao.session?.user.id) { setErro('Sua sessão expirou. Entre novamente.'); return false; }
-    const { error: erroServidor } = await supabase.from('importador_despesas_rascunhos').upsert({ empresa_id: empresaId, usuario_id: sessao.session.user.id, ano: anoDestino, mes: mesDestino, dados: rascunho, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id,usuario_id,ano,mes' });
+    const { error: erroServidor } = await supabase.from(tabelaRascunho).upsert({ empresa_id: empresaId, usuario_id: sessao.session.user.id, ano: anoDestino, mes: mesDestino, ...contextoCentro, dados: rascunho, atualizado_em: new Date().toISOString() }, { onConflict: conflitoRascunho });
     if (erroServidor) { setErro('Não foi possível salvar o rascunho no servidor.'); return false; }
     window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(rascunho);
     setLoteChave(chave); setSalvoEm(agora); setErro(''); onEstadoRascunho?.(true);
     return true;
+    } catch { setErro('Não foi possível salvar o rascunho. Seus dados continuam nesta revisão; tente novamente.'); return false; }
   };
 
   useEffect(() => {
-    if (etapa !== 'revisando' || !itens.length || !empresaId) return;
+    if (etapa !== 'revisando' || !itens.length || !empresaId || (centroObrigatorio && !centroCustoId)) return;
     const agendamento = window.setTimeout(() => {
       const chave = loteChave || crypto.randomUUID();
       const agora = new Date().toLocaleString('pt-BR');
-      const rascunho: RascunhoImportador = { versao: 1, empresaId, mesDestino, anoDestino, loteChave: chave, nomeArquivo: nomeArquivo || arquivo?.name || 'Documento importado', tipoDocumento, tipoDetectado, totalDocumento, itens, salvoEm: agora };
+      const rascunho: RascunhoImportador = { versao: 1, empresaId, centroCustoId, mesDestino, anoDestino, loteChave: chave, nomeArquivo: nomeArquivo || arquivo?.name || 'Documento importado', tipoDocumento, tipoDetectado, totalDocumento, itens, salvoEm: agora };
       void supabase.auth.getSession().then(async ({ data }) => {
         const usuarioId = data.session?.user.id;
         if (!usuarioId) return;
-        const { error } = await supabase.from('importador_despesas_rascunhos').upsert({ empresa_id: empresaId, usuario_id: usuarioId, ano: anoDestino, mes: mesDestino, dados: rascunho, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id,usuario_id,ano,mes' });
-        if (!error) { window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(rascunho); }
-      });
+        const { error } = await supabase.from(tabelaRascunho).upsert({ empresa_id: empresaId, usuario_id: usuarioId, ano: anoDestino, mes: mesDestino, ...contextoCentro, dados: rascunho, atualizado_em: new Date().toISOString() }, { onConflict: conflitoRascunho });
+        if (error) { setErro('Não foi possível salvar automaticamente. A revisão continua aberta; use Salvar e continuar depois para tentar novamente.'); return; }
+        window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(rascunho);setSalvoEm(agora);onEstadoRascunho?.(true);
+      }).catch(()=>setErro('Não foi possível salvar automaticamente. Seus dados continuam nesta revisão.'));
       if (!loteChave) setLoteChave(chave);
-      setSalvoEm(agora); onEstadoRascunho?.(true);
     }, 700);
     return () => window.clearTimeout(agendamento);
-  }, [etapa, itens, empresaId, mesDestino, anoDestino, loteChave, nomeArquivo, arquivo?.name, tipoDocumento, tipoDetectado, totalDocumento, onEstadoRascunho]);
+  }, [etapa, itens, empresaId, centroCustoId, centroObrigatorio, mesDestino, anoDestino, loteChave, nomeArquivo, arquivo?.name, tipoDocumento, tipoDetectado, totalDocumento, onEstadoRascunho]);
 
   const salvarEFechar = async () => { if (await salvarRascunho()) fechar(); };
 
@@ -432,7 +460,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
     void supabase.auth.getSession().then(async ({ data }) => {
       const usuarioId = data.session?.user.id;
       if (!usuarioId) return;
-      await supabase.from('importador_despesas_rascunhos').delete().eq('empresa_id', empresaId).eq('usuario_id', usuarioId).eq('ano', anoDestino).eq('mes', mesDestino);
+      await supabase.from(tabelaRascunho).delete().eq('empresa_id', empresaId).eq('usuario_id', usuarioId).eq('ano', anoDestino).eq('mes', mesDestino).match(contextoCentro);
     });
     window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(null);
     onEstadoRascunho?.(false);
@@ -440,6 +468,9 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   };
 
   const confirmar = async () => {
+    if (emConfirmacao.current) return;
+    if (centroObrigatorio && !centroCustoId) { setErro('Selecione o centro de custo antes de confirmar a importação.'); return; }
+    if (!empresaId || !loteChave || !selecionadas.length) { setErro('Selecione ao menos uma despesa em um lote válido antes de confirmar.'); return; }
     if (!confere) { setErro('A soma ainda não confere com o total informado no documento. Revise ou refaça a análise.'); return; }
     const pendente = selecionadas.find((item) => !dataIsoValida(item.data) || !item.tipo || !tipos.includes(item.tipo) || !Number.isFinite(item.valor) || item.valor <= 0);
     if (pendente) {
@@ -451,21 +482,34 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
       }, 0);
       return;
     }
-    setEtapa('confirmando'); setProgresso(18); setDetalhe('Validando os lançamentos…');
+    emConfirmacao.current = true;
+    setErro(''); setEtapa('confirmando'); setProgresso(18); setDetalhe('Validando os lançamentos…');
     const cronometro = window.setInterval(() => setProgresso((atual) => Math.min(91, atual + 9)), 500);
     try {
       const lancamentos = await Promise.all(selecionadas.map(async (item, indice) => ({ data: item.data, tipo_despesa: item.tipo, descricao: item.descricao.trim(), valor: Number(item.valor.toFixed(2)), item_chave: await sha256(`${loteChave}|${indice}|${item.data}|${item.descricaoOriginal}|${item.valor.toFixed(2)}`) })));
-      const resposta = await executarComSessao((token) => fetch('/api/importador-despesas/confirmar', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ empresaId, loteChave, lancamentos }) }));
-      if (!resposta) return;
+      const resposta = await executarComSessao((token) => fetch('/api/importador-despesas/confirmar', { method: 'POST', signal: AbortSignal.timeout(60_000), headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ empresaId, centroCustoId, loteChave, lancamentos }) }));
+      if (!resposta) throw new Error('Sua sessão expirou. Entre novamente para concluir a importação.');
       const corpo = await resposta.json().catch(() => null);
       if (!resposta.ok || corpo?.erro) throw new Error(corpo?.mensagem || 'Não foi possível inserir os lançamentos.');
-      setProgresso(100); setDetalhe('Lançamentos inseridos com sucesso.');
-      const { data: sessaoAtual } = await supabase.auth.getSession(); const usuarioId = sessaoAtual.session?.user.id; if (usuarioId) await supabase.from('importador_despesas_rascunhos').delete().eq('empresa_id', empresaId).eq('usuario_id', usuarioId).eq('ano', anoDestino).eq('mes', mesDestino); window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(null); onEstadoRascunho?.(false);
-      await onConcluido();
+      const recibo = validarReciboImportacao(corpo, selecionadas.length, loteChave);
+      setProgresso(100); setDetalhe(recibo.inseridos > 0 ? `${recibo.inseridos} despesa(s) lançada(s) com sucesso.${recibo.ignorados ? ` ${recibo.ignorados} já existia(m) e não foi(ram) duplicada(s).` : ''}` : 'Este lote já foi lançado. Nenhuma despesa foi duplicada.');
+      // A gravação já foi confirmada: limpeza auxiliar não pode bloquear a tela nem sugerir reenvio.
+      try { window.localStorage.removeItem(CHAVE_RASCUNHO); } catch { /* armazenamento indisponível não desfaz a gravação */ }
+      setRascunhoRemoto(null); onEstadoRascunho?.(false);
+      void (async () => {
+        const { data: sessaoAtual } = await supabase.auth.getSession();
+        const usuarioId = sessaoAtual.session?.user.id;
+        if (usuarioId) {
+          const { error } = await supabase.from(tabelaRascunho).delete().eq('empresa_id', empresaId).eq('usuario_id', usuarioId).eq('ano', anoDestino).eq('mes', mesDestino).match(contextoCentro).eq('dados->>loteChave', loteChave);
+          if (error) console.warn('Importação confirmada; não foi possível limpar o rascunho.');
+        }
+      })().catch(() => console.warn('Importação confirmada; não foi possível limpar o rascunho.'));
+      try { void Promise.resolve(onConcluido()).catch(() => console.warn('Importação confirmada; atualização da tela pendente.')); }
+      catch { console.warn('Importação confirmada; atualização da tela pendente.'); }
       window.setTimeout(fechar, 450);
     } catch (causa) {
-      setErro(causa instanceof Error ? causa.message : 'Não foi possível inserir os lançamentos.'); setEtapa('revisando');
-    } finally { window.clearInterval(cronometro); }
+      setErro(causa instanceof Error && causa.name === 'TimeoutError' ? 'Não recebemos a confirmação no tempo esperado. Seus dados foram preservados; confira os lançamentos antes de tentar novamente.' : causa instanceof Error ? causa.message : 'Não foi possível inserir os lançamentos.'); setEtapa('revisando');
+    } finally { window.clearInterval(cronometro); if (emConfirmacao.current) emConfirmacao.current = false; }
   };
 
   const botaoBase = 'inline-flex h-11 items-center justify-center rounded-xl px-3 text-xs font-black transition-[transform,border-color,box-shadow] duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 motion-reduce:transform-none motion-reduce:transition-none';
@@ -482,7 +526,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   return <div className="fixed inset-0 z-[1500] flex items-center justify-center bg-slate-950/75 p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="titulo-importador">
     <section className={`flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl shadow-2xl ${darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
       <header className="flex items-start justify-between gap-4 px-5 py-4 text-white" style={{ backgroundColor: corPrimaria }}>
-        <div><p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/75">Importação assistida</p><h2 id="titulo-importador" className="mt-1 text-lg font-black">Confira as despesas antes de lançar</h2><p className="mt-1 text-xs font-semibold text-white/80">{nomeArquivo || arquivo?.name || 'Rascunho salvo'} · {tipoDetectado === 'fatura-cartao' ? 'Fatura de cartão' : 'Extrato ou planilha'}</p></div>
+        <div><p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/75">Importação assistida</p><h2 id="titulo-importador" className="mt-1 text-lg font-black">Confira as despesas antes de lançar</h2><p className="mt-1 text-xs font-semibold text-white/80">{centroCustoNome?`${centroCustoNome} · `:''}{nomeArquivo || arquivo?.name || 'Rascunho salvo'} · {tipoDetectado === 'fatura-cartao' ? 'Fatura de cartão' : 'Extrato ou planilha'}</p></div>
         <div className="flex shrink-0 flex-wrap justify-end gap-2">
           {salvoEm && <button type="button" onClick={() => onSolicitarDescarte?.(descartarRascunho)} className={`${botaoBase} border border-red-200 bg-red-50 text-red-700 shadow-sm hover:border-red-600 focus-visible:ring-red-200`}>Descartar</button>}
           <button type="button" onClick={fechar} className={botaoCabecalhoNeutro}>Fechar</button>
@@ -490,7 +534,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
         </div>
       </header>
       <div className={`shrink-0 border-b px-5 py-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><Resumo titulo="Despesas reconhecidas" valor={moeda(totalDespesasDocumento)} detalhe={`${despesas.length} lançamentos`} darkMode={darkMode} /><Resumo titulo="Estornos e créditos" valor={`− ${moeda(totalEstornosDocumento)}`} detalhe={`${estornos.length} separados`} darkMode={darkMode} /><Resumo titulo="Total a lançar" valor={moeda(totalParaLancar)} destaque corPrimaria={corPrimaria} detalhe="Após seus ajustes" darkMode={darkMode} /><label className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><span className="block text-[11px] font-black uppercase tracking-wide text-slate-500">Total no documento</span><input value={totalDocumento === null ? '' : totalDocumento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} onChange={(event) => setTotalDocumento(Number.isFinite(parseValor(event.target.value)) ? Math.abs(parseValor(event.target.value)) : null)} placeholder="R$ 0,00" className={`mt-1 w-full bg-transparent text-lg font-black outline-none ${darkMode ? 'text-white' : 'text-slate-900'}`} inputMode="decimal" /><small className={`block text-[11px] font-semibold ${confere ? 'text-emerald-700' : 'text-red-700'}`}>{diferenca === null ? 'Informe o total para conferir.' : confere ? '✓ O original confere.' : `Diferença de ${moeda(Math.abs(diferenca))}`}</small></label><label className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><span className="block text-[11px] font-black uppercase tracking-wide text-slate-500">Tipo de documento</span><select value={tipoDocumento} onChange={(event) => setTipoDocumento(event.target.value as TipoDocumento)} className={`mt-1 w-full bg-transparent text-sm font-bold outline-none ${darkMode ? 'text-white' : 'text-slate-900'}`}><option value="automatico">Detectar automaticamente</option><option value="extrato-bancario">Extrato bancário</option><option value="fatura-cartao">Fatura de cartão</option></select><small className="block pt-2 text-[11px] font-semibold text-slate-500">Use Refazer após alterar.</small></label></div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><Resumo titulo="Despesas reconhecidas" valor={moeda(totalDespesasDocumento)} detalhe={`${despesas.length} lançamentos`} darkMode={darkMode} /><Resumo titulo="Estornos e créditos" valor={`− ${moeda(totalEstornosDocumento)}`} detalhe={`${estornos.length} separados`} darkMode={darkMode} /><Resumo titulo="Total a lançar" valor={moeda(totalParaLancar)} destaque corPrimaria={corPrimaria} detalhe="Após seus ajustes" darkMode={darkMode} /><label className={`min-w-0 rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><span className="block text-[11px] font-black uppercase tracking-wide text-slate-500">Total no documento</span><input value={totalDocumento === null ? '' : totalDocumento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} onChange={(event) => setTotalDocumento(Number.isFinite(parseValor(event.target.value)) ? Math.abs(parseValor(event.target.value)) : null)} placeholder="R$ 0,00" className={`mt-1 w-full bg-transparent text-lg font-black outline-none ${darkMode ? 'text-white' : 'text-slate-900'}`} inputMode="decimal" /><small className={`block text-[11px] font-semibold ${confere ? 'text-emerald-700' : 'text-red-700'}`}>{diferenca === null ? 'Informe o total para conferir.' : confere ? '✓ O original confere.' : `Diferença de ${moeda(Math.abs(diferenca))}`}</small></label><label className={`min-w-0 rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><span className="block text-[11px] font-black uppercase tracking-wide text-slate-500">Tipo de documento</span><select value={tipoDocumento} onChange={(event) => setTipoDocumento(event.target.value as TipoDocumento)} className={`mt-1 w-full min-w-0 max-w-full bg-transparent pr-5 text-sm font-bold outline-none ${darkMode ? 'text-white' : 'text-slate-900'}`}><option value="automatico">Automático</option><option value="extrato-bancario">Extrato bancário</option><option value="fatura-cartao">Fatura de cartão</option></select><small className="block pt-2 text-[11px] font-semibold text-slate-500">Use Refazer após alterar.</small></label></div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-4">
         {erro && <div className="mb-4"><AvisoFechavel tipo="erro" onFechar={() => setErro('')}>{erro}</AvisoFechavel></div>}
@@ -498,7 +542,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
         <div className="mb-2 text-xs font-semibold text-slate-500">A conferência usa os valores originais reconhecidos. O <strong>valor a lançar</strong> pode ser ajustado — por exemplo, para lançar apenas a sua parte de uma compra compartilhada.</div>{salvoEm && <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800" role="status">Rascunho salvo às {horarioSalvo(salvoEm)}. Você pode fechar e continuar depois.</div>}
         {!tipos.length && !avisoTiposFechado && <div className="mb-4"><AvisoFechavel tipo="atencao" onFechar={() => setAvisoTiposFechado(true)}>Cadastre ao menos um tipo de despesa antes de confirmar esta importação.</AvisoFechavel></div>}
         {avisoConferenciaAtivo && !avisoConferenciaFechado && <div className="mb-4"><AvisoFechavel tipo="atencao" onFechar={() => setAvisoConferenciaFechado(true)}>A confirmação está bloqueada enquanto a soma não conferir. Revise os itens ou use <strong>Refazer análise</strong>.</AvisoFechavel></div>}
-        <div className={`overflow-x-auto rounded-xl border ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><table className="w-full min-w-[820px] text-left text-sm"><thead className={darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-50 text-slate-600'}><tr><th className="p-3">Incluir</th><th className="p-3">Data</th><th className="p-3">Descrição</th><th className="p-3">Valor a lançar</th><th className="p-3">Tipo da despesa</th></tr></thead><tbody>{despesas.map((item) => <tr ref={(element) => { focoLinhas.current[item.id] = element; }} key={item.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'} ${!item.incluir ? 'opacity-50' : ''}`}><td className="p-3"><input type="checkbox" checked={item.incluir} onChange={(event) => atualizar(item.id, { incluir: event.target.checked })} aria-label={`Incluir ${item.descricao}`} /></td><td className="p-3"><label className="sr-only" htmlFor={`data-${item.id}`}>Data de {item.descricao}</label><input id={`data-${item.id}`} type="date" value={item.data} aria-invalid={!dataIsoValida(item.data)} onChange={(event) => atualizar(item.id, { data: event.target.value })} className={`min-w-[132px] rounded-lg border px-2 py-1.5 text-xs font-bold ${!dataIsoValida(item.data) ? 'border-red-300 bg-red-50 text-red-900' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`} /></td><td className="p-3"><input value={item.descricao} onChange={(event) => atualizar(item.id, { descricao: event.target.value, tipoSugeridoHistorico: false })} className={`w-full min-w-[190px] rounded-lg border px-2 py-1.5 text-xs ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`} /><small className="mt-1 block text-[10px] font-semibold text-slate-500">{item.descricaoOriginal}</small></td><td className="p-3"><label className="sr-only" htmlFor={`valor-${item.id}`}>Valor a lançar de {item.descricao}</label><div className={`flex w-28 items-center rounded-lg border px-2 py-1.5 ${item.valor <= 0 ? 'border-red-300 bg-red-50 text-red-900' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><input id={`valor-${item.id}`} aria-invalid={item.valor <= 0} value={valoresDigitados[item.id] ?? (item.valor > 0 ? valorComDuasCasas(item.valor) : '')} onChange={(event) => { const digitos = event.target.value.replace(/\D/g, ''); if (!digitos) { setValoresDigitados((atuais) => ({ ...atuais, [item.id]: '' })); atualizar(item.id, { valor: 0 }); return; } const valor = parseInt(digitos, 10) / 100; setValoresDigitados((atuais) => ({ ...atuais, [item.id]: valorComDuasCasas(valor) })); atualizar(item.id, { valor }); }} inputMode="numeric" className="min-w-0 flex-1 bg-transparent text-right text-xs font-black outline-none" /></div><small className="mt-1 block text-[10px] font-semibold text-slate-500">{item.valorOriginal > 0 ? `Original: ${moeda(item.valorOriginal)}` : 'Valor não informado'}</small></td><td className="p-3"><select value={item.tipo} aria-invalid={!item.tipo || !tipos.includes(item.tipo)} onChange={(event) => atualizar(item.id, { tipo: event.target.value, tipoSugeridoHistorico: false })} className={`min-w-[180px] rounded-lg border px-2 py-1.5 text-xs font-bold ${!item.tipo || !tipos.includes(item.tipo) ? 'border-red-300 bg-red-50 text-red-900' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><option value="">Selecionar tipo</option>{tipos.map((tipo) => <option key={tipo}>{tipo}</option>)}</select>{item.tipoSugeridoHistorico && <small className="mt-1 block text-[10px] font-bold text-emerald-700">Sugerido pelo seu histórico</small>}</td></tr>)}</tbody></table></div>
+        <div className={`overflow-x-auto rounded-xl border ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><table className="w-full min-w-[820px] text-left text-sm"><thead className={darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-50 text-slate-600'}><tr><th className="p-3">Incluir</th><th className="p-3">Data</th><th className="p-3">Descrição</th><th className="p-3">Valor a lançar</th><th className="p-3">Tipo da despesa</th></tr></thead><tbody>{despesas.map((item) => <tr ref={(element) => { focoLinhas.current[item.id] = element; }} key={item.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'} ${!item.incluir ? 'opacity-50' : ''}`}><td className="p-3 align-top"><div className="flex h-11 items-center"><input type="checkbox" checked={item.incluir} onChange={(event) => atualizar(item.id, { incluir: event.target.checked })} aria-label={`Incluir ${item.descricao}`} /></div></td><td className="p-3 align-top"><label className="sr-only" htmlFor={`data-${item.id}`}>Data de {item.descricao}</label><input id={`data-${item.id}`} type="date" value={item.data} aria-invalid={!dataIsoValida(item.data)} onChange={(event) => atualizar(item.id, { data: event.target.value })} className={`h-11 min-w-[132px] rounded-lg border px-2 py-1.5 text-xs font-bold ${!dataIsoValida(item.data) ? 'border-red-300 bg-red-50 text-red-900' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`} /></td><td className="p-3 align-top"><input value={item.descricao} onChange={(event) => atualizar(item.id, { descricao: event.target.value, tipoSugeridoHistorico: false })} className={`h-11 w-full min-w-[190px] rounded-lg border px-2 py-1.5 text-xs ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`} /></td><td className="p-3 align-top"><label className="sr-only" htmlFor={`valor-${item.id}`}>Valor a lançar de {item.descricao}</label><div className={`flex h-11 w-28 items-center rounded-lg border px-2 py-1.5 ${item.valor <= 0 ? 'border-red-300 bg-red-50 text-red-900' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><input id={`valor-${item.id}`} aria-invalid={item.valor <= 0} value={valoresDigitados[item.id] ?? (item.valor > 0 ? valorComDuasCasas(item.valor) : '')} onChange={(event) => { const digitos = event.target.value.replace(/\D/g, ''); if (!digitos) { setValoresDigitados((atuais) => ({ ...atuais, [item.id]: '' })); atualizar(item.id, { valor: 0 }); return; } const valor = parseInt(digitos, 10) / 100; setValoresDigitados((atuais) => ({ ...atuais, [item.id]: valorComDuasCasas(valor) })); atualizar(item.id, { valor }); }} inputMode="numeric" className="min-w-0 flex-1 bg-transparent text-right text-xs font-black outline-none" /></div></td><td className="p-3 align-top"><select aria-label={`Tipo da despesa de ${item.descricao}`} title={item.tipoInformado?`Tipo informado na planilha: ${item.tipoInformado}`:undefined} value={item.tipo} aria-invalid={!item.tipo || !tipos.includes(item.tipo)} onChange={(event) => atualizar(item.id, { tipo: event.target.value, tipoManual: true, tipoSugeridoHistorico: false })} className={`h-11 min-w-[180px] rounded-lg border px-2 py-1.5 text-xs font-bold ${!item.tipo || !tipos.includes(item.tipo) ? 'border-red-300 bg-red-50 text-red-900' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><option value="">Selecionar tipo</option>{tipos.map((tipo) => <option key={tipo}>{tipo}</option>)}</select>{item.tipoSugeridoHistorico && <small className="mt-1 block text-[10px] font-bold text-emerald-700">Sugerido pelo seu histórico</small>}</td></tr>)}</tbody></table></div>
         {estornos.length > 0 && <section className={`mt-5 overflow-hidden rounded-xl border ${darkMode ? 'border-emerald-900 bg-emerald-950/20' : 'border-emerald-200 bg-emerald-50/40'}`}><div className="p-4"><h3 className="font-black">Estornos e créditos</h3><p className="mt-1 text-xs font-semibold text-slate-500">Eles não serão lançados como despesas nesta etapa.</p></div><table className="w-full text-left text-sm"><tbody>{estornos.map((item) => <tr key={item.id} className={`border-t ${darkMode ? 'border-emerald-900' : 'border-emerald-100'}`}><td className="p-3">{dataExibida(item.data)}</td><td className="p-3">{item.descricao}</td><td className="p-3 font-black text-emerald-700">{moeda(item.valor)}</td></tr>)}</tbody></table></section>}
       </div>
       <footer className={`flex flex-col-reverse gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><p className={`text-xs font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>{selecionadas.length} despesa{selecionadas.length === 1 ? '' : 's'} selecionada{selecionadas.length === 1 ? '' : 's'} · {moeda(totalParaLancar)}</p><div className="flex flex-wrap gap-2"><button type="button" onClick={() => void salvarEFechar()} className={`${botaoBase} border px-4 text-sm shadow-sm hover:ring-1 hover:ring-current focus-visible:ring-sky-600`} style={estiloBotaoSecundario}>Salvar e continuar depois</button><button type="button" onClick={() => void confirmar()} disabled={!confere || !selecionadas.length || !tipos.length} className={`${botaoBase} border border-transparent px-5 text-sm text-white shadow-[0_8px_18px_-12px_rgba(15,23,42,0.7)] hover:border-white/90 focus-visible:ring-sky-600`} style={{ backgroundColor: corPrimaria }}>Confirmar e lançar despesas</button></div></footer>

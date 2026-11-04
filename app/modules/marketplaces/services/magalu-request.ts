@@ -7,7 +7,7 @@ import { openMarketplaceSecret, sealMarketplaceSecret } from './secret-vault';
 import { getMagaluOAuthConfiguration, magaluCatalogScopesGranted, MAGALU_CONNECTION_SCOPES, refreshMagaluToken } from './magalu-oauth';
 import { MagaluConnectionError } from './magalu-diagnostics';
 
-export type MagaluConnection = { id: string; empresa_id: string; provider: 'magalu'; seller_reference: string; status: string;
+export type MagaluConnection = { id: string; empresa_id: string; provider: 'magalu'; seller_reference: string; seller_name?:string|null; status: string;
   token_sealed: Parameters<typeof openMarketplaceSecret>[0]; expires_at: string | null; scopes: string[]; connected_at: string; last_error_code?: string | null };
 
 export async function loadMagaluConnection(db: SupabaseClient, companyId: string, id: unknown): Promise<MagaluConnection> {
@@ -81,48 +81,54 @@ async function accessToken(db: SupabaseClient, initial: MagaluConnection, force 
 /** Somente leitura em rotas conhecidas; nunca aceita URL/resource vindo do navegador. */
 export async function magaluRequest(db: SupabaseClient, connection: MagaluConnection, path: string): Promise<unknown> {
   const url = new URL(path, 'https://api.magalu.com');
+  const skuPresenceQuery = url.pathname === '/seller/v1/portfolios/skus' && url.search === '?_limit=1&_offset=0';
   if (url.origin !== 'https://api.magalu.com' || !path.startsWith('/') || path.startsWith('//') || url.hash
-    || !/^\/seller\/(?:v1\/(?:orders(?:\/[A-Za-z0-9_-]{1,100})?|financial-analysis\/orders)|v0\/tickets(?:\/[a-f0-9-]{36}(?:\/(?:events|returns|messages))?)?)$/.test(url.pathname)) throw new MarketplaceError(400, 'invalid_resource', 'Consulta Magalu inválida.');
+    || (!skuPresenceQuery && !/^\/seller\/(?:v1\/(?:orders(?:\/[A-Za-z0-9_-]{1,100})?|financial-analysis\/orders)|v0\/tickets(?:\/[a-f0-9-]{36}(?:\/(?:events|returns|messages))?)?)$/.test(url.pathname))) throw new MarketplaceError(400, 'invalid_resource', 'Consulta Magalu inválida.');
   let token = await accessToken(db, connection);
   for (let attempt = 0; attempt < 2; attempt++) {
     let response: Response;
     try { response = await fetch(url, { method: 'GET', cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(8_000), headers: { Accept: 'application/json', Authorization: `Bearer ${token}`, 'X-Tenant-Id': connection.seller_reference } }); }
     catch { throw new MarketplaceError(503, 'magalu_unavailable', 'O Magalu não respondeu. Tente atualizar novamente.'); }
     if (response.status === 401 && attempt === 0) { token = await accessToken(db, connection, true); continue; }
-    if (response.status !== 200) throw new MarketplaceError(response.status === 403 ? 403 : 503, `magalu_${response.status}`, response.status === 403 ? 'O Magalu não liberou esta consulta. Autorize novamente a mesma loja para permitir vendas e pós-venda.' : response.status === 429 ? 'Limite de consultas do Magalu. Aguarde e tente novamente.' : 'Não foi possível consultar este recurso no Magalu. Tente novamente.');
+    if (response.status !== 200) throw new MarketplaceError(response.status === 403 ? 403 : 503, `magalu_${response.status}`, response.status === 403
+      ? skuPresenceQuery ? 'O Magalu não autorizou a consulta de anúncios desta loja.' : 'O Magalu não liberou esta consulta. Autorize novamente a mesma loja para permitir vendas e pós-venda.'
+      : response.status === 429 ? 'Limite de consultas do Magalu. Aguarde e tente novamente.' : 'Não foi possível consultar este recurso no Magalu. Tente novamente.');
     return response.json().catch(() => { throw new MarketplaceError(503, 'magalu_response', 'A resposta do Magalu está incompleta. Tente atualizar novamente.'); });
   }
   throw new MarketplaceError(409, 'reconnect', 'Autorize a mesma loja Magalu novamente.');
 }
 
 /** Catálogo: caminhos fixos, escopos próprios e escrita somente após validação no servidor. */
-export async function magaluCatalogRequest(db: SupabaseClient, connection: MagaluConnection, method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ status: number; data: unknown }> {
-  if (!magaluCatalogScopesGranted(connection.scopes)) throw new MarketplaceError(403, 'magalu_catalog_reauthorize', 'Reautorize esta loja Magalu para catálogo, preço e estoque. Não precisa excluí-la.');
+export async function magaluCatalogRequest(db: SupabaseClient, connection: MagaluConnection, method: 'GET' | 'POST' | 'PATCH', path: string, body?: unknown): Promise<{ status: number; data: unknown }> {
   const url = new URL(path, 'https://api.magalu.com');
   const base = '/seller/v1/portfolios/';
-  const readable = /^\/seller\/v1\/portfolios\/(?:category(?:\/hierarchy|\/[a-f0-9-]{36}\/(?:attributes|datasheet))?|skus\/[A-Za-z0-9._-]{1,32}(?:\/validation-info)?|prices\/[A-Za-z0-9._-]{1,32}|stocks\/[A-Za-z0-9._-]{1,32})$/i;
+  const readable = /^\/seller\/v1\/portfolios\/(?:category(?:\/hierarchy|\/[a-f0-9-]{36}\/(?:attributes|datasheet))?|skus(?:\/[A-Za-z0-9._-]{1,32}(?:\/validation-info)?)?|prices\/[A-Za-z0-9._-]{1,32}|stocks\/[A-Za-z0-9._-]{1,32})$/i;
   const writable = /^\/seller\/v1\/portfolios\/(?:skus|prices\/[A-Za-z0-9._-]{1,32}|stocks\/[A-Za-z0-9._-]{1,32})$/;
-  if (!path.startsWith(base) || path.startsWith('//') || url.origin !== 'https://api.magalu.com' || url.hash || (method === 'GET' ? !readable.test(url.pathname) : !writable.test(url.pathname) || !!url.search)) {
+  const patchable=/^\/seller\/v1\/portfolios\/(?:skus|prices|stocks)\/[A-Za-z0-9._-]{1,32}$/;
+  if (!path.startsWith(base) || path.startsWith('//') || url.origin !== 'https://api.magalu.com' || url.hash || (method === 'GET' ? !readable.test(url.pathname) : !(method==='PATCH'?patchable:writable).test(url.pathname) || !!url.search)) {
     throw new MarketplaceError(400, 'invalid_resource', 'Recurso de catálogo Magalu inválido.');
   }
-  if (method === 'GET' && [...url.searchParams.keys()].some(key => !['name', 'id', 'parent_id', '_limit', '_offset'].includes(key))) throw new MarketplaceError(400, 'invalid_resource', 'Filtro de catálogo inválido.');
+  if (method === 'GET' && [...url.searchParams.keys()].some(key => !['name', 'id', 'parent_id', '_limit', '_offset','_sort','status','group_id'].includes(key))) throw new MarketplaceError(400, 'invalid_resource', 'Filtro de catálogo inválido.');
+  const resource=url.pathname.slice(base.length).split('/')[0];
+  const scope=`open:portfolio-${resource==='category'?'categories':resource}-seller:${method==='GET'?'read':'write'}`;
+  if(!connection.scopes.includes(scope))throw new MarketplaceError(403,'magalu_catalog_reauthorize','Falta permissão para esta operação Magalu. Reautorize a mesma loja, sem excluí-la.');
   let token = await accessToken(db, connection);
   for (let attempt = 0; attempt < 2; attempt++) {
     let response: Response;
     try { response = await fetch(url, { method, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(12_000),
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}`, 'X-Tenant-Id': connection.seller_reference, ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}) },
-      ...(method === 'POST' ? { body: JSON.stringify(body) } : {}) }); }
-    catch { throw new MarketplaceError(method === 'POST' ? 409 : 503, method === 'POST' ? 'magalu_write_uncertain' : 'magalu_unavailable',
-      method === 'POST' ? 'A resposta do Magalu não chegou. O envio pode ter sido aceito; não repita a publicação antes de conferir o SKU.' : 'O Magalu não respondeu. Tente consultar novamente.'); }
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}`, 'X-Tenant-Id': connection.seller_reference, ...(method !== 'GET' ? { 'Content-Type': 'application/json' } : {}) },
+      ...(method !== 'GET' ? { body: JSON.stringify(body) } : {}) }); }
+    catch { throw new MarketplaceError(method !== 'GET' ? 409 : 503, method !== 'GET' ? 'magalu_write_uncertain' : 'magalu_unavailable',
+      method !== 'GET' ? 'A resposta do Magalu não chegou. O envio pode ter sido aceito; não repita a publicação antes de conferir o SKU.' : 'O Magalu não respondeu. Tente consultar novamente.'); }
     if (response.status === 401 && attempt === 0) { token = await accessToken(db, connection, true); continue; }
     const data: unknown = await response.json().catch(() => null);
     if (method === 'GET' && response.status === 404) return { status: 404, data: null };
-    if (response.status !== (method === 'POST' ? 202 : 200)) {
+    if (response.status !== (method !== 'GET' ? 202 : 200)) {
       const code = response.status === 403 ? 'magalu_catalog_denied' : response.status === 422 ? 'magalu_catalog_validation' : response.status === 423 ? 'magalu_catalog_locked' : `magalu_catalog_${response.status}`;
       throw new MarketplaceError(response.status === 403 ? 403 : response.status === 422 ? 422 : response.status === 423 ? 423 : 503, code,
         response.status === 403 ? 'O Magalu não liberou esta operação para a loja. Reautorize e confira a aprovação do vendedor.' : response.status === 422 ? 'O Magalu rejeitou os dados do catálogo. Revise a ficha e a categoria; o envio foi interrompido.' : response.status === 423 ? 'O Magalu bloqueou temporariamente o cadastro de produtos. Aguarde a liberação.' : response.status === 429 ? 'Limite de consultas do Magalu. Aguarde e tente novamente.' : 'O Magalu não confirmou esta etapa. Confira o SKU antes de tentar novamente.');
     }
-    if (!data || typeof data !== 'object' || (method === 'POST' && Array.isArray(data))) throw new MarketplaceError(503, 'magalu_response', 'A resposta do Magalu está incompleta. Confira o SKU antes de repetir o envio.');
+    if (!data || typeof data !== 'object' || (method !== 'GET' && Array.isArray(data))) throw new MarketplaceError(503, 'magalu_response', 'A resposta do Magalu está incompleta. Confira o SKU antes de repetir o envio.');
     return { status: response.status, data };
   }
   throw new MarketplaceError(409, 'reconnect', 'Reautorize a mesma loja Magalu.');

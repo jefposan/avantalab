@@ -27,7 +27,12 @@ test('novos lançamentos usam o centro ativo escolhido no cabeçalho', () => {
   assert.match(mobile, /Centro de custo<\/span><select id="lancamento-centro-custo"/);
   assert.match(mobile, /bindChange\('lancamento-centro-custo'/);
   assert.match(mobile, /centro_custo_id: centroCustoId/);
-  assert.match(mobile, /!ehFutura && !state\.centrosCustoAtivo/);
+  // O total agora pertence à mesma transação do lançamento, não a um upsert
+  // separado no aparelho (que poderia repetir ou somar junto com o trigger).
+  assert.match(mobile, /enfileirarMovimentoFinanceiroMobile\('receita', 'incluir', dados/);
+  const sql = readFileSync('supabase/migrations/20261020210000_movimentos_financeiros_mobile.sql', 'utf8');
+  assert.match(sql, /v_receita\.centro_custo_id is null and not v_futuro/);
+  assert.match(sql, /referencia_total_mensal=false/);
 });
 
 test('o centro escolhido na pílula de perfil define o contexto financeiro mobile', () => {
@@ -83,7 +88,7 @@ test('o card de centros consolida os centros do perfil sem trocar o contexto glo
   assert.match(mobile, /O resumo acompanha diretamente o período ativo no cabeçalho da Gestão/);
   assert.doesNotMatch(mobile, /mesCentrosCusto/);
   assert.doesNotMatch(mobile, /mes-centros-custo-mobile/);
-  assert.match(mobile, /centrosCusto: centrosCustoCardHtml\(\)/);
+  assert.match(mobile, /centrosCusto: function \(\) \{ return centrosCustoCardHtml\(\); \}/);
   assert.match(mobile, /if \(id === 'centrosCusto'\) return temCardCentrosCustoMobile\(\);/);
 });
 

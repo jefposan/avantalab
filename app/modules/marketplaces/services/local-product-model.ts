@@ -1,12 +1,17 @@
 import { catalogAttributes, safeHttpsImage, safeText, validEan, type PublicationForm } from './catalog-publication.ts';
 import { objectValue, type ListingSnapshot } from './listing-model.ts';
+import { validProductPictures } from '../product-photos.ts';
 
 export type LocalProductLink = { id: string; connection_id: string; provider: string; provider_listing_id: string; title: string; reported_stock: number | null; status: string; source_snapshot: Record<string, unknown>; updated_at: string; accountName?: string };
 export type LocalProduct = {
+  internal_notes?: string;
+  internal_notes_revision?: number;
+  allocations?: import('../warehouses').WarehouseAllocation[]; total_stock_quantity?: number | null;
   id: string; empresa_id: string; sku: string; name: string; ean: string | null; description: string;
   pictures: string[]; category_id: string; catalog_product_id: string; attributes: Array<{ id: string; name: string; value: string; valueId?: string }>;
   publication_form: Partial<PublicationForm>; price_cents: number | null; stock_quantity: number | null;
   stock_confirmed_at: string | null; revision: number; created_at: string; updated_at: string;
+  listing_stock_review_at?: string | null;
   links: LocalProductLink[];
 };
 
@@ -33,27 +38,28 @@ export function localProductData(raw: unknown) {
 }
 
 export function productFromSnapshot(snapshot: ListingSnapshot) {
+  const pictures = validProductPictures(snapshot.pictures);
   return {
     name: safeText(snapshot.title, 220), ean: validEan(snapshot.ean) || null,
-    sku: '', description: '', pictures: [], category_id: safeText(snapshot.category, 30), catalog_product_id: '',
+    sku: '', description: '', pictures, category_id: safeText(snapshot.category, 30), catalog_product_id: '',
     price_cents: snapshot.price != null && snapshot.price > 0 ? Math.round(snapshot.price * 100) : null,
     attributes: [],
     publication_form: { ean: validEan(snapshot.ean) || '', price: snapshot.price || 0, stock: snapshot.stock ?? -1,
-      categoryId: snapshot.category, listingType: snapshot.listingType, shippingMode: snapshot.shipping.mode,
-      condition: snapshot.condition, description: '', attributes: {} },
+      categoryId: snapshot.category, listingType: snapshot.listingType, shippingMode: snapshot.shipping.mode, freeShipping: snapshot.shipping.free === true,
+      condition: snapshot.condition, description: '', pictureUrl: pictures[0] || '', attributes: {} },
   };
 }
 
 export function productFromPreparation(form: PublicationForm, product: { name: string; pictures: string[]; attributes: LocalProduct['attributes'] }) {
   return {
     name: safeText(product.name, 220), ean: validEan(form.ean) || null, sku: '',
-    description: safeText(form.description, 50000), pictures: [...new Set([form.pictureUrl, ...product.pictures].flatMap(value => {
+    description: safeText(form.description, 50000), pictures: [...new Set([form.pictureUrl, ...product.pictures,...form.additionalPictures||[]].flatMap(value => {
       const url = safeHttpsImage(value); return url ? [url] : [];
     }))].slice(0, 12),
     category_id: safeText(form.categoryId, 30), catalog_product_id: '', attributes: product.attributes,
     price_cents: Math.round(form.price * 100),
     publication_form: { ean: form.ean, productId: form.productId, categoryId: form.categoryId, price: form.price, stock: form.stock,
-      listingType: form.listingType, shippingMode: form.shippingMode, condition: form.condition,
+      listingType: form.listingType, shippingMode: form.shippingMode, freeShipping: form.freeShipping === true, condition: form.condition,
       warrantyType: form.warrantyType, warrantyTime: form.warrantyTime || '', description: form.description || '',
       pictureUrl: form.pictureUrl || '', attributes: form.attributes || {} },
   };

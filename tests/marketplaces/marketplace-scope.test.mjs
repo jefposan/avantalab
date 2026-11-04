@@ -49,11 +49,12 @@ test('navegação fica no contexto da página inteira, mede altura real e manté
   assert.match(client, /observer\.observe\(header\); observer\.observe\(selector\)/);
   assert.match(client, /observer\.disconnect\(\)/);
   assert.ok(client.indexOf('data-marketplace-selector') < client.indexOf('<section className={styles.grid}'));
-  assert.match(listings, /if \(marketplace !== 'mercado_livre'\) return;/);
-  assert.match(listings, /const visibleRows = marketplace === 'mercado_livre'/);
+  assert.match(listings, /if \(!marketplaceIntegrated\(marketplace\) \|\| acting \|\| syncController.current\) return;/);
+  assert.match(listings, /const visibleRows = marketplaceIntegrated\(marketplace\)/);
   assert.match(listings, /scopedAccounts.filter/);
   assert.match(products, /const publicationAccounts = props.publicationAccounts \?\? accounts/);
   assert.match(products, /!validTargetAccount/);
-  assert.match(client, /<Vendas[\s\S]*?accounts=\{salesAccounts\}/);
+  assert.match(client, /<Vendas[\s\S]*?accounts=\{filteredSalesAccounts\}/);
   assert.match(client, /const salesAccounts = accounts.filter\(salesAccountAvailable\)/);
+  assert.match(client, /salesByMarketplaces\(salesByView\(salesInPeriod\(salesSnapshot, salesPeriod\), salesView\), selectedSalesMarketplaces\)/);
 });

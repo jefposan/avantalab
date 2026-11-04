@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { LiberacoesUsuario } from './acessos-usuario';
 import {
   DESPESAS_PADRAO_EMPRESA,
   DESPESAS_PADRAO_PESSOAL,
@@ -231,7 +232,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   for (let tentativa = 0; tentativa < 3; tentativa++) {
     const resposta = await supabase
       .from('usuarios_empresa')
-      .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
+      .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em, dashboard_liberada, modulos_liberados')
       .eq('user_id', usuarioId)
       .eq('status', 'ativo')
       .order('nome', { ascending: true });
@@ -331,6 +332,8 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   empresa_id: empresa.id,
   empresa_nome: empresa.nome,
   perfil: vinculo.perfil,
+  dashboard_liberada: vinculo.dashboard_liberada,
+  modulos_liberados: vinculo.modulos_liberados,
   status: vinculo.status,
   acessoId: vinculo.id,
   usuario_nome: vinculo.nome,
@@ -500,7 +503,7 @@ const MESES_DB = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'J
 // mês no fim. Assim "Sempre" não depende de uma fila local nem expira.
 // Idempotente (checa recorrencia_id no mês). Valor inicial = valor da mesma
 // fixa no mês anterior mais próximo.
-export async function garantirFixasDoMesAtual(empresaId: string, mesesAdiante = 3): Promise<void> {
+export async function garantirFixasDoMesAtual(empresaId: string, mesesAdiante = 3, cliente = supabase): Promise<void> {
   try {
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
@@ -516,12 +519,12 @@ export async function garantirFixasDoMesAtual(empresaId: string, mesesAdiante = 
     });
 
     const [{ data: recs }, { data: centrosAtivos }] = await Promise.all([
-      supabase
+      cliente
         .from('recorrencias')
         .select('*')
         .eq('empresa_id', empresaId)
         .eq('ativo', true),
-      supabase
+      cliente
         .from('centros_custo')
         .select('id')
         .eq('empresa_id', empresaId)
@@ -531,7 +534,7 @@ export async function garantirFixasDoMesAtual(empresaId: string, mesesAdiante = 
     const centrosAtivosIds = new Set((centrosAtivos || []).map((centro: { id: string }) => centro.id));
 
     const anosAlvo = Array.from(new Set(alvos.map((alvo) => alvo.ano)));
-    const { data: lancs } = await supabase
+    const { data: lancs } = await cliente
       .from('lancamentos')
       .select('id, ano, mes, valor, recorrencia_id, status')
       .eq('empresa_id', empresaId)
@@ -562,7 +565,7 @@ export async function garantirFixasDoMesAtual(empresaId: string, mesesAdiante = 
           });
         const valorBase = anteriores.length ? Number(anteriores[0].valor || 0) : 0;
 
-        await supabase.from('lancamentos').insert({
+        await cliente.from('lancamentos').insert({
           empresa_id: empresaId,
           ano: alvo.ano,
           mes: alvo.mesNome,
@@ -1299,17 +1302,15 @@ export async function buscarMeuAcessoEmpresa(empresaId: string, usuarioId: strin
 }
 
 export async function buscarUsuariosEmpresa(empresaId: string) {
-  const { data, error } = await supabase.rpc('listar_usuarios_empresa_contas_rpc', {
-    p_empresa_id: empresaId,
+  const { data: sessao } = await supabase.auth.getSession();
+  const token = sessao.session?.access_token;
+  if (!token) throw new Error('Sessão não encontrada. Faça login novamente.');
+  const resposta = await fetch(`/api/usuarios-empresa?empresaId=${encodeURIComponent(empresaId)}`, {
+    headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
   });
-
-  if (error) {
-    console.error('Erro ao buscar usuários da empresa:', error);
-    return [];
-  }
-
-  // Funcionários do Controle de Ponto não são usuários do sistema — não listar.
-  return (data || []).filter((u: any) => u?.perfil !== 'funcionario_ponto');
+  const resultado = await resposta.json();
+  if (!resposta.ok || !Array.isArray(resultado.usuarios)) throw new Error(resultado.mensagem || 'Não foi possível carregar as liberações dos usuários.');
+  return resultado.usuarios;
 }
 
 export async function criarUsuarioEmpresa({
@@ -1319,6 +1320,7 @@ export async function criarUsuarioEmpresa({
   login,
   senha,
   perfil,
+  liberacoes,
 }: {
   empresaId: string;
   nome: string;
@@ -1326,6 +1328,7 @@ export async function criarUsuarioEmpresa({
   login: string;
   senha: string;
   perfil: 'administrador' | 'operador_completo' | 'operador_simples';
+  liberacoes?: LiberacoesUsuario;
 }) {
   const { data: sessao } = await supabase.auth.getSession();
 
@@ -1353,6 +1356,7 @@ export async function criarUsuarioEmpresa({
       login,
       senha,
       perfil,
+      liberacoes,
     }),
   });
 
@@ -1451,10 +1455,12 @@ export async function vincularUsuarioExistenteEmpresa({
   empresaId,
   userId,
   perfil,
+  liberacoes,
 }: {
   empresaId: string;
   userId: string;
   perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';
+  liberacoes?: LiberacoesUsuario;
 }) {
   const { data: sessao } = await supabase.auth.getSession();
 
@@ -1479,6 +1485,7 @@ export async function vincularUsuarioExistenteEmpresa({
       empresaId,
       userId,
       perfil,
+      liberacoes,
     }),
   });
 
@@ -1552,6 +1559,7 @@ export async function atualizarUsuarioEmpresa({
   email,
   perfil,
   novaSenha,
+  liberacoes,
 }: {
   acessoId: string;
   nome: string;
@@ -1559,6 +1567,7 @@ export async function atualizarUsuarioEmpresa({
   email: string;
   perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';
   novaSenha?: string;
+  liberacoes?: LiberacoesUsuario;
 }) {
   const { data: sessao } = await supabase.auth.getSession();
 
@@ -1586,6 +1595,7 @@ export async function atualizarUsuarioEmpresa({
       email: email.trim().toLowerCase(),
       perfil,
       novaSenha: novaSenha?.trim() || undefined,
+      liberacoes,
     }),
   });
 

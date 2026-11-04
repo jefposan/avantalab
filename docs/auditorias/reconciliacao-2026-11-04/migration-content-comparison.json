@@ -1,0 +1,2441 @@
+[
+  {
+    "version": "20260702165900",
+    "path": "supabase/migrations/20260702165900_admin_console.sql",
+    "sha256": "cc23e66533d2109b7947578a0a2028a99ee0926131b287e48be4d0e7718071b7",
+    "remoteName": "admin_console",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "3613a93adf0621c848059ef1ea02474f982cc0d54e6d43415414cb0804b5414a",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260702170000",
+    "path": "supabase/migrations/20260702170000_ponto_lembretes.sql",
+    "sha256": "2a85a43b18905becfa9c52d88d7638a002961ef570b5e6d3c813712c2aaaab10",
+    "remoteName": "ponto_lembretes",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "c721b2f7619a3c159b537190ec39b7efa117b1c18f46a8e1e333c3fe34941034",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260702170100",
+    "path": "supabase/migrations/20260702170100_ponto_dashboard_realtime.sql",
+    "sha256": "40714e4117cb1d847f293fa81ff9833b51c9dff49fae76dd1d9b7acce0fed10a",
+    "remoteName": "ponto_dashboard_realtime",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "b2ba77e6e1ee579769dfed6b195f6c7076f1690e4ffcf4df4eac6e180a66f12b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260703153000",
+    "path": "supabase/migrations/20260703153000_push_subscriptions_origem.sql",
+    "sha256": "ac2e2e9f6159f137e17e67df1cbaf5b0f0d93c1eec29a1af56c42e406c5d46db",
+    "remoteName": "push_subscriptions_origem",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "7f90e4fafacf8469494436e7449a76ecfae7fcfb84244c992609afdcfaca1615",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260706190000",
+    "path": "supabase/migrations/20260706190000_cobranca_ciclo_financeiro.sql",
+    "sha256": "9f6bd074f6835f701338527865199218cd0248bfdb55ee4da7a99db646b9d2c1",
+    "remoteName": "cobranca_ciclo_financeiro",
+    "remoteStatementCount": 45,
+    "remoteStatementsSha256": "48fe50b96002560c65b3997c31a99ad169f9de98b4fc03728b64aea6e6700b1d",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260707093000",
+    "path": "supabase/migrations/20260707093000_assinaturas_dados_cobranca.sql",
+    "sha256": "6140505116900f6f0474552f1d240359895722205740544d816a043b4514d7ac",
+    "remoteName": "assinaturas_dados_cobranca",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "e5f9f7f7a610651fc05abc485b6b154c07dd9b86fc8958fbc1e879ce7de4b5e7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260708120000",
+    "path": "supabase/migrations/20260708120000_liberar_perfis_existentes_cortesia.sql",
+    "sha256": "f8eec261a0e41df6720493f2c2ebdef8d8f90db159dffded79c9a57f1fd02eaf",
+    "remoteName": "liberar_perfis_existentes_cortesia",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "d2a0e2c12b9247b26916b7f86cd518de342af22d14814cdce334fbcc3b234648",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260708143000",
+    "path": "supabase/migrations/20260708143000_caixinhas_movimentos.sql",
+    "sha256": "f7230ca9d62a1126c148ab592d112401102ea8fa2f9d03ac516d225d792b271e",
+    "remoteName": "caixinhas_movimentos",
+    "remoteStatementCount": 11,
+    "remoteStatementsSha256": "464c3a4519d3696a9566c711269fcf552b2536e1e14c89a3d1ba3ed5149d238c",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20260708150000",
+    "path": "supabase/migrations/20260708150000_caixinha_saldo_inicial.sql",
+    "sha256": "0c1fb807193e1025da3fb26f32aca7c6ccf6d9110dacb465703fcc2488ca10a8",
+    "remoteName": "caixinha_saldo_inicial",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "0854ec3b2e8b9d92d25340e90e6c3f8cca419ad4f2676ee7589354872cfab354",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260710143000",
+    "path": "supabase/migrations/20260710143000_ponto_dias_nao_uteis.sql",
+    "sha256": "6c292e4f1a324d6fb838f1ee66779e348f3b62df63ca13b89daae6eb61511918",
+    "remoteName": "ponto_dias_nao_uteis",
+    "remoteStatementCount": 10,
+    "remoteStatementsSha256": "0104c3d3a4e8d97290f52c3138406481615ca4bcb72195fa379de7ad3b5ac94b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260712120000",
+    "path": "supabase/migrations/20260712120000_primeiro_perfil_cadastro_idempotente.sql",
+    "sha256": "ec112c49664eed0e459eda4afd2db112e4617c60ea2d74cc90fa800ac6a8f0a8",
+    "remoteName": "primeiro_perfil_cadastro_idempotente",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "c30852c1ab5b75b9b0852fe08c73ef12f69f5a1440ba05df6f741fb069c8f6d0",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260712130000",
+    "path": "supabase/migrations/20260712130000_cadastro_completo_perfil.sql",
+    "sha256": "f8f39f5d951633f5f2bd47c64cbd42f4a65f2739918c5a5845a1e4545cfef4ba",
+    "remoteName": "cadastro_completo_perfil",
+    "remoteStatementCount": 12,
+    "remoteStatementsSha256": "184fb96b3cc1ee4e001bb6286ba907515f97a57721d4bcf4b9904543f11a2df9",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260712140000",
+    "path": "supabase/migrations/20260712140000_codigos_vinculo_empresa.sql",
+    "sha256": "560cf912e0cf9b48260430399d49d5ae4520af42cb62c769af1b2b0ad5c84c57",
+    "remoteName": "codigos_vinculo_empresa",
+    "remoteStatementCount": 17,
+    "remoteStatementsSha256": "ddc9b3191f0faf90d3b0da46fb62767bf17141169dbcbb31ae0ff762fd1237c7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260712143000",
+    "path": "supabase/migrations/20260712143000_solicitacoes_acesso_vendas_mobile.sql",
+    "sha256": "42857426d55bd084b305210e888f80728c2f7168927c2c88e261bb4b737b79ca",
+    "remoteName": "solicitacoes_acesso_vendas_mobile",
+    "remoteStatementCount": 19,
+    "remoteStatementsSha256": "4ae32afe905ec7e8b76b43c21dc8a8e000ecf28478e695b51a48841ffc49f5c0",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260712150000",
+    "path": "supabase/migrations/20260712150000_remover_acesso_implicito_vendas_mobile.sql",
+    "sha256": "495da3a0636b8e3ae264281edcddb8c207d646edab87f312d24977ef9b21010a",
+    "remoteName": "remover_acesso_implicito_vendas_mobile",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "358d3d01880d64ecb3c707205b6229263626af4a2844da95d36469795ad3535e",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260712153000",
+    "path": "supabase/migrations/20260712153000_gerenciar_acessos_vendas_mobile.sql",
+    "sha256": "fef615d66d5ebaee12395136798a41fc1cd941eea34c0607a2b33539879262c5",
+    "remoteName": "gerenciar_acessos_vendas_mobile",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "85f79332bc23b8746b0f1a887aed7b5a6681bc03c81336d19b3be51074c14623",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260712170000",
+    "path": "supabase/migrations/20260712170000_notas_lancamentos.sql",
+    "sha256": "d8b58d5c7a90b5920fd7a93ad97ccea7632d50b54534d4a0d8a53860d9f72294",
+    "remoteName": "notas_lancamentos",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "84159c51e9d523b915ac26924232d2d0e8bb36a0a62dd85d9023ffdb559c8468",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260713090000",
+    "path": "supabase/migrations/20260713090000_notas_lancamentos_exclusao_resiliente.sql",
+    "sha256": "072855d75e51952f24c0525fdfda52aa504679b3e901e685850d4fd84d548382",
+    "remoteName": "notas_lancamentos_exclusao_resiliente",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "1ae64cd49d1f9995cefbadbbad22428be448eb6e08a944fa32e0c4e01ec0fec6",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260713103000",
+    "path": "supabase/migrations/20260713103000_pacotes_e_custo_vendas_mobile.sql",
+    "sha256": "1d2469ee63c6fb7e764056e23766a28a54662a97df107d6fa844784f9aea9326",
+    "remoteName": "pacotes_e_custo_vendas_mobile",
+    "remoteStatementCount": 10,
+    "remoteStatementsSha256": "43f83f24d2ee9cd61f52eebb98ee86e2906dd4167909b94883ee533faf856c58",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260713193000",
+    "path": "supabase/migrations/20260713193000_pagamentos_vendas_mobile.sql",
+    "sha256": "ff613eb779ca5f837222e655267742dcbad3e5b854d6afa1af07f4865210aa4b",
+    "remoteName": "pagamentos_vendas_mobile",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "bf49dbfce05f536144a310dc90d9026ceb966881ea4d61eebe38e59fe86f7329",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260713233000",
+    "path": "supabase/migrations/20260713233000_conteudos_vendas_mobile.sql",
+    "sha256": "62964b8bb8bb80d312645650206528f428f301108298b7fe27ecff57cc30751a",
+    "remoteName": "conteudos_vendas_mobile",
+    "remoteStatementCount": 11,
+    "remoteStatementsSha256": "361bbdb6eb4b9bfac7250066628738a4d9a49dbea7900147de9451d0b5aa1876",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260714120000",
+    "path": "supabase/migrations/20260714120000_imagens_produtos_vendas_mobile.sql",
+    "sha256": "d169f906ff75bb6f3833c1d66f1eb62f4e43aa96210fbf2f6ee259d6074dcb76",
+    "remoteName": "imagens_produtos_vendas_mobile",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "ae980364cb39b12b82186330c5af75108974cdd3e52fda912cf218a8fcb3c5cd",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260714183000",
+    "path": "supabase/migrations/20260714183000_divulgacao_vendas_mobile.sql",
+    "sha256": "f3bf9dbd6f6eb280fab728e0b33fae364ee6f8c3f530e2dc81222b86491499b0",
+    "remoteName": "divulgacao_vendas_mobile",
+    "remoteStatementCount": 20,
+    "remoteStatementsSha256": "7cc06f3a88ccb75973142dd846a90bf41f9158734235f446f9e0416c07e3d577",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260714193000",
+    "path": "supabase/migrations/20260714193000_subpastas_divulgacao_vendas_mobile.sql",
+    "sha256": "c573db6420272f6c29f99894021422b9ac78837057cf7ca905cfca1ee3714752",
+    "remoteName": "subpastas_divulgacao_vendas_mobile",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "dfa316e7fad8521e312f8e2027b27482854be5a7835011709c9d4c55143205a4",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260714210000",
+    "path": "supabase/migrations/20260714210000_suspensao_vendas_mobile.sql",
+    "sha256": "2bbac3652215fc062beb900149b7cd5f7350a1ea0032e4bd3111a58f97320471",
+    "remoteName": "suspensao_vendas_mobile",
+    "remoteStatementCount": 51,
+    "remoteStatementsSha256": "71cca5393a9be83866e3d182e4bbfd5970abc3041f72e9373c5f1654df62d636",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260714213000",
+    "path": "supabase/migrations/20260714213000_fila_miniaturas_divulgacao.sql",
+    "sha256": "48813684e8a6d06192bb29f238277c9f5295ce334c7131746a0e373927e4ca1e",
+    "remoteName": "fila_miniaturas_divulgacao",
+    "remoteStatementCount": 23,
+    "remoteStatementsSha256": "5ad248265f3b7df308e4e8f84cd886c6a401ac5764a8005378860b4b0935dc92",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260714220000",
+    "path": "supabase/migrations/20260714220000_dashboard_clientes_vendas_mobile.sql",
+    "sha256": "110d06c15350a3506401515be2ceea2a521e7c778934264653a245222d423135",
+    "remoteName": "dashboard_clientes_vendas_mobile",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "5f6bb90d0ffe783b5659c6a10244a8ac5db23a40ab21c576d3822ebf585e9015",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260715103000",
+    "path": "supabase/migrations/20260715103000_catalogos_estoque_vendas_mobile.sql",
+    "sha256": "94c799a19ac9062b4c2f6c701ba87a1be15d02ab4edb638da9706b9a05ba8dfa",
+    "remoteName": "catalogos_estoque_vendas_mobile",
+    "remoteStatementCount": 33,
+    "remoteStatementsSha256": "eaff10e23fb27cf1bb287bb72a41162ce641aff4c326c1d206f97834d78083a6",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260715213000",
+    "path": "supabase/migrations/20260715213000_integracao_receitas_vendas_mobile.sql",
+    "sha256": "1e0f0c3dd0fa3be4fc99e21feec6becd253cc8509a1d35473fc54f08d4eeae03",
+    "remoteName": "integracao_receitas_vendas_mobile",
+    "remoteStatementCount": 34,
+    "remoteStatementsSha256": "fa72b0433e7e777e56cb031a556aaa266183a6d46defc6562acac2cfdadc2add",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260715230000",
+    "path": "supabase/migrations/20260715230000_vinculos_comerciais_e_reset_vendas_mobile.sql",
+    "sha256": "35ad33a4b8e98a1f8e89f507476038f8bde21c046880b88c798664493c321fcf",
+    "remoteName": "vinculos_comerciais_e_reset_vendas_mobile",
+    "remoteStatementCount": 21,
+    "remoteStatementsSha256": "0e6739d382395054376bb6401a4db5f3749b366f8cc3b2b1779812302dd8ada0",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260715231000",
+    "path": "supabase/migrations/20260715231000_backup_reset_completo_vendas_mobile.sql",
+    "sha256": "236ca2b1ace88486dcf913bf089af8a8d2892f715b73e6c73dba7eb1f6629094",
+    "remoteName": "backup_reset_completo_vendas_mobile",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "2dc3117ba614a33a77888626eaeee0b386b2884c3c74227c4cf4d4bf8e5edc97",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260715233000",
+    "path": "supabase/migrations/20260715233000_perfil_financeiro_independente_vendas_mobile.sql",
+    "sha256": "3633c12bccc6be79525481874f54848c658549b0f193508ff74b671659ca3e5e",
+    "remoteName": "perfil_financeiro_independente_vendas_mobile",
+    "remoteStatementCount": 14,
+    "remoteStatementsSha256": "100a1e301815774a1da3d98d50b3c255070e494f63ab18e5964e1169a6a4a8ca",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716090000",
+    "path": "supabase/migrations/20260716090000_desvincula_empresa_comercial_anterior.sql",
+    "sha256": "3fa678eb540afc41f0d2c8a4cb1b276fcc7cd366362567beb94ab84fc6f5c300",
+    "remoteName": "desvincula_empresa_comercial_anterior",
+    "remoteStatementCount": 9,
+    "remoteStatementsSha256": "035240f71641cc8590fa354bf2804f4ea865b5b3328bca056d4101de32101606",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716100000",
+    "path": "supabase/migrations/20260716100000_acesso_gestores_integracao_vendas_mobile.sql",
+    "sha256": "56dffee2a4a1b1337fe7e7517de20076e42280dc0e08d50f632ced5044ea613d",
+    "remoteName": "acesso_gestores_integracao_vendas_mobile",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "912b3689949dd17a33d773c2398afc7a526e1c801bf08547f0e9cfcd99713d3c",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716103000",
+    "path": "supabase/migrations/20260716103000_perfis_gestao_troca_vendas_mobile.sql",
+    "sha256": "623cb055d61d9bdf788b6195f133f4bbae9227e06a83702a5f1cf82572a63b3e",
+    "remoteName": "perfis_gestao_troca_vendas_mobile",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "7abb2e424bb14e2659763344d3b5158854fd74b94b1657c928b0ef9597438e00",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716110000",
+    "path": "supabase/migrations/20260716110000_catalogo_reconhece_produtos_ja_importados.sql",
+    "sha256": "1cb1bca76c539bc0adb1136f578a7ac5cd4dc128f65dcd7907049ffbeb25e803",
+    "remoteName": "catalogo_reconhece_produtos_ja_importados",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "df2695dfad6dadd104a02b651cf45b995e451317b967b096a8ad15b711723f1e",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716120000",
+    "path": "supabase/migrations/20260716120000_receita_vendas_mobile_consolidada.sql",
+    "sha256": "f96b1b0a3b67da359871525239a3152090246509da0591efb13d381c55ccdde8",
+    "remoteName": "receita_vendas_mobile_consolidada",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "fb18df331a44e2e3f38a19a8af74184ffac8a1061b6df9daf3e9ed8641088cd6",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716123000",
+    "path": "supabase/migrations/20260716123000_receita_vendas_mobile_por_mes.sql",
+    "sha256": "09331fc8086b714a3cd6e509ed72cc5e6cdfbdf3accb3594976fc1a34ab2b16c",
+    "remoteName": "receita_vendas_mobile_por_mes",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "d369e5941e25f62cb66fbafd9d4ca3913c24d03b30c49f6fd1aac7272e02f27c",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716150000",
+    "path": "supabase/migrations/20260716150000_ativacao_confiavel_vendas_mobile.sql",
+    "sha256": "122d7fe9dc9808e33c0da98e3eaf2e81245cbfebfc670cb42298a8d7bd497ce4",
+    "remoteName": "ativacao_confiavel_vendas_mobile",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "75bbdcb23b75f0df078c95ae3f5c15aa7f6a605131fc3b12761ef06b411f9319",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716170000",
+    "path": "supabase/migrations/20260716170000_login_conta_consistente.sql",
+    "sha256": "83191a050a21363aa0adcacfd5ab30c403b8a25e5e5fc232347a916df6e841b2",
+    "remoteName": "login_conta_consistente",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "23fe91d98e8b586fa5860ec2b8b711e8492fff26ac3c1f6dc4107227311e37d5",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716193000",
+    "path": "supabase/migrations/20260716193000_persistencia_segura_vendas_mobile.sql",
+    "sha256": "b1c66b5cd84965cb367e81592500983a364e0a9e784dc5e79fec028122dca2ad",
+    "remoteName": "persistencia_segura_vendas_mobile",
+    "remoteStatementCount": 11,
+    "remoteStatementsSha256": "44e645d60aec9ccb6d33578249a915e1ebd9886a2603f1f5338308187105e4e9",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716203000",
+    "path": "supabase/migrations/20260716203000_fila_idempotente_vendas_mobile.sql",
+    "sha256": "3b10aae935231095a766012c994583c9b61ba7a537830d2f3837134957083285",
+    "remoteName": "fila_idempotente_vendas_mobile",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "803fb8979c5f77582bc2bdef79f2e4f1001417c263c2decd9c8d3387ea3f1018",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260716220000",
+    "path": "supabase/migrations/20260716220000_acessos_multiplos_vendas_mobile.sql",
+    "sha256": "0987514857ecda35bed882badac1ab951b16ad69a3c293a3c2de9657dc821ddf",
+    "remoteName": "acessos_multiplos_vendas_mobile",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "5a045474ee7263e641004deda9d44885e84e7b192ea58fbe3223d246726e210b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260717213000",
+    "path": "supabase/migrations/20260717213000_divulgacao_operador_completo.sql",
+    "sha256": "b8c59cbd66de56bb123b4f2dab15518e782c630997f2fc2aa45c6bca1fcee4b8",
+    "remoteName": "divulgacao_operador_completo",
+    "remoteStatementCount": 14,
+    "remoteStatementsSha256": "1ea2cfbf078252645a83e46d0fd4652fca7f13b994c083e4a77dd7d20e1e733f",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260718110000",
+    "path": "supabase/migrations/20260718110000_pagamentos_vendas_sem_data_futura.sql",
+    "sha256": "de5e74aeb5eb91b8faa63116f22ef45fc16d064462558f8bab04e73cc52d029e",
+    "remoteName": "pagamentos_vendas_sem_data_futura",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "e22b7cf029b459fb2958db9c2f843d7e4d6b211bd943338dd34d58c925754762",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260718123000",
+    "path": "supabase/migrations/20260718123000_recebimentos_presencial.sql",
+    "sha256": "00d63068c2e6830b5cd6484261711f9489b031cecabbe7efde785f44fc98f696",
+    "remoteName": "recebimentos_presencial",
+    "remoteStatementCount": 60,
+    "remoteStatementsSha256": "9f170c2add1680b79b60ef449e7b25bb1fb6eb7647dca4c78ffd511a9eac587b",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20260718173000",
+    "path": "supabase/migrations/20260718173000_integracao_financeira_recebimentos.sql",
+    "sha256": "50222e599a9436b3821986fbae738b66cf5ab781cb0b22aa118f3760ff053c89",
+    "remoteName": "integracao_financeira_recebimentos",
+    "remoteStatementCount": 18,
+    "remoteStatementsSha256": "d9299fc10571a43d847ffd0210ba5d7a882d86639527b6e056427fe2222e1ef3",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20260718210000",
+    "path": "supabase/migrations/20260718210000_corrigir_nome_recebimentos_presenciais.sql",
+    "sha256": "cca76ae848c469c1346c9c35c1c3420b4d4beb163f004ab5d16a02f24868a07e",
+    "remoteName": "corrigir_nome_recebimentos_presenciais",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "43bf04fbbbf4bf5ece4ef20e0bcbfd211393a5e454496147fb4fdfa436b76bc2",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260718220000",
+    "path": "supabase/migrations/20260718220000_frequencia_recebimentos_subempresa.sql",
+    "sha256": "3d3268f351335903d9927f4ac9ac4b88c3e6e14a6cafefb9149cfcc30f35a29a",
+    "remoteName": "frequencia_recebimentos_subempresa",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "9fc4d1fdeebfe69fd6e8085fac8270686f3a6b83ac862550e54228dbe4cea61d",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260718230000",
+    "path": "supabase/migrations/20260718230000_recorrencia_e_inadimplencia_recebimentos.sql",
+    "sha256": "3745abe91bc1caf26d1f24c28e338c2f4ba97e27f88939401daba0362277114c",
+    "remoteName": "recorrencia_e_inadimplencia_recebimentos",
+    "remoteStatementCount": 11,
+    "remoteStatementsSha256": "f8c61ac8fc7a2fde218635d6c31f555a38be16cb29db2daf593c6cf875ab35ee",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260718240000",
+    "path": "supabase/migrations/20260718240000_endereco_cep_recebimentos.sql",
+    "sha256": "6c2150fc622fd3c15862dccf34d8399d848a0fc49b1cb0cad367aa87ba1c4701",
+    "remoteName": "endereco_cep_recebimentos",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "9b99030ec1bc00f7ce2c421c3359ad56c5b4de75e2e3da111f92bd2b08016ac9",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260718250000",
+    "path": "supabase/migrations/20260718250000_dia_vencimento_legado_opcional.sql",
+    "sha256": "8a7dc1367cb5934598c46bac05effac18cbb71fb9cfdb7cdba7cdcc64c98c57b",
+    "remoteName": "dia_vencimento_legado_opcional",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "ad5600672713a9f2e0569b18c8453be85f48268d457fa07591a459330ec6cba0",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260718260000",
+    "path": "supabase/migrations/20260718260000_normalizar_status_vencimento_recebimentos.sql",
+    "sha256": "3ecf0337799f8482b2c2d196b320617d7daf4d8fb06803a18fcc76ed8fa30917",
+    "remoteName": "normalizar_status_vencimento_recebimentos",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "174cf57d60d4acde31c9ce7eac8cb4f83f58159397ed05dd381a1d15ec13ecff",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260718270000",
+    "path": "supabase/migrations/20260718270000_integracao_automatica_e_vencimento_unico_recebimentos.sql",
+    "sha256": "3abf621e5c432089264f35938c3d44d3ec13b7bcecb9d6556c0ffa0cd02879aa",
+    "remoteName": "integracao_automatica_e_vencimento_unico_recebimentos",
+    "remoteStatementCount": 35,
+    "remoteStatementsSha256": "45a4b86f6f9ca531ab4e3aebcbb39b7de7aa6a70b20236796629be301177ba03",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260719100000",
+    "path": "supabase/migrations/20260719100000_ponto_inativacao_e_historico_protegido.sql",
+    "sha256": "0e60a3ee89630196313e11c5d04deb200cab3aa0e615d4a97cc7cc5b60ac9631",
+    "remoteName": "ponto_inativacao_e_historico_protegido",
+    "remoteStatementCount": 16,
+    "remoteStatementsSha256": "f8b89cf9694b6ec685c430b6c0b599aeec3f7ac29d84fa6224d63cdeaaf62b46",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260720100000",
+    "path": "supabase/migrations/20260720100000_ponto_auditoria.sql",
+    "sha256": "f71de0c7cfb1d0b3826c6d16a142cd61ca9a8be1355ccf186bf46d3b9d770f20",
+    "remoteName": "ponto_auditoria",
+    "remoteStatementCount": 10,
+    "remoteStatementsSha256": "fb5ad4e933b0a9c093944b886f65d2f7200a058c25b2d5e899b72f7fd4639deb",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260720110000",
+    "path": "supabase/migrations/20260720110000_ponto_arp_nsr.sql",
+    "sha256": "79237e1e381b0a5cd5f7309904d301c66f6eb902ee541b07f040c0f55ccdfcce",
+    "remoteName": "ponto_arp_nsr",
+    "remoteStatementCount": 12,
+    "remoteStatementsSha256": "8e541ace0833d4fbea73c2d374806a7dfcbf20f177d2518f768cdd9c94f5e458",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260720120000",
+    "path": "supabase/migrations/20260720120000_rep_p_cofre_certificados.sql",
+    "sha256": "08eabf011ef862b4788afead89b320c8f7833b3ac77b80daefa868c91d96e1e1",
+    "remoteName": "rep_p_cofre_certificados",
+    "remoteStatementCount": 11,
+    "remoteStatementsSha256": "a1409d09ed4168b22ebfd76608f7ec2f64cc6430dff4d3666e2219a77c1648db",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260720140000",
+    "path": "supabase/migrations/20260720140000_rep_p_afd_configuracao.sql",
+    "sha256": "a7c3c088ccdcaa38e02b2ec097d53d288f580988629d06d0556372457a878567",
+    "remoteName": "rep_p_afd_configuracao",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "74a5613a96d835f1a59c431897bc9bc07f8c4f41db2701445c03fdb4b7ea5f8b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260720150000",
+    "path": "supabase/migrations/20260720150000_rep_p_documentos_gerados.sql",
+    "sha256": "e49fa8521a3fba08aae6795193406dabfb1235f65bad250de59b82465732eb29",
+    "remoteName": "rep_p_documentos_gerados",
+    "remoteStatementCount": 12,
+    "remoteStatementsSha256": "f7b7f2d292dfa107bd01696e256b01d19e1d8048628cdc8b1bdb3d32870b191d",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260720160000",
+    "path": "supabase/migrations/20260720160000_rep_p_manual_legal.sql",
+    "sha256": "078d4a2d13a27b32967122fcd67495dfd1ddb692e38219adbcff7927d4923800",
+    "remoteName": "rep_p_manual_legal",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "8630a45df926fb4e6fc9741a3d66ec54b7e29c529f5129ec2a255de4da1ace2c",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260720170000",
+    "path": "supabase/migrations/20260720170000_rep_p_espelho.sql",
+    "sha256": "99e7d136aa24492a9f219005851ccac5c1d6ce3cbc328670ba6900fadffc7866",
+    "remoteName": "rep_p_espelho",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "d4198656efa58493af89b010e5df73e4c3cd0ba18ca5a10ec98cefd9753eb860",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260721110000",
+    "path": "supabase/migrations/20260721110000_receitas_vendas_mes_completo.sql",
+    "sha256": "e695cd90b50b18db5c85148186f488899f62bdccf2c0dca0fc19c37e6f2537d6",
+    "remoteName": "receitas_vendas_mes_completo",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "c333ba5804c8aa499d5a5044e3557529b654330976f69833f1a2bc947af7f320",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260721205000",
+    "path": "supabase/migrations/20260721205000_proteger_contador_nsr_rep_p.sql",
+    "sha256": "f45437222db31246430b397a3b99ce89bac4231056b5b4d1de0d8cc57bba4f64",
+    "remoteName": "proteger_contador_nsr_rep_p",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "65d47dfc429df918efc8752758817d4f0b535d30856da8e851d52a038ecd35c5",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260721223000",
+    "path": "supabase/migrations/20260721223000_importador_despesas_lancamentos.sql",
+    "sha256": "2db2d57b07bb9484dd5cd3bde14f076c637508cdfa9535c37515055e28331b13",
+    "remoteName": "importador_despesas_lancamentos",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "e1e5bb19eb93c296dd3f8d47fd55461dc20560d3ad32d38ca43ba9095b87ea33",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260722130000",
+    "path": "supabase/migrations/20260722130000_importador_despesas_rascunhos_servidor.sql",
+    "sha256": "e464defdaac2bd35a5e7703804d6bd6606d3216307e4c0d3f228f7461e01abce",
+    "remoteName": "importador_despesas_rascunhos_servidor",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "18e6af8d57589dd4e218a575237ed05963acc6e5719a48abaf2fd2402b689805",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260722143000",
+    "path": "supabase/migrations/20260722143000_importador_despesas_rascunhos_por_mes.sql",
+    "sha256": "6db9f6d1d8d3f54351e57a4ab5b820da2ff3fa6bc0a315eb8e6baae9de64c54f",
+    "remoteName": "importador_despesas_rascunhos_por_mes",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "e52b3839591a2c8fb1453f6649404e0855d35d424d80a3ee4a8446f1b5060ff7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260722160000",
+    "path": "supabase/migrations/20260722160000_clientes_diretos_e_locais_agrupadores.sql",
+    "sha256": "91ead31ec204674d92fadbceff99c8ac419c8ca99ca654608c890015ad28a772",
+    "remoteName": "clientes_diretos_e_locais_agrupadores",
+    "remoteStatementCount": 22,
+    "remoteStatementsSha256": "6a98b1ea573560d6f6d6a39fd406a2247aa1afbf2fdfae51ffd1ada2ca5f8154",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260723150000",
+    "path": "supabase/migrations/20260723150000_baixa_direta_recebimentos.sql",
+    "sha256": "ede0c1f895967e01b2b556a34e9b628d8ab1c4d9568408f3d8aea7c37ee5149e",
+    "remoteName": "baixa_direta_recebimentos",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "dc35f298abc0c2ec384d3ebbd36c436bc5a446729139a5ef58ef067848d66d0a",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260723160000",
+    "path": "supabase/migrations/20260723160000_estorno_baixa_recebimentos.sql",
+    "sha256": "f3afdb7edf5d2fa028ca10db29a933277a9e35d8d95aeae0b15e93c779c7d92d",
+    "remoteName": "estorno_baixa_recebimentos",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "060c312a49d8833eb8295cf5364dc50b7f4f328c77f1ea5242c92b2687882847",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260723170000",
+    "path": "supabase/migrations/20260723170000_valor_contratado_opcional_recebimentos.sql",
+    "sha256": "9a808a8c0463f245648fec373deef93b3be3b0c78d5e49eb002386a824624b3e",
+    "remoteName": "valor_contratado_opcional_recebimentos",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "b8d183c2c606ee598c70d33136de74af12194c85f358d8d0f330375cd5f7f2f7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260724010000",
+    "path": "supabase/migrations/20260724010000_importacao_planilha_recebimentos.sql",
+    "sha256": "587231b8c9ba58009465075543e03562227ce4d3fa0cfc9466486bd5a6b95ef2",
+    "remoteName": "importacao_planilha_recebimentos",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "d4c265d1a25a2c188c263dfa19404f57cf382acba5fed3a2b5b674ac97bba6cb",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260724011000",
+    "path": "supabase/migrations/20260724011000_corrigir_importacao_planilha_recebimentos.sql",
+    "sha256": "1cd4ca229aaa84537aa9156362dc941b5020589043de2ed0aea29b27622cf83b",
+    "remoteName": "corrigir_importacao_planilha_recebimentos",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "2f80bfdaabd32b41bfba35edcac32678ad7cd9c48b26ecb95f3f46471d6389a3",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260724012000",
+    "path": "supabase/migrations/20260724012000_corrigir_limpeza_eventos_importacao.sql",
+    "sha256": "250da823771f6cbd30ae0a31c1c24a87d3b2e9af4025166fbb672992e332d994",
+    "remoteName": "corrigir_limpeza_eventos_importacao",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "8c76fe1ebb1d09a9f29313cc16d3c3188474c1b9e5197d8961dbd1391168c665",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260724013000",
+    "path": "supabase/migrations/20260724013000_importacao_sem_sincronizacao_forcada.sql",
+    "sha256": "35f4f75f4a154c8d9865ab2b9ba8ce831eacd514b05d671c6bd64f1779bfe56c",
+    "remoteName": "importacao_sem_sincronizacao_forcada",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "f7ea99e5a8e0421df909846669e7977a7e0e629b0a8689e9b2513233365330c9",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260724014000",
+    "path": "supabase/migrations/20260724014000_evitar_recorrencia_durante_importacao_planilha.sql",
+    "sha256": "942629b13e87479bccef7f9871f1059746510e469a84dea2d3d917037a837316",
+    "remoteName": "evitar_recorrencia_durante_importacao_planilha",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "f345472c98e671a0252672969c84407f9265a7a0ab6583cbcc2fa90b19fc9397",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260724015000",
+    "path": "supabase/migrations/20260724015000_limitar_recorrencias_a_doze_meses.sql",
+    "sha256": "51cb1703702cc0deb7615e2decbb4c795601b65944259c21576b40b371597392",
+    "remoteName": "limitar_recorrencias_a_doze_meses",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "1a27df6ecdb25adc119baa8c0791678d072174c13a0bd55395b45a18baead949",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260724190000",
+    "path": "supabase/migrations/20260724190000_limite_e_auditoria_importador_ia.sql",
+    "sha256": "7990b5e2b381f6bf24865ba48c900ffd6a5497b7e9509e95fe7d020581cdc41c",
+    "remoteName": "limite_e_auditoria_importador_ia",
+    "remoteStatementCount": 12,
+    "remoteStatementsSha256": "5bd8bda21fec4d8b3fd6fde176b5b91b1bb819fa4fff17d75cd91cae0daca811",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260725110000",
+    "path": "supabase/migrations/20260725110000_preferencias_vendas_mobile_servidor.sql",
+    "sha256": "1cdd300d25e88c7f858f617f4f6be42966ba8061b5e2ef7974ca27d20a76b92f",
+    "remoteName": "preferencias_vendas_mobile_servidor",
+    "remoteStatementCount": 15,
+    "remoteStatementsSha256": "5d9bebdc1b3a3639fc4e85a2b89e8fbc3136612b8a66136f202fdf397041a25e",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260725155000",
+    "path": "supabase/migrations/20260725155000_bloquear_duplicados_divulgacao.sql",
+    "sha256": "103ed0ade0fef03163e30808068d077598409f72f2176f1178b14d66659326b3",
+    "remoteName": "bloquear_duplicados_divulgacao",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "b98969e877f713c7068f905e7a1d7fb15f00b1681fc13a2edc4e172fc89f4295",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260725160000",
+    "path": "supabase/migrations/20260725160000_comprovantes_recebimentos.sql",
+    "sha256": "c953ecb46a5247631e961182b2f8143c46029c47d82bc599232ecda04e8fd76a",
+    "remoteName": "comprovantes_recebimentos",
+    "remoteStatementCount": 15,
+    "remoteStatementsSha256": "55b9ca78016360f64b9f829fe81da27be694afbb1074c84c8e8af7938b72abb9",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260727120000",
+    "path": "supabase/migrations/20260727120000_vinculo_financeiro_opcional_vendas.sql",
+    "sha256": "99f8f82cd6bb57cd97ea28587328d664a72afd9195128defa12357164cb42639",
+    "remoteName": "vinculo_financeiro_opcional_vendas",
+    "remoteStatementCount": 38,
+    "remoteStatementsSha256": "4f0ea9c252820bba6f0bbf2796e467b56fcf4d57b348706d24551bf6bd697eb6",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260727230000",
+    "path": "supabase/migrations/20260727230000_diretorio_global_contas.sql",
+    "sha256": "b91a632892d3b89d6edce608a363747456f88fb41c9d98908cf8dbfaf8a75584",
+    "remoteName": "diretorio_global_contas",
+    "remoteStatementCount": 13,
+    "remoteStatementsSha256": "2ffc3d8fbd6ccf35a192854dddc36c532dac688a31d0195a53763e015e5057c5",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260727234500",
+    "path": "supabase/migrations/20260727234500_estornar_recebimentos_lancados.sql",
+    "sha256": "117a59a2dfa8d3ace3aafd6cab95ae916d6fefe3a042d134f22b8e8a8de0d947",
+    "remoteName": "estornar_recebimentos_lancados",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "3e68edbcbe0a28fb7c90f53c367c8de6c908ae15f43fbe47268b40cef7ab0f84",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260728090000",
+    "path": "supabase/migrations/20260728090000_referencia_total_mensal.sql",
+    "sha256": "b70088928b45e4beafdd0c8e1556563645d7620b41a63cb0d95ed7543fcaa222",
+    "remoteName": "referencia_total_mensal",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "74aa4d6f9a9113270c849c82984a7e02c0404c6bd49c45ec6ab453a7e4db52d7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260729150000",
+    "path": "supabase/migrations/20260729150000_assinaturas_modulos_planos_comerciais.sql",
+    "sha256": "02b0165bf46f3a870427d6559b6fce4e4981ec5940f5628a796d03694f036e99",
+    "remoteName": "assinaturas_modulos_planos_comerciais",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "3618ba35741118227ee8b47de33b9a2977f4803962c3c8e6f773ba70896a9f2c",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260729170000",
+    "path": "supabase/migrations/20260729170000_criacao_perfis_limites_comerciais.sql",
+    "sha256": "f762fbcb8718d2655fe778e46a157a5ca87080873268361b852e84c45220771d",
+    "remoteName": "criacao_perfis_limites_comerciais",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "c2f38609d9793630f62726ab89042d6b3c83edf8963f8ace8275a52d010869e1",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260729180000",
+    "path": "supabase/migrations/20260729180000_business_pro_modulos_inclusos.sql",
+    "sha256": "26d66816537b632e281f11c0ab1b50b7fd893412826d85d122c481c6dd2e436f",
+    "remoteName": "business_pro_modulos_inclusos",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "173c1cc1e04dfcaf58487d489f40bb4fa49ce9b33f23be0e530028f7fc21f33e",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260729200000",
+    "path": "supabase/migrations/20260729200000_desativar_integracao_vendas_ao_remover_modulo.sql",
+    "sha256": "0580588b6c5e5cabd73f52c0d68b73765aa4beafb56380509c46a2d1b8ea3851",
+    "remoteName": "desativar_integracao_vendas_ao_remover_modulo",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "b5000ff6267c8faace08c58aa1f9b6bae16083506fb0c660cb0376b86409ce71",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260729220000",
+    "path": "supabase/migrations/20260729220000_assinaturas_app_store.sql",
+    "sha256": "cf91b7838d81e70e87fe9cde8c548840d74251da92c46c5a3aec7387a012ecfc",
+    "remoteName": "assinaturas_app_store",
+    "remoteStatementCount": 11,
+    "remoteStatementsSha256": "a4220fae2b792da1374a369523a88be56fe146c0983807ec535e17ea282e6786",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260801090000",
+    "path": "supabase/migrations/20260801090000_avisos_vencimento_assinatura.sql",
+    "sha256": "4cfda20b7e22a4781cf3dac13695429ccbb7454f32e8e795181e0223eb364a4d",
+    "remoteName": "avisos_vencimento_assinatura",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "98dad1e3f6e4fad2748ef75cae80e49fd36e2887507897fbaa06b0bd0691b9d1",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20260801091000",
+    "path": "supabase/migrations/20260801091000_avisos_assinatura_idempotencia.sql",
+    "sha256": "2bc406e25dccdd704f0915e038d9267f9e88eca82292f64cf9ad73e16426dbe6",
+    "remoteName": "avisos_assinatura_idempotencia",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "ee23e26cd3395e6e8beac38480d41d95c12760aace084fd83bae5617f0fbb9cf",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260801100000",
+    "path": "supabase/migrations/20260801100000_pontos_restauracao.sql",
+    "sha256": "83e8f7a97410c2dbcd49d349473db6d9eef56ec407c0d7f5c63a5bd7d92ebb42",
+    "remoteName": "pontos_restauracao",
+    "remoteStatementCount": 15,
+    "remoteStatementsSha256": "d1f4ebaceb4015d03c921aebdd46153bc9b7939f2ced9a8725664aa1335f4085",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260803090000",
+    "path": "supabase/migrations/20260803090000_push_apns.sql",
+    "sha256": "f06d5893d059fa5893f8b35b6c077fa2e2d2b1234487938a07b497f014428cb0",
+    "remoteName": "push_apns",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "4105afe2cef315d17affd4f427fc323a680e9807078ba6a4e3d2e49040cab81f",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260803110000",
+    "path": "supabase/migrations/20260803110000_ponto_reconhecimento_facial_preparacao.sql",
+    "sha256": "870ec994d4da85c1c345ad341a01f5b3ac09ca89e500998131e8517327686f24",
+    "remoteName": "ponto_reconhecimento_facial_preparacao",
+    "remoteStatementCount": 15,
+    "remoteStatementsSha256": "0f26467825e6a203b077c93c5bcdb02d86d24e4de01b7e71b2eda7d0e4921d03",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260804150000",
+    "path": "supabase/migrations/20260804150000_ponto_facial_tipos_marcacao.sql",
+    "sha256": "62998ba520cb439868bf783ee4a6305a2f7b5bf920d5b54cfb356efd99a6777d",
+    "remoteName": "ponto_facial_tipos_marcacao",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "70a22dd69a9e738fc3ef29b879bbce6bb822d0eda260340a27ab082defa41a70",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260805120000",
+    "path": "supabase/migrations/20260805120000_carteira_creditos_consultas.sql",
+    "sha256": "fa1ae2a8f21a374581ba8f3886c7803c42789d1de8d3d0bd89ff37491e0d00d1",
+    "remoteName": "carteira_creditos_consultas",
+    "remoteStatementCount": 25,
+    "remoteStatementsSha256": "a650c16b8aa16ca797dd08d69b83018add0978efefb259d9204f9ceda6d169d8",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260805121000",
+    "path": "supabase/migrations/20260805121000_carteira_webhooks.sql",
+    "sha256": "caa668807d61c051507cb83dddf7cdf5017f2d66370409b2b3059a05d5ce80ff",
+    "remoteName": "carteira_webhooks",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "5607c7b23fd21535b8a0e9cf9a9ccc9eb044562fcc0926206e058da22e85f6a7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260805122000",
+    "path": "supabase/migrations/20260805122000_carteira_estornos_gateway.sql",
+    "sha256": "4878eec913af053578692fd4d1f8838fb52aafb13621362f55dca62f33dcb838",
+    "remoteName": "carteira_estornos_gateway",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "c95527ab78d8cdf0581aeeafb4bc8b19516f46365edc2819fd90af67d15a33d0",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260805130000",
+    "path": "supabase/migrations/20260805130000_ponto_facial_cobranca.sql",
+    "sha256": "f92ed4c0f2d79cb77b685acfdacb453e43ab1891f0b6cbd49ad72c3863cf0179",
+    "remoteName": "ponto_facial_cobranca",
+    "remoteStatementCount": 22,
+    "remoteStatementsSha256": "a6f08f1e819b6678237f7075c8eeeaf1085356c98a9622be0a01ca8d9a8e4372",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260805140000",
+    "path": "supabase/migrations/20260805140000_pdf_divulgacao_vendas.sql",
+    "sha256": "702fddd220000340675623ab00d3886fed1d04d0e66b35f7ba00182d69ae505b",
+    "remoteName": "pdf_divulgacao_vendas",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "c533212af6e9339a5b00c1c56e5dd4ca66710ff0cb5c1b992e0fe43720192037",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260805143000",
+    "path": "supabase/migrations/20260805143000_reprocessar_capas_pdf_divulgacao.sql",
+    "sha256": "6fac3ed66e6f4f03eaaa8250a665de16c80028a25003a470f8e6e604e738578f",
+    "remoteName": "reprocessar_capas_pdf_divulgacao",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "dfa707fa9984ec17868aa7f0f79b251d2c06e64cfbd1a8ed0454b606b1c6ae34",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260807150000",
+    "path": "supabase/migrations/20260807150000_exclusao_perfil_com_retencao.sql",
+    "sha256": "e85c2b8ea59764942c5330c841914840aa4d23bc27843d04e7f3719a9e4c8b52",
+    "remoteName": "exclusao_perfil_com_retencao",
+    "remoteStatementCount": 22,
+    "remoteStatementsSha256": "e64595f0f191c22dda45ae3d9b3a2663d62445a640dd83af6a2eb71afedb8123",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260807190000",
+    "path": "supabase/migrations/20260807190000_padrao_modulos_e_avanta_projetos.sql",
+    "sha256": "52fabf895b33a2bdd5a6b996d09acebb43aca89889b8c5f99f7f43e3caf8d941",
+    "remoteName": "padrao_modulos_e_avanta_projetos",
+    "remoteStatementCount": null,
+    "remoteStatementsSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20260807193000",
+    "path": "supabase/migrations/20260807193000_capa_pasta_divulgacao_vendas_mobile.sql",
+    "sha256": "101343a6ab27653da62c722a1c8eeaf9717e5a62e3af5c67f77defe473e4f094",
+    "remoteName": "capa_pasta_divulgacao_vendas_mobile",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "71b91e495a7f20480d0fd9196620f6c1ecf2ea71d2c3a8c1139044d22aef7f84",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260807200000",
+    "path": "supabase/migrations/20260807200000_cortesia_equivale_ao_plano_completo.sql",
+    "sha256": "1a3086965f46e608433e7fec38ae918d198fdd5462da1932820adbcded1fea62",
+    "remoteName": "cortesia_equivale_ao_plano_completo",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "02c85d1d17ba856a3c4223a8cb0e9ed5d6e325e56990c5430270064097c1d468",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260807210000",
+    "path": "supabase/migrations/20260807210000_ativar_vinculo_comercial_aprovado.sql",
+    "sha256": "386f02db6c1f773b9ce1b560dea61bb345e48405f068c29bfb280637f4af6da8",
+    "remoteName": "ativar_vinculo_comercial_aprovado",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "70af8ef6209d25e74df5f67471aff9124feadce3858fdcc9c57f5a6c106e6511",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260807223000",
+    "path": "supabase/migrations/20260807223000_vinculo_vendas_mobile_realtime.sql",
+    "sha256": "f7b727af074c8bab55cfa3371b07a7842b5d6c1f376d41e50c0a0d73c2ee7080",
+    "remoteName": "vinculo_vendas_mobile_realtime",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "0b84920dfbaf7a9550ed304540762d79a51558f6fb470eef196b8400f5195c5d",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260808153000",
+    "path": "supabase/migrations/20260808153000_mes_pagamento_correcao_recebimentos.sql",
+    "sha256": "54df07f7ddd741bee7e66957af3e2b8952d02ac2bfb14b11e641fd6a3442e085",
+    "remoteName": "mes_pagamento_correcao_recebimentos",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "a0b619c82653e3d605346b9c58778efc35ceebd055a56de33fba6dc7f563695e",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260810150000",
+    "path": "supabase/migrations/20260810150000_contas_compartilhadas_vendas_mobile.sql",
+    "sha256": "021829d6e3dca67382fde6c145de1e1981d86235ad9bbd5b7cf9529a2ed18f99",
+    "remoteName": "contas_compartilhadas_vendas_mobile",
+    "remoteStatementCount": 65,
+    "remoteStatementsSha256": "803e67d7db35fec6202b575d7a005406f0ad84e5adbebcc739f3bf9bf7a6aa81",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260810183000",
+    "path": "supabase/migrations/20260810183000_exclusao_conta_avantavendas.sql",
+    "sha256": "a4235f31913f39a715efc641fa7a07f0213186feac8db296546774c0f30455dd",
+    "remoteName": "exclusao_conta_avantavendas",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "77c0e42226c555312cc2d5fe83ffe87dfa6c0822962aba8ad06ad15a459616d8",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260811120000",
+    "path": "supabase/migrations/20260811120000_conta_inicial_automatica_vendas.sql",
+    "sha256": "d4113ddce70e779725011f6eee32599c8e72c9f984a1a6a4054a836e908df4be",
+    "remoteName": "conta_inicial_automatica_vendas",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "b76e82afe6fa03c02d6c9a6931f2ac7ea09c2a27340ae8b7bb5afd814ac78998",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260812090000",
+    "path": "supabase/migrations/20260812090000_receitas_somente_por_entradas.sql",
+    "sha256": "91e4e4a557403117c9e3d18722aa01eb0b4d6dc9f71d16e86d7a9985cb0940d7",
+    "remoteName": "receitas_somente_por_entradas",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "a5af85251a3f2dfa0151d43025fe4f071f68540471a7da723a470529d7ebac8c",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260812170000",
+    "path": "supabase/migrations/20260812170000_normalizar_receitas_por_entradas.sql",
+    "sha256": "57684cce3713324c847bc006ecdffa72205092e6fd0b0e1f6c795f5dabbe1b06",
+    "remoteName": "normalizar_receitas_por_entradas",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "b0bbb012846b04cc180471e60ed9315408ee0338d877d220cbda74accefeb5a7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260812180000",
+    "path": "supabase/migrations/20260812180000_compartilhar_assinatura_por_quota.sql",
+    "sha256": "0e72a6c5b977b9c4ae6710c862b032d5cb259513587a518b0e667182d30c051d",
+    "remoteName": "compartilhar_assinatura_por_quota",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "5399e6457488c9b352680d730a282bee07ebf8d3c148927a05a1d19dd110f092",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260813123000",
+    "path": "supabase/migrations/20260813123000_backup_restauracao_contas_vendas.sql",
+    "sha256": "dc60cbf0f1f624a4f71211b0dd1b1c6c579443f9a4043dd4e645e068f6ed85ba",
+    "remoteName": "backup_restauracao_contas_vendas",
+    "remoteStatementCount": 37,
+    "remoteStatementsSha256": "77301fccfa4574500c0526782e604408dd11f44a360667009e8459c3d7f5650f",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260813170000",
+    "path": "supabase/migrations/20260813170000_compartilhamento_avanta_projetos.sql",
+    "sha256": "7b6d37ba36e78e417db8ae143016dd52989fb41d7e4c365920c81f5386319d81",
+    "remoteName": "compartilhamento_avanta_projetos",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "867e12e3b4a2f725f41941b4740cda1a76fb6ea063739421e9f681cb0b6ced5b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260813183000",
+    "path": "supabase/migrations/20260813183000_backup_completo_conta_vendas.sql",
+    "sha256": "a31da91b2af34ac8ed6bb936a9397f6e598cea71431843e831ab18cd9149d075",
+    "remoteName": "backup_completo_conta_vendas",
+    "remoteStatementCount": 48,
+    "remoteStatementsSha256": "f5796ef723e380df29a1105b9a773e71f57ff3793c2deb22e42bc25e52a1a201",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260813220000",
+    "path": "supabase/migrations/20260813220000_vinculo_catalogo_por_conta_vendas.sql",
+    "sha256": "bf03de080acd0a0226fd68891086711b421ffa09523d29e406735d6458e22360",
+    "remoteName": "vinculo_catalogo_por_conta_vendas",
+    "remoteStatementCount": 39,
+    "remoteStatementsSha256": "db8a65420ed23611029deba78dc59453b082840b51b9acd49f8ed6198f315aca",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260813224500",
+    "path": "supabase/migrations/20260813224500_corrigir_recursos_vinculo_migrado_vendas.sql",
+    "sha256": "779595e1172180acc8a8a0dd43428a365c4cd5037009ca37d7d056da3e569908",
+    "remoteName": "corrigir_recursos_vinculo_migrado_vendas",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "b2caee0fc5a206fed664b96013a0a2f119e4372723d3fa861e6b691814a72e31",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260817190000",
+    "path": "supabase/migrations/20260817190000_reconciliar_perfis_quota_assinatura.sql",
+    "sha256": "26926ac83c3685ffab96d8b833c0f942186fee91720645428786f55600212b06",
+    "remoteName": "reconciliar_perfis_quota_assinatura",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "d2a596cb4f94dbd4f122d7b8411377165fef593b7f3bf31fc9edfb157a567c26",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260817210000",
+    "path": "supabase/migrations/20260817210000_auditoria_fluxo_assinaturas.sql",
+    "sha256": "76d9c825579d3835c454984fce3c0c86d36a2c3fdc8b7f2c018c82fc70f2d738",
+    "remoteName": "auditoria_fluxo_assinaturas",
+    "remoteStatementCount": 11,
+    "remoteStatementsSha256": "f2111f4fb66ec930007822ec64b458a4b80f7ad0bfddc7bdfa85f3ad6e51e036",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260817220000",
+    "path": "supabase/migrations/20260817220000_assinatura_propria_perfil_compartilhado.sql",
+    "sha256": "f165eefe07521c3caf0b76ad5565b7be0f518446f4650bce4305c623be10d0b4",
+    "remoteName": "assinatura_propria_perfil_compartilhado",
+    "remoteStatementCount": 10,
+    "remoteStatementsSha256": "dfc8189e0b65021f0dbf22b050169e55940a0683d6be3a699fe71fa5acc86657",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260820160000",
+    "path": "supabase/migrations/20260820160000_capa_externa_divulgacao_vendas_mobile.sql",
+    "sha256": "89b261622fbeefa4ef04add7d7b768a10b3a8330a98d937a847619b10d2a9afc",
+    "remoteName": "capa_externa_divulgacao_vendas_mobile",
+    "remoteStatementCount": null,
+    "remoteStatementsSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20260822120000",
+    "path": "supabase/migrations/20260822120000_pedidos_respeitam_conta_ativa_vendas.sql",
+    "sha256": "37280b868656b36f0421f1af7acb6f5cd2407c8ab12d7e335b033fa3dd191378",
+    "remoteName": "pedidos_respeitam_conta_ativa_vendas",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "e9979d92fec998cc94c6c4551441a8be979255115951f7c7a6a3c50244b75786",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260822153000",
+    "path": "supabase/migrations/20260822153000_listar_vinculos_comerciais_gestao.sql",
+    "sha256": "93db57474bc562a92ac9f72df6c53d966c283a4ded1a54d02be10459b19d91f3",
+    "remoteName": "listar_vinculos_comerciais_gestao",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "e1913817ceea34527cfce34c019f538cb674dbd311d7ccee452afacacbd7e2a3",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260822170000",
+    "path": "supabase/migrations/20260822170000_listar_vinculos_contas_vendas_gestao.sql",
+    "sha256": "7547df630fd7c1c3fa08d42b9c6bba315afc6c14de0c979999c01e68d66f85f8",
+    "remoteName": "listar_vinculos_contas_vendas_gestao",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "053c8df05a7896968398261ea4201fbf9897b72679d0035d9b414d4b6bc0810b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260822171000",
+    "path": "supabase/migrations/20260822171000_listar_todos_vinculos_contas_vendas_gestao.sql",
+    "sha256": "451419a4ba824e616ffa76507f503fa20432f2ccdaee1c34a23cecd44f1ec9b4",
+    "remoteName": "listar_todos_vinculos_contas_vendas_gestao",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "0be07553f1f9c692bbdbd5e070adf73a5c88638ea81764cbef1574f7ae91cfe0",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260822180000",
+    "path": "supabase/migrations/20260822180000_avisos_solicitacoes_vendas.sql",
+    "sha256": "c9467caa2ff2cfd87809d851d2fbb716bb8f4e8642599fc5029baf53285c1ef8",
+    "remoteName": "avisos_solicitacoes_vendas",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "4f8c2fa03cb7f85d8b7de333b69a4a4228469758ff35c24a38bf7152613c5dbc",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260824120000",
+    "path": "supabase/migrations/20260824120000_data_movimentacao_estoque_vendas.sql",
+    "sha256": "4f80b66ae09e24a1a07e9931e57005965869fa3e3bc1a6a6ce6a068f0f2af058",
+    "remoteName": "data_movimentacao_estoque_vendas",
+    "remoteStatementCount": 8,
+    "remoteStatementsSha256": "2585bb9f63600df37ff829793724aaf6578679f7cb47df2d843cc3400875522f",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260824143000",
+    "path": "supabase/migrations/20260824143000_contas_vendas_primeira_classe.sql",
+    "sha256": "147a7a11de792f5ff042afcc8ee288051cc8e8765d6123d061b69d6683ebbf9e",
+    "remoteName": "contas_vendas_primeira_classe",
+    "remoteStatementCount": 43,
+    "remoteStatementsSha256": "0a922526c1f95cc8082091af14b06e06ca1b02143a7c87738b87ba09ca99d0d2",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260824150000",
+    "path": "supabase/migrations/20260824150000_estoque_por_conta_com_data.sql",
+    "sha256": "0c00b1eb3ed21ae6a39d3675c8715a2949e437ad732ac4162b6c31cd38b8be0d",
+    "remoteName": "estoque_por_conta_com_data",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "4da84ec90d5f2cd89ac6869e3a1d1f2a643e551b8abf2947b676266aa63be6d5",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260824170000",
+    "path": "supabase/migrations/20260824170000_estoque_automatico_pedidos_vendas.sql",
+    "sha256": "382ac0f2b12bee4d64197f78bdacc64a04d4e581035b06bf4ce0af7b12eb0afa",
+    "remoteName": "estoque_automatico_pedidos_vendas",
+    "remoteStatementCount": 12,
+    "remoteStatementsSha256": "5c4343bfd872a17f160d4b590d83f643638dc8f000cc54f8a1da5193fbc66d0b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260824203000",
+    "path": "supabase/migrations/20260824203000_reconciliar_saldo_estoque_pedidos_vendas.sql",
+    "sha256": "18670c792620ed94e1b312c52d8d8298ea4b0ea0fb872415fa5b717669441418",
+    "remoteName": "reconciliar_saldo_estoque_pedidos_vendas",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "8ea2d45d9666ef4073d37c0df7a4cd74712b6f353a29fdaba8025ed40b6eb33a",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260825103000",
+    "path": "supabase/migrations/20260825103000_custos_precificacao_base_compartilhada.sql",
+    "sha256": "35256303877bfe75dbc3e028dafc164e0168ba3c012a7fd0e5f0e0fdbe5274ef",
+    "remoteName": "custos_precificacao_base_compartilhada",
+    "remoteStatementCount": 33,
+    "remoteStatementsSha256": "a45021f00b1642f8344f3652dbd85d57830bec3c21659f4cf7cebc5cdb95183f",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260826130000",
+    "path": "supabase/migrations/20260826130000_vinculos_financeiros_por_conta_vendas.sql",
+    "sha256": "389a1c9e84eea76fca63d652825be9888669df41258718f0f96f267f9635f011",
+    "remoteName": "vinculos_financeiros_por_conta_vendas",
+    "remoteStatementCount": 34,
+    "remoteStatementsSha256": "7238479202735898521230799e087488c7ebedb4f9512db10981e61ec456797a",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260826150000",
+    "path": "supabase/migrations/20260826150000_atualizar_descricao_modulo_custos.sql",
+    "sha256": "6d6456cf139488d673e7a66cdc82befe7289a517c98266d09a0f365d87e3386e",
+    "remoteName": "atualizar_descricao_modulo_custos",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "1e36eaed373c1690bd8140ccf885a86100ea0e8022cdd64d153a4743bf2c9003",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260826152000",
+    "path": "supabase/migrations/20260826152000_endurecer_documentos_custos.sql",
+    "sha256": "55c7af30e4fb4d58353199deeb2ec1a333ee103aa5e53f18ad3af88625eb7a6a",
+    "remoteName": "endurecer_documentos_custos",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "7140ec7747b2eb67d675f3120f479dfd62874d376c98a6c8d44c1e92dc27c67e",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260826153000",
+    "path": "supabase/migrations/20260826153000_publicar_modulo_custos.sql",
+    "sha256": "8f7fa258ac3bdf90b0f5cb9f3ff8b41000077429e0f452cbad24ce11b784423d",
+    "remoteName": "publicar_modulo_custos",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "229f56bf0372cd7e73fa0832314bd0e9dc00ba2c98d6753a82783d4a78ea1fe2",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260826180000",
+    "path": "supabase/migrations/20260826180000_corrigir_transferencia_financeira_por_conta.sql",
+    "sha256": "d19d944be6a3baee404f1687e394e58bcb4a2f483222bd3a26f29b20dc8a034b",
+    "remoteName": "corrigir_transferencia_financeira_por_conta",
+    "remoteStatementCount": 10,
+    "remoteStatementsSha256": "b5a26c8302cd0df433ab89069b32d47a9fb6d814b3463cd98382f66400292327",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260826193000",
+    "path": "supabase/migrations/20260826193000_corrigir_gatilho_pedidos_sem_data_pagamento.sql",
+    "sha256": "7e8e8948e2700d098a94723df3f5486fd62eb26c28c2b09bb4a5cc6c108fd2b2",
+    "remoteName": "corrigir_gatilho_pedidos_sem_data_pagamento",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "2f83b4ee5e18efce1681b1f8ef83a7ce324da872852eb2beb0cbd4d1b408d551",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260831130000",
+    "path": "supabase/migrations/20260831130000_tabelas_precos_produtos_importacao.sql",
+    "sha256": "629b748932c0d46771fbdcfe5bda67d3696a357a772580c364dc4038536e1cad",
+    "remoteName": "tabelas_precos_produtos_importacao",
+    "remoteStatementCount": 44,
+    "remoteStatementsSha256": "774ca29784dbfa1137676cba9960dbefe3f965d4a439829246abc41c91141e6b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260831220000",
+    "path": "supabase/migrations/20260831220000_desvincular_precificacao_avantavendas.sql",
+    "sha256": "23fd82c9f7bd78d235934eab385ac2cf073917db5638675924736429daad83ef",
+    "remoteName": "desvincular_precificacao_avantavendas",
+    "remoteStatementCount": 13,
+    "remoteStatementsSha256": "e364e34d1ccc97f664c8d80239b2ea8613c00d3d2920aaf0fd6db64bbb9f682a",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260901100000",
+    "path": "supabase/migrations/20260901100000_separar_preco_divulgacao_precificacao.sql",
+    "sha256": "16ea58af8218673fb8e5f9b6dcac063da7785114491894831307cfe3f5c6feab",
+    "remoteName": "separar_preco_divulgacao_precificacao",
+    "remoteStatementCount": 10,
+    "remoteStatementsSha256": "550270275bbdd07c639378b624be014cb80f165c7814d63a498c8f691803d950",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260901150000",
+    "path": "supabase/migrations/20260901150000_codigo_automatico_tabela_preco.sql",
+    "sha256": "2ca009f0ee7713fe9c3d0deeac284c7a8413f2f08dabd83520c921e21ca92585",
+    "remoteName": "codigo_automatico_tabela_preco",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "ce19d6c7fbad67addb7fe8e137d16a31415b50a225f8375bbaa280cdee558401",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905150000",
+    "path": "supabase/migrations/20260905150000_vendas_servicos_modulo.sql",
+    "sha256": "a72a8e5b64fc5af551f0aadf97fee11d1925bc392b53ee0487e4cddefd3e598b",
+    "remoteName": "vendas_servicos_modulo",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "7795a613638a883c85e0351fec5c97138c0356523f9c6dedb239e0708c1bf03d",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905151000",
+    "path": "supabase/migrations/20260905151000_vendas_permissoes.sql",
+    "sha256": "e7399145120ba7122eeb784b19b34befcd439ac95c12825fec18d4950c2693e8",
+    "remoteName": "vendas_permissoes",
+    "remoteStatementCount": 35,
+    "remoteStatementsSha256": "8cccec72fa91e71b80fa7e151940a2c0c645172718dc3cb711d0ddf2e4a088d9",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905152000",
+    "path": "supabase/migrations/20260905152000_vendas_comercial.sql",
+    "sha256": "228fdbe8acbc669dfa999edcfd392f0de3fba421ce6bebbcf343b97d9f870734",
+    "remoteName": "vendas_comercial",
+    "remoteStatementCount": 126,
+    "remoteStatementsSha256": "1b3e73dea9a06f5894291c5e4fcdccced98d2f32355a84bb270aeca9a8cc38b7",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20260905153000",
+    "path": "supabase/migrations/20260905153000_vendas_fiscal_privado.sql",
+    "sha256": "835702384e2328404833a623e5243a80df3d8e8bb27001df1b45534d78710c83",
+    "remoteName": "vendas_fiscal_privado",
+    "remoteStatementCount": 56,
+    "remoteStatementsSha256": "3b918a153b0c86e9b0e8e018693cee029a48a0be489d1ddeb514b9b63e20548e",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905154000",
+    "path": "supabase/migrations/20260905154000_vendas_fiscal_recuperacao.sql",
+    "sha256": "a84b1eb7e35c34b3208e00ab0d62457fb4d228d042bc234c412b1a53f615aba6",
+    "remoteName": "vendas_fiscal_recuperacao",
+    "remoteStatementCount": 11,
+    "remoteStatementsSha256": "37ed429b55d4e3b6a8dab8771bd2de9197496235a774685654e5599aad399375",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905155000",
+    "path": "supabase/migrations/20260905155000_vendas_fiscal_governanca.sql",
+    "sha256": "cbe26145d23e4ddce99d7ea65f6eddee87b77e81b8fddf27cb14718a42a89ccc",
+    "remoteName": "vendas_fiscal_governanca",
+    "remoteStatementCount": 26,
+    "remoteStatementsSha256": "9dee6ab8a906e83994020ed98e2add0876a727e073e98ef760bbd881117eb289",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905160000",
+    "path": "supabase/migrations/20260905160000_vendas_certificados.sql",
+    "sha256": "70377f4f041a485de5687665d8c18cfc806b26806be95dffbaceabb25b066850",
+    "remoteName": "vendas_certificados",
+    "remoteStatementCount": 20,
+    "remoteStatementsSha256": "7192fdb17111eee64c583f1b04b35b3af908cd8d765b6d50011213c45027c51c",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905161000",
+    "path": "supabase/migrations/20260905161000_vendas_certificados_ativacao.sql",
+    "sha256": "be22b7eb290818a3ab27912be711b03e2ea724b637d672e36967c402e2863442",
+    "remoteName": "vendas_certificados_ativacao",
+    "remoteStatementCount": 8,
+    "remoteStatementsSha256": "78f2be5edc736c0c948f0b2f3a548b9d0d6d9c3968134b17b8d4d06d66993277",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905162000",
+    "path": "supabase/migrations/20260905162000_vendas_artefatos_revisoes.sql",
+    "sha256": "e9a18e674d76b307084ad1e99c7c4f520ae5a34aa5a7ab22fae2114e04e4fc3e",
+    "remoteName": "vendas_artefatos_revisoes",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "fa527ee0571caad3e2e83a3dbc752bc4ab992e69d1bed4ee7f1782656d8cad0f",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905163000",
+    "path": "supabase/migrations/20260905163000_vendas_rejeicoes_correcoes.sql",
+    "sha256": "7e2a96807ddb6c2b842a097a409b9b3f717908113e3adb926028c0483cc12ce0",
+    "remoteName": "vendas_rejeicoes_correcoes",
+    "remoteStatementCount": 10,
+    "remoteStatementsSha256": "0089247b2f5ae17694cdeee5bfe7da47694f8789d105969981e206e8b4290944",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905164000",
+    "path": "supabase/migrations/20260905164000_vendas_cancelamento_evento.sql",
+    "sha256": "643922fc70a6ff99baa1d7266bab348f0296ccdd791b5609da3e4255c46b691e",
+    "remoteName": "vendas_cancelamento_evento",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "820ad667e47f27227b0a494a7b1352eab57926d130b9205a68df65e0cb6bc0d2",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905165000",
+    "path": "supabase/migrations/20260905165000_vendas_runtime_credencial.sql",
+    "sha256": "b704ad22f2d800e295e19c66b77af1afaf6b82d7f089d037085189c2b87cefb8",
+    "remoteName": "vendas_runtime_credencial",
+    "remoteStatementCount": 21,
+    "remoteStatementsSha256": "e18ea1b75d155f14a526b54016b6484d02e1d46d20c5f9470d50225c8f848909",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260905166000",
+    "path": "supabase/migrations/20260905166000_vendas_runtime_fechamento.sql",
+    "sha256": "2e5e1b5fa538f95f9efe0eba1c6dcfd4a50e960922e4b69556cff4d2690bbb4d",
+    "remoteName": "vendas_runtime_fechamento",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "e8d7350c9229ffff289b7f5f34a9b60bac9870db65e5276eb67709ac05ccea1d",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260906203000",
+    "path": "supabase/migrations/20260906203000_renomear_conteudo_avantavendas.sql",
+    "sha256": "d19762222279c054ed8ccf87d3f58eb03a75ef7bc702e308e0db811a04d8b338",
+    "remoteName": "renomear_conteudo_avantavendas",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "1e0c362dad091d252527d8a5305fb5fcb6a27e7a779f8f6e88c196b57bbf04b0",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260906210000",
+    "path": "supabase/migrations/20260906210000_vendas_operacao_integrada.sql",
+    "sha256": "67e7aaeb44357891c61ced9addb9e6eb72c7e21f2c70129a5cb44e1126995907",
+    "remoteName": "vendas_operacao_integrada",
+    "remoteStatementCount": 40,
+    "remoteStatementsSha256": "a735f962186e0e2dd775e8e17d41a67a12aab48defe14d1e134e440286f6f94c",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260906213000",
+    "path": "supabase/migrations/20260906213000_vendas_estornos_integrados.sql",
+    "sha256": "2d1bd4d772e239e994b947bd717faeecc4d703a2949e86f97df82d22999db369",
+    "remoteName": "vendas_estornos_integrados",
+    "remoteStatementCount": 18,
+    "remoteStatementsSha256": "3bac23b13619133da59d74a459f569cd7fca8e7a9910199aba71af4b7a347c9d",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260907143000",
+    "path": "supabase/migrations/20260907143000_limpa_observacoes_tecnicas_clientes.sql",
+    "sha256": "1355bfc8af7fe109f5c52ad3b0311e619e42a15b1a836fedce081958c7edcd76",
+    "remoteName": "limpa_observacoes_tecnicas_clientes",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "4023c1119d4c89984675bb8ce6e5e0887c1f3760c1ab5baaa4ae998563160ba3",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20260907210000",
+    "path": "supabase/migrations/20260907210000_reaplica_limpeza_observacoes_tecnicas_clientes.sql",
+    "sha256": "2b0c0515876c64fd4809ded99cea07a09a5b294ab4094d1488f10f05a7843a1a",
+    "remoteName": "reaplica_limpeza_observacoes_tecnicas_clientes",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "fc3496269518e398b397785eb8ff6d494f21d1d5855b12082d397a1e83cb4c99",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260908230000",
+    "path": "supabase/migrations/20260908230000_catalogo_conteudo_vendas_operador_completo.sql",
+    "sha256": "2b53299d973277b43dfddd1bc2692618d1cfd0e5f9074bc26b81fd64a6e77b38",
+    "remoteName": "catalogo_conteudo_vendas_operador_completo",
+    "remoteStatementCount": 16,
+    "remoteStatementsSha256": "c6236f85e931d78f747bfa2e31e5b1f0ea32390d7a6f90cd34bec9b8139ad5f2",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260908233000",
+    "path": "supabase/migrations/20260908233000_sku_tecnico_produtos_legados_conteudo_vendas.sql",
+    "sha256": "f59625c470891e8211489f434d2177c2bf40e09223915c569146973941221d97",
+    "remoteName": "sku_tecnico_produtos_legados_conteudo_vendas",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "2d90d36c82ca93821c453fd92f10da1c607919bdeea5e61172f24d3d5b709cc7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260908234500",
+    "path": "supabase/migrations/20260908234500_publicacao_imediata_catalogo_avantavendas.sql",
+    "sha256": "740ed2876d3abb1e82416076ffbe343c615ed4500f5d6c08fe2a580f3b9e026f",
+    "remoteName": "publicacao_imediata_catalogo_avantavendas",
+    "remoteStatementCount": 10,
+    "remoteStatementsSha256": "266d982b34860168d2961a550be0ec0f7452f0387d8a3231a10bdc01126bc4e7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260909084500",
+    "path": "supabase/migrations/20260909084500_isolar_gatilho_produtos_catalogo.sql",
+    "sha256": "6be8b2eb498133e2e08400209db3e7786f9f2b8288d6f09147d42aa0fa6087e7",
+    "remoteName": "isolar_gatilho_produtos_catalogo",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "c75dc100aa5f007927baa28f43c80ebecf683b0bf646bbeabe7543a27d4582d7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260909103000",
+    "path": "supabase/migrations/20260909103000_separar_vencimento_mensal_execucao_servico_recebimentos.sql",
+    "sha256": "192370b5babf28f8dd360de54cd4b03534f3fbc8d7df0d8320654f20ba95c052",
+    "remoteName": "separar_vencimento_mensal_execucao_servico_recebimentos",
+    "remoteStatementCount": 39,
+    "remoteStatementsSha256": "1c9c7eaef80f78817cdea51214fefad0b9907ba089168acc4a3f1da662dbf938",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260909114000",
+    "path": "supabase/migrations/20260909114000_servicos_recebimentos_presenciais.sql",
+    "sha256": "95f23984bf6ffb6af6fe56f4b556754ac6ff8bd7df1fcedac0315dc7e96055d1",
+    "remoteName": "servicos_recebimentos_presenciais",
+    "remoteStatementCount": 16,
+    "remoteStatementsSha256": "f13f1ce782500e970bac8a242e346debd9f1c9d6b78123a2e27e648f01111a82",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260909133000",
+    "path": "supabase/migrations/20260909133000_sincronizar_perfil_colaboradores_recebimentos.sql",
+    "sha256": "8832d4f7ed2ff143782d14adb78fe6c0c7cc82b9bdafe0aadd453d0c49f5f8d1",
+    "remoteName": "sincronizar_perfil_colaboradores_recebimentos",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "c9e35a0bc51a8c026770ff5e4659891d71da3fc12369f405f3d714d3d2393d5e",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260909170000",
+    "path": "supabase/migrations/20260909170000_assinaturas_servicos_storage.sql",
+    "sha256": "8b5785da0f3a7be050cabded3fcd4777dd28e85244001d8aa8e8e73c2f7006b3",
+    "remoteName": "assinaturas_servicos_storage",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "643b7c859ea688186fb1d053209ecd2d514a4bc20f37dc1145951657acde55b9",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260909173000",
+    "path": "supabase/migrations/20260909173000_agenda_atrasos_servicos.sql",
+    "sha256": "946ade0d83f66aac319704e0ed2fb8514f5af006ee1c8a1042a164407fb78d9d",
+    "remoteName": "agenda_atrasos_servicos",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "26ef6ac2df984c1008cf2ac0b8ff7c0ae9053adfd695eb4a767b65e58f302f01",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260909190000",
+    "path": "supabase/migrations/20260909190000_agendamentos_manuais_servicos.sql",
+    "sha256": "89e53372bfcb430f60ddf298306a42e96b88e7a4b96f7341633b67ccab49a8e0",
+    "remoteName": "agendamentos_manuais_servicos",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "f3a3fe2013937d907ec3dc560f92466b1385733296d2c913b9bf03be1d9bbb5e",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260909200000",
+    "path": "supabase/migrations/20260909200000_configurar_valor_integracao_recebimentos.sql",
+    "sha256": "99650ad8495979512aa3d2624044328fec731c1f628e2950e2f14b5fae3ef588",
+    "remoteName": "configurar_valor_integracao_recebimentos",
+    "remoteStatementCount": 12,
+    "remoteStatementsSha256": "020928d7c875576f182278b02d590e3ff4100a99940bd5d41944645f34aed93c",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260909210000",
+    "path": "supabase/migrations/20260909210000_busca_voz_catalogo_aprendizado.sql",
+    "sha256": "30c84ccfb9583db5bbc3895740d5b242ef2ecf56f59351a16688f6b25e16bfdd",
+    "remoteName": "busca_voz_catalogo_aprendizado",
+    "remoteStatementCount": 54,
+    "remoteStatementsSha256": "a8a8d43c74f3e38a5de2dce94696debd0028372de1bd21b75f3072bcdc19b515",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260910143000",
+    "path": "supabase/migrations/20260910143000_vendas_integridade_regras_fiscais.sql",
+    "sha256": "8f14a2a935b6687a5b39134fc91595dbaa731b456859878e08cd35c24e8ade8d",
+    "remoteName": "vendas_integridade_regras_fiscais",
+    "remoteStatementCount": 15,
+    "remoteStatementsSha256": "6090b0db72821a7185995a9267dc3740afc2d15b8206d1adeb00b6998621319d",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260910183000",
+    "path": "supabase/migrations/20260910183000_vendas_perfil_fiscal_empresa.sql",
+    "sha256": "8595124dd0055d2ee1ec55caba72e14508d27f835ecc5987c07fb93dab2d69fc",
+    "remoteName": "vendas_perfil_fiscal_empresa",
+    "remoteStatementCount": 11,
+    "remoteStatementsSha256": "511269377bec7d9631d54c29486657e906fa40eb7cf4f216596d2ed2c41d2619",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260911143000",
+    "path": "supabase/migrations/20260911143000_comando_voz_por_colaborador.sql",
+    "sha256": "f27459effadba7893ffb3dbdd58f8b2fe7d6eb20a6124ef87ca6d0931a00dd3c",
+    "remoteName": "comando_voz_por_colaborador",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "368fc2557fe71793512ccb4d81fa179fb778cc7646d6ae57953e5a323063bbff",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260911160000",
+    "path": "supabase/migrations/20260911160000_operacoes_offline_recebimentos.sql",
+    "sha256": "e9c8dfd6f459504bcd42772eed380dc660b9d3afad0e4c6b8d46fa7fc20b3a5a",
+    "remoteName": "operacoes_offline_recebimentos",
+    "remoteStatementCount": 8,
+    "remoteStatementsSha256": "b07f65bdbcacc25d71f51aa66ef9a628df258a21a59048988434ee637ab63ce3",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260911190000",
+    "path": "supabase/migrations/20260911190000_centros_custo_financeiro.sql",
+    "sha256": "4443ef41086e922f9932f0f9bc68e5f1a8c17864f367f120cb14a4c7ec2ad3dc",
+    "remoteName": "centros_custo_financeiro",
+    "remoteStatementCount": 15,
+    "remoteStatementsSha256": "58092678cde09775d4b7239fef9e4a3b34ad7ecc4e5bbc4a5b4dac064306c69b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260911193000",
+    "path": "supabase/migrations/20260911193000_centros_custo_contextos_financeiros.sql",
+    "sha256": "762b73ca7becd5d174cf75f624852e35ccf8c669a4bb7bd99d9b70a2b98bf4e2",
+    "remoteName": "centros_custo_contextos_financeiros",
+    "remoteStatementCount": 18,
+    "remoteStatementsSha256": "c25db2fe6a02af71c96a4d83dae8a17cc25bc9a84a00e220c2d33d5b885006a9",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260911194500",
+    "path": "supabase/migrations/20260911194500_centros_custo_principal_padrao.sql",
+    "sha256": "fea8684756b27edc0a5ef34ffd9c95cd4510c738ad0822270266ecc10c842983",
+    "remoteName": "centros_custo_principal_padrao",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "7f2a9ac75a2ecb6a8e0f1e2a299997523296c1b4fab79f38cd1d25a5516f31e4",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260911195000",
+    "path": "supabase/migrations/20260911195000_corrigir_gatilhos_centros_custo.sql",
+    "sha256": "1ecba7132e87321d553e072485f711bff32dfbeea02e2f1e87cdaedaf4356349",
+    "remoteName": "corrigir_gatilhos_centros_custo",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "de15144e37338f29ba60ab72b5f678ebf04fd903ead290e501eff5ee9dd78b0f",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260912120000",
+    "path": "supabase/migrations/20260912120000_analytics_download_avantavendas.sql",
+    "sha256": "de126da89b95301aea512a4d11a4e07fc8d7c83ef131759d3db5b5f99b3478ad",
+    "remoteName": "analytics_download_avantavendas",
+    "remoteStatementCount": 8,
+    "remoteStatementsSha256": "7675063acf6016f067a7274d066594c96fced47b14f4eef9aa89c1022d78bd19",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260912123000",
+    "path": "supabase/migrations/20260912123000_vendas_fiscal_storage_homologacao.sql",
+    "sha256": "014b1ab1ffa78494bba7d23a2bd410546a3b15c7d91e91af48cc0ffdb27e57e7",
+    "remoteName": "vendas_fiscal_storage_homologacao",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "90824f4b7fc701d0574206af7e63079272cdc23201519d554e5e2c1ceabecce9",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260913193000",
+    "path": "supabase/migrations/20260913193000_downloads_oficiais_lojas.sql",
+    "sha256": "91aa6e3850fb017ccdc1de295ec1966129bdb2deec341c18e98ab1bcb3d14dab",
+    "remoteName": "downloads_oficiais_lojas",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "5638e20de2acc6b8d32a59a9dd53f6379f7642d7a114f60aaa47d7aab74aafb9",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260913201500",
+    "path": "supabase/migrations/20260913201500_corrigir_fonte_apple_downloads.sql",
+    "sha256": "b1f5316cb606adac2d72bc1cce0033d9270dceae06eb201b64ad6a6d44b9d540",
+    "remoteName": "corrigir_fonte_apple_downloads",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "538952c68d35b6a71be896a1a8844030c1c61be644902bb3b1a8395a13ca7795",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260915103000",
+    "path": "supabase/migrations/20260915103000_centros_custo_realtime.sql",
+    "sha256": "c9e82ca5964292db5b8004de2a92841785eca33238d34e90657ede181d2e5cb8",
+    "remoteName": "centros_custo_realtime",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "e3575e1ac560be516b1b331ae8d60eacd4297853bf5b156b4050d2b1a90f1b39",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260915110000",
+    "path": "supabase/migrations/20260915110000_excluir_centros_custo_com_lancamentos.sql",
+    "sha256": "51b4c93680afe24ae3d194929e0d05a7ea4c8178987a0f042481e070b4aad2ed",
+    "remoteName": "excluir_centros_custo_com_lancamentos",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "bbd137c3d7b09bf8f95fe1a09c00ea9c5f0d5ca21f4bc0b835007b2478c63513",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260917113000",
+    "path": "supabase/migrations/20260917113000_permitir_adiar_cadastro_perfil.sql",
+    "sha256": "7ed9fdd65c6697568236b6fa2d7f00add19949a2d778ada0fb42557211299c51",
+    "remoteName": "permitir_adiar_cadastro_perfil",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "46cd9101b83e66834291414505fc486b857375fd9e6598155c5861903dd053b5",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260919103000",
+    "path": "supabase/migrations/20260919103000_business_premium_e_limites.sql",
+    "sha256": "1b8c2258bbda6be16ca02004f97516b9d2b280d5e301d2e7fd7fce65e17bce07",
+    "remoteName": "business_premium_e_limites",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "f716b1e4835afc63cf927bcdf8d99bbddf2d763db968cc47acc1162f3936004b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260919133000",
+    "path": "supabase/migrations/20260919133000_aplicar_direitos_planos_empresariais.sql",
+    "sha256": "5b8ee43e5f90463d86c4083603246843db0c8e677e3a8b3a66920e6db2ae15b5",
+    "remoteName": "aplicar_direitos_planos_empresariais",
+    "remoteStatementCount": 9,
+    "remoteStatementsSha256": "55ebc58b8dad7547be03531712c513072f76bb69922ba1e93e77522862150044",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260919143000",
+    "path": "supabase/migrations/20260919143000_alteracoes_assinatura_agendadas.sql",
+    "sha256": "09b1d8d900eeef82280504544bce4d86b5cb79d3b87d9d2367c5e6dcc68ecb51",
+    "remoteName": "alteracoes_assinatura_agendadas",
+    "remoteStatementCount": 14,
+    "remoteStatementsSha256": "225b07c822080cb9db80d7c0c501d7dfd32e62d946b9784784204a951dc75ca5",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260919153000",
+    "path": "supabase/migrations/20260919153000_exclusao_perfil_definitiva.sql",
+    "sha256": "363f4c44818cac422526fc59388b9adc70420bb04e1061f0db9e3db6f59179b7",
+    "remoteName": "exclusao_perfil_definitiva",
+    "remoteStatementCount": 10,
+    "remoteStatementsSha256": "23b5490f5e9754dfa70ac13d864decef9eaac7f4e27f8f06eecfde66c7a57562",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260919193000",
+    "path": "supabase/migrations/20260919193000_disparos_multiplataforma_automaticos.sql",
+    "sha256": "a7301cd66ba2c0be4cab27c030c548b1f5ec419cee5b7ba0460984d994a5ece3",
+    "remoteName": "disparos_multiplataforma_automaticos",
+    "remoteStatementCount": 29,
+    "remoteStatementsSha256": "9cc5b98e104d1b379e3724b11b699f008218df287baba5be4b17803caeefbb10",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260920123000",
+    "path": "supabase/migrations/20260920123000_configuracao_tributaria_empresa.sql",
+    "sha256": "d38563a75370adcb8180241fe3f0626bc3e111691324c0d805900dba4967341e",
+    "remoteName": "configuracao_tributaria_empresa",
+    "remoteStatementCount": 2,
+    "remoteStatementsSha256": "c4e3f3c63e627639610e0e7850af44b53916b09d1f6061d3a9233bd92e300498",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260920165000",
+    "path": "supabase/migrations/20260920165000_backup_nuvem.sql",
+    "sha256": "c84f52c799a475c4835157f82dfa40d78049cbf2ce6ea76607990c34ade2261a",
+    "remoteName": "backup_nuvem",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "d4fe5f6d7fe309ab59984bc2c8ee2f6463d836420825ccef15b3544c9227e758",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260920183000",
+    "path": "supabase/migrations/20260920183000_importacao_catalogo_completo_tridium.sql",
+    "sha256": "7fd139555b4d0fdf7b090d0164662b7706e8a1c8b36ab968f262289866afacff",
+    "remoteName": "importacao_catalogo_completo_tridium",
+    "remoteStatementCount": 14,
+    "remoteStatementsSha256": "109f6a814d692a3a410873745afd4f6803dd20c2b0fdbbbad8a84d59f69004a7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260920184500",
+    "path": "supabase/migrations/20260920184500_permitir_importacao_controlada_tabela_padrao.sql",
+    "sha256": "dc555b4dc69c8734ccd9df27d1a48cee545b6de822c8ddc1377f2d2ddc7f11d7",
+    "remoteName": "permitir_importacao_controlada_tabela_padrao",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "6b1105fbbb2d1c8d33ce2c6f19fba862beb0b4cbbb7c655a32f4e8a6f262cc99",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260920190000",
+    "path": "supabase/migrations/20260920190000_nao_publicar_carga_administrativa_catalogo.sql",
+    "sha256": "4034bb4e534a3695ac7e071a4a6e9a26eee8d0f930344349a61a402df9e85a9f",
+    "remoteName": "nao_publicar_carga_administrativa_catalogo",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "cf845617486ef2ed900e1aafb58e04416476319dabc0a1069ebdeb712f9b3f41",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260921090000",
+    "path": "supabase/migrations/20260921090000_reorganizar_parcelamento_despesa.sql",
+    "sha256": "a2bc7714c32f3db4f8df77c56d57bac798dc65006f94f1e0cbd07068ab709b9a",
+    "remoteName": "reorganizar_parcelamento_despesa",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "c44c9c26113792fd50502f110ed299198d8ab2df653a9404b58b252c62ab22d7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260922113000",
+    "path": "supabase/migrations/20260922113000_perfis_adicionais_business_premium.sql",
+    "sha256": "ec53ddce4b9befeecc540242b1ca74d071f47ca106f651043e498047b4f32085",
+    "remoteName": "perfis_adicionais_business_premium",
+    "remoteStatementCount": 12,
+    "remoteStatementsSha256": "5ba76f973c1b19ccb2d74fd26adfd8234518ead13fc6ceae44f259fb10df590a",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260923110000",
+    "path": "supabase/migrations/20260923110000_sessoes_e_concorrencia_financeira.sql",
+    "sha256": "3f0200e63710cd2a6d9b868c8af6502eafa583624d8ab7732ac5cbc98d6dcc33",
+    "remoteName": "sessoes_e_concorrencia_financeira",
+    "remoteStatementCount": 16,
+    "remoteStatementsSha256": "f978ee709396a76cfab0230e5baac511407c5edc61cf45e3584a6e49f4aa589c",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260923173000",
+    "path": "supabase/migrations/20260923173000_insumos_itens_fiscais.sql",
+    "sha256": "7a56b9dc4423f041b0c62b2f7fc6b89079cc8b33edd25865fa31477f63d0c809",
+    "remoteName": "insumos_itens_fiscais",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "8b98663df915f62bd48221890fec847cebb70062cce7e206be30be6414d891ea",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260924100000",
+    "path": "supabase/migrations/20260924100000_separar_catalogo_externo_e_local_custos.sql",
+    "sha256": "69a3d14735991bbbfc82fe4d842286eb40877f6625f2d874aca80c877430d7dd",
+    "remoteName": "separar_catalogo_externo_e_local_custos",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "fd3d812913fcfa690c0faed31b21c7d5baf4f0d3fe48e99acd7dd1b9be533580",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260924103000",
+    "path": "supabase/migrations/20260924103000_acoes_lote_catalogo_custos.sql",
+    "sha256": "084c907c9a3d64a1edbd7fea8e878e2c731ec0b7d96bccb39f00d8634541268f",
+    "remoteName": "acoes_lote_catalogo_custos",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "5df4ed68938b8d1ef8d261095dee1d68a42914e54ac3c76899529a2a5a4c65b7",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260924110000",
+    "path": "supabase/migrations/20260924110000_catalogos_empresa_gerenciaveis.sql",
+    "sha256": "caf11627628b881f3d375c42622cdf260f661d8493de99dfffe57d8ab4cbcebb",
+    "remoteName": "catalogos_empresa_gerenciaveis",
+    "remoteStatementCount": 16,
+    "remoteStatementsSha256": "01c9da493ba4f4bd7a250e00b0dd4c792a2aa6a09ce1146f603e3d577c81b8ab",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260924120000",
+    "path": "supabase/migrations/20260924120000_catalogos_no_conteudo_avantavendas.sql",
+    "sha256": "6b18995c317077d21979793be04254cce860a9e2af4eca3b4c228fe47fe2ee56",
+    "remoteName": "catalogos_no_conteudo_avantavendas",
+    "remoteStatementCount": 16,
+    "remoteStatementsSha256": "ef0b6cace25dd951ff43d3a031f59d358ba2c293bef00fbdf4efef842ece3b09",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20260924130000",
+    "path": "supabase/migrations/20260924130000_exportar_catalogo_escolhido_conteudo.sql",
+    "sha256": "56f45d6f53ff2e24446d3f27ca10a86f4e2d1e6a82372099bf8d90d9612f6dfe",
+    "remoteName": "exportar_catalogo_escolhido_conteudo",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "9925110cc96a68962ddce3939e2bfe7f9767aee48bf4f7d02193953e7026370b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261003150000",
+    "path": "supabase/migrations/20261003150000_mover_produtos_entre_catalogos_custos.sql",
+    "sha256": "e28bd93782556eff2d04529f4fd4efa79b8303ceef76c37f817167d786240c85",
+    "remoteName": "mover_produtos_entre_catalogos_custos",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "3bbb9792ff7f17dd80c76bc3e66dd026eac422e0d95c070ea8ff3509b25acdcd",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261004100000",
+    "path": "supabase/migrations/20261004100000_marketplaces_module.sql",
+    "sha256": "9d81ddce683af11e4016434450fa26811b191fb79f943a4703cf363d3df09c2c",
+    "remoteName": "marketplaces_module",
+    "remoteStatementCount": 18,
+    "remoteStatementsSha256": "ce16d86d73e11d99eb653123cfec86481fc35ec7c91615ce0f5765158e76bba6",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261004110000",
+    "path": "supabase/migrations/20261004110000_ativacao_catalogo_vendas_explicita.sql",
+    "sha256": "2d2955608dd32ee041da69284ed5c4f0569b19894478ebd7d60c90d0481a376c",
+    "remoteName": "ativacao_catalogo_vendas_explicita",
+    "remoteStatementCount": 20,
+    "remoteStatementsSha256": "f045c52a8a451ac16b3a6516fcb3c3a9784af8f17b56d0f860f1a6c34b731977",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261005110000",
+    "path": "supabase/migrations/20261005110000_importar_produtos_ao_criar_catalogo.sql",
+    "sha256": "585358580e423a23308b5c99d876b4ae3e59bee2e4d42571c43f2768f300e24d",
+    "remoteName": "importar_produtos_ao_criar_catalogo",
+    "remoteStatementCount": 5,
+    "remoteStatementsSha256": "18cebb595eb1e8d9e8679f5fe4eb17b3e4beb7431e9e472b4a5d9b3147faa3e4",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261005140000",
+    "path": "supabase/migrations/20261005140000_marketplace_listing_management.sql",
+    "sha256": "fe3c6286c8ea69131fbb93ac5cabdae3487fc527caa09c7c4889d481874abf07",
+    "remoteName": "marketplace_listing_management",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "b86ef38544464f0845975dc054baa95690d88a1cfa6f93ff5d3717f282c2936b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261005190000",
+    "path": "supabase/migrations/20261005190000_marketplace_listing_edit.sql",
+    "sha256": "5670df838e642a6ba303e28c199d3ccfcab2cd579124ee66261de098c12bb148",
+    "remoteName": "marketplace_listing_edit",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "586bc5d94ce6365364b3850dfdc53447796e221e78bc350dfe154530c8b88aaa",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261005200000",
+    "path": "supabase/migrations/20261005200000_corrigir_vinculo_comercial_catalogo_imediato.sql",
+    "sha256": "f13b3ea37a8a530b1cee00082ebbdf42bf314ca1d80f0741fbbf9429e672ead6",
+    "remoteName": "corrigir_vinculo_comercial_catalogo_imediato",
+    "remoteStatementCount": 0,
+    "remoteStatementsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261005213000",
+    "path": "supabase/migrations/20261005213000_marketplace_price_consultations.sql",
+    "sha256": "41afc9775558d6818f5fea4137fc216b6b8c73fba1139cc4fcf6b320358a827d",
+    "remoteName": "marketplace_price_consultations",
+    "remoteStatementCount": 11,
+    "remoteStatementsSha256": "959b2bcd1c8db72210f7aa5bdef63f80549bbcf2c11e07d94f2c08c81cd427c2",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261005221000",
+    "path": "supabase/migrations/20261005221000_marketplace_price_manual_reference.sql",
+    "sha256": "ec36ba5f40b5bd57a669d2488658646ee4e542ea5c7bf8b904fe78562bf20a92",
+    "remoteName": "marketplace_price_manual_reference",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "87238f2dc76c7cedd3be3c6d6ef3059ae5931f8e3d9b57b7ff371059c035753b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261006090000",
+    "path": "supabase/migrations/20261006090000_avantaprecos_users.sql",
+    "sha256": "708285de7a2f79b86f3de73fee1556da69df03122bee72b9481cfebef3309990",
+    "remoteName": "avantaprecos_users",
+    "remoteStatementCount": 10,
+    "remoteStatementsSha256": "55c403d319148e3a5e6e88f634b308691923953c0e63cfa2c3197e059cea4e79",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261006130000",
+    "path": "supabase/migrations/20261006130000_marketplace_price_google_shopping.sql",
+    "sha256": "da7b24162cf393ec38d8ea8487e30a07f966b94a488345ea7a8573c5671026db",
+    "remoteName": "marketplace_price_google_shopping",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "72588944bded50eb60a3740dea20c224f562f17baeadc974a37f9ee5cf5b18e4",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261006133000",
+    "path": "supabase/migrations/20261006133000_separar_catalogo_interno_do_avantavendas.sql",
+    "sha256": "4e3d20fb36f779c2670a5a0f8d1e83e00c820e60ffdf69d0d121326ea25669a1",
+    "remoteName": "separar_catalogo_interno_do_avantavendas",
+    "remoteStatementCount": 21,
+    "remoteStatementsSha256": "bbf7527ce94bccba4e4406a119a821eff1b45c7e55752c69eda3a4343c24b704",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261006134500",
+    "path": "supabase/migrations/20261006134500_concluir_deduplicacao_catalogo_avantavendas.sql",
+    "sha256": "713b58dd556cbfcebdae1b01a4e0f154879ce96b7d1b57c562120e8b1f34477a",
+    "remoteName": "concluir_deduplicacao_catalogo_avantavendas",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "9fee66cc3ed50e892de36f6715b16888f106e5843164405f1d78f9c0c9e26b41",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261006135000",
+    "path": "supabase/migrations/20261006135000_ocultar_duplicidade_legada_de_catalogo.sql",
+    "sha256": "610877ea6ddf95b19ee3220c7d7dec8d5379dd7e10d8b86dc55a48b86d2d1c42",
+    "remoteName": "ocultar_duplicidade_legada_de_catalogo",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "17f0c7b0971ad1983d30e9e702a1f072a98eaef32e6f5e3102df04294aed6dba",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261006150000",
+    "path": "supabase/migrations/20261006150000_independencia_destinos_catalogo.sql",
+    "sha256": "34c72aad88f52047367e877e9f6b8b4e1d9a68720da16ac6f84203a8831df64f",
+    "remoteName": "independencia_destinos_catalogo",
+    "remoteStatementCount": 17,
+    "remoteStatementsSha256": "b2e005a17f927ef039ae9ae40686ced29b5a189424f99f2b676e2f6c5f7d2379",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261006162000",
+    "path": "supabase/migrations/20261006162000_marketplace_price_history_reuse.sql",
+    "sha256": "bf3f90f77c978629eb9e2a266b12d3dcb786574ca489ec54367384427dc5e2ce",
+    "remoteName": "marketplace_price_history_reuse",
+    "remoteStatementCount": 9,
+    "remoteStatementsSha256": "c788eb54f022bab66aa85910dd542431c654cf4c4c8d7d6f811d388b8020ea29",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261007010000",
+    "path": "supabase/migrations/20261007010000_deduplicar_produtos_catalogo_por_origem.sql",
+    "sha256": "d2c2d7578eb1c20549aa4e30f534aa38367d7d7bfbf7dd4ee4a0d36558a527bf",
+    "remoteName": "deduplicar_produtos_catalogo_por_origem",
+    "remoteStatementCount": 15,
+    "remoteStatementsSha256": "43ad5b9cf6dcb34e0f474f6469709fbae56d7b4ee8260436a9bda5fb102e9193",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261007114000",
+    "path": "supabase/migrations/20261007114000_marketplace_price_openai_sources.sql",
+    "sha256": "f22d1844971ca9a4bd778a7fd50fa7cab340e4498c0f1f4147bdc47a112ab313",
+    "remoteName": "marketplace_price_openai_sources",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "32a6586aa9371a4ea9bb5d4136ff768ab58942c1616fd4c722182d4e8e6b8afa",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261007190000",
+    "path": "supabase/migrations/20261007190000_sessoes_isoladas_por_perfil.sql",
+    "sha256": "614a81ea153974d2e79439d41d6b1fb338417ffa4fa9340b857ab2221d21d59a",
+    "remoteName": "sessoes_isoladas_por_perfil",
+    "remoteStatementCount": 16,
+    "remoteStatementsSha256": "3d1c75f15ff66a42f3c8c6f6b13adf056e01ae448c76819380ce7285dd5e1945",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261007210000",
+    "path": "supabase/migrations/20261007210000_despesa_futura_prevista.sql",
+    "sha256": "ebdf28043dbd764a2b360136b0f41c4b76bc0cb02f247b9faf40fb26f5368803",
+    "remoteName": "despesa_futura_prevista",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "012b9e0c354be5d6ff9900dd5f2ef5f8ade00e74e52316695edd0f52eb650af8",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261007230000",
+    "path": "supabase/migrations/20261007230000_marketplace_sales_notifications.sql",
+    "sha256": "39ef35a8340e02a7ae5446793ceda3000eb4d7df0d585f27b4bf41f1b40ebaf1",
+    "remoteName": "marketplace_sales_notifications",
+    "remoteStatementCount": 14,
+    "remoteStatementsSha256": "0873e9c4049f0ec241e2980fa0fe0b5cfae8a2e7800d8d9013f6fd33f2f510c3",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261016190000",
+    "path": "supabase/migrations/20261016190000_marketplace_price_lots.sql",
+    "sha256": "cea61006adcfae91f39926d1f455b21c74f32e94bb39e5b7b91b5b449261a5bf",
+    "remoteName": "marketplace_price_lots",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "112a6a0c61adef8f978267a4c53c4320cf02ed3cfba967fde631cc4a8722890d",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261018190000",
+    "path": "supabase/migrations/20261018190000_marketplace_price_settings.sql",
+    "sha256": "dddc0b1da4c726564ad644a9c59233bfdd38b011a4cbdb002d5d16d3e51071fc",
+    "remoteName": "marketplace_price_settings",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "7021ce6efd20d1c9cac3964048fe45fdbdbe9fbaf9530a6abf9e4fa4e8e3338e",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261019010000",
+    "path": "supabase/migrations/20261019010000_marketplace_product_price_research.sql",
+    "sha256": "eead70556a4600a5ac1204e590e6cdb125a010d8ca5fdd080b6ba5c217555239",
+    "remoteName": "marketplace_product_price_research",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "0a52de0cf30780d4dde531fe85f84be6a20041a7e38898ac984061132f40af4f",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261019020000",
+    "path": "supabase/migrations/20261019020000_marketplace_price_products_stock.sql",
+    "sha256": "33fbda6da5e6b1a68acc0a53a62160147a35933cf62f9e770134ff52b8bad11b",
+    "remoteName": "marketplace_price_products_stock",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "305bba66bcc0e21b2528a0746b2e6209ac0b0ce745b9861bd3ec346d8710c59d",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261019030000",
+    "path": "supabase/migrations/20261019030000_marketplace_local_reference.sql",
+    "sha256": "e11e22e1efa1a388e180ba15933c99575eefb1ebca8554332fd5eddf5eada1cb",
+    "remoteName": "marketplace_local_reference",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "386789b9ffe181efbd241c440e63ae108bb993ec03d03fdb24299781950d37ef",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261019210000",
+    "path": "supabase/migrations/20261019210000_marketplace_price_stock_permission.sql",
+    "sha256": "17b90e6f769b9b15d0404948e806bbefbbcdea61496e34a7189542a06a7233f6",
+    "remoteName": "marketplace_price_stock_permission",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "4f7d1f7b9e5d8b947bf900fce16d13c68b3ff1b5abbccd3f646f1d9ecec7de97",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261019230000",
+    "path": "supabase/migrations/20261019230000_marketplace_warehouses.sql",
+    "sha256": "eef15ddbef10442ed059f2d1297cab30a361d500924d314a9cccf7d5ed03d20c",
+    "remoteName": "marketplace_warehouses",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "c1e0bf59828640b2072aa4a159971b38bc9b3725379dfc0b8943d7ad38b2e2c8",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261020010000",
+    "path": "supabase/migrations/20261020010000_marketplace_direct_sales.sql",
+    "sha256": "d8a4ecddb994b4ce6de9abd4c84202744a2f8ca21f7faae7175c1ba368fe2e5e",
+    "remoteName": "marketplace_direct_sales",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "2720cdbdfc68bc17c198ce0e5c48c8507d3308edd938ac56279fc91b891e7e89",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261020160000",
+    "path": "supabase/migrations/20261020160000_reorganizar_parcelamento_id_numerico.sql",
+    "sha256": "e68f932321bbb999902f03add233f5d660949ac33dd92f6cfee7376c5f576e1b",
+    "remoteName": "reorganizar_parcelamento_id_numerico",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "c2a51ec55854bc3f4d64dc88ec79dac971377cfc0962fb6b02c32f9a471f0a29",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261020190000",
+    "path": "supabase/migrations/20261020190000_edicoes_financeiras_idempotentes.sql",
+    "sha256": "d26337d1f2478c7cf2ad292804c93521d418d1827e7691367d54570372e9462b",
+    "remoteName": "edicoes_financeiras_idempotentes",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "e39051c5408e44bf9c8db9ef9623f6c5b8053c3df8d1f6eafe8d22e03733809b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261020210000",
+    "path": "supabase/migrations/20261020210000_movimentos_financeiros_mobile.sql",
+    "sha256": "cdf2671641c2d4d26bdec12f60d65b5c2543db4af507497b40c111e5bdc83c15",
+    "remoteName": "movimentos_financeiros_mobile",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "ed85c215a85f521d95b7c1879c106a3a8c1f11284d9a658a098d5eea747cbb7f",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261021010000",
+    "path": "supabase/migrations/20261021010000_marketplace_stock_reconciliation.sql",
+    "sha256": "a662cb3e7d6d172e211b9aca46ce99d3e1f955ccfca9d4e88aecef7436c0db73",
+    "remoteName": "marketplace_stock_reconciliation",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "ca975bbf115cfdcbea858fb7a2d4929438b39293291bafc1d820bbf4ba4d3c26",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261021020000",
+    "path": "supabase/migrations/20261021020000_marketplace_connector_parity.sql",
+    "sha256": "b316fce6644ec6f777f8ada6527392b5c851ee1c94a13b11519542b80d4e8bff",
+    "remoteName": "marketplace_connector_parity",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "b4788b262fe27fd2bbb2e1bad40b6acdf36bb6a0558e2746b1382775c9681f0a",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261021030000",
+    "path": "supabase/migrations/20261021030000_marketplace_product_internal_notes.sql",
+    "sha256": "a30f10aa8782be9c7fbb845ef9f09da973ac45385c0bca5710b49c457e6cd90a",
+    "remoteName": "marketplace_product_internal_notes",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "21ce998e31b3aab515bad79d38eb4b7c88096427ce389265bcb2286c2c432b63",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261021040000",
+    "path": "supabase/migrations/20261021040000_marketplace_researched_product_facts.sql",
+    "sha256": "08ebf8fe0bdcb53bb12919bd29860b3c8eb6da088c491ecb84e1898342ee303b",
+    "remoteName": "marketplace_researched_product_facts",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "23cf3ef461eacedec4c4cea5a43ce2eb930aa5a00591bf4592ab6a8bc6dfdfc8",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261021050000",
+    "path": "supabase/migrations/20261021050000_marketplace_price_reference_access.sql",
+    "sha256": "a92689f8335e55eb2899922b09830bb7e09448f7d6d63f86ffa9fe1529d2189d",
+    "remoteName": "marketplace_price_reference_access",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "e698ec10494d39ae12b48e1f3e5a97f1983780401d61513a9db8b64cfd4bdd10",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261022010000",
+    "path": "supabase/migrations/20261022010000_marketplace_listing_catalog_import.sql",
+    "sha256": "5871f8bc2f6c2d323182cea227cbcd19bf7c919e58958d7ae20412312892ce7e",
+    "remoteName": "marketplace_listing_catalog_import",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "427a19cb58894e9fcb0d1757bc69a463524e54029aa5642c113f045b06c0702c",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261022020000",
+    "path": "supabase/migrations/20261022020000_marketplace_listing_status_checks.sql",
+    "sha256": "c5b79dd89ed84ecb3e0c35490eadf7f52bb9cd7d966c8539b4b6797372d1a5c0",
+    "remoteName": "marketplace_listing_status_checks",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "a7b89ca416a428b07f680ad60c1a56478d50930eb8a56f59806ced1db28067ba",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261022160000",
+    "path": "supabase/migrations/20261022160000_marketplace_product_removal.sql",
+    "sha256": "d7ded7c43cefed80caa85b9922dbc3b1f6cc8d28e577ad71a506e46fc5756755",
+    "remoteName": "marketplace_product_removal",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "c18514bf15c67c9ee7327b122514e10986755738b2fd7bd3e73c92a42b6696c8",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261022180000",
+    "path": "supabase/migrations/20261022180000_marketplace_product_delete_simple.sql",
+    "sha256": "0fa09d78704db2af550d0af89939a685663202cacdd32019a838f6d35be64217",
+    "remoteName": "marketplace_product_delete_simple",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "0cfc46af7346cafdd3ae655bede0567b8b365ffbee2834a60f030693e83dfb62",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261022181000",
+    "path": "supabase/migrations/20261022181000_marketplace_search_accents.sql",
+    "sha256": "b13214bdf65c8031a84bb14ef9308e85e9b496f7f8d7df6dcfd5a4d2f9659496",
+    "remoteName": "marketplace_search_accents",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "1af4563d96809a1b2f067b67f2d0841229be0b6ef7b66b5e36d4deac6c07900f",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261022200000",
+    "path": "supabase/migrations/20261022200000_marketplace_price_ai_controls.sql",
+    "sha256": "edc5f584c23774788323dcc032d54e6f4038649b14606fe56dbe6246256a2917",
+    "remoteName": "marketplace_price_ai_controls",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "898f7d6253fcbd8e2f68ca22a6bb08988f2dcf3830490a22c82a1fae1d3a118b",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261023050000",
+    "path": "supabase/migrations/20261023050000_marketplace_multi_publication_targets.sql",
+    "sha256": "7315119cfe031566c62363a8201ae4c773a384843cc1d57291fb539fe05e8e21",
+    "remoteName": "marketplace_multi_publication_targets",
+    "remoteStatementCount": null,
+    "remoteStatementsSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261024010000",
+    "path": "supabase/migrations/20261024010000_marketplace_product_ean_guard.sql",
+    "sha256": "44b3dd0b9a7d505ef5fa002052b61037e601cad76e80efa3502005d2930347a6",
+    "remoteName": "marketplace_product_ean_guard",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "6eb9d5835750fc276bdc6a9a8fa3f028a91f9eba763cd82954ae3947992848f6",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261024030000",
+    "path": "supabase/migrations/20261024030000_marketplace_price_eight_offers.sql",
+    "sha256": "a18a9d576e826692473b3ac016d454af0db31c150f086f02ebd3acb95498cebf",
+    "remoteName": "marketplace_price_eight_offers",
+    "remoteStatementCount": 6,
+    "remoteStatementsSha256": "8e0e27adbe6c5cc17ca84ea33a242471b92e989c8fbbb17920e7b20d06df14f4",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261024040000",
+    "path": "supabase/migrations/20261024040000_cron_history_retention.sql",
+    "sha256": "fbe4218f612bc21e4c1ef3469167d8049c21d07438ca5ff50946bd8710a0f328",
+    "remoteName": "cron_history_retention",
+    "remoteStatementCount": 7,
+    "remoteStatementsSha256": "541ab316e55a12381fc6b2f0e71c5ca4e18db6b2462f232f7ee62247ad0287a8",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261024050000",
+    "path": "supabase/migrations/20261024050000_marketplace_removal_discovery.sql",
+    "sha256": "29fd22d04616b76abdc22a1af50f5853636a39b13204e9aa304bc55090969379",
+    "remoteName": "marketplace_removal_discovery",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "f24abc135d96a8e52d66717d60b09ea22a437059ce476064affe6c4c9f42beeb",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261024060000",
+    "path": "supabase/migrations/20261024060000_marketplace_quality_daily_ai.sql",
+    "sha256": "d6a9711b41a9b453245f2234589df1f8139cf80184327e745fb66a0fefb976ca",
+    "remoteName": "marketplace_quality_daily_ai",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "370b3be7cd97ca75f4194ef7fc293da205dae0e8811ffe3d06b609e87ec96b85",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261024061000",
+    "path": "supabase/migrations/20261024061000_marketplace_quality_filters.sql",
+    "sha256": "1fec0bb539c3fe7b6e3b2e1a4ec5b03318c9b205dd8e564e579070ad5bd85622",
+    "remoteName": "marketplace_quality_filters",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "21718cd9444d815edbb5f279306ce47f1517064247d1440ced710bf0cbf3abf0",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261024062000",
+    "path": "supabase/migrations/20261024062000_marketplace_quality_numeric_receipt.sql",
+    "sha256": "8a08da3d28ca15698d8fa789135167ab76352d5c6bc8c346a96b368404f66667",
+    "remoteName": "marketplace_quality_numeric_receipt",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "c16c2ed188856e078add0e372db7b0bfb8da4d14ea34f21a4f0b59e3af47ac04",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261025180000",
+    "path": "supabase/migrations/20261025180000_ocultar_anuncios_excluidos_operacao.sql",
+    "sha256": "9aa8150ae8ec079fe59533608a016e767d700f6236e48abdac6d181e68e7e599",
+    "remoteName": "ocultar_anuncios_excluidos_operacao",
+    "remoteStatementCount": 9,
+    "remoteStatementsSha256": "cfa9ce32442822b28e9d1f93117f0b0fa5e3d168d13fae177948c0d07368e156",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261026020000",
+    "path": "supabase/migrations/20261026020000_marketplace_ean_picture_gallery.sql",
+    "sha256": "45249c5fb1a01582f5dd8e95e2ccbf4679b4be56af769fdb079bc478b999d324",
+    "remoteName": "marketplace_ean_picture_gallery",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "8964af7038240e2751f3f335d655fda6bd4d68170174354a04746af338c8ee8f",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261026030000",
+    "path": "supabase/migrations/20261026030000_marketplace_preparation_content.sql",
+    "sha256": "1106e2b8207f603e442e91f1fac2c1d7da3eb14ca88545b2316aee7b185ab1ef",
+    "remoteName": "marketplace_preparation_content",
+    "remoteStatementCount": 3,
+    "remoteStatementsSha256": "c390749811b247add65af9a2fd2a795747c864eeb7a0ab072291a932a88463d4",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261026220000",
+    "path": "supabase/migrations/20261026220000_preservar_saldo_importacao_anuncios.sql",
+    "sha256": "640af543ff3c3d8b1ba61330cf4f9772bfde0ea136147f1f4dd47dc5e2c1f76f",
+    "remoteName": "preservar_saldo_importacao_anuncios",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "6810e56b679c9877845a727e8e68199dd6c6b3e8072eade56c22182425f37ee9",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261027010000",
+    "path": "supabase/migrations/20261027010000_catalog_completion.sql",
+    "sha256": "2c041bdecf8084f854066b8e115e279bec8f2973d923dd254b5f164c775ca300",
+    "remoteName": "catalog_completion",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "9313485e5569dca742bf85f287ee8c9cff338a2f5713a85199c5232e6cdd9d9f",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261027020000",
+    "path": "supabase/migrations/20261027020000_catalog_full_confirmation.sql",
+    "sha256": "e16be77bbdd44b9731d5fedcbc06bdd75e23db9937cdbb9af209a1e1bced294a",
+    "remoteName": "catalog_full_confirmation",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "a1c04f246786116aa50e4c236722c2b032fd1bd7ca92e30a54c48d4e7b8d4253",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261027030000",
+    "path": "supabase/migrations/20261027030000_catalog_photo_selection.sql",
+    "sha256": "134173aa35beabef7750da0a43f976d282a9b94f43b543ce77585557fd624052",
+    "remoteName": "catalog_photo_selection",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "b616932a81812522defc75f7d7fda3dbf3900165112f635d61eb839909b4f37c",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261027140000",
+    "path": "supabase/migrations/20261027140000_marketplace_product_editor_content.sql",
+    "sha256": "e59e23afbdee5938ca6b9182c25d386ab3730c58c6c3300967d05f9c217f71a7",
+    "remoteName": "marketplace_product_editor_content",
+    "remoteStatementCount": 4,
+    "remoteStatementsSha256": "61d7db258d2929a64c170f901f3a9a13d2c683407e1b9febf17fc57acec5adb2",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261029160000",
+    "path": "supabase/migrations/20261029160000_preservar_autorizacao_estoque_pendente.sql",
+    "sha256": "ec5d95059722a64da8f8fa89203c5a6c686eddb9129646e5f207e8b96254ea00",
+    "remoteName": "preservar_autorizacao_estoque_pendente",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "ceddc7831fa98dfd21be9d0a4310f9f9ea3285ced53d28048861c075d36043bb",
+    "status": "equivalencia-lexical"
+  },
+  {
+    "version": "20261104160000",
+    "path": "supabase/migrations/20261104160000_exclusao_segura_produtos_custos.sql",
+    "sha256": "55c7a4d79b9d1b63c8ce388e65d39978ff8250ca8133bb629719a61514465b67",
+    "remoteName": "exclusao_segura_produtos_custos",
+    "remoteStatementCount": 1,
+    "remoteStatementsSha256": "628ecea2fc0ad9151335aa8b4418271c1a6f57a7a17eb5ea256bf05ec2796fd6",
+    "status": "exige-evidencia-complementar"
+  },
+  {
+    "version": "20261104190000",
+    "path": "supabase/migrations/20261104190000_reajuste_tabelas_precos.sql",
+    "sha256": "6fea1392d6ba8d97ff3b6840d2c5a59a6cded250d36f33f437c70031549a1c8f",
+    "remoteName": "reajuste_tabelas_precos",
+    "remoteStatementCount": 18,
+    "remoteStatementsSha256": "a995eb68f37c1f6a44698b53393502f1fbc978ebb6d9aaa23ae1a47ad156ad7c",
+    "status": "equivalencia-lexical"
+  }
+]

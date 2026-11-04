@@ -21,20 +21,21 @@ test('formulário comum permite salvar/cancelar, valida, protege descarte e usa 
   assert.match(form,/requestKey\.current/);
   assert.match(form,/document.getElementById.*?\.focus\(\)/);
 });
-test('atualização e filtros não descartam edição aberta; a conta é bloqueada no card Marketplace', () => {
-  assert.match(page,/acting \|\| expanded \|\| copyingListing\) return/);
-  assert.match(page,/if \(syncController.current\) \{\s*if \(background\) return;\s*syncController.current.abort\(\)/);
-  assert.match(page,/syncController.current\?\.abort\(\);\n    setExpanded/);
+test('navegação explícita pode recolher edição; atualização automática preserva a ficha e gravação bloqueia conta', () => {
+  assert.match(page,/acting \|\| syncController.current\) return/);
+  assert.doesNotMatch(page,/syncController.current\?\.abort\(\);\n    setExpanded/);
+  assert.match(page,/loadListRef.current\(true,true\)/);
   assert.match(page,/<ListingEditor key=\{`\$\{sourceAccountId\}-\$\{item.id\}`\}/);
-  assert.match(page,/disabled=\{!connectedSignature \|\| syncing \|\| acting \|\| !!expanded\}/);
+  assert.match(page,/disabled=\{!connectedSignature \|\| syncing \|\| acting\}/);
+  assert.match(page,/onAccountSelectionLockedChange\(acting\)/);
   assert.match(page, /MarketplaceAccountPicker label="Conta de destino"/);
   const client = read('app/marketplaces/MarketplacesClient.tsx');
   assert.match(client,/disabled=\{accountSelectionLocked \|\| publicationBusy\}/);
 });
 test('os campos editáveis, incluindo tipo e taxa do anúncio, antecedem o EAN na mesma lista expandida', () => {
-  const row = page.split('{expanded === item.id && <tr')[1];
+  const row = page.split('{expanded === itemKey && <tr')[1];
   assert.ok(row.includes('<ListingEditor') && row.includes('<ListingData item={item} /></ListingEditor>'));
-  assert.ok(page.indexOf('<ListingEditor') > page.indexOf('className={styles.tableScroll}'));
+  assert.match(page,/group\.listings\.map\(renderListing\)/);
   assert.match(form, /<dl>[\s\S]*EDIT_FIELDS\.map[\s\S]*\{children\}[\s\S]*<\/dl>/);
   assert.doesNotMatch(form, /editorPanel|editorFields|<h3/);
 });
@@ -70,14 +71,15 @@ test('ações de publicação ficam disponíveis na própria edição e preserva
   assert.match(form, /'Excluir definitivamente'/);
   assert.match(form, /const lifecycleDisabled = loading \|\| saving \|\| stale \|\| dirty;/);
   assert.match(form, /Salve ou cancele as alterações antes de mudar a situação do anúncio\./);
-  assert.match(page, /onListingAction=\{\(action\) => setConfirmation\(\{ action, id: item\.id, name: item\.title, connectionId: sourceAccountId \}\)\}/);
-  assert.match(page, /setExpanded\(''\);\n      setSyncNotice\('Ação confirmada pelo Mercado Livre\.'/);
+  assert.match(page, /onListingAction=\{\(action\) => setConfirmation\(\{ action, id: item\.id, name: item\.title, connectionId: sourceAccountId,companyId,provider:marketplace,requestKey:crypto.randomUUID\(\) \}\)\}/);
+  assert.match(page,/setSyncNotice\(actionResult.pending\?/);
+  assert.match(page,/Ação confirmada pelo marketplace/);
   assert.match(css, /\.inlineEditorForm \.actionBar \.destructiveAction \{[^}]*color: #b42318;/);
 });
 test('publicar em outra conta ocupa a barra comum, à direita e com destaque contextual', () => {
   assert.match(page, /additionalAction=\{publishOtherAccountAction\}/);
-  assert.equal((page.match(/>Publicar em outra conta<\/button>/g)||[]).length,1);
-  assert.match(form, /Abrir no Mercado Livre ↗<\/a>\}[\s\S]*?\{additionalAction\}[\s\S]*?<\/div>/);
+  assert.equal((page.match(/>Anunciar em mais contas<\/button>/g)||[]).length,1);
+  assert.match(form, /Abrir no \{editor\?\.provider === 'magalu' \? 'Magalu' : 'Mercado Livre'\} ↗<\/a>\}[\s\S]*?\{additionalAction\}[\s\S]*?<\/div>/);
   assert.match(page, /aria-controls=\{`listing-copy-\$\{item\.id\}`\}/);
   assert.match(page, /Preparar este anúncio em outra conta para revisar antes de publicar/);
   assert.match(css, /\.publishOtherAccountAction \{[^}]*margin-inline-start: auto;/);
@@ -87,8 +89,10 @@ test('publicar em outra conta ocupa a barra comum, à direita e com destaque con
   assert.equal((css.match(/:not\(\.publishOtherAccountButton\)/g)||[]).length,2);
 });
 test('anúncio em edição usa fundo e faixa contextual, mantendo as cores normais do texto', () => {
-  assert.match(page, /className=\{expanded === item.id && editing \? styles\.editingListingTitle : undefined\}/);
-  assert.match(page, /expanded === item.id && editing && <small className=\{styles\.editingListingLabel\}>Em edição<\/small>/);
+  assert.match(page, /className=\{expanded === itemKey && editing \? styles\.editingListingTitle : undefined\}/);
+  assert.match(page, /className=\{styles.announcedAccountIdentity\}/);
+  assert.match(page, /<ListingGroupHeader group=\{group\} provider=\{marketplace\}/);
+  assert.match(read('app/marketplaces/ListingProductIdentity.tsx'), /editing && <small className=\{styles\.editingListingLabel\}>Em edição<\/small>/);
   assert.match(css, /th\.editingListingTitle \{[^}]*background: color-mix\(in srgb, var\(--brand\) 8%, #fff\);[^}]*box-shadow: inset 3px 0 0 var\(--brand\)/);
   assert.match(css, /\.dark \.listingTable tbody th\.editingListingTitle \{[^}]*background: color-mix\(in srgb, var\(--brand\) 18%, #182235\)/);
   assert.doesNotMatch(css, /editingListing(?:Title|Label)[^{]*\{[^}]*\bcolor:/);
@@ -98,7 +102,7 @@ test('nomes e descrições dos produtos na lista aparecem completos com quebra d
   assert.doesNotMatch(css, /\.listingTable tbody th strong \{[^}]*(?:white-space: nowrap|overflow: hidden|text-overflow: ellipsis)/);
 });
 test('hover leve destaca somente a linha do anúncio, incluindo ações, sem alterar o título em edição', () => {
-  assert.match(page, /<Fragment key=\{item.id\}><tr className=\{styles.listingRow\}>/);
+  assert.match(page, /<Fragment key=\{itemKey\}><tr className=\{styles.listingRow\} data-marketplace-detail=/);
   assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)/);
   assert.match(css, /\.listingRow:hover > :is\(th, td\):not\(\.editingListingTitle\) \{ background: color-mix\(in srgb, var\(--brand\) 4%, #fff\)/);
   assert.match(css, /\.dark \.listingTable tbody \.listingRow:hover[^}]*var\(--brand\) 10%, #182235/);
@@ -107,7 +111,9 @@ test('hover leve destaca somente a linha do anúncio, incluindo ações, sem alt
 });
 test('GET e PATCH autenticam gestão e isolam empresa/conta; migração preserva acesso backend', () => {
   assert.equal((route.match(/authorizeMarketplace\(request, .*?, 'manage'\)/g)||[]).length,2);
-  assert.equal((route.match(/loadConnection\(db, empresaId,/g)||[]).length,2);
+  assert.equal((route.match(/integrationAdapter\(db,empresaId,/g)||[]).length,2);
+  const adapter=read('app/modules/marketplaces/services/integration-adapters.ts');
+  assert.match(adapter,/eq\('empresa_id',company\)/);
   assert.match(route,/Cache-Control.*?no-store/);
   const sql=read('supabase/migrations/20261005190000_marketplace_listing_edit.sql');
   assert.match(sql,/'delete', 'edit'/);assert.match(sql,/create unique index/);assert.doesNotMatch(sql,/revoke|grant|drop table|disable row level security/i);
@@ -123,7 +129,8 @@ test('abrir edição alinha o título abaixo do cabeçalho, após expandir e sem
   assert.match(scrollSource, /closest\('main'\)\?\.querySelector\('header'\)/);
   assert.match(scrollSource, /window.scrollY \+ row.getBoundingClientRect\(\).top - headerBottom - 8/);
   assert.match(scrollSource, /prefers-reduced-motion: reduce.*'instant' : 'smooth'/);
-  assert.match(form, /requestAnimationFrame\(\(\) => formRef.current\?\.querySelector<HTMLElement>[\s\S]*?\.focus\(\{ preventScroll: true \}\)\)/);
+  assert.match(form, /requestAnimationFrame\(\(\) => \{[\s\S]*?target\|\|formRef.current\?\.querySelector<HTMLElement>[\s\S]*?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(form, /const target=initialFocus\?formRef.current/);
   for (const [headerBottom, reducedMotion] of [[80, false], [228, true]]) {
     const frames = [], scrolls = [], horizontal = [];
     let selected = '';
@@ -131,6 +138,7 @@ test('abrir edição alinha o título abaixo do cabeçalho, após expandir e sem
     const context = {
       acting: false, expanded: '', syncController: { current: null },
       setExpanded: (id) => { selected = id; },
+      setCopyingListing() {}, setCopyTargetId() {},
       editButtons: { current: new Map([['listing-a', button]]) },
       tableScroll: { current: { scrollTo: (options) => horizontal.push(options.left), closest: () => ({ querySelector: () => ({ getBoundingClientRect: () => ({ bottom: headerBottom }) }) }) } },
       requestAnimationFrame: (callback) => frames.push(callback),
@@ -151,6 +159,10 @@ test('abrir edição alinha o título abaixo do cabeçalho, após expandir e sem
     assert.equal(scrolls.length, 1);
     context.expanded = 'another-listing';
     openEditing('listing-a');
-    assert.equal(frames.length, 0, 'não substitui outra edição aberta');
+    assert.equal(selected, 'listing-a', 'substitui a ficha anterior pelo anúncio clicado');
+    assert.equal(frames.length, 1, 'agenda alinhamento do novo anúncio');
+    context.acting = true;
+    openEditing('listing-b');
+    assert.equal(selected, 'listing-a', 'gravação real mantém a proteção');
   }
 });

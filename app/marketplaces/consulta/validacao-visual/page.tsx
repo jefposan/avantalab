@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { CSSProperties } from 'react';
 import styles from '../marketplaces-mobile.module.css';
+import lotStyles from '../../price-lots.module.css';
 import recebimentosStyles from '@/app/recebimentos/recebimentos.module.css';
 import ColaboradorTopbar from '@/app/recebimentos/components/ColaboradorTopbar';
 import '../viewport-shell.css';
@@ -33,12 +34,11 @@ export default async function MarketplaceViewportValidationPage({ searchParams }
         <ColaboradorTopbar nomeDoPerfil="TRIDIUM COSMETICOS" descricaoDaOperacao="Consulta rápida de produtos e preços">
           <button type="button" className={`${recebimentosStyles.btn} ${recebimentosStyles.btnGhost} ${recebimentosStyles.btnSm}`}>Sair</button>
         </ColaboradorTopbar>
+        <section className={lotStyles.captureBar} aria-label="Lotes">
+          <button type="button">Criar Lote</button>
+          <button type="button">Editar Lotes</button>
+        </section>
         <main className={styles.content}>
-          <section className={styles.hero}>
-            <p className={styles.eyebrow}>Consulta rápida</p>
-            <h1>Qual é o preço?</h1>
-            <p>Leia o código do produto e compare em poucos segundos.</p>
-          </section>
           <section className={styles.manualCard} aria-labelledby="validacao-manual-title">
             <h2 id="validacao-manual-title">Consultar manualmente</h2>
             <form>

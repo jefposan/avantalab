@@ -2,6 +2,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { LIBERACOES_PADRAO, liberacoesDoVinculo, validarLiberacoes, type LiberacoesUsuario } from '../lib/acessos-usuario';
 import {
   buscarEmpresasDoUsuario,
   buscarMeuAcessoEmpresa,
@@ -75,8 +76,13 @@ export function useEmpresas(deps: UseEmpresasDeps) {
 
   // --- Gestão de usuários ---
   const [usuariosEmpresa, setUsuariosEmpresa] = useState<any[]>([]);
+  const consultaUsuariosRef = useRef(0);
+  const empresaUsuariosRef = useRef(empresaId);
+  useEffect(() => { empresaUsuariosRef.current = empresaId; consultaUsuariosRef.current += 1; setUsuariosEmpresa([]); }, [empresaId]);
   const [usuariosCarregando, setUsuariosCarregando] = useState(false);
   const [usuarioSalvando, setUsuarioSalvando] = useState(false);
+  const [usuarioLiberacoes, setUsuarioLiberacoes] = useState<LiberacoesUsuario>(LIBERACOES_PADRAO);
+  const [editUsuarioLiberacoes, setEditUsuarioLiberacoes] = useState<LiberacoesUsuario>(LIBERACOES_PADRAO);
   const [usuarioNome, setUsuarioNome] = useState('');
   const [usuarioEmail, setUsuarioEmail] = useState('');
   const [usuarioLogin, setUsuarioLogin] = useState('');
@@ -104,6 +110,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples'
   >('operador_simples');
   const [modalUsuarios, setModalUsuarios] = useState(false);
+  useEffect(() => { const timer = window.setTimeout(() => { setUsuarioLiberacoes(LIBERACOES_PADRAO); setEditUsuarioLiberacoes(LIBERACOES_PADRAO); setUsuarioEditandoId(null); }, 0); return () => window.clearTimeout(timer); }, [empresaId]);
   const [ajudaUsuariosAberta, setAjudaUsuariosAberta] = useState(false);
   const rascunhoUsuarioCarregadoRef = useRef('');
 
@@ -201,10 +208,22 @@ export function useEmpresas(deps: UseEmpresasDeps) {
 
   const carregarUsuariosEmpresa = async () => {
     if (!empresaId || !podeGerenciarUsuarios) return;
+    const consulta = ++consultaUsuariosRef.current;
+    const consultaAtual = () => consulta === consultaUsuariosRef.current && empresaId === empresaUsuariosRef.current;
     setUsuariosCarregando(true);
-    const usuarios = await buscarUsuariosEmpresa(empresaId);
-    setUsuariosEmpresa(usuarios);
-    setUsuariosCarregando(false);
+    try {
+      const usuarios = await buscarUsuariosEmpresa(empresaId);
+      if (!consultaAtual()) return false;
+      setUsuariosEmpresa(usuarios);
+      return true;
+    } catch (erro) {
+      if (!consultaAtual()) return false;
+      setUsuariosEmpresa([]);
+      abrirAviso('Não foi possível carregar os usuários', erro instanceof Error ? erro.message : 'Tente novamente.');
+      return false;
+    } finally {
+      if (consultaAtual()) setUsuariosCarregando(false);
+    }
   };
 
   const abrirModalUsuarios = () => {
@@ -285,12 +304,14 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       return;
     }
 
+    try { validarLiberacoes(usuarioLiberacoes, perfilUsuarioExistente); } catch (e) { abrirAviso('Acessos obrigatórios', (e as Error).message); return; }
     setVinculandoUsuarioExistente(true);
 
     const resultado = await vincularUsuarioExistenteEmpresa({
       empresaId,
       userId: usuarioEncontrado.id,
       perfil: perfilUsuarioExistente,
+      liberacoes: usuarioLiberacoes,
     });
 
     setVinculandoUsuarioExistente(false);
@@ -360,6 +381,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       return;
     }
 
+    try { validarLiberacoes(usuarioLiberacoes, usuarioPerfil); } catch (e) { abrirAviso('Acessos obrigatórios', (e as Error).message); return; }
     setUsuarioSalvando(true);
     const resultado = await criarUsuarioEmpresa({
         empresaId,
@@ -368,6 +390,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
         login: loginLimpo,
         senha: senhaLimpa,
         perfil: usuarioPerfil,
+        liberacoes: usuarioLiberacoes,
       })
       .catch(() => ({
         erro: true,
@@ -388,12 +411,14 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     setUsuarioLogin('');
     setUsuarioSenha('');
     setUsuarioPerfil('operador_simples');
+    setUsuarioLiberacoes(LIBERACOES_PADRAO);
     removerRascunhoUsuario();
 
     await carregarUsuariosEmpresa();
   };
 
   const iniciarEdicaoUsuario = (usuario: any) => {
+    setEditUsuarioLiberacoes(liberacoesDoVinculo(usuario));
     const loginUsuario = (usuario.login || usuario.email || '').toLowerCase();
     const emailAtual = (emailUsuarioAtual || '').toLowerCase();
     const usuarioEhAtual =
@@ -457,6 +482,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     const perfilOriginal = usuarioOriginal.perfil;
 
     const houveAlteracao =
+      JSON.stringify(editUsuarioLiberacoes) !== JSON.stringify(liberacoesDoVinculo(usuarioOriginal)) ||
       nomeLimpo !== nomeOriginal ||
       loginLimpo !== loginOriginal ||
       emailLimpo !== String(usuarioOriginal.email || '').toLowerCase() ||
@@ -468,6 +494,9 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       return;
     }
 
+    try { validarLiberacoes(editUsuarioLiberacoes, editUsuarioPerfil); } catch (e) { abrirAviso('Acessos obrigatórios', (e as Error).message); return; }
+    consultaUsuariosRef.current += 1;
+    setUsuariosCarregando(false);
     setUsuarioSalvando(true);
     const resultado = await atualizarUsuarioEmpresa({
         acessoId: usuarioEditandoId,
@@ -476,6 +505,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
         email: emailLimpo,
         perfil: editUsuarioPerfil,
         novaSenha: editUsuarioNovaSenha,
+        liberacoes: editUsuarioLiberacoes,
       })
       .catch(() => ({
         erro: true,
@@ -491,11 +521,11 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       return;
     }
 
-    await carregarUsuariosEmpresa();
-    setEditUsuarioNovaSenha('');
-    setEditUsuarioConfirmarSenha('');
-    setMostrarEditUsuarioNovaSenha(false);
-    abrirAviso('Usuário atualizado', 'Os dados do usuário foram salvos com sucesso.');
+    const editandoProprioAcesso = usuarioEditandoId === acessoUsuarioAtualId;
+    cancelarEdicaoUsuario();
+    const listaAtualizada = await carregarUsuariosEmpresa();
+    if (listaAtualizada) abrirAviso('Usuário atualizado', 'Os dados do usuário foram salvos com sucesso.');
+    if (editandoProprioAcesso) window.location.replace(`/gestao?empresaId=${encodeURIComponent(empresaId || '')}`);
   };
 
   const redefinirSenhaUsuario = async () => {
@@ -760,6 +790,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   // ---------------------------------------------------------------------------
 
   return {
+    usuarioLiberacoes, setUsuarioLiberacoes, editUsuarioLiberacoes, setEditUsuarioLiberacoes,
     // Empresa atual
     empresaId, setEmpresaId,
     nomeEmpresaAtual, setNomeEmpresaAtual,

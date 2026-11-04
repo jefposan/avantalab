@@ -1,6 +1,988 @@
+<!-- ava-version: 3.2.0.310 -->
+
+> Revisão 3.2.0.310: reconciliação de fontes e proteção da publicação pela main; sem impacto operacional.
+
+> Revisão 3.2.0.309: Modelo Excel de despesas consulta os tipos atuais do perfil a cada download e atualiza a lista de reconhecimento, compartilhada pelos centros de custo. Se a consulta falhar, tente novamente; não é gerado modelo antigo. Nomes distintos, como Água e Água / Energia, não são associados por suposição.
+
+> Revisão 3.2.0.308: Em Custos e Precificação → Tabelas de preços, Reajuste aplica um percentual ou valor adicional às tabelas ativas selecionadas. Informe o valor, marque os quadros desejados, confira as médias e a quantidade de preços e use Revisar antes de Aplicar reajuste. Somente produtos e serviços ativos e não excluídos são alterados. Na tabela principal, o preço padrão do cadastro é atualizado; em tabelas adicionais, valores antes herdados tornam-se preços próprios. Cada preço e o lote ficam registrados no histórico. A operação não altera automaticamente pedidos anteriores nem os preços independentes do AvantaVendas.
+
+> Revisão 3.2.0.307: Em Custos e Precificação, Excluir cadastro realiza exclusão lógica. O item sai das listas, é desativado no catálogo e não aceita novos usos, mas composição, preços, versões de custos e lançamentos anteriores permanecem vinculados ao mesmo código nos históricos. O histórico identifica o item como Excluído. Inativar continua disponível quando a intenção for apenas suspender o uso e permitir reativação.
+
+> Revisão 3.2.0.305: Em Vendas de Marketplaces, Imprimir abre diretamente a janela padrão do navegador/sistema com o PDF de duas páginas 100 × 150 mm (envio e DACE), sem popup próprio ou QZ Tray. Selecione a impressora, papel 100 × 150 mm e escala 100%, confirmando nessa janela. Baixar oferece PDF ou TXT térmico; ambos mantêm identificação por pedido/produto. A faixa de documentos está compacta; estados informativos ficam em Documentos fiscais e erros/pendências fiscais continuam visíveis. Abrir a janela ou baixar arquivo não confirma impressão física.
+
+> Revisão 3.2.0.304: Na entrada da Gestão Web, credencial recusada pelo Auth é relida, renovada uma vez quando aplicável e validada remotamente. Sessão definitivamente encerrada volta ao login. Falha de rede/timeout não dispara limpeza automática. Entrar novamente na tela de erro reinicia somente as chaves locais de autenticação do projeto, sem apagar senhas do navegador, preferências ou dados do sistema; não encerra outros aparelhos. Tentar novamente continua disponível. Nenhum acesso é liberado apenas pelo cache.
+
+> Revisão 3.2.0.303: Em Vendas de Marketplaces, Imprimir abre a prévia PDF térmica no navegador: duas páginas 100 × 150 mm, envio/QR e DACE resumida, sem controle. Imprimir em tamanho real 100%, papel 100 × 150 mm. TXT por pedido/produto permanece disponível. Sem QZ Tray; exige impressora instalada no computador. PDF fora do layout reconhecido gera erro, sem corte arbitrário. Não confirma impressão física.
+
+> Revisão 3.2.0.302: Preços padrão por produto: referência do cadastro × Ideal inicia novas preparações Online (Mercado Livre/Magalu); referência × Médio preenche novos posts Saldão e é usada no PWA Ofertas quando não existe post salvo. Percentuais vêm das configurações do perfil. Preços explícitos do anúncio e posts salvos têm prioridade no seu canal. Post altera somente post/Saldão; não muda Online. Alterar referência manual muda a base dos padrões, sem sobrescrever preço de venda manual. Consultar/bipar reaproveita dados salvos, sem publicar anúncios. Revisão substitui a regra de ausência de preço da .291.
+
+> Revisão 3.2.0.300: Em Vendas de Marketplaces, Baixar etiqueta térmica entrega diretamente o TXT, identificado pelo número do pedido e nome do produto. Não é necessário extrair ZIP; o controle PDF não acompanha. Abra/envie o TXT no utilitário da L42DT como já configurado. Download não confirma impressão; impressão direta ainda não existe.
+
+> Revisão 3.2.0.299: sem impacto operacional na Gestão Web; desempate por inclusão ajustado somente na Gestão Mobile.
+
+> Revisão 3.2.0.297: O PWA público usa Saldão Aline como nome de instalação inclusive em links de ofertas compartilhadas; prévias sociais mantêm o produto; ícones já criados não são renomeados automaticamente.  Ofertas Web/PWA centraliza Entrar no grupo quando Instalar não aparece, sem mudança operacional nos demais ambientes.  Na lista de Vendas Web, a rolagem continua pela página ao atingir o início ou fim dos detalhes.  Cancelamento de venda direta: quantidade compacta, motivo e ações juntos em telas largas, com adaptação em telas pequenas. Quantidade zero continua cancelando sem reposição; somente devolução física informada repõe estoque.
+
+> Revisão 3.2.0.296: No catálogo Ofertas: cabeçalho branco opaco permanece na borda superior e respeita a área segura do aparelho. Sem tarja adicional ou alteração de contatos e ações. Validar o efeito visual no iPhone após a publicação.
+
+> Revisão 3.2.0.295: No catálogo público, Contato 1/2 do produto preenchem WhatsApp com saudação, pedido de oferta, nome e link do produto. No flutuante a mensagem apenas identifica a origem no Ofertas Saldão Aline. O cliente envia, nunca é automático. Voltar ao topo aparece acima do WhatsApp após rolar e preserva busca/filtros. Posts existentes e links do grupo não mudam.
+
+> Revisão 3.2.0.294: Catálogo de ofertas com topo compacto: logo/grupo/instalar em uma faixa, título centralizado, busca sem rótulo visual e estoque/ordenar na mesma linha. Filtros Todos, Produto novo e Produto com detalhes ou avaria conservam os nomes completos e as ações anteriores. Sem alteração no funcionamento de compra, compartilhar, copiar ou consultar estoque.
+
+> Revisão 3.2.0.293: O link geral do catálogo usa a imagem Saldão Aline Ofertas na prévia de compartilhamento; links por produto preservam a foto do produto. No celular os três filtros ficam na mesma linha, com texto longo dentro da pílula. Demais ações permanecem iguais.
+
+> Revisão 3.2.0.292: No catálogo público, Compartilhar esta oferta abre o menu nativo no celular; no Web, Copiar link da oferta copia diretamente e confirma no botão. O link abre aquele produto; Ver todas as ofertas volta à lista. Comprar online mostra marketplace/preço sem nomes de contas. Topo com logo e botões Instalar/Entrar no grupo lado a lado no celular. Filtros Produto novo (Online) e Produto com detalhe ou avaria (Saldão); condição cadastrada continua visível, sem alteração de anúncios.
+
+> Revisão 3.2.0.291: Catálogo público em /ofertas/saldao-aline, sem login: buscar produto, filtrar Online/Saldão, ordenar A–Z ou menor preço. Online escolhe conta e preço antes de abrir o anúncio; Saldão tem Contato 1 e Contato 2 no WhatsApp. Estoque atualizado periodicamente enquanto visível, sem somar contas. De é referência consultada; Por é preço do anúncio Online ou do post salvo Saldão, sem regra percentual. Se faltam preço/condição, consultar vendedor. Instalar usa PWA próprio; não há venda, reserva nem alteração de saldo nesta página.
+
+> Revisão 3.2.0.290: AvantaPreços: o texto do post agora inclui Condição. Opções compartilhadas no Online e nos estoques de imagem: Novo, Usado, Recondicionado, Avaria e Com detalhe. No link Online, escolha explicitamente a condição; Avaria ou Com detalhe exigem uma observação em Detalhes. A condição informada vale somente para o post, sem mudar o anúncio no marketplace. Posts/imagens salvos não são regenerados automaticamente; De/Por continuam sem regra percentual.
+
+> Revisão 3.2.0.284: Substitui a orientação percentual da 3.2.0.283: o post Online usa De=média consultada e Por=preço anunciado na conta escolhida. Qualquer preço anunciado válido é aceito; não calcular 10%, não exigir igualdade com sugestão e não orientar mudar o anúncio para gerar link. Legenda e formulário sem percentual/desconto; conta, anúncio ativo, saldo e URL oficial continuam conferidos. Saldão/imagem permanece igual.
+
+> Revisão 3.2.0.283: AvantaPreços → Criar post: saldo Online abre link de compra, saldo Saldão mantém imagem, e saldo nos dois permite escolher. Online exige conta/anúncio; De é a média consultada e POR APENAS é 90% dessa média. Divergência com o preço anunciado bloqueia o link e orienta ajustar em Anúncios; nunca altera preços automaticamente. Gerar confere novamente. Compartilhar link usa texto e URL oficial, com Copiar link e descrição como alternativa. Posts em imagem existentes são preservados.
+
+> Revisão 3.2.0.282: Uma conta já em sincronização não gera aviso de desconexão ou falha imediata. O módulo aguarda em segundo plano e faz até quatro retomadas de 30 segundos, sem bloquear as outras contas. Falhas reais ou ocupação persistente continuam visíveis.
+
+> Revisão 3.2.0.281: Contas conectadas mostra contas, ações e indicador durante a atualização. Sucesso não deixa mensagem persistente; resumos de catálogo e itens preservados não aparecem no card. Falhas e autorização insuficiente continuam visíveis. A complementação permanece em segundo plano.
+
+> Refinamento 3.2.0.280: EAN e pesquisa permanecem fixos abaixo do título durante a rolagem do Novo anúncio; a prévia ocupa o espaço livre abaixo das duas faixas.
+
+> Refinamento 3.2.0.280: Novo anúncio tem uma única rolagem contida para as duas colunas, com cabeçalho fixo e prévia centralizada. O fim da rolagem não avança para Vendas ou Anunciados; use os atalhos para essas seções.
+
+> Refinamento 3.2.0.280: a conferência Preparar conteúdo para qualidade tem título destacado, respiro e separação visual. Os indicadores e as ações Completar permanecem iguais.
+
+> Refinamento 3.2.0.280: removido o texto de orientação sobre buscar nota acima de 70 no Novo anúncio; checklist de conteúdo preservado.
+
+> Refinamento 3.2.0.280: removida a orientação textual abaixo da área de fotos do Novo anúncio; inclusão de imagens e validações permanecem.
+
+> Revisão 3.2.0.280: Marketplaces > Novo anúncio: prévia compacta mostra foto junto ao nome e EAN, faixa de preço/quantidade e dados da publicação em duas colunas. Abra Descrição e características para o caminho completo da categoria e os dados longos. No Magalu, o expansor mantém ficha técnica e orientação de preparação. Prévia continua acompanhando a rolagem; envio e validações não mudaram.
+
+> Revisão 3.2.0.279: Marketplaces: pontuação abaixo de 70 não gera aviso de pendência. Acompanhe a nota visualmente no anúncio e use a revisão/objetivos quando desejar; medidores e filtros de qualidade permanecem disponíveis. Avisos reais de estoque, vendas, vínculos e sincronização continuam ativos.
+
+> Revisão 3.2.0.278: Marketplaces > Conferir saldos: anúncios User Products podem ser sincronizados após confirmar origem única e todos os vínculos do mesmo produto/conta. Full, depósitos, variações, kits e vínculos incompletos continuam bloqueados com o motivo por conta. Atualizar a página não autoriza reposição antiga por si só; a sincronização concluída exige retorno por conta.
+
+> Revisão 3.2.0.277: Marketplaces > Novo anúncio: use a rolagem da página para todos os preenchimentos. O cabeçalho permanece sob a navegação e a prévia flutua centralizada na altura útil; em telas estreitas ou muito baixas ela acompanha o fluxo da página. Continua havendo folga após os botões finais.
+
+> Revisão 3.2.0.276: Marketplaces: entrada confirmada no Online autoriza o envio do mesmo saldo às contas vinculadas; releituras preservam a autorização ainda pendente da mesma revisão. O envio só está concluído após confirmação por conta. Migração desta correção aplicada ao banco de produção.
+
+> Revisão 3.2.0.275: Dashboard: sincronização automática de configurações ocorre em segundo plano, sem tarjas de salvamento ou sucesso no menu. Falhas ao salvar continuam informadas.
+
+> Revisão 3.2.0.274: Marketplaces: Anunciados > Ver anúncios mostra Editar todos os anúncios na faixa de Estoque Online compartilhado, acima das contas. Abre uma única revisão com preço, informações, fotos e ficha técnica editáveis. Só campos alterados são enviados, após conferir todas as contas. Preço pode ser comum sem alterar a referência; diferenças existentes não são igualadas ao abrir. Bloqueios de catálogo e estoque compartilhado permanecem. O antigo Editar preços de todas as contas dentro do editor individual foi removido. A confirmação é única, com resultado por campo/conta e interrupção em falha ou pendência. Após confirmação de cada conta, preço anunciado e linhas são atualizados imediatamente, sem recarregar nem fechar a edição. Consultas anteriores não restauram o preço antigo. Confirmação pendente não altera o preço visível como se fosse sucesso; referência de precificação é independente.
+
+> Revisão 3.2.0.273: Marketplaces: ao editar o Preço de venda de um anúncio vinculado, Editar preços de todas as contas abre um único valor e a lista completa de destinos do mesmo marketplace. Confere vínculos, preços e permissões de todas as contas antes do envio; preserva o preço de referência e os demais dados. Mostra confirmação por anúncio e interrompe em falha ou confirmação pendente, sem repetir automaticamente. Recarregar preços mantém o valor digitado e consulta novamente. A revisão individual ignora horários, estimativas e textos auxiliares; alterações reais e permissões continuam protegidas.
+
+> Revisão 3.2.0.272: Marketplaces: em Anunciados, o cabeçalho compara o preço atual (ou faixa entre contas) com Mínimo, Médio e Ideal calculados pela referência cadastrada e percentuais da empresa. Se indisponíveis, mostra traços. Qualidade do anúncio identifica a barra; a situação aparece abaixo. Editar preços continua em Ver anúncios > Editar na conta > Preço de venda > Salvar alterações.
+
+> Revisão 3.2.0.271: Marketplaces: Revisar anúncio permite rolar todo o conteúdo até os botões finais, inclusive com os campos expandidos. Cabeçalho permanece acessível; pontuação e publicação mantêm o comportamento anterior.
+
+> Revisão 3.2.0.270: Publicação de catálogo preserva a descrição oficial e conclui com o popup existente. Não tenta regravar a descrição após criar o item. Falha parcial mostra o diagnóstico na revisão por conta; não repetir envio de anúncio já criado.
+
+> Revisão 3.2.0.269: Preparação reconhece origem oficial mesmo quando a ficha omite GTIN, somente após busca exata do EAN com resultado único da mesma origem e identidade/variantes comprovadas. Vale para todos os produtos e contas; sem regra por cafeteira ou código específico. Anúncios comuns mantêm o limite da categoria.
+
+> Revisão 3.2.0.268: Preparar anúncio reconhece também a origem de catálogo registrada pela pesquisa Web/AvantaPreços, mediante EAN e variante sem conflito reconfirmados. Abrir novamente a preparação carrega a ficha oficial. Origem ambígua ou não comprovada mantém o cadastro local e o limite da categoria.
+
+> Revisão 3.2.0.267: Nome oficial de ficha de catálogo ML não é bloqueado localmente pelo limite do título comum. O ML continua validando o envio. Nome longo em página de catálogo não significa que anúncios comuns aceitam o mesmo comprimento; cadastro local sem vínculo de catálogo mantém a regra da categoria.
+
+> Revisão 3.2.0.266: Pesquisa por EAN para cadastro usa nome compacto de até 60 caracteres quando marca/modelo permitem identificar com segurança, preservando variantes. Não corta o modelo; quando não houver identidade segura ou os essenciais excederem o limite, revisar o nome. Não altera automaticamente nomes de cadastros existentes.
+
+> Revisão 3.2.0.265: Produtos cadastrados e Estoques oferecem botão Copiar nome e EAN ao lado do nome. Copia ambos para a área de transferência sem expandir a ficha; ausência de EAN é indicada como Não informado.
+
+> Revisão 3.2.0.264: Card de publicação em andamento sem frase redundante; confirmação de sucesso com texto centralizado. Sem alteração dos passos de publicação.
+
+> Revisão 3.2.0.263: Novo anúncio reserva espaço após os botões finais na coluna de preenchimento para alcançá-los no centro da tela pela rolagem; sem alteração das ações.
+
+> Revisão 3.2.0.262: Novo anúncio deixa de exibir avisos de sucesso no rodapé ao salvar o nome ou a ficha. Salvamento automático e validações continuam funcionando.
+
+> Revisão 3.2.0.261: No Novo anúncio, o limite de caracteres acompanha a digitação; nome válido é salvo automaticamente ao sair do campo. Se houver falha, Publicar tenta salvar novamente. Após salvar, confira o frete e marque a confirmação antes de publicar.
+
+> Revisão 3.2.0.260: em Vendas → Documento e etiqueta, escolha Térmica L42DT — 100 × 150 mm e use Baixar etiqueta térmica. No Windows, extraia o ZIP oficial do Mercado Livre e abra o TXT/ZPL no Direct Print da Elgin/Bematech ou utilitário compatível, selecionando a L42DT e papel 100 × 150 mm, em tamanho original. PDFs auxiliares ficam separados no pacote. Download não confirma impressão. Instalação do driver/utilitário e teste físico são feitos no computador Windows. Para impressora comum, escolha PDF original; não reduza o PDF A4 para tentar obter a etiqueta térmica.
+
+> Revisão 3.2.0.259: Categoria no Novo anúncio do Mercado Livre apresenta nome e caminho oficial completo, permitindo distinguir nomes iguais em áreas diferentes. O resumo também apresenta o caminho. Se o nome ou caminho não puder ser consultado, revalide; não escolha pelo código.
+
+> Revisão 3.2.0.258: Preparar anúncio posiciona o card Novo anúncio abaixo da navegação de marketplaces, sem esconder seu início; sem alteração dos passos de publicação.
+
+> Revisão 3.2.0.257: Publicar abre o popup Publicando enquanto aguarda o marketplace. No sucesso, mostra Publicação concluída e fecha em 2,5 segundos; em erro, fecha e direciona ao campo ou diagnóstico. Textos operacionais foram retirados do resumo lateral.
+
+> Revisão 3.2.0.256: botões Cancelar anúncio, Revalidar dados e Publicar centralizados no Novo anúncio; sem impacto operacional.
+
+> Revisão 3.2.0.255: ao clicar em Publicar sem marcar a confirmação, a área do checkbox recebe destaque vermelho e foco. Marque a confirmação após conferir o produto para retirar o aviso e continuar.
+
+> Revisão 3.2.0.254: Novo anúncio não exibe mais a tarja de ficha preparada ao abrir a preparação ou trocar a conta. Erros e confirmação de publicação continuam visíveis.
+
+> Revisão 3.2.0.253: produto sem anúncio exibe Preparar anúncio acima de Expandir com qualquer saldo Online. O botão da seção Publicação mantém o verde anterior. Preparar não publica; envio ainda exige as validações de saldo e das contas.
+
+> Revisão 3.2.0.252: na lista de Estoques, a busca por nome, código ou EAN e Ler EAN ficam na mesma linha de Online/Saldão no desktop, com largura reduzida. Em telas estreitas seguem abaixo. O título de pesquisa foi removido.
+
+> Revisão 3.2.0.251: espaçamento e centralização das pílulas do produto; sem impacto operacional.
+
+> Revisão 3.2.0.250: nos Produtos cadastrados, **Preparar anúncio** e **Expandir** têm a mesma pílula; o preparo usa apenas texto compacto. O critério que mostra ou oculta a ação permanece o mesmo.
+
+> Revisão 3.2.0.249: nos Produtos cadastrados, um produto sem estoque Online informado e sem anúncio mostra **Preparar anúncio** acima de Expandir. A ação abre a preparação, mas publicar continua exigindo a confirmação do saldo Online. Quando houver anúncio vinculado, o atalho não aparece.
+
+> Revisão 3.2.0.248: ao preparar um produto no Novo anúncio, as referências Mínimo, Média e Ideal aparecem no cabeçalho, à direita do título. Em tela estreita elas passam para a linha seguinte; os valores, cálculos e a publicação não mudam.
+
+> Revisão 3.2.0.247: Depois de selecionar as contas no Novo anúncio, escolha **Publicações iguais** para usar o preço e os dados principais em conjunto, ou **Publicações distintas** para abrir os cards de preço e frete por conta. O frete ainda é validado por destino; uma pendência abre a revisão individual antes de publicar.
+
+> Revisão 3.2.0.246: Diagnóstico administrativo de preços em /marketplaces/diagnostico-precos: informe a empresa e EAN/modelo, use Testar contas sem IA. Exige gestor/administrador, consulta até quatro contas e mostra respostas de autenticação, catálogo, busca e ofertas. Não altera anúncios, referências ou a pesquisa atual; médias da amostra não foram validadas como equivalentes.
+
+> Revisão 3.2.0.245: No Novo anúncio, os avisos e detalhes técnicos da preparação aparecem em uma faixa própria abaixo do painel. Leia o retorno antes de ajustar ou publicar; as ações e a prévia permanecem separadas.
+
+> Revisão 3.2.0.244: Em Novo anúncio do Mercado Livre, marque **Todos** para selecionar todas as novas contas disponíveis de uma vez. Contas já anunciadas ou com envio pendente continuam bloqueadas; depois confira a validação e o frete de cada destino antes de publicar.
+
+> Revisão 3.2.0.243: Ao preparar anúncio, use Conta, EAN com leitor ou Nome, marca ou modelo e o único botão Pesquisar. Digitar em uma pesquisa limpa a outra. Cancelar limpa a preparação; em telas estreitas os campos se empilham.
+
+> Revisão 3.2.0.242: aviso de pesquisa de preços centralizado no card do produto; sem impacto operacional.
+
+> Revisão 3.2.0.241: Ao preparar anúncio, o topo reúne Mínimo, Média e Ideal com base na referência salva do produto e nos percentuais configurados no perfil. O preço de venda digitado continua independente. A faixa fica fora da rolagem dos dados à esquerda; a prévia permanece à direita no desktop. Sem referência ou percentuais disponíveis, os valores ficam indisponíveis. Mercado Livre e Magalu usam o mesmo layout; em tela estreita as áreas se empilham.
+
+> Revisão 3.2.0.240: Vendas, Anunciados, Estoque, Produtos cadastrados e Resultados compartilham uma única expansão: abrir um recolhe os outros quatro. Vale para cabeçalhos, rodapés e aberturas por busca, atalhos e pendências. Filtros e componentes permanecem montados ao recolher; o botão dos objetivos conserva o funcionamento da .239.
+
+> Revisão 3.2.0.239: Em Qualidade do anúncio, os objetivos pendentes começam ocultos. Use Ver objetivos pendentes, à direita de Revisar anúncio, para expandir; Ocultar objetivos pendentes recolhe a seção. Ao fechar e reabrir o produto, os objetivos voltam ocultos. Revisão, consulta e publicação preservadas.
+
+> Revisão 3.2.0.238: na revisão de anúncios, conflito anterior ao envio reconfere automaticamente os dados, preserva o rascunho e pede conferir/confirmar novamente. Falha parcial ou incerta continua interrompendo envios: use Conferir mantendo rascunho para ler o estado atual, sem reenvio automático. O motivo fica visível; mudanças reais de permissão e vínculo continuam protegidas. Qualidade por conta identifica anúncio, nota e horário do ML; o consolidado é a menor nota, não uma nota única do cadastro. Recarregar dados continua sendo a opção de reiniciar e descartar mediante confirmação.
+
+> Revisão 3.2.0.237: correção interna preserva a coerência da ficha ao salvar o nome; fluxo operacional da .235/.236 mantido. Contador é ajuda; erro continua indicado separadamente.
+
+> Revisão 3.2.0.236: nomes de fichas oficiais permanecem protegidos e não são reenviados ao salvar fotos/descrição da preparação. Para o caso Lenoxx na categoria Processadores MLB31674, limite consultado de 60 caracteres; corrigir o nome local de 67 caracteres e salvar antes de publicar. Conferência por conta da .235 preservada.
+
+> Revisão 3.2.0.235: na preparação de produto local, Conferir cadastro alcança Nome do produto. Corrija e use Salvar ficha no cadastro; depois confira novamente as contas. O limite exibido vem da categoria. Cada conta possui sua conferência de frete, inclusive ciência de custo indisponível quando necessária. Detalhes técnicos da última recusa ficam na própria conta. Salvar o nome não publica nem modifica anúncios existentes; nomes oficiais do catálogo permanecem protegidos.
+
+> Revisão 3.2.0.234: em Produtos cadastrados, Editar cadastro permite ajustar características manualmente junto dos demais dados. Salvar não muda estoque nem anúncios; o EAN da característica deve ser exatamente o EAN do cadastro. Ao ler um EAN com mais de uma ficha, escolha no popup comparando etiqueta, foto, ficha, tensão/potência disponíveis e EAN. Ficha que declarar outro EAN fica bloqueada; não tratar 127V e 220V como equivalentes.
+
+> Revisão 3.2.0.233: Marketplaces Web: Resultado de vendas inicia recolhido. Expanda pelo controle do cabeçalho ou pelo atalho Resultados; filtros e cálculos preservados.
+
+> Revisão 3.2.0.232: AvantaPreços: restaurado o fluxo de preço total, disponibilidade, variante e fonte direta citada retornados pela pesquisa web; a loja bloquear o HTML ao servidor não elimina a oferta. EAN diferente, outra tensão/modelo, usados/reembalados, preços sem centavos válidos ou sem fonte não entram. Média aritmética de até oito ofertas deduplicadas; salva e relê a referência. Mantém uma chamada mini com teto de duas ferramentas web, sem pesquisas adicionais. Cadastro com especificações contraditórias exige conferência, sem troca silenciosa de variante. Estoque e anúncios preservados.
+
+> Revisão 3.2.0.231: AvantaPreços: Sincronizar e atualizar saldos fica à direita de Nova pesquisa no topo do produto. Mesmo fluxo de consulta e confirmação de divergências. Outras saídas registra baixas sem venda; Vendas diretas consulta histórico, ambas em Outras ações.
+
+> Revisão 3.2.0.230: AvantaPreços: o ícone Sincronizar e atualizar saldos consulta os anúncios vinculados e relê o saldo local. Se estiverem iguais, conclui sem modal. Divergências ou pendências abrem conferência para confirmar direção e quantidade; nunca importa/soma quantidades automaticamente. Sem anúncio, relê apenas o saldo local. Falha não significa atualização concluída.
+
+> Revisão 3.2.0.229: AvantaPreços: a descrição completa do produto fica dentro de Características, no topo antes dos atributos. Expanda Características para consultar; inicia recolhida ao abrir o produto. Texto cadastrado preservado.
+
+> Revisão 3.2.0.228: AvantaPreços: topo do produto mostra Total e estoques em cards informativos alinhados. Conferir saldos e Atualizar permanecem disponíveis juntos abaixo. Sem alteração de cálculos ou ações.
+
+> Revisão 3.2.0.227: AvantaPreços: novo post começa com nome básico do produto, sem texto promocional do cadastro. Legenda: descrição, Detalhe somente se preenchido e preços De tachado/Por negrito. Para post antigo, Editar e gerar nova versão. Sem mudança de cadastro/estoque. Sem alteração de permissões.
+
+> Revisão 3.2.0.226: AvantaPreços: a barra do post é somente informativa, sem seleção ou bloqueios por saldo. Todos soma as quantidades e cada estoque mostra seu saldo ao abrir; desconhecido é Indisponível. Serve para orientar a escolha manual do preço. Gerar/compartilhar preservam validações próprias, sem consultar ou movimentar estoque por clique. Substitui a orientação de bloqueio da .225.
+
+> Revisão 3.2.0.225: AvantaPreços: ao clicar Criar post, a barra no topo mostra Todos e cada estoque ativo com o saldo desse produto. Todos soma os saldos; seleção mantém preço e cadastro. Mais de três botões quebram para outra linha. Estoque zero ou indisponível impede gerar/compartilhar; reabrir consulta os saldos atuais. Post pronto mantém a barra. Não reserva unidades nem grava estoque. O filtro da lista continua disponível.
+
+> Revisão 3.2.0.224: AvantaPreços, base da empresa: Visualizar produtos oferece Todos e estoques ativos (Online/Saldão etc.). Um estoque específico mostra somente produtos com saldo positivo nele e sua quantidade; busca e paginação respeitam a seleção. Todos permite ver a base inteira. Retornar do produto ou ajustar saldo relê a lista. Filtro não reserva unidades. Somente leitura, sem alteração de saldo.
+
+> Revisão 3.2.0.223: AvantaPreços: Criar post → escolher foto do cadastro/galeria/câmera → revisar campos → Gerar e salvar. Arquivo e dados ficam no sistema por produto, disponíveis aos usuários autorizados em qualquer aparelho. Reabrir recupera o post pronto; Editar post gera nova versão ao salvar. Compartilhar post envia imagem e legenda automática com De tachado e Por negrito; Baixar imagem disponível. Não existe Copiar legenda nem salvamento no navegador. Edição não altera cadastro/saldo/anúncios; post salvo mantém preço e texto da versão, sem atualização silenciosa. Conflito pede reabrir. Substitui notas locais .220–.222.
+
+> Revisão 3.2.0.222: detalhes na arte do post local ficam maiores, mais leves e afastados das etiquetas. Para atualizar arte já salva, Editar → Gerar e salvar. Sem impacto operacional no AvantaVendas; não publicado.
+
+> Revisão 3.2.0.221: AvantaPreços local remove Copiar legenda e cópia manual; Compartilhar post mantém imagem e legenda automática. Sem impacto operacional no AvantaVendas; não publicado. Esta orientação substitui a alternativa de cópia descrita na revisão anterior.
+
+> Revisão 3.2.0.220: AvantaPreços em teste local — Criar post oferece Foto do produto/Galeria/Tirar foto. Gerar e salvar grava arte e campos neste navegador por usuário, empresa e produto. Reabrir apresenta post pronto para Editar ou Compartilhar, sem preencher novamente. Legenda inclui descrição, De tachado e Por em negrito; Copiar legenda é alternativa se o aplicativo não encaminhar texto junto com a imagem. Limpar dados remove arquivos, sem sincronização entre aparelhos. Nada muda no cadastro ou saldo, não publicado.
+
+> Revisão 3.2.0.219: Preserva custos já apurados quando sincronizações mantêm os mesmos totais. Cache considera a revisão do pedido no provedor, não uma simples regravação local. A lista mantém sua página durante atualizações em segundo plano; Atualizar relê a lista. Mudança de filtros/mês continua isolando resultados. Falha de nova consulta identifica os últimos custos confirmados; não inventa valores. Consulta real do ML validada na 3.2.0.218 (25 pedidos em outubro); demais ambientes sem novos passos.
+
+> Revisão 3.2.0.218: sem impacto operacional; avisos do padrão connectionMessage centralizados horizontalmente no Marketplaces Web.
+
+> Revisão 3.2.0.217: Selecione mês em Resultado de vendas e clique Ver vendas do mês. A lista aparece dentro do quadro, respeita marketplace/conta/estoque/ano e contém todos os estados, com canceladas/estornadas/pendentes Fora do total. Rodapé mostra total confirmado do mês inteiro; 25 registros por página, com rolagem própria. Clique no nome do produto para detalhes dos itens/pedido. Fechar lista ou Ocultar vendas recolhe somente a lista. Trocar mês/filtros reinicia a página; voltar ao ano oculta a lista. Taxas/frete/líquido ausentes continuam A apurar; não foram validados em contas reais no local sem chave. Recurso local, não publicado.
+
+> Revisão 3.2.0.216: O atalho inferior Resultados leva ao quadro Resultado de vendas, abrindo-o se recolhido e alinhando no topo sem alterar os filtros. Local, não publicado.
+
+> Revisão 3.2.0.215: A linha do mês na tabela de Resultado de vendas também seleciona o período e atualiza Do bruto ao líquido. Clique novamente para voltar ao ano; teclado Enter/Espaço funciona no mês. Local, não publicado.
+
+> Revisão 3.2.0.214: sem impacto operacional; destaque visual da linha do mês ao passar o mouse em Resultado de vendas no Web.
+
+> Revisão 3.2.0.213: Expandir Resultado de vendas alinha o quadro abaixo da navegação fixa, como os demais cards. Recolher e atualizar não deslocam a página; filtros e seleção do mês preservados. Local, não publicado.
+
+> Revisão 3.2.0.212: sem impacto operacional; remoção da borda colorida superior do quadro Resultado de vendas no Web.
+
+> Revisão 3.2.0.211: Quadro Resultado de vendas compacto; selecionar o mês pelas barras detalha a cascata, novo clique retorna ao ano. Consulta custos reais automaticamente em lotes, sem bloquear o módulo. ML usa comissão por unidade e frete do vendedor; envio compartilhado é rateado em centavos. Magalu usa transações e mostra ajustes quando necessários. Parcial identifica cobertura incompleta; A apurar nunca significa zero. Sem custos registrados nas diretas, manter pendente. Não é lucro nem repasse recebido. Neste teste local falta MARKETPLACE_SECRETS_KEY e a Vercel protege o valor; não criar/rotacionar chave para testar. Recurso local, ainda não publicado.
+
+> Revisão 3.2.0.210: Marketplaces Web tem Resultado de vendas ao final da página. Filtre marketplace, conta, estoque e ano; clique no mês da tabela ou gráfico para a composição e clique novamente ou Ver ano inteiro para o acumulado anual. A carga é local ao quadro, após aproximar a rolagem; Atualizar relê dados salvos, sem sincronizar o marketplace. Só vendas confirmadas em BRL entram no total; ML confirmado sem pagamento não entra. Taxas/frete e líquido ficam A apurar porque a apuração financeira dos provedores ainda não foi integrada. Não confundir líquido com lucro. Vendas online sem origem histórica ficam em Origem não identificada; não atribuir ao estoque Online atual. Valores brutos ausentes são sinalizados com asterisco, sem inventar valores. Recurso em desenvolvimento local, sem publicação.
+
+> Revisão 3.2.0.209: os pontos continuam animados mesmo com reduzir movimentos ativado. O movimento indica espera, sem garantir resposta da internet ou do servidor; validações e recuperação de erros preservadas.
+
+> Revisão 3.2.0.208: Usar ficha do catálogo abre card compacto. Padrão do catálogo importa ficha, fotos e capa oficiais com um clique em Importar. Personalizar fotos permite remover, adicionar pelo computador/arraste e clicar na imagem para defini-la como capa; envia somente a seleção e sua ordem. Cancelar não importa. Preço, estoque e condições de venda preservados. Sem segunda confirmação ou textos longos. Uploads ficam preparados até Importar; comprovante vinculado a empresa/usuário/produto expira em duas horas. Resposta incerta exige releitura, sem reenvio automático. Catálogo oficial continua protegido.
+
+> Revisão 3.2.0.207: o catálogo pode omitir GTIN na ficha detalhada. Nessa situação, aceitar somente a prova devolvida pelo ML na busca por product_identifier: EAN válido e idêntico, um único resultado total e mesmo produto da ficha. Contradição de EAN, busca textual, ambiguidade e variante divergente continuam bloqueadas. Retoma apenas itens preservados pela antiga ausência de GTIN; não repete envios incertos.
+
+> Revisão 3.2.0.206: Cadastro do produto oferece Usar ficha do catálogo. A consulta é somente leitura e compara capa, fotos, nome, descrição e ficha técnica. Salvar e enviar abre confirmação explícita. Confirmar permite substituir dados técnicos, inclusive nome e capa, usando a ficha única com EAN/variante comprovados; catálogo primeiro e fotos próprias depois até o limite. Valores sem equivalente são preservados. Preço, saldo, SKU, EAN, condição, garantia, frete e condições de venda não mudam. A fila salva local e envia aos anúncios próprios editáveis; catálogo oficial não é modificado. Alterações no cadastro ou na ficha invalidam a prévia. Resultado aparece em Contas conectadas; envio incerto não é repetido. Sem confirmação, a rotina automática continua preenchendo somente lacunas.
+
+> Revisão 3.2.0.205: ao abrir Marketplaces com permissão de gestão e conta ML conectada, o catálogo completa automaticamente o que falta no cadastro e nos anúncios próprios. Só ficha única com EAN válido e variante compatível; ambiguidade preserva o produto para conferência. Acrescenta fotos sem trocar capa/remover fotos; descrição e atributos preenchidos não são substituídos. Se o valor local difere do catálogo, não enviar a versão conflitante ao anúncio. Não altera preço, estoque, SKU, EAN, nome, vínculo de catálogo ou condições comerciais. O ML confirma cada envio; catálogo oficial fica protegido. A fila continua no worker ao fechar o navegador, sem IA paga, e evita reconsulta antes de 24h após conclusão. Resposta incerta interrompe o produto e exige Revisar anúncio, sem reenvio automático. Contas conectadas mostra resultados e motivos de preservação. Novos cadastros de empresa já ativada também entram na fila. Releitura não descarta edição aberta.
+
+> Revisão 3.2.0.204: Revisar anúncio separa Pode ajustar no AvantaLab de Restrições e ajustes externos. Cada recomendação identifica somente seus anúncios, conta e quantidade de fotos. Um anúncio próprio pode adicionar fotos mesmo com par de catálogo no mesmo User Product, desde que alcance e permissões estejam confirmados; a galeria do catálogo é preservada e conferida após envio. Fotos de catálogo continuam sujeitas à análise do ML; a revisão não envia sugestões ao catálogo nem inventa aprovação. Galerias podem ser diferentes: conferir por anúncio, sem copiar automaticamente. Ficha técnica compartilhada mantém as restrições existentes. A nota real continua vindo do ML.
+
+> Revisão 3.2.0.203: sem impacto operacional adicional; validação da atualização de anúncios em segundo plano descrita abaixo.
+
+> Revisão 3.2.0.202: Atualizar em Anunciados executa em segundo plano. Só o botão muda para Atualizando e fica desativado até concluir. Lista, filtros, menu e edição continuam disponíveis; não descarta rascunhos nem reinicia consultas ao trocar filtros. A lista é relida silenciosamente e aguarda o fim de edição aberta. Atualiza vendas após cada conta; falhas identificam a conta. Sair/trocar perfil cancela o acompanhamento local com progresso salvo no servidor.
+
+<!-- ava-version: 3.2.0.201 -->
+
+> Revisão 3.2.0.201: importar ou vincular novo anúncio ao cadastro com saldo local já informado, inclusive zero, não pede reconfirmação. Não importa nem soma quantidade do marketplace. Apenas saldo local realmente ausente exige conferência inicial. A migração limpa marcadores indevidos, preserva confirmação física, depósitos e históricos. AvantaVendas sem impacto operacional.
+
+<!-- ava-version: 3.2.0.200 -->
+
+> Revisão 3.2.0.200: sem impacto operacional; Pesquisa, Situação e Qualidade alinhados em uma linha no Anunciados Web. Pesquisa 15% mais estreita, seletores com larguras iguais; comportamento dos filtros preservado.
+
+<!-- ava-version: 3.2.0.199 -->
+
+> Revisão 3.2.0.199: ao abrir Marketplaces, após carregar as contas, busca anúncios de todas as contas conectadas em segundo plano. Novas conexões/reconexões entram na fila. Após cada conta concluir, atualiza suas vendas e relê listas sem descartar edição aberta. Atualizar manual também atualiza vendas por conta. Falhas identificam a conta; usar Atualizar para tentar novamente. Sair/trocar perfil cancela as consultas locais e preserva progresso salvo.
+
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 3.1.0 -->
+<!-- ava-version: 3.2.0.198 -->
+
+> Revisão 3.2.0.198: saldo informado, inclusive zero, é situação normal. A conferência inicial de anúncio importado/vinculado mantém Estoque a confirmar; Confirmar saldo XX abre somente o popup com saldo Online atual, sem formulário de quantidade. Cancelar não grava. Ajustar estoque altera a quantidade separadamente. Confirmar não soma saldos de outros estoques. Sem anúncio ou somente anúncios encerrados/excluídos não recebem essa pendência. Zero não cria aviso de esgotamento; falhas reais de pausa, sincronização e vendas continuam visíveis. A confirmação inicial não é uma conferência periódica de todo cadastro.
+
+<!-- ava-version: 3.2.0.197 -->
+
+> Preferência confirmada: ao excluir anúncios, manter o produto visível em Produtos cadastrados e nos Estoques, com saldo físico preservado.
+
+> Revisão 3.2.0.197: na seção Publicação da ficha do produto, usar Excluir anúncios para conferir e excluir os anúncios das contas exibidas, preservando cadastro, saldos e históricos. A confirmação não apaga o produto local. Anunciados atualiza após confirmação; falha parcial exige nova conferência sem recriar os já excluídos. Não declarar exclusão em moderação ou retorno incerto. ML under_review/forbidden permite exclusão direta; outros estados dependem da regra da plataforma. Esta orientação substitui excluir cadastro nesse botão; outros fluxos de exclusão do cadastro permanecem próprios.
+
+<!-- ava-version: 3.2.0.196 -->
+
+> Revisão 3.2.0.196: resumo não repete Saldo local não informado; a conferência continua nos detalhes do produto. Avisos reais de divergência e pausa pendente preservados.
+
+<!-- ava-version: 3.2.0.195 -->
+
+> Revisão 3.2.0.195: cabeçalho do produto expandido e botão de recolher permanecem abaixo do menu durante o foco. Redimensionamento, foco e mudança de conteúdo recuperam alinhamento imediato sem reiniciar a rolagem interna. Confirmações e navegação preservadas.
+
+<!-- ava-version: 3.2.0.194 -->
+
+> Revisão 3.2.0.194: anúncio com exclusão/encerramento confirmado não deve receber tentativa de estoque ou pendência de pausa. Fila é encerrada por revisão e geração, preservando histórico. Não presumir exclusão por 404/erro de leitura. Inclui as regras de avisos da revisão 3.2.0.193; sem alterar saldos ou vendas.
+
+<!-- ava-version: 3.2.0.193 -->
+
+> Revisão 3.2.0.193: saldo zero confirmado e pausa comprovada não contam como aviso. Qualidade baixa só gera pendência para anúncio ativo. Pausa pendente de anúncio encerrado/excluído não é cobrada; falhas reais, vendas e conferência física pendente permanecem. Contador relê os avisos em segundo plano a cada minuto e após ajustar saldo, sem recarregar listas.
+
+<!-- ava-version: 3.2.0.192 -->
+
+> Revisão 3.2.0.192: produto expandido mantém cabeçalho, seletor de marketplaces e atalhos acessíveis; demais áreas continuam bloqueadas. Confirmações e proteções de gravação permanecem.
+
+<!-- ava-version: 3.2.0.191 -->
+
+> Revisão 3.2.0.191: confirmação de saldo Online zerado usa descritivo curto e botões Cancelar/Confirmar saldo zero. Conferir fisicamente antes de confirmar; Cancelar não grava. Mesma operação de estoque e solicitação de pausa.
+
+<!-- ava-version: 3.2.0.190 -->
+
+> Revisão 3.2.0.190: Ao consultar explicitamente um EAN já cadastrado sem preço de referência, o AvantaPreços pesquisa ofertas verificadas e confirma o preço salvo. Com referência existente, mantém consulta local. Sem ofertas válidas, informa ausência sem inventar preço; EAN e variantes continuam validados. A correção de saldo Online zero da revisão 3.2.0.189 acompanha esta entrega.
+
+<!-- ava-version: 3.2.0.189 -->
+
+> Revisão 3.2.0.189: estoque Online zero confirmado é esgotamento, não saldo desconhecido. Ao zerar, o sincronizador solicita pausa dos anúncios elegíveis; Sem estoque só confirma pausa/inatividade com saldo remoto zero na última conferência. Sem estoque com pausa pendente não comprova conclusão; verificar erros/contas sem ocultar vendas pendentes, conexão ou pausa incerta. Conferência de importação com zero oferece Confirmar saldo zero: contar fisicamente o Online, confirmar no modal e aguardar a pausa de cada conta. O botão sempre seleciona Online; não soma nem altera outros estoques. Cancelar não grava. Ajustar/Confirmar estoque aceita saldo final zero, inclusive 0 → 0, reenfileirando a pausa sem autorizar reposição. Confirmação física pendente não é dispensada nem substituída por leitura da quantidade do marketplace. Não adicionar uma unidade fictícia para destravar. Sem dado ainda informado mostra Estoque não informado/Confirmar estoque, preservando apresentação numérica. Após reabastecer, não prometer reativação automática de pausas manuais. Full e modelos não homologados mantêm restrições. Falha da fila pode ocorrer após confirmar o saldo: conferir avisos; repetir a mesma tentativa não duplica movimentação. Esta orientação substitui a regra antiga de obrigar Adicionar saldo positivo quando o saldo é zero. Sem mudança de permissões, plano ou banco.
+
+<!-- ava-version: 3.2.0.188 -->
+
+> Revisão 3.2.0.188: Em Vendas de Marketplaces, abra o pedido e a faixa Documento e etiqueta. Solicitar DC-e exige perfil PF/PJ não contribuinte e confirmação de que não há solicitação anterior sem retorno. O mesmo botão fica DC-e solicitada e inativo após aceite ou tentativa incerta. O histórico é independente da sincronização e da etiqueta. Expanda Documentos fiscais para consultar situação e arquivos oferecidos pelo ML. NF-e é para PJ contribuinte: importar XML original modelo 55 autorizado em produção (até 2 MB), substituir a NF-e importada antes da impressão ou solicitar emissão pelo Faturador, confirmando certificado A1/cadastro/dados fiscais prontos. Não confundir permissão OAuth com configuração do Faturador. Recurso não localizado (404) não significa ausência de documento. Erro definitivo de envio permite correção; incerteza mantém a reserva. Consultar não emite nem importa. A data de envio programado é um dia civil; impressão/reimpressão só após liberação logística. Downloads de NF-e externa dependem dos arquivos disponibilizados pelo ML. Pós-venda com ações de cancelamento/reembolso/devolução permanece no Mercado Livre. Não afirmar emissão real sem confirmação do provedor.
+
+> Revisão 3.2.0.187: O X à direita de Estoque, junto dos atalhos flutuantes oculta os atalhos da esquerda por 30 segundos e ela retorna automaticamente. Saída para a esquerda, retorno para a direita, com movimento reduzido respeitado. Não muda filtros ou dados.
+
+> Revisão 3.2.0.186: No pedido Web, Solicitar DC-e muda para DC-e solicitada no mesmo botão, inativo inclusive em envio programado e junto à impressão liberada. Abrir/Consultar etiqueta consulta o documento existente no ML sem reenviar. Aviso separado diferencia aceite, emissão concluída, tentativa sem confirmação e consulta indisponível; não afirmar aceite sem evidência.
+
+> Revisão 3.2.0.185: sem impacto operacional; Cancelar anúncio conserva o texto dentro do botão ativo ou desativado, com quebra da linha de ações em telas estreitas.
+
+> Revisão 3.2.0.184: sem impacto operacional; indicador das contas no Marketplaces Web ampliado, com texto Conectando contas... abaixo.
+
+> Revisão 3.2.0.183: Consultar etiqueta permanece disponível no pedido com envio programado ou etiqueta em preparação; a consulta relê o Mercado Livre e não emite DC-e. A impressão depende da liberação logística, separada da emissão fiscal.
+
+> Revisão 3.2.0.182: Após solicitar DC-e, o pedido mostra DC-e solicitada e aguarda a liberação da etiqueta, com emissão inativa inclusive ao reabrir. Consultar etiqueta permanece disponível. Resposta incerta não libera reenvio; falha confirmada antes do envio permite nova tentativa. Etiqueta liberada substitui a espera por Imprimir/Reimprimir.
+
+> Revisão 3.2.0.181: No pedido expandido, Documento e etiqueta agrupa as ações compactas: Emitir DC-e e Consultar etiqueta na pendência fiscal; Imprimir etiqueta quando liberada ou Reimprimir etiqueta depois de impressa. Mensagem acompanha a situação do ML. Atualizar do Pós-venda fica ao lado do título e continua somente consulta. Link externo mostra a conta esperada, mas usa a sessão atual do navegador; não troca a conta do Mercado Livre. Demais regras fiscais/estoque e permissões preservadas.
+
+> Revisão 3.2.0.180: Em Marketplaces Web, abra o pedido e use **Emitir DC-e**, abaixo do aviso fiscal e antes de Pós-venda. Confirme somente para vendedor PF/PJ não contribuinte; PJ contribuinte segue NF-e. O ML informa prazo de até três dias corridos da venda. Fechar o resultado consulta o pedido; **Consultar liberação da etiqueta** relê o envio até aparecer Imprimir etiqueta. Em resposta incerta, consulte antes de repetir: tentativa fica registrada no servidor. Envio programado aguarda liberação pelo ML, não admite emissão enquanto não estiver invoice_pending. Full e Magalu não participam. Não altera valores/estoque. Responder mensagens, cancelar, aceitar devoluções e solicitar reembolsos ainda são ações no ML; AvantaLab consulta o pós-venda. Implementação não comprova emissão fiscal real sem confirmação do provedor.
+
+> Revisão 3.2.0.179: Publicar mantém o popup central durante envio e resultado por conta. Fechar encerra o acompanhamento sem reenviar. Em falha/resultado parcial, conferir Resultado do envio e recarregar os dados antes de nova tentativa. Aviso de foto no rascunho é limpo apenas depois dos envios confirmados, inclusive se a atualização da tela falhar. Confirmação curta Voltar/Publicar preservada.
+
+> Revisão 3.2.0.178: Confirmação da revisão de anúncio foi simplificada: título Publicar alterações?, resumo do que será enviado e contas de destino, botões Voltar/Publicar. Sem mudança na validação ou na publicação.
+
+> Revisão 3.2.0.177: Durante a inclusão da foto, aguarde Carregando na área de adicionar fotos. Erros de arquivo, endereço, conversão ou envio aparecem no mesmo local; tente outra imagem ou repita após corrigir. O resultado permanece ali, sem aviso no topo. Upload não publica o anúncio.
+
+> Revisão 3.2.0.176: Fotos arrastadas da web são importadas pelo link da imagem. WebP/AVIF são convertidos automaticamente para JPEG/PNG, sem baixar e renomear manualmente. Aceita também arquivos WebP/AVIF; limite de 2,5 MB, imagem estática. A foto permanece na preparação até a confirmação de envio e respeita as restrições do anúncio.
+
+> Revisão 3.2.0.175: Na preparação e na revisão de anúncio, arraste uma imagem JPG/PNG de até 2,5 MB para a área de fotos, do computador ou de outra página pública HTTPS. O botão de arquivo continua disponível. A imagem entra na preparação, sem publicar automaticamente. O motivo por conta distingue catálogo confirmado pelo ML de resposta sem informação de catálogo; atualizar a revisão tenta conferir a permissão novamente. Não prometer liberar fotos de catálogo por alterar a conta.
+
+> Revisão 3.2.0.174: sem impacto operacional. Pesquisar e Cancelar anúncio possuem a mesma altura visual e largura igual na Gestão Web.
+
+> Revisão 3.2.0.173: Em Revisar anúncio, fotos são liberadas por conta; adicionar somente nos destinos permitidos, preservando capas e galerias. Recomendações iguais aparecem uma vez. Em Novo anúncio, adicionar fotos, conferir fotos/descrição/ficha técnica e usar Salvar ficha no cadastro para compartilhar o conteúdo nas contas. Salvar não publica nem altera estoque ou preço. A nota acima de 70 é objetivo, calculado pelo ML sem garantia; restrições de catálogo e alcance aparecem por conta.
+
+> Revisão 3.2.0.172: Revisar anúncio mostra automaticamente as recomendações reais do ML, agrupadas entre contas. Cada ação abre só Informações, Fotos ou Ficha técnica; campos protegidos e restrições ficam em Dados preservados e detalhes por conta. Fotos permitidas têm Adicionar fotos do computador. IA aparece quando pode completar dados ou fotos e usa o EAN exato para recuperar galeria do catálogo; valores existentes e fotos são preservados. Cadastro por EAN mantém todas as fotos encontradas, até o limite. Referência de preparo: três fotos reais, mas cumprir essa quantidade não garante nota. Se o catálogo controlar as fotos ou o alcance afetar outro cadastro, informar o impedimento específico; não prometer edição nem aumentar estoque para cumprir uma meta. Sugestões e fotos são revisadas antes de publicar.
+
+<!-- ava-version: 3.2.0.171 -->
+
+> Revisão 3.2.0.171: Ver no estoque recupera a lista de estoques antes de localizar o produto quando a leitura inicial falhou. Se persistir indisponível, usar Tentar novamente; erro de leitura não significa estoque inexistente. Nenhum saldo é alterado.
+
+> Revisão 3.2.0.170: em Qualidade do anúncio, primeiro usar Revisar anúncio. Dentro do popup, Consultar objetivos lê todas as contas vinculadas e mostra cada pendência; os atalhos levam às Informações, Fotos ou Ficha técnica já abertas. Não há botão de consulta na ficha expandida de estoque nem repetição de ações por conta.
+
+<!-- ava-version: 3.2.0.170 -->
+
+> Revisão 3.2.0.169: em Qualidade do anúncio, usar Atualizar objetivos no topo para consultar as contas conectadas e revelar as pendências reais do Mercado Livre. A ação é somente leitura; depois, abrir Revisar anúncio apenas para corrigir e publicar campos editáveis.
+
+<!-- ava-version: 3.2.0.169 -->
+
+> Revisão 3.2.0.168: em Qualidade do anúncio, uma meta que só o Mercado Livre pode resolver fica identificada com a conta correspondente; não abrir link externo sem sessão nem pedir/guardar senha, SMS ou reconhecimento facial. O responsável pela conta conclui o ajuste diretamente no marketplace e, depois, usar Atualizar objetivos no AvantaLab para conferir o recálculo.
+
+<!-- ava-version: 3.2.0.168 -->
+
+> Revisão 3.2.0.167: em Qualidade do anúncio, usar os objetivos pendentes para abrir diretamente Informações, Fotos ou Ficha técnica na revisão. Quando não houver edição homologada pelo AvantaLab, abrir os detalhes por conta para conferir a restrição do Mercado Livre. Conferir e publicar alterações continua sendo uma decisão explícita; a nota é recalculada pelo marketplace.
+
+<!-- ava-version: 3.2.0.167 -->
+
+> Revisão 3.2.0.166: sem impacto operacional na Gestão Web; estabilização interna do estado de Marketplaces preserva abertura de produtos, navegação, foco, rolagem e confirmações existentes.
+
+<!-- ava-version: 3.2.0.166 -->
+
+> Revisão 3.2.0.165: em Marketplaces Web, anúncio com situação Excluído não aparece em Anunciados nem nos vínculos operacionais do produto. Seu registro técnico permanece somente para auditoria, sem apagar produto, estoque, vendas ou financeiro.
+
+<!-- ava-version: 3.2.0.165 -->
+
+> Revisão 3.2.0.164: em Revisar anúncio, o cabeçalho com produto, Completar com IA e Fechar fica visível enquanto o conteúdo da conferência rola. Nenhuma ação, preço, estoque ou anúncio é alterado por esse ajuste visual.
+
+<!-- ava-version: 3.2.0.164 -->
+
+> Revisão 3.2.0.163: ao publicar o mesmo cadastro em outra conta, somente o preço pode variar. Fotos, descrição, ficha, garantia, tipo, envio, condição, EAN e saldo vêm do cadastro; se não houver fotos canônicas cadastradas, completar a ficha antes de publicar. Na revisão, fotos diferentes por anúncio são somente consulta e não devem ser copiadas entre anúncios.
+
+<!-- ava-version: 3.2.0.163 -->
+
+> Revisão 3.2.0.159: sem impacto operacional na Gestão Web; AvantaVendas reutiliza LoadingPontos oficial e atualiza sua marca, sem alterar o componente da Gestão.
+
+> Revisão 3.2.0.160: sem impacto operacional na Gestão Web; somente Gestão Mobile recebe o loading compartilhado.
+
+> Revisão 3.2.0.161: sem impacto operacional; alteração de marca exclusiva do AvantaVendas.
+
+> Revisão 3.2.0.162: sem impacto operacional; correção exclusiva da leitura do loading na Gestão Mobile.
+
+<!-- ava-version: 3.2.0.162 -->
+
+<!-- ava-version: 3.2.0.158 -->
+
+> Publicação 3.2.0.158 confirmada na Web em 25/10/2026: deployment dpl_35yMw6kZUBQHnsXkhtSmApYPFNtL READY e domínio oficial conferido; o build mencionado como pendente na revisão abaixo foi aprovado. Recarregar a página para obter o novo fluxo. Sem alteração de anúncios reais nos testes.
+
+> Revisão 3.2.0.158: em Qualidade do anúncio, usar Revisar anúncio para abrir a revisão geral no formato de Novo anúncio. Objetivos são informativos; detalhes por conta conservam Atualizar objetivos. Formulário reúne informações, fotos e ficha completa, com vazios, protegidos, campos preservados e diferenças por conta. Conteúdo controlado pelo catálogo/identidade é somente leitura com motivo. Preço e saldo são consulta neste editor, conservando seus controles próprios. Resumo flutuante mostra foto/prévia e Preenchimento do rascunho (indicador local de campos editáveis válidos), separado da última nota real do ML; não prometer aumento de nota. Completar com IA no topo pede confirmação da cota, pesquisa evidências e só preenche vazios permitidos do rascunho; conferir fontes e valores antes do envio. Sem comprovação, continuar manualmente nos campos liberados; ausência de sugestões não é necessariamente erro. Publicar alterações confirma anúncios existentes de todas as contas vinculadas suportadas, preserva preço/estoque/identidade e não cria anúncios. Todos os destinos/seções são validados antes da primeira escrita. Falha parcial/resultado incerto interrompe próximas etapas, exibe resultados e exige Recarregar dados e nova revisão, nunca reenvio automático. Cancelar revisão descarta só o rascunho, não desfaz alterações já confirmadas. Substitui as orientações antigas de editores separados/Aplicar melhorias no bloco de qualidade. Sem mudança de permissões, plano ou banco. Publicação pendente do build.
+
+<!-- ava-version: 3.2.0.157 -->
+
+> Revisão 3.2.0.157: Acesso Web mantém a mesma preparação durante sessão, cadastro e plano; loading de pontos também nos módulos e cards que usam o componente compartilhado. Não há Cancelar e voltar ao login nessa espera. Em erro, usar Tentar novamente; fechamento/cancelamento no provedor continua tratado. Publicado na Web em 25/10/2026.
+
+<!-- ava-version: 3.2.0.156 -->
+
+> Revisão 3.2.0.156: Completar com IA pesquisa dados ausentes por EAN/marca/modelo, com até duas ferramentas web e verificação da página, identidade/variante e trecho literal. Exibe fonte clicável e revisão antes de aplicar; dado não comprovado permanece pendente. Não substitui campos existentes, preço, saldo ou identidade. Preencher ficha técnica abre o editor manual; ausência de sugestões não oferece salvar vazio. Novo anúncio e revisão por conta incluem Ficha técnica complementar, com campos opcionais editáveis da categoria e suas opções/unidades, sem obrigar o que ficou vazio. Campos fixos/internos continuam protegidos. Leitura de EAN só traz o que a fonte disponibiliza; não garante nota acima de 70, que depende de outros critérios do ML. Contabilização inclui ferramentas web na cota existente. Revisão obrigatória antes de enviar.
+
+<!-- ava-version: 3.2.0.155 -->
+
+> Revisão 3.2.0.155: ao administrar outro usuário, nome no perfil e acessos autorizados podem ser ajustados, mas e-mail/login/senha globais pertencem ao titular. Oriente-o a editar seus próprios dados ou recuperar a senha no login; não prometa redefinição por outro gestor. Somente Master concede Master. Se plano/franquia não puderem ser conferidos, novas inclusões aguardam recuperação; usuários existentes não perdem acesso. Backups novos são identificados por perfil e download confere titularidade. Legados permanecem na nuvem: titular pode baixá-los diretamente e usar a importação local, sem atribuição automática. Publicado e conferido em 25/10/2026; sem alteração de plano, banco ou arquivos reais.
+
+<!-- ava-version: 3.2.0.154 -->
+
+> Revisão 3.2.0.154: Completar com IA confirma uso de uma pequena parte da cota mensal e revisão antes de aplicar, sem expor custos/modelo internos. Restrições globais de envio não bloqueiam preparar rascunho; identidade e campos fixos continuam preservados. Ao confirmar, cada destino é revalidado; elegíveis são enviados e os demais mostram motivo específico. Resultado parcial não significa sucesso geral e não é reenviado automaticamente. Rascunhos não salvos são descartados ao fechar. Orçamento e permissões preservados.
+
+> Revisão 3.2.0.153: Qualidade compacta separa visão geral, Objetivos pendentes em botões âmbar e Edição manual azul-acinzentada. Fotos do produto/Ficha técnica abrem o editor conjunto; restrições sem editor levam aos detalhes por conta. Objetivos são lidos da avaliação local salva, sem consulta ao ML/IA na abertura; ausência, falha ou avaliação parcial são informadas. Atualizar objetivos consulta as contas; IA mantém revisão antes de aplicar e orçamento existente. Preços individuais, estoque, permissões e edição conjunta preservados. Inclui layout Estoque/Preços sugeridos da 3.2.0.152; demais ambientes sem impacto operacional.
+
+> Revisão 3.2.0.152: Estoques/Produtos cadastrados separam Estoque (saldos por local e etiqueta de pendência), Preços sugeridos (referência, edição/pesquisa, mínimo/médio/ideal) e Expandir/Recolher. Sem alteração em dados, cálculos ou permissões; não confundir sugestões com preços dos anúncios. Demais ambientes sem impacto operacional. Ajuste local, ainda não publicado nesta etapa.
+
+> Revisão 3.2.0.151: Ver no estoque aceita reabertura do mesmo produto, conclui pelo resultado local sem esperar rolagem e permite Cancelar. Falha/tempo excedido libera a tela com Tentar novamente; cancelar descarta resposta antiga, sem alterar dados. Produtos removidos/vínculo inválido exigem conferência. Etiqueta de pausa separa símbolo e quantidade. Demais ambientes sem impacto operacional.
+
+> Revisão 3.2.0.150: resumo de Anunciados organiza qualidade com nota, situações em etiquetas, quantidade acima das ações e bloco Preço anunciado/Preços dos anúncios. O valor é o anúncio sincronizado, não a referência pesquisada. Sem alterações em dados ou anúncios; demais módulos sem impacto operacional.
+
+> Revisão 3.2.0.149: Marketplaces exibe a qualidade real salva nos cards de Anunciados, Estoques e Produtos cadastrados. Em várias contas, mostra a menor nota, sem média inventada; sem avaliação não significa zero. Atualização diária no servidor, em pequenos lotes, sem consultar ML/IA ao abrir cards. Abaixo de 70 gera aviso; filtros de qualidade em Anunciados. **Completar com IA** usa somente GPT-5.4 mini por ação explícita, com evidências do mesmo cadastro/anúncios e fotos já existentes no ML, sem geração/pesquisa externa. Campos sem comprovação permanecem pendentes. Revisar fontes, selecionar sugestões, marcar autorização e aplicar aos anúncios vinculados; preços por conta, estoque e identificação são preservados. Limite próprio de US$ 5/mês por empresa; reserva máxima US$ 0,10 por tentativa, mantida se o consumo ficar incerto, e reaproveitamento por 24h. Edição manual não depende do orçamento. Falha parcial não desfaz envios confirmados: conferir os resultados e refazer análise, sem reenviar automaticamente. A pontuação depende do recálculo do Mercado Livre.
+
+> Revisão 3.2.0.148: em Marketplaces, quando o saldo Online chega a zero e o Mercado Livre não permite confirmar a quantidade (User Product, vínculo incompleto ou depósito), o anúncio é protegido por pausa confirmada; não trate isso como saldo remoto zerado. Para voltar a vender, confira o saldo físico, registre-o no Online e reative: o sistema envia e relê a quantidade antes de liberar o anúncio. Cancelamento de pedido só devolve automaticamente antes de etiqueta/despacho; depois de qualquer avanço logístico, faça entrada manual somente após avaliar a unidade retornada.
+
+> Identificação 3.2.0.147: em Anunciados, EAN ocupa uma linha abaixo do título/descrição; conta/vínculo ficam em linha separada. Sem mudança nos dados ou na busca.
+
+> Revisão 3.2.0.147: Excluir produto confere também o mesmo EAN/UPC nos anúncios sincronizados de todas as contas, mesmo sem vínculo local. Se houver anúncios a excluir, revisar a lista, marcar a confirmação e usar **Excluir anúncios e produto**. O cadastro só é removido após confirmação remota; falha/resultado incerto preserva o cadastro, mas não desfaz anúncios já excluídos. Conferir novamente não exclui automaticamente. Conflito com outro cadastro/variação exige revisão, nunca excluir por semelhança de nome. Sem EAN, a descoberta é limitada aos vínculos. **Todas** em Anunciados inclui o histórico de excluídos; isso não indica anúncio ativo. Não orientar que um anúncio desconhecido/não sincronizado foi conferido.
+
+> Revisão 3.2.0.146: Em Marketplaces, **Qualidade do anúncio** aparece antes de Cadastro do produto na ficha expandida de Estoques e Produtos cadastrados. Em Anunciados, use **Ver estoque** para abrir essa ficha; a qualidade não aparece como média no card do anúncio. Título, descrição, tipo, fotos e ficha técnica são editados uma vez para todos os anúncios vinculados elegíveis, após conferir todos os destinos. O preço continua individual por conta. Estoque local, EAN/identidade e anúncios reais não são alterados por esse editor. Se uma aplicação ficar parcial, confira o resultado exibido e recarregue antes de tentar o restante; o sistema não reenvia automaticamente.
+
+> Revisão 3.2.0.144: sem impacto operacional na Gestão Web; somente apresentação conjunta dos botões da Sala do AvantaVendas restaurada. Não publicado.
+
+<!-- ava-version: 3.2.0.145 -->
+
+> Revisão 3.2.0.145: Carregar link do anúncio usa consulta própria, sem atualizar listas, retratos ou saldo. Exibe Carregando link e libera a ação após sucesso, erro ou limite de espera, sem marcar uma leitura falha como alteração incerta. Recolher a ficha cancela somente a leitura. O foco é único por página: outra ficha recolhe a anterior apenas quando não houver gravação em andamento; limpeza atrasada não remove o bloqueio da ficha atual. Atualizar listas não reabre uma pendência já consumida. A consulta não altera anúncios reais nem estoque; Conferir situação e ações confirmadas mantêm seus fluxos próprios.
+
+<!-- ava-version: 3.2.0.143 -->
+
+> Revisão 3.2.0.143: Novo anúncio valida automaticamente as novas contas selecionadas e as alterações do formulário, após pausa curta na digitação. Leituras limitadas a duas contas por vez; trocar rascunho/seleção cancela respostas antigas. Frete é estimado separadamente por conta, sem repetir consulta por renderização. Pendências exibem motivo e Conferir campo leva ao controle do anúncio naquela conta, nunca ao EAN da pesquisa. Publicar exige confirmação do produto, validação atual e frete revisado; nada é publicado automaticamente. Revalidar contas permite tentar novamente após falha sem recarregar a página, preservando os dados por destino. Anúncios existentes e envios incertos permanecem protegidos.
+
+> Revisão 3.2.0.142: Qualidade do anúncio fica antes de Cadastro do produto. Consultar objetivos de todos lê avaliações reais por anúncio, sem nota agregada. Editar informações, Gerenciar fotos e Editar ficha técnica usam um editor único para os anúncios vinculados elegíveis. Título/nome base, descrição, tipo de anúncio, fotos e características dependem da permissão comum a todos os destinos; somente preço permanece individual. EAN/identidade e estoque não são enviados por esse editor. Revise e confirme antes de aplicar: todas as contas são conferidas antes do primeiro envio, com confirmação separada por destino. Falha parcial não significa sucesso geral; confira os resultados e recarregue antes de tentar novamente. Não repete envios automaticamente. Vínculos incompletos, conteúdo controlado pelo ML ou plataforma não homologada bloqueiam a edição conjunta, sem omitir destinos. Não publica novos produtos nem sincroniza campos ainda sem editor homologado. Entrega local, não publicada.
+
+> Revisão 3.2.0.141: Preparar anúncio aparece em verde e recolhe a ficha antes de abrir Novo anúncio, liberando a página. Rascunhos não salvos da ficha são descartados; nenhuma escrita em andamento é interrompida. Atalhos flutuantes Vendas/Anunciados/Estoque/Pesquisar produtos ficam acima dos cards, mantêm transparência e recolhem o produto antes de executar a ação. Confirmações e carregamentos bloqueantes permanecem prioritários. As quatro ações administrativas de Produtos cadastrados aparecem no cabeçalho, junto de Atualizar, somente quando expandido. Busca continua local e automática; retirado apenas o texto explicativo. Sem alteração de regras de publicação/estoque. Local, não publicado.
+
+<!-- ava-version: 3.2.0.140 -->
+
+> Revisão 3.2.0.140: em Qualidade do anúncio, Consultar/Atualizar objetivos lê nota, classificação e metas reais do ML; o medidor compacto não calcula nota própria. Gerenciar fotos permite preparar JPG/PNG até 2,5 MB, ordenar e remover fotos; somente Revisar e salvar e a confirmação alteram o anúncio. Editar ficha técnica usa campos/valores/unidades permitidos pela categoria; EAN/identidade, catálogo e campos fixos ficam protegidos. Confira os códigos de todos os anúncios afetados pelo mesmo User Product na conta antes de enviar. Não altera estoque, preço ou outras contas. Erro de validação preserva rascunho e permite corrigir; resposta incerta exige Recarregar dados para conferir, nunca reenvio automático. Objetivo só é cumprido quando o ML recalcular e retornar assim; use Atualizar objetivos. Recursos sem API/permissão seguem com orientação/link oficial. Não garante posição nas buscas.
+
+<!-- ava-version: 3.2.0.139 -->
+
+> Revisão 3.2.0.139: Mercado Livre tem Qualidade e objetivos do anúncio no editor e em Anúncios vinculados do produto/estoque. Clique em Consultar objetivos; a nota, classificação, objetivos e datas vêm do ML por conta/ITEM/User Product. Atualizar objetivos faz nova leitura somente por ação manual. Ajustar no AvantaLab abre/focaliza título, descrição, preço ou tipo no editor existente, com permissões remotas e salvamento explícito. Outros recursos levam ao link oficial do ML; nunca aumente estoque para cumprir meta, confirme sempre o saldo físico. Sem avaliação ou acesso negado não significa nota zero. Após salvar, atualize os objetivos e aguarde eventual recálculo do ML. Não é a métrica de Experiência de compra e não garante posição nas buscas.
+
+<!-- ava-version: 3.2.0.138 -->
+
+> Revisão 3.2.0.138: em Anunciados, Ver no estoque mostra “Abrindo produto” com leve escurecimento enquanto localiza a ficha. A ficha aparece recolhida no estoque; o usuário pode expandi-la. Falha oferece tentar novamente sem alterar dados.
+
+<!-- ava-version: 3.2.0.137 -->
+
+> Revisão 3.2.0.137: Conferir e ajustar mostra “Abrindo pendência” com fundo levemente escurecido até localizar, expandir e alinhar a ficha abaixo da barra fixa. Os detalhes mantêm rolagem interna. Se a abertura não concluir, permite tentar novamente sem alterar dados.
+
+<!-- ava-version: 3.2.0.136 -->
+
+> Revisão 3.2.0.136: Conferir e ajustar posiciona a ficha no mesmo ciclo da expansão manual, logo abaixo da barra fixa, sem busca/controles acima do produto. Detalhes mantêm rolagem independente e recolher libera a navegação. Sem novos passos, dados ou permissões; ajuste local não publicado.
+
+<!-- ava-version: 3.2.0.135 -->
+
+> Revisão 3.2.0.135: vínculo e prova do anúncio associado precedem a importação, preservando confirmação física existente. Vínculos importados antigos podem receber prova sem remapear produto nem repetir baixa; pendências genuínas permanecem.
+
+<!-- ava-version: 3.2.0.134 -->
+
+> Revisão 3.2.0.134: vendas recebidas por outro código de anúncio recuperam o vínculo somente quando o Mercado Livre confirma o mesmo User Product ou relação recíproca de estoque de catálogo, na mesma conta e sem variações/conflito. Baixa por pedido ocorre uma única vez; não soma saldos de anúncios, não altera SALDÃO nem repõe estoque antigo. Sem prova, a pendência continua nos avisos para conferência. Nenhum novo anúncio é publicado ou reativado por este fluxo.
+
+<!-- ava-version: 3.2.0.133 -->
+
+> Revisão 3.2.0.133: Conferir e ajustar dos avisos de Marketplaces posiciona o produto expandido abaixo da barra fixa antes de bloquear a rolagem externa. Detalhes continuam com rolagem interna; recolher devolve a navegação. Não muda pesquisa, preço, saldo ou anúncios. Gestão Mobile e Vendas sem impacto operacional. Publicação autorizada, ainda não confirmada.
+
+<!-- ava-version: 3.2.0.132 -->
+
+> Revisão 3.2.0.132: perfis usam consultas agrupadas, mantendo as validações no servidor. A lista não espera todas as logos; Meus módulos busca somente a imagem do perfil escolhido sem bloquear navegação. Dashboard recebe a imagem pelas configurações, sem transferência duplicada. Aparência, permissões, planos e cadastros preservados; nenhum procedimento novo. Publicação autorizada, sujeita ao build completo.
+
+<!-- ava-version: 3.2.0.131 -->
+
+> Revisão 3.2.0.131: AvantaPreços e referências Web usam CampoMoeda oficial: cursor à direita ao focar/clicar, digitação por centavos e máscara imediata 1.234,56, inclusive colagem. Salvar/Atualizar cálculos continua explícito; foco não salva nem pesquisa. PADRÃO AVANTA 1.22.0 somente para moeda, não EAN/quantidade/percentual. Gestão Mobile e Vendas sem impacto operacional. Publicação autorizada, ainda não confirmada.
+
+> Revisão 3.2.0.130: acesso prepara os perfis com consultas agrupadas, mantendo validações no servidor. A lista não aguarda logos de todos os perfis; Meus módulos busca a imagem apenas do escolhido, sem bloquear navegação, e mantém o nome se ela falhar. No Dashboard a imagem vem com as configurações, sem transferência duplicada. Aparência, permissões, planos e cadastros preservados; preparação local, não publicada. Nenhum procedimento novo para o usuário.
+
+<!-- ava-version: 3.2.0.130 -->
+
+> Revisão 3.2.0.129: sem impacto operacional na Gestão Web; reenvio do visual do Vendas com verificação de acesso corrigida, mantendo testes e backend.
+
+<!-- ava-version: 3.2.0.129 -->
+
+<!-- ava-version: 3.2.0.128 -->
+
+> Revisão 3.2.0.128: AvantaPreços/Web mantêm GPT-5.4 mini, até oito ofertas distintas e média de todas as aprovadas. Consulta inicial combina EAN e marca/modelo/variante, com alternativa de varejistas independentes no mesmo orçamento. Até oito páginas já encontradas são priorizadas por modelo e diversidade, conferindo preço e estoque; sem pesquisas para completar a quantidade. Referência anterior preservada se não houver oferta comprovada. Testes reais Kian, Elgin e Conair confirmaram preços e cálculos. Gestão e Vendas sem impacto operacional; publicação autorizada, ainda não confirmada.
+
+> Revisão 3.2.0.127: sem impacto operacional. Manutenção administrativa do histórico técnico do pg_cron com retenção de 30 dias; não altera cadastros, produtos, vendas, permissões ou plano, nem exige nova publicação do aplicativo.
+
+<!-- ava-version: 3.2.0.127 -->
+
+> Revisão 3.2.0.125: pesquisa explícita mantém GPT-5.4 mini, aceita até oito ofertas comprovadas na loja e calcula média de todas elas; não faz pesquisas adicionais para completar a quantidade. Origem bloqueada, variante conflitante ou estoque indisponível não comprova preço. Resultado vazio preserva referência salva. Preparação local não publicada; testes reais mostram cobertura variável. Demais funções sem impacto operacional.
+
+> Revisão 3.2.0.97: atualização manual de preço mantém produto, lista e filtros, aplica somente a ficha pesquisada e exibe o resultado junto à ação no Web e AvantaPreços, incluindo ausência de ofertas, cache e falhas. Anúncios não sincronizam automaticamente ao entrar, por intervalo ou retorno à aba; demais cards permanecem estáveis após a carga e atualizam por ações explícitas. Somente vendas online aplicam atualizações periódicas; pendências completas são consultadas na carga inicial/ação manual. Mantidas sincronização de estoque no servidor, autorização, limites e modelo econômico. Gestão e AvantaVendas sem impacto operacional. Publicação autorizada; enviado/em build não significa publicado.
+
+> Revisão 3.2.0.96: AvantaPreços avisa Produto cadastrado sem preço e orienta referência manual ou Atualizar preço. Preços são conferidos no cadastro e nos valores retornados pelo histórico antes de confirmar sucesso; divergência exibe erro. Pesquisa sem oferta e edição com preço vazio preservam a referência anterior. Sem pesquisa automática, alteração de estoque ou anúncios; sem impacto operacional na Gestão/AvantaVendas.
+
+> Revisão 3.2.0.95: cards de produtos, estoque, anúncios, vendas e base local do AvantaPreços destacam o carregamento com círculo maior, mensagem, superfície na cor do perfil e três prévias de linhas. Após oito segundos avisam da demora, sem porcentagem fictícia nem bloquear a página. Demais fluxos preservados.
+
+> Revisão 3.2.0.94: sem impacto operacional; corrigidos os testes de cancelamento para o estado de carregamento local, preservando todas as verificações e as melhorias de lista e filtros do AvantaPreços.
+
+> Revisão 3.2.0.93: AvantaPreços informa Carregando produto ao abrir histórico/cadastro na base da empresa, sem pesquisa externa. Pesquisando preços fica reservado à pesquisa explícita. Publicação inclui lista inicial completa e filtros .92.
+
+> Revisão 3.2.0.92: AvantaPreços abre a lista da empresa em A–Z sem exigir busca. Pesquisar é opcional; limpar restaura a lista sem mudar o filtro escolhido. Opções: última atualização, data de cadastro (recentes primeiro), anunciados, com estoque e sem estoque; saldo positivo em qualquer estoque não arquivado conta como com estoque. Sem IA/fontes externas.
+
+> Revisão 3.2.0.91: publicação autorizada dos avisos únicos da Gestão Mobile sobre a produção .90. Sem impacto operacional na Gestão Web, Marketplaces ou AvantaPreços. Enviado/em build não significa publicado.
+
+> Revisão 3.2.0.90: AvantaPreços separa Ver produtos e estoque em área exclusiva da base da empresa. Voltar e busca acima; resultados roláveis sob cabeçalho com ordenação e Limpar resultados. Abertura não pesquisa; digitar usa somente cadastro da empresa, sem IA nem fontes externas. Retorno dos detalhes preserva termo/página.
+
+> Revisão 3.2.0.89: sem impacto operacional na Gestão Web. Mobile usa confirmação única e curta após recibo de inclusão/alteração/exclusão; fila e recuperação de falhas preservadas. Sem publicação nesta tarefa.
+
+> Revisão 3.2.0.88: ao expandir produto em cadastros, estoque, anúncios ou vendas, role dentro dos detalhes; a identificação permanece fora dessa rolagem. Mantidas largura, edição, demais ações da página e alinhamento inicial sob os marketplaces.
+
+> Revisão 3.2.0.87: Excluir produto apresenta Confirmar exclusão antes das opções de anúncios. Uma confirmação manual conclui quando não há pendências; bloqueios reais explicam por que a ação está desabilitada. Conferir novamente não exclui automaticamente. Saldo desconhecido não bloqueia; histórico preservado.
+
+> Revisão 3.2.0.86: AvantaPreços abre produto/histórico com o preço salvo e mantém amostra e data da consulta. Nova pesquisa somente ao clicar em Atualizar preço; edição manual permanece disponível.
+
+> Revisão 3.2.0.85: sem impacto operacional. Otimização somente de testes/build/fila de publicação; login, sessão, permissões e dados preservados. Não anunciar publicação desta entrega antes de confirmação.
+
+> Revisão 3.2.0.84: publicação dos ajustes aprovados do AvantaVendas; sem impacto operacional na Gestão Web. AvantaPreços .80/.83 não incluído. Aguardar conclusão da publicação.
+
+> Revisão 3.2.0.83: Web/AvantaPreços usam mini para descobrir links; somente preço/disponibilidade lidos diretamente em Product/Offer da origem entram numa nova referência. Sem estoque, pausado, encerrado, variante divergente, página bloqueada ou dados insuficientes são descartados. Podem existir menos de cinco ofertas ou nenhuma; referência anterior permanece sem ser declarada atual. Cache economiza descoberta por seis horas, mas relê a origem em cada atualização explícita. Limites .80 e uso registrados, sem fallback 5.5. Cancelar é melhor esforço, não estorno garantido. Bloqueio .80 é histórico: .83 tem avaliação da origem; produção somente após recibo. Entrega isolada não inclui AvantaVendas av192/av193; nenhum produto/anúncio publicado nos testes.
+
+> Revisão 3.2.0.82: alinhamento das setas e ampliação sem borda nos materiais do AvantaVendas; sem impacto operacional na Gestão Web. Sem mudanças em arquivos ou dados. Local, não publicado.
+
+> Revisão 3.2.0.81: tema roxo no formulário de consignado do AvantaVendas; sem impacto operacional na Gestão Web, precificação ou integração financeira. Não muda dados nem publica a entrega local 3.2.0.80. Local, não publicado.
+
+> Revisão 3.2.0.80: preparação local de pesquisa com GPT-5.4 mini e controles de consumo compartilhados Web/AvantaPreços. Cache 6h por variante/empresa, cinco ofertas, limites de 5/min usuário, 30/h e 100/24h empresa; sem fallback 5.5. Cache informa reaproveitamento, não nova coleta. Cancelamento propagado não garante estorno; custos sem métricas permanecem desconhecidos. Avaliação real não aprovada por anúncio pausado/preço divergente; NÃO publicado nem migração aplicada. Produção não recebe estes controles até validação da origem. Demais módulos sem impacto novo.
+
+> Revisão 3.2.0.79: Anunciados, Estoques e Produtos cadastrados usam a mesma tarja de situação. Produto local com qualquer anúncio ativo mantém Anunciado, mesmo com saldo zero ou filtro por outra conta. Pausado/Em análise/Desativado seguem a situação; excluídos ou somente locais sem tarja. Histórico de Vendas sem tarja. Pendências .77–.78 incluídas na entrega; não publicar produtos nos testes.
+
+> Revisão 3.2.0.78: ao editar produto em Estoques/Produtos cadastrados Web, cadastro é salvo primeiro; se há anúncios vinculados aplicáveis, perguntar Atualizar os anúncios também? Somente cadastro não altera a plataforma. Revisar anúncios permite escolher cada conta/anúncio e revisar Dados ou Preço de venda; apenas Salvar alterações envia para o anúncio escolhido. Referência não é preço de venda: só usar como sugestão com opção explícita, ou digitar no formulário. Título/descrição dependem de permissão da plataforma; fotos/EAN/categoria não são enviados pelo editor atual. Confirmadas pelo marketplace exige retorno conferido; aguardando confirmação ainda é pendente, não repetir cegamente. Link Abrir anúncio reaparece nos vínculos; Carregar link consulta quando URL ainda não está disponível. Erro não apaga o cadastro local. Local, não publicado, sem alteração real de anúncios ou nova migração.
+
+> Revisão 3.2.0.77: Excluir produto abre diretamente uma confirmação quando não há anúncios vinculados. Não exige confirmar saldo desconhecido nem registrar saída para limpar cadastro duplicado; após confirmar, apaga o cadastro/saldos/consultas do produto escolhido. Vendas/movimentações históricas permanecem independentes do cadastro. Com anúncios, encerrar/excluir explicitamente em todas as contas antes; pausa não basta e falha não significa inexistente. Sem checkbox/arquivamento. Cancelar não altera dados; falha recupera a mesma tentativa. Buscas ignoram acentos/ç e caixa; `maquina` encontra `Máquina`, inclusive em outras páginas. Migrações só preparadas/testadas localmente; não aplicadas/publicadas, nenhum produto real removido.
+
+> Entrega autorizada 3.2.0.76: migração de exclusão/arquivamento aplicada com cadastros e saldos preservados, sem executar remoções. Publicação do sistema solicitada junto das pendências .73–.75; só considerar no ar após confirmação do deploy. As notas de implementação local abaixo são históricas. Não publicar nenhum produto nesta entrega.
+
+> Revisão 3.2.0.76: Web e AvantaPreços oferecem Excluir produto nos detalhes, para gestores/administradores/operadores completos. Conferir todos os estoques e contas vinculadas; saldo positivo ou a confirmar exige saída/transferência ou confirmação real de zero, nunca zerar para burlar o bloqueio. Anúncio ativo deve ser pausado/encerrado explicitamente e conferido novamente; falha/desconexão ou operação pendente bloqueia. Confirmação relê todas as contas. Com histórico/vínculos, arquiva preservando registros; sem uso, exclui definitivamente após ciência e confirmação. Arquivado sai das listas/buscas ativas, não é recriado por sincronização e não apaga anúncios externos. Permissão dedicada de estoque não concede exclusão. Migração apenas preparada/testada em isolamento; não publicada nem aplicada em produção. Sem dados reais alterados.
+
+> Revisão 3.2.0.75: após publicação confirmada, Novo anúncio fecha o produto/preparação, mantém aviso de sucesso, libera controles, atualiza listas e volta ao topo da página sem recarregar. No Magalu, aceite do SKU/análise ainda não é conclusão: só publicado encerra. Erro/resultado parcial/incerto conserva dados para conferir e não volta ao topo como sucesso. Nenhum produto publicado nos testes; correção local não publicada, sem migração.
+
+> Revisão 3.2.0.74: erro de EAN no Novo anúncio leva a EAN do produto no anúncio, nunca ao campo de busca. Campo do anúncio permanece visível e recebe destaque/mensagem inline. Sem EAN, conferir motivo de ausência quando disponível na categoria pelo atalho; não inventar código nem presumir dispensa do ML. Ficha externa usa código da origem; corrigir na origem e revalidar. Sem publicar produto ou dados; correção local não publicada.
+
+> Revisão 3.2.0.73: após recusa em Novo anúncio ML, corrigir campos e tentar novamente sem recarregar. Publicar indica/foca pendências, inclusive confirmação desmarcada e revisão do frete, sem enviar enquanto incompleto. Mensagem próxima do botão explica o próximo passo. Recusa explícita de validação permite nova tentativa; resposta incerta/timeout/resultado parcial mantém proteção e exige conferir Anunciados/ML antes de repetir. Espera limitada libera a interface e mantém os dados. Sem novo produto publicado; correção local, não publicada, sem migração.
+
+> Revisão 3.2.0.72: Novo anúncio ML permite frete grátis opcional; quando exigido pela conta/categoria, fica marcado e bloqueado com aviso. Exibe custo estimado do vendedor por unidade antes de publicar, nunca confundir com preço do produto. Medidas padrão da categoria são identificadas; embalagem manual é usada na simulação e deve ser conferida também nas características. Custo indisponível exige ciência; regras desconhecidas exigem nova consulta. Preço/conta/embalagem alterados invalidam a conferência e a assinatura vence em dez minutos. Sem publicar produto nesta entrega, sem migração.
+
+> Revisão 3.2.0.71: advertências explicitamente não bloqueantes do pré-validador ML não impedem criar anúncio. Somente POST /items/validate com HTTP 400/validation_error e todas as causas válidas do tipo warning recebe esse tratamento; recusa real/vazia/mista e qualquer falha de criação continuam bloqueando. Sucesso exige ID/vendedor confirmados. Atributos internos read_only/inferred não são enviados nem solicitados como obrigatórios, cadastro preservado. Categoria sugerida deve corresponder ao produto; previsão automática não é confirmação. Publicação/reteste autorizados, sem migração.
+
+> Revisão 3.2.0.70: Novo anúncio orienta recusas em português e destaca campos identificados. Prazo da garantia requer quantidade e unidade: ex. 3 meses; não presumir unidade para “3”. Resposta original sanitizada fica em Detalhes técnicos, recolhida. Recusa desconhecida pede suporte sem inventar causa; falha de rede em operação pede conferir a lista antes de repetir. Dados preenchidos permanecem. Correção local, sem publicação ou migração.
+
+> Revisão 3.2.0.69: rodapé de Marketplaces fica no fim da página, sem faixa vazia após ele; Pesquisar produtos continua flutuante, subindo quando o rodapé aparece para preservar links legais. Sem mudança operacional de estoque/anúncios, sessão ou permissões. Publicação autorizada somente do sistema; build em andamento não significa publicado.
+
+> Revisão 3.2.0.68: Novo anúncio consulta o modelo atual da conta de destino no ML. Contas User Products enviam family_name; legadas enviam title, automaticamente, sem novo campo obrigatório para o usuário. Falha ao confirmar conta/modelo não envia anúncio: tentar novamente sem alterar cadastro por suposição. Cópia entre contas usa o modelo do destino. Motivos de recusa permanecem visíveis; sem publicação automática de produto durante testes, sem migração.
+
+> Revisão 3.2.0.67: em Novo anúncio, recusa ML apresenta motivo/código informado pela plataforma e campos identificados. Conferir campo leva ao controle/características, sem apagar preenchimento nem reenviar automaticamente. Título ou característica herdada requer corrigir cadastro de origem e preparar novamente. Sem campo na resposta, informar essa limitação, não presumir falta de estoque/preenchimento. Testes simulados, sem publicação real ou migração.
+
+> Revisão 3.2.0.63: correção do comprovante de consignado no AvantaVendas; sem impacto operacional na Gestão Web ou na integração financeira. Não regrava lançamentos. Publicado em `dpl_8s3BsjTyEPYpnERkpBCkroc6Rzzq`, com domínios oficiais conferidos. Alterações locais 3.2.0.59–3.2.0.62 não incluídas.
+
+> Revisão3.2.0.43: no Web de Marketplaces, produto expandido no estoque mostra tarja verde Anunciado quando possui publicação confirmada. Filtro Todos/Anunciado/Não anunciado entre arrastar e Criar estoque atua antes da paginação, junto à pesquisa e estoque selecionado. Pausados do Mercado Livre continuam anunciados; rascunhos/excluídos não contam. Recolher produto libera a troca do filtro. Sem impacto operacional na Gestão nativa e no AvantaPreços/AvantaVendas; sem migração.
+
+> Revisão local3.2.0.42: consultar EAN digitado ou pelo leitor abre diretamente detalhes e preços quando o produto é identificado, local ou externo. Busca por descrição segue listando resultados para seleção; EAN ambíguo/ausente não abre produto por suposição. Cancelar e proteção contra resposta antiga mantidos. Sem migração ou publicação; sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Publicação3.2.0.41 autorizada: migração20261021040000 aplicada com preservação verificada de102produtos,129saldos e registros de10tabelas. Ficha web completa apenas ausências com fontes e EAN válido; Atualizar preço recupera dados faltantes de produto existente. Sem pesquisa em massa ou alteração de estoque/anúncios. Envio à Vercel em preparação; build iniciado não significa no ar. Notas locais anteriores de migração não aplicada são históricas. Gestão nativa e AvantaVendas sem impacto operacional.
+
+> Revisão3.2.0.41: pesquisa web no AvantaPreços completa EAN válido, descrição, foto e características quando encontrados para o produto exato com fonte consultada. Características/fontes nos detalhes; cadastro preserva campos manuais/saldo/anúncios e Atualizar preço completa produto existente. Dado ausente/ambíguo continua vazio. Migração preparada, não aplicada; não publicado. Sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão3.2.0.40: AvantaPreços mantém EAN, descrição, internet e resultados no início; selecionar um produto abre detalhes com Voltar/Nova pesquisa. Cancelar também encerra busca local e abertura de produto, respostas antigas são ignoradas. Consultas auxiliares têm limite; salvar preço não aguarda histórico. Erro de gravação pede conferir valor antes de repetir. Cancelar não desfaz gravação já recebida. Sem impacto operacional na Gestão nativa e AvantaVendas; sem migração.
+
+> Revisão local3.2.0.39: AvantaPreços tem × para limpar EAN digitado, EAN do leitor e busca por descrição enquanto preenchidos. Apaga só o campo acionado, sem consultar automaticamente ou alterar outro filtro/cadastro. Sem impacto operacional no Web de gestão, Gestão nativa e AvantaVendas; não publicado.
+
+> Revisão local3.2.0.38: no AvantaPreços, Cancelar aparece durante pesquisa na internet/atualização de preço, antes ou depois da identificação do produto. Interrompe acompanhamento e libera o app imediatamente, mantendo a tela atual e ignorando respostas antigas. Não reverte gravação concluída nem garante revogação de tarefa já recebida pelo provedor. Sem impacto operacional no módulo Web de gestão de anúncios, Gestão nativa ou AvantaVendas; não publicado.
+
+> Revisão local3.2.0.37: refinamento visual do estoque, compacto e setorizado. Estoque/operação lado a lado, quantidade e saldo atual do depósito selecionado juntos; notas e Cancelar/Concluir permanecem separados. Sem mudança de permissões, persistência ou instruções de cadastro/post. Sem impacto operacional na Gestão nativa/AvantaVendas; migração não aplicada, não publicado.
+
+> Revisão local3.2.0.36: entrada/ajuste/transferência tem campos setorizados e observações internas opcionais de até160caracteres por produto. Usuários do perfil visualizam no produto, fora da publicação online. Criar post copia para Detalhes editável, revisar antes de gerar; edição do post não salva nota no cadastro. Exige Editar estoque para gravar, revisão protege concorrência e repetição não duplica entrada. Migração apenas preparada, não aplicada nem publicada; sem impacto na Gestão nativa/AvantaVendas.
+
+> Revisão local 3.2.0.35: AvantaPreços oculta o seletor de contas; aviso somente Conectado/Desconectado, sem provedor ou quantidade. Preparação não declara desconexão antes de consultar. Conexão de pesquisa permanece interna; gestão de contas somente no Web. Etiquetas procuram todas as vendas do perfil. Falhas reais são informadas. Sem impacto operacional na Gestão nativa/AvantaVendas; não publicado. Leitor3.2.0.34 já publicado, notas locais anteriores são históricas.
+
+> Revisão local 3.2.0.34: Ler etiqueta procura primeiro nas vendas Mercado Livre registradas no perfil, todas as contas/períodos, pelo ID do envio, sem depender de OAuth ativo nem da conta selecionada. Foto/EAN da mesma conta; sem aproximação por nome ou acesso a outros perfis. Só na ausência de venda local tenta as contas conectadas. Banco indisponível não é ausência. Sem preço/escritas; não publicado. Gestão nativa/AvantaVendas sem impacto operacional.
+
+> Revisão local 3.2.0.33: no AvantaPreços, Ler etiqueta à esquerda e Ler EAN à direita, também na ordem de teclado e na prévia local. Mantém comportamento, modal e acesso. Não publicado; sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão local 3.2.0.32: Ler etiqueta no AvantaPreços também mostra Código da etiqueta (ID do envio lido) e EAN de cada produto, sem preço nem bipagem de conferência. EAN validado da ficha/variação correta; ausente mostra Não informado, sem presumir SKU ou EAN do pai. Somente Fechar; sem alteração de estoque/venda. Prévia fictícia local, não publicado; configuração OAuth real ainda pendente. Sem impacto operacional na Gestão nativa/AvantaVendas.
+
+> Revisão local3.2.0.31: no AvantaPreços, Ler etiqueta fica junto a Ler EAN. QR Mercado Livre → consulta autorizada → foto e descrição dos produtos em modal com somente Fechar. Sem preço, bipagem de conferência EAN, cadastro, histórico de preços, movimentação ou despacho. Prévia fictícia em validacao-etiqueta; teste real local exige configuração OAuth segura. Não publicado. Sem impacto operacional na Gestão nativa e no AvantaVendas.
+
+> Revisão 3.2.0.30: compactação de scripts exclusiva do AvantaVendas. Sem impacto operacional na Gestão Web, autenticação, permissões ou dados.
+
+> Revisão 3.2.0.29: distribuição compacta exclusiva da Gestão Mobile, com lógica e URLs preservadas. Sem impacto operacional na Gestão Web; login/permissões/dados não alterados.
+
+> Revisão de infraestrutura 21/10/2026, aplicação 3.2.0.28 mantida: WWW corrigido e proteções de cache/cabeçalhos aplicadas no Cloudflare/Vercel, sem impacto operacional. Login, permissões e dados não alterados; não orientar reinstalação, limpeza de dados ou nova senha. Auditoria em `docs/auditorias/cloudflare-entrega-web-2026-10-21.md`.
+
+> Revisão 3.2.0.28 (prevalece sobre notas históricas): Magalu passa a compartilhar Anunciados, editor, avisos e conferência Online/anúncios com ML. Pedido novo aprovado baixa por SKU/conta uma vez; histórico anterior à ativação não é rebaixado. Zero só conclui após saldo zero e pausa relidos. Pausa manual preservada; cancelamento não repõe fisicamente por suposição. Reposição espera pedidos recentes/completos. Atualização Magalu é periódica, não instantânea; 202 significa processamento. Etiquetas pelo portal e taxas indisponíveis explicitadas; Full/Multi-Origem protegidos. Sem integração financeira nem impacto operacional no AvantaVendas/Gestão nativa. A versão3.2.0.27 já foi publicada; notas locais .27 abaixo são históricas.
+
+> Revisão local 3.2.0.27: produto → Publicação → Estoque dos anúncios → Conferir saldos/Resolver compara Online e anúncios por conta; aviso compacto junto ao saldo e nas pendências abre a mesma conferência. Escolha Online para anúncios ou importe UMA origem (não soma contas); confira físico e confirme. Saldão/outros preservados. Zero requer confirmação adicional e pausa relida; fila/erro não significa concluído. Pausas manuais nunca são reativadas automaticamente. Mercado Livre elegível; Magalu não incluído. Venda exige saldo positivo e permissão. Migração somente testada localmente; não publicado.
+
+> Revisão local 3.2.0.26: Venda/Registrar venda exige permissão e saldo positivo em algum estoque. Online zerado não impede venda pelo Saldão abastecido; formulário escolhe origem com saldo, sem modificar tentativas guardadas. Sincronização: Mercado Livre baixa pedido vinculado uma vez do Online e enfileira saldo para seus anúncios elegíveis no mesmo cadastro; não é instantâneo. Magalu importa vendas/avisos, sem baixa ou sincronização de saldo automática implementada. Cancelamento não devolve unidade automaticamente. Local, não publicado.
+
+> Revisão local 3.2.0.25: Criar post do AvantaPreços usa Detalhes para qualquer condição (Novo/Usado/Com avaria). Observações opcionais até 160 caracteres; Com avaria exige explicar a condição. Conteúdo é preservado ao trocar condição, aparece ampliado na imagem. De maior/tachado, Por à direita, pílulas maiores. Não altera cadastro/estoque/venda. Ainda não publicado.
+
+> Revisão local 3.2.0.24: AvantaPreços com SVG Atualizar saldos simplificado e pílulas de saldo numérico acessíveis. Online vazio/zero mostra 0 un.; quantidade positiva é mantida independentemente de confirmação. Não altera banco ou saldo automaticamente. Foto anterior difere dos bundles públicos .23; após publicação, fechar/reabrir PWA conectado, sem apagar dados/reinstalar. Local, não publicado.
+
+> Revisão local 3.2.0.23 substitui a orientação .22 sobre saldo: em Estoques e Produtos cadastrados, Preparar anúncio sem saldo online mostra “sem estoque disponível” ao lado do botão e não abre o preparo. Corrigir o saldo online permite continuar; saldo offline não conta. Com saldo, cadastro incompleto continua permitido para completar em Novo anúncio. Ainda não publicado.
+
+> Revisão local 3.2.0.22: Estoques e Produtos cadastrados → expandir produto → Publicação → selecionar conta autorizada → Preparar anúncio. Abre Novo anúncio preenchido com os dados locais, mesmo sem saldo, categoria ou foto. Revisar os campos destacados; categoria/opções são confirmadas na conta. Cadastro mínimo não impede preparo; publicação exige dados válidos, saldo online suficiente e confirmação. Preparo não altera cadastro/estoque nem publica. Magalu também mostra a ficha antes de selecionar categoria. Ainda não publicado.
+
+> Publicação 3.2.0.18 em 20/10/2026: refinamentos .14–.18 do AvantaPreços e Online/Saldão no card Vendas publicados. Criar post → revisar foto/descrição, voltagem/condição/avaria → informar De real e Por → Gerar post → revisar → Compartilhar post ou Baixar imagem. Cor primária do perfil; sem alteração de cadastro, saldo ou financeiro ao gerar imagem. Fechar/reabrir PWA sem apagar dados; compartilhamento real depende do aparelho e será testado pelo responsável. Notas locais .14–.18 abaixo são históricas; demais trabalhos locais não foram publicados.
+
+> Publicação 3.2.0.07 confirmada em 20/10/2026: ajustes de acesso/retomada exclusivos do AvantaVendas no ar, sem impacto operacional na Gestão. Notas locais .07 abaixo são históricas. Sem migração, mudança financeira ou de permissões.
+
+> Produção 3.2.0.02 confirmada em 19/10/2026 nos dois domínios: revisões 01–02 publicadas. Cabeçalhos com ações compactas de 32 px e expandir/recolher somente setas; Estoques no AvantaKanban, padrão Vendas → Anunciados → Estoques → Produtos, com seis pontos e teclado. Ordens personalizadas antigas preservadas na mesma chave por usuário/empresa. Notas locais 01–02 abaixo são históricas. Recarregar Web sem apagar dados/preferências; sem impacto operacional na Gestão nativa/AvantaVendas/PWA, sem migração ou movimentação real.
+
+> Produção 3.2.0 confirmada em 19/10/2026 nos dois domínios: migração aplicada e estoques separados disponíveis no Web/AvantaPreços. Os 65 produtos e saldos antigos foram preservados no Online; nenhuma movimentação ou permissão real alterada. Notas locais 71/3.2.0 e pendências de publicação abaixo são históricas. Criar/renomear estoques, Dar entrada, Ajustar saldo final e Transferir usam a mesma base por perfil. Só Online alimenta anúncios. Baixa manual por venda offline e novos critérios de cancelamento ficam para a próxima etapa; Gestão nativa/AvantaVendas sem impacto operacional. Recarregar Web ou fechar/reabrir PWA, sem apagar dados/reinstalar. Teste autenticado com o responsável.
+
+> Produção 3.1.0.70 confirmada em 19/10/2026 nos dois domínios: revisões 65–70 publicadas. Salvar usuário termina silenciosamente, setas liberadas após salvar, Senha placeholder ****. Pendências no alerta à esquerda do mês com painel compacto; título alinhado ao seletor e mesma altura visual. Vendas/Anunciados com círculo durante consulta real; cards inicialmente recolhidos e atualização passiva preservados. Notas locais 65–70 abaixo são históricas. Recarregar sem apagar dados/reinstalar; ensaio autenticado com o responsável. Nenhuma permissão ou quantidade real alterada no deploy.
+
+> Produção 3.1.0.51 confirmada em 19/10/2026: consulta/cadastro/estoque das revisões 49–51 disponíveis, migrações instaladas e consultas antigas vinculadas sem saldo presumido. Sem quantidade: Produto fora de estoque / Estoque a ser inserido / Adicionar → quantidade → Concluir. Saldo positivo: Já em estoque / quantidade / Editar saldo final; zero volta a fora de estoque / 0 unidades / Adicionar. Bipe reutiliza o cadastro por EAN, sem somar unidades nem pesquisar novamente; Atualizar preço é explícito. Notas locais/pending abaixo são históricas. Recarregar Web ou fechar/reabrir PWA sem apagar dados/reinstalar; entrar se a sessão tiver expirado. Ensaio autenticado pelo responsável; não informar que gravamos saldo real no deploy.
+
+> Produção 3.1.0.48 confirmada em 19/10/2026, migração instalada. Recuperar fotos completou os 28 produtos sem imagens da Saldão Aline, com fotos carregando e demais campos preservados. Importar/reimportar preenche somente cadastros vazios; nunca substitui fotos existentes/manuais. Na pílula Referência, seta circular pesquisa ofertas atuais e atualiza somente a média local e seus três preços calculados, não preços dos anúncios nem lotes salvos. Recolher detalhes antes de pesquisar; aguardar sem repetir, atualizar a lista após resposta incerta. Falha/sem ofertas mantém referência; edição concorrente não é sobrescrita. Notas locais 48 abaixo são históricas. Exclusivamente Web.
+
+> Produção 3.1.0.47 confirmada: revisões 44–47 disponíveis e migração de configurações instalada. Notas locais 44–47 abaixo são históricas, inclusive a antiga pendência do banco. Configurações do AvantaPreços reúne percentuais da referência/aparência por empresa; novos cálculos Web/PWA usam a regra compartilhada, lotes salvos preservam valores. Card de produtos é somente Web: referência em pílula estável e todas as etiquetas confirmadas visíveis, quatro por linha. Recarregar sem apagar dados/reinstalar. Build e arquivos/APIs conferidos; ensaio autenticado com o responsável. Nenhum anúncio publicado no deploy.
+
+> Produção 3.1.0.41 confirmada em 18/10/2026: ajustes 37–41 de busca automática em Produtos e estoque, atalho com 20% de opacidade, seletor compacto e Contas conectadas somente com seta e inicialmente recolhido. Notas locais 37–41 abaixo são históricas. Recarregar a página, sem reinstalar ou apagar dados. Domínios/arquivos/APIs protegidas conferidos; interação autenticada produtiva/leitor físico com o responsável. A revisão local 42 pertence a outro trabalho, não publicado por esta entrega.
+
+Na revisão 3.2.0.73, **Revalidar dados** recarrega a ficha/categoria de origem sem apagar preço ou descrição digitados. Usar após corrigir o cadastro de origem; não publica nem altera saldo. Continua sendo necessário revisar e confirmar antes de enviar.
+
+> Revisão 3.2.0.122: publicação reutiliza EAN ativo da empresa sem alterar referência ou saldo. Duplicados existentes exigem abrir o cadastro correto; não somar estoques nem escolher preço automaticamente. Proteção adicional de EAN depende da migração desta versão. Local, não publicado.
+
+> Revisão 3.2.0.123: gestor pode aprovar Excluir produtos no usuário do AvantaPreços. Desligado por padrão; independente de Editar estoque/Registrar vendas. Ao abrir produto, autorizados veem Excluir produto e confirmação. Todas as contas vinculadas são conferidas; anúncios não são excluídos automaticamente. Histórico de vendas preservado. Migração/permissão e interface preparadas, não publicadas. Duplicados legados não são removidos automaticamente.
+
+> Revisão 3.2.0.124: sem impacto operacional na Gestão Web. Somente visual da preparação do AvantaVendas, sem backend.
+
+<!-- ava-version: 3.2.0.124 -->
+
+Revisão 3.2.0.121: Marketplaces Web oferece Vendas, Anunciados e Estoque à esquerda do rodapé e pesquisa à direita, todos compactos e com a mesma aparência. Abrem e alinham o card existente, sem trocar filtros ou pesquisar externamente. Produto em foco deve ser recolhido antes. Em telas estreitas usam ícones acessíveis. Gestão Mobile e AvantaVendas sem impacto operacional; local não publicado.
+
+Revisão 3.2.0.120: Anunciados oferece Ver no estoque ao lado de Ver anúncios, levando ao ID vinculado no card Estoques, destacado e recolhido. Expandir permite editar; Voltar à lista retorna aos demais. Sem vínculo a ação é inativa, sem cadastro duplicado/pesquisa externa. Gestão Mobile e AvantaVendas sem impacto operacional.
+
+Revisão 3.2.0.119: Fichas de Produtos cadastrados/Estoques com Expandir/Recolher textual usam pílula e foco exclusivo no produto, com rolagem interna. Recolher desmonta rascunho não salvo, restaura interação/rolagem e mantém envios protegidos. Controles só com seta, Gestão Mobile e AvantaVendas sem impacto operacional.
+
+Revisão 3.2.0.118: Cancelar anúncio no topo e rodapé fica inativo na ficha vazia; digitar EAN/nome ou carregar produto o habilita. Limpar volta a desativá-lo, e preparação/envio continuam bloqueando a ação. Sem impacto operacional na Gestão Mobile e AvantaVendas; local não publicado.
+
+Revisão 3.2.0.117: Novo anúncio oferece Cancelar anúncio no topo, ao lado de Pesquisar, e mantém o do rodapé. Ambos limpam a preparação pelo mesmo fluxo e ficam indisponíveis durante preparação/envio. Inclui preenchimento pela origem e agrupamento 115–116; sem impacto operacional na Gestão Mobile e AvantaVendas. Publicação do sistema autorizada, sem publicar produtos.
+
+Revisão 3.2.0.116: Anunciados reúne anúncios vinculados ao mesmo cadastro local em um grupo, com contagem de contas/anúncios, situações e faixa de preços. Expandir permite editar ou abrir cada anúncio por conta. Saldo Online compartilhado aparece uma vez e não é somado. Sem vínculo local, anúncios permanecem separados. Paginação preserva grupos completos. Sem impacto operacional na Gestão Mobile e AvantaVendas; ajuste local não publicado.
+
+Revisão 3.2.0.115: Anunciar em mais contas abre os dados já preenchidos a partir do anúncio de origem, inclusive com EAN; revalidar não os substitui pelos dados comerciais locais. Valores da origem temporariamente ausentes das opções continuam visíveis, mas precisam de validação na conta nova. Contas existentes são conferidas pelos vínculos persistidos e ficam bloqueadas. Campos editáveis preservados; EAN e saldo Online únicos. Sem impacto operacional na Gestão Mobile e AvantaVendas. Ajuste local não publicado.
+
+Refinamento visual da 3.2.0.114: contas de destino usam até três colunas conforme o espaço do formulário; telas estreitas reduzem a grade sem mudar seleção, validação ou bloqueio das contas já anunciadas.
+
+Revisão 3.2.0.114: Marketplaces: preparação com seleção de contas ao final, contas já anunciadas marcadas e bloqueadas, validação e resultado por conta, repetição sem duplicar envios confirmados e confirmação separada para atualizar dados comerciais existentes. EAN e saldo Online comuns ao cadastro; envio prioritário de alterações de estoque com fila durável, confirmação remota e preservação das pausas manuais. Magalu mantém o processamento assíncrono e exige revisão dos campos de sua categoria. Nenhum produto real publicado durante os testes. Gestão Mobile e AvantaVendas sem impacto operacional.
+
+Revisão local 3.2.0.113: expandir manualmente Contas conectadas, Vendas, Anunciados, Estoques ou Produtos cadastrados alinha o card abaixo do cabeçalho e das marcas. Recolher ou atualizar dados não movimenta a página por essa regra; foco e preferências de movimento são preservados. Ainda não publicado.
+
+Produção 3.2.0.112 confirmada READY/PROMOTED em 23/10/2026: limpeza do Novo anúncio, botões e correção da leitura das contas disponíveis nos domínios oficiais, com restauração 3.2.0.109 preservada. Notas locais 110–112 abaixo são históricas. Publicação em várias contas de uma vez ainda não existe nem foi implementada nesta entrega.
+
+Revisão 3.2.0.112: ações do Novo anúncio ML ficam à direita na ordem Cancelar anúncio (vermelho), Revalidar dados (azul) e Publicar (verde), com destaque e efeito de clique. Funções e confirmações não mudam: cancelar descarta só o rascunho; revalidar consulta os dados; somente Publicar pode enviar após validação e confirmação. Ajuste local, não publicado.
+
+Revisão 3.2.0.111: Contas conectadas e Anunciados compartilham uma consulta em andamento, sem duplicar a leitura inicial nem guardar permissões em cache permanente. Consulta tem prazo de 30 segundos, incluindo a sessão. Demora mostra aviso de consulta e permite Atualizar contas, preservando contas já carregadas; sucesso limpa o aviso. Timeout não significa desconexão nem exige nova autorização. Troca de perfil descarta respostas antigas. Sem alterar OAuth, banco ou anúncios; correção local, não publicada.
+
+Revisão 3.2.0.110: Novo anúncio ML omite avisos repetitivos de preparo e a ajuda fixa do EAN preenchido. Validar EAN aparece apenas se o código local mudar ou houver erro de EAN; não é pesquisa de produto nem dispensa revisão/validação da conta e categoria. Cancelar anúncio (antes Limpar preparação) descarta somente o rascunho e libera novo preparo; não cancela anúncios publicados nem altera cadastro/estoque. Erros e pendências continuam visíveis. Ajuste local, não publicado.
+
+Revisão 3.2.0.109: Produtos cadastrados obtém a quantidade diretamente do servidor e carrega a lista apenas ao expandir, sem bloquear a página pela contagem. Atualizar com o card recolhido atualiza só o total. A Gestão preserva o módulo já aberto quando revalida permissões do mesmo perfil, evitando uma segunda preparação; acesso revogado/troca de perfil continuam efetivos. Preparar anúncio leva Novo anúncio ao topo útil, abaixo da navegação, e mantém o alinhamento ao concluir a preparação, sem atualizar todas as listas. Prévia com foto e campos alinhados incluída na entrega autorizada; só anunciar publicação quando a Vercel confirmar READY e domínios.
+
+Revisão 3.2.0.108: Preparar anúncio no Web organiza campos à esquerda e Prévia do anúncio à direita, com foto, título, preço, quantidade e condições preenchidas, atualizados na edição. Descrição e características/ficha técnica podem ser abertas dentro da prévia. A foto ausente mostra Sem foto. A prévia acompanha a rolagem e não representa anúncio já publicado nem a aparência exata no marketplace. Topo, datas, marcas, confirmação e fluxo de envio não mudam. Ponto local anterior 3.2.0.107 preservado; sem publicação do sistema.
+
+Revisão 3.2.0.107: laboratório de Preparar anúncio disponível somente no desenvolvimento local em `/marketplaces/simulacao-preparo`. Usa dados fictícios e o formulário real, incluindo resumo flutuante e frete simulado. Escolha Sucesso, Recusa com erro no campo ou Resposta incerta; revise e marque a confirmação antes de Simular publicação. Reiniciar teste/trocar cenário descarta edições. Não conecta conta, consulta ML, grava estoque ou cria anúncio real. Não valida a integração OAuth/API. O módulo operacional e seus controles permanecem iguais; sem publicação do sistema.
+
+Revisão 3.2.0.106: no Web, o Resumo da preparação acompanha a rolagem à direita e permanece centralizado na área útil abaixo dos controles fixos. Se necessário, role dentro do resumo ou use o teclado. Largura reduzida/zoom mantém resumo no fluxo da página. Campos e confirmação de envio preservados; não publicado.
+
+Revisão 3.2.0.105: no Web, Preparar anúncio de Mercado Livre e Magalu mantém campos, pendências e ações na coluna esquerda e Resumo da preparação à direita. O resumo acompanha os dados editados do rascunho; quantidade para publicar não confirma saldo novo. Preparar não publica nem altera cadastro/estoque. Publicar/Enviar anúncio continuam exigindo revisão, validação e confirmação. Topo, datas e botões dos marketplaces preservados. Sem pesquisa nova de categoria ou publicação desta entrega.
+
+Revisão 3.2.0.104: Atualizar anúncios mantém lista e total conhecidos se a mesma seleção falhar, identifica conta/etapa pendente e continua nas outras contas; não garante atualização remota quando houver recusa. Filtro Ativos oferece Ver todas as situações. Sem mudar permissões, preços ou estoque. Gestão mobile e AvantaVendas sem impacto operacional. Sem publicação nesta etapa.
+
+Revisão 3.2.0.103: Preparar anúncio em Marketplaces mostra carregamento central padrão com fundo translúcido e formulário não interativo, removido no sucesso ou erro. Não significa publicação do produto. Gestão mobile e AvantaVendas sem impacto operacional. Sem publicação nesta etapa.
+
+Revisão 3.2.0.102: avisos de ações de preço no Web e AvantaPreços expiram após 20 segundos e ao encerrar/trocar o produto, sem duplicação. Não confundir aviso transitório com pendência real ou estado sem referência. Preços e cadastro preservados; demais módulos sem impacto operacional. Sem publicação nesta etapa.
+
+Revisão 3.2.0.101: Busca geral de preços ampliada com GPT-5.4 mini: termos mais curtos e identificadores do cadastro, distinção entre modelo e medidas, validação de variante e exclusão de vitrines de peças. Uma recuperação limitada tenta outras fontes quando não há ofertas válidas, respeitando cancelamento, tempo e custos. Média dos até cinco menores preços válidos; abertura local e referência anterior preservadas. Sem impacto operacional nos demais módulos; publicação autorizada, envio/build não significa publicado.
+
+Revisão 3.2.0.100: valores do AvantaPreços ficam em lista vertical, um por linha, em todas as larguras. Sem impacto operacional na Gestão Web; preços, pesquisa e cálculos preservados. Sem publicação nesta etapa.
+
+Revisão 3.2.0.99: OpenAI GPT-5.4 mini volta a fornecer preços totais, lojas e fontes. O servidor calcula a média das até cinco menores ofertas válidas e aplica os percentuais configurados, sem depender de leitura adicional do HTML das lojas. Cache reaproveita preços e fontes da pesquisa recente, sem afirmar nova conferência. Abertura continua somente local e referências não são apagadas em falhas. Demais módulos sem impacto operacional. Publicação autorizada após validar preços e cálculos no Web e AvantaPreços.
+
+Revisão 3.2.0.98: pesquisa explícita também verifica a oferta principal Amazon quando não há dados estruturados, usando somente a variante identificada com estoque e compra habilitada. O preço confirmado forma a referência e os preços mínimo, médio e ideal conforme percentuais configurados. Mantidos GPT-5.4 mini e limites; cache antigo sem ofertas não é reutilizado. Sem impacto operacional nos demais módulos. Versão ainda não publicada.
+
+> Revisão 3.2.0.66: a validação inicial do acesso tem limite de 15 segundos. Falha de sessão/rede não dispara logout: a cena deixa de carregar e mostra Tentar novamente, que recarrega a mesma URL sem limpar sessão/armazenamento. Não orientar apagar dados, reinstalar ou repetir credenciais por uma falha transitória. Conteúdo protegido continua exigindo identidade confirmada e autorizações. Sem migração; Marketplaces 3.2.0.65 e consignado av191 preservados.
+
+> Revisão 3.2.0.65: Marketplaces reconfere automaticamente os anúncios já cadastrados, inclusive excluídos ausentes da busca. A lista exibe o estado remoto confirmado sem substituir uma edição aberta. Falha mantém último estado e gera aviso de conferência parcial; não presumir exclusão por erro/404. Conferência periódica é eventual, não instantânea. Rodapé institucional incluído; preservada a correção de consignado av191. Migração de progresso não altera estoque nem executa pausas em massa.
+
+> Revisão 3.2.0.64: todos os módulos Web de página própria têm rodapé institucional com a versão de seu próprio pacote, inclusive Marketplaces dentro do iframe da Gestão. Projetos preserva o modo de mapa em foco. Ponto/Conteúdo AvantaVendas usam o rodapé da Gestão, sem cópia interna. Não deduzir versão de um iframe pelo rodapé do hospedeiro. Recarregar não comprova pausa remota; conferir situação do anúncio. Sem publicação ou migração.
+
+> Revisão 3.2.0.62: em Estoques, “Produto da pendência” e “Voltar à lista” ficam agrupados com fundo discreto à direita dos seletores. Voltar restaura a lista com os filtros atuais, sem resolver a pendência ou alterar dados. Grupo acomoda larguras menores. Sem publicação ou nova migração.
+
+> Revisão 3.2.0.61: cadastro local único prevalece na divergência de importação; não sobrescrever dados nem criar duplicado, apenas pedir estoque físico Online. Com vários candidatos, escolher cadastro nos avisos e depois confirmar quantidade no produto. Escolher cadastro não encerra o aviso de estoque. Ações de anúncio usam a conta confirmada mesmo em Todas as contas/ficha recolhida; sucesso exige retorno confirmado e resultado pendente continua nos avisos. Nova leitura do estado/valores encerra a pendência comprovada; não repetir envio incerto. Migração local refinada, não aplicada; não publicado.
+
+> Revisão 3.2.0.60: tarjas são situações de publicação, não saldo: Anunciado prevalece sobre Pausado, Em análise e Desativado entre as contas consideradas. Todos excluídos/sem vínculo: sem tarja. Ao sincronizar anúncios externos, importar cadastro ou vincular por identidade segura no perfil; não importar unidades. Nova vinculação pede confirmar quantidade física Online, preservando saldo existente. Confirmação em Ajustar estoque encerra a pendência; não usar soma de contas. Ambiguidade/variações geram aviso para revisão sem novo cadastro por suposição. Migração local pendente, sem publicação.
+
+> Revisão 3.2.0.59: o título Estoques mostra o total de produtos com saldo positivo no estoque selecionado, sem influência de conta, publicação ou busca. Produtos listados mostra separadamente o total dos resultados filtrados, não apenas a página atual. Atualizar e mudanças de cadastro/saldo renovam o total; filtrar/paginar não. Sem publicação.
+
+> Revisão 3.2.0.58: expandir produto pelo título ou seta em Estoques/Produtos cadastrados rola seu início para logo abaixo do seletor de marketplaces. Recolher não move a página; atualização de dados não rouba a posição. Sem publicação.
+
+> Revisão 3.2.0.57: produto expandido → Publicação → Anúncios vinculados permite Conferir situação e ações suportadas por conta: Pausar, Reativar (saldo Online positivo), Encerrar e Excluir após encerramento. Confirmação antes de alterar. Tarja/filtro Anunciado agora exigem anúncio ativo; outro ativo mantém tarja. Não apagar produto nem saldo Saldão. Resultado incerto exige conferir antes de repetir. Não publicado.
+
+> Revisão 3.2.0.56: sincronização Online em duas colunas no Web; anúncios em páginas de três. Escolher direção/origem, Continuar e confirmar físico/zero na etapa seguinte. Alterar direção retorna sem salvar. Sem mudança nas regras de saldo/pausa; sem publicação.
+
+> Revisão 3.2.0.55: nos avisos Web, Conferir e ajustar abre o produto em Estoques Online, o anúncio ou o pedido na conta correta, conforme a pendência, com detalhes abertos. Não sincroniza nem salva automaticamente. Voltar à lista encerra a consulta direcionada; item ausente mostra erro. Sem migração/publicação.
+
+> Revisão 3.2.0.54: avisos de falta/divergência de estoque ignoram anúncios pausados, inativos, encerrados, excluídos ou cancelados, em Mercado Livre e Magalu. Um vínculo ativo do mesmo produto continua sendo conferido; estado desconhecido não é tratado como desativado. Contador usa avisos aplicáveis, sem recriar alerta pela fila bruta. Vendas já registradas aguardando baixa e falhas de conexão/pausa não confirmada permanecem visíveis. Fila e dados não são alterados; reativar anúncio volta a avaliar saldo. Mesma regra nas indicações Web/AvantaPreços. Sem migração/publicação; sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão 3.2.0.53: Estoques Web agrupa seleção e ações em uma faixa compacta, alinhada à esquerda; Renomear/Usar online/Arquivar ficam junto aos nomes, com divisor e identificação acessível do estoque selecionado. Cores por identidade passam a paleta sóbria de azul/cinza/verde/areia, estável e com contraste verificado; mesma paleta nas etiquetas de vendas diretas Web/AvantaPreços. Seleção mantém marca de confirmação e contorno, Arquivar mantém semântica destrutiva. Sem seletor de cor personalizado, migração ou publicação; dados/permissões preservados e sem impacto operacional na Gestão nativa/AvantaVendas.
+
+> Revisão 3.2.0.52: histórico/detalhes de vendas diretas no Web e AvantaPreços separam Situação da venda e Devoluções em seções verticais distintas, cada uma com título, divisor e espaçamento. Motivo do cancelamento permanece na situação da venda; devoluções só aparecem com retorno registrado. Mesmo arranjo em desktop/mobile, sem competir na mesma linha. Sem alteração de dados, estoque, permissões ou fluxo; sem migração/publicação e sem impacto operacional na Gestão nativa/AvantaVendas.
+
+> Revisão 3.2.0.51: vendas diretas no Web e AvantaPreços mostram somente Venda confirmada ou Venda cancelada quando nenhuma unidade foi devolvida. Havendo devolução física registrada, mostram informação separada: Devolução parcial (quantidade de total) ou Devolução total, com singular/plural correto. Não altera venda, estoque, totais, permissões nem fluxo de cancelamento/devolução. Sem migração/publicação; sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão 3.2.0.50: Próxima e Anterior nas listas de Anunciados, Estoques, Produtos cadastrados e catálogo do AvantaPreços mudam a página e, após o carregamento, rolam ao topo do respectivo card. Estoque usa o card do depósito, não a sublista. Título recebe foco sem rolagem adicional; cabeçalhos fixos e movimento reduzido respeitados. Filtros/contas/estoque preservados, sem rolagem em atualização automática. Sem migração/publicação ou impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão 3.2.0.49: no Web Marketplaces, item expandido em Anunciados/Estoques/Produtos cadastrados não bloqueia navegação. Clicar em filtro, conta, estoque, paginação, atualizar ou outra ação externa recolhe a ficha e executa o comando no mesmo clique; abrir outro item substitui a ficha anterior. Ações/campos internos e modais são preservados. Fechar não salva edições não confirmadas. Gravação/sincronização mantêm bloqueios necessários; atualização automática não descarta ficha aberta. Sem migração ou publicação; sem impacto operacional no AvantaPreços, Gestão nativa e AvantaVendas.
+
+> Revisão 3.2.0.48: todos os usuários com acesso ativo ao AvantaPreços podem Ajustar preço médio/Atualizar cálculos e Atualizar preço nos detalhes do produto. As duas ações atualizam a referência compartilhada no cadastro e recalculam sugestões; não alteram saldo, anúncios ou lotes salvos. Permissão Editar estoque continua independente. Pesquisa explícita preserva cancelamento, limites e proteção de concorrência. Sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão 3.2.0.47: Estoques Web inicia em Todas as contas e permite escolher uma conta no cabeçalho, junto ao filtro de publicação. Todas mantém produtos sem anúncio; conta específica com Todos mostra produtos vinculados a ela. Anunciado/Não anunciado consideram publicação confirmada na conta escolhida; Não anunciado inclui produtos ainda sem vínculo nela. Lista, busca e contador respeitam esses filtros antes da paginação. Tarja Anunciado aparece na própria linha, sem expandir o produto; com conta selecionada considera somente essa conta. Saldo permanece por depósito, sem soma/duplicação por anúncio. Sem migração/publicação ou impacto na Gestão nativa/AvantaPreços/AvantaVendas.
+
+> Revisão 3.2.0.46: removido Registrar cálculo manual da entrada do AvantaPreços. Produto não localizado mantém a pesquisa e aviso para revisar EAN/descrição ou buscar na internet, sem criar referência vazia ou abrir outro formulário. Produto localizado conserva Ajustar preço médio e Atualizar cálculos nos detalhes. Histórico existente e lotes preservados; consulta não localizada não inventa produto nem preço. Sem migração/publicação e sem impacto operacional na Gestão Web/nativa e AvantaVendas.
+
+> Revisão 3.2.0.45: Web Marketplaces tem contagem leve de Estoques e Anunciados, independente da ficha/lista completa. Total confirmado permanece durante atualização; primeira leitura aguarda consulta real, sem inventar zero. Abrir/recolher card, voltar à aba e ordenar/paginar não recontam; abertura, Atualizar, filtros/estoque/conta e alterações de dados recalculam. Vendas abre registros salvos sem aguardar rede dos marketplaces; Atualizar mantém sincronização. Sem migração/publicação e sem impacto operacional na Gestão nativa/AvantaPreços/AvantaVendas.
+
+> Revisão 3.2.0.44: AvantaPreços abre características recolhidas em cada abertura/troca de produto; seta permite expandir/recolher sem perder os dados. Ler etiqueta tem fundo azul institucional fixo (#003E73), independente do perfil; Ler EAN e demais cores preservados. Sem migração, alteração de dados ou publicação. Sem impacto operacional na Gestão Web/nativa e AvantaVendas.
+
+> Atualização 3.2.0.21 autorizada: arte do WhatsApp aprovada e vinculada somente ao Open Graph/Twitter do link do AvantaPreços; ícone de instalação não mudou. Instalar AvantaPreços abaixo do login inclui prompt Android quando disponível e instruções iPhone. Envio/build não equivale a publicação; a imagem antiga pode permanecer no cache do WhatsApp. Notas de aprovação pendente abaixo são históricas.
+
+> Revisão local 3.2.0.21: login AvantaPreços oferece Instalar AvantaPreços abaixo do card, sem exigir entrar. Android compatível abre a instalação; ausência de prompt mostra instruções. iPhone orienta Safari/Compartilhar/Adicionar à Tela de Início. Oculto no app instalado; cancelar não declara instalação e não altera sessão. Arte da prévia do link em aprovação, ainda não substituída. Não publicado. Revisão .20 de saldo/ícone/post já publicada, AvantaVendas preservado.
+
+> Revisão local 3.2.0.20: saldo não informado aparece como zero no Marketplace/AvantaPreços, inclusive por estoque e na venda; erro de leitura permanece erro. Ajustar estoque permite informar o saldo correto, sem zeragem automática dos anúncios ao apenas abrir. Criar post preenche De com a média pesquisada/referência atual e permite editar; Médio de venda não é a base de De. Ícone Atualizar corrigido no AvantaPreços; AvantaVendas preservado. Sem publicação e sem impacto no financeiro.
+
+> Publicação 3.2.0.19 confirmada: integração financeira Mobile .13 sobre produção .18, com migração aplicada e dados preservados. Refinamentos Web/AvantaPreços/posts .14–.18 e APIs protegidas conferidos; sem outra mudança operacional Web.
+
+> Revisão local 3.2.0.18: post do AvantaPreços usa cor primária do perfil, De (preço anterior real informado) tachado e Por (venda) em destaque. De precisa ser maior que Por; referência de mercado não vira preço anterior automaticamente. Sem impacto operacional na Gestão Web, banco ou estoque; não publicado.
+
+> Revisão local 3.2.0.17: no PWA AvantaPreços, Criar post fica ao lado de Atualizar preço. Foto/produto já selecionados; revisar descrição, voltagem, condição (Novo/Usado/Com avaria), avaria obrigatória se aplicável e preço sugerido ou manual. Gerar post abre prévia; Editar post/Baixar imagem e Compartilhar post ficam abaixo. Usa menu nativo com arquivo pronto; sem suporte, baixa PNG. Cancelar compartilhamento não declara sucesso. Não altera cadastro/saldo/vendas nem publica anúncio; sem impacto operacional na Gestão Web. Não publicado.
+
+> Revisão local 3.2.0.16: formulário de venda/saída reorganizado. O seletor mostra somente o nome do estoque; Saldo disponível aparece separado e muda conforme a seleção, sem converter desconhecido em zero. Quantidade/valor e sugestões agrupados; confirmação/baixa/permissões preservadas. Não publicado.
+
+> Revisão local 3.2.0.15: Vendas inicia em Online (pedidos importados dos marketplaces); Saldão alterna para vendas registradas manualmente, com origem no estoque escolhido. Filtro de estoque, período, contagem e total confirmado são próprios da origem; trocar origem limpa conta/canal/situação. Venda manual no estoque Online continua manual. No PWA, Venda é o terceiro botão do saldo e abre produto já escolhido, estoque, quantidade, valor/data e confirmação. Reutiliza baixa e histórico existentes, sem nova migração/financeiro/publicação.
+
+> Revisão local 3.2.0.14 — AvantaPreços: resultado mostra Saldo do produto e pílulas por estoque. Ajustar estoque define saldo final; Adicionar saldo soma uma entrada no estoque escolhido. Zero confirmado é Sem saldo, desconhecido continua A confirmar e total parcial indica unidades confirmadas. Voltar retorna ao início; Nova pesquisa abre o leitor EAN diretamente. Lotes ativos, permissões e histórico preservados. Sem impacto operacional na Gestão Web; não publicado.
+
+> Revisão 3.2.0.13: inclusão/exclusão em segundo plano na Gestão Mobile, incluída na publicação .19 com migração aplicada. Sem impacto operacional na Gestão Web; fluxos, permissões e dados existentes preservados.
+
+> Publicação 3.2.0.12 confirmada em 20/10/2026: ajustes exclusivos da Gestão Mobile e migração aditiva instalada sem alterar registros. Gestão Web e demais módulos preservados; sem impacto operacional nesta interface.
+
+> Revisão 3.2.0.12: período inicial do novo lançamento na Gestão Mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 3.2.0.11 (incluída na 3.2.0.12): fila de edições exclusiva da Gestão Mobile. Sem impacto operacional na Gestão Web; migração aditiva aplicada sem alterar os registros.
+
+> Publicação 3.2.0.10 confirmada em 20/10/2026 nos domínios oficiais: correções da Gestão Mobile no ar e migração numérica aplicada sem alterar registros (2.610 lançamentos, 163 parcelas). Indicador de contas .09 e AvantaVendas av189 preservados. Fechar/reabrir o aplicativo para obter os recursos, sem reinstalar ou apagar dados; teste em aparelho físico com o responsável.
+
+> Revisão 3.2.0.10: integra as correções da Gestão Mobile descritas em 3.2.0.08, preservando o indicador de contas da produção 3.2.0.09. Sem outra mudança operacional na interface Web.
+
+> Revisão 3.2.0.09: Contas conectadas mostra o círculo padrão no centro do cabeçalho durante leitura inicial/atualização, mesmo recolhido. Ao terminar ou falhar, o círculo desaparece; não significa nova autorização ou conexão OAuth.
+
+> Revisão 3.2.0.08: sem mudança da interface Web. A função compartilhada de reorganizar parcelas agora aceita o ID numérico real dos lançamentos; migração `20261020160000_reorganizar_parcelamento_id_numerico.sql` aplicada, preservando registros existentes, histórico anterior, confirmação, empresa e centro. Exige acesso financeiro autenticado; acesso anônimo negado.
+
+> Revisão 3.2.0.07: acesso e retomada cautelosa exclusivos do AvantaVendas; sem impacto operacional na Gestão Web. Não publicado, sem alteração de banco/permissões/financeiro.
+
+> Revisão 3.2.0.06: produto expandido organizado em Cadastro do produto, Estoques e movimentações, Publicação e Históricos. Editar cadastro/Consultar ficha ficam juntos; Editar/Atualizar estoques também; Vendas e saídas agrupa Registrar venda, Outras saídas e Vendas diretas. Descrição/fotos, dados complementares e históricos abrem sob demanda. Não muda permissões nem confirmações. Inclui contadores .05 e vendas diretas .04; financeiro permanece adiado.
+
+> Revisão 3.2.0.05: Anunciados mostra o total da seleção de contas e filtros, sem limitar à página atual. Estoques mostra produtos com saldo no estoque selecionado e acompanha a busca, não a soma de unidades ou quantidade de depósitos. Carregando indica “…”; falha ou catálogo não integrado indica “—”, nunca zero inventado. Inclui vendas diretas/saídas 3.2.0.04; financeiro continua adiado.
+
+> Revisão 3.2.0.04: no produto Web/AvantaPreços, Registrar venda seleciona estoque, quantidade, valor unitário efetivo, data e observação. Mínimo/médio/ideal só preenchem sugestões; valor final é o vendido. Venda e saída são atômicas. Vendas do mês une ML/Magalu e Saldão · Venda direta (nome do estoque), com filtro Canal de venda e total confirmado; canceladas não contam no total. Data da venda define o mês. Histórico Vendas diretas no produto permite cancelar e informar unidades que retornaram fisicamente/estoque de destino; zero cancela sem repor, retornos posteriores são explícitos e limitados ao vendido. Outras saídas (perda/avaria/uso interno), ajustes e transferências não geram venda. Registrar vendas é permissão individual nova, inicialmente desmarcada, separada de Editar estoque. Configurações > Usuários da consulta libera o acesso; não ampliar automaticamente. Tentativa incerta fica guardada por perfil/ator/produto ou venda neste navegador; repetir recupera o mesmo recibo, fechar não desfaz envio. Prévia /marketplaces/validacao-vendas-diretas disponível apenas localmente, com dados fictícios. Nenhuma receita/lançamento financeiro, NF ou alteração de critérios de baixa/cancelamento online nesta etapa; integração com dashboard financeiro fica para trabalho posterior.
+
+> Revisão 3.2.0.03: Produtos cadastrados é a base única. Estoques usa a mesma lista detalhada, com busca por descrição/EAN e leitor, filtrada pelo estoque/saldo positivo. Pílula única já vem selecionada; mais estoques ficam em pílulas lado a lado com cores estáveis. Criar estoque à esquerda de Atualizar abre nome e confirmação; Renomear/Usar online/Arquivar preservados. Recolher o produto antes de trocar estoque evita perder edição. Sem saldo aparece vazio só neste estoque, não significa produto excluído. Quantidade e edição correspondem ao selecionado.
+
+> Revisão local 3.2.0.02: ordem padrão Vendas → Anunciados → Estoques → Produtos. Os seis pontos de Estoques permitem arrastar como os demais; teclado por setas/Início/Fim, Escape cancela. Preferência por usuário/empresa/navegador preserva ordens personalizadas antigas e insere Estoques antes de Produtos. Ainda não publicado.
+
+> Revisão local 3.2.0.01: cabeçalhos de Estoques/Vendas/Anunciados/Produtos com ações de 32 px; expandir/recolher somente setas, também no rodapé, com tooltip e nome acessível. Funcionalidade, filtros e permissões preservados. Ainda não publicado.
+
+> Produção 3.2.0 confirmada nos dois domínios, migração aplicada em 19/10/2026; notas locais 71/3.2.0 abaixo são históricas: Produtos mantém cadastro único com total/distribuição; Estoques cria/renomeia/consulta/arquiva offline vazio e define um Online por perfil. No produto/AvantaPreços escolher estoque e Dar entrada (soma), Ajustar saldo final (substitui), Transferir (retira/adiciona juntos). Não confundir ajuste com venda/baixa manual: essa etapa será definida depois. Só Online alimenta anúncios; legado vai para Online sem duplicar. Troca exige saldo anterior confirmado/zerado e pendências resolvidas. Gestores administram estoques; caixa Editar estoque permite movimentar, não administrar estoques. Falha não significa zero. Consulta não altera saldo. Publicação Web/PWA confirmada; saldos anteriores preservados.
+
+> Revisão local 3.1.0.71: entrada/edição de estoque no AvantaPreços usa menos, quantidade centralizada, mais, Cancelar e Concluir na mesma linha. Botões alteram somente o rascunho; Concluir confirma saldo final, não soma ao saldo. Mesmas permissões e proteção de revisão/repetição. Campo compacto preserva limite existente e saldos maiores. Ainda não publicado.
+
+> Revisão local 3.1.0.70: alerta do cabeçalho com mesma altura visual do seletor de mês; área de clique preservada. Sem impacto operacional. Ainda não publicado.
+
+> Revisão local 3.1.0.69: título Período das vendas alinhado ao seletor de mês, não ao alerta à esquerda. Sem impacto operacional nos filtros ou avisos. Ainda não publicado.
+
+> Revisão local 3.1.0.68: Vendas e Anunciados mostram círculo central durante carregamento real ao expandir. Anunciados sinaliza também atualização explícita e consulta Magalu em andamento. Aguarde a resposta; erro e vazio são informados separadamente. Cards permanecem inicialmente recolhidos; atualização passiva não bloqueia os demais. Ainda não publicado.
+
+> Revisão local 3.1.0.67: Pendências fica no SVG de alerta à esquerda do mês, com contador somente para avisos existentes. Clique abre painel compacto igual aos avisos AvantaLab, preservando detalhes e Atualizar avisos. X/Escape/clique externo fecham, sem alterar estoque ou reconhecer pendências. Falha não vira ausência de avisos. Ainda não publicado.
+
+> Revisão local 3.1.0.66: placeholder Senha dos usuários AvantaPreços é somente ****. Não é valor salvo; na edição, campo vazio continua mantendo a senha atual. Validação preservada. Ainda não publicado.
+
+> Revisão local 3.1.0.65: ao salvar usuário da consulta, botão mostra Salvando… e sucesso termina silenciosamente, sem fechar editor ou recarregar a lista. Setas de troca liberadas após salvar; rascunho alterado precisa ser salvo ou cancelado. Erros continuam informados, sem descartar os campos. Permissão individual preservada. Ainda não publicado.
+
+> Entrega publicada 3.1.0.64: nome do perfil em maiúsculas no topo do AvantaPreços; sem impacto operacional neste ambiente. Publicado.
+
+> Entrega publicada 3.1.0.63: AvantaPreços → Ver produtos e estoque lista o cadastro completo do mesmo perfil, por descrição/nome/EAN, mesmo sem preço ou consulta anterior. Páginas de 25, busca no servidor ao digitar; pesquisa na internet separada. Abrir permite consultar saldo e editar somente com a permissão individual. Últimas consultas mostra dez registros recentes. Sem impacto na Gestão nativa. Publicado.
+
+> Entrega publicada 3.1.0.62: editor identifica nome/login e salva somente a permissão daquele acesso. Lista exibe Editar estoque: Permitido/Não permitido por usuário; após salvar conserva o valor confirmado. Cancelar retorna ao cadastro novo desmarcado. Publicado.
+
+> Entrega publicada 3.1.0.61: Marketplaces abre com Contas conectadas, Vendas, Anunciados e Produtos e estoque recolhidos. Expansão manual e atalhos explícitos continuam disponíveis; atualização automática não abre os blocos. Publicado.
+
+> Entrega publicada 3.1.0.60: Marketplaces → Configurações → Usuários da consulta oferece uma única caixa Editar estoque, ao criar ou editar. Desmarcada por padrão; marcar permite confirmar/editar quantidades no AvantaPreços da empresa, sem dar Gestão ou outros poderes. Salvar persiste; desmarcar retira a permissão nas próximas gravações. Perfis já existentes não são liberados automaticamente. Migração instalada e publicação confirmada, sem concessão ou movimentação real pelo agente.
+
+> Entrega publicada 3.1.0.59: Pendências identifica produto/EAN, conta, anúncio/pedido e motivo. Atualizar avisos apenas consulta; não reenviar estoque nem repetir entrada. Retornos automáticos e confirmação física atualizam essa área. “Sincronização ativa” removido; falhas/ausência de atividade continuam visíveis. Saldo já confirmado não é descrito como ausente; venda antiga ainda pendente mostra conciliação. Evento identificado de outro produto não bloqueia reposição. Notificação ainda não identificada da conta relacionada mantém proteção até sua leitura. Erro não significa ausência de pendências. Publicado.
+
+> Produção 3.1.0.58 confirmada nos dois domínios: EAN abaixo dos itens do pedido e ações compactas no topo de Marketplaces. Notas locais 57–58 abaixo são históricas. Recarregar a página; sem mudança de saldo, pedido ou permissões no deploy.
+
+> Revisão local 3.1.0.58: barra superior de Marketplaces com Criar Lote, Editar Lotes, Configurações e Copiar link na escala compacta oficial. Mesmas ações e permissões; sem impacto operacional. Ainda não publicado.
+
+> Revisão local 3.1.0.57: detalhe do pedido mostra EAN em linha abaixo da descrição de cada item, conforme dado validado do item/anúncio da mesma empresa/conta/variação. Sem dado, Não informado; falha complementar, Indisponível no momento. Não inferir por SKU/nome. Sem mudança de estoque, preço, etiqueta ou pedido; ainda não publicado.
+
+> Produção 3.1.0.56 confirmada nos dois domínios: foto/EAN dos Anunciados, contraste de confirmação e exclusão de acesso preservando a base. Notas locais 54–56 abaixo são históricas. Nenhuma exclusão/bloqueio de usuário real ou movimentação de saldo no deploy. Revisão 57 segue local.
+
+> Revisão local 3.1.0.56: excluir acesso dedicado do AvantaPreços retira somente o acesso, bloqueia autenticação e libera o login. Produtos, quantidades, fotos, consultas, lotes e histórico permanecem no perfil/empresa em que foram criados, com autoria preservada. Criar o mesmo login em outra empresa não transfere a base. Confirmação em dois cliques; falha parcial informa que o acesso está bloqueado e pede repetir a exclusão para finalizar. Não se aplica a contas comuns/compartilhadas. Sem publicação ou exclusão produtiva de teste.
+
+> Revisão local 3.1.0.55: Confirmar no modal de estoque físico recupera o texto visível com contraste explícito, protegido da cor herdada dos anúncios. Sem impacto operacional na confirmação, quantidade ou permissões. Não publicado.
+
+> Produção 3.1.0.53 confirmada: Configurações Web compactas, setores e ações menores, topo na cor do perfil e X centralizado. Notas locais 52/53 abaixo são históricas; foto/EAN da revisão 54 ainda não publicado. Recarregar sem apagar dados; sem mudança de permissões ou migração.
+
+> Revisão 3.1.0.54 local: em Anunciados, miniatura igual à de Produtos e estoque, com conta/código do anúncio e EAN em linha própria abaixo. SKU não é apresentado como EAN; ausente mostra Não informado. Sem foto disponível, exibe Sem foto. Sem alteração de cadastro ou sincronização; não publicado.
+
+> Revisão 3.1.0.53 local: Configurações Web usa faixa superior na cor do perfil, contraste automático do texto e X geométrico centrado. Ações compartilham BotaoAcaoCompacto do PADRÃO AVANTA 1.20.0: face 32px, alvo 44px, variantes semânticas. Mesmas funções/permissões da revisão 52; não orientar procurar um novo comando. Sem publicação ou mudança em dados.
+
+> Revisão 3.1.0.52 local, não publicada: modal Configurações do AvantaPreços Web compacto, apenas Configurações no título. Preços de venda e Aparência separados lado a lado; Usuários abaixo. Nome/login/senha/Salvar na mesma linha; na edição, Cancelar precede Salvar. Navegação de usuários mostra um por página com contagem, preservando todos os cadastros; não orientar rolar para procurar os demais. Explicação dos percentuais removida da tela; continuam percentuais da referência, não margem. Sem alteração de permissões, banco ou logins reais. Fechar/X/Escape e segurança de viewport preservados.
+
+> Revisão 3.1.0.51 local, não publicada, prevalece sobre os rótulos históricos abaixo: consultar produto novo ou abrir antigo mantém o cadastro automático sem presumir saldo. Sem quantidade: Produto fora de estoque / Estoque a ser inserido / Adicionar. Adicionar → quantidade → Concluir confirma o saldo no mesmo produto; cancelar mantém o cadastro pendente. Saldo positivo: Já em estoque, unidades e Editar (saldo final, não soma). Ao zerar: Produto fora de estoque, 0 unidades e Adicionar; reposição exige valor positivo. Bipe não duplica nem soma estoque. Migrações 49/50 pendentes; sem alteração de produção ou lotes salvos.
+
+> Revisão 3.1.0.50 local: EAN de produto existente abre o cadastro canônico, mostra referência e saldo atuais e não pesquisa o mercado nem soma unidades. Leitor Web do lote usa a referência cadastrada; Atualizar preço é ação explícita, altera o mesmo produto sem mexer em estoque/lotes salvos. Referência manual no PWA também atualiza esse cadastro. Já em estoque mostra saldo e Editar permite saldo final maior/menor/zero. Referência cadastrada não é nova pesquisa; sem duplicar produtos. Migrações 49/50 preparadas, não instaladas; não publicado.
+
+> Revisão 3.1.0.49 local, não publicada: consultar e identificar no AvantaPreços cria/reutiliza o cadastro em Produtos e estoque, sem confirmar unidades. Histórico/manual e leitor Web de lotes compartilham esse cadastro. Entrar estoque → quantidade → Concluir confirma o saldo físico; depois Já em estoque mostra quantidade e Editar define o novo saldo final (não uma soma), permitindo aumentar, diminuir ou zerar. Histórico antigo pode ser aberto para entrar estoque. Consultar/bipar/reabrir não soma unidades nem publica anúncio. Fotos/referências preenchidas preservadas; ausência de ofertas não impede cadastrar o produto identificado. EAN duplicado ambíguo exige unificação, nunca criar outro por suposição. Só gestor master, administrador e operador completo alteram saldo; acesso de consulta apenas visualiza. Esperar gravação; falha/resposta incerta pede atualizar e conferir antes de outra alteração. Migração preparada/testada, ainda não instalada em produção. Lotes salvos preservam snapshots.
+
+> Revisão 3.1.0.48 em validação: Produtos e estoque tem Recuperar fotos, que preenche somente cadastros vazios a partir dos anúncios vinculados. Não substitui fotos manuais nem altera preços/estoque. A importação também passa a incluir fotos válidas e informa pendências. Na pílula Referência, a seta circular pesquisa ofertas atuais do produto exato e atualiza a média de referência; mínimo/médio/ideal recalculam pelos percentuais da empresa. Não atualiza preço dos anúncios. Recolher os detalhes antes de pesquisar, para preservar edição aberta. Sem ofertas/falha mantém o valor; conflito não sobrescreve edição concorrente. Espera bloqueia duplicação; se a resposta não chegar, atualizar a lista antes de repetir. Pesquisa auditada por empresa, permissão de gestão, limite de cinco inícios/minuto e uma pendência por produto. Migração/publicação e recuperação produtiva ainda pendentes nesta etapa. Exclusivamente Web; lotes salvos/PWA preservados.
+
+> Revisão 3.1.0.47, local e não publicada: todas as pílulas de marketplaces com publicação confirmada ficam visíveis no card de produto Web, quatro por linha; a quinta e seguintes seguem abaixo, sem “+N”. Nomes completos e ajuda de anúncios pausados preservados. Somente organização visual; não libera integrações nem muda anúncios, estoque ou referência. PWA inalterado.
+
+> Revisão 3.1.0.46, local e não publicada: referência dentro de uma pílula no card de produto Web. Editar troca o conteúdo no mesmo espaço, sem abrir campos/botões grandes. ✓ ou Enter salva; × ou Esc cancela e retorna o foco para Editar. Reabrir usa o valor salvo, não o rascunho cancelado. Erro mantém a edição para correção; em espera, não afirmar que cancelar desfaz uma gravação enviada. Preços continuam calculados após salvar; permissões, anúncios e estoque preservados. Somente Web de computador; PWA e redirecionamento inalterados.
+
+> Revisão 3.1.0.45, local e não publicada: card de Produtos e estoque compacto. Nome, SKU/EAN e pílulas de marketplace ficam à esquerda; estoque e referência juntos antes dos três preços. Percentuais junto aos títulos. Descrição e anúncios completos ficam em Expandir ou clique no nome. Pílulas usam o último estado dos anúncios vinculados, não uma consulta em tempo real; não repetem o marketplace e informam pausados do ML na ajuda. Sem vínculo mostra Sem publicação; vínculos sem estado de publicação reconhecido mostram Publicação não confirmada, nunca publicação inventada. Editar referência mantém Salvar/Cancelar e permissões. Este módulo é somente Web de computador: no celular permanece o PWA próprio, que não possui esta área. Não orientar procurar este card no PWA. Não altera redirecionamento, anúncio, estoque, lote ou tema. Migração da revisão 44 permanece pendente em produção.
+
+> Revisão 3.1.0.44, local e não publicada: em Produtos e estoque, referência tem Editar/Salvar/Cancelar e os preços mínimo/médio/ideal aparecem ao lado de Expandir. São percentuais da referência, não margem/lucro. Engrenagem Configurações do AvantaPreços inclui percentuais e aparência antes dos usuários. Padrões 50/70/90; gestor/administrador altera por empresa. Novos cálculos no Web/PWA usam os percentuais salvos; lotes existentes não mudam. Automático acompanha o tema do aparelho, sem regra às 18h; padrão do perfil preserva o shell. Migração de configurações preparada, ainda não instalada em produção: aviso e bloqueio de Salvar configurações enquanto pendente. Prévia local fictícia validacao-produtos permite ensaiar em memória. Não confundir isso com gravação real nem publicação de anúncio.
+
+> Publicação Web 3.1.0.43-av188 confirmada: ajustes do menu do AvantaVendas, sem mudança operacional na Gestão Web. Notas locais da revisão 43 abaixo são históricas.
+
+> Revisão 3.1.0.43: linha deslizante adicionada ao menu inferior do AvantaVendas; sem impacto operacional na Gestão Web. Não publicado.
+
+> Revisão 3.1.0.42: círculo do menu substituído por resposta tátil opcional exclusivamente no AvantaVendas; sem impacto operacional na Gestão Web. Não publicado.
+
+> Revisão 3.1.0.41, local, não publicada: Contas conectadas inicia recolhido a cada abertura da página, mesmo se foi expandido antes. Use a seta para baixo para abrir. Conectar/Atualizar e contagem permanecem visíveis; nova conexão ainda abre a identificação da conta durante a ação.
+
+> Revisão 3.1.0.40, local, não publicada: Contas conectadas recolhe/expande pela seta no cabeçalho, sem texto no controle. Seta para cima recolhe, para baixo expande; Conectar/Atualizar continuam disponíveis. Sem mudança nas contas ou permissões.
+
+> Revisão 3.1.0.39, local, não publicada: seletor de marketplaces com botões 30% mais baixos no Web e seis colunas iguais; mobile preserva alvo de 48 px em três colunas. Sem impacto operacional na seleção, disponibilidade das integrações ou permissões.
+
+> Revisão 3.1.0.38, local, não publicada: atalho flutuante Pesquisar produtos tem 20% de opacidade em repouso e 100% no mouse, foco do teclado ou toque/pressão. Sem impacto operacional na pesquisa, rolagem ou permissões.
+
+> Revisão 3.1.0.37, local, não publicada: em Marketplaces Web, Produtos e estoque tem busca sempre visível por nome, descrição, SKU ou EAN; atualiza automaticamente sem Enter. Ler EAN verde foca/seleciona o campo; leitor USB/Bluetooth em modo teclado não precisa enviar Enter e não captura outros campos. Atalho flutuante Pesquisar produtos no canto inferior direito abre a área e rola abaixo do cabeçalho, com foco na pesquisa. Resultados são os cadastros de toda a empresa, independentemente do marketplace; mostram foto, descrição resumida, EAN, estoque e preço cadastrado. Nome/Expandir abre os detalhes. × limpa e restaura a lista. Falha não significa nenhum produto. Consultar não pesquisa preços na internet, altera estoque, inclui no lote ou publica anúncio. Prévia validacao-produtos é fictícia, somente desenvolvimento; teste autenticado local usa os dados reais da empresa.
+
+> Revisão 3.1.0.36: o perfil atual na troca tem selo Em uso branco, azul-marinho e ✓, independente da cor do perfil. O selo não é um botão; o perfil atual continua desativado. Sem impacto operacional na troca, login ou permissões.
+
+> Publicação 3.1.0.35 confirmada em 17/10/2026: inclui refinamentos 30–35 de botões, fechamento do painel e datas dos lotes/Marketplaces. Notas locais seguintes são históricas. Web/PWA, versão/cache e API protegida conferidos no domínio oficial; sem nova migração. Recarregar a página ou fechar/reabrir o PWA, sem reinstalar/apagar dados. Se fechou durante uma gravação, reabrir e atualizar para conferir antes de repetir. Teste autenticado no iPhone e entre aparelhos permanece com o responsável.
+
+> Revisão 3.1.0.35, local, não publicada: no card de cada lote salvo, Editar lote e Continuar leituras ficam iguais na mesma linha e ocupam a largura útil, com texto centralizado. Continuar/Reabrir e continuar usa o verde do Ler EAN. Sem mudança operacional: edição/retomada, reabertura explícita e permissões preservadas.
+
+> Revisão 3.1.0.34, local, não publicada: no Marketplaces/AvantaPreços, datas aparecem como dd/mm/aa (17/10/26), inclusive campos de lote/período, histórico, sincronizações e PDF. O calendário nativo continua disponível; salva ISO com ano completo, sem abreviar o banco. Apresentação compacta separada do seletor impede o formato por extenso do iPhone de invadir o custo; data central e valor à direita, com 16 px de intervalo. O padrão de datas dos outros módulos não muda. Ainda requer validação do responsável no iPhone após publicação.
+
+> Revisão 3.1.0.33, local, não publicada: painel de lotes pode fechar pelo X, fundo ou Escape mesmo aguardando rede/PDF. Cancelar na escolha de PDF apenas volta à conferência; X/fundo/Escape saem do painel inteiro. Resposta tardia não reativa lote nem abre arquivo depois de sair. Rede tem limite de 20 s, PDF de 120 s; erro permite nova ação explícita, sem repetir gravação automaticamente. Na confirmação de remoção pendente, Fechar painel permite sair. Isso não desfaz alterações já enviadas ao servidor: reabrir e atualizar o lote para conferir antes de repetir; não afirmar cancelamento/estorno da gravação. Lotes salvos são preservados; rascunho não salvo não é gravação. Para destravar a versão antiga ainda no ar, recarregar a página ou fechar/reabrir o PWA, sem apagar dados ou reinstalar. O ajuste não comprova a causa exata da sessão iOS da captura.
+
+> Revisão 3.1.0.32, local, não publicada: abaixo dos produtos do lote, Concluir conferência e Continuar leituras neste lote ficam lado a lado, iguais e ocupando a linha. Continuar/reabrir leituras usa o verde do Ler EAN. Sem mudança operacional; concluídos continuam mostrando Reabrir conferência e Reabrir e continuar leituras, sem reabertura implícita. Ações continuam restritas às permissões existentes.
+
+> Revisão 3.1.0.31, local, não publicada: no detalhe do lote, Todos os lotes, Editar lote e Atualizar têm larguras iguais na mesma linha, preenchendo a largura útil. Acesso somente leitura continua sem Editar lote e distribui os dois restantes igualmente. Sem mudança operacional; os destinos e permissões são os mesmos.
+
+> Revisão 3.1.0.30, local, não publicada: card de lote ativo no AvantaPreços mantém nome acima e dois botões iguais na mesma linha, ocupando toda a largura útil. Quantidade/Ver lote e totais à esquerda; Voltar ao modo comum à direita. Sem mudança operacional: abrir totais não encerra o lote; voltar pausa sem excluir os registros.
+
+> Publicação 3.1.0.29 confirmada em 17/10/2026: inclui os refinamentos 27–29 de campos e botões dos lotes web/PWA. Data centralizada, moeda à direita sem legenda Opcional; custo não obrigatório. Pares de botões iguais em linha completa, ações de leitura verdes; lista com Atualizar à esquerda e Criar novo lote à direita. Recarregar web ou fechar/reabrir o PWA para obter os recursos atualizados, sem reinstalar ou apagar dados. Notas locais seguintes são históricas; sem nova migração ou mudança operacional.
+
+> Revisão 3.1.0.29, local, não publicada: lista Lotes recebidos mostra Atualizar à esquerda e Criar novo lote à direita, com larguras iguais ocupando toda a linha. Sem mudança operacional; acesso de consulta continua sem criação e mostra Atualizar em largura total.
+
+> Revisão 3.1.0.28, local, não publicada: no formulário de lote, Novo lote/Continuar lote existente e Cancelar/Criar e iniciar leituras ocupam linhas completas, cada par com larguras iguais. Ações de iniciar/retomar leituras usam o verde do Ler EAN. Edição preserva Cancelar, Salvar e Salvar e continuar na mesma linha. Sem mudança de operação.
+
+> Revisão 3.1.0.27, local, não publicada: criação/edição de lote no web/PWA mantém data e valor na mesma linha, separados, com data centralizada e moeda à direita. A legenda Opcional foi retirada; deixar o valor vazio continua permitido e não equivale a zero. Máscara e cursor à direita preservados.
+
+> Publicação 3.1.0.26 confirmada em 17/10/2026: lotes web/PWA e migração instalada em produção. Esta situação substitui as notas locais históricas abaixo. Entrar na mesma empresa e retomar o mesmo lote em Editar Lotes permite continuar em outro aparelho; Atualizar lote relê o salvo. Fechar/reabrir o PWA ou recarregar a página traz a versão atual, sem reinstalar nem apagar dados. Foram conferidos versão/bundles/cache/API protegida; o teste autenticado entre aparelhos será feito pelo responsável, sem lote fictício criado pelo deploy.
+
+> Revisão 3.1.0.26, local: removido o texto Leitor ativo / Bipe o código do lote web. Ativação continua indicada no botão Ler EAN por aparelho; leitura por Enter e inclusão preservadas. Sem mudança operacional adicional nem publicação.
+
+> Revisão 3.1.0.25, local: Marketplaces Web tem **Criar Lote** e **Editar Lotes** à esquerda das configurações. Criar ou **Salvar e continuar** abre inclusão no mesmo lote. **Ler EAN por aparelho** foca o campo; leitor USB/Bluetooth em modo teclado envia o EAN e Enter. Também permite digitar e **Consultar e incluir**. Contador abre conferência/totais/PDF; **Pausar lote** não apaga. **Atualizar lote** relê o salvo, inclusive alterações de outro aparelho. Para alternar web/PWA, entrar na mesma empresa e retomar o mesmo lote em Editar Lotes: ambos usam a mesma API e registros, sem importação. Consulta de pendente, candidato e continuação não duplicam leitura; novo bipe após sucesso conta unidade. Nada é anunciado por bipar. A prévia é fictícia em memória; migração e publicação produtivas pendentes.
+
+> Revisão 3.1.0.24, local: data e custo do lote ficam lado a lado. O custo opcional usa máscara monetária Avanta, por exemplo 1.234,56; digite somente os algarismos (123456). Foco/clique posiciona o cursor à direita, conforme retificação do usuário; após digitar, o cursor segue no fim. Backspace apaga progressivamente até vazio, sem travar em 0,00. Apagar tudo mantém custo não informado, diferente de zero digitado. Ainda não publicado.
+
+> Revisão 3.1.0.23, local: formulário de lote mais compacto. Na edição, **Cancelar**, **Salvar** e **Salvar e continuar** ficam na mesma linha. Salvar grava sem iniciar leituras; Salvar e continuar grava e retoma o mesmo lote. Lote concluído mostra aviso de que essa ação reabre a conferência. Criação e demais operações preservadas; não publicado.
+
+> Revisão 3.1.0.22, local: AvantaPreços apresenta **Criar Lote** e **Editar Lotes** no topo, lado a lado e com larguras iguais. Editar Lotes abre a lista dos lotes salvos para edição/retomada. Sem destaque Consulta rápida / Qual é o preço? nem legenda de modo comum; a consulta comum continua sendo o padrão inicial. Com lote ativo, contador/totais e pausa aparecem em área separada abaixo dos dois botões. Ainda não publicado.
+
+> Revisão 3.1.0.21, local: **Criar lote** abre **Data do lote** e **Valor de custo do lote (R$) — opcional**, seguidos de nome/origem/observações. **Continuar lote existente** no mesmo painel mostra os lotes salvos com data e custo. Cada linha oferece **Editar lote** e, no AvantaPreços, **Continuar leituras**. A edição mantém ID/produtos e permite **Salvar e continuar leituras**; concluídos usam **Reabrir e continuar**, explicitamente. A retomada relê o salvo antes de ativar e acrescenta produtos ao mesmo lote. Data do lote é escolhida pelo usuário; não confundir com data/hora de geração do PDF. Abertura comum preservada. Ainda não publicado nem migrado em produção.
+
+> Revisão 3.1.0.20, local: Gerar PDF dos lotes abre a escolha **Detalhado — todos os produtos** ou **Resumido — somente totais**, seguida de **Gerar arquivo**. Cabeçalho azul institucional em duas linhas: empresa; geração, unidades e valor pago se informado. PDF A4 paisagem com margens de 5 mm e linhas compactas. **Lucro bruto** é o total projetado de cada cenário menos o valor pago, podendo ser negativo; sem custo fica sem valor e com pendências não é calculado. O custo é opcional em Criar lote/Editar informações. O parágrafo explicativo de estimativa foi removido da tela/PDF; não reintroduzi-lo por iniciativa própria. Informações adicionais do lote continuam editáveis, mas não entram no cabeçalho exportado. Ainda não publicado.
+
+> Revisão 3.1.0.19 — implementação local, ainda não publicada: AvantaPreços abre no **Modo comum**. **Criar lote** pede nome, fornecedor/origem, recebimento, observações e valor pago opcional; após salvar, cada leitura continua no fluxo normal e também entra no lote. O contador abre produtos, totais e PDF. Bipes repetidos contam unidades; atualizar pesquisa ou abrir histórico não conta outro produto. Falha na pesquisa mantém a leitura pendente; usar **Consultar** no item pendente para completá-lo sem duplicar. Quantidade pode ser corrigida; Remover exige confirmação e afeta só o lote. **Voltar ao modo comum** pausa a coleta sem apagar dados; ao reabrir o aplicativo, o modo comum continua sendo o padrão. **Lotes recebidos** permite abrir e retomar um lote em conferência; concluídos precisam ser reabertos para alterar produtos. O mesmo acesso existe no módulo **Anúncios em marketplaces**, por empresa.
+
+> O relatório usa os preços salvos na leitura e respeita quantidades: referência da pesquisa (ou manual, identificada) e venda mínimo/vermelho, médio/azul e ideal/verde. Os três totais e a diferença bruta em relação ao custo aparecem na tela e no PDF. Não chamar de lucro líquido: taxas, impostos, frete, despesas e devoluções não foram deduzidos. Sem custo, não há comparação; sem preços completos, há apenas subtotais parciais e aviso de pendência. Gerar PDF não publica anúncios nem movimenta estoque/financeiro. Fotos indisponíveis são informadas. A migração dos lotes precisa ser instalada antes do uso real; não afirmar persistência produtiva validada sem implantação.
+
+> Revisão 3.1.0.18: marca e comprovantes de consignado ajustados somente no AvantaVendas independente; sem impacto operacional na Gestão Web.
+
+> Revisão 3.1.0.17: correção do retorno Google/Apple exclusiva da Gestão Capacitor; sem impacto operacional na Gestão Web/PWA.
+
+> Revisão 3.1.0.16: barra de preparação da Gestão nativa acompanha tarefas e desenha 100% antes da dashboard; sem impacto operacional na Gestão Web.
+
+> Complemento 3.1.0.15 — Magalu: catálogo habilitado no aplicativo AvantaLab. Cada vendedor concede acesso à própria loja; a conta proprietária do aplicativo não limita quem pode conectar. Lojas existentes usam Conectar outra conta e escolhem a mesma organização para renovar as permissões, preservando conexão e identificação. Na Rarus/JEFF, consentimento concluído e formulário liberado. O perfil ainda não tem produtos locais: cadastrar/revisar o produto em Produtos e estoque antes do primeiro envio. Autorização de catálogo não é anúncio publicado; cada envio exige revisão e confirmação.
+
+> Revisão 3.1.0.15: dashboard nativa abre com mês principal pronto e complementos automáticos nos cards; sem impacto operacional na Gestão Web.
+
+> Revisão 3.1.0.14: removida a segunda preparação exclusiva da Gestão nativa; sem impacto operacional na Gestão Web.
+
+> Revisão 3.1.0.13 Marketplaces Web, publicada: os retornos de catálogo seguem seis estados comuns a todos os provedores: consultando, vazio confirmado, itens encontrados, acesso negado, falha e ainda não verificado. Uma lista vazia de SKUs da Magalu pode vir sem metadados completos; não exigir o parser de pedidos para confirmar o array vazio. `results: null` só confirma vazio com contagem zero e início da lista; resposta ausente ou contraditória continua sendo falha. No Mercado Livre, lista vazia só confirma conta sem anúncios depois de sincronização concluída e sem filtros. Filtro sem linhas não é conta vazia. “Atualizar contas” repete a consulta, sem publicar produtos.
+
+> Revisão 3.1.0.12: abertura progressiva exclusiva da Gestão nativa, helper de manutenção reutilizado com cliente autenticado no servidor; sem impacto operacional na Gestão Web.
+
+> Revisão 3.1.0.11: localização nativa do Gestão iOS compilada, com IPA assinado e seletores conferidos no simulador; sem impacto operacional na Gestão Web. Upload e submissão 1.0.2 (7) concluídos em 16/10/2026; Waiting for Review, liberação automática após aprovação.
+
+> Revisão 3.1.0.10: consulta de SKUs Magalu restaurada. “Sem anúncios para exibir” exige resposta válida com contagem zero, deslocamento inicial e sem próxima página; `results: null` só é vazio nessas condições. Falha da API não significa loja vazia. “Atualizar contas” repete a leitura, sem publicar anúncios.
+
+> Revisão 3.1.0.09: API compartilhada preserva nome pessoal quando omitido na edição do acesso mobile; nome pessoal enviado continua exigindo nome e sobrenome. Sem impacto operacional nos formulários Web.
+
+> Revisão 3.1.0.08: ao selecionar Magalu, o módulo consulta a primeira página de SKUs da loja. Só mostra “Sem anúncios para exibir” quando a resposta da Magalu confirma página vazia e completa. Se houver SKU, informa que existem produtos, mas ainda não importa a listagem. Acesso negado, falha, resposta incompleta ou conta a reautorizar aparecem separadamente; “Atualizar contas” repete a consulta. Isso não libera a publicação nem altera anúncios/estoque.
+
+> Revisão 3.1.0.07: a linha da loja Magalu distingue acesso autorizado para vendas da liberação de publicação. “Publicação não liberada” informa ausência de permissões de catálogo, não significa anúncios pendentes nem ausência de anúncios. “Anúncios da loja: não consultados pelo AvantaLab” informa que anúncios antigos não foram importados nem contados; não afirmar “sem anúncios para exibir” sem consulta que confirme catálogo vazio.
+
+> Revisão 3.1.0.06 (local): a conexão Magalu solicita inicialmente as consultas e a escrita de etiquetas já documentadas. Catálogo, preço e estoque só entram no consentimento após liberação dos acessos no aplicativo Magalu e habilitação no servidor. Conta conectada sem catálogo pode consultar vendas/pós-venda, mas não publicar. Se o login parar, use Cancelar conexão ou aguarde o aviso após dez minutos; não repetir SMS indefinidamente. Erros 401/400 observados ainda não têm causa confirmada, e a correção precisa de teste real antes de afirmar sucesso.
+
+> Revisão 3.1.0.05: títulos dos cards reduzidos permanecem completos, com quebra de linha; filtros e ações se reorganizam conforme o espaço do card. Funcionamento e preferências preservados.
+
+> Revisão 3.1.0.04: seletor de permissões compartilhado com Usuários mobile; sem impacto operacional na Gestão Web.
+
+> Revisão 3.1.0.03: em Usuários e na seleção de áreas, a concessão antes chamada Dashboard da Gestão se chama Financeiro. Controla os dados e operações financeiras do perfil. Somente o rótulo muda; permissões gravadas e papéis preservados.
+
+> Revisão 3.1.0.02: numeração volta à série 3, preservando todas as funcionalidades. Usuários exibe as liberações persistidas no servidor; erro de leitura não significa acesso ativado. Após Salvar alterações, Dashboard e módulos são conferidos no banco antes do sucesso; ao reabrir, permanecem conforme gravados. Em falha de consulta, atualizar a lista e tentar novamente.
+
+> Revisão 4.0.0.30: restrição financeira por perfil no app nativo; sem impacto operacional na Gestão Web.
+
+> Revisão 4.0.0.29: seletor restrito do app nativo; sem impacto operacional na Gestão Web e suas permissões.
+
+> Revisão 4.0.0.28: entrada Web usa um card estável Preparando acesso, sem alternar títulos/mensagens entre provedor, sessão e empresa. Cancelamento social preservado; spinner sem percentual artificial.
+
+> Revisão 4.0.0.27: seletor fixo no AvantaVendas. Sem impacto operacional na Gestão Web.
+
+> Revisão 4.0.0.26: painel /admin usa senha administrativa própria, sem exigir sessão de perfil financeiro. APIs continuam autenticadas; sem alteração operacional da Gestão.
+
+> Revisão 4.0.0.25: seletor de perfil fixo em todas as telas do AvantaVendas
+> independente. Sem impacto operacional na Gestão Web.
+
+> Falha de comunicação ao validar acessos não significa sessão expirada: tentar novamente após restabelecer o serviço, sem dispensar autenticação.
+
+> Revisão 4.0.0.24: seletor de centros mais largo, nomes em até duas linhas; cadastro mantém até 80 caracteres, sem alterar nomes existentes.
+
+> Revisão 4.0.0.23: corrigida a ativação de centros de custo em Configurações para Gestor Master/Administrador com Dashboard e plano elegível. Reutiliza o Principal e preserva os dados; sem mudança nos passos operacionais.
+
+> Revisão 4.0.0.22: tela restrita a módulos exclusiva do app nativo AvantaLab; sem impacto operacional na Gestão Web/PWA.
+
+> Revisão 4.0.0.21: Ponto e Conteúdo abrem pelo perfil selecionado sem reiniciar login. Dados secundários não exigem nova entrada. Falha de carga volta à seleção para tentar novamente, sem encerrar a sessão. Vendas não exige Dashboard quando seu módulo está liberado.
+
+> Revisão 4.0.0.20: durante atualização financeira, as abas continuam disponíveis. A área de dados fica temporariamente não interativa, sem modal de carregamento; resumos secundários chegam em segundo plano. Em erro, usar Tentar novamente. Mudanças de perfil, ano ou centro não reutilizam dados do contexto anterior. Autenticação, plano e cadastro obrigatório ainda são necessários.
+
+> Revisão 4.0.0.19: marca oficial AvantaLab no canto superior esquerdo de Meus módulos; sem impacto operacional.
+
+> Revisão 4.0.0.18: em Meus módulos, clicar em qualquer parte do card abre o módulo. O botão Acessar continua disponível, assim como o acesso pelo teclado.
+
+> Revisão 4.0.0.17: durante a preparação, a página do módulo fica visível ao fundo, sem interação até os dados estarem prontos; sem impacto nos comandos operacionais.
+
+> Revisão 4.0.0.16: preparação dos módulos padronizada em um card compacto. Atualizações de acesso/tema não reiniciam a preparação de dados já exibidos; sem alteração nos comandos operacionais.
+
+> Revisão 4.0.0.15: Trocar perfil em Meus módulos abre a tela padrão de seleção após login. Confirmar acesso segue as liberações do perfil escolhido.
+
+> Revisão 4.0.0.14: Acessar usa o perfil e os módulos já carregados, sem espera por nova validação no clique. Dados e operações permanecem protegidos no servidor; revogação ou sessão inválida interrompem o acesso.
+
+> Revisão 4.0.0.13: realce visual dos cards de módulos no hover e foco; sem impacto operacional.
+
+> Revisão 4.0.0.12: para usuários sem Dashboard, Início retorna diretamente à seleção de módulos já carregada, sem preparar a Gestão. A lista é reconferida em segundo plano; abrir outro módulo continua exigindo acesso válido.
+
+> Revisão 4.0.0.11: Meus módulos tem cabeçalho e conjunto integralmente compactados, sem mudança operacional.
+
+> Revisão 4.0.0.10: Meus módulos exibe três cards por linha no desktop, sem mudança operacional.
+
+> Revisão 4.0.0.09: cards de módulos mais largos e baixos; Acessar com fundo primário próximo ao rodapé. Sem alteração operacional.
+
+> Revisão 4.0.0.08: Acessar fica no rodapé do módulo, com face menor e área de toque preservada. Sem mudança operacional.
+
+> Revisão 4.0.0.07: Meus módulos não repete o nome quando há logo, usa cards mais largos e ação Acessar discreta; sem mudança operacional.
+
+> Revisão 4.0.0.06: área Meus módulos mais compacta, sem alteração operacional de acesso, seleção ou retorno.
+
+> Revisão 4.0.0.05: Salvar alterações fecha o card Editar usuário quando o servidor confirma o sucesso; a lista é atualizada. Em caso de erro, a edição permanece aberta para correção.
+
+> Revisão 4.0.0.04: alterar somente Dashboard ou módulos habilita Salvar alterações. Master pode definir as liberações de Administradores e Operadores; o Administrador mantém poderes administrativos apenas nas áreas liberadas, sem alterar a própria concessão nem a de outros gestores.
+
+> Revisão 4.0.0.03: modal Editar usuário mais largo no desktop, com campos de nova senha e confirmação lado a lado. Sem mudança operacional nas permissões ou no salvamento.
+
+> Revisão 4.0.0.02: Editar usuário usa rolagem interna quando necessário, mantendo fechamento e ações disponíveis. E-mail, login e tipo ficam lado a lado no desktop e as liberações em duas colunas; no celular, uma coluna. As permissões não mudam.
+
+> Revisão 4.0.0.01: Confirmar acesso mostra Carregando imediatamente e consulta apenas o perfil escolhido, sem recarregar os demais perfis. Se a validação falhar, a seleção mostra o erro e permite tentar novamente.
+
+> Revisão 4.0.0: em Usuários, o gestor escolhe Dashboard da Gestão e os módulos liberados no cadastro, no vínculo de conta existente ou na edição. O papel define o nível de operação dentro da área. Gestor Master mantém a Gestão. Com Dashboard, a entrada abre a Gestão; sem ela, um módulo disponível abre direto e vários abrem Meus módulos. Início retorna à seleção para usuários restritos. Módulos também precisam estar instalados, ativos e compatíveis com o papel. Sem módulo disponível, orientar a procurar o gestor. Não orientar acesso por URL como forma de contornar liberações.
+
+> Revisão 4.0.0 — Marketplaces: no card **Vendas**, após **Situação**, use
+> **Marketplaces** para mostrar todas as plataformas ou selecionar uma ou mais.
+> A escolha filtra os pedidos, as contas disponíveis e os contadores desse card;
+> não altera os números globais do cabeçalho. Abrir vendas pelo aviso ou pelo
+> cabeçalho limpa essa seleção para mostrar o pedido solicitado.
+
+> Revisão 3.1.0.01: no Marketplaces Web, **Recolher** e **Expandir** ao lado
+> de **Atualizar contas** ocultam ou mostram a lista de Contas conectadas.
+> Conectar e atualizar continuam disponíveis com a lista recolhida; ao concluir
+> uma nova conexão, a lista reabre para identificar a conta.
 
 > Revisão 3.1.0: no Marketplaces Web, escolha Magalu, selecione uma loja com
 > permissões de catálogo, prepare um produto do cadastro local em Produtos e
@@ -5141,3 +6123,22 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 
 Ela orienta, não executa operações, não vê a tela atual e não confirma gravação,
 sincronização ou permissão sem dados explícitos.
+Regra preparada da referência (3.2.0.125, ainda não publicada): média aritmética de até oito preços totais comprovados na origem, sem completar a amostra com novas pesquisas. Parcelamento não exclui anúncio; usa-se o preço total, não a parcela.
+
+> Revisão 3.2.0.126: sem impacto operacional na Gestão Web. Publicação do visual de carregamento do Vendas e compatibilidade da proteção com a Vercel atual, sem alterar plano/backend ou testes.
+
+<!-- ava-version: 3.2.0.126 -->
+
+Revisão 3.2.0.290: Link de compra compacto para telas pequenas; condição abre acima e as ações permanecem acessíveis. Sem mudança na regra de preços ou no compartilhamento.
+
+Post Online 3.2.0.290: valor anunciado na linha 💰 *POR APENAS R$ …*, mantendo De como média consultada, sem percentual ou preço fixo.
+
+Revisão 3.2.0.290: posts por imagem do perfil Saldão Aline incluem na legenda dois links de oferta (11 98304-4391 e 11 98788-5611), sem mensagem preenchida, seguidos do convite curto do grupo. Imagem, preços, posts Online e outras empresas preservados.
+
+Revisão 3.2.0.290: post Online identifica a URL com *Link de compra:* em negrito no WhatsApp. Demais dados e posts de estoque não Online preservados.
+
+Revisão 3.2.0.290: importação de despesas no mês preserva o centro de custo selecionado na revisão, rascunho e confirmação. Na tela independente, escolher o centro quando o perfil usar centros. Rascunhos de centros separados; não transferir lançamentos antigos nem repetir lotes para corrigir alocação sem conferência. Sessão expirada, erro ou confirmação incerta preservam a revisão. Sem impacto operacional no AvantaVendas e nos demais fluxos nativos.
+
+Revisão 3.2.0.290: o tipo informado na planilha é preservado até carregar o cadastro do perfil; acentos, caixa e espaços não impedem reconhecimento. A seleção manual prevalece, e categoria de outro perfil exige revisão. Tabela sem repetir descrição/valor original, mantendo valores de conferência internamente e controles alinhados. Sem alteração de permissões, banco ou lançamentos existentes.
+
+Refinamento 3.2.0.290: opção Automático no tipo de documento mantém a detecção automática e cabe no card. Sem alteração operacional nos demais ambientes.

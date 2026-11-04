@@ -1,4 +1,5 @@
 'use client';
+import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -203,7 +204,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
 
   const retornarParaGestao = useCallback(() => {
     const empresaRetorno = empresaId || contextoInicial?.empresaId || '';
-    const destino = empresaRetorno ? `/gestao?empresaId=${encodeURIComponent(empresaRetorno)}` : '/gestao';
+    const destino = empresaRetorno ? destinoInicioModulo(empresaRetorno) : '/gestao';
     if (solicitarRetornoAoModuloHospedeiro()) return;
     router.push(destino);
   }, [contextoInicial, empresaId, router]);
@@ -405,7 +406,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       const { data } = await aguardarComLimite(supabase.auth.getSession(), 10_000, 'A confirmação da sessão demorou mais que o esperado. Tente novamente.');
       const token = data.session?.access_token;
       if (!token) throw new Error('Entre na Gestão para utilizar o laboratório integrado.');
-      const respostaPerfil = await aguardarComLimite(fetch(`/api/perfil-cadastro?empresaId=${encodeURIComponent(perfilId)}`, {
+      const respostaPerfil = await aguardarComLimite(fetch(`/api/modulos/vendas/perfil?empresaId=${encodeURIComponent(perfilId)}`, {
         headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
       }), 20_000, 'A confirmação do perfil demorou mais que o esperado. Tente novamente.');
       const perfil = await respostaPerfil.json().catch(() => ({}));
@@ -1000,7 +1001,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
     <section className="relative min-h-0 flex-1" aria-label="Vendas e Serviços">
       {!empresaId ? erro ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <TransicaoNavegacaoInterna destino="Vendas e Serviços" empresa={contextoInicial?.empresa} /> : erro && !perfilPronto ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <>
         <div aria-hidden={!perfilPronto || undefined} inert={!perfilPronto || undefined}><iframe ref={iframeRef} src={`/vendas/sistema?bridge=gestao&companyId=${encodeURIComponent(empresaId)}`} title="Vendas e Serviços" className="block h-screen min-h-[620px] w-full border-0 bg-white" onLoad={() => setIframePronto(true)} /></div>
-        <CarregamentoDadosModulo ativo={!perfilPronto || !iframePronto} titulo="Preparando Vendas e Serviços" mensagem="Renderizando o módulo e carregando os dados deste perfil…" corPrimaria={corPrimaria} />
+        <CarregamentoDadosModulo ativo={!perfilPronto || !iframePronto} titulo="Preparando Vendas e Serviços" mensagem="Carregando os dados do módulo…" corPrimaria={corPrimaria} temaEscuro={contextoInicial?.empresa.temaEscuro} />
       </>}
     </section>
     <RodapeAvanta />
