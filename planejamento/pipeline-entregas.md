@@ -125,3 +125,9 @@ remoto consultado. Não são recursos obsoletos nem material exclusivo de testes
 Os testes leem essa fonte única. A pasta não integra a fila automática de
 migrações; ausência do identificador não autoriza aplicar SQL ou migration repair.
 Consultar proveniência e AUDITORIA-15-SQL antes de alterar ou descartar uma fonte.
+
+## Reconciliação da main — 3.2.0.310
+
+Deployments automáticos por Git estão desativados por `git.deploymentEnabled: false` em `vercel.json`, conforme autorização do titular. A opção de API `gitProviderOptions.createDeployments` controla registros de deployment no GitHub e não impede builds da Vercel. O merge de reconciliação disparou o build `dpl_5naHiguFHTaMDiZvy1w8WUbf6Xd7`, cancelado antes da promoção; a produção 3.2.0.309 foi preservada. Publicações continuam exclusivamente pelo pipeline CLI autorizado, com fila, SHA de main, identidade, base vigente e testes.
+
+Referência: https://vercel.com/docs/project-configuration/git-configuration#git.deploymentenabled
