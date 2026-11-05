@@ -3,6 +3,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --av-ean-reading-background: linear-gradient(145deg, #1fb6ad, #0b8f9a);
+  --av-perfil-em-uso-superficie: #ffffff;
+  --av-perfil-em-uso-tinta: #003e73;
+  --av-perfil-em-uso-largura: 5.5rem;
 
   /* Tipografia AvantaLab: altere este bloco para atualizar todo o sistema. */
   --av-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -37,6 +41,65 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--av-font-family);
+}
+
+/* Selo único da Gestão Web/Mobile, independente da cor/tema do perfil. */
+.avanta-perfil-em-uso {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  inline-size: var(--av-perfil-em-uso-largura);
+  min-block-size: 1.75rem;
+  padding: 0.3rem 0.5rem;
+  border: 1.5px solid var(--av-perfil-em-uso-tinta);
+  border-radius: 9999px;
+  background: var(--av-perfil-em-uso-superficie);
+  color: var(--av-perfil-em-uso-tinta);
+  font-family: var(--av-font-family);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: none;
+  opacity: 1;
+  box-shadow: 0 0 0 1.5px var(--av-perfil-em-uso-superficie), 0 2px 5px rgb(0 62 115 / 16%);
+}
+
+.avanta-perfil-em-uso > svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  flex: none;
+}
+
+.avanta-perfil-em-uso-reserva {
+  display: block;
+  flex: none;
+  inline-size: var(--av-perfil-em-uso-largura);
+  block-size: 1.75rem;
+}
+
+/* A etiqueta é irmã do botão: opacity no perfil desativado não a apaga. */
+.avanta-perfil-opcao > .avanta-perfil-em-uso {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+@media (forced-colors: active) {
+  .avanta-perfil-em-uso {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .avanta-perfil-em-uso circle { fill: CanvasText; }
+  .avanta-perfil-em-uso path { stroke: Canvas; }
 }
 
 /* Rodapé do menu da Gestão Mobile: confirma visualmente o toque antes de o
@@ -351,6 +414,96 @@ nav {
   backdrop-filter: blur(16px) saturate(150%);
 }
 
+.avanta-loading-pontos { position:relative;display:block;width:140px;height:50px;max-width:100%;margin:0 auto;overflow:hidden; }
+.avanta-loading-pontos-trajeto { position:absolute;left:50%;top:50%;width:280px;height:100px;margin:-50px 0 0 -140px;transform:scale(.5); }
+.avanta-loading-pontos-trajeto > i { position:absolute;left:50%;top:50%;width:36px;height:36px;margin:-18px;border-radius:50%;background:currentColor;animation:avanta-pontos-onda 2s linear infinite;animation-delay:var(--av-ponto-atraso); }
+.avanta-loading-pontos--compacto { width:48px;height:20px; }
+.avanta-loading-pontos--compacto .avanta-loading-pontos-trajeto { transform:scale(.17); }
+@keyframes avanta-pontos-onda {
+  0.00% { transform: translate3d(-120.000px,0.000px,0) scale(0.00000); }
+  1.25% { transform: translate3d(-119.907px,-0.063px,0) scale(0.00154); }
+  2.50% { transform: translate3d(-119.630px,-0.252px,0) scale(0.00616); }
+  3.75% { transform: translate3d(-119.168px,-0.566px,0) scale(0.01382); }
+  5.00% { transform: translate3d(-118.523px,-1.005px,0) scale(0.02447); }
+  6.25% { transform: translate3d(-117.694px,-1.569px,0) scale(0.03806); }
+  7.50% { transform: translate3d(-116.684px,-2.254px,0) scale(0.05450); }
+  8.75% { transform: translate3d(-115.495px,-3.060px,0) scale(0.07368); }
+  10.00% { transform: translate3d(-114.127px,-3.982px,0) scale(0.09549); }
+  11.25% { transform: translate3d(-112.583px,-5.017px,0) scale(0.11980); }
+  12.50% { transform: translate3d(-110.866px,-6.159px,0) scale(0.14645); }
+  13.75% { transform: translate3d(-108.977px,-7.399px,0) scale(0.17528); }
+  15.00% { transform: translate3d(-106.921px,-8.730px,0) scale(0.20611); }
+  16.25% { transform: translate3d(-104.700px,-10.138px,0) scale(0.23875); }
+  17.50% { transform: translate3d(-102.317px,-11.611px,0) scale(0.27300); }
+  18.75% { transform: translate3d(-99.776px,-13.132px,0) scale(0.30866); }
+  20.00% { transform: translate3d(-97.082px,-14.681px,0) scale(0.34549); }
+  21.25% { transform: translate3d(-94.238px,-16.236px,0) scale(0.38328); }
+  22.50% { transform: translate3d(-91.249px,-17.774px,0) scale(0.42178); }
+  23.75% { transform: translate3d(-88.119px,-19.268px,0) scale(0.46077); }
+  25.00% { transform: translate3d(-84.853px,-20.688px,0) scale(0.50000); }
+  26.25% { transform: translate3d(-81.456px,-22.005px,0) scale(0.53923); }
+  27.50% { transform: translate3d(-77.934px,-23.187px,0) scale(0.57822); }
+  28.75% { transform: translate3d(-74.291px,-24.201px,0) scale(0.61672); }
+  30.00% { transform: translate3d(-70.534px,-25.018px,0) scale(0.65451); }
+  31.25% { transform: translate3d(-66.668px,-25.605px,0) scale(0.69134); }
+  32.50% { transform: translate3d(-62.700px,-25.935px,0) scale(0.72700); }
+  33.75% { transform: translate3d(-58.635px,-25.983px,0) scale(0.76125); }
+  35.00% { transform: translate3d(-54.479px,-25.729px,0) scale(0.79389); }
+  36.25% { transform: translate3d(-50.239px,-25.156px,0) scale(0.82472); }
+  37.50% { transform: translate3d(-45.922px,-24.254px,0) scale(0.85355); }
+  38.75% { transform: translate3d(-41.534px,-23.020px,0) scale(0.88020); }
+  40.00% { transform: translate3d(-37.082px,-21.459px,0) scale(0.90451); }
+  41.25% { transform: translate3d(-32.573px,-19.580px,0) scale(0.92632); }
+  42.50% { transform: translate3d(-28.013px,-17.404px,0) scale(0.94550); }
+  43.75% { transform: translate3d(-23.411px,-14.956px,0) scale(0.96194); }
+  45.00% { transform: translate3d(-18.772px,-12.270px,0) scale(0.97553); }
+  46.25% { transform: translate3d(-14.104px,-9.384px,0) scale(0.98618); }
+  47.50% { transform: translate3d(-9.415px,-6.344px,0) scale(0.99384); }
+  48.75% { transform: translate3d(-4.711px,-3.199px,0) scale(0.99846); }
+  50.00% { transform: translate3d(-0.000px,-0.000px,0) scale(1.00000); }
+  51.25% { transform: translate3d(4.711px,3.199px,0) scale(0.99846); }
+  52.50% { transform: translate3d(9.415px,6.344px,0) scale(0.99384); }
+  53.75% { transform: translate3d(14.104px,9.384px,0) scale(0.98618); }
+  55.00% { transform: translate3d(18.772px,12.270px,0) scale(0.97553); }
+  56.25% { transform: translate3d(23.411px,14.956px,0) scale(0.96194); }
+  57.50% { transform: translate3d(28.013px,17.404px,0) scale(0.94550); }
+  58.75% { transform: translate3d(32.573px,19.580px,0) scale(0.92632); }
+  60.00% { transform: translate3d(37.082px,21.459px,0) scale(0.90451); }
+  61.25% { transform: translate3d(41.534px,23.020px,0) scale(0.88020); }
+  62.50% { transform: translate3d(45.922px,24.254px,0) scale(0.85355); }
+  63.75% { transform: translate3d(50.239px,25.156px,0) scale(0.82472); }
+  65.00% { transform: translate3d(54.479px,25.729px,0) scale(0.79389); }
+  66.25% { transform: translate3d(58.635px,25.983px,0) scale(0.76125); }
+  67.50% { transform: translate3d(62.700px,25.935px,0) scale(0.72700); }
+  68.75% { transform: translate3d(66.668px,25.605px,0) scale(0.69134); }
+  70.00% { transform: translate3d(70.534px,25.018px,0) scale(0.65451); }
+  71.25% { transform: translate3d(74.291px,24.201px,0) scale(0.61672); }
+  72.50% { transform: translate3d(77.934px,23.187px,0) scale(0.57822); }
+  73.75% { transform: translate3d(81.456px,22.005px,0) scale(0.53923); }
+  75.00% { transform: translate3d(84.853px,20.688px,0) scale(0.50000); }
+  76.25% { transform: translate3d(88.119px,19.268px,0) scale(0.46077); }
+  77.50% { transform: translate3d(91.249px,17.774px,0) scale(0.42178); }
+  78.75% { transform: translate3d(94.238px,16.236px,0) scale(0.38328); }
+  80.00% { transform: translate3d(97.082px,14.681px,0) scale(0.34549); }
+  81.25% { transform: translate3d(99.776px,13.132px,0) scale(0.30866); }
+  82.50% { transform: translate3d(102.317px,11.611px,0) scale(0.27300); }
+  83.75% { transform: translate3d(104.700px,10.138px,0) scale(0.23875); }
+  85.00% { transform: translate3d(106.921px,8.730px,0) scale(0.20611); }
+  86.25% { transform: translate3d(108.977px,7.399px,0) scale(0.17528); }
+  87.50% { transform: translate3d(110.866px,6.159px,0) scale(0.14645); }
+  88.75% { transform: translate3d(112.583px,5.017px,0) scale(0.11980); }
+  90.00% { transform: translate3d(114.127px,3.982px,0) scale(0.09549); }
+  91.25% { transform: translate3d(115.495px,3.060px,0) scale(0.07368); }
+  92.50% { transform: translate3d(116.684px,2.254px,0) scale(0.05450); }
+  93.75% { transform: translate3d(117.694px,1.569px,0) scale(0.03806); }
+  95.00% { transform: translate3d(118.523px,1.005px,0) scale(0.02447); }
+  96.25% { transform: translate3d(119.168px,0.566px,0) scale(0.01382); }
+  97.50% { transform: translate3d(119.630px,0.252px,0) scale(0.00616); }
+  98.75% { transform: translate3d(119.907px,0.063px,0) scale(0.00154); }
+  100.00% { transform: translate3d(120.000px,0.000px,0) scale(0.00000); }
+}
+@media(prefers-reduced-motion:reduce) { .avanta-loading-pontos-trajeto > i { animation-play-state:running; } }
+
 .avanta-loading-spinner {
   height: 1.3rem;
   width: 1.3rem;
@@ -572,17 +725,8 @@ html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-
   animation: av-menu-gestao-entrada 620ms cubic-bezier(.22, 1, .36, 1) both;
 }
 
-@keyframes av-mobile-lancamentos-pilula-expandir {
-  from {
-    max-width: 32px;
-  }
-  to {
-    max-width: 112px;
-  }
-}
-
 /* No Gestão Mobile, a lupa é a própria extremidade direita do controle. Ao
-   expandir a lista, o mesmo círculo cresce para receber Recolher à esquerda. */
+   expandir, reserva a largura final sem reiniciar animação a cada render. */
 .av-mobile-lancamentos-pilula {
   width: 32px;
   max-width: 32px;
@@ -590,9 +734,9 @@ html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-
 }
 
 .av-mobile-lancamentos-pilula-expandida {
-  width: auto;
+  width: 112px;
   max-width: 112px;
-  animation: av-mobile-lancamentos-pilula-expandir 180ms cubic-bezier(.22, 1, .36, 1) both;
+  flex-shrink: 0;
 }
 
 /* Os atalhos principais deixam uma margem à direita para avançarem no hover. */

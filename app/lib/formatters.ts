@@ -5,6 +5,18 @@ export const formatarMoeda = (valor: number) => {
   }).format(valor);
 };
 
+/** Data civil ISO sem conversão de fuso. Ano curto é somente apresentação. */
+export function formatarDataISO(valor: string, anoCurto = false): string {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
+  if (!partes) return '';
+  const [, ano, mes, dia] = partes;
+  const a = Number(ano), m = Number(mes), d = Number(dia);
+  const bissexto = a % 4 === 0 && (a % 100 !== 0 || a % 400 === 0);
+  const dias = [31, bissexto ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (a < 1 || m < 1 || m > 12 || d < 1 || d > dias[m - 1]) return '';
+  return `${dia}/${mes}/${anoCurto ? ano.slice(-2) : ano}`;
+}
+
 export const moedaDigitadaParaNumero = (valor: string) => {
   const digitos = String(valor || '').replace(/\D/g, '').slice(0, 15);
   if (!digitos) return null;

@@ -497,14 +497,14 @@ export default function AppHeader({
                         type="button"
                         onClick={() => setListaCentroCustoAberta((aberta) => !aberta)}
                         disabled={carregandoCentroCusto}
-                        className={`relative flex h-6 w-[138px] items-center justify-center rounded-md border-2 px-6 text-center text-[9px] font-black uppercase tracking-wide shadow-sm outline-none transition hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-2 ${darkMode ? 'focus-visible:ring-slate-300 focus-visible:ring-offset-slate-900' : 'focus-visible:ring-slate-500 focus-visible:ring-offset-white'}`}
+                        className={`relative flex min-h-6 w-[220px] max-w-[calc(100vw-130px)] items-center justify-center rounded-md border-2 px-6 py-0.5 text-center text-[9px] font-black uppercase tracking-wide shadow-sm outline-none transition hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-2 ${darkMode ? 'focus-visible:ring-slate-300 focus-visible:ring-offset-slate-900' : 'focus-visible:ring-slate-500 focus-visible:ring-offset-white'}`}
                         style={{ backgroundColor: corPrimaria, borderColor: corPrimaria, color: textoSobreCorPrimaria }}
                         aria-label="Selecionar centro de custo"
                         aria-haspopup="listbox"
                         aria-expanded={listaCentroCustoAberta}
                         aria-controls="lista-centros-custo-global"
                       >
-                        <span className="truncate">{centrosCustoAtivos.find((centro) => centro.id === centroCustoSelecionadoId)?.nome || 'Principal'}</span>
+                        <span className="line-clamp-2 min-w-0 whitespace-normal break-words leading-3" title={centrosCustoAtivos.find((centro) => centro.id === centroCustoSelecionadoId)?.nome || 'Principal'}>{centrosCustoAtivos.find((centro) => centro.id === centroCustoSelecionadoId)?.nome || 'Principal'}</span>
                         {carregandoCentroCusto ? (
                           <span className="absolute right-2 h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
                         ) : (
@@ -525,10 +525,10 @@ export default function AppHeader({
                                   setListaCentroCustoAberta(false);
                                   if (!selecionado) onSelecionarCentroCusto?.(centro.id);
                                 }}
-                                className={`flex min-h-10 w-full items-center justify-center rounded-lg px-2.5 text-center text-xs font-black uppercase tracking-wide transition focus-visible:outline-none ${selecionado ? (darkMode ? 'bg-slate-700' : 'bg-slate-100') : (darkMode ? 'text-slate-200 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-100')}`}
+                                className={`flex min-h-11 w-full items-center justify-center rounded-lg px-2.5 py-2 text-center text-xs font-black uppercase tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current ${selecionado ? (darkMode ? 'bg-slate-700' : 'bg-slate-100') : (darkMode ? 'text-slate-200 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-100')}`}
                                 style={selecionado ? { color: corPrimaria } : undefined}
                               >
-                                <span className="truncate">{centro.nome}</span>
+                                <span className="line-clamp-2 min-w-0 whitespace-normal break-words leading-4" title={centro.nome}>{centro.nome}</span>
                               </button>
                             );
                           })}

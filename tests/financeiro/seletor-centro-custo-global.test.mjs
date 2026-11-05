@@ -22,22 +22,19 @@ test('páginas analíticas seguem somente o seletor global', () => {
 });
 
 test('controle global mantém contorno primário e aciona a troca do contexto', () => {
-  assert.match(header, /h-6 w-\[138px\] items-center justify-center rounded-md border-2 px-6 text-center/);
+  assert.match(header, /min-h-6 w-\[220px\] max-w-\[calc\(100vw-130px\)\]/);
+  assert.match(header, /line-clamp-2 min-w-0 whitespace-normal break-words leading-3/);
+  assert.match(header, /line-clamp-2 min-w-0 whitespace-normal break-words leading-4/);
   assert.match(header, /style=\{\{ backgroundColor: corPrimaria, borderColor: corPrimaria, color: textoSobreCorPrimaria \}\}/);
   assert.match(header, /onSelecionarCentroCusto\?\.\(centro.id\)/);
   assert.match(gestao, /setCarregandoCentroCusto\(true\);/);
   assert.match(gestao, /setCentroCustoSelecionadoId\(centroCustoId\);/);
 });
 
-test('troca de centro reutiliza a superfície glass de carregamento', () => {
-  const inicio = gestao.indexOf('{carregandoCentroCusto && !carregandoPerfil && (');
-  const fim = gestao.indexOf('{despesaRelatorioAberta && (', inicio);
-  const carregamento = gestao.slice(inicio, fim);
-
-  assert.ok(inicio >= 0 && fim > inicio);
-  assert.match(carregamento, /avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl/);
-  assert.match(carregamento, /avanta-loading-glass-icon mx-auto flex h-11 w-11/);
-  assert.match(carregamento, /text-white">Carregando centro de custo/);
+test('troca de centro mantém navegação e bloqueia somente a área financeira', () => {
+  assert.doesNotMatch(gestao, /\{carregandoCentroCusto && !carregandoPerfil && \(/);
+  assert.match(gestao, /Atualizando dados deste perfil… Você pode navegar pelas abas/);
+  assert.match(gestao, /inert=\{carregandoPerfil \|\| carregandoCentroCusto/);
 });
 
 test('cabeçalho eleva as abas apenas com centro de custo ativo', () => {

@@ -17,6 +17,10 @@ const ambienteOriginal = {
 const fetchOriginal = globalThis.fetch;
 let pastaCompilada;
 let backup;
+const empresa = '00000000-0000-4000-8000-000000000001';
+const outraEmpresa = '00000000-0000-4000-8000-000000000002';
+const prefixo = `avanta-${empresa}__`;
+const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 function respostaJson(dados, status = 200) {
   return new Response(JSON.stringify(dados), { status, headers: { 'Content-Type': 'application/json' } });
@@ -99,27 +103,59 @@ function callsWith(condicao, chamadas) {
   return chamada;
 }
 
-test('upload, listagem e download preservam o isolamento de cada provedor', async () => {
+test('upload, listagem e download preservam o perfil autorizado em ambos os provedores', async () => {
   const chamadas = [];
   globalThis.fetch = async (url, init = {}) => {
     chamadas.push({ url: String(url), init });
     if (String(url).includes('upload/drive')) return respostaJson({ id: 'google-arquivo', name: 'backup.xlsx' });
-    if (String(url).includes('drive/v3/files?')) return respostaJson({ files: [{ id: 'google-lista', name: 'backup.xlsx', size: '12', createdTime: '2026-09-20T00:00:00Z' }] });
+    if (String(url).includes('drive/v3/files?')) return respostaJson({ files: [{ id: 'google-lista', name: prefixo+'backup.xlsx', size: '12', createdTime: '2026-09-20T00:00:00Z', appProperties: {avantaEmpresaId:empresa}, parents:['pasta'],mimeType:mime }, {id:'alheio',name:`avanta-${outraEmpresa}__backup.xlsx`,parents:['pasta'],mimeType:mime,appProperties:{avantaEmpresaId:outraEmpresa}}, {id:'legado',name:'backup.xlsx',parents:['pasta'],mimeType:mime}] });
+    if (String(url).includes('drive/v3/files/google-lista?fields=')) return respostaJson({id:'google-lista',name:prefixo+'backup.xlsx',parents:['pasta'],mimeType:mime,appProperties:{avantaEmpresaId:empresa}});
     if (String(url).includes('drive/v3/files/google-lista?alt=media')) return new Response(new Uint8Array([1, 2, 3]));
-    if (String(url).includes('approot:/backup.xlsx:/content')) return respostaJson({ id: 'one-arquivo', name: 'backup.xlsx' });
-    if (String(url).includes('approot/children')) return respostaJson({ value: [{ id: 'one-lista', name: 'backup.xlsx', size: 16, lastModifiedDateTime: '2026-09-20T00:00:00Z', file: {} }, { id: 'ignorar', name: 'texto.txt', file: {} }] });
+    if (String(url).includes(`approot:/${prefixo}backup.xlsx:/content`)) return respostaJson({ id: 'one-arquivo', name: prefixo+'backup.xlsx' });
+    if (String(url).includes('approot/children')) return respostaJson({ value: [{ id: 'one-lista', name: prefixo+'backup.xlsx', size: 16, lastModifiedDateTime: '2026-09-20T00:00:00Z', file: {} }, {id:'alheio',name:`avanta-${outraEmpresa}__backup.xlsx`,file:{}}, { id: 'legado', name: 'backup.xlsx', file: {} }] });
+    if (String(url).includes('drive/items/one-lista?$select=')) return respostaJson({id:'one-lista',name:prefixo+'backup.xlsx',file:{},parentReference:{id:'raiz'}});
+    if (String(url).includes('special/approot?$select=')) return respostaJson({id:'raiz'});
     if (String(url).includes('drive/items/one-lista/content')) return new Response(new Uint8Array([4, 5]));
     throw new Error(`URL inesperada: ${url}`);
   };
   const bytes = new Uint8Array([9, 8, 7]).buffer;
-  assert.equal((await backup.enviarBackupNuvem('google_drive', 'token', 'pasta', 'backup.xlsx', bytes)).id, 'google-arquivo');
-  assert.equal((await backup.enviarBackupNuvem('onedrive', 'token', 'approot', 'backup.xlsx', bytes)).id, 'one-arquivo');
-  assert.deepEqual(await backup.listarBackupsNuvem('google_drive', 'token', 'pasta'), [{ id: 'google-lista', nome: 'backup.xlsx', tamanho: 12, criadoEm: '2026-09-20T00:00:00Z' }]);
-  assert.deepEqual(await backup.listarBackupsNuvem('onedrive', 'token', 'approot'), [{ id: 'one-lista', nome: 'backup.xlsx', tamanho: 16, criadoEm: '2026-09-20T00:00:00Z' }]);
-  assert.deepEqual([...new Uint8Array(await backup.baixarBackupNuvem('google_drive', 'token', 'google-lista'))], [1, 2, 3]);
-  assert.deepEqual([...new Uint8Array(await backup.baixarBackupNuvem('onedrive', 'token', 'one-lista'))], [4, 5]);
+  assert.equal((await backup.enviarBackupNuvem('google_drive', 'token', 'pasta', 'backup.xlsx', bytes, empresa)).id, 'google-arquivo');
+  assert.equal((await backup.enviarBackupNuvem('onedrive', 'token', 'approot', 'backup.xlsx', bytes, empresa)).id, 'one-arquivo');
+  assert.deepEqual(await backup.listarBackupsNuvem('google_drive', 'token', 'pasta', empresa), [{ id: 'google-lista', nome: 'backup.xlsx', tamanho: 12, criadoEm: '2026-09-20T00:00:00Z' }]);
+  assert.deepEqual(await backup.listarBackupsNuvem('onedrive', 'token', 'approot', empresa), [{ id: 'one-lista', nome: 'backup.xlsx', tamanho: 16, criadoEm: '2026-09-20T00:00:00Z' }]);
+  assert.deepEqual([...new Uint8Array(await backup.baixarBackupNuvem('google_drive', 'token', 'google-lista', 'pasta', empresa))], [1, 2, 3]);
+  assert.deepEqual([...new Uint8Array(await backup.baixarBackupNuvem('onedrive', 'token', 'one-lista', 'approot', empresa))], [4, 5]);
   assert.match(callsWith(calls => calls.url.includes('upload/drive'), chamadas).init.headers['Content-Type'], /multipart\/related/);
-  assert.equal(callsWith(calls => calls.url.includes('approot:/backup.xlsx:/content'), chamadas).init.method, 'PUT');
+  assert.equal(callsWith(calls => calls.url.includes(`approot:/${prefixo}backup.xlsx:/content`), chamadas).init.method, 'PUT');
+  const enviado = await callsWith(calls => calls.url.includes('upload/drive'), chamadas).init.body.text();
+  assert.match(enviado, new RegExp(`"avantaEmpresaId":"${empresa}"`));
+  assert.ok(enviado.includes(prefixo+'backup.xlsx'));
+});
+
+test('ID forjado, arquivo legado, pasta divergente e metadados incompletos nunca liberam conteúdo', async () => {
+  for (const provedor of ['google_drive','onedrive']) {
+    for (const item of [
+      {id:'arquivo',name:`avanta-${outraEmpresa}__backup.xlsx`,appProperties:{avantaEmpresaId:outraEmpresa},parents:['pasta'],mimeType:mime,file:{}},
+      {id:'arquivo',name:'backup.xlsx',parents:['pasta'],mimeType:mime,file:{}},
+      {id:'arquivo',name:prefixo+'backup.xlsx',appProperties:{avantaEmpresaId:empresa},parents:['outra-pasta'],mimeType:mime,file:{},parentReference:{id:'outra-pasta'}},
+      {id:'arquivo',name:prefixo+'backup.xlsx'},
+    ]) {
+      let conteudo=0;
+      globalThis.fetch=async url=>{if(String(url).includes('alt=media')||String(url).endsWith('/content')){conteudo++;throw Error('Conteúdo não deve ser chamado');}return respostaJson(String(url).includes('special/approot?')?{id:'raiz'}:item);};
+      await assert.rejects(()=>backup.baixarBackupNuvem(provedor,'token','arquivo','pasta',empresa),/perfil|pasta/);
+      assert.equal(conteudo,0);
+    }
+  }
+  await assert.rejects(()=>backup.listarBackupsNuvem('google_drive','token','pasta','perfil-invalido'),/Perfil/);
+});
+
+test('OneDrive percorre páginas antes de filtrar o perfil e nunca envia credencial a nextLink externo',async()=>{
+ const urls=[];
+ globalThis.fetch=async url=>{urls.push(String(url));return respostaJson(urls.length===1?{value:[{id:'B',name:`avanta-${outraEmpresa}__backup.xlsx`,file:{}}],'@odata.nextLink':'https://graph.microsoft.com/v1.0/me/special/approot/children?page=2'}:{value:[{id:'A',name:prefixo+'backup.xlsx',file:{}}]});};
+ const arquivos=await backup.listarBackupsNuvem('onedrive','token','approot',empresa);
+ assert.equal(urls.length,2);assert.equal(arquivos.length,1);assert.equal(arquivos[0].id,'A');
+ let count=0;globalThis.fetch=async()=>{count++;return respostaJson({value:[],'@odata.nextLink':'https://externo.invalid/roubar'});};
+ await assert.rejects(()=>backup.listarBackupsNuvem('onedrive','token','approot',empresa),/confirmar/);assert.equal(count,1);
 });
 
 test('erros do provedor e configuração ausente são devolvidos sem ocultar a causa', async () => {

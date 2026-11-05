@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { renewalAuthorizationUrl } from '../renewal-authorization';
 import styles from '../marketplaces.module.css';
+import { marketplaceDateTimeLabel } from '@/app/modules/marketplaces/date-format';
 
 type RenewalInfo = { sellerName: string; sellerReference: string; expiresAt: string };
 const failureMessage = (failure: unknown, fallback: string) => failure instanceof Error && ['TimeoutError', 'AbortError'].includes(failure.name)
@@ -51,7 +52,7 @@ export default function RenewalClient() {
         <p><strong>{info.sellerName}</strong> · ID {info.sellerReference}</p>
         <p>Entre no Mercado Livre com esta conta e revise as permissões antes de autorizar. Se outra conta estiver conectada no navegador, use uma janela anônima.</p>
         <p>Sua senha é informada somente ao Mercado Livre. Este link não permite acessar o AvantaLab, ver vendas ou excluir a conexão. Os anúncios e o histórico serão mantidos.</p>
-        <p>Solicitação válida até {new Date(info.expiresAt).toLocaleString('pt-BR')}.</p>
+        <p>Solicitação válida até {marketplaceDateTimeLabel(info.expiresAt)}.</p>
         <button type="button" disabled={busy} onClick={() => void authorize()}>Continuar no Mercado Livre</button>
       </>}
       {error && <p role="alert">{error}</p>}

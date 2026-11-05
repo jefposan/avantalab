@@ -6,7 +6,7 @@
     "dev": "next dev",
     "dev:solicitacao-voz": "npm --prefix \"../AvantaLab Projetos/prototipos/solicitacao-voz\" run dev",
     "dev:vendas-fiscal": "node scripts/iniciar-vendas-fiscal-local.mjs",
-    "build": "node scripts/verificar-padrao-avanta.mjs && node scripts/verificar-conhecimento-ava.mjs && node scripts/verificar-revisao-avantavendas.mjs && npm test && node scripts/verificar-acesso-mobile.mjs && node scripts/verificar-acesso-web.mjs && node scripts/verificar-agenda-vendas.mjs && node scripts/verificar-interface-vendas.mjs && node scripts/verificar-notificacoes-perfil.mjs && next build --webpack",
+    "build": "node scripts/verificar-padrao-avanta.mjs && node scripts/verificar-conhecimento-ava.mjs && node scripts/verificar-revisao-avantavendas.mjs && npm test && node scripts/verificar-acesso-mobile.mjs && node scripts/verificar-acesso-web.mjs && node scripts/verificar-agenda-vendas.mjs && node scripts/verificar-interface-vendas.mjs && node scripts/verificar-notificacoes-perfil.mjs && node scripts/gerar-mobile-otimizado.mjs && node scripts/gerar-vendas-otimizado.mjs && next build --webpack",
     "verificar:padrao-avanta": "node scripts/verificar-padrao-avanta.mjs",
     "verificar:ava": "node scripts/verificar-conhecimento-ava.mjs",
     "verificar:ava-chat": "node --no-warnings --experimental-strip-types --test tests/ava/*.test.mjs",
@@ -21,8 +21,11 @@
     "fiscal:orchestrator:verify": "node app/vendas/scripts/verificar-orquestrador-nfe-local.mjs",
     "fiscal:orchestrator:resilience": "node app/vendas/scripts/verificar-resiliencia-orquestrador-nfe-local.mjs",
     "start": "next start",
-    "test": "node --no-warnings --experimental-strip-types --test tests/**/*.test.mjs",
-    "lint": "eslint"
+    "test": "node scripts/executar-testes.mjs",
+    "test:seguranca": "node scripts/executar-testes.mjs tests/admin tests/usuarios tests/perfis tests/modulos tests/infra tests/mobile/oauth-nativo-confiavel.test.mjs tests/mobile/sessao-unica-supabase.test.mjs tests/mobile/recuperacao-sessao-perfil.test.mjs tests/mobile/usuarios-acessos.test.mjs tests/avantavendas/login-persistencia-oauth.test.mjs",
+    "lint": "eslint",
+    "publicar:vercel": "node scripts/publicar-vercel.mjs",
+    "verificar:historico-migracoes": "node docs/auditorias/reconciliacao-2026-11-04/auditar-registros.mjs"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.15.5",
@@ -67,7 +70,10 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "twilio": "^6.0.2",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "parse5": "8.0.0",
+    "sharp": "0.34.5",
+    "saxes": "5.0.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.2",

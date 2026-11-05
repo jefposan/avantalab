@@ -1,6 +1,9 @@
 import type { SVGProps } from 'react';
 
 const paths: Record<string, React.ReactNode> = {
+  building: <><path d="M4 21V5l10-3v19M14 8h6v13M2 21h20M7 8h1M10 7h1M7 12h1M10 11h1M7 16h1M10 15h1M17 12h1M17 16h1" /></>,
+  storefront: <><path d="M3 10h18l-2-6H5l-2 6ZM4 10v10h16V10M9 20v-6h6v6M9 4l-1 6M15 4l1 6" /><path d="M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" /></>,
+  shoppingBag: <><rect x="4" y="7" width="16" height="14" rx="2" /><path d="M8 9V6a4 4 0 0 1 8 0v3" /></>,
   plus: <><path d="M12 5v14M5 12h14" /></>,
   people: <><circle cx="9" cy="8" r="3" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0" /><path d="M16 5.5a3 3 0 0 1 0 5.5M18.5 20a5.5 5.5 0 0 0-3.2-5" /></>,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
@@ -19,6 +22,7 @@ const paths: Record<string, React.ReactNode> = {
   zoomIn: <><circle cx="10" cy="10" r="6" /><path d="M10 7v6M7 10h6m2.5 5.5L21 21" /></>,
   zoomOut: <><circle cx="10" cy="10" r="6" /><path d="M7 10h6m2.5 5.5L21 21" /></>,
   close: <path d="m6 6 12 12M18 6 6 18" />,
+  alert: <><path d="M10.3 4.5a2 2 0 0 1 3.4 0l8 14A2 2 0 0 1 20 21H4a2 2 0 0 1-1.7-2.5Z" /><path d="M12 9v4M12 17h.01" /></>,
   chevron: <path d="m9 18 6-6-6-6" />,
   child: <><circle cx="6" cy="7" r="2" /><circle cx="18" cy="17" r="2" /><path d="M8 7h4v10h4" /></>,
   sibling: <><circle cx="5" cy="7" r="2" /><circle cx="19" cy="7" r="2" /><circle cx="12" cy="18" r="2" /><path d="M7 7h10M12 7v9" /></>,
@@ -32,6 +36,7 @@ const paths: Record<string, React.ReactNode> = {
   filter: <path d="M4 5h16l-6 7v6l-4 2v-8Z" />,
   calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>,
   refresh: <><path d="M3 12a9 9 0 0 1 15.36-6.36L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15.36 6.36L3 16" /><path d="M8 16H3v5" /></>,
+  trendUp: <><path d="M4 18 10 12l4 4 6-9" /><path d="M15 7h5v5" /></>,
   back: <path d="m15 18-6-6 6-6" />,
   settings: <><path strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065Z" /><path strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></>,
   barcode: <><path d="M4 5v14M7 5v14M10 5v14M14 5v14M17 5v14M20 5v14" /><path d="M12 5v14" strokeWidth="1" /></>,

@@ -10,6 +10,8 @@ export type DespesaImportada = {
   descricao: string;
   valor: number;
   categoria: CategoriaDespesa | '';
+  categoriaInformada?: string;
+  categoriaManual?: boolean;
   incluir: boolean;
   confianca: 'Alta' | 'Revisar';
   natureza?: 'despesa' | 'estorno';
@@ -20,6 +22,7 @@ export type DespesaImportada = {
 export type RascunhoImportacao = {
   versao: 1;
   empresaId?: string;
+  centroCustoId?: string | null;
   loteChave?: string;
   arquivo: string;
   tipoDocumento?: TipoDocumentoImportado;

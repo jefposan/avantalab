@@ -69,8 +69,8 @@ test('saldo zero antigo não inventa um crédito sem informação suficiente', (
   assert.equal(fluxo().resumoComprovantePedido(pedido({ saldo_anterior: 0, saldo_final: 0 })).creditoAnterior, 0);
 });
 
-test('consignado não recupera crédito como se seu total gerasse débito', () => {
-  assert.equal(fluxo().resumoComprovantePedido(pedido({ saldo_anterior: 0, saldo_final: 34 }, 56, { forma_pagamento: 'Consignado' })).creditoAnterior, 0);
+test('consignado não oferece um resumo de dívida ou crédito', () => {
+  assert.equal(fluxo().resumoComprovantePedido(pedido({ saldo_anterior: 0, saldo_final: 34 }, 56, { forma_pagamento: 'Consignado' })), null);
 });
 
 test('pedido sem retrato usa histórico anterior e ignora pagamentos posteriores ou de outro cliente', () => {

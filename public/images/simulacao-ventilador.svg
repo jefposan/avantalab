@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#fff"/>
+  <ellipse cx="240" cy="288" rx="78" ry="10" fill="#e2e8f0"/>
+  <path d="M228 198h24l9 68h-42z" fill="#334155"/>
+  <rect x="173" y="262" width="134" height="22" rx="11" fill="#334155"/>
+  <circle cx="240" cy="122" r="96" fill="#f1f5f9" stroke="#334155" stroke-width="8"/>
+  <g fill="#64748b">
+    <path d="M240 122c-54-47-19-89 8-77 25 12 8 49-8 77z"/>
+    <path d="M240 122c68-24 86 28 62 46-22 15-47-16-62-46z"/>
+    <path d="M240 122c-14 71-68 61-71 31-2-27 37-33 71-31z"/>
+  </g>
+  <g fill="none" stroke="#94a3b8" stroke-width="2">
+    <circle cx="240" cy="122" r="79"/><circle cx="240" cy="122" r="59"/><circle cx="240" cy="122" r="38"/>
+    <path d="M144 122h192M240 26v192M172 54l136 136M172 190L308 54"/>
+  </g>
+  <circle cx="240" cy="122" r="16" fill="#003e73"/>
+  <text x="240" y="308" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#64748b">PRODUTO FICTÍCIO · SIMULAÇÃO LOCAL</text>
+</svg>

@@ -126,6 +126,11 @@ export async function advanceMagaluPublication(db: SupabaseClient, connection: M
       current = await updateStage(db, current, 'price_confirmed');
     }
     if (current.response_summary.stage === 'price_confirmed') {
+      if(objectValue(current.response_summary).shared_stock===true){
+        const local=await getLocalProduct(db,connection.empresa_id,current.response_summary.local_product_id);
+        if(local.stock_quantity==null||local.listing_stock_review_at)throw new MarketplaceError(409,'physical_stock_pending','Confirme o saldo Online antes de continuar o envio.');
+        current=await updateStage(db,current,'price_confirmed',{stock_body:{...objectValue(current.response_summary.stock_body),quantity:local.stock_quantity}});
+      }
       current = await updateStage(db, current, 'stock_submitting');
       const response = await magaluCatalogRequest(db, connection, 'POST', stockPath(current.provider_listing_id), current.response_summary.stock_body);
       current = await updateStage(db, current, 'stock_accepted', { stock_trace: safeText(objectValue(response.data).trace_id, 100) });
@@ -148,7 +153,7 @@ export async function advanceMagaluPublication(db: SupabaseClient, connection: M
   }
 }
 
-export async function createMagaluPublication(db: SupabaseClient, companyId: string, connectionId: unknown, actor: string, requestKey: unknown, raw: unknown) {
+export async function createMagaluPublication(db: SupabaseClient, companyId: string, connectionId: unknown, actor: string, requestKey: unknown, raw: unknown, options?:{sharedStock?:boolean}) {
   if (!uuidIsValid(requestKey)) throw new MarketplaceError(400, 'invalid_request', 'Atualize o formulário e tente novamente.');
   const connection = await loadMagaluCatalogConnection(db, companyId, connectionId);
   if (!isMagaluPublicationForm(raw)) throw new MarketplaceError(400, 'invalid_form', 'Revise os dados da publicação.');
@@ -163,6 +168,7 @@ export async function createMagaluPublication(db: SupabaseClient, companyId: str
   if (previous.status !== 404) throw new MarketplaceError(409, 'sku_exists', 'Este SKU já existe no Magalu. Confira-o antes de criar outro anúncio.');
   const summary: Summary = { stage: 'sku_submitting', sku: form.sku, title: form.title.trim(), local_product_id: product.id,
     sku_body: bodies.sku, price_body: bodies.price, stock_body: bodies.stock };
+  if(options?.sharedStock)Object.assign(summary,{shared_stock:true});
   const { data, error } = await db.from('marketplace_publications').insert({ empresa_id: companyId, connection_id: connection.id, provider: 'magalu',
     ean: form.ean, price_cents: form.priceCents, status: 'publishing', idempotency_key: requestKey,
     provider_listing_id: form.sku, created_by: actor, response_summary: summary }).select('*').maybeSingle();

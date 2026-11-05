@@ -4,10 +4,12 @@ import { registerHooks } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { existsSync } from 'node:fs';
+import { mockOriginModule,originFixture } from './price-origin-fixture.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 const hooks = registerHooks({ resolve(specifier, context, next) {
   if (specifier === 'server-only') return { url: 'data:text/javascript,export {}', shortCircuit: true };
+  if (specifier === './public-price-page') return { url:'data:text/javascript,'+encodeURIComponent(mockOriginModule),shortCircuit:true };
   if (specifier.endsWith('/management-access') || specifier.endsWith('/management-access.ts') || specifier === './management-access') return { url: 'data:text/javascript,export class MarketplaceError extends Error { constructor(status,code,message,fields){super(message);this.status=status;this.code=code;this.fields=fields;} }', shortCircuit: true };
   if (specifier.endsWith('/mercadolivre-management') || specifier === './mercadolivre-management') return { url: 'data:text/javascript,export async function mlRequest(db,connection,path){return globalThis.__mlPriceMock(path)}', shortCircuit: true };
   let candidate;
@@ -24,7 +26,22 @@ hooks.deregister();
 const ean = '7891129598607';
 const productId = 'MLB75636839';
 const connection = { id: crypto.randomUUID(), empresa_id: crypto.randomUUID() };
+test('preço total confirmado do EAN 7899882311471 gera referência e três sugestões',()=>{
+ assert.deepEqual(calculatePriceSuggestions([26590]),{market:265.9,minimum:132.95,medium:186.13,ideal:239.31});
+});
 const product = (extra = {}) => ({ id: productId, name: 'Fogão de teste', domain_id: 'MLB-STOVES', status: 'active', pictures: [{ secure_url: 'https://http2.mlstatic.com/a.jpg' }], attributes: [], ...extra });
+
+test('consulta compartilhada Web/AvantaPreços entrega nome compacto sem perder a ficha original',async()=>{
+ process.env.MARKETPLACE_SECRETS_KEY='configured-for-test';
+ const original='Ferro de Passar Seco e Vapor Electrolux Efficient Base antiaderente Vapor Vertical Extra 1200W de Potência Cabo 1,35m ESI10';
+ const item=product({name:original,attributes:[{id:'BRAND',name:'Marca',value_name:'Electrolux'},{id:'LINE',name:'Linha',value_name:'Efficient'},{id:'MODEL',name:'Modelo',value_name:'ESI10'}]});
+ globalThis.__mlPriceMock=async path=>new URL(`https://api.mercadolibre.com${path}`).pathname==='/products/search'?{results:[item]}:item;
+ const result=await consultMercadoLivrePrice({},connection,{ean,manualPrice:132});
+ assert.equal(result.product.name,'Ferro de Passar Seco e Vapor Electrolux Efficient ESI10');
+ assert.equal(result.product.description,original);
+ assert.equal(result.product.id,productId);assert.equal(result.ean,ean);
+ assert.equal(result.product.attributes.find(attribute=>attribute.id==='MODEL').value,'ESI10');
+});
 
 function mockCatalog() {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
@@ -40,6 +57,7 @@ function mockPriceProvider({ offers = [
   { title: 'Fogão de teste', seller: 'Loja A', price: 800, url: 'https://loja-a.example/fogao' },
   { title: 'Fogão de teste', seller: 'Loja B', price: 900, url: 'https://loja-b.example/fogao' },
 ] } = {}) {
+  globalThis.priceOriginFixtures=new Map(offers.map(offer=>[offer.url,originFixture(offer)]));
   process.env.OPENAI_API_KEY = 'test-openai-key';
   process.env.OPENAI_PRICE_SEARCH_MODEL = 'test-search-model';
   globalThis.fetch = async (url, init) => {
@@ -47,7 +65,7 @@ function mockPriceProvider({ offers = [
       assert.equal(init?.method, 'POST');
       const payload = JSON.parse(String(init?.body));
       globalThis.__openAIPriceRequest = payload;
-      return Response.json({ output: [{ content: [{ type: 'output_text', text: JSON.stringify({ offers }) }] }] });
+      return Response.json({ output: [{type:'web_search_call',action:{sources:offers.map(offer=>({url:offer.url}))}},{ content: [{ type: 'output_text', text: JSON.stringify({ offers:offers.map(offer=>({...offer,currency:'BRL',availability:'in_stock'})) }) }] }] });
     }
     throw new Error(`URL OpenAI inesperada: ${url}`);
   };
@@ -65,10 +83,10 @@ test('sugestões aplicam exatamente 50%, 70% e 90% sobre o preço informado', ()
   assert.deepEqual(calculatePriceSuggestions([10000]), { market: 100, minimum: 50, medium: 70, ideal: 90 });
 });
 
-test('referência usa somente a média das cinco menores ofertas válidas', () => {
+test('referência usa média de todas as ofertas válidas, limitada a oito', () => {
   assert.deepEqual(
     calculatePriceSuggestions([99900, 10000, 11000, 12000, 13000, 14000]),
-    { market: 120, minimum: 60, medium: 84, ideal: 108 },
+    { market: 266.5, minimum: 133.25, medium: 186.55, ideal: 239.85 },
   );
 });
 
@@ -78,7 +96,8 @@ test('consulta identifica o produto e calcula a média sem consultar a vitrine d
   const result = await consultMercadoLivrePrice({}, connection, { ean });
   assert.equal(result.status, 'found');
   assert.equal(result.product?.name, 'Fogão de teste');
-  assert.equal(globalThis.__openAIPriceRequest.model, 'test-search-model');
+  assert.equal(globalThis.__openAIPriceRequest.model, 'gpt-5.4-mini');
+  assert.equal(globalThis.__openAIPriceRequest.max_tool_calls, 2);
   assert.equal(globalThis.__openAIPriceRequest.tool_choice, 'required');
   assert.equal(globalThis.__openAIPriceRequest.tools[0].type, 'web_search');
   assert.match(globalThis.__openAIPriceRequest.input, /Fogão de teste/);
@@ -88,7 +107,7 @@ test('consulta identifica o produto e calcula a média sem consultar a vitrine d
 });
 
 
-test('consulta inclui o menor Mercado Livre e o menor Amazon na base da média', async () => {
+test('consulta usa a amostra representativa sem reservar vagas por marketplace', async () => {
   mockCatalog();
   mockPriceProvider({ offers: [
     { title: 'Fogão de teste', seller: 'Loja 1', price: 100, url: 'https://um.example/fogao' },
@@ -107,12 +126,14 @@ test('consulta inclui o menor Mercado Livre e o menor Amazon na base da média',
     { seller: 'Loja 2', price: 110 },
     { seller: 'Loja 3', price: 120 },
     { seller: 'Mercado Livre - menor', price: 300 },
+    { seller: 'Mercado Livre - caro', price: 350 },
     { seller: 'Amazon - menor', price: 400 },
+    { seller: 'Amazon - caro', price: 450 },
   ]);
-  assert.deepEqual(result.prices, { market: 206, minimum: 103, medium: 144.2, ideal: 185.4 });
+  assert.deepEqual(result.prices, { market: 261.43, minimum: 130.72, medium: 183, ideal: 235.29 });
 });
 
-test('consulta com IA usa somente as cinco menores ofertas comprovadas', async () => {
+test('consulta com IA não descarta oferta comprovada só por ter preço mais alto', async () => {
   mockCatalog();
   mockPriceProvider({ offers: [
     { title: 'Fogão de teste', seller: 'Loja cara', price: 5_000, url: 'https://cara.example/fogao' },
@@ -124,8 +145,8 @@ test('consulta com IA usa somente as cinco menores ofertas comprovadas', async (
   ] });
   const result = await consultMercadoLivrePrice({}, connection, { ean });
   assert.equal(result.status, 'found');
-  assert.deepEqual(result.prices, { market: 300, minimum: 150, medium: 210, ideal: 270 });
-  assert.deepEqual(result.sample?.offers?.map((offer) => offer.price), [100, 200, 300, 400, 500]);
+  assert.deepEqual(result.prices, { market: 1083.33, minimum: 541.67, medium: 758.33, ideal: 975 });
+  assert.deepEqual(result.sample?.offers?.map((offer) => offer.price), [100, 200, 300, 400, 500, 5000]);
 });
 
 test('tarefa Google concluída sem ofertas encerra a consulta em vez de permanecer pendente', async () => {

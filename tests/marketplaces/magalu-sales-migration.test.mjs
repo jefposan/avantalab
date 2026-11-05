@@ -1,8 +1,9 @@
+import { sqlDeTesteURL } from '../helpers/sql-historico.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
-const read = path => readFileSync(new URL(`../../supabase/migrations/${path}`,import.meta.url),'utf8');
+const read = path => readFileSync(sqlDeTesteURL(path),'utf8');
 test('SQL real: migração Magalu preserva ML, isola cursor/empresa e alerta uma vez sem baixar estoque', async () => {
   const db = new PGlite();
   try {

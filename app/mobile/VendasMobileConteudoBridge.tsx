@@ -24,9 +24,14 @@ export default function VendasMobileConteudoBridge() {
         corPrimaria: detalhe.corPrimaria || '#003E73',
       });
     };
+    const fechar = () => setDados(null);
 
     window.addEventListener('avantalab:open-vendas-conteudo', abrir);
-    return () => window.removeEventListener('avantalab:open-vendas-conteudo', abrir);
+    window.addEventListener('avantalab:close-native-modules', fechar);
+    return () => {
+      window.removeEventListener('avantalab:open-vendas-conteudo', abrir);
+      window.removeEventListener('avantalab:close-native-modules', fechar);
+    };
   }, []);
 
   useEffect(() => {

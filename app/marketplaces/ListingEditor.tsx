@@ -8,6 +8,9 @@ import { changedFields, EDIT_FIELDS, validateChanges, type EditField, type Listi
 import type { ListingAction, ListingSnapshot } from '@/app/modules/marketplaces/services/listing-model';
 import styles from './marketplaces.module.css';
 import MarketplaceSelect from './MarketplaceSelect';
+import {seedListingValues} from '@/app/modules/marketplaces/product-listing-update';
+import type {ListingChanges} from '@/app/modules/marketplaces/listing-editor';
+import ListingQuality from './ListingQuality';
 
 type Requester = (path: string, body?: unknown, signal?: AbortSignal, method?: string) => Promise<unknown>;
 const labels = { title: 'Título', price: 'Preço de venda (R$)', listingType: 'Tipo de anúncio', stock: 'Estoque disponível', description: 'Descrição' };
@@ -18,10 +21,12 @@ function feeDetail(fee: number | null, percent: number | null, notice?: string) 
   const formatted = fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   return `Taxa ${formatted}${percent == null ? '' : ` · ${percent}%`}`;
 }
-export default function ListingEditor({ companyId, accountId, itemId, snapshot, permalink, children, additionalAction, dark, brand, request, onClose, onSaved, onBusy, onListingAction }: {
+export default function ListingEditor({ companyId, accountId, itemId, snapshot, permalink, children, additionalAction, dark, brand, request, onClose, onSaved, onBusy, onListingAction,suggestedChanges,initialFocus }: {
   companyId: string; accountId: string; itemId: string; dark: boolean; brand: string; request: Requester;
   snapshot: ListingSnapshot; permalink: string | null; children: ReactNode; additionalAction?: ReactNode;
-  onClose: () => void; onSaved: (listing: ListingSnapshot) => void; onBusy: (busy: boolean) => void; onListingAction?: (action: ListingAction) => void;
+  suggestedChanges?:ListingChanges;
+  initialFocus?:EditField;
+  onClose: () => void; onSaved: (listing: ListingSnapshot,pending?:boolean) => void; onBusy: (busy: boolean) => void; onListingAction?: (action: ListingAction) => void;
 }) {
   const prefix = useId();
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -39,8 +44,9 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
   const [feeMessage, setFeeMessage] = useState('');
   const requestKey = useRef(crypto.randomUUID());
   const formRef = useRef<HTMLFormElement>(null);
+  const commonProduct=editor?.fields.title.reason?.startsWith('Dado comum do produto.')===true;
   const dirty = !!editor && Object.keys(changedFields(editor, values)).length > 0;
-  const availableLifecycleActions = snapshot.substatus.includes('deleted') ? [] : lifecycleActions[snapshot.status] || [];
+  const availableLifecycleActions = (snapshot.substatus.includes('deleted') ? [] : lifecycleActions[snapshot.status] || []).filter(action=>editor?.provider!=='magalu'||['pause','resume'].includes(action));
   const lifecycleDisabled = loading || saving || stale || dirty;
 
   useEffect(() => {
@@ -49,15 +55,20 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
     void request(`anunciados/editar?${params}`, undefined, controller.signal).then((data) => {
       if (controller.signal.aborted) return;
       const result = data as Editor;
-      setEditor(result); setValues(result.values);
-      setPriceText(result.values.price == null ? '' : result.values.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      const seeded=seedListingValues(result,suggestedChanges);
+      setEditor(result); setValues(seeded.values);
+      setPriceText(seeded.values.price == null ? '' : seeded.values.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       setStockText(result.values.stock == null ? '' : String(result.values.stock));
-      requestKey.current = crypto.randomUUID(); setStale(false); setErrors({}); setMessage('');
-      requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>('input:not([disabled]), textarea:not([disabled]), button')?.focus({ preventScroll: true }));
+      requestKey.current = crypto.randomUUID(); setStale(false); setErrors({}); setMessage(seeded.notice);
+      requestAnimationFrame(() => {
+        const target=initialFocus?formRef.current?.querySelector<HTMLElement>(`[id="${prefix}-${initialFocus}"]:not([disabled])`):null;
+        if(target)target.scrollIntoView({block:'center',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+        (target||formRef.current?.querySelector<HTMLElement>('input:not([disabled]), textarea:not([disabled]), button'))?.focus({ preventScroll: true });
+      });
     }).catch((failure) => { if (!controller.signal.aborted) setMessage(failure instanceof Error ? failure.message : 'Não foi possível abrir a edição.'); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [companyId, accountId, itemId, request, reloadKey]);
+  }, [companyId, accountId, itemId, request, reloadKey,suggestedChanges,initialFocus,prefix]);
 
   useEffect(() => {
     if (!dirty && !saving) return;
@@ -74,7 +85,7 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
     setErrors((current) => ({ ...current, [field]: undefined, form: undefined }));
   }
   async function refreshListingTypeFee(nextType = values.listingType, nextPrice = values.price) {
-    if (!editor || feeLoading || !nextType || nextPrice == null || !Number.isFinite(nextPrice) || nextPrice <= 0) return;
+    if (!editor || editor.provider!=='mercado_livre' || feeLoading || !nextType || nextPrice == null || !Number.isFinite(nextPrice) || nextPrice <= 0) return;
     const params = new URLSearchParams({ empresaId: companyId, connectionId: accountId, id: itemId, listingType: nextType, price: String(nextPrice) });
     setFeeLoading(true); setFeeMessage('');
     try {
@@ -96,8 +107,10 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
     if (Object.keys(validation.errors).length) { if (firstError) document.getElementById(`${prefix}-${firstError}`)?.focus(); return; }
     setSaving(true); onBusy(true);
     try {
-      const result = await request('anunciados/editar', { empresaId: companyId, connectionId: accountId, id: itemId, revision: editor.revision, requestKey: requestKey.current, changes: validation.changes }, undefined, 'PATCH') as { listing: ListingSnapshot };
-      onSaved(result.listing);
+      const result = await request('anunciados/editar', { empresaId: companyId, connectionId: accountId, id: itemId, revision: editor.revision, requestKey: requestKey.current, changes: validation.changes }, undefined, 'PATCH') as { listing: ListingSnapshot;pending?:boolean;message?:string };
+      if(result.listing?.id!==itemId)throw new Error('A atualização não foi confirmada para este anúncio. Recarregue a edição antes de tentar novamente.');
+      if(result.pending){setMessage(result.message||'Envio aceito, aguardando confirmação do marketplace. Recarregue a edição para conferir.');setStale(true);}
+      onSaved(result.listing,!!result.pending);
     } catch (failure) {
       const detail = failure as Error & { code?: string; fields?: Partial<Record<EditField, string>> };
       setMessage(detail.message || 'Não foi possível salvar. Confira o anúncio antes de tentar novamente.');
@@ -108,13 +121,15 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
   }
 
   return <>
+    {editor?.provider==='mercado_livre'&&<ListingQuality companyId={companyId} accountId={accountId} itemId={itemId} request={request} dark={dark} brand={brand} disabled={loading||saving} canManageContent={!commonProduct} onContentBusy={onBusy} onContentSaved={()=>{setStale(true);setMessage('O conteúdo do anúncio foi alterado. Recarregue a edição antes de enviar outros campos; seus rascunhos foram preservados.');}} canEdit={field=>!!editor.fields[field]?.editable&&!stale} onEdit={field=>{const input=document.getElementById(`${prefix}-${field}`);input?.scrollIntoView({block:'center',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});input?.focus({preventScroll:true});}}/>}
+    {commonProduct&&<p className={styles.help} role="status">Este anúncio pertence a um produto vinculado. Para editar dados comuns e qualidade, use Ver estoque e abra a ficha do produto; O preço pode ser ajustado nesta conta. Em Anunciados, use Editar todos os anúncios no topo da lista de contas para uma edição conjunta.</p>}
     <form ref={formRef} className={styles.inlineEditorForm} aria-label="Editar dados do anúncio" aria-busy={loading || saving} onSubmit={save}>
       <div className={styles.actionBar}>
         <button type="button" disabled={saving} onClick={cancel}>Cancelar</button>
         <button type="button" disabled={loading || saving} onClick={refresh}>Recarregar edição</button>
         {onListingAction && availableLifecycleActions.map((action) => <button key={action} type="button" className={action === 'close' || action === 'delete' ? styles.destructiveAction : undefined} disabled={lifecycleDisabled} title={dirty ? 'Salve ou cancele as alterações antes de mudar a situação do anúncio.' : undefined} onClick={() => onListingAction(action)}>{lifecycleLabels[action]}</button>)}
         <button type="submit" className={styles.primary} disabled={loading || saving || stale || !dirty}>{saving ? 'Salvando…' : 'Salvar alterações'}</button>
-        {permalink && <a href={permalink} target="_blank" rel="noopener noreferrer">Abrir no Mercado Livre ↗</a>}
+        {permalink && <a href={permalink} target="_blank" rel="noopener noreferrer">Abrir no {editor?.provider === 'magalu' ? 'Magalu' : 'Mercado Livre'} ↗</a>}
         {additionalAction}
       </div>
       {loading && <p role="status">Consultando permissões e dados atuais…</p>}

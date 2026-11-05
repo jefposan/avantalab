@@ -14,5 +14,6 @@ export async function POST(request: Request) {
   if (authorized.error) return NextResponse.json({ ok: false }, { status: 503 });
   if (!authorized.data) return NextResponse.json({ ok: false }, { status: 401 });
   after(async () => { try { await runMarketplaceWorker(db); } catch { console.error('marketplace_worker_failed'); } });
+  after(async () => { try { const {resumeCatalogCompletion}=await import('@/app/modules/marketplaces/services/catalog-completion');await resumeCatalogCompletion(db); } catch { console.error('marketplace_catalog_completion_pending'); } });
   return NextResponse.json({ accepted: true }, { status: 202, headers: { 'Cache-Control': 'no-store' } });
 }

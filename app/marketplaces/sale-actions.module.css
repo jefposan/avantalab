@@ -1,0 +1,37 @@
+.documentBand { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 20px;min-width:0;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--brand) 6%,#fff);color:#334155; }
+.documentInfo { display:flex;align-items:center;gap:12px;flex:1 1 300px;min-width:0; }
+.documentInfo > div { min-width:0; }
+.documentInfo h3 { margin:0 0 4px;font-size:13px;font-weight:600;line-height:1.3; }
+.documentInfo p { margin:0;font-size:12px;line-height:1.5;color:#64748b;overflow-wrap:anywhere; }
+.documentIcon { display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:10px;color:var(--brand);background:#fff; }
+.documentActions { display:flex;align-items:flex-end;justify-content:flex-end;flex-wrap:wrap;gap:8px;flex:0 1 auto;min-width:0; }
+.documentActions > div { flex:0 1 280px;min-width:0;max-width:100%; }
+.documentActions > button { flex:0 0 auto; }
+.documentFeedback { flex-basis:100%;margin:0;font-size:12px;line-height:1.5;overflow-wrap:anywhere; }
+.fiscalDetails { flex:1 1 100%;min-width:0;font-size:12px;line-height:1.5; }
+.fiscalDetails p { margin:4px 0;overflow-wrap:anywhere; }
+.fiscalDetails summary { cursor:pointer;min-height:44px;display:list-item;align-content:center;font-weight:500; }
+.fiscalDetails summary:focus-visible { outline:2px solid var(--brand);outline-offset:3px;border-radius:4px; }
+.fiscalStates { display:grid;gap:4px; }
+.fiscalControls,.fiscalDocument,.fiscalDocument > div { display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px; }
+.fiscalControls > button { max-width:100%; }
+.fiscalControls > button > span { white-space:normal;line-height:1.3; }
+.fiscalDocument { justify-content:space-between; }
+.fiscalHelp,.fiscalDiagnostics { color:inherit;opacity:.85; }
+.documentBand[data-dark="true"] { color:#edf3f9;background:color-mix(in srgb,var(--brand) 12%,#182235); }
+.documentBand[data-dark="true"] .documentInfo p { color:#b8c5d7; }
+.documentBand[data-dark="true"] .documentIcon { color:#edf3f9;background:#27354a; }
+.postSale.postSale { margin-top:8px;padding-top:20px;border-top:1px solid color-mix(in srgb,currentColor 14%,transparent);gap:10px; }
+.postSale .postSaleHeading { justify-content:flex-start;gap:12px; }
+.postSaleFooter { display:grid;gap:4px;justify-items:start;margin-top:4px; }
+.postSaleFooter p { margin:0; }
+.postSale .accountLink { display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;width:fit-content;min-height:44px;font-size:12px; }
+@media (max-width:600px) {
+  .documentBand { gap:8px;padding:12px; }
+  .documentInfo { flex-basis:100%; }
+  .documentActions { justify-content:flex-start; }
+}
+.documentTitle {display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;}.documentTitle h3{margin:0;}.documentBadge,.documentFormat{display:inline-flex;align-items:center;white-space:nowrap;font-size:11px;border-radius:999px;padding:4px 9px;}.documentBadge{color:#166534;background:#e9f7ed;}.documentBadge[data-pending="true"]{color:#475569;background:#edf2f7;}.documentFormat{color:#475569;background:#eef2f6;}.documentBand{gap:6px 16px;background:color-mix(in srgb,var(--brand) 2%,#fff);padding:10px 14px;}.documentActions{gap:4px;align-items:center;}.documentActions>.labelDownload{flex:0 0 125px;width:125px;}.labelDownload button[aria-haspopup="listbox"]{position:relative;isolation:isolate;min-height:44px;border:0;background:transparent;font-size:13px;font-weight:500;}.labelDownload button[aria-haspopup="listbox"]::before{content:"";position:absolute;inset:6px 0;border:1px solid #94a3b8;border-radius:10px;z-index:-1;}.labelDownload [role="listbox"]{left:auto;right:0;min-width:225px;max-width:calc(100vw - 32px);}.fiscalDetails{border-top:1px solid color-mix(in srgb,currentColor 10%,transparent);padding-top:3px;}.nativePrintFrame{position:fixed;left:-10000px;top:0;width:800px;height:600px;border:0;pointer-events:none;}.documentBand[data-dark="true"] .documentFormat{background:#27354a;color:#edf3f9;}.documentBand[data-dark="true"] .documentBadge{background:#123b2a;color:#bbf7d0;}.documentBand[data-dark="true"] .documentBadge[data-pending="true"]{background:#27354a;color:#d2dce9;}.documentBand[data-dark="true"] .labelDownload button[aria-haspopup="listbox"]{color:#edf3f9;}
+@media(max-width:600px){.documentActions{width:100%;justify-content:flex-start;}.documentFormat{font-size:10px;padding:3px 6px;}.documentActions>.labelDownload{flex-basis:100px;width:100px;}.documentInfo{gap:8px;}.documentIcon{flex-basis:36px;width:36px;height:36px;}}
+@media(max-width:600px){.labelDownload [role="listbox"]{left:0;right:auto;min-width:0;width:180px;max-width:calc(100vw - 112px);}}
+.documentFeedback a{display:inline-flex;align-items:center;min-height:44px;}

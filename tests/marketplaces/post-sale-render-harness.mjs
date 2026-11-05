@@ -9,12 +9,15 @@ import { renderToStaticMarkup } from 'react-dom/server';
 const componentPath = resolve(import.meta.dirname, '../../app/marketplaces/SalePostSale.tsx');
 const hooks = registerHooks({
   resolve(specifier, context, next) {
+    if (specifier === '@/app/components/BotaoAcaoCompacto') return { url: pathToFileURL(resolve(import.meta.dirname, '../../app/components/BotaoAcaoCompacto.tsx')).href, shortCircuit: true };
+    if (specifier === '@/app/projetos/components/Icon') return { url: pathToFileURL(resolve(import.meta.dirname, '../../app/projetos/components/Icon.tsx')).href, shortCircuit: true };
+    if (specifier === '@/app/modules/marketplaces/date-format') return { url: pathToFileURL(resolve(import.meta.dirname, '../../app/modules/marketplaces/date-format.ts')).href, shortCircuit: true };
     if (context.parentURL === pathToFileURL(componentPath).href && specifier === './Anunciados') return { url: 'data:text/javascript,export async function marketplaceClientRequest(){throw new Error("Fixture sem rede");}', shortCircuit: true };
     if (specifier.endsWith('.module.css')) return { url: 'data:text/javascript,export default new Proxy({}, {get:(_,key)=>key});', shortCircuit: true };
     return next(specifier, context);
   },
   load(url, context, next) {
-    if (url === pathToFileURL(componentPath).href) return { format: 'module', shortCircuit: true, source: ts.transpileModule(readFileSync(componentPath, 'utf8'), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.ESNext } }).outputText };
+    if (url.startsWith('file:') && url.endsWith('.tsx')) return { format: 'module', shortCircuit: true, source: ts.transpileModule(readFileSync(new URL(url), 'utf8'), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.ESNext } }).outputText };
     return next(url, context);
   },
 });

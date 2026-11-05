@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { autenticarPerfilCobranca, resolverEstadoAcesso } from '@/app/lib/cobranca-servidor';
 import { planoPermiteCentrosDeCusto } from '@/app/lib/limites-comerciais-servidor';
 
@@ -24,7 +25,17 @@ export async function POST(request: Request) {
     }, { status: 409 });
   }
 
-  const { data: configuracao, error } = await acesso.db
+  // Os triggers/RPCs usam auth.uid(). A service role serve à validação acima,
+  // mas a alteração precisa preservar o usuário e suas políticas RLS.
+  const dbUsuario = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: { headers: { Authorization: request.headers.get('authorization')! } },
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    },
+  );
+  const { data: configuracao, error } = await dbUsuario
     .from('configuracoes')
     .upsert({ empresa_id: empresaId, centros_custo_ativo: ativo }, { onConflict: 'empresa_id' })
     .select('centros_custo_ativo')
@@ -35,11 +46,11 @@ export async function POST(request: Request) {
 
   let centroPrincipalId: string | null = null;
   if (ativo) {
-    const { data, error: erroPrincipal } = await acesso.db.rpc('garantir_centro_custo_principal', {
+    const { data, error: erroPrincipal } = await dbUsuario.rpc('garantir_centro_custo_principal', {
       p_empresa_id: empresaId,
     });
     if (erroPrincipal || !data) {
-      await acesso.db.from('configuracoes').update({ centros_custo_ativo: false }).eq('empresa_id', empresaId);
+      await dbUsuario.from('configuracoes').update({ centros_custo_ativo: false }).eq('empresa_id', empresaId);
       return NextResponse.json({ erro: true, mensagem: 'Não foi possível preparar o centro Principal.' }, { status: 500 });
     }
     centroPrincipalId = String(data);

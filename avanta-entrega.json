@@ -1,0 +1,8 @@
+{
+  "baseDeploymentId": "dpl_Dq1wCBwU92G354cov6BCiN4qrYt9",
+  "version": "3.2.0.310",
+  "scope": "Infraestrutura: reconciliar fontes, preservar histórico SQL de recursos ativos e proteger publicação a partir da main.",
+  "migrations": [],
+  "reconciliationStatus": "blocked-audit",
+  "auditReview": "19 diferenças documentadas e 15 fontes de recursos ativos preservadas; aguardando autorização externa"
+}

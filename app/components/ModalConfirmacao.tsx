@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef } from 'react';
 import DraggableModalCard from './DraggableModalCard';
+import LoadingPontos from './LoadingPontos';
+import { corTextoSobreFundo } from '@/app/lib/cores-avanta';
 
 type ModalConfirmacaoProps = {
   aberto: boolean;
@@ -11,6 +13,10 @@ type ModalConfirmacaoProps = {
   textoCancelar?: string;
   textoConfirmar?: string;
   carregando?: boolean;
+  mostrarProgresso?: boolean;
+  centralizarTexto?: boolean;
+  ocultarCancelar?: boolean;
+  cancelarDuranteCarregamento?: boolean;
   corPrimaria?: string;
   textoSobreCorPrimaria?: string;
   darkMode?: boolean;
@@ -27,8 +33,12 @@ export default function ModalConfirmacao({
   textoCancelar = "Cancelar",
   textoConfirmar = "Confirmar",
   carregando = false,
+  mostrarProgresso = false,
+  centralizarTexto = false,
+  ocultarCancelar = false,
+  cancelarDuranteCarregamento = false,
   corPrimaria = '#003E73',
-  textoSobreCorPrimaria = '#ffffff',
+  textoSobreCorPrimaria,
   darkMode = false,
   variante = 'destrutiva',
   aoCancelar,
@@ -37,9 +47,12 @@ export default function ModalConfirmacao({
   const tituloId = useId();
   const mensagemId = useId();
   const cancelarRef = useRef<HTMLButtonElement | null>(null);
+  const confirmarRef = useRef<HTMLButtonElement | null>(null);
+  const mensagemRef = useRef<HTMLParagraphElement | null>(null);
   const dialogoRef = useRef<HTMLDivElement | null>(null);
   const aoCancelarRef = useRef(aoCancelar);
   const carregandoRef = useRef(carregando);
+  const cancelarDuranteCarregamentoRef = useRef(cancelarDuranteCarregamento);
 
   useEffect(() => {
     aoCancelarRef.current = aoCancelar;
@@ -48,6 +61,9 @@ export default function ModalConfirmacao({
   useEffect(() => {
     carregandoRef.current = carregando;
   }, [carregando]);
+  useEffect(() => {
+    cancelarDuranteCarregamentoRef.current = cancelarDuranteCarregamento;
+  }, [cancelarDuranteCarregamento]);
 
   useEffect(() => {
     if (!aberto) return;
@@ -58,11 +74,11 @@ export default function ModalConfirmacao({
     const overflowAnterior = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    const foco = window.requestAnimationFrame(() => cancelarRef.current?.focus());
+    const foco = window.requestAnimationFrame(() => (cancelarRef.current || confirmarRef.current)?.focus({preventScroll:true}));
     const aoPressionarTecla = (evento: KeyboardEvent) => {
       if (evento.key === 'Escape') {
         evento.preventDefault();
-        if (!carregandoRef.current) aoCancelarRef.current();
+        if (!carregandoRef.current || cancelarDuranteCarregamentoRef.current) aoCancelarRef.current();
         return;
       }
       if (evento.key !== 'Tab' || !dialogoRef.current) return;
@@ -71,7 +87,7 @@ export default function ModalConfirmacao({
           'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
         )
       );
-      if (!focaveis.length) return;
+      if (!focaveis.length) { evento.preventDefault(); mensagemRef.current?.focus({preventScroll:true}); return; }
       const primeiro = focaveis[0];
       const ultimo = focaveis[focaveis.length - 1];
       if (evento.shiftKey && document.activeElement === primeiro) {
@@ -92,7 +108,17 @@ export default function ModalConfirmacao({
     };
   }, [aberto]);
 
+  useEffect(()=>{
+    if(!aberto)return;
+    if(carregando&&mostrarProgresso)mensagemRef.current?.focus({preventScroll:true});
+    else if(ocultarCancelar)confirmarRef.current?.focus({preventScroll:true});
+  },[aberto,carregando,mostrarProgresso,ocultarCancelar]);
+
   if (!aberto) return null;
+
+  const textoCabecalho = textoSobreCorPrimaria || corTextoSobreFundo(corPrimaria);
+  const corBotaoConfirmar = variante === 'destrutiva' ? '#dc2626' : corPrimaria;
+  const textoBotaoConfirmar = variante === 'destrutiva' ? corTextoSobreFundo(corBotaoConfirmar) : textoCabecalho;
 
   const cardTema = darkMode
     ? 'border-slate-700 bg-slate-900 text-slate-100'
@@ -115,7 +141,7 @@ export default function ModalConfirmacao({
       style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
       onClick={(evento) => {
         evento.stopPropagation();
-        if (!carregando) aoCancelar();
+        if (!carregando || cancelarDuranteCarregamento) aoCancelar();
       }}
     >
       <DraggableModalCard
@@ -126,35 +152,37 @@ export default function ModalConfirmacao({
         className={`my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-3xl border shadow-2xl ${cardTema}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div data-modal-drag-handle className="px-5 py-4" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">
+        <div data-modal-drag-handle className={`px-5 py-4${centralizarTexto ? ' text-center' : ''}`} style={{ backgroundColor: corPrimaria, color: textoCabecalho }}>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em]">
             {rotuloCabecalho || (variante === 'destrutiva' ? 'Confirmação de exclusão' : 'Confirmação')}
           </p>
           <h2 id={tituloId} className="mt-1 text-xl font-black">{titulo}</h2>
         </div>
 
         <div className="min-h-0 overflow-y-auto p-5 overscroll-contain">
-          <p id={mensagemId} className={`mb-6 whitespace-pre-line rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ${mensagemTema}`}>
+          <p ref={mensagemRef} tabIndex={mostrarProgresso&&carregando?-1:undefined} role={mostrarProgresso&&carregando?'status':undefined} aria-label={!mensagem ? titulo : undefined} aria-live={mostrarProgresso?'polite':undefined} id={mensagemId} className={`mb-6 whitespace-pre-line rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed${centralizarTexto ? ' text-center' : ''} ${mensagemTema}`}>
+            {mostrarProgresso&&carregando&&<LoadingPontos cor={corPrimaria}/>}
             {mensagem}
           </p>
 
-          <div className="grid grid-cols-2 gap-3">
-          <button
+          <div className={`grid ${ocultarCancelar?'grid-cols-1':'grid-cols-2'} gap-3`}>
+          {!ocultarCancelar&&<button
   ref={cancelarRef}
   type="button"
   onClick={aoCancelar}
-  disabled={carregando}
+  disabled={carregando && !cancelarDuranteCarregamento}
   className={`min-h-11 rounded-xl border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${cancelarTema}`}
 >
   {textoCancelar}
-</button>
+</button>}
 
           <button
+  ref={confirmarRef}
   type="button"
   onClick={aoConfirmar}
   disabled={carregando}
   className="min-h-11 rounded-xl px-4 py-2 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
-  style={{ backgroundColor: variante === 'destrutiva' ? '#dc2626' : corPrimaria }}
+  style={{ backgroundColor: corBotaoConfirmar, color: textoBotaoConfirmar }}
 >
   {carregando ? "Aguarde..." : textoConfirmar}
 </button>

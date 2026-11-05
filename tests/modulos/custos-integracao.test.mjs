@@ -50,6 +50,7 @@ const migracaoCatalogosGerenciaveis = readFileSync('supabase/migrations/20260924
 const migracaoAtivacaoCatalogo = readFileSync('supabase/migrations/20261004110000_ativacao_catalogo_vendas_explicita.sql', 'utf8');
 const migracaoDestinosCatalogo = readFileSync('supabase/migrations/20261006150000_independencia_destinos_catalogo.sql', 'utf8');
 const migracaoMoverCatalogo = readFileSync('supabase/migrations/20261003150000_mover_produtos_entre_catalogos_custos.sql', 'utf8');
+const migracaoExclusaoProduto = readFileSync('supabase/migrations/20261104160000_exclusao_segura_produtos_custos.sql', 'utf8');
 const fornecedoresCustos = readFileSync('app/api/modulos/custos/fornecedores/route.ts', 'utf8');
 
 test('Custos usa página total e exige o acesso oficial do módulo', () => {
@@ -67,6 +68,22 @@ test('Acesso direto a Custos seleciona o perfil e retorna ao módulo na mesma or
   assert.match(gestao, /moduloSolicitado === 'custos'/);
   assert.match(gestao, /router\.replace\(`\/custos\?empresaId=\$\{encodeURIComponent\(empresa\.id\)\}`\)/);
   assert.doesNotMatch(cliente, /https?:\/\/[^'"`]*\/gestao/);
+});
+
+test('exclusão lógica retira o cadastro das operações e preserva todo o histórico', () => {
+  assert.match(workspace, /Excluir cadastro/);
+  assert.match(workspace, /variante="destrutiva"/);
+  assert.match(workspace, /todos os lançamentos anteriores serão preservados nos históricos/);
+  assert.match(workspace, /produto\.excluido_em \? ' — excluído'/);
+  assert.match(workspace, /produtos\.filter\(\(produto\) => !produto\.excluido_em\)/);
+  assert.match(repositorio, /custos_excluir_produto_rpc/);
+  assert.match(repositorio, /excluido_em,atualizado_em/);
+  assert.match(migracaoExclusaoProduto, /custos_pode_acessar_empresa\(p_empresa_id, true\)/);
+  assert.match(migracaoExclusaoProduto, /add column if not exists excluido_em timestamptz/);
+  assert.match(migracaoExclusaoProduto, /set ativo = false,[\s\S]*disponivel_catalogo = false,[\s\S]*excluido_em = v_excluido_em/);
+  assert.match(migracaoExclusaoProduto, /cadastro foi excluído e permanece disponível somente nos históricos/);
+  assert.doesNotMatch(migracaoExclusaoProduto, /delete from public\.vendas_mobile_catalogo_produtos/);
+  assert.doesNotMatch(migracaoExclusaoProduto, /update public\.custos_documentos/);
 });
 
 test('Custos participa do catálogo comercial e da navegação oficial da Gestão', () => {
@@ -114,8 +131,8 @@ test('Hierarquia e vigência são reconfirmadas no servidor e no banco', () => {
   assert.match(migracao, /acesso\.perfil in \('gestor_master', 'administrador', 'operador_completo'\)/);
 });
 
-test('Cabeçalho de Custos segue Projetos, retorna ao Dashboard e alterna o tema do perfil', () => {
-  assert.match(cliente, /Voltar ao Dashboard do AvantaLab/);
+test('Cabeçalho de Custos segue Projetos, retorna ao início autorizado e alterna o tema do perfil', () => {
+  assert.match(cliente, /Voltar ao início do AvantaLab/);
   assert.match(cliente, /<ModuloHeader empresa=\{access\.empresa\} onBack=\{voltar\}/);
   assert.match(cabecalhoModulo, /className = styles\.moduleLogo/);
   assert.match(cliente, /Abrir ajustes de Custos e Precificação/);
@@ -222,7 +239,8 @@ test('ativar e desativar catálogos atualiza os cards sem avisos ou confirmaçã
 
 test('movimentação entre catálogos preserva o cadastro e protege empresa, destino e códigos', () => {
   assert.match(repositorio, /catalogoAtual = catalogos\.find\(\(item\) => item\.padrao && item\.ativo\)/);
-  assert.match(repositorio, /\.in\('catalogo_id', catalogos\.map\(\(item\) => item\.id\)\)/);
+  assert.match(repositorio, /consultarProdutosCustos\(catalogos\.map\(\(item\) => item\.id\)\)/);
+  assert.match(repositorio, /\.in\('catalogo_id', catalogoIds\)/);
   assert.match(repositorio, /custos_mover_produtos_catalogo_rpc/);
   assert.match(workspace, /catalogo_id === rascunho\.catalogo_id/);
   assert.match(migracaoMoverCatalogo, /custos_pode_acessar_empresa\(p_empresa_id, true\)/);
@@ -371,7 +389,7 @@ test('Gestão mantém o Dashboard montado e recebe o retorno seguro do módulo e
   assert.match(gestao, /MENSAGEM_RETORNO_MODULO_EMBUTIDO/);
   assert.match(cliente, /consumirNavegacaoModulo\('custos', companyId\)/);
   assert.match(cliente, /solicitarRetornoAoModuloHospedeiro\(\)/);
-  assert.match(cliente, /router\.push\(returnHref\)/);
+  assert.match(cliente, /router\.push\(returnTo === 'vendas' \? returnHref : destinoInicioModulo\(companyId\)\)/);
   assert.doesNotMatch(gestao, /consumirNavegacaoModulo\('gestao'\)/);
   assert.match(cliente, /\/api\/modulos\/acesso\?empresaId=/);
   assert.match(transicao, /aria-busy="true"/);
@@ -454,15 +472,15 @@ test('o botão Início mantém a mesma escala e tratamento nos quatro módulos',
 test('todos os módulos em página total devolvem o controle à Gestão quando embutidos', () => {
   assert.match(gestao, /navegarParaModulo\('projetos', '\/projetos', empresaId \|\| ''\)/);
   assert.match(gestao, /navegarParaModulo\('recebimentos_presencial', '\/recebimentos', empresaId \|\| ''\)/);
-  assert.match(cliente, /router\.prefetch\(returnHref\)/);
+  assert.match(cliente, /router\.prefetch\(returnTo === 'vendas' \? returnHref : destinoInicioModulo\(companyId\)\)/);
   assert.match(projetos, /consumirNavegacaoModulo\('projetos', companyId\)/);
   assert.match(projetos, /solicitarRetornoAoModuloHospedeiro\(\)/);
   assert.match(projetos, /router\.push\(destino\)/);
   assert.match(projetos, /Preparando Projetos/);
   assert.match(recebimentos, /consumirNavegacaoModulo\('recebimentos_presencial', empresaId\)/);
-  assert.match(recebimentos, /router\.prefetch\(inicioHref\)/);
+  assert.match(recebimentos, /router\.prefetch\(empresaId \? destinoInicioModulo\(empresaId\) : inicioHref\)/);
   assert.match(recebimentos, /solicitarRetornoAoModuloHospedeiro\(\)/);
-  assert.match(recebimentos, /router\.push\(inicioHref\)/);
+  assert.match(recebimentos, /router\.push\(empresaId \? destinoInicioModulo\(empresaId\) : inicioHref\)/);
   assert.match(vendasIntegrado, /consumirNavegacaoModulo\('vendas'\)/);
   assert.match(vendasIntegrado, /solicitarRetornoAoModuloHospedeiro\(\)/);
   assert.match(vendasIntegrado, /RETURN_TO_MANAGEMENT_MESSAGE_TYPE/);

@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { saleGroup, salesInPeriod, salesSummary } from '../../app/modules/marketplaces/sales-status.ts';
+import { salesByMarketplaces, salesByView } from '../../app/modules/marketplaces/sales-marketplace-filter.ts';
 
 const client = readFileSync(new URL('../../app/marketplaces/MarketplacesClient.tsx', import.meta.url), 'utf8');
 const source = ts.createSourceFile('MarketplacesClient.tsx', client, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -17,32 +18,45 @@ function find(predicate) {
 const handler = find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'selectSalesFromHeader');
 const visible = find(node => ts.isVariableDeclaration(node) && node.name.getText(source) === 'visibleSales');
 const compile = text => ts.transpileModule(text, { compilerOptions: { target: ts.ScriptTarget.ESNext } }).outputText;
-const choose = new Function('sales', 'setSalesSnapshot', 'setSalesAccount', 'setSalesExpanded', 'setSalesPeriod', 'setSalesGroup', 'scrollToSales', `${compile(handler.getText(source))}; return selectSalesFromHeader;`);
+const choose = new Function('sales', 'setSalesSnapshot', 'setSalesAccount', 'setSalesMarketplaces', 'setSalesExpanded', 'setSalesPeriod', 'setSalesGroup', 'scrollToSales', `${compile(handler.getText(source))}; return selectSalesFromHeader;`);
 const panelHandler = find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'selectSalesInPanel');
 const chooseInPanel = new Function('sales', 'setSalesSnapshot', 'setSalesGroup', `${compile(panelHandler.getText(source))}; return selectSalesInPanel;`);
-const readVisible = new Function('salesSnapshot', 'salesPeriod', 'salesGroup', 'salesAccount', 'salesInPeriod', 'saleGroup', `${compile(`const read = ${visible.initializer.arguments[0].getText(source)};`)} return read();`);
-const fixture = (connectionId, orderId, shipmentStatus, soldAt = '2026-10-10T15:00:00Z') => ({ connectionId, orderId, status: 'paid', shipmentStatus, shipmentSubstatus: null, labelStatus: 'unavailable', soldAt, createdAt: soldAt });
+const compiledVisible = new Function('salesSnapshot', 'salesPeriod', 'salesGroup', 'salesAccount', 'selectedSalesMarketplaces', 'salesInPeriod', 'saleGroup', 'salesByMarketplaces', 'salesByView', 'salesView', `${compile(`const read = ${visible.initializer.arguments[0].getText(source)};`)} return read();`);
+const readVisible = (...args) => compiledVisible(...args, salesByView, 'online');
+const fixture = (connectionId, orderId, shipmentStatus, soldAt = '2026-10-10T15:00:00Z') => ({ connectionId, orderId, provider: connectionId === 'conta-c' ? 'magalu' : 'mercado_livre', status: 'paid', shipmentStatus, shipmentSubstatus: null, labelStatus: 'unavailable', soldAt, createdAt: soldAt });
 const sales = [
   ...Array.from({ length: 6 }, (_, index) => fixture(index % 2 ? 'conta-b' : 'conta-a', String(index), 'delivered')),
   fixture('conta-c', 'pendente', 'pending'),
   fixture('conta-a', 'antigo', 'delivered', '2026-09-01T15:00:00Z'),
 ];
 function setup() {
-  const state = { snapshot: [], account: 'conta-c', expanded: false, period: { start: '2026-10-01', end: '2026-10-31' }, group: '' };
+  const state = { snapshot: [], account: 'conta-c', marketplaces: [], expanded: false, period: { start: '2026-10-01', end: '2026-10-31' }, group: '' };
   const scrolls = [];
-  const select = choose(sales, value => state.snapshot = value, value => state.account = value, value => state.expanded = value, value => state.period = value, value => state.group = value, () => scrolls.push({ group: state.group, expanded: state.expanded, account: state.account }));
+  const select = choose(sales, value => state.snapshot = value, value => state.account = value, value => state.marketplaces = value, value => state.expanded = value, value => state.period = value, value => state.group = value, () => scrolls.push({ group: state.group, expanded: state.expanded, account: state.account }));
   const selectInPanel = chooseInPanel(sales, value => state.snapshot = value, value => state.group = value);
-  const rows = () => readVisible(state.snapshot, state.period, state.group, state.account, salesInPeriod, saleGroup);
+  const rows = () => readVisible(state.snapshot, state.period, state.group, state.account, state.marketplaces, salesInPeriod, saleGroup, salesByMarketplaces);
   return { state, select, selectInPanel, rows, scrolls };
 }
 
 test('inicia período, situações e contas em Todos, inclusive nos anúncios', () => {
   assert.match(client, /\[salesAccount, setSalesAccount\] = useState\(''\)/);
+  assert.match(client, /\[salesMarketplaces, setSalesMarketplaces\] = useState<SalesMarketplace\[\]>\(\[\]\)/);
   assert.match(client, /\[salesGroup, setSalesGroup\] = useState<SaleGroup \| ''>\(''\)/);
   assert.match(client, /\[salesPeriod, setSalesPeriod\] = useState<SalePeriod>\(\{ start: '', end: '' \}\)/);
   const listings = readFileSync(new URL('../../app/marketplaces/Anunciados.tsx', import.meta.url), 'utf8');
   assert.match(listings, /\[accountSelection, setAccountId\] = useState\(''\)/);
   assert.match(listings, /\[status, setStatus\] = useState\(''\)/);
+});
+test('seleção de marketplace filtra o card e é limpa ao escolher situação global', () => {
+  const { state, select, rows } = setup();
+  select({ group: '' });
+  state.marketplaces = ['magalu'];
+  assert.deepEqual(rows().map(row => row.orderId), ['pendente']);
+  state.marketplaces = ['mercado_livre'];
+  assert.equal(rows().length, 6);
+  select({ group: '' });
+  assert.deepEqual(state.marketplaces, []);
+  assert.equal(rows().length, 7);
 });
 test('Entregues 6 mostra os seis de todas as contas no período, mesmo após filtrar outra conta', () => {
   const { state, select, rows } = setup();
@@ -95,12 +109,14 @@ test('situação do bloco substitui a do header sem perder conta ou período; ú
 
 test('contagens no bloco respeitam conta e período, sem ficarem limitadas à situação atual', () => {
   const summary = find(node => ts.isVariableDeclaration(node) && node.name.getText(source) === 'accountSalesSummary');
-  const count = new Function('periodSales', 'salesAccount', 'salesSummary', `${compile(`const count = ${summary.initializer.arguments[0].getText(source)};`)} return count();`);
+  const compiledCount = new Function('periodSales', 'salesAccount', 'selectedSalesMarketplaces', 'salesSummary', 'salesByMarketplaces', 'salesByView', 'salesView', `${compile(`const count = ${summary.initializer.arguments[0].getText(source)};`)} return count();`);
+  const count = (...args) => compiledCount(...args, salesByView, 'online');
   const inPeriod = salesInPeriod(sales, { start: '2026-10-01', end: '2026-10-31' });
-  assert.equal(count(inPeriod, 'conta-c', salesSummary).byGroup.awaiting_dispatch, 1);
-  assert.equal(count(inPeriod, 'conta-c', salesSummary).byGroup.delivered, 0);
-  assert.equal(count(inPeriod, 'conta-b', salesSummary).byGroup.delivered, 3);
-  assert.equal(count(inPeriod, '', salesSummary).total, 7);
+  assert.equal(count(inPeriod, 'conta-c', [], salesSummary, salesByMarketplaces).byGroup.awaiting_dispatch, 1);
+  assert.equal(count(inPeriod, 'conta-c', [], salesSummary, salesByMarketplaces).byGroup.delivered, 0);
+  assert.equal(count(inPeriod, 'conta-b', [], salesSummary, salesByMarketplaces).byGroup.delivered, 3);
+  assert.equal(count(inPeriod, '', [], salesSummary, salesByMarketplaces).total, 7);
+  assert.equal(count(inPeriod, '', ['magalu'], salesSummary, salesByMarketplaces).total, 1);
   assert.match(client, /counts=\{accountSalesSummary.byGroup\} total=\{accountSalesSummary.total\}/);
 });
 

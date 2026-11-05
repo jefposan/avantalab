@@ -14,3 +14,13 @@ backups/
 # Rascunhos de banco e worktrees locais não fazem parte do artefato Web.
 supabase/drafts/
 .codex/
+
+# Artefatos locais e dependências não pertencem ao pacote publicado.
+output/
+outputs/
+node_modules/
+imagens diversas/
+*.tsbuildinfo
+
+# Estado local do cliente Supabase não pertence à fonte publicada.
+supabase/.temp/

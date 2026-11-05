@@ -1,0 +1,4122 @@
+[
+  {
+    "status": "M",
+    "path": ".gitignore"
+  },
+  {
+    "status": "M",
+    "path": ".vercelignore"
+  },
+  {
+    "status": "M",
+    "path": "AGENTS.md"
+  },
+  {
+    "status": "M",
+    "path": "CHANGELOG.md"
+  },
+  {
+    "status": "A",
+    "path": "app/api/acessos-usuario/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/atualizar-usuario-empresa/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/backup-nuvem/arquivo/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/backup-nuvem/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/centros-custo/configurar/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/criar-usuario-interno/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/cron/marketplace-quality/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/cron/marketplaces/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/importador-despesas/confirmar/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/lancamentos/nota/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/lancamentos/operacao-anexos/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/mobile/preparar-recorrencias/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/anunciados/acao/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/anunciados/editar/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/anunciados/link/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/anunciados/qualidade/cache/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/anunciados/qualidade/conteudo/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/anunciados/qualidade/foto/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/anunciados/qualidade/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/anunciados/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/anunciados/sincronizar/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/avisos/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/catalogo/completar/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/catalogo/ficha/foto/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/catalogo/ficha/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/conexoes/magalu/anuncios/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/conexoes/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/diagnostico-precos/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/estoques/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/integracao/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/precos/configuracoes/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/precos/estoque/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/precos/estoques/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/precos/etiqueta/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/precos/historico/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/precos/lotes/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/precos/post/links/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/precos/post/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/precos/produto/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/precos/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/precos/sincronizacao/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/precos/usuarios/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/preparar-copia/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/preparar/conteudo/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/preparar/foto/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/produtos/excluir/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/produtos/fotos/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/produtos/preco/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/produtos/qualidade/ia/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/produtos/qualidade/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/produtos/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/publicacao-multiconta/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/publicar/frete/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/relatorio-vendas/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/validacao-vendas-diretas/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/vendas-diretas/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/vendas/dce/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/vendas/etiqueta/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/marketplaces/vendas/fiscal/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/modulos/marketplaces/vendas/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/modulos/vendas/perfil/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/ofertas/saldao-aline/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/redefinir-senha-usuario/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/api/usuarios-empresa/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/api/vincular-usuario-existente/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/avantavendas/NativeHapticsBridge.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/avantavendas/page.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/avantavendas/recursos/[...arquivo]/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/avantavendas/recursos/scripts-proprios.json"
+  },
+  {
+    "status": "M",
+    "path": "app/avantavendas/sistema/app.js"
+  },
+  {
+    "status": "A",
+    "path": "app/avantavendas/sistema/assets/logo-avantavendas-aprovado-20261025-v2.jpg"
+  },
+  {
+    "status": "A",
+    "path": "app/avantavendas/sistema/assets/logo-avantavendas-aprovado-20261025.jpg"
+  },
+  {
+    "status": "A",
+    "path": "app/avantavendas/sistema/assets/logo-avantavendas-negativo.png"
+  },
+  {
+    "status": "A",
+    "path": "app/avantavendas/sistema/assets/logo-avantavendas-original.png"
+  },
+  {
+    "status": "A",
+    "path": "app/avantavendas/sistema/assets/logo-avantavendas-positivo.png"
+  },
+  {
+    "status": "A",
+    "path": "app/avantavendas/sistema/assets/logo-avantavendas.md"
+  },
+  {
+    "status": "M",
+    "path": "app/avantavendas/sistema/order-receipt-v2.js"
+  },
+  {
+    "status": "M",
+    "path": "app/avantavendas/sistema/styles.css"
+  },
+  {
+    "status": "M",
+    "path": "app/avantavendas/sistema/supabase-client.js"
+  },
+  {
+    "status": "M",
+    "path": "app/avantavendas/sw.js/route.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/avantavendas/version.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/components/AcessosUsuarioCampos.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/AppHeader.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/BackupNuvemModals.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/components/BotaoAcaoCompacto.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/components/BotaoAcaoCompacto.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/BotaoExpandirCard.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/components/CampoData.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/components/CampoData.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/components/CampoMoeda.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/CardExpandidoModal.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/CardLancamentoDespesa.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/CarregamentoDadosModulo.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/components/Dashboard.module.css"
+  },
+  {
+    "status": "M",
+    "path": "app/components/Dashboard.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/components/DetalhesRolaveis.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/components/DetalhesRolaveis.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/components/InstalarPwa.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/components/InstalarPwa.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/components/LoadingPontos.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/MarketplaceLiveMonitor.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/ModalConfirmacao.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/ModuloHeader.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/NovidadesVendasModal.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/PontoAdminModal.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/RedirecionamentoPosOAuth.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/components/SelecaoModulos.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/components/SeloPerfilEmUso.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/TabelaLancamentosDespesa.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/TelaCarregandoAcesso.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/TransicaoNavegacaoInterna.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/components/WebPopupScrollLock.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/custos/CustosClient.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/custos/CustosWorkspace.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/custos/TabelasPrecosView.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/custos/custos.module.css"
+  },
+  {
+    "status": "M",
+    "path": "app/custos/repository.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/custos/types.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/gestao/page.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/globals.css"
+  },
+  {
+    "status": "M",
+    "path": "app/hooks/useEmpresas.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/hooks/useInstalacaoPwa.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/hooks/useTemaResolvido.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/lib/acessos-usuario-servidor.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/lib/acessos-usuario.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/lib/ava-conhecimento.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/lib/backup-nuvem-servidor.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/lib/cobranca-servidor.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/lib/compartilhar-imagem.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/lib/consultas-por-ids-servidor.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/lib/cores-avanta.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/lib/database.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/lib/foco-produto.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/lib/formatters.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/lib/limites-comerciais-servidor.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/lib/navegacao-modulos.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/lib/reiniciar-acesso-local.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/lib/retorno-modulos.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/lib/usuarios-empresa-liberacoes.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/lib/validar-sessao-entrada.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/lib/version.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/Anunciados.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/CatalogCandidateChooser.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/CatalogCandidateChooser.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/CatalogCompletion.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/CatalogFullReview.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/CatalogFullReview.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/DateOrderButton.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/DirectSaleActions.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/DirectSalesHistory.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ImportStockChoice.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/InitialStockLoad.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/InventoryNotices.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/LabelNativePrint.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ListingContentEditor.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/ListingEditor.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ListingGroupHeader.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ListingProductIdentity.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ListingQuality.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/LocalProductPricing.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/MagaluListing.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/MagaluMultiPublication.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/MarketplaceSelect.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/MarketplacesClient.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/MonthlySalesList.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/MultiAccountPublication.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/NewListing.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/PriceCalculationSettings.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/PriceLabelReader.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/PriceLotWebReader.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/PriceLotsPanel.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/PriceProductStock.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/PriceSearchProgress.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/PriceToolsActions.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/PriceUsersPanel.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductLinkedListings.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductListingReview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductListingUpdate.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductPhotoInput.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductPhotoInput.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductPost.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductPostFlow.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductPublicationRibbon.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductQuality.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductRemoval.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductRemoval.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductSearchShortcut.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ProductThumbnail.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/ProductsStock.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/PublicationOptionalAttributes.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/PublicationShipping.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/QualityAIReview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/QualityGauge.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/QualitySummary.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/ReviewQualityObjectives.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/SaleFiscalDocuments.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/SaleItems.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/SalePostSale.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/SalesFilters.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/SalesReport.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/StockSync.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/Vendas.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/WarehousesPanel.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/account-reader.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/catalog-feedback.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/common-product-request.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/consulta/MarketplaceMobileApp.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/consulta/marketplaces-mobile.module.css"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/consulta/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/consulta/validacao-estoque/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/consulta/validacao-estoque/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/consulta/validacao-etiqueta/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/consulta/validacao-etiqueta/preview.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/consulta/validacao-etiqueta/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/consulta/validacao-pesquisa/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/consulta/validacao-pesquisa/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/consulta/validacao-sincronizacao/Preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/consulta/validacao-sincronizacao/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/consulta/validacao-sincronizacao/preview.module.css"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/consulta/validacao-visual/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/diagnostico-precos/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/direct-sales.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/listing-confirmation.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/listing-quality.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/magalu-catalog-state.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/marketplaces.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/multi-publication-validation.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/notice-opening.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/panel-expansion.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/passive-refresh.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/price-label-reader.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/price-lot-consultation.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/price-lot-panel-session.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/price-lots.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/price-product-stock.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/product-link-request.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/product-listing-review.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/product-listing-review.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/product-listing-update.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/product-post-image.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/product-post-photo.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/product-post-store.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/product-post.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/product-stock-events.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/publication-request.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/quality-summary.module.css"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/renovar/RenewalClient.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/review-quality-goals.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/sale-actions.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/sales-report.module.css"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/scroll-panel-row.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/search-shortcut-footer.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/simulacao-preparo/fixture.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/simulacao-preparo/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/simulacao-preparo/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/startup-account-sync.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/stock-sync.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/useDirectSaleCommand.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/marketplaces/usePanelOrder.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/usePreparationSummary.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/usePriceLotCapture.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/usePriceSettings.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-acoes/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-acoes/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-anunciados/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-anunciados/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-configuracoes/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-configuracoes/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-confirmacao-estoque/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-confirmacao-estoque/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-controles/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-controles/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-estoques/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-estoques/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-pedido-ean/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-pedido-ean/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-pendencias/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-pendencias/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-produtos/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-produtos/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-qualidade-produto/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-qualidade-produto/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-qualidade/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-qualidade/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-revisao-focada/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-revisao-focada/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-vendas-diretas/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/marketplaces/validacao-vendas-diretas/preview.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/mobile/AcessosUsuarioMobileBridge.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/mobile/OAuthNativoMobileBridge.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/mobile/OperacoesCampoNativoBridge.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/mobile/VendasMobileConteudoBridge.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/mobile/oauth-nativo-controller.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/mobile/page.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/importador-despesas/README.md"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/importador-despesas/components/ImportadorDespesasModal.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/importador-despesas/lib/confirmacao.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/importador-despesas/lib/modelo-excel.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/importador-despesas/lib/tipos-planilha.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/importador-despesas/screens/ImportadorDespesas.module.css"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/importador-despesas/screens/ImportadorDespesas.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/importador-despesas/types.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/README.md"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/catalog-completion.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/catalog-photos.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/category-display.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/date-format.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/dev/direct-sales-fixture.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/direct-sales.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/fiscal-state.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/integration-contract.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/label-download.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/label-native-print.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/listing-content.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/listing-edit-revision.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/listing-groups.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/listing-price-batch.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/listing-quality.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/live-feed.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/local-product-publications.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/local-product-search.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/magalu-catalog-presence.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/magalu-listing-model.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/magalu-publication-model.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/magalu-sales-model.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/multi-publication.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/notice-navigation.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/panel-count.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/panel-order.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/picture-account-permissions.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/price-lot-pdf.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/price-lots.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/price-offer-identity.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/price-origin-evidence.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/price-search-cancellation.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/price-settings.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/price-stock-state.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-common-content.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-internal-notes.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-listing-actions.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-listing-update.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-photo-file.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-photo-transfer.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-photos.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-picture-policy.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-post.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-quality-goals.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-registration-name.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-removal.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/product-shopping-link.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/publication-content-readiness.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/publication-prefill.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/publication-shipping.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/quality-ai.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/quality-gauge.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/quality-summary.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/quality-web-evidence.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/sale-items.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/sales-financial.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/sales-marketplace-filter.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/sales-report-list.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/sales-report.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/sales-status.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/catalog-completion.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/catalog-full.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/catalog-photo-receipt.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/catalog-publication.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/confirmed-price-consultation.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/dataforseo-google-shopping.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/direct-sales.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/fiscal-history.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/fiscal-provider-error.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/imported-product-photos.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/integration-adapters.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/inventory-dispatch.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/inventory-notices.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/inventory-product-guard.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/inventory-read.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/inventory-worker.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/listing-content.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/listing-edit-adapters.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/listing-edit-confirmation.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/listing-model.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/listing-price-references.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/listing-quality.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/listing-status-refresh.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/local-price-consultation.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/local-product-model.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/local-product-price-research.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/local-products.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/magalu-editor.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/magalu-inventory.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/magalu-listings.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/magalu-multi-publication.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/magalu-oauth.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/magalu-publication.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/magalu-request.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/management-access.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/mercadolivre-catalog.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/mercadolivre-editor.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/mercadolivre-fiscal.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/mercadolivre-management.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/mercadolivre-price-consultation.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/mercadolivre-price-diagnostic.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/mercadolivre-publication-shipping.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/mercadolivre-publication.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/mercadolivre-sales.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/mercadolivre-validation-error.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/multi-publication.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/nfe-xml.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/openai-web-price-search.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/preparation-content.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/price-access.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/price-catalog.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/price-lots.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/price-persistence.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/price-product-stock.ts"
+  },
+  {
+    "status": "M",
+    "path": "app/modules/marketplaces/services/price-reference.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/price-search-control.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/price-settings.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/price-user-removal.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/product-common-content.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/product-internal-notes.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/product-photo-normalize.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/product-photo-source.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/product-posts.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/product-removal.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/product-shopping-links.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/public-price-page.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/quality-ai.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/quality-cache.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/quality-catalog-pictures.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/quality-web-research.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/sale-item-ean.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/sale-listing-link.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/sales-financial.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/sales-report-list.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/sales-report.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/shipping-label.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/stock-reconciliation.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/verify-price-origins.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/warehouses.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/web-product-facts.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/services/zero-stock.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/shipping-label.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/stock-reconciliation.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/thermal-label-pdf.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/thermal-label.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/marketplaces/warehouses.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/ofertas/README.md"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/ofertas/catalog.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/ofertas/manifest.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modules/ofertas/server.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/modulos/MeusModulos.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/modulos/modulos.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/modulos/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/ofertas/saldao-aline/Catalog.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/ofertas/saldao-aline/catalog.module.css"
+  },
+  {
+    "status": "A",
+    "path": "app/ofertas/saldao-aline/layout.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/ofertas/saldao-aline/manifest.webmanifest/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/ofertas/saldao-aline/page.tsx"
+  },
+  {
+    "status": "A",
+    "path": "app/ofertas/saldao-aline/sw.js/route.ts"
+  },
+  {
+    "status": "A",
+    "path": "app/ofertas/saldao-aline/viewport-shell.css"
+  },
+  {
+    "status": "M",
+    "path": "app/projetos/ProjetosClient.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/projetos/components/Icon.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/recebimentos/RecebimentosClient.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/recebimentos/RecebimentosPaginaClient.tsx"
+  },
+  {
+    "status": "M",
+    "path": "app/vendas/VendasIntegrado.tsx"
+  },
+  {
+    "status": "A",
+    "path": "avanta-entrega.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/acessos-usuario.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/cloudflare-entrega-web-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/entrega-multiconta-3.2.0.114.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/marketplaces-expansao-exclusiva-2026-10-27.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/marketplaces-precos-api-diagnostico-2026-10-27.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/marketplaces-preparacao-precos-2026-10-27.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/marketplaces-publicacao-2026-10-27.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/marketplaces-revisao-2026-10-27.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/mobile-entrega-compacta-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/ofertas-precos-padrao-2026-11-03.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/AUDITORIA-15-SQL.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/AUDITORIA-15-SQL.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/FECHAMENTO.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/PROPOSTA-MAIN.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/README.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/ajustes-historicos.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/arquivos-candidato.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/arquivos-preservados-main.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/auditar-registros.mjs"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/deployments.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/espelho-local.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/evidencias-registros-remotos.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/fontes-historicas-sem-registro.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/fontes-producao309.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/historico-fontes.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/migracoes-divergentes-estado-atual.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/migration-content-comparison.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/prova-gerador-registro.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/provas-execucao-historica.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/provas-variantes-historicas.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/sql-canonical.mjs"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/reconciliacao-2026-11-04/validacao-final.json"
+  },
+  {
+    "status": "A",
+    "path": "docs/auditorias/vendas-entrega-compacta-2026-10-21.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/ava/gestao-mobile.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/ava/gestao-web.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/ava/vendas.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/avantavendas/auditoria-acesso-retomada-2026-10-20.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/avantavendas/marca-loading-2026-10-25.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/avantavendas/marca-referencia-v2-2026-10-25.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/gestao-mobile-loading-2026-10-25.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/anunciados-identificacao.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/auditoria-navegacao-consulta-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/avisos-publicacao-linguagem-clara.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/cancelar-pesquisa-avantaprecos.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/catalogo-anuncios-e-conferencia-estoque.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/configuracoes-precos.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/confirmacao-estoque-contraste.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/consulta-e-estoque.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/consulta-ean-direta-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/contrato-conectores.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/correcao-fiscal-320188.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/exclusao-acesso-preserva-perfil.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/exclusao-produtos.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/ficha-pesquisa-web-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/fotos-e-referencia.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/frete-publicacao-32072.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/instalacao-e-previa-link.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/leitor-etiqueta.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/lotes-recebidos.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/marketplaces/magalu-permissoes.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/navegacao-ficha-expandida-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/observacoes-internas-estoque.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/pedido-itens-ean.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/pendencias-identificadas.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/permissao-estoque-avantaprecos.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/pesquisa-mini-32080.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/pesquisa-produtos.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/pesquisa-unificada-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/preparacao-layout-320108.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/product-post.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-32076.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-32079.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-ajustes-32053-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-ajustes-32058-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-ajustes-32062-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-ajustes-32065-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-avisos-32070-2026-10-22.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-cancelar-320185.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-cancelar-limpar-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-cards-320113.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-contas-320184.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-dce-320180.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-dce-320186.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-ean-direto-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-exclusao-320147.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-ficha-web-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-lotes-2026-10-17.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-modelo-conta-32068-2026-10-22.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-novo-anuncio-320112.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-observacoes-estoque-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-pedido-320181.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-pedido-320182.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-pedido-320183.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-pesquisa-32083.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-pesquisa-unificada-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-preparo-320109.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-prevalidacao-32071-2026-10-22.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-recuperacao-acesso-32066-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-recusas-ml-32067-2026-10-22.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-rodape-320187.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/publicacao-rodape-32069-2026-10-22.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/referencia-acesso-2026-10-21.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/relatorio-vendas.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/resultado-publicacao-wap-2026-10-22.md"
+  },
+  {
+    "status": "A",
+    "path": "docs/marketplaces/retornos-catalogo.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/padrao-avanta/CHANGELOG.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/padrao-avanta/README.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/padrao-avanta/acessibilidade.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/padrao-avanta/autenticacao.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/padrao-avanta/campos-formatacao.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/padrao-avanta/checklist.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/padrao-avanta/componentes.md"
+  },
+  {
+    "status": "M",
+    "path": "docs/padrao-avanta/manifest.json"
+  },
+  {
+    "status": "M",
+    "path": "docs/padrao-avanta/modulos.md"
+  },
+  {
+    "status": "M",
+    "path": "next.config.ts"
+  },
+  {
+    "status": "M",
+    "path": "package-lock.json"
+  },
+  {
+    "status": "M",
+    "path": "package.json"
+  },
+  {
+    "status": "A",
+    "path": "planejamento/marketplaces-objetivos-correcoes.md"
+  },
+  {
+    "status": "A",
+    "path": "planejamento/pipeline-entregas.md"
+  },
+  {
+    "status": "M",
+    "path": "proxy.ts"
+  },
+  {
+    "status": "A",
+    "path": "public/images/avantaprecos-link-v1.jpg"
+  },
+  {
+    "status": "A",
+    "path": "public/images/simulacao-ventilador.svg"
+  },
+  {
+    "status": "M",
+    "path": "public/mobile-app.js"
+  },
+  {
+    "status": "A",
+    "path": "public/ofertas/aline-192.png"
+  },
+  {
+    "status": "A",
+    "path": "public/ofertas/aline-512.png"
+  },
+  {
+    "status": "A",
+    "path": "public/ofertas/aline-logo.png"
+  },
+  {
+    "status": "A",
+    "path": "public/ofertas/ofertas-saldao-aline-compartilhar-v1.jpg"
+  },
+  {
+    "status": "A",
+    "path": "scripts/auditar-entrega-web.mjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/avaliar-origens-precos.mjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/avaliar-pesquisa-mini.mjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/conferir-origem-producao.mjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/executar-testes.mjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/gerar-marca-avantavendas.mjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/gerar-mobile-otimizado.mjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/gerar-vendas-otimizado.mjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/publicar-vercel.mjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/testar-mobile-rede-lenta.cjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/testar-vendas-rede-lenta.cjs"
+  },
+  {
+    "status": "A",
+    "path": "scripts/validar-area-modulos.mjs"
+  },
+  {
+    "status": "M",
+    "path": "scripts/verificar-acesso-mobile.mjs"
+  },
+  {
+    "status": "M",
+    "path": "scripts/verificar-acesso-web.mjs"
+  },
+  {
+    "status": "M",
+    "path": "scripts/verificar-interface-vendas.mjs"
+  },
+  {
+    "status": "M",
+    "path": "scripts/verificar-padrao-avanta.mjs"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261011200000_marketplace_local_products.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261012010000_marketplace_inventory_sync.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261012160000_marketplace_magalu_oauth.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261012190000_marketplace_connection_labels.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261012230000_marketplace_sales_history.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261013150000_marketplace_magalu_sales.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261013170000_marketplace_pending_sale_alerts.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261014030000_marketplace_magalu_publication_guard.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261014050000_usuario_areas_liberadas.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261023060000_marketplace_grouped_listings.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261024150000_marketplace_inventory_protection.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261025170000_marketplace_quality_web_usage.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261026170000_marketplace_fiscal_history.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261027130000_marketplace_product_posts.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/20261030143000_importador_despesas_centros.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/README.md"
+  },
+  {
+    "status": "A",
+    "path": "supabase/historico-sem-registro/proveniencia.json"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260708143000_caixinhas_movimentos.sql"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260718123000_recebimentos_presencial.sql"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260718173000_integracao_financeira_recebimentos.sql"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260801090000_avisos_vencimento_assinatura.sql"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260905152000_vendas_comercial.sql"
+  },
+  {
+    "status": "M",
+    "path": "supabase/migrations/20260907143000_limpa_observacoes_tecnicas_clientes.sql"
+  },
+  {
+    "status": "D",
+    "path": "supabase/migrations/20261011200000_marketplace_local_products.sql"
+  },
+  {
+    "status": "D",
+    "path": "supabase/migrations/20261012010000_marketplace_inventory_sync.sql"
+  },
+  {
+    "status": "D",
+    "path": "supabase/migrations/20261012160000_marketplace_magalu_oauth.sql"
+  },
+  {
+    "status": "D",
+    "path": "supabase/migrations/20261012190000_marketplace_connection_labels.sql"
+  },
+  {
+    "status": "D",
+    "path": "supabase/migrations/20261012230000_marketplace_sales_history.sql"
+  },
+  {
+    "status": "D",
+    "path": "supabase/migrations/20261013150000_marketplace_magalu_sales.sql"
+  },
+  {
+    "status": "D",
+    "path": "supabase/migrations/20261013170000_marketplace_pending_sale_alerts.sql"
+  },
+  {
+    "status": "D",
+    "path": "supabase/migrations/20261014030000_marketplace_magalu_publication_guard.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261016190000_marketplace_price_lots.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261018190000_marketplace_price_settings.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261019010000_marketplace_product_price_research.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261019020000_marketplace_price_products_stock.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261019030000_marketplace_local_reference.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261019210000_marketplace_price_stock_permission.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261019230000_marketplace_warehouses.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261020010000_marketplace_direct_sales.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261020160000_reorganizar_parcelamento_id_numerico.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261020190000_edicoes_financeiras_idempotentes.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261020210000_movimentos_financeiros_mobile.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261021010000_marketplace_stock_reconciliation.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261021020000_marketplace_connector_parity.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261021030000_marketplace_product_internal_notes.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261021040000_marketplace_researched_product_facts.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261021050000_marketplace_price_reference_access.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261022010000_marketplace_listing_catalog_import.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261022020000_marketplace_listing_status_checks.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261022160000_marketplace_product_removal.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261022180000_marketplace_product_delete_simple.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261022181000_marketplace_search_accents.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261022200000_marketplace_price_ai_controls.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261023050000_marketplace_multi_publication_targets.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261024010000_marketplace_product_ean_guard.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261024030000_marketplace_price_eight_offers.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261024040000_cron_history_retention.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261024050000_marketplace_removal_discovery.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261024060000_marketplace_quality_daily_ai.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261024061000_marketplace_quality_filters.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261024062000_marketplace_quality_numeric_receipt.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261025180000_ocultar_anuncios_excluidos_operacao.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261026020000_marketplace_ean_picture_gallery.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261026030000_marketplace_preparation_content.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261026220000_preservar_saldo_importacao_anuncios.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261027010000_catalog_completion.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261027020000_catalog_full_confirmation.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261027030000_catalog_photo_selection.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261027140000_marketplace_product_editor_content.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261029160000_preservar_autorizacao_estoque_pendente.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261104160000_exclusao_segura_produtos_custos.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/migrations/20261104190000_reajuste_tabelas_precos.sql"
+  },
+  {
+    "status": "A",
+    "path": "supabase/operations/rollback_usuario_areas.sql"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/cache-estatico-seguro.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/carregamento-visual.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/consignado-identidade.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/consignado-sem-saldo-financeiro.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/consignado-tema-harness.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/consignado-tema.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/entrega-otimizada.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/avantavendas/login-persistencia-oauth.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/marca-loading-av196.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/materiais-visualizacao-harness.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/materiais-visualizacao.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/menu-indicador.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/menu-toque-tatil.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/avantavendas/order-receipt-credit.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/avantavendas/order-receipt-v2.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/profile-header.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/retomada-segura.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/avantavendas/sala-carregamento-conjunto.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/backup-nuvem-servidor.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/campo-moeda.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/cobranca/sessao-perfil-rotas.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/cobranca/sessoes-e-concorrencia.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/financeiro/ativacao-centros-custo.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/financeiro/dashboard-cabecalhos.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/financeiro/despesa-fixa-sempre.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/financeiro/despesas-previstas-conferencia.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/financeiro/edicoes-idempotentes-banco.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/financeiro/gestao-navegacao-rapida.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/financeiro/movimentos-mobile-banco.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/financeiro/preparacao-acesso-unica.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/financeiro/reorganizacao-parcelamento-banco.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/financeiro/reorganizacao-parcelamento.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/financeiro/seletor-centro-custo-global.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/helpers/sql-historico.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/importador-despesas/centros-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/importador-despesas/confirmacao-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/importador-despesas/confirmacao-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/importador-despesas/fluxo-modal.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/importador-despesas/modelo-perfil-atual.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/infra/entrega-web-auditoria.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/infra/fontes-historicas-produto.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/infra/historico-migracoes-auditoria.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/infra/origem-producao.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/infra/pipeline-entrega.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/account-identification.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/accounts-loading.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/announced-ean-layout.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/announced-price-comparison-render.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/announced-price-references-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/announced-stock-navigation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-completion-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-completion-client.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-completion-cron.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-completion-service.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-completion-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-completion.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-feedback.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-full-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-full-client.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-identifier-evidence.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-photo-selection.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/catalog-photo-upload-api.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/catalog-publication.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/category-display.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/collapsible-panels.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/compact-panel-controls.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/connector-parity-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/date-fields.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/date-order.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/dce-emission.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/dce-service.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/dce-view.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/detail-navigation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/direct-sale-form-layout.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/direct-sale-shortcut.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/direct-sales-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/direct-sales.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/ean-picture-gallery.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/editor-interface.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/fiscal-fixture.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/fiscal-history-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/fiscal-service-harness.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/fiscal-service.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/fiscal-state.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/fiscal-transport.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/fiscal-view-harness.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/fiscal-view.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/footer-hide.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/footer-layout.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/footer-shortcuts.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/import-stock-choice.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/initial-stock.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/interface.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/inventory-dispatch.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/inventory-notices-panel.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/inventory-notices-refresh.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/inventory-notices.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/inventory-sync.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/inventory-worker.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/label-format-route.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/label-native-print.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-action-confirmation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-catalog-import-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-confirmation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-content-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-content.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/listing-date-order.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-edit-revision.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-groups.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-link-api.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/listing-management.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/listing-operations.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-price-batch.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-price-references.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-product-identity.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-quality-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-quality.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-refresh-resilience.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/listing-status-refresh.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/local-price-consultation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/local-product-publications.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/local-product-search.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/local-products.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/magalu-catalog-presence.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/magalu-catalog-route.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/magalu-default-price.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/magalu-editor.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/magalu-inventory-worker.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/magalu-listing-model.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/magalu-multi-publication.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/magalu-oauth.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/magalu-publication-migration.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/magalu-publication-model.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/magalu-sales-migration.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/magalu-sales.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/management-service.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/marketplace-mobile-pwa.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/marketplace-scope.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/monthly-sales-list-view.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/multi-publication-validation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/multi-publication.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/new-listing-cancel.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/notice-navigation-layout.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/notice-navigation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/notice-opening.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/notice-product-scroll.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/page-scroll.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/panel-count.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/panel-expand-scroll.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/panel-expansion.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/panel-footer.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/panel-loading.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/panel-order.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/passive-refresh.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/pending-sale-alerts.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/picture-account-permissions.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/post-sale-render-harness.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/post-sale-service.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/post-sale-view.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/preparation-content-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/preparation-content-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/preparation-summary-viewport.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-catalog.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-consultation-product-api.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/price-consultation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-direct-diagnostic.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-facts-collapsed.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-link-preview.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-lots-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-lots-close.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-lots-home.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-lots-web.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-lots.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-origin-evidence.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-origin-fixture.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-persistence.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-products-stock-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-products-stock.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-reference-access.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-refresh-isolation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-search-cancellation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-search-clear.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-search-control.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-search-navigation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-search-render-harness.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-settings-layout.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-settings.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-stock-compact.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-stock-permission-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-stock-permission.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-stock-state.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-stock-unified-refresh.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-tools-actions.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-user-removal.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-users-individual.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/price-values-layout.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-common-content-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-common-content.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-delete-simple-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-detail-scroll.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-expand-scroll.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-focus.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-header-alignment.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-internal-notes-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-internal-notes.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-link-request.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-listing-actions.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-listing-removal.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-listing-review.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-listing-update.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-photo-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-photo-drop.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-photo-source.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-photos.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-post-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-post-link-flow.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-post-saved.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-post-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-post-stock-view.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-post.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-price-research.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-publication-draft.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-quality-layout.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-reference-copy.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-registration-name.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-removal-discovery-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-removal-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-removal.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-shopping-links-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-shopping-links.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/product-summary-layout.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/publication-clear-messages.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/publication-completion.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/publication-content-readiness.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/publication-error-interface.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/publication-prefill.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/publication-request.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/publication-service.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/publication-shipping-interface.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/publication-simulation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/publication-validation-error.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/pwa-install.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/quality-ai-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/quality-ai-draft.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/quality-ai-review.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/quality-catalog-pictures.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/quality-daily-ai.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/quality-web-research.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/refresh-icon.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/researched-product-facts.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/review-account-live-validation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/review-objectives-render.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/review-publication-feedback.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/review-quality-goals.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/review-recovery-live.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sale-item-ean.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/sale-label-preview.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sale-listing-link.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sales-cached-opening.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sales-financial-service.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sales-financial.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/sales-history.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/sales-interface.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sales-marketplace-filter.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sales-only-notices.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sales-report-list.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sales-report-service.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sales-report-view.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sales-report.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/sales-row-scroll.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/sales-selection.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/marketplaces/sales-status.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/shipping-label.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/startup-account-sync.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/startup-lazy-products.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/sticky-selector-focus-scroll.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/stock-increase-authorization-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/stock-navigation-recovery.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/stock-reconciliation-model.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/stock-reconciliation-source.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/stock-reconciliation-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/stock-sync-layout.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/stock-zero-presentation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/thermal-label-download.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/thermal-label-pdf.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/thermal-label-text.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/transient-product-feedback.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/warehouses-panel.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/warehouses-sql.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/warehouses-ui.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/warehouses.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/marketplaces/web-photo-live-validation.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/abertura-progressiva.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/anexos-operacao.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/mobile/aplicacao-lancamento.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/mobile/centros-custo-mobile.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/edicoes-segundo-plano.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/editar-perfil-empresa.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/entrega-otimizada.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/financeiro-instabilidades.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/loading-pontos.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/movimentos-segundo-plano.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/mobile/navegacao-push.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/oauth-nativo-confiavel.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/mobile/ordenacao-lancamentos.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/perfil-em-uso-harness.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/perfil-em-uso.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/periodo-novo-lancamento.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/recorrencias-servidor.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/mobile/usuarios-acessos.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/acessos-usuario-api.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/acessos-usuario-banco.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/acessos-usuario.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/app-nativo-sem-dashboard.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/botao-acao-compacto.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/card-modulo-clicavel.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/modulos/carregamento-acesso-mobile.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/modulos/custos-integracao.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/entrada-integrada-direta.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/entrada-perfil-selecionado.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/entrada-sessao-recuperacao.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/entrada-sessao-renovacao.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/loading-pontos.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/logo-institucional.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/modal-confirmacao-contraste.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/modulos/navegacao-modulos.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/modulos/navegacao-sessao-persistente.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/perfis-carregamento-leve.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/preparacao-padronizada.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/modulos/projetos-tema-e-foco.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/retorno-modulos-rapido.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/rodape-modulos.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/modulos/tabelas-precos-importacao.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/usuario-fechar-apos-salvar.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/usuario-modal-responsivo.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/modulos/usuario-salvar-liberacoes.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/modulos/vendas-prontidao-operacional.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/ofertas/catalog.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/usuarios/auditoria-identidade-isolamento.test.mjs"
+  },
+  {
+    "status": "A",
+    "path": "tests/usuarios/liberacoes-persistencia.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "vercel.json"
+  }
+]

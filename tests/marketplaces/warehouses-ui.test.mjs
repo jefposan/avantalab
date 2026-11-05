@@ -1,0 +1,67 @@
+import * as stockSyncModel from '../../app/modules/marketplaces/stock-reconciliation.ts';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
+import vm from 'node:vm';
+import ts from 'typescript';
+import {priceStockState} from '../../app/modules/marketplaces/price-stock-state.ts';
+const require=createRequire(import.meta.url);
+for (const compactSummary of [false, true]) test(`AvantaPreços escolhe estoque/operação e envia entrada ou transferência sem somar o offline ao online (compacto: ${compactSummary})`,async()=>{
+  const balances=[{id:'online',name:'Online',is_online:true,quantity:1,revision:1,confirmed_at:'2026-10-19'},{id:'saldao',name:'Saldão',is_online:false,quantity:2,revision:1,confirmed_at:'2026-10-19'}];
+  const stock=()=>({productId:'product',quantity:balances[0].quantity,confirmed:true,revision:1,canManage:true,warehousesReady:true,warehouses:structuredClone(balances)});
+  const states=[],refs=[],writes=[];let cursor=0,refCursor=0;
+  const hooks={useCallback(fn){return fn;},useState(initial){const i=cursor++;if(!(i in states))states[i]=i===0?stock():i===1?false:typeof initial==='function'?initial():initial;return[states[i],v=>{states[i]=typeof v==='function'?v(states[i]):v;}];},useRef(v){const i=refCursor++;return refs[i]||=( {current:v});},useEffect(){}};
+  const exports={};
+  vm.runInNewContext(ts.transpileModule(readFileSync('app/marketplaces/PriceProductStock.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{exports,Error,AbortSignal,AbortController,crypto,requestAnimationFrame(fn){fn();},require(name){if(name.includes('stock-reconciliation'))return stockSyncModel;if(name.includes('ModalConfirmacao'))return {default:'zero-modal'}; if(name==='react')return hooks;if(name.includes('ProductRemoval'))return{default:'product-removal'};if(name.includes('product-internal-notes'))return{PRODUCT_INTERNAL_NOTES_LIMIT:160};if(name.includes('StockSync'))return{default:'stock-sync'};if(name.includes('direct-sales'))return{DIRECT_SALES_CHANGED:'direct-sales-changed'};if(name.includes('DirectSaleActions'))return{default:'direct-sales'};if(name.includes('BotaoAcaoCompacto'))return{default:'button'};if(name.endsWith('.module.css'))return{default:new Proxy({},{get:(_,k)=>k})};if(name.includes('price-stock-state'))return{priceStockState};if(name.includes('product-stock-events'))return{notifyProductStockChanged(){}};return require(name);}});
+  const request=async(_path,options)=>{const body=JSON.parse(options.body);writes.push(body);const source=balances.find(w=>w.id===body.warehouseId);assert.equal(body.revision,source.revision);if(body.action==='transfer'){const target=balances.find(w=>w.id===body.destinationId);assert.equal(body.destinationRevision,target.revision);source.quantity-=body.quantity;target.quantity+=body.quantity;target.revision++;}else source.quantity=body.action==='add'?source.quantity+body.quantity:body.quantity;source.revision++;return{stock:stock()};};
+  let tree;
+  function render(){cursor=0;refCursor=0;const wrapper=exports.default({companyId:'company',productId:'product',request,compactSummary});tree=wrapper.type(wrapper.props);}
+  function all(n){if(Array.isArray(n))return n.flatMap(all);if(!n||typeof n!=='object')return[];return[n,...all(n.props?.children)];}
+  const find=fn=>{const n=all(tree).find(fn);assert.ok(n);return n;};
+  const button=text=>find(n=>n.type==='button'&&n.props.children===text);
+  const selects=()=>all(tree).filter(n=>n.type==='select');
+  const input=()=>find(n=>n.type==='input');
+  const editLabel = compactSummary ? 'Ajustar estoque' : 'Editar';
+  render();button(editLabel).props.onClick();render();
+  selects()[0].props.onChange({target:{value:'saldao'}});render();selects()[1].props.onChange({target:{value:'add'}});render();
+  input().props.onChange({target:{value:'1'}});render();await find(n=>n.type==='form').props.onSubmit({preventDefault(){}});render();
+  assert.equal(writes[0].warehouseId,'saldao');assert.equal(writes[0].action,'add');assert.deepEqual(balances.map(w=>w.quantity),[1,3]);
+  button(editLabel).props.onClick();render();selects()[1].props.onChange({target:{value:'transfer'}});render();
+  assert.equal(selects().length,3);selects()[2].props.onChange({target:{value:'online'}});render();
+  input().props.onChange({target:{value:'1'}});render();await find(n=>n.type==='form').props.onSubmit({preventDefault(){}});render();
+  assert.equal(writes[1].action,'transfer');assert.equal(writes[1].destinationId,'online');assert.deepEqual(balances.map(w=>w.quantity),[2,2]);
+  assert.equal(new Set(writes.map(w=>w.requestKey)).size,2);
+  if (compactSummary) {
+    button('Adicionar saldo').props.onClick(); render();
+    assert.equal(selects()[1].props.value, 'add');
+    assert.equal(input().props.value, '');
+    input().props.onChange({target:{value:'2'}}); render();
+    await find(n=>n.type==='form').props.onSubmit({preventDefault(){}}); render();
+    assert.equal(writes.at(-1).action, 'add');
+    assert.deepEqual(balances.map(w=>w.quantity),[2,4]);
+    assert.equal(all(tree).some(n=>n.props?.className==='heading'),false,'sem duplicar saldo do estoque selecionado');
+    const text = node => typeof node==='string'||typeof node==='number'?String(node):Array.isArray(node)?node.map(text).join(' '):node?.props?text(node.props.children):'';
+    assert.match(text(tree), /Total 6 un\./);
+    balances[0].quantity=null; states[0]=stock(); render();
+    assert.match(text(tree), /Total 4 un\./);
+    assert.match(text(tree), /Online\s+0 un\./);
+    assert.doesNotMatch(text(tree), /a confirmar|confirmadas/i);
+    balances[1].quantity=null;states[0]=stock();render();
+    assert.match(text(tree), /Total 0 un\./);
+    button('Ajustar estoque').props.onClick();render();
+    assert.equal(input().props.value,'0','ajuste de saldo vazio inicia em zero sem herdar outro estoque');
+    button('Cancelar').props.onClick();render();
+    balances.forEach(w=>{w.quantity=0;});states[0]=stock();render();
+    assert.match(text(tree), /Total 0 un\./);
+    states[0]={...stock(),canManage:false};render();
+    assert.ok(all(tree).filter(n=>n.type==='button'&&['Ajustar estoque','Adicionar saldo'].includes(n.props.children)).every(n=>n.props.disabled),'edição permanece bloqueada sem permissão individual');
+  }
+  states[0]={...stock(),canManage:true,importStockReview:true};render();const offlineBefore=balances[1].quantity,writesBefore=writes.length;
+  const balance=balances[0].quantity??0;
+  const confirm=()=>find(n=>n.type==='button'&&Array.isArray(n.props.children)&&n.props.children.join('')===`Confirmar saldo ${balance}`);
+  confirm().props.onClick();render();const modal=()=>find(n=>n.type==='zero-modal'&&n.props.aberto);assert.equal(all(tree).some(n=>n.type==='form'),false,'somente popup, sem formulário de quantidade');assert.equal(writes.length,writesBefore);
+  modal().props.aoCancelar();render();assert.equal(writes.length,writesBefore,'cancelar confirmação não grava');
+  confirm().props.onClick();render();await modal().props.aoConfirmar();render();
+  assert.equal(writes.at(-1).quantity,balance);assert.equal(writes.at(-1).action,'set');assert.equal(writes.at(-1).warehouseId,'online');assert.equal(balances[1].quantity,offlineBefore,'confirmar saldo não altera o depósito offline');
+});

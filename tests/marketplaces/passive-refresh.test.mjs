@@ -57,12 +57,19 @@ test('eventos automáticos não propagam refreshKey às listas; popup continua n
   assert.match(client, /salesInPeriod\(salesSnapshot, salesPeriod\)/);
   assert.match(client, /onLatest: data => setSales/);
   assert.match(client, /onVisible: data => \{ setSalesSnapshot/);
-  assert.match(client, /setInventorySnapshot\(current => current \?\? detail.feed!/);
+  assert.match(client, /setInventorySnapshot\(\{companyId, feed: detail.feed\}\)/);
   assert.match(client, /<MarketplaceLiveMonitor key=\{companyId\}/);
   const listings = read('marketplaces/Anunciados.tsx');
-  assert.match(listings, /synchronizeRef.current\(true\)/);
-  assert.match(listings, /if \(!background\) \{ setSyncing\(true\)/);
-  assert.match(listings, /if \(!background\) setSyncNotice/);
-  assert.match(listings, /if \(!controller.signal.aborted && !background\)/);
-  assert.match(listings, /else \{ await loadAccounts\(controller.signal\); await loadListRef.current\(\)/);
+  assert.doesNotMatch(listings, /synchronizeRef.current\(true\)|setInterval\(|addEventListener\('visibilitychange'/);
+  assert.match(listings, /setSyncing\(true\); setError\(''\); setSyncNotice\(''\)/);
+  assert.match(listings, /if\(!silent\)setLoading\(true\)/);
+  assert.match(listings, /if \(!controller.signal.aborted && !silent\) setLoading\(false\)/);
+  assert.match(listings, /loadListRef.current\(true,true\)/);
+});
+test('somente vendas online autorizam aplicação periódica na lista; saldão fica estável', async()=>{
+ let online=true;const visible=[],latest=[];
+ const reader=createPassiveRefresh({read:async()=>({id:'sale'}),onLatest:v=>latest.push(v),onVisible:v=>visible.push(v),onLoading(){},onError(){},backgroundVisible:()=>online});
+ await reader.background();assert.equal(visible.length,1);online=false;await reader.background();assert.equal(visible.length,1);assert.equal(latest.length,2);await reader.manual();assert.equal(visible.length,2);
+ const client=readFileSync('app/marketplaces/MarketplacesClient.tsx','utf8');assert.match(client,/backgroundVisible: \(\) => salesViewRef.current === 'online'/);
+ const monitor=readFileSync('app/components/MarketplaceLiveMonitor.tsx','utf8');assert.match(monitor,/refreshInventory = manual \|\| !inventoryLoaded/);assert.match(monitor,/scope=sales/);assert.match(client,/if \(detail.refreshInventory !== false\) setInventorySnapshot/);
 });

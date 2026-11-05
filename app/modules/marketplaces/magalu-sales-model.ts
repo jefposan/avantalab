@@ -29,15 +29,18 @@ export function normalizeMagaluOrder(value: unknown, seller: string) {
     : ['pending', 'not_verified', 'handling', 'ready_to_ship', 'shipped'].find(status => active.some(delivery => delivery.status === status)) || null;
   const items = deliveries.flatMap(delivery => magaluList(delivery.items)).map(item => {
     if (!Number.isSafeInteger(item.quantity) || (item.quantity as number) < 1 || (item.quantity as number) > 100_000) throw new Error('magalu_items');
-    return { title: magaluText(objectValue(item.info).name) || 'Produto', quantity: item.quantity as number, unitPrice: magaluMoney(item.unit_price, 'value') };
+    const info=objectValue(item.info);
+    return { title: magaluText(info.name) || 'Produto', quantity: item.quantity as number, unitPrice: magaluMoney(item.unit_price, 'value'),sku:typeof info.sku==='string'?info.sku:null,listingId:typeof info.sku==='string'?info.sku:undefined };
   });
   if (!items.length || items.length > 500) throw new Error('magalu_items');
+  const lines=new Map<string,{listingId:string;variationId:string;quantity:number;title:string}>();
+  for(const delivery of deliveries.filter(d=>d.status!=='cancelled'))for(const item of magaluList(delivery.items)){const info=objectValue(item.info),sku=info.sku;if(typeof sku!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$/.test(sku))throw new Error('magalu_inventory_identity');const old=lines.get(sku),quantity=(old?.quantity||0)+(item.quantity as number);if(quantity>99999)throw new Error('magalu_inventory_quantity');lines.set(sku,{listingId:sku,variationId:'',quantity,title:magaluText(info.name)||'Produto'});}
   const status = order.status === 'cancelled' ? 'cancelled' : order.status === 'approved' ? 'paid' : order.status === 'new' ? 'payment_required' : order.status === 'finished' ? 'confirmed' : 'unknown';
   return { orderId: order.code, providerOrderId: String(order.id), providerOrderStatus: ({ new: 'Pedido criado', approved: 'Pagamento aprovado', cancelled: 'Venda cancelada', finished: 'Pedido finalizado' } as Record<string, string>)[String(order.status)] || 'Pedido em atualização',
     channelId: uuidIsValid(objectValue(order.channel).id) ? String(objectValue(order.channel).id) : null,
     soldAt: magaluDate(order.purchased_at)!, status, shipmentId: packages.length === 1 ? packages[0].id : null, shipmentStatus, shipmentSubstatus: null,
     labelStatus: 'unavailable' as const, buyer: magaluText(objectValue(order.customer).name, 160) || null, total: magaluMoney(order.amounts), currency: 'BRL', items,
-    deliveries: packages, confirmedAt: magaluDate(order.approved_at), providerUpdatedAt: magaluDate(order.updated_at)!, inventoryLines: [],
+    deliveries: packages, confirmedAt: magaluDate(order.approved_at), providerUpdatedAt: magaluDate(order.updated_at)!, inventoryLines: [...lines.values()],
     warnings: packages.some(delivery => delivery.status === 'cancelled') && active.length ? ['Este pedido tem entrega cancelada e outras entregas com situações diferentes. Confira cada pacote.'] : [],
   };
 }

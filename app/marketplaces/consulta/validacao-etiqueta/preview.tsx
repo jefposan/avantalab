@@ -1,0 +1,14 @@
+'use client';
+import {useState} from 'react';
+import PriceLabelReader,{LabelResultDialog} from '../../PriceLabelReader';
+import ColaboradorTopbar from '@/app/recebimentos/components/ColaboradorTopbar';
+import mobile from '../marketplaces-mobile.module.css';
+import shell from '@/app/recebimentos/recebimentos.module.css';
+import styles from './preview.module.css';
+const example={shipmentId:'48300837943',products:[{description:'Fritadeira Airfryer Philips Walita XL Digital 6,2L — Preto 127V',image:'https://http2.mlstatic.com/D_643328-MLA99931158063_112025-O.jpg',ean:'8720389031151'}]};
+export default function Preview(){const [open,setOpen]=useState(false),[dark,setDark]=useState(false);
+ return <><aside className={styles.toolbar}><strong>Prévia local · resultado fictício, não corresponde à etiqueta enviada</strong><button onClick={()=>setOpen(true)}>Simular QR lido</button><button onClick={()=>setDark(!dark)}>{dark?'Tema claro':'Tema escuro'}</button></aside><div className={`${shell.page} ${mobile.page} ${dark?mobile.dark:''} ${styles.page}`}>
+ <ColaboradorTopbar nomeDoPerfil="SALDÃO ALINE" descricaoDaOperacao="Consulta rápida de produtos e preços"><button type="button">Sair</button></ColaboradorTopbar>
+ <main className={mobile.content}><section className={mobile.manualCard}><h2>Consultar manualmente</h2><label>Nome ou EAN do produto<input placeholder="Digite para pesquisar" disabled/></label></section><section className={mobile.scanSection} aria-label="Leitores"><div className={mobile.scanActions}><button className={`${mobile.scanButton} ${mobile.labelScanButton}`} onClick={()=>setOpen(true)}><span><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M3 9V3h6m6 0h6v6m0 6v6h-6m-6 0H3v-6M7 7h3v3H7zm7 0h3v3h-3zM7 14h3v3H7zm7 0h3v3h-3z"/></svg></span><strong>Ler etiqueta</strong><small>QR Mercado Livre</small></button><button className={mobile.scanButton} onClick={()=>{}}><span><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M5 6v12m4-12v12m5-12v12m5-12v12"/></svg></span><strong>Ler EAN</strong><small>Abrir câmera</small></button></div><p className={mobile.connectionOk}>Mercado Livre conectado</p></section><button className={mobile.allPricedProductsButton}>Ver produtos e estoque</button><section className={mobile.historySection}><h2>Últimas consultas</h2><p className={mobile.emptyHistory}>A leitura de etiquetas não altera o histórico de preços.</p></section><details><summary>Testar câmera real (resposta fictícia)</summary><PriceLabelReader companyId="preview" request={async(_path,options)=>({...example,shipmentId:JSON.parse(String(options?.body||'{}')).shipmentId||example.shipmentId})} dark={dark}/></details></main>
+ {open&&<LabelResultDialog result={example} onClose={()=>setOpen(false)} dark={dark} brand="#003e73"/>}</div></>;
+}

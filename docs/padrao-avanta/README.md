@@ -1,6 +1,6 @@
 # PADRÃO AVANTA
 
-Versão oficial: **1.17.0**
+Versão oficial: **1.23.1**
 Identificador: `PADRAO-AVANTA`
 Manifesto: `docs/padrao-avanta/manifest.json`
 
@@ -61,6 +61,26 @@ antes de criar uma convenção isolada. Não duplicar componentes existentes.
 6. Atualizar documentação, versão do produto, changelog e manuais da Ava conforme
    `AGENTS.md`.
 7. Executar `npm run verificar:padrao-avanta` e `npm run verificar:ava`.
+
+## Identificação e comunicação de publicações
+
+- Toda publicação deve incluir a versão oficial do sistema e um resumo
+  descritivo, em português, do que foi corrigido ou adicionado. Formato:
+  `VERSÃO — Módulo: resumo das alterações`.
+- Registrar essa identificação no provedor de publicação (por exemplo, Vercel),
+  no registro da entrega e na comunicação ao responsável. Não deixar a
+  descrição somente no changelog, nem usar apenas versão, hash ou texto genérico.
+- Em envios por pacote isolado ou CLI sem descrição de commit, incluir versão
+  e resumo nos metadados suportados pelo provedor. Se o destino não oferecer
+  esse campo, registrar a limitação e vincular o resumo ao identificador da
+  publicação no registro da entrega; nunca omitir a descrição silenciosamente.
+- O resumo deve refletir apenas as alterações efetivamente incluídas no pacote.
+  Exemplo: `3.2.0.48 — AvantaPreços: liberar edição manual e atualização de preço
+  para usuários ativos, salvando a referência no cadastro e preservando estoque`.
+- Avisar assim que o envio terminar, informando o estado real: em fila, em build
+  ou publicado. Não aguardar o build para liberar a conversa, nem afirmar que
+  está no ar antes de confirmar. Publicação autorizada deve ter promoção
+  automática após build aprovado ou promoção manual pendente explicitada.
 
 ## Como invocar em qualquer projeto
 

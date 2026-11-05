@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { baixarBackupNuvem, decifrarBackupNuvem, renovarTokenBackup, type ProvedorBackupNuvem } from '@/app/lib/backup-nuvem-servidor';
+import { baixarBackupNuvem, cifrarBackupNuvem, decifrarBackupNuvem, renovarTokenBackup, type ProvedorBackupNuvem } from '@/app/lib/backup-nuvem-servidor';
 
 export const runtime = 'nodejs';
 
@@ -18,7 +18,9 @@ export async function GET(request: Request) {
     const { data: conexao } = await admin.from('backup_nuvem_conexoes').select('*').eq('empresa_id', empresaId).maybeSingle();
     if (!conexao) throw new Error('Nenhuma conta de nuvem conectada.');
     const provedor = conexao.provedor as ProvedorBackupNuvem; const renovado = await renovarTokenBackup(provedor, decifrarBackupNuvem(conexao.refresh_token_cifrado));
-    const bytes = await baixarBackupNuvem(provedor, renovado.accessToken, id);
+    const salvo = await admin.from('backup_nuvem_conexoes').update({ access_token_cifrado: cifrarBackupNuvem(renovado.accessToken), refresh_token_cifrado: cifrarBackupNuvem(renovado.refreshToken), expira_em: renovado.expiraEm, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId);
+    if (salvo.error) throw new Error('Não foi possível guardar a renovação da conexão. Tente novamente.');
+    const bytes = await baixarBackupNuvem(provedor, renovado.accessToken, id, conexao.pasta_id, empresaId);
     return new NextResponse(bytes, { headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="${nome.endsWith('.xlsx') ? nome : `${nome}.xlsx`}"`, 'Cache-Control': 'no-store' } });
   } catch (error) { return NextResponse.json({ erro: true, mensagem: error instanceof Error ? error.message : 'Não foi possível baixar o arquivo.' }, { status: 500 }); }
 }

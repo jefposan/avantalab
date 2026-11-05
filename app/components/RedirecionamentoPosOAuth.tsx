@@ -137,6 +137,7 @@ export default function RedirecionamentoPosOAuth() {
   return (
     <div className="fixed inset-0 z-[20000]">
       <TelaCarregandoAcesso
+        preparandoAcesso
         titulo="Preparando acesso"
         mensagem="Verificando sua sessão..."
         nivelTitulo="h2"

@@ -129,8 +129,10 @@ ler o valor atual.
   **Preparando acesso**. Não deixar o botão **Conectando…** exposto como única
   indicação de andamento.
 - Exibir etapa real e progresso somente quando houver tarefas mensuráveis.
-- Enquanto o provedor estiver pendente, oferecer **Cancelar e voltar ao login**
-  na tela de preparação, nunca dentro do card de login ocioso.
+- Por decisão do titular em 25/10/2026, não exibir **Cancelar e voltar ao login**
+  na preparação Web. Preservar cancelamento pelo provedor, erros, limites de
+  espera e recuperação; remover o botão não autoriza espera indefinida.
+- Conferência de cadastro e assinatura reutiliza a mesma cena de preparação.
 - Cancelar remove feedback antigo, restaura os rótulos **Continuar com Google**
   e **Continuar com Apple** e permite nova tentativa imediatamente.
 - Não limpar o estado apenas porque o aplicativo ficou ativo novamente; o
@@ -188,6 +190,8 @@ Novos aplicativos usam seu próprio App ID. Protocolo, Android intent-filter,
 iOS URL Types e Redirect URL do Supabase precisam ser idênticos.
 
 ## Sessão, origem e logout
+
+- Antes de carregar o financeiro, resolver as liberações do vínculo selecionado. Dashboard permitida entra na Gestão; acesso restrito entra no módulo único ou em Meus módulos. A regra vale em senha, sessão restaurada, OAuth e troca de perfil. Início mostra a seleção para usuários sem Dashboard, sem reabrir automaticamente o único módulo.
 
 - **Lembrar-me** vale igualmente para senha, Google e Apple.
 - Marcado: persistência por até 30 dias, renovada conforme a política do

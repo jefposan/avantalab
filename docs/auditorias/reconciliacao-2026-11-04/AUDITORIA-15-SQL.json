@@ -1,0 +1,3731 @@
+{
+  "capturedAt": "2026-11-04T14:36:51.930212+00:00",
+  "projectRef": "qzewxhdkwettnlmkjoqd",
+  "sourceDeploymentId": "dpl_Dq1wCBwU92G354cov6BCiN4qrYt9",
+  "sourceGitSnapshot": "884bf1d716d5d203ded0828fe25fc7df92490fa9",
+  "scope": "Presença estrutural e referências no código publicado. Não mede frequência de uso por usuários nem afirma que cada linha histórica ainda é a definição atual. Nenhuma chamada funcional ou escrita remota foi feita.",
+  "schemaSnapshotSha256": "d726d0b5c32fc8ad1c55796661a30e637e7ce4bd07d32d6785c776f028088b4f",
+  "decisionSummary": {
+    "retainProductSources": 15,
+    "obsoleteFilesProven": 0,
+    "deleteFunctionalFiles": 0
+  },
+  "records": [
+    {
+      "objects": {
+        "tables": [
+          "marketplace_product_links",
+          "marketplace_product_operations",
+          "marketplace_products",
+          "marketplace_stock_movements"
+        ],
+        "functions": [
+          "marketplace_product_command"
+        ],
+        "indexes": [
+          "marketplace_product_links_product_idx",
+          "marketplace_products_company_idx",
+          "marketplace_stock_movements_product_idx"
+        ],
+        "alterTables": [
+          "marketplace_product_links",
+          "marketplace_product_operations",
+          "marketplace_products",
+          "marketplace_stock_movements"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [
+        "marketplace_product_links",
+        "marketplace_product_operations",
+        "marketplace_products",
+        "marketplace_stock_movements"
+      ],
+      "presentFunctions": [
+        "marketplace_product_command"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/mercadolivre-editor.ts",
+          "line": 32,
+          "call": "from('marketplace_product_links').select('product_id').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id)."
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/mercadolivre-editor.ts",
+          "line": 35,
+          "call": "from('marketplace_products').select('stock_quantity,listing_stock_review_at').eq('empresa_id', connection.empresa_id).eq('id', lin"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 58,
+          "call": "from('marketplace_product_links').select('*').eq('empresa_id', job.empresa_id).eq('product_id', job.product_id).eq('id', job.link_"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 73,
+          "call": "from('marketplace_product_links').update({status:item.status,updated_at:new Date().toISOString()}).eq('empresa_id',job.empresa_id)"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 90,
+          "call": "from('marketplace_product_links').select('provider_listing_id,product_id').eq('empresa_id', job.empresa_id).eq('connection_id', li"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 108,
+          "call": "from('marketplace_product_links').update({reported_stock:typeof paused.available_quantity==='number'?paused.available_quantity:nul"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 131,
+          "call": "from('marketplace_product_links').update({reported_stock:0,status:'paused',updated_at:new Date().toISOString()}).eq('id',link.id)."
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 152,
+          "call": "from('marketplace_product_links').update({ reported_stock: job.desired_quantity, status: verified.status, updated_at: new Date().t"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 56,
+          "call": "from('marketplace_products').select('stock_quantity,revision,listing_stock_review_at').eq('empresa_id', job.empresa_id).eq('id', j"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 116,
+          "call": "from('marketplace_products').select('stock_quantity,revision,listing_stock_review_at').eq('empresa_id',job.empresa_id).eq('id',job"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 144,
+          "call": "from('marketplace_products').select('stock_quantity,revision,listing_stock_review_at').eq('empresa_id', job.empresa_id).eq('id', j"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/sale-listing-link.ts",
+          "line": 22,
+          "call": "from('marketplace_product_links').select('product_id,provider_listing_id,source_snapshot,updated_at')"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/sale-listing-link.ts",
+          "line": 60,
+          "call": "from('marketplace_product_links').upsert({ empresa_id: connection.empresa_id,"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/sale-listing-link.ts",
+          "line": 71,
+          "call": "from('marketplace_product_links').update({ source_snapshot: { ...prior, relationEvidence: evidence } })"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/sale-listing-link.ts",
+          "line": 51,
+          "call": "from('marketplace_products').select('id').eq('empresa_id', connection.empresa_id).eq('id', productId).is('archived_at', null).mayb"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/inventory-product-guard.ts",
+          "line": 8,
+          "call": "from('marketplace_product_links').select('connection_id,provider,provider_listing_id').eq('empresa_id',company).eq('product_id',pr"
+        },
+        {
+          "object": "marketplace_product_command",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 80,
+          "call": "rpc('marketplace_product_command', { p_empresa_id: empresaId, p_actor_id: actor, p_action: action, p_data: data, p_request_key: re"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 104,
+          "call": "from('marketplace_product_links').select('id,connection_id,provider,provider_listing_id,title,reported_stock,status,source_snapsho"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 198,
+          "call": "from('marketplace_product_links').select('id,product_id,connection_id,provider,provider_listing_id,title,reported_stock,status,sou"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 239,
+          "call": "from('marketplace_product_links').select('connection_id,provider,provider_listing_id').eq('empresa_id', companyId).eq('product_id'"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 67,
+          "call": "from('marketplace_products').select('id').eq('empresa_id', empresaId).is('archived_at', null).in('ean', variants);"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 95,
+          "call": "from('marketplace_products').select(columns).eq('empresa_id', empresaId).eq('id', id).is('archived_at', null).maybeSingle();"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 171,
+          "call": "from('marketplace_products').select('id,name,sku,ean,description' + warehouseJoin + publicationJoin)"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 186,
+          "call": "from('marketplace_products').select('id' + warehouseJoin + publicationJoin, {count:'exact',head:true}).eq('empresa_id',empresaId)."
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 190,
+          "call": "from('marketplace_products').select(columns + warehouseJoin + publicationJoin, skipCount ? {} : { count: 'exact' }).eq('empresa_id"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/product-common-content.ts",
+          "line": 17,
+          "call": "from('marketplace_product_links').select('id,provider,connection_id,provider_listing_id,status').eq('empresa_id',company).eq('prod"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/multi-publication.ts",
+          "line": 15,
+          "call": "from('marketplace_product_links').select('connection_id,provider_listing_id,status,provider').eq('empresa_id',company).eq('product"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/stock-reconciliation.ts",
+          "line": 14,
+          "call": "from('marketplace_product_links').select('*').eq('empresa_id',company).eq('product_id',product.id).order('id').limit(31);"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/stock-reconciliation.ts",
+          "line": 48,
+          "call": "from('marketplace_product_links').select('provider_listing_id,product_id').eq('empresa_id',company).eq('connection_id',link.connec"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/magalu-listings.ts",
+          "line": 79,
+          "call": "from('marketplace_product_links').select('product_id').eq('empresa_id',connection.empresa_id).eq('connection_id',connection.id).eq"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/magalu-listings.ts",
+          "line": 81,
+          "call": "from('marketplace_products').select('stock_quantity,listing_stock_review_at').eq('empresa_id',connection.empresa_id).eq('id',link."
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/product-shopping-links.ts",
+          "line": 11,
+          "call": "from('marketplace_product_links').select('connection_id,provider,provider_listing_id').eq('empresa_id',company).eq('product_id',pr"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/quality-cache.ts",
+          "line": 8,
+          "call": "from('marketplace_product_links').select('connection_id,provider_listing_id,status').eq('empresa_id',company).eq('product_id',prod"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 12,
+          "call": "from('marketplace_products').select('stock_quantity,revision,listing_stock_review_at').eq('empresa_id',job.empresa_id).eq('id',job"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 14,
+          "call": "from('marketplace_products').select('listing_stock_review_at').eq('empresa_id',job.empresa_id).eq('id',job.product_id).maybeSingle"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 22,
+          "call": "from('marketplace_products').select('stock_quantity,revision').eq('empresa_id',job.empresa_id).eq('id',job.product_id).is('archive"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/mercadolivre-management.ts",
+          "line": 311,
+          "call": "from('marketplace_product_links').select('product_id').eq('empresa_id',connection.empresa_id).eq('connection_id',connection.id).eq"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/mercadolivre-management.ts",
+          "line": 314,
+          "call": "from('marketplace_products').select('stock_quantity,listing_stock_review_at').eq('empresa_id',connection.empresa_id).eq('id',linke"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/price-catalog.ts",
+          "line": 31,
+          "call": "from('marketplace_products').select(columns+joins,count?{count}:{}).eq('empresa_id',companyId).is('archived_at',null);"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/listing-price-references.ts",
+          "line": 11,
+          "call": "from('marketplace_products').select('id,price_cents').eq('empresa_id',companyId).in('id',ids).is('archived_at',null);"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-price-consultation.ts",
+          "line": 20,
+          "call": "from('marketplace_products').select('id').eq('empresa_id', companyId).is('archived_at', null).in('ean', variants).limit(2);"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/catalog-completion.ts",
+          "line": 85,
+          "call": "from('marketplace_product_links').select('connection_id,provider_listing_id,status').eq('empresa_id',job.empresa_id).eq('product_i"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/mercadolivre-publication.ts",
+          "line": 379,
+          "call": "from('marketplace_product_links').select('id').eq('empresa_id',connection.empresa_id).eq('product_id',form.localProductId).eq('con"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/mercadolivre-publication.ts",
+          "line": 472,
+          "call": "from('marketplace_product_links').select('id').eq('empresa_id', empresaId).eq('product_id', local.id).eq('connection_id', connecti"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/product-posts.ts",
+          "line": 20,
+          "call": "from('marketplace_products').select('id,name').eq('empresa_id',company).eq('id',id).is('archived_at',null).maybeSingle();"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/initial-stock.ts",
+          "line": 37,
+          "call": "from('marketplace_product_links').select('connection_id,provider_listing_id').eq('empresa_id', empresaId).eq('product_id', product"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/modules/marketplaces/services/initial-stock.ts",
+          "line": 61,
+          "call": "from('marketplace_product_links').select('id').eq('empresa_id', empresaId).eq('product_id', product.id)"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/initial-stock.ts",
+          "line": 30,
+          "call": "from('marketplace_products').select('id,name,revision').eq('empresa_id', empresaId).is('archived_at', null).is('stock_quantity', n"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/price-persistence.ts",
+          "line": 15,
+          "call": "from('marketplace_products').select('id,price_cents,revision').eq('empresa_id', company).eq('id', productId).is('archived_at', nul"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/api/modulos/marketplaces/publicacao-multiconta/route.ts",
+          "line": 15,
+          "call": "from('marketplace_product_links').select('product_id').eq('empresa_id',empresaId).eq('connection_id',body.connectionId).eq('provid"
+        },
+        {
+          "object": "marketplace_stock_movements",
+          "file": "app/api/modulos/marketplaces/produtos/route.ts",
+          "line": 14,
+          "call": "from('marketplace_stock_movements').select('id,kind,stock_before,stock_after,note,created_at').eq('empresa_id', empresaId).eq('pro"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/api/modulos/marketplaces/produtos/fotos/route.ts",
+          "line": 12,
+          "call": "from('marketplace_products').select('id').eq('empresa_id', empresaId).is('archived_at', null).eq('pictures', '[]').order('id').lim"
+        },
+        {
+          "object": "marketplace_product_links",
+          "file": "app/api/modulos/marketplaces/precos/estoque/route.ts",
+          "line": 19,
+          "call": "from('marketplace_product_links').select('provider,reported_stock,status').eq('empresa_id',empresaId).eq('product_id',product.id)."
+        }
+      ],
+      "functionDependencies": [
+        {
+          "function": "marketplace_product_command",
+          "calledBy": "marketplace_product_content_save(uuid,uuid,uuid,bigint,jsonb,uuid)"
+        },
+        {
+          "function": "marketplace_product_command",
+          "calledBy": "marketplace_warehouse_command(uuid,uuid,text,jsonb,uuid)"
+        },
+        {
+          "function": "marketplace_product_command",
+          "calledBy": "marketplace_product_editor_save(uuid,uuid,uuid,bigint,jsonb,uuid)"
+        },
+        {
+          "function": "marketplace_product_command",
+          "calledBy": "marketplace_import_choose_local(uuid,uuid,uuid,text,uuid,uuid)"
+        }
+      ],
+      "boundTriggers": [],
+      "version": "20261011200000",
+      "feature": "Cadastro local de produtos e vínculos com anúncios",
+      "sourceSha256": "49be22f50e05bc836439f3e7c16a715044d352d230ad60fc5db4060ba20d7034",
+      "archivedPath": "supabase/historico-sem-registro/20261011200000_marketplace_local_products.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {
+          "marketplace_product_links": true,
+          "marketplace_product_operations": true,
+          "marketplace_products": true,
+          "marketplace_stock_movements": true
+        },
+        "views": {},
+        "functions": {
+          "marketplace_product_command": true
+        },
+        "indexes": [
+          {
+            "name": "marketplace_products_company_idx",
+            "ready": true,
+            "unique": false,
+            "valid": true
+          },
+          {
+            "name": "marketplace_product_links_product_idx",
+            "ready": true,
+            "unique": false,
+            "valid": true
+          },
+          {
+            "name": "marketplace_stock_movements_product_idx",
+            "ready": true,
+            "unique": false,
+            "valid": true
+          }
+        ]
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [],
+      "sourcePathInDeployment": "supabase/migrations/20261011200000_marketplace_local_products.sql"
+    },
+    {
+      "objects": {
+        "tables": [
+          "marketplace_inventory_events",
+          "marketplace_inventory_outbox",
+          "marketplace_inventory_reconciliation",
+          "marketplace_inventory_settings",
+          "marketplace_inventory_worker",
+          "marketplace_sale_alert_reads",
+          "marketplace_sale_alerts"
+        ],
+        "functions": [
+          "marketplace_apply_inventory_event",
+          "marketplace_broadcast_changed",
+          "marketplace_enqueue_stock",
+          "marketplace_inventory_connection",
+          "marketplace_link_changed",
+          "marketplace_live_feed",
+          "marketplace_observe_listing",
+          "marketplace_order_freshness",
+          "marketplace_order_inventory",
+          "marketplace_stock_baseline",
+          "marketplace_stock_changed",
+          "marketplace_worker_authorized",
+          "marketplace_worker_claim"
+        ],
+        "indexes": [
+          "marketplace_inventory_events_pending_idx",
+          "marketplace_inventory_outbox_pending_idx"
+        ],
+        "alterTables": [
+          "marketplace_products",
+          "marketplace_sale_notifications",
+          "marketplace_stock_movements",
+          "public"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [
+        "marketplace_inventory_events",
+        "marketplace_inventory_outbox",
+        "marketplace_inventory_reconciliation",
+        "marketplace_inventory_settings",
+        "marketplace_inventory_worker",
+        "marketplace_sale_alert_reads",
+        "marketplace_sale_alerts"
+      ],
+      "presentFunctions": [
+        "marketplace_apply_inventory_event",
+        "marketplace_broadcast_changed",
+        "marketplace_enqueue_stock",
+        "marketplace_inventory_connection",
+        "marketplace_link_changed",
+        "marketplace_live_feed",
+        "marketplace_observe_listing",
+        "marketplace_order_freshness",
+        "marketplace_order_inventory",
+        "marketplace_stock_baseline",
+        "marketplace_stock_changed",
+        "marketplace_worker_authorized",
+        "marketplace_worker_claim"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales-history.ts",
+          "line": 40,
+          "call": "from('marketplace_inventory_reconciliation').select('*')"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales-history.ts",
+          "line": 62,
+          "call": "from('marketplace_inventory_reconciliation').upsert({ ...progress, history_completed_at: now.toISOString(), history_scan_offset: 0"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales-history.ts",
+          "line": 77,
+          "call": "from('marketplace_inventory_reconciliation').upsert({ ...progress,"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales-history.ts",
+          "line": 71,
+          "call": "from('marketplace_sale_notifications').upsert({ id: `history:${connection.id}:${order.id}:${stamp}`,"
+        },
+        {
+          "object": "marketplace_observe_listing",
+          "file": "app/modules/marketplaces/services/product-removal.ts",
+          "line": 60,
+          "call": "rpc('marketplace_observe_listing',{p_empresa:company,p_connection:link.connection_id,p_listing:listing.id,p_quantity:listing.stock"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 137,
+          "call": "from('marketplace_sale_notifications').upsert({ id: notification.id, empresa_id: connection.empresa_id, connection_id: connection."
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 143,
+          "call": "from('marketplace_sale_notifications').select('id,topic,resource,attempts').eq('empresa_id', connection.empresa_id).eq('connection"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 182,
+          "call": "from('marketplace_sale_notifications').update({ processed_at: new Date().toISOString(), error_code: null }).eq('id', event.id);"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 185,
+          "call": "from('marketplace_sale_notifications').update({ attempts, error_code: error instanceof MarketplaceError ? error.code : 'processing"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/mercadolivre-editor.ts",
+          "line": 35,
+          "call": "from('marketplace_products').select('stock_quantity,listing_stock_review_at').eq('empresa_id', connection.empresa_id).eq('id', lin"
+        },
+        {
+          "object": "marketplace_observe_listing",
+          "file": "app/modules/marketplaces/services/inventory-listings.ts",
+          "line": 13,
+          "call": "rpc('marketplace_observe_listing', { p_empresa: connection.empresa_id, p_connection: connection.id, p_listing: id,"
+        },
+        {
+          "object": "marketplace_apply_inventory_event",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 319,
+          "call": "rpc('marketplace_apply_inventory_event', { p_id: event.id }); assertDatabase(applied.error);"
+        },
+        {
+          "object": "marketplace_inventory_events",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 306,
+          "call": "from('marketplace_inventory_events').select('id,empresa_id,connection_id,provider,listing_id,variation_id,issue').in('empresa_id',"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 19,
+          "call": "from('marketplace_inventory_outbox').update({state:'excluded',issue:null,protected_at:null})"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 157,
+          "call": "from('marketplace_inventory_outbox').update({ state: outcome, issue, attempts: job.attempts + 1,"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 260,
+          "call": "from('marketplace_inventory_outbox').select('*').in('empresa_id', enabled).eq('state', 'pending').lte('next_attempt_at', new Date("
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 167,
+          "call": "from('marketplace_inventory_reconciliation').select('*').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 181,
+          "call": "from('marketplace_inventory_reconciliation').upsert({ connection_id: connection.id, empresa_id: connection.empresa_id,"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 271,
+          "call": "from('marketplace_inventory_reconciliation').select('*').in('empresa_id', enabled);"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 286,
+          "call": "from('marketplace_inventory_reconciliation').select('checkpoint').eq('connection_id', candidate.id).maybeSingle();"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 288,
+          "call": "from('marketplace_inventory_reconciliation').upsert({ connection_id: candidate.id, empresa_id: candidate.empresa_id,"
+        },
+        {
+          "object": "marketplace_inventory_settings",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 194,
+          "call": "from('marketplace_inventory_settings').select('empresa_id,activated_at').eq('enabled', true);"
+        },
+        {
+          "object": "marketplace_inventory_worker",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 202,
+          "call": "from('marketplace_inventory_worker').select('turn').eq('id', 1).maybeSingle();"
+        },
+        {
+          "object": "marketplace_inventory_worker",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 326,
+          "call": "from('marketplace_inventory_worker').update({ lease_owner: null, lease_until: null, finished_at: new Date().toISOString(), issue }"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 56,
+          "call": "from('marketplace_products').select('stock_quantity,revision,listing_stock_review_at').eq('empresa_id', job.empresa_id).eq('id', j"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 116,
+          "call": "from('marketplace_products').select('stock_quantity,revision,listing_stock_review_at').eq('empresa_id',job.empresa_id).eq('id',job"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 144,
+          "call": "from('marketplace_products').select('stock_quantity,revision,listing_stock_review_at').eq('empresa_id', job.empresa_id).eq('id', j"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 177,
+          "call": "from('marketplace_sale_notifications').upsert({ id: `reconcile:${connection.id}:${id}:${stamp}`, empresa_id: connection.empresa_id"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 300,
+          "call": "from('marketplace_sale_notifications').select('empresa_id,connection_id').in('empresa_id', enabled).is('processed_at', null).lte('"
+        },
+        {
+          "object": "marketplace_worker_claim",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 189,
+          "call": "rpc('marketplace_worker_claim', { p_owner: owner });"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/sale-listing-link.ts",
+          "line": 51,
+          "call": "from('marketplace_products').select('id').eq('empresa_id', connection.empresa_id).eq('id', productId).is('archived_at', null).mayb"
+        },
+        {
+          "object": "marketplace_inventory_events",
+          "file": "app/modules/marketplaces/services/inventory-product-guard.ts",
+          "line": 9,
+          "call": "from('marketplace_inventory_events').select('id').eq('empresa_id',company).eq('product_id',product).eq('state','pending').order('i"
+        },
+        {
+          "object": "marketplace_inventory_events",
+          "file": "app/modules/marketplaces/services/inventory-product-guard.ts",
+          "line": 20,
+          "call": "from('marketplace_inventory_events').select('listing_id').eq('empresa_id',company).eq('connection_id',account).eq('state','pending"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/inventory-product-guard.ts",
+          "line": 22,
+          "call": "from('marketplace_sale_notifications').select('topic,resource').eq('empresa_id',company).eq('connection_id',account).is('processed"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 67,
+          "call": "from('marketplace_products').select('id').eq('empresa_id', empresaId).is('archived_at', null).in('ean', variants);"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 95,
+          "call": "from('marketplace_products').select(columns).eq('empresa_id', empresaId).eq('id', id).is('archived_at', null).maybeSingle();"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 171,
+          "call": "from('marketplace_products').select('id,name,sku,ean,description' + warehouseJoin + publicationJoin)"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 186,
+          "call": "from('marketplace_products').select('id' + warehouseJoin + publicationJoin, {count:'exact',head:true}).eq('empresa_id',empresaId)."
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-products.ts",
+          "line": 190,
+          "call": "from('marketplace_products').select(columns + warehouseJoin + publicationJoin, skipCount ? {} : { count: 'exact' }).eq('empresa_id"
+        },
+        {
+          "object": "marketplace_inventory_settings",
+          "file": "app/modules/marketplaces/services/magalu-multi-publication.ts",
+          "line": 17,
+          "call": "from('marketplace_inventory_settings').select('enabled').eq('empresa_id',company).maybeSingle();"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/inventory-dispatch.ts",
+          "line": 18,
+          "call": "from('marketplace_inventory_outbox').select('*').eq('empresa_id',company).eq('state','pending').lte('next_attempt_at',new Date().t"
+        },
+        {
+          "object": "marketplace_inventory_settings",
+          "file": "app/modules/marketplaces/services/inventory-dispatch.ts",
+          "line": 10,
+          "call": "from('marketplace_inventory_settings').select('enabled').eq('empresa_id',company).maybeSingle();"
+        },
+        {
+          "object": "marketplace_inventory_worker",
+          "file": "app/modules/marketplaces/services/inventory-dispatch.ts",
+          "line": 23,
+          "call": "from('marketplace_inventory_worker').update({lease_owner:null,lease_until:null,finished_at:new Date().toISOString()}).eq('id',1).e"
+        },
+        {
+          "object": "marketplace_worker_claim",
+          "file": "app/modules/marketplaces/services/inventory-dispatch.ts",
+          "line": 14,
+          "call": "rpc('marketplace_worker_claim',{p_owner:owner});"
+        },
+        {
+          "object": "marketplace_inventory_settings",
+          "file": "app/modules/marketplaces/services/multi-publication.ts",
+          "line": 39,
+          "call": "from('marketplace_inventory_settings').select('enabled').eq('empresa_id',company).maybeSingle();"
+        },
+        {
+          "object": "marketplace_inventory_settings",
+          "file": "app/modules/marketplaces/services/multi-publication.ts",
+          "line": 65,
+          "call": "from('marketplace_inventory_settings').select('enabled').eq('empresa_id',company).maybeSingle();"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/stock-reconciliation.ts",
+          "line": 64,
+          "call": "from('marketplace_inventory_outbox').select('link_id').eq('empresa_id',company).eq('product_id',product.id).eq('state','pending')]"
+        },
+        {
+          "object": "marketplace_observe_listing",
+          "file": "app/modules/marketplaces/services/magalu-listings.ts",
+          "line": 25,
+          "call": "rpc('marketplace_observe_listing',{p_empresa:connection.empresa_id,p_connection:connection.id,p_listing:listing.id,p_quantity:list"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/magalu-listings.ts",
+          "line": 81,
+          "call": "from('marketplace_products').select('stock_quantity,listing_stock_review_at').eq('empresa_id',connection.empresa_id).eq('id',link."
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 45,
+          "call": "from('marketplace_inventory_outbox').update({state,issue,attempts:job.attempts+1,next_attempt_at:new Date(Date.now()+60000).toISOS"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 12,
+          "call": "from('marketplace_products').select('stock_quantity,revision,listing_stock_review_at').eq('empresa_id',job.empresa_id).eq('id',job"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 14,
+          "call": "from('marketplace_products').select('listing_stock_review_at').eq('empresa_id',job.empresa_id).eq('id',job.product_id).maybeSingle"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 22,
+          "call": "from('marketplace_products').select('stock_quantity,revision').eq('empresa_id',job.empresa_id).eq('id',job.product_id).is('archive"
+        },
+        {
+          "object": "marketplace_observe_listing",
+          "file": "app/modules/marketplaces/services/mercadolivre-management.ts",
+          "line": 339,
+          "call": "rpc('marketplace_observe_listing',{p_empresa:connection.empresa_id,p_connection:connection.id,p_listing:updated.id,p_quantity:upda"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/mercadolivre-management.ts",
+          "line": 314,
+          "call": "from('marketplace_products').select('stock_quantity,listing_stock_review_at').eq('empresa_id',connection.empresa_id).eq('id',linke"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/price-catalog.ts",
+          "line": 31,
+          "call": "from('marketplace_products').select(columns+joins,count?{count}:{}).eq('empresa_id',companyId).is('archived_at',null);"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/listing-price-references.ts",
+          "line": 11,
+          "call": "from('marketplace_products').select('id,price_cents').eq('empresa_id',companyId).in('id',ids).is('archived_at',null);"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/local-price-consultation.ts",
+          "line": 20,
+          "call": "from('marketplace_products').select('id').eq('empresa_id', companyId).is('archived_at', null).in('ean', variants).limit(2);"
+        },
+        {
+          "object": "marketplace_enqueue_stock",
+          "file": "app/modules/marketplaces/services/zero-stock.ts",
+          "line": 10,
+          "call": "rpc('marketplace_enqueue_stock',{p_empresa:company,p_product:product.id,p_increase:false});"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/product-posts.ts",
+          "line": 20,
+          "call": "from('marketplace_products').select('id,name').eq('empresa_id',company).eq('id',id).is('archived_at',null).maybeSingle();"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/initial-stock.ts",
+          "line": 30,
+          "call": "from('marketplace_products').select('id,name,revision').eq('empresa_id', empresaId).is('archived_at', null).is('stock_quantity', n"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/modules/marketplaces/services/price-persistence.ts",
+          "line": 15,
+          "call": "from('marketplace_products').select('id,price_cents,revision').eq('empresa_id', company).eq('id', productId).is('archived_at', nul"
+        },
+        {
+          "object": "marketplace_worker_authorized",
+          "file": "app/api/cron/marketplaces/route.ts",
+          "line": 13,
+          "call": "rpc('marketplace_worker_authorized', { p_token: token });"
+        },
+        {
+          "object": "marketplace_live_feed",
+          "file": "app/api/modulos/marketplaces/avisos/route.ts",
+          "line": 11,
+          "call": "rpc('marketplace_live_feed', { p_empresa: empresaId, p_user: usuario.id });"
+        },
+        {
+          "object": "marketplace_sale_alert_reads",
+          "file": "app/api/modulos/marketplaces/avisos/route.ts",
+          "line": 35,
+          "call": "from('marketplace_sale_alert_reads').upsert(associated.data.map(row => ({ empresa_id: empresaId, alert_id: row.id, user_id: usuari"
+        },
+        {
+          "object": "marketplace_sale_alerts",
+          "file": "app/api/modulos/marketplaces/avisos/route.ts",
+          "line": 29,
+          "call": "from('marketplace_sale_alerts').select('id,sale_id,connection_id').eq('empresa_id', empresaId).eq('id', body.alertId).maybeSingle("
+        },
+        {
+          "object": "marketplace_sale_alerts",
+          "file": "app/api/modulos/marketplaces/avisos/route.ts",
+          "line": 33,
+          "call": "from('marketplace_sale_alerts').select('id').eq('empresa_id', empresaId).eq('connection_id', alert.data.connection_id).eq('sale_id"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/api/modulos/marketplaces/vendas/route.ts",
+          "line": 38,
+          "call": "from('marketplace_sale_notifications').select('id',{count:'exact',head:true}).eq('empresa_id',empresaId).in('connection_id',ids).i"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/api/modulos/marketplaces/vendas/route.ts",
+          "line": 43,
+          "call": "from('marketplace_sale_notifications').select('connection_id').eq('empresa_id', empresaId).is('processed_at', null).lte('next_atte"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/api/modulos/marketplaces/vendas/route.ts",
+          "line": 58,
+          "call": "from('marketplace_sale_notifications').select('id', { count: 'exact', head: true }).eq('empresa_id', empresaId).in('connection_id'"
+        },
+        {
+          "object": "marketplace_stock_movements",
+          "file": "app/api/modulos/marketplaces/produtos/route.ts",
+          "line": 14,
+          "call": "from('marketplace_stock_movements').select('id,kind,stock_before,stock_after,note,created_at').eq('empresa_id', empresaId).eq('pro"
+        },
+        {
+          "object": "marketplace_products",
+          "file": "app/api/modulos/marketplaces/produtos/fotos/route.ts",
+          "line": 12,
+          "call": "from('marketplace_products').select('id').eq('empresa_id', empresaId).is('archived_at', null).eq('pictures', '[]').order('id').lim"
+        },
+        {
+          "object": "marketplace_observe_listing",
+          "file": "app/api/modulos/marketplaces/anunciados/acao/route.ts",
+          "line": 13,
+          "call": "rpc('marketplace_observe_listing',{p_empresa:empresaId,p_connection:params.get('connectionId'),p_listing:listing.id,p_quantity:lis"
+        }
+      ],
+      "functionDependencies": [
+        {
+          "function": "marketplace_apply_inventory_event",
+          "calledBy": "marketplace_order_inventory()"
+        },
+        {
+          "function": "marketplace_enqueue_stock",
+          "calledBy": "marketplace_stock_changed()"
+        },
+        {
+          "function": "marketplace_enqueue_stock",
+          "calledBy": "marketplace_link_changed()"
+        },
+        {
+          "function": "marketplace_enqueue_stock",
+          "calledBy": "marketplace_warehouse_command(uuid,uuid,text,jsonb,uuid)"
+        },
+        {
+          "function": "marketplace_enqueue_stock",
+          "calledBy": "marketplace_direct_sale_command(uuid,uuid,text,jsonb,uuid)"
+        },
+        {
+          "function": "marketplace_enqueue_stock",
+          "calledBy": "marketplace_stock_sync_command(uuid,uuid,uuid,jsonb)"
+        },
+        {
+          "function": "marketplace_enqueue_stock",
+          "calledBy": "marketplace_listing_catalog_import_before_removal(uuid,uuid,text)"
+        }
+      ],
+      "boundTriggers": [
+        {
+          "definition": "CREATE TRIGGER marketplace_inventory_connection AFTER INSERT OR UPDATE ON public.marketplace_connections FOR EACH ROW EXECUTE FUNCTION marketplace_inventory_connection()",
+          "name": "marketplace_inventory_connection",
+          "table": "marketplace_connections"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_listings_broadcast AFTER INSERT OR UPDATE ON public.marketplace_listings FOR EACH ROW EXECUTE FUNCTION marketplace_broadcast_changed()",
+          "name": "marketplace_listings_broadcast",
+          "table": "marketplace_listings"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_order_freshness BEFORE UPDATE ON public.marketplace_sales FOR EACH ROW EXECUTE FUNCTION marketplace_order_freshness()",
+          "name": "marketplace_order_freshness",
+          "table": "marketplace_sales"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_order_inventory AFTER INSERT OR UPDATE ON public.marketplace_sales FOR EACH ROW EXECUTE FUNCTION marketplace_order_inventory()",
+          "name": "marketplace_order_inventory",
+          "table": "marketplace_sales"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_sales_broadcast AFTER INSERT OR UPDATE ON public.marketplace_sales FOR EACH ROW EXECUTE FUNCTION marketplace_broadcast_changed()",
+          "name": "marketplace_sales_broadcast",
+          "table": "marketplace_sales"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_link_changed AFTER INSERT OR UPDATE ON public.marketplace_product_links FOR EACH ROW EXECUTE FUNCTION marketplace_link_changed()",
+          "name": "marketplace_link_changed",
+          "table": "marketplace_product_links"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_products_broadcast AFTER INSERT OR UPDATE ON public.marketplace_products FOR EACH ROW EXECUTE FUNCTION marketplace_broadcast_changed()",
+          "name": "marketplace_products_broadcast",
+          "table": "marketplace_products"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_stock_baseline BEFORE INSERT OR UPDATE ON public.marketplace_products FOR EACH ROW EXECUTE FUNCTION marketplace_stock_baseline()",
+          "name": "marketplace_stock_baseline",
+          "table": "marketplace_products"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_stock_changed AFTER INSERT OR UPDATE ON public.marketplace_products FOR EACH ROW EXECUTE FUNCTION marketplace_stock_changed()",
+          "name": "marketplace_stock_changed",
+          "table": "marketplace_products"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_sale_alerts_broadcast AFTER INSERT ON public.marketplace_sale_alerts FOR EACH ROW EXECUTE FUNCTION marketplace_broadcast_changed()",
+          "name": "marketplace_sale_alerts_broadcast",
+          "table": "marketplace_sale_alerts"
+        }
+      ],
+      "version": "20261012010000",
+      "feature": "Sincronização de estoque, baixas e fila de eventos",
+      "sourceSha256": "b3a90aaac1ff03a933fd7d02b367aed23ed78da3bfb86d45522cea8d421f9a73",
+      "archivedPath": "supabase/historico-sem-registro/20261012010000_marketplace_inventory_sync.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {
+          "marketplace_inventory_events": true,
+          "marketplace_inventory_outbox": true,
+          "marketplace_inventory_reconciliation": true,
+          "marketplace_inventory_settings": true,
+          "marketplace_inventory_worker": true,
+          "marketplace_sale_alert_reads": true,
+          "marketplace_sale_alerts": true
+        },
+        "views": {},
+        "functions": {
+          "marketplace_apply_inventory_event": true,
+          "marketplace_broadcast_changed": true,
+          "marketplace_enqueue_stock": true,
+          "marketplace_inventory_connection": true,
+          "marketplace_link_changed": true,
+          "marketplace_live_feed": true,
+          "marketplace_observe_listing": true,
+          "marketplace_order_freshness": true,
+          "marketplace_order_inventory": true,
+          "marketplace_stock_baseline": true,
+          "marketplace_stock_changed": true,
+          "marketplace_worker_authorized": true,
+          "marketplace_worker_claim": true
+        },
+        "indexes": [
+          {
+            "name": "marketplace_inventory_outbox_pending_idx",
+            "ready": true,
+            "unique": false,
+            "valid": true
+          },
+          {
+            "name": "marketplace_inventory_events_pending_idx",
+            "ready": true,
+            "unique": false,
+            "valid": true
+          }
+        ]
+      },
+      "enabledTriggers": [
+        {
+          "enabled": "O",
+          "function": "marketplace_inventory_connection",
+          "name": "marketplace_inventory_connection",
+          "table": "marketplace_connections"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_broadcast_changed",
+          "name": "marketplace_listings_broadcast",
+          "table": "marketplace_listings"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_order_freshness",
+          "name": "marketplace_order_freshness",
+          "table": "marketplace_sales"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_order_inventory",
+          "name": "marketplace_order_inventory",
+          "table": "marketplace_sales"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_broadcast_changed",
+          "name": "marketplace_sales_broadcast",
+          "table": "marketplace_sales"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_link_changed",
+          "name": "marketplace_link_changed",
+          "table": "marketplace_product_links"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_broadcast_changed",
+          "name": "marketplace_products_broadcast",
+          "table": "marketplace_products"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_stock_baseline",
+          "name": "marketplace_stock_baseline",
+          "table": "marketplace_products"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_stock_changed",
+          "name": "marketplace_stock_changed",
+          "table": "marketplace_products"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_broadcast_changed",
+          "name": "marketplace_sale_alerts_broadcast",
+          "table": "marketplace_sale_alerts"
+        }
+      ],
+      "reviewedPublishedCode": [],
+      "sourcePathInDeployment": "supabase/migrations/20261012010000_marketplace_inventory_sync.sql"
+    },
+    {
+      "objects": {
+        "tables": [],
+        "functions": [],
+        "indexes": [],
+        "alterTables": [
+          "marketplace_oauth_pending"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [],
+      "presentFunctions": [],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/modules/marketplaces/services/authorization-renewal.ts",
+          "line": 36,
+          "call": "from('marketplace_oauth_pending').select('id').eq('empresa_id', companyId).eq('started_by', actorId).is('consumed_at', null).gt('e"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/modules/marketplaces/services/authorization-renewal.ts",
+          "line": 42,
+          "call": "from('marketplace_oauth_pending').insert({ empresa_id: companyId, provider: 'mercado_livre', state, started_by: actorId, expires_a"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/modules/marketplaces/services/authorization-renewal.ts",
+          "line": 52,
+          "call": "from('marketplace_oauth_pending').select('*').eq('state', state).eq('provider', 'mercado_livre').is('consumed_at', null).maybeSing"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/modules/marketplaces/services/authorization-renewal.ts",
+          "line": 64,
+          "call": "from('marketplace_oauth_pending').select('*')"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/modules/marketplaces/services/authorization-renewal.ts",
+          "line": 89,
+          "call": "from('marketplace_oauth_pending')"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/modules/marketplaces/services/magalu-connection.ts",
+          "line": 10,
+          "call": "from('marketplace_oauth_pending').select('id').eq('empresa_id', companyId).eq('provider', 'magalu')"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/modules/marketplaces/services/magalu-connection.ts",
+          "line": 18,
+          "call": "from('marketplace_oauth_pending').insert({ empresa_id: companyId, provider: 'magalu', state: authorization.state,"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/api/modulos/marketplaces/conexoes/magalu/callback/route.ts",
+          "line": 51,
+          "call": "from('marketplace_oauth_pending').select('*').eq('provider', 'magalu').eq('state', state).is('consumed_at', null).maybeSingle();"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/api/modulos/marketplaces/conexoes/magalu/callback/route.ts",
+          "line": 67,
+          "call": "from('marketplace_oauth_pending').update({ consumed_at: new Date().toISOString() })"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/api/modulos/marketplaces/conexoes/mercado-livre/renovar/route.ts",
+          "line": 26,
+          "call": "from('marketplace_oauth_pending').update({ consumed_at: new Date().toISOString() }).eq('state', body.requestId).eq('empresa_id', e"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/api/modulos/marketplaces/conexoes/mercado-livre/iniciar/route.ts",
+          "line": 36,
+          "call": "from('marketplace_oauth_pending')"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/api/modulos/marketplaces/conexoes/mercado-livre/iniciar/route.ts",
+          "line": 38,
+          "call": "from('marketplace_oauth_pending').insert({"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/api/modulos/marketplaces/conexoes/mercado-livre/callback/route.ts",
+          "line": 35,
+          "call": "from('marketplace_oauth_pending')"
+        },
+        {
+          "object": "marketplace_oauth_pending",
+          "file": "app/api/modulos/marketplaces/conexoes/mercado-livre/callback/route.ts",
+          "line": 41,
+          "call": "from('marketplace_oauth_pending')"
+        }
+      ],
+      "functionDependencies": [],
+      "boundTriggers": [],
+      "version": "20261012160000",
+      "feature": "Conexão OAuth Magalu vinculada ao navegador",
+      "sourceSha256": "86b583c73793c80af09eaf45d6fed8bbd2cc842a68a39c97a422eb05359cb362",
+      "archivedPath": "supabase/historico-sem-registro/20261012160000_marketplace_magalu_oauth.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {},
+        "views": {},
+        "functions": {},
+        "indexes": []
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [
+        {
+          "path": "app/modules/marketplaces/services/magalu-connection.ts",
+          "line": 19,
+          "searchTerm": "browser_binding_hash",
+          "fileSha256": "349b1d10df0d2b2f00adc43d1c959e666e41e5232cffa7e7e739d763d34437b9"
+        },
+        {
+          "path": "app/api/modulos/marketplaces/conexoes/magalu/callback/route.ts",
+          "line": 4,
+          "searchTerm": "magaluBrowserMatches",
+          "fileSha256": "2b9897e6a4b126e150fbf1e428f111ce07e7eb9e092a27e7c7e5658f4afd23a7"
+        }
+      ],
+      "currentBrowserBindingColumn": true,
+      "sourcePathInDeployment": "supabase/migrations/20261012160000_marketplace_magalu_oauth.sql"
+    },
+    {
+      "objects": {
+        "tables": [
+          "marketplace_connection_labels"
+        ],
+        "functions": [],
+        "indexes": [
+          "marketplace_connection_labels_empresa_idx",
+          "marketplace_connections_id_empresa_idx"
+        ],
+        "alterTables": [
+          "marketplace_connection_labels"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [
+        "marketplace_connection_labels"
+      ],
+      "presentFunctions": [],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_connection_labels",
+          "file": "app/modules/marketplaces/services/product-shopping-links.ts",
+          "line": 18,
+          "call": "from('marketplace_connection_labels').select('connection_id,local_label').eq('empresa_id',company).in('connection_id',ids),"
+        },
+        {
+          "object": "marketplace_connection_labels",
+          "file": "app/api/modulos/marketplaces/conexoes/route.ts",
+          "line": 13,
+          "call": "from('marketplace_connection_labels').select('connection_id,local_label,updated_at').eq('empresa_id', empresaId);"
+        },
+        {
+          "object": "marketplace_connection_labels",
+          "file": "app/api/modulos/marketplaces/conexoes/identificacao/route.ts",
+          "line": 19,
+          "call": "from('marketplace_connection_labels').upsert({ connection_id: connection.id, empresa_id: empresaId, local_label: label, updated_by"
+        }
+      ],
+      "functionDependencies": [],
+      "boundTriggers": [],
+      "version": "20261012190000",
+      "feature": "Apelidos locais das contas conectadas",
+      "sourceSha256": "229fb65f2b522de4b8f0a69d87e4172fcb3ba4d00257a77901436e32096b1c53",
+      "archivedPath": "supabase/historico-sem-registro/20261012190000_marketplace_connection_labels.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {
+          "marketplace_connection_labels": true
+        },
+        "views": {},
+        "functions": {},
+        "indexes": [
+          {
+            "name": "marketplace_connections_id_empresa_idx",
+            "ready": true,
+            "unique": true,
+            "valid": true
+          },
+          {
+            "name": "marketplace_connection_labels_empresa_idx",
+            "ready": true,
+            "unique": false,
+            "valid": true
+          }
+        ]
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [],
+      "sourcePathInDeployment": "supabase/migrations/20261012190000_marketplace_connection_labels.sql"
+    },
+    {
+      "objects": {
+        "tables": [],
+        "functions": [
+          "marketplace_sale_operation"
+        ],
+        "indexes": [
+          "marketplace_sale_notifications_priority_idx",
+          "marketplace_sales_listing_lines_idx"
+        ],
+        "alterTables": [
+          "marketplace_inventory_reconciliation",
+          "marketplace_sale_notifications",
+          "marketplace_sales"
+        ],
+        "views": [
+          "marketplace_listing_operations",
+          "marketplace_pending_sales"
+        ]
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [],
+      "presentFunctions": [
+        "marketplace_sale_operation"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales-history.ts",
+          "line": 40,
+          "call": "from('marketplace_inventory_reconciliation').select('*')"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales-history.ts",
+          "line": 62,
+          "call": "from('marketplace_inventory_reconciliation').upsert({ ...progress, history_completed_at: now.toISOString(), history_scan_offset: 0"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales-history.ts",
+          "line": 77,
+          "call": "from('marketplace_inventory_reconciliation').upsert({ ...progress,"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales-history.ts",
+          "line": 71,
+          "call": "from('marketplace_sale_notifications').upsert({ id: `history:${connection.id}:${order.id}:${stamp}`,"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 137,
+          "call": "from('marketplace_sale_notifications').upsert({ id: notification.id, empresa_id: connection.empresa_id, connection_id: connection."
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 143,
+          "call": "from('marketplace_sale_notifications').select('id,topic,resource,attempts').eq('empresa_id', connection.empresa_id).eq('connection"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 182,
+          "call": "from('marketplace_sale_notifications').update({ processed_at: new Date().toISOString(), error_code: null }).eq('id', event.id);"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 185,
+          "call": "from('marketplace_sale_notifications').update({ attempts, error_code: error instanceof MarketplaceError ? error.code : 'processing"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 99,
+          "call": "from('marketplace_sales').select('id,updated_at,shipment_id,shipment_status,shipment_substatus,label_status,snapshot')"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 127,
+          "call": "from('marketplace_sales').update(payload).eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('id', prev"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 128,
+          "call": "from('marketplace_sales').insert(payload).select('id').maybeSingle();"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 152,
+          "call": "from('marketplace_sales').select('provider_order_id').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).e"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 159,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider_orde"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 171,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider', 'm"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 195,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', companyId).in('connection_id', connectionIds).order('updated_at', { ascendi"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 203,
+          "call": "from('marketplace_sales').update({ seen_at: new Date().toISOString() }).eq('empresa_id', companyId).eq('connection_id', connection"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 216,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', companyId).eq('connection_id', connection.id).eq('id', saleId).maybeSingle("
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 246,
+          "call": "from('marketplace_sales').update(updated).eq('empresa_id', companyId).eq('connection_id', connection.id).eq('id', saleId).eq('upda"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 256,
+          "call": "from('marketplace_sales').select('provider_order_id').eq('empresa_id', companyId).eq('connection_id', connectionId).eq('provider',"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 167,
+          "call": "from('marketplace_inventory_reconciliation').select('*').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 181,
+          "call": "from('marketplace_inventory_reconciliation').upsert({ connection_id: connection.id, empresa_id: connection.empresa_id,"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 271,
+          "call": "from('marketplace_inventory_reconciliation').select('*').in('empresa_id', enabled);"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 286,
+          "call": "from('marketplace_inventory_reconciliation').select('checkpoint').eq('connection_id', candidate.id).maybeSingle();"
+        },
+        {
+          "object": "marketplace_inventory_reconciliation",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 288,
+          "call": "from('marketplace_inventory_reconciliation').upsert({ connection_id: candidate.id, empresa_id: candidate.empresa_id,"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 177,
+          "call": "from('marketplace_sale_notifications').upsert({ id: `reconcile:${connection.id}:${id}:${stamp}`, empresa_id: connection.empresa_id"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 300,
+          "call": "from('marketplace_sale_notifications').select('empresa_id,connection_id').in('empresa_id', enabled).is('processed_at', null).lte('"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 251,
+          "call": "from('marketplace_sales').update({ operation_checked_at: new Date().toISOString() })"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/shipping-label.ts",
+          "line": 12,
+          "call": "from('marketplace_sales').select('id,connection_id,snapshot').eq('empresa_id',company).eq('provider','mercado_livre').eq('shipment"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/inventory-product-guard.ts",
+          "line": 22,
+          "call": "from('marketplace_sale_notifications').select('topic,resource').eq('empresa_id',company).eq('connection_id',account).is('processed"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 16,
+          "call": "from('marketplace_sales').select('id,updated_at,snapshot').eq('empresa_id', connection.empresa_id).eq('connection_id', connection."
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 28,
+          "call": "from('marketplace_sales').update(data).eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider', '"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 29,
+          "call": "from('marketplace_sales').upsert(data, { onConflict: 'connection_id,provider_order_id', ignoreDuplicates: true }).select('id').may"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 76,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', companyId).eq('connection_id', connection.id).eq('provider', 'magalu').eq('"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 88,
+          "call": "from('marketplace_sales').update(updated).eq('empresa_id', companyId).eq('connection_id', connection.id).eq('provider', 'magalu')."
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-fiscal.ts",
+          "line": 77,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', companyId).eq('connection_id', connection.id).eq('provider', 'mercado_livre"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/sales-report-list.ts",
+          "line": 20,
+          "call": "from('marketplace_sales').select('id,provider,connection_id,provider_order_id,status,updated_at,snapshot').eq('empresa_id',company"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/sales-report.ts",
+          "line": 30,
+          "call": "from('marketplace_sales').select('id,provider,connection_id,status,sold_at:snapshot->>soldAt,total:snapshot->total,items:snapshot-"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/sales-financial.ts",
+          "line": 69,
+          "call": "from('marketplace_sales').select('id,provider,connection_id,provider_order_id,status,updated_at,snapshot').eq('empresa_id',company"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/api/modulos/marketplaces/vendas/route.ts",
+          "line": 38,
+          "call": "from('marketplace_sale_notifications').select('id',{count:'exact',head:true}).eq('empresa_id',empresaId).in('connection_id',ids).i"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/api/modulos/marketplaces/vendas/route.ts",
+          "line": 43,
+          "call": "from('marketplace_sale_notifications').select('connection_id').eq('empresa_id', empresaId).is('processed_at', null).lte('next_atte"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/api/modulos/marketplaces/vendas/route.ts",
+          "line": 58,
+          "call": "from('marketplace_sale_notifications').select('id', { count: 'exact', head: true }).eq('empresa_id', empresaId).in('connection_id'"
+        }
+      ],
+      "functionDependencies": [],
+      "boundTriggers": [],
+      "version": "20261012230000",
+      "feature": "Operações e histórico de vendas/anúncios",
+      "sourceSha256": "3b0ff31a388a69ea74f0bd4ab5d44bf440aebaa4ad8f6f96192bb0429672cfb7",
+      "archivedPath": "supabase/historico-sem-registro/20261012230000_marketplace_sales_history.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {},
+        "views": {
+          "marketplace_listing_operations": true,
+          "marketplace_pending_sales": true
+        },
+        "functions": {
+          "marketplace_sale_operation": true
+        },
+        "indexes": [
+          {
+            "name": "marketplace_sales_listing_lines_idx",
+            "ready": true,
+            "unique": false,
+            "valid": true
+          },
+          {
+            "name": "marketplace_sale_notifications_priority_idx",
+            "ready": true,
+            "unique": false,
+            "valid": true
+          }
+        ]
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [],
+      "sourcePathInDeployment": "supabase/migrations/20261012230000_marketplace_sales_history.sql"
+    },
+    {
+      "objects": {
+        "tables": [
+          "marketplace_magalu_sales_sync"
+        ],
+        "functions": [
+          "marketplace_magalu_sale_alert"
+        ],
+        "indexes": [
+          "marketplace_connections_company_id_idx"
+        ],
+        "alterTables": [
+          "marketplace_magalu_sales_sync",
+          "marketplace_sales"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [
+        "marketplace_magalu_sales_sync"
+      ],
+      "presentFunctions": [
+        "marketplace_magalu_sale_alert"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 99,
+          "call": "from('marketplace_sales').select('id,updated_at,shipment_id,shipment_status,shipment_substatus,label_status,snapshot')"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 127,
+          "call": "from('marketplace_sales').update(payload).eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('id', prev"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 128,
+          "call": "from('marketplace_sales').insert(payload).select('id').maybeSingle();"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 152,
+          "call": "from('marketplace_sales').select('provider_order_id').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).e"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 159,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider_orde"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 171,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider', 'm"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 195,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', companyId).in('connection_id', connectionIds).order('updated_at', { ascendi"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 203,
+          "call": "from('marketplace_sales').update({ seen_at: new Date().toISOString() }).eq('empresa_id', companyId).eq('connection_id', connection"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 216,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', companyId).eq('connection_id', connection.id).eq('id', saleId).maybeSingle("
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 246,
+          "call": "from('marketplace_sales').update(updated).eq('empresa_id', companyId).eq('connection_id', connection.id).eq('id', saleId).eq('upda"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 256,
+          "call": "from('marketplace_sales').select('provider_order_id').eq('empresa_id', companyId).eq('connection_id', connectionId).eq('provider',"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 251,
+          "call": "from('marketplace_sales').update({ operation_checked_at: new Date().toISOString() })"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/shipping-label.ts",
+          "line": 12,
+          "call": "from('marketplace_sales').select('id,connection_id,snapshot').eq('empresa_id',company).eq('provider','mercado_livre').eq('shipment"
+        },
+        {
+          "object": "marketplace_magalu_sales_sync",
+          "file": "app/modules/marketplaces/services/inventory-product-guard.ts",
+          "line": 14,
+          "call": "from('marketplace_magalu_sales_sync').select('scan_offset,window_end,last_completed_at').eq('empresa_id',company).eq('connection_i"
+        },
+        {
+          "object": "marketplace_magalu_sales_sync",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 37,
+          "call": "from('marketplace_magalu_sales_sync').upsert({ empresa_id: connection.empresa_id, connection_id: connection.id }, { onConflict: 'c"
+        },
+        {
+          "object": "marketplace_magalu_sales_sync",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 39,
+          "call": "from('marketplace_magalu_sales_sync').update({ lease_owner: owner, lease_until: new Date(Date.now() + 40_000).toISOString() })"
+        },
+        {
+          "object": "marketplace_magalu_sales_sync",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 59,
+          "call": "from('marketplace_magalu_sales_sync').update({ scan_offset: page.next || 0, window_end: page.next == null ? null : end,"
+        },
+        {
+          "object": "marketplace_magalu_sales_sync",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 68,
+          "call": "from('marketplace_magalu_sales_sync').update({ lease_owner: null, lease_until: null, last_checked_at: now }).eq('empresa_id', conn"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 16,
+          "call": "from('marketplace_sales').select('id,updated_at,snapshot').eq('empresa_id', connection.empresa_id).eq('connection_id', connection."
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 28,
+          "call": "from('marketplace_sales').update(data).eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider', '"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 29,
+          "call": "from('marketplace_sales').upsert(data, { onConflict: 'connection_id,provider_order_id', ignoreDuplicates: true }).select('id').may"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 76,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', companyId).eq('connection_id', connection.id).eq('provider', 'magalu').eq('"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 88,
+          "call": "from('marketplace_sales').update(updated).eq('empresa_id', companyId).eq('connection_id', connection.id).eq('provider', 'magalu')."
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/mercadolivre-fiscal.ts",
+          "line": 77,
+          "call": "from('marketplace_sales').select('*').eq('empresa_id', companyId).eq('connection_id', connection.id).eq('provider', 'mercado_livre"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/sales-report-list.ts",
+          "line": 20,
+          "call": "from('marketplace_sales').select('id,provider,connection_id,provider_order_id,status,updated_at,snapshot').eq('empresa_id',company"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/sales-report.ts",
+          "line": 30,
+          "call": "from('marketplace_sales').select('id,provider,connection_id,status,sold_at:snapshot->>soldAt,total:snapshot->total,items:snapshot-"
+        },
+        {
+          "object": "marketplace_sales",
+          "file": "app/modules/marketplaces/services/sales-financial.ts",
+          "line": 69,
+          "call": "from('marketplace_sales').select('id,provider,connection_id,provider_order_id,status,updated_at,snapshot').eq('empresa_id',company"
+        }
+      ],
+      "functionDependencies": [],
+      "boundTriggers": [],
+      "version": "20261013150000",
+      "feature": "Sincronização de vendas Magalu",
+      "sourceSha256": "96e3f8266ca8220c745b97f6c1986db2fa4474bd4935946b6c399c3af9c351fa",
+      "archivedPath": "supabase/historico-sem-registro/20261013150000_marketplace_magalu_sales.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {
+          "marketplace_magalu_sales_sync": true
+        },
+        "views": {},
+        "functions": {
+          "marketplace_magalu_sale_alert": true
+        },
+        "indexes": [
+          {
+            "name": "marketplace_connections_company_id_idx",
+            "ready": true,
+            "unique": true,
+            "valid": true
+          }
+        ]
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [
+        {
+          "path": "app/modules/marketplaces/services/magalu-sales.ts",
+          "line": 37,
+          "searchTerm": "db.from('marketplace_magalu_sales_sync')",
+          "fileSha256": "0100a8390cd41e401daf2423808670a3d9f78bcd57aaf797ff7b75750335a0aa"
+        }
+      ],
+      "sourcePathInDeployment": "supabase/migrations/20261013150000_marketplace_magalu_sales.sql"
+    },
+    {
+      "objects": {
+        "tables": [],
+        "functions": [
+          "marketplace_live_feed",
+          "marketplace_register_pending_sale",
+          "marketplace_sale_pending_alert"
+        ],
+        "indexes": [],
+        "alterTables": [
+          "marketplace_sale_alerts"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [],
+      "presentFunctions": [
+        "marketplace_live_feed",
+        "marketplace_register_pending_sale",
+        "marketplace_sale_pending_alert"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_live_feed",
+          "file": "app/api/modulos/marketplaces/avisos/route.ts",
+          "line": 11,
+          "call": "rpc('marketplace_live_feed', { p_empresa: empresaId, p_user: usuario.id });"
+        },
+        {
+          "object": "marketplace_sale_alerts",
+          "file": "app/api/modulos/marketplaces/avisos/route.ts",
+          "line": 29,
+          "call": "from('marketplace_sale_alerts').select('id,sale_id,connection_id').eq('empresa_id', empresaId).eq('id', body.alertId).maybeSingle("
+        },
+        {
+          "object": "marketplace_sale_alerts",
+          "file": "app/api/modulos/marketplaces/avisos/route.ts",
+          "line": 33,
+          "call": "from('marketplace_sale_alerts').select('id').eq('empresa_id', empresaId).eq('connection_id', alert.data.connection_id).eq('sale_id"
+        }
+      ],
+      "functionDependencies": [
+        {
+          "function": "marketplace_register_pending_sale",
+          "calledBy": "marketplace_sale_pending_alert()"
+        }
+      ],
+      "boundTriggers": [
+        {
+          "definition": "CREATE TRIGGER marketplace_sale_pending_alert AFTER INSERT OR UPDATE ON public.marketplace_sales FOR EACH ROW EXECUTE FUNCTION marketplace_sale_pending_alert()",
+          "name": "marketplace_sale_pending_alert",
+          "table": "marketplace_sales"
+        }
+      ],
+      "version": "20261013170000",
+      "feature": "Avisos de vendas pendentes e leitura por usuário",
+      "sourceSha256": "41d8f083407a537db380b6dc66459e56398973e62620691b78c854618e28382f",
+      "archivedPath": "supabase/historico-sem-registro/20261013170000_marketplace_pending_sale_alerts.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {},
+        "views": {},
+        "functions": {
+          "marketplace_live_feed": true,
+          "marketplace_register_pending_sale": true,
+          "marketplace_sale_pending_alert": true
+        },
+        "indexes": []
+      },
+      "enabledTriggers": [
+        {
+          "enabled": "O",
+          "function": "marketplace_sale_pending_alert",
+          "name": "marketplace_sale_pending_alert",
+          "table": "marketplace_sales"
+        }
+      ],
+      "reviewedPublishedCode": [],
+      "sourcePathInDeployment": "supabase/migrations/20261013170000_marketplace_pending_sale_alerts.sql"
+    },
+    {
+      "objects": {
+        "tables": [],
+        "functions": [],
+        "indexes": [
+          "marketplace_magalu_publication_one_active",
+          "marketplace_magalu_publication_sku_guard"
+        ],
+        "alterTables": [],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [],
+      "presentFunctions": [],
+      "runtimeReferences": [],
+      "functionDependencies": [],
+      "boundTriggers": [],
+      "version": "20261014030000",
+      "feature": "Proteção contra envio duplicado de SKU/loja Magalu",
+      "sourceSha256": "98482fe810c84f386326467749c444e89f849df1fde64d19bee0dd16e36496f8",
+      "archivedPath": "supabase/historico-sem-registro/20261014030000_marketplace_magalu_publication_guard.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {},
+        "views": {},
+        "functions": {},
+        "indexes": [
+          {
+            "name": "marketplace_magalu_publication_sku_guard",
+            "ready": true,
+            "unique": true,
+            "valid": true
+          },
+          {
+            "name": "marketplace_magalu_publication_one_active",
+            "ready": true,
+            "unique": true,
+            "valid": true
+          }
+        ]
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [
+        {
+          "path": "app/modules/marketplaces/services/magalu-publication.ts",
+          "line": 172,
+          "searchTerm": "db.from('marketplace_publications').insert",
+          "fileSha256": "db960c9bdaf9027eb2972b5bec58b35fa287c41d22c8e22f907435344d55a95b"
+        },
+        {
+          "path": "app/modules/marketplaces/services/magalu-publication.ts",
+          "line": 175,
+          "searchTerm": "error?.code === '23505'",
+          "fileSha256": "db960c9bdaf9027eb2972b5bec58b35fa287c41d22c8e22f907435344d55a95b"
+        }
+      ],
+      "sourcePathInDeployment": "supabase/migrations/20261014030000_marketplace_magalu_publication_guard.sql"
+    },
+    {
+      "objects": {
+        "tables": [
+          "usuario_areas_auditoria",
+          "usuario_areas_rpc_backup"
+        ],
+        "functions": [
+          "usuario_area_liberada",
+          "usuario_area_restricao",
+          "usuario_area_rpc_restricao",
+          "usuario_areas_validar_e_auditar"
+        ],
+        "indexes": [],
+        "alterTables": [
+          "usuario_areas_auditoria",
+          "usuario_areas_rpc_backup",
+          "usuarios_empresa"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [
+        "usuario_areas_auditoria",
+        "usuario_areas_rpc_backup"
+      ],
+      "presentFunctions": [
+        "usuario_area_liberada",
+        "usuario_area_restricao",
+        "usuario_area_rpc_restricao",
+        "usuario_areas_validar_e_auditar"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "usuarios_empresa",
+          "file": "app/hooks/useAuth.ts",
+          "line": 1112,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/limites-comerciais-servidor.ts",
+          "line": 35,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/projetos-compartilhados-servidor.ts",
+          "line": 30,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 53,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 69,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 84,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 112,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 124,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 180,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 194,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 212,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 222,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 234,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 273,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 1289,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 1638,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 1794,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/database.ts",
+          "line": 1817,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/cobranca-servidor.ts",
+          "line": 51,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/cobranca-servidor.ts",
+          "line": 94,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/cobranca-servidor.ts",
+          "line": 159,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/cobranca-servidor.ts",
+          "line": 352,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/cobranca-servidor.ts",
+          "line": 392,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/permissoes-modulos-servidor.ts",
+          "line": 82,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/permissoes-modulos-servidor.ts",
+          "line": 140,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/acessos-usuario-servidor.ts",
+          "line": 6,
+          "call": "from('usuarios_empresa').select('perfil,status,dashboard_liberada,modulos_liberados').eq('user_id', usuarioId).eq('empresa_id', em"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/acessos-usuario-servidor.ts",
+          "line": 33,
+          "call": "from('usuarios_empresa').select('empresa_id').eq('id', body.acessoId).maybeSingle();"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/acessos-usuario-servidor.ts",
+          "line": 46,
+          "call": "from('usuarios_empresa').select('id,perfil').eq('user_id', auth.user.id).eq('empresa_id', empresaId).eq('status','ativo').maybeSin"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/lib/acessos-usuario-servidor.ts",
+          "line": 51,
+          "call": "from('usuarios_empresa').select('perfil,dashboard_liberada,modulos_liberados').eq('user_id', auth.user.id).eq('status', 'ativo').n"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/modules/marketplaces/services/price-access.ts",
+          "line": 37,
+          "call": "from('usuarios_empresa').select('id,perfil,status').eq('empresa_id', empresaId).eq('user_id', user.id).eq('status', 'ativo').maybe"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/modules/marketplaces/services/price-access.ts",
+          "line": 49,
+          "call": "from('usuarios_empresa').select('empresa_id,perfil').eq('user_id', user.id).eq('status', 'ativo'),"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/modules/marketplaces/services/authorization-renewal.ts",
+          "line": 22,
+          "call": "from('usuarios_empresa').select('id').eq('empresa_id', pending.empresa_id).eq('user_id', pending.started_by).eq('status', 'ativo')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/modules/marketplaces/services/magalu-connection.ts",
+          "line": 28,
+          "call": "from('usuarios_empresa').select('id').eq('empresa_id', companyId).eq('user_id', actorId).eq('status', 'ativo').in('perfil', ['gest"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/modules/marketplaces/services/price-user-removal.ts",
+          "line": 16,
+          "call": "from('usuarios_empresa').select('id').eq('user_id', target.user_id).limit(1),"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/atualizar-empresa/route.ts",
+          "line": 52,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/excluir-usuario-interno/route.ts",
+          "line": 58,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/excluir-usuario-interno/route.ts",
+          "line": 73,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/excluir-usuario-interno/route.ts",
+          "line": 102,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/excluir-usuario-interno/route.ts",
+          "line": 192,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/criar-usuario-interno/route.ts",
+          "line": 112,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/criar-usuario-interno/route.ts",
+          "line": 261,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/backup-nuvem/route.ts",
+          "line": 23,
+          "call": "from('usuarios_empresa').select('perfil').eq('empresa_id', empresaId).eq('user_id', data.user.id).in('perfil', perfisBackup).eq('s"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/atualizar-usuario-empresa/route.ts",
+          "line": 111,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/atualizar-usuario-empresa/route.ts",
+          "line": 126,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/atualizar-usuario-empresa/route.ts",
+          "line": 187,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/atualizar-usuario-empresa/route.ts",
+          "line": 297,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/atualizar-usuario-empresa/route.ts",
+          "line": 349,
+          "call": "from('usuarios_empresa').update({ email: emailEnviado }).eq('user_id', usuarioAlvo.user_id);"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/atualizar-usuario-empresa/route.ts",
+          "line": 379,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/usuarios-ativos/route.ts",
+          "line": 26,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/redefinir-senha-usuario/route.ts",
+          "line": 63,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/redefinir-senha-usuario/route.ts",
+          "line": 82,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/criar-perfil/route.ts",
+          "line": 31,
+          "call": "from('usuarios_empresa').select('empresa_id').eq('user_id', auth.user.id).eq('status', 'ativo');"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/admin-disparos/route.ts",
+          "line": 46,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/admin-disparos/route.ts",
+          "line": 183,
+          "call": "from('usuarios_empresa').select('user_id').eq('empresa_id', destinoId).eq('status', 'ativo').neq('perfil', 'funcionario_ponto').no"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/vincular-usuario-existente/route.ts",
+          "line": 114,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/vincular-usuario-existente/route.ts",
+          "line": 135,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/vincular-usuario-existente/route.ts",
+          "line": 311,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/pontos-restauracao/route.ts",
+          "line": 16,
+          "call": "from('usuarios_empresa').select('perfil').eq('empresa_id', empresaId).eq('user_id', data.user.id).in('perfil', ['gestor_master', '"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/recebimentos/_lib.ts",
+          "line": 70,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/admin-cadastros/route.ts",
+          "line": 60,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/redefinir-senha-ponto/route.ts",
+          "line": 41,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/redefinir-senha-ponto/route.ts",
+          "line": 54,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/atualizar-funcionario-ponto/route.ts",
+          "line": 67,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/atualizar-funcionario-ponto/route.ts",
+          "line": 91,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/atualizar-funcionario-ponto/route.ts",
+          "line": 180,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/usuarios-empresa/route.ts",
+          "line": 16,
+          "call": "from('usuarios_empresa').select('perfil').eq('empresa_id', empresaId).eq('user_id', auth.user.id).eq('status', 'ativo').maybeSingl"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/usuarios-empresa/route.ts",
+          "line": 25,
+          "call": "from('usuarios_empresa').select('id,dashboard_liberada,modulos_liberados').eq('empresa_id', empresaId).in('id', ids) : { data: [],"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/admin-perfis/route.ts",
+          "line": 228,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/acessos-usuario/route.ts",
+          "line": 22,
+          "call": "from('usuarios_empresa').select('id,empresa_id,nome,perfil,status,dashboard_liberada,modulos_liberados').eq('user_id', auth.user.i"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/criar-funcionario-ponto/route.ts",
+          "line": 71,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/criar-funcionario-ponto/route.ts",
+          "line": 102,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/criar-funcionario-ponto/route.ts",
+          "line": 138,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/criar-funcionario-ponto/route.ts",
+          "line": 166,
+          "call": "from('usuarios_empresa').delete().eq('user_id', novoUserId).eq('empresa_id', empresaId);"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/perfil-cadastro/route.ts",
+          "line": 86,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/excluir-funcionario-ponto/route.ts",
+          "line": 37,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/excluir-funcionario-ponto/route.ts",
+          "line": 50,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/lancamentos/nota/route.ts",
+          "line": 42,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/lancamentos/operacao-anexos/route.ts",
+          "line": 25,
+          "call": "from('usuarios_empresa').select('perfil').eq('user_id', auth.user.id).eq('empresa_id', empresaId).eq('status', 'ativo').maybeSingl"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/ponto/documentos-rep-p/autorizacao.ts",
+          "line": 16,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/ponto/resolver-email/route.ts",
+          "line": 29,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/ponto/assinatura/route.ts",
+          "line": 33,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/modulos/acesso/route.ts",
+          "line": 31,
+          "call": "from('usuarios_empresa').select('empresa_id').eq('user_id', auth.user.id).eq('status', 'ativo').neq('empresa_id', empresaId).limit"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/modulos/projetos/compartilhados/route.ts",
+          "line": 23,
+          "call": "from('usuarios_empresa').select('id').eq('empresa_id', empresaId).eq('user_id', auth.user.id).eq('status', 'ativo').limit(1).maybe"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/modulos/projetos/compartilhamentos/route.ts",
+          "line": 44,
+          "call": "from('usuarios_empresa').select('user_id').eq('empresa_id', empresaId).eq('status', 'ativo').in('user_id', userIds)"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/modulos/projetos/compartilhamentos/route.ts",
+          "line": 64,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/senha/redefinir/route.ts",
+          "line": 41,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/senha/enviar-codigo/route.ts",
+          "line": 25,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/mobile/preparar-recorrencias/route.ts",
+          "line": 19,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/importador-despesas/sugestoes/route.ts",
+          "line": 52,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/cobranca/estado/route.ts",
+          "line": 47,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/cobranca/assinar/route.ts",
+          "line": 66,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/cobranca/definir-inicio/route.ts",
+          "line": 45,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/cobranca/sessoes/route.ts",
+          "line": 47,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/ava/chat/route.ts",
+          "line": 48,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/api/backup-nuvem/arquivo/route.ts",
+          "line": 15,
+          "call": "from('usuarios_empresa').select('perfil').eq('empresa_id', empresaId).eq('user_id', auth.user.id).in('perfil', ['gestor_master', '"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/mobile/ava/AvaChatClient.tsx",
+          "line": 413,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "app/mobile/conteudo-vendas/VendasMobileConteudoClient.tsx",
+          "line": 43,
+          "call": "from('usuarios_empresa').select('perfil, status').eq('empresa_id', empresaId).eq('user_id', usuario.data.user.id).eq('status', 'at"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "public/mobile-app.js",
+          "line": 7643,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "public/mobile-app.js",
+          "line": 7651,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "public/mobile-app.js",
+          "line": 7667,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "public/mobile-app.js",
+          "line": 7681,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "public/mobile-app.js",
+          "line": 7690,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "public/mobile-app.js",
+          "line": 7728,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "public/mobile-app.js",
+          "line": 9818,
+          "call": "from('usuarios_empresa')"
+        },
+        {
+          "object": "usuarios_empresa",
+          "file": "public/mobile-app.js",
+          "line": 10058,
+          "call": "from('usuarios_empresa')"
+        }
+      ],
+      "functionDependencies": [
+        {
+          "function": "usuario_area_liberada",
+          "calledBy": "usuario_area_restricao(uuid,text)"
+        },
+        {
+          "function": "usuario_area_liberada",
+          "calledBy": "usuario_area_rpc_restricao(text,jsonb)"
+        },
+        {
+          "function": "usuario_area_liberada",
+          "calledBy": "reorganizar_parcelamento_despesa_rpc(uuid,bigint,integer,text,integer,text,text,numeric,integer,integer)"
+        },
+        {
+          "function": "usuario_area_liberada",
+          "calledBy": "aplicar_edicao_financeira_mobile_interna(uuid,uuid,text,text,integer,jsonb,uuid)"
+        },
+        {
+          "function": "usuario_area_liberada",
+          "calledBy": "aplicar_movimento_financeiro_mobile_rpc(uuid,uuid,text,text,jsonb,uuid)"
+        },
+        {
+          "function": "usuario_area_restricao",
+          "calledBy": "usuario_area_rpc_restricao(text,jsonb)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "ativar_modulo_vendas_mobile_rpc(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "regenerar_codigo_vinculo_empresa_rpc(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "listar_usuarios_empresa_contas_rpc(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "definir_login_conta_rpc(uuid,uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "definir_catalogo_atual_conteudo_vendas_mobile_rpc(uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "gerenciar_acesso_vendas_mobile_rpc(uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_criar_catalogo_com_produtos_rpc(uuid,text,text,jsonb)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_devolver(uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "atualizar_usuario_empresa_rpc(uuid,text,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_registrar_divergencia(uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "listar_produtos_conteudo_vendas_mobile_rpc(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_baixar(uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "alterar_status_catalogo_conteudo_vendas_mobile_rpc(uuid,uuid,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "salvar_produto_conteudo_vendas_mobile_rpc(uuid,uuid,jsonb)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_alterar_publicacao_avantavendas_catalogo_rpc(uuid,uuid,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "avantalab_confirmar_sessao_perfil(uuid,uuid,uuid,text,text,boolean,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "marketplace_product_command_base_49(uuid,uuid,text,jsonb,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_sincronizar_todos_meses_financeiro(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_sincronizar_mes_financeiro(uuid,integer,integer)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_atualizar_titulos_financeiro(uuid,integer,integer,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "importar_lancamentos_despesas_rpc(uuid,text,jsonb)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_baixar(uuid,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "restaurar_ponto_restauracao(uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_sincronizar_recorrencias(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_substituir_catalogo_completo_rpc(uuid,uuid,text,jsonb,jsonb,jsonb,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "sincronizar_receita_vendas_mobile_gestao(uuid,date)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "atualizar_receita_vendas_mobile_gestao_rpc(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "definir_perfil_financeiro_vendas_mobile_rpc(uuid,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "sincronizar_receita_vendas_mobile_usuario(uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "desvincular_receitas_vendas_mobile_usuario(uuid,uuid,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "consumir_credito_consulta(uuid,uuid,text,text,text,bigint,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "restaurar_perfil_excluido(uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "excluir_perfil_com_retencao(uuid,uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "purgar_perfil_excluido(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "criar_conta_vendas_mobile_rpc(text,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "restaurar_ponto_restauracao_vendas_mobile(uuid,uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "atualizar_recurso_vinculo_comercial_vendas_mobile_rpc(uuid,uuid,text,boolean,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_mover_produtos_catalogo_rpc(uuid,uuid[],uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "criar_usuario_empresa_rpc(uuid,text,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "listar_usuarios_empresa_rpc(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "excluir_usuario_empresa_rpc(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_alterar_status_catalogo_empresa_rpc(uuid,uuid,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "excluir_empresa_rpc(uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "atualizar_recurso_vinculo_comercial_vendas_mobile_rpc(uuid,text,boolean,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_estornar(uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_obter_integracao_financeira(uuid,integer,integer)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "excluir_centro_custo_com_lancamentos_rpc(uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "resgatar_cupom_perfil(uuid,uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_definir_integracao_financeira(uuid,boolean,integer,integer)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "marketplace_enqueue_stock(uuid,uuid,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "reservar_importador_ia_analise(uuid,text,integer)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "criar_ponto_restauracao(uuid,text,uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_registrar_colaborador(uuid,uuid,uuid,uuid,uuid,numeric,text,text,text,text,text,bigint,date,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_garantir_tabela_padrao_rpc(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "excluir_perfil_definitivamente(uuid,uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_definir_catalogo_atual_rpc(uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "listar_catalogos_conteudo_vendas_mobile_rpc(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "listar_vinculos_comerciais_vendas_mobile_rpc(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "desvincular_receitas_vendas_mobile_conta(uuid,uuid,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "sincronizar_receita_vendas_mobile_conta(uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_importar_produtos_precos_rpc(uuid,uuid,text,timestamp with time zone,jsonb,jsonb,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "definir_perfil_financeiro_vendas_mobile_rpc(uuid,uuid,text,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "preservar_historico_legado_conta_vendas_mobile(uuid,uuid,uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "definir_perfil_financeiro_vendas_mobile_rpc(uuid,uuid,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_salvar_preco_tabela_rpc(uuid,uuid,uuid,numeric)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_salvar_tabela_preco_rpc(uuid,uuid,text,text,text,boolean)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "vendas_reservar_numero_operacao(uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "vendas_sincronizar_receita_mes(uuid,date)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "inativar_produto_conteudo_vendas_mobile_rpc(uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_sincronizar_servicos(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "recebimentos_atualizar_configuracao_financeira(uuid,integer,integer,text,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "garantir_centro_custo_principal(uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "marketplace_observe_listing(uuid,uuid,text,integer,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "ativar_assinatura_propria_perfil(uuid,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "aplicar_alteracao_assinatura_agendada(uuid,timestamp with time zone)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "validar_exclusao_perfil_definitiva(uuid,uuid,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_restaurar_catalogo_externo_e_separar_local_rpc(uuid,uuid)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_aplicar_acao_produtos_lote_rpc(uuid,uuid[],text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "custos_salvar_catalogo_empresa_rpc(uuid,uuid,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "salvar_catalogo_conteudo_vendas_mobile_rpc(uuid,uuid,text,text)"
+        },
+        {
+          "function": "usuario_area_rpc_restricao",
+          "calledBy": "listar_produtos_catalogo_conteudo_vendas_mobile_rpc(uuid,uuid)"
+        }
+      ],
+      "boundTriggers": [
+        {
+          "definition": "CREATE TRIGGER usuario_areas_validar BEFORE INSERT OR UPDATE OF perfil, dashboard_liberada, modulos_liberados ON public.usuarios_empresa FOR EACH ROW EXECUTE FUNCTION usuario_areas_validar_e_auditar()",
+          "name": "usuario_areas_validar",
+          "table": "usuarios_empresa"
+        }
+      ],
+      "version": "20261014050000",
+      "feature": "Permissões por área, módulos e auditoria de acesso",
+      "sourceSha256": "35e3d994574868f9ccb5ee4fbdbdb4fa8a2cb1d43dc9a07cf1070b1f4aabf8a5",
+      "archivedPath": "supabase/historico-sem-registro/20261014050000_usuario_areas_liberadas.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {
+          "usuario_areas_auditoria": true,
+          "usuario_areas_rpc_backup": true
+        },
+        "views": {},
+        "functions": {
+          "usuario_area_liberada": true,
+          "usuario_area_restricao": true,
+          "usuario_area_rpc_restricao": true,
+          "usuario_areas_validar_e_auditar": true
+        },
+        "indexes": []
+      },
+      "enabledTriggers": [
+        {
+          "enabled": "O",
+          "function": "usuario_areas_validar_e_auditar",
+          "name": "usuario_areas_validar",
+          "table": "usuarios_empresa"
+        }
+      ],
+      "reviewedPublishedCode": [
+        {
+          "path": "app/lib/acessos-usuario.ts",
+          "line": 4,
+          "searchTerm": "dashboard_liberada",
+          "fileSha256": "100e51c7dfadc930ec0f315dbf8dada626c60fdc3159d12997906b63eb3d07b6"
+        },
+        {
+          "path": "app/api/acessos-usuario/route.ts",
+          "line": 22,
+          "searchTerm": "modulos_liberados",
+          "fileSha256": "0e121fbd18ec947aaaa6a7d961f117677a08d2abd3d0c21b83b6fa4971ced5a4"
+        }
+      ],
+      "restrictiveAreaPolicyCount": 136,
+      "storagePolicyPresent": true,
+      "sourcePathInDeployment": "supabase/migrations/20261014050000_usuario_areas_liberadas.sql"
+    },
+    {
+      "objects": {
+        "tables": [],
+        "functions": [
+          "marketplace_grouped_listings"
+        ],
+        "indexes": [],
+        "alterTables": [],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [],
+      "presentFunctions": [
+        "marketplace_grouped_listings"
+      ],
+      "runtimeReferences": [],
+      "functionDependencies": [],
+      "boundTriggers": [],
+      "version": "20261023060000",
+      "feature": "Agrupamento de anúncios por produto e conta",
+      "sourceSha256": "e48b9cbf0d182a7881f4249b7d5d21e5e2e8c42533839b420afb92b42820cbbe",
+      "archivedPath": "supabase/historico-sem-registro/20261023060000_marketplace_grouped_listings.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {},
+        "views": {},
+        "functions": {
+          "marketplace_grouped_listings": true
+        },
+        "indexes": []
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [
+        {
+          "path": "app/api/modulos/marketplaces/anunciados/route.ts",
+          "line": 30,
+          "searchTerm": "'marketplace_grouped_listings'",
+          "fileSha256": "5c0838d70810d7a5e6e727a872be48b41f15145f4dc0f6d7eef94ac75bc10fab"
+        }
+      ],
+      "sourcePathInDeployment": "supabase/migrations/20261023060000_marketplace_grouped_listings.sql"
+    },
+    {
+      "objects": {
+        "tables": [],
+        "functions": [
+          "marketplace_apply_inventory_event",
+          "marketplace_live_feed"
+        ],
+        "indexes": [],
+        "alterTables": [
+          "marketplace_inventory_events",
+          "marketplace_inventory_outbox",
+          "marketplace_listing_stock_control",
+          "marketplace_stock_movements"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [],
+      "presentFunctions": [
+        "marketplace_apply_inventory_event",
+        "marketplace_live_feed"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_apply_inventory_event",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 319,
+          "call": "rpc('marketplace_apply_inventory_event', { p_id: event.id }); assertDatabase(applied.error);"
+        },
+        {
+          "object": "marketplace_inventory_events",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 306,
+          "call": "from('marketplace_inventory_events').select('id,empresa_id,connection_id,provider,listing_id,variation_id,issue').in('empresa_id',"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 19,
+          "call": "from('marketplace_inventory_outbox').update({state:'excluded',issue:null,protected_at:null})"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 157,
+          "call": "from('marketplace_inventory_outbox').update({ state: outcome, issue, attempts: job.attempts + 1,"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 260,
+          "call": "from('marketplace_inventory_outbox').select('*').in('empresa_id', enabled).eq('state', 'pending').lte('next_attempt_at', new Date("
+        },
+        {
+          "object": "marketplace_listing_stock_control",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 38,
+          "call": "from('marketplace_listing_stock_control').upsert({ link_id: link.id, empresa_id: job.empresa_id, product_id: job.product_id,"
+        },
+        {
+          "object": "marketplace_listing_stock_control",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 48,
+          "call": "from('marketplace_listing_stock_control').update({ paused_by_system: true, pause_confirmed_at: new Date().toISOString(), updated_a"
+        },
+        {
+          "object": "marketplace_listing_stock_control",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 119,
+          "call": "from('marketplace_listing_stock_control').upsert({link_id:link.id,empresa_id:job.empresa_id,product_id:job.product_id,pause_reques"
+        },
+        {
+          "object": "marketplace_listing_stock_control",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 125,
+          "call": "from('marketplace_listing_stock_control').select('pause_requested_at').eq('empresa_id',job.empresa_id).eq('link_id',link.id).maybe"
+        },
+        {
+          "object": "marketplace_listing_stock_control",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 127,
+          "call": "from('marketplace_listing_stock_control').update({paused_by_system:true,pause_confirmed_at:new Date().toISOString(),updated_at:new"
+        },
+        {
+          "object": "marketplace_inventory_events",
+          "file": "app/modules/marketplaces/services/inventory-product-guard.ts",
+          "line": 9,
+          "call": "from('marketplace_inventory_events').select('id').eq('empresa_id',company).eq('product_id',product).eq('state','pending').order('i"
+        },
+        {
+          "object": "marketplace_inventory_events",
+          "file": "app/modules/marketplaces/services/inventory-product-guard.ts",
+          "line": 20,
+          "call": "from('marketplace_inventory_events').select('listing_id').eq('empresa_id',company).eq('connection_id',account).eq('state','pending"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/inventory-dispatch.ts",
+          "line": 18,
+          "call": "from('marketplace_inventory_outbox').select('*').eq('empresa_id',company).eq('state','pending').lte('next_attempt_at',new Date().t"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/stock-reconciliation.ts",
+          "line": 64,
+          "call": "from('marketplace_inventory_outbox').select('link_id').eq('empresa_id',company).eq('product_id',product.id).eq('state','pending')]"
+        },
+        {
+          "object": "marketplace_listing_stock_control",
+          "file": "app/modules/marketplaces/services/stock-reconciliation.ts",
+          "line": 64,
+          "call": "from('marketplace_listing_stock_control').select('link_id,paused_by_system').eq('empresa_id',company).eq('product_id',product.id),"
+        },
+        {
+          "object": "marketplace_inventory_outbox",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 45,
+          "call": "from('marketplace_inventory_outbox').update({state,issue,attempts:job.attempts+1,next_attempt_at:new Date(Date.now()+60000).toISOS"
+        },
+        {
+          "object": "marketplace_listing_stock_control",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 24,
+          "call": "from('marketplace_listing_stock_control').select('pause_requested_at,paused_by_system').eq('empresa_id',job.empresa_id).eq('link_i"
+        },
+        {
+          "object": "marketplace_listing_stock_control",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 37,
+          "call": "from('marketplace_listing_stock_control').upsert({link_id:link.id,empresa_id:job.empresa_id,product_id:job.product_id,pause_reques"
+        },
+        {
+          "object": "marketplace_listing_stock_control",
+          "file": "app/modules/marketplaces/services/magalu-inventory.ts",
+          "line": 42,
+          "call": "from('marketplace_listing_stock_control').update({paused_by_system:true,pause_confirmed_at:new Date().toISOString(),updated_at:new"
+        },
+        {
+          "object": "marketplace_live_feed",
+          "file": "app/api/modulos/marketplaces/avisos/route.ts",
+          "line": 11,
+          "call": "rpc('marketplace_live_feed', { p_empresa: empresaId, p_user: usuario.id });"
+        },
+        {
+          "object": "marketplace_stock_movements",
+          "file": "app/api/modulos/marketplaces/produtos/route.ts",
+          "line": 14,
+          "call": "from('marketplace_stock_movements').select('id,kind,stock_before,stock_after,note,created_at').eq('empresa_id', empresaId).eq('pro"
+        }
+      ],
+      "functionDependencies": [
+        {
+          "function": "marketplace_apply_inventory_event",
+          "calledBy": "marketplace_order_inventory()"
+        }
+      ],
+      "boundTriggers": [],
+      "version": "20261024150000",
+      "feature": "Proteção de estoque contra eventos tardios e concorrência",
+      "sourceSha256": "26df565702ee63259bc9efa0726c46c828e538c56024c2ae41481e809efd39aa",
+      "archivedPath": "supabase/historico-sem-registro/20261024150000_marketplace_inventory_protection.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {},
+        "views": {},
+        "functions": {
+          "marketplace_apply_inventory_event": true,
+          "marketplace_live_feed": true
+        },
+        "indexes": []
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [],
+      "sourcePathInDeployment": "supabase/migrations/20261024150000_marketplace_inventory_protection.sql"
+    },
+    {
+      "objects": {
+        "tables": [],
+        "functions": [
+          "marketplace_quality_ai_finish",
+          "marketplace_quality_ai_research_claim"
+        ],
+        "indexes": [],
+        "alterTables": [],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [],
+      "presentFunctions": [
+        "marketplace_quality_ai_finish",
+        "marketplace_quality_ai_research_claim"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_quality_ai_finish",
+          "file": "app/modules/marketplaces/services/quality-ai.ts",
+          "line": 62,
+          "call": "rpc('marketplace_quality_ai_finish',{p_company:company,p_actor:actor,p_id:job.id,p_status:'completed',p_result:result,p_usage:usag"
+        },
+        {
+          "object": "marketplace_quality_ai_finish",
+          "file": "app/modules/marketplaces/services/quality-ai.ts",
+          "line": 66,
+          "call": "rpc('marketplace_quality_ai_finish',{p_company:company,p_actor:actor,p_id:job.id,p_status:'failed',p_result:null,p_usage:usage});"
+        },
+        {
+          "object": "marketplace_quality_ai_research_claim",
+          "file": "app/modules/marketplaces/services/quality-ai.ts",
+          "line": 43,
+          "call": "rpc('marketplace_quality_ai_research_claim',{p_company:company,p_actor:actor,p_product:product.id,p_hash:fingerprint,p_key:input.r"
+        }
+      ],
+      "functionDependencies": [],
+      "boundTriggers": [],
+      "version": "20261025170000",
+      "feature": "Recibos de uso da IA e pesquisa web de qualidade",
+      "sourceSha256": "d70dd9d89942c36a43dc0c37b937ca48c777cb26d9458e60b4e48977287f677a",
+      "archivedPath": "supabase/historico-sem-registro/20261025170000_marketplace_quality_web_usage.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {},
+        "views": {},
+        "functions": {
+          "marketplace_quality_ai_finish": true,
+          "marketplace_quality_ai_research_claim": true
+        },
+        "indexes": []
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [],
+      "sourcePathInDeployment": "supabase/migrations/20261025170000_marketplace_quality_web_usage.sql"
+    },
+    {
+      "objects": {
+        "tables": [
+          "marketplace_fiscal_operations",
+          "marketplace_fiscal_status"
+        ],
+        "functions": [
+          "marketplace_archive_legacy_dce",
+          "marketplace_fiscal_guard",
+          "marketplace_preserve_fiscal_receipt"
+        ],
+        "indexes": [
+          "marketplace_fiscal_operations_inflight",
+          "marketplace_fiscal_operations_sale"
+        ],
+        "alterTables": [
+          "marketplace_fiscal_operations",
+          "marketplace_fiscal_status",
+          "marketplace_sale_notifications"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [
+        "marketplace_fiscal_operations",
+        "marketplace_fiscal_status"
+      ],
+      "presentFunctions": [
+        "marketplace_archive_legacy_dce",
+        "marketplace_fiscal_guard",
+        "marketplace_preserve_fiscal_receipt"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales-history.ts",
+          "line": 71,
+          "call": "from('marketplace_sale_notifications').upsert({ id: `history:${connection.id}:${order.id}:${stamp}`,"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 137,
+          "call": "from('marketplace_sale_notifications').upsert({ id: notification.id, empresa_id: connection.empresa_id, connection_id: connection."
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 143,
+          "call": "from('marketplace_sale_notifications').select('id,topic,resource,attempts').eq('empresa_id', connection.empresa_id).eq('connection"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 182,
+          "call": "from('marketplace_sale_notifications').update({ processed_at: new Date().toISOString(), error_code: null }).eq('id', event.id);"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/mercadolivre-sales.ts",
+          "line": 185,
+          "call": "from('marketplace_sale_notifications').update({ attempts, error_code: error instanceof MarketplaceError ? error.code : 'processing"
+        },
+        {
+          "object": "marketplace_fiscal_operations",
+          "file": "app/modules/marketplaces/services/fiscal-history.ts",
+          "line": 45,
+          "call": "from('marketplace_fiscal_operations').insert({ empresa_id: sale.empresa_id, connection_id: sale.connection_id, sale_id: sale.id,"
+        },
+        {
+          "object": "marketplace_fiscal_operations",
+          "file": "app/modules/marketplaces/services/fiscal-history.ts",
+          "line": 54,
+          "call": "from('marketplace_fiscal_operations').update({ ...update, updated_at: new Date().toISOString() })"
+        },
+        {
+          "object": "marketplace_fiscal_status",
+          "file": "app/modules/marketplaces/services/fiscal-history.ts",
+          "line": 37,
+          "call": "from('marketplace_fiscal_status').update(payload).eq('empresa_id', sale.empresa_id).eq('connection_id', sale.connection_id).eq('sa"
+        },
+        {
+          "object": "marketplace_fiscal_status",
+          "file": "app/modules/marketplaces/services/fiscal-history.ts",
+          "line": 38,
+          "call": "from('marketplace_fiscal_status').insert({ ...payload, empresa_id: sale.empresa_id, connection_id: sale.connection_id, sale_id: sa"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 177,
+          "call": "from('marketplace_sale_notifications').upsert({ id: `reconcile:${connection.id}:${id}:${stamp}`, empresa_id: connection.empresa_id"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/inventory-worker.ts",
+          "line": 300,
+          "call": "from('marketplace_sale_notifications').select('empresa_id,connection_id').in('empresa_id', enabled).is('processed_at', null).lte('"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/modules/marketplaces/services/inventory-product-guard.ts",
+          "line": 22,
+          "call": "from('marketplace_sale_notifications').select('topic,resource').eq('empresa_id',company).eq('connection_id',account).is('processed"
+        },
+        {
+          "object": "marketplace_fiscal_operations",
+          "file": "app/modules/marketplaces/services/mercadolivre-fiscal.ts",
+          "line": 62,
+          "call": "from('marketplace_fiscal_operations').update({ state: state.status === 'completed' ? 'completed' : 'rejected', updated_at: new Dat"
+        },
+        {
+          "object": "marketplace_fiscal_operations",
+          "file": "app/modules/marketplaces/services/mercadolivre-fiscal.ts",
+          "line": 67,
+          "call": "from('marketplace_fiscal_operations').update({ state: 'completed', updated_at: new Date().toISOString() })"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/api/modulos/marketplaces/vendas/route.ts",
+          "line": 38,
+          "call": "from('marketplace_sale_notifications').select('id',{count:'exact',head:true}).eq('empresa_id',empresaId).in('connection_id',ids).i"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/api/modulos/marketplaces/vendas/route.ts",
+          "line": 43,
+          "call": "from('marketplace_sale_notifications').select('connection_id').eq('empresa_id', empresaId).is('processed_at', null).lte('next_atte"
+        },
+        {
+          "object": "marketplace_sale_notifications",
+          "file": "app/api/modulos/marketplaces/vendas/route.ts",
+          "line": 58,
+          "call": "from('marketplace_sale_notifications').select('id', { count: 'exact', head: true }).eq('empresa_id', empresaId).in('connection_id'"
+        }
+      ],
+      "functionDependencies": [],
+      "boundTriggers": [
+        {
+          "definition": "CREATE TRIGGER marketplace_archive_legacy_dce AFTER INSERT OR UPDATE OF snapshot ON public.marketplace_sales FOR EACH ROW EXECUTE FUNCTION marketplace_archive_legacy_dce()",
+          "name": "marketplace_archive_legacy_dce",
+          "table": "marketplace_sales"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_preserve_fiscal_receipt BEFORE UPDATE OF snapshot ON public.marketplace_sales FOR EACH ROW EXECUTE FUNCTION marketplace_preserve_fiscal_receipt()",
+          "name": "marketplace_preserve_fiscal_receipt",
+          "table": "marketplace_sales"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_fiscal_operations_guard BEFORE INSERT OR UPDATE ON public.marketplace_fiscal_operations FOR EACH ROW EXECUTE FUNCTION marketplace_fiscal_guard()",
+          "name": "marketplace_fiscal_operations_guard",
+          "table": "marketplace_fiscal_operations"
+        },
+        {
+          "definition": "CREATE TRIGGER marketplace_fiscal_status_guard BEFORE INSERT OR UPDATE ON public.marketplace_fiscal_status FOR EACH ROW EXECUTE FUNCTION marketplace_fiscal_guard()",
+          "name": "marketplace_fiscal_status_guard",
+          "table": "marketplace_fiscal_status"
+        }
+      ],
+      "version": "20261026170000",
+      "feature": "Histórico e preservação de operações/documentos fiscais",
+      "sourceSha256": "ab38d3d373b2af1af6facc5cf0115af88f7aba2e130918705b6d60acd5b4baa7",
+      "archivedPath": "supabase/historico-sem-registro/20261026170000_marketplace_fiscal_history.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {
+          "marketplace_fiscal_operations": true,
+          "marketplace_fiscal_status": true
+        },
+        "views": {},
+        "functions": {
+          "marketplace_archive_legacy_dce": true,
+          "marketplace_fiscal_guard": true,
+          "marketplace_preserve_fiscal_receipt": true
+        },
+        "indexes": [
+          {
+            "name": "marketplace_fiscal_operations_inflight",
+            "ready": true,
+            "unique": true,
+            "valid": true
+          },
+          {
+            "name": "marketplace_fiscal_operations_sale",
+            "ready": true,
+            "unique": false,
+            "valid": true
+          }
+        ]
+      },
+      "enabledTriggers": [
+        {
+          "enabled": "O",
+          "function": "marketplace_archive_legacy_dce",
+          "name": "marketplace_archive_legacy_dce",
+          "table": "marketplace_sales"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_preserve_fiscal_receipt",
+          "name": "marketplace_preserve_fiscal_receipt",
+          "table": "marketplace_sales"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_fiscal_guard",
+          "name": "marketplace_fiscal_operations_guard",
+          "table": "marketplace_fiscal_operations"
+        },
+        {
+          "enabled": "O",
+          "function": "marketplace_fiscal_guard",
+          "name": "marketplace_fiscal_status_guard",
+          "table": "marketplace_fiscal_status"
+        }
+      ],
+      "reviewedPublishedCode": [
+        {
+          "path": "app/modules/marketplaces/services/fiscal-history.ts",
+          "line": 15,
+          "searchTerm": "'marketplace_fiscal_operations'",
+          "fileSha256": "5a423504ae90dfd869a5236bb19228bd22431a70269ceacc00e3633640d88aa4"
+        }
+      ],
+      "sourcePathInDeployment": "supabase/migrations/20261026170000_marketplace_fiscal_history.sql"
+    },
+    {
+      "objects": {
+        "tables": [
+          "marketplace_product_posts"
+        ],
+        "functions": [
+          "marketplace_product_post_save"
+        ],
+        "indexes": [],
+        "alterTables": [
+          "marketplace_product_posts"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [
+        "marketplace_product_posts"
+      ],
+      "presentFunctions": [
+        "marketplace_product_post_save"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "marketplace_product_post_save",
+          "file": "app/modules/marketplaces/services/product-posts.ts",
+          "line": 78,
+          "call": "rpc('marketplace_product_post_save',{p_empresa:company,p_product:product,p_actor:actor,p_request:input.requestKey,p_revision:input"
+        },
+        {
+          "object": "marketplace_product_posts",
+          "file": "app/modules/marketplaces/services/product-posts.ts",
+          "line": 24,
+          "call": "from('marketplace_product_posts').select(columns).eq('empresa_id',company).eq('product_id',product).order('revision',{ascending:fa"
+        },
+        {
+          "object": "marketplace_product_posts",
+          "file": "app/modules/marketplaces/services/product-posts.ts",
+          "line": 71,
+          "call": "from('marketplace_product_posts').select(columns).eq('empresa_id',company).eq('id',input.requestKey).maybeSingle();"
+        }
+      ],
+      "functionDependencies": [],
+      "boundTriggers": [],
+      "version": "20261027130000",
+      "feature": "Versões de artes e conteúdo de produto",
+      "sourceSha256": "e6b85078a202ebc26d2bd05daa4df7de97ed244902f58ba6886de937d7bf9bb6",
+      "archivedPath": "supabase/historico-sem-registro/20261027130000_marketplace_product_posts.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {
+          "marketplace_product_posts": true
+        },
+        "views": {},
+        "functions": {
+          "marketplace_product_post_save": true
+        },
+        "indexes": []
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [],
+      "sourcePathInDeployment": "supabase/migrations/20261027130000_marketplace_product_posts.sql"
+    },
+    {
+      "objects": {
+        "tables": [
+          "importador_despesas_rascunhos_centros"
+        ],
+        "functions": [
+          "importar_lancamentos_despesas_contexto_rpc"
+        ],
+        "indexes": [],
+        "alterTables": [
+          "importador_despesas_rascunhos_centros"
+        ],
+        "views": []
+      },
+      "sameNameRemote": [],
+      "sameTablesInOtherRemoteRecords": [],
+      "presentTables": [
+        "importador_despesas_rascunhos_centros"
+      ],
+      "presentFunctions": [
+        "importar_lancamentos_despesas_contexto_rpc"
+      ],
+      "runtimeReferences": [
+        {
+          "object": "importar_lancamentos_despesas_contexto_rpc",
+          "file": "app/api/importador-despesas/confirmar/route.ts",
+          "line": 67,
+          "call": "rpc('importar_lancamentos_despesas_contexto_rpc', {"
+        }
+      ],
+      "functionDependencies": [],
+      "boundTriggers": [],
+      "version": "20261030143000",
+      "feature": "Importação de despesas e rascunhos por centro de custo",
+      "sourceSha256": "6a22f5d0103940fb042ad4259f1cb9cba652e672658315fee13793c07ce19b83",
+      "archivedPath": "supabase/historico-sem-registro/20261030143000_importador_despesas_centros.sql",
+      "remoteMigrationIdPresent": false,
+      "decision": "preservar-como-fonte-historica-do-produto",
+      "runtimeUsageConfirmed": true,
+      "currentObjects": {
+        "tables": {
+          "importador_despesas_rascunhos_centros": true
+        },
+        "views": {},
+        "functions": {
+          "importar_lancamentos_despesas_contexto_rpc": true
+        },
+        "indexes": []
+      },
+      "enabledTriggers": [],
+      "reviewedPublishedCode": [
+        {
+          "path": "app/api/importador-despesas/confirmar/route.ts",
+          "line": 67,
+          "searchTerm": "importar_lancamentos_despesas_contexto_rpc",
+          "fileSha256": "d3be1d90590647c21c28a7c2accdf9931a38864bf128cca682b3e6d3cb758f84"
+        },
+        {
+          "path": "app/modules/importador-despesas/components/ImportadorDespesasModal.tsx",
+          "line": 226,
+          "searchTerm": "importador_despesas_rascunhos_centros",
+          "fileSha256": "08078cd2d657f6f0a03e3a9b808da4aa79688f66e7336c50ebd7122248f088e2"
+        }
+      ],
+      "sourcePathInDeployment": "supabase/migrations/20261030143000_importador_despesas_centros.sql"
+    }
+  ]
+}

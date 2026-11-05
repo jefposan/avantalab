@@ -20,13 +20,15 @@ test('Gestão e Vendas usam o mesmo conteúdo essencial no card de preparação'
   const fimVendas = appVendas.indexOf('function atualizarProgressoPreparacao(', inicioVendas);
   const carregamentoVendas = appVendas.slice(inicioVendas, fimVendas);
 
-  assert.match(paginaGestao, /className="gestao-access-loader" aria-hidden="true"/);
-  assert.match(carregamentoGestao, /class="gestao-access-loader" aria-hidden="true"/);
+  assert.match(paginaGestao, /<LoadingPontos \/>/);
+  assert.match(paginaGestao, /<template id="gestaoAccessLoadingTemplate"><LoadingPontos \/><\/template>/);
+  assert.match(carregamentoGestao, /renderLoadingPreparacaoMobile\(\)/);
   assert.match(carregamentoGestao, /class="gestao-access-progress"/);
   assert.doesNotMatch(carregamentoGestao, />AvantaLab<|>AVANTALAB</);
 
-  assert.match(paginaVendas, /className="loader" aria-hidden="true"/);
-  assert.match(carregamentoVendas, /class="loader" aria-hidden="true"/);
+  assert.match(paginaVendas, /<LoadingPontos \/>/);
+  assert.match(paginaVendas, /<template id="vendasAccessLoadingTemplate"><LoadingPontos \/><\/template>/);
+  assert.match(carregamentoVendas, /renderLoadingPreparacaoVendas\(\)/);
   assert.match(carregamentoVendas, /class="access-progress"/);
   assert.doesNotMatch(carregamentoVendas, /<p>AvantaLab<\/p>/);
 });
@@ -59,7 +61,8 @@ test('Vendas restaura o cache da conta ativa e não bloqueia a Sala com Divulga�
   assert.match(bancoVendas, /contaVendasAtiva: contaContexto/);
   assert.match(appVendas, /state\.contaVendasAtiva = acessoVendas\.contaVendasAtiva \|\| null/);
   assert.match(appVendas, /const cache = await lerCacheVendas\(\)/);
-  assert.match(appVendas, /const dadosIniciais = carregarDadosBackend\(false, true, true\);[\s\S]*await recursosSala;[\s\S]*await dadosIniciais/);
+  assert.match(appVendas, /const dadosIniciais = carregarDadosBackend\(false, true, true\);[\s\S]*await concluirPreparacaoInicialVendas\(\);[\s\S]*await dadosIniciais/);
+  assert.doesNotMatch(appVendas, /await recursosSala/);
   assert.match(appVendas, /carregarConteudosSecundariosVendas\(false\)/);
   assert.match(bootstrapVendas, /const arquivosEssenciais = \[/);
   assert.match(bootstrapVendas, /const arquivosComprovantes = \[/);

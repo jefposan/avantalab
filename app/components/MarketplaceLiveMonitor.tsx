@@ -6,6 +6,7 @@ import ModalConfirmacao from './ModalConfirmacao';
 import { supabase } from '@/app/lib/supabase';
 import { marketplaceClientRequest } from '@/app/marketplaces/Anunciados';
 import { providerName, type MarketplaceLiveFeed, type SaleAlert } from '@/app/modules/marketplaces/live-feed';
+import { PRODUCT_STOCK_CHANGED } from '@/app/marketplaces/product-stock-events';
 
 /** Cada empresa/usuário tem leitura persistida no servidor. Este monitor pertence apenas ao módulo Marketplace do perfil aberto. */
 export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = false, onOpenSale }: { companyId: string; brand?: string; dark?: boolean; onOpenSale: (alert: SaleAlert) => void }) {
@@ -18,7 +19,8 @@ export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = fa
   const reloadRef = useRef<() => void>(() => {});
   useEffect(() => { currentRef.current = current; }, [current]);
   useEffect(() => {
-    let stopped = false, running = false, denied = false;
+    let stopped = false, running = false, denied = false, requested = false, subscribing = false, inventoryLoaded = false;
+    let lastInventoryRead = 0;
     const controller = new AbortController();
     let channel: ReturnType<typeof supabase.channel> | null = null;
     const showNext = () => {
@@ -30,32 +32,47 @@ export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = fa
       const next = alerts.current[0];
       if (next) { currentRef.current = next; setRemaining(Math.max(0, alerts.current.length - 1)); setCurrent(next); }
     };
-    const poll = async () => {
-      if (stopped || denied || running || document.visibilityState === 'hidden') return;
+    const refreshState = (loading: boolean, error = '') => window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state', { detail: { companyId, loading, error } }));
+    const poll = async (manual = false) => {
+      if (stopped || denied || document.visibilityState === 'hidden') { if (manual) refreshState(false, 'Abra novamente o módulo para atualizar os avisos.'); return; }
+      if (manual) refreshState(true);
+      if (running) { requested = requested || manual; return; }
       running = true;
+      let refreshError = '';
       try {
-        const feed = await marketplaceClientRequest(`avisos?empresaId=${encodeURIComponent(companyId)}`, undefined, controller.signal) as MarketplaceLiveFeed;
+        const refreshInventory = manual || !inventoryLoaded || Date.now() - lastInventoryRead >= 60_000;
+        const feed = await marketplaceClientRequest(`avisos?empresaId=${encodeURIComponent(companyId)}${refreshInventory ? '' : '&scope=sales'}`, undefined, AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)])) as MarketplaceLiveFeed;
         if (stopped) return;
+        if (refreshInventory) { inventoryLoaded = true; lastInventoryRead = Date.now(); }
         alerts.current = feed.alerts;
-        window.dispatchEvent(new CustomEvent('avanta:marketplace-live-feed', { detail: { companyId, feed } }));
+        window.dispatchEvent(new CustomEvent('avanta:marketplace-live-feed', { detail: { companyId, feed, refreshInventory } }));
         if (currentRef.current && !feed.alerts.some(alert => alert.id === currentRef.current?.id)) { currentRef.current = null; setCurrent(null); }
         showNext();
-        if (!channel) {
-          const session = await supabase.auth.getSession();
-          if (stopped || !session.data.session) return;
-          await supabase.realtime.setAuth(session.data.session.access_token);
-          if (stopped) return;
-          channel = supabase.channel(`marketplace:${companyId}`, { config: { private: true } })
-            .on('broadcast', { event: 'changed' }, () => { void poll(); }).subscribe();
+        if (!channel && !subscribing) {
+          subscribing = true;
+          // A assinatura é complementar. Sessão/realtime lentos não prendem a leitura nem o botão Atualizar.
+          void (async () => {
+            const session = await supabase.auth.getSession();
+            if (stopped || !session.data.session) return;
+            await supabase.realtime.setAuth(session.data.session.access_token);
+            if (stopped) return;
+            channel = supabase.channel(`marketplace:${companyId}`, { config: { private: true } })
+              .on('broadcast', { event: 'changed' }, () => { void poll(); }).subscribe();
+          })().catch(() => { /* Polling permanece como contingência. */ }).finally(() => { subscribing = false; });
         }
       } catch (error) {
+        refreshError = 'Não foi possível atualizar os avisos. Os dados anteriores podem estar desatualizados. Tente novamente.';
         if (!stopped) {
           if ((error as { code?: string }).code === 'forbidden' || (error as { code?: string }).code === 'module_inactive') {
             denied = true; alerts.current = []; currentRef.current = null; setCurrent(null);
           }
           window.dispatchEvent(new CustomEvent('avanta:marketplace-live-feed', { detail: { companyId, unavailable: true } }));
         }
-      } finally { running = false; }
+      } finally {
+        running = false;
+        if (!stopped && requested) { requested = false; void poll(true); }
+        else if (!stopped && manual) refreshState(false, refreshError);
+      }
     };
     reloadRef.current = () => { void poll(); };
     void poll();
@@ -63,7 +80,12 @@ export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = fa
     const observer = new MutationObserver(showNext);
     observer.observe(document.body, { childList: true, subtree: true });
     const focus = () => { showNext(); void poll(); };
+    const refresh = (event: Event) => {
+      if ((event as CustomEvent<{companyId: string}>).detail?.companyId === companyId) void poll(true);
+    };
     window.addEventListener('focus', focus); document.addEventListener('visibilitychange', focus);
+    window.addEventListener('avanta:marketplace-refresh-notices', refresh);
+    window.addEventListener(PRODUCT_STOCK_CHANGED, refresh);
     const auth = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') { denied = true; alerts.current = []; currentRef.current = null; setCurrent(null); }
       else { denied = false; window.setTimeout(() => { void poll(); }, 0); }
@@ -71,6 +93,8 @@ export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = fa
     return () => {
       stopped = true; controller.abort(); window.clearInterval(timer); observer.disconnect();
       window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', focus);
+      window.removeEventListener('avanta:marketplace-refresh-notices', refresh);
+      window.removeEventListener(PRODUCT_STOCK_CHANGED, refresh);
       auth.data.subscription.unsubscribe(); if (channel) void supabase.removeChannel(channel);
     };
   }, [companyId]);

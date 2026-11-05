@@ -4,12 +4,15 @@ import AvaMobileBridge from './AvaMobileBridge';
 import BackupMobileBridge from './BackupMobileBridge';
 import OAuthNativoMobileBridge from './OAuthNativoMobileBridge';
 import VendasMobileConteudoBridge from './VendasMobileConteudoBridge';
+import AcessosUsuarioMobileBridge from './AcessosUsuarioMobileBridge';
+import OperacoesCampoNativoBridge from './OperacoesCampoNativoBridge';
 import IosBillingBridge from './IosBillingBridge';
 import AndroidBillingBridge from './AndroidBillingBridge';
 import NativeShellBridge from './NativeShellBridge';
 import NativePushNotificationsBridge from './NativePushNotificationsBridge';
 import ExportarLancamentosMobileBridge from './ExportarLancamentosMobileBridge';
 import { APP_VERSION } from '../lib/version';
+import LoadingPontos from '../components/LoadingPontos';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   ? process.env.NEXT_PUBLIC_SITE_URL
@@ -132,13 +135,19 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
       window.__avantalabConfirmarAcessoMobile = function () {
         try { sessionStorage.removeItem(chaveRecuperacao); } catch (error) {}
       };
+      function oauthNativoEmAndamento() {
+        return window.__avantalabPonteOAuthMobilePendente === true || window.__avantalabAberturaOAuthMobile === true ||
+          (typeof window.__avantalabOAuthNativoMobileEmAndamento === 'function' && window.__avantalabOAuthNativoMobileEmAndamento());
+      }
       window.__avantalabForcarAtualizacaoMobile = function () {
+        if (oauthNativoEmAndamento()) return;
         try {
           sessionStorage.removeItem(chaveRecuperacao);
         } catch (error) {}
         window.location.replace('/mobile/recuperar?agora=' + Date.now());
       };
       window.__avantalabRecuperarAcessoMobile = function () {
+        if (oauthNativoEmAndamento()) return false;
         var agora = Date.now();
         var ultimaRecuperacao = 0;
         try { ultimaRecuperacao = Number(sessionStorage.getItem(chaveRecuperacao) || 0); } catch (error) {}
@@ -148,7 +157,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
         progresso.rotulo = 'Reconectando automaticamente';
         var etapa = document.getElementById('mobileAccessProgressLabel');
         if (etapa) etapa.textContent = progresso.rotulo;
-        window.setTimeout(function () { window.location.reload(); }, 700);
+        window.setTimeout(function () { if (!oauthNativoEmAndamento()) window.location.reload(); }, 700);
         return true;
       };
       function telaPreparacaoVisivel() {
@@ -173,12 +182,14 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
         if (telaPreparacaoVisivel()) registrarFalhaGlobal('promessa_rejeitada', evento.reason);
       });
       window.__avantalabVerificarVersaoMobile = function () {
+        if (oauthNativoEmAndamento()) return;
         if (typeof window.fetch !== 'function') return;
         fetch('/mobile/versao?agora=' + Date.now(), { cache: 'no-store' })
           .then(function (resposta) { return resposta.ok ? resposta.json() : null; })
           .then(function (dados) {
             var versaoEncontrada = dados && String(dados.versao || '');
             if (!versaoEncontrada || versaoEncontrada === '${mobileAssetVersion}') return;
+            if (oauthNativoEmAndamento()) return;
             var ultima = 0;
             try { ultima = Number(sessionStorage.getItem(chaveRecargaVersao) || 0); } catch (error) {}
             if (ultima && Date.now() - ultima < 120000) return;
@@ -208,6 +219,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
       }, 60000);
       window.setInterval(function () {
         if (document.hidden) return;
+        if (oauthNativoEmAndamento()) return;
         var root = document.getElementById('mobile-root');
         if (!root || String(root.textContent || '').indexOf('Preparando acesso') < 0) return;
         var valorAtual = Number(progresso.valor || 0);
@@ -695,7 +707,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
               className="gestao-access-brand pointer-events-none"
             />
             <div className="gestao-access-card" role="status" aria-live="polite" aria-busy="true">
-              <span className="gestao-access-loader" aria-hidden="true" />
+              <LoadingPontos />
               <h1>Preparando acesso</h1>
               <p>
                 <span id="mobileAccessProgressLabel">Iniciando a Gestão Mobile</span>
@@ -708,10 +720,13 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
           </section>
         )}
       </div>
+      <template id="gestaoAccessLoadingTemplate"><LoadingPontos /></template>
       <AvaMobileBridge />
       <BackupMobileBridge />
       <OAuthNativoMobileBridge />
       <VendasMobileConteudoBridge />
+      <AcessosUsuarioMobileBridge />
+      <OperacoesCampoNativoBridge />
       <IosBillingBridge apiKey={revenueCatIosApiKey} />
       <AndroidBillingBridge
         apiKey={revenueCatAndroidApiKey}

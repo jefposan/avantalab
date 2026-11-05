@@ -5,7 +5,7 @@
 - Botões de ícone possuem nome acessível; imagens informativas possuem `alt`.
 - Labels, ajuda e erros devem estar associados aos campos.
 - Preservar contraste mínimo WCAG AA e não comunicar apenas por cor.
-- Respeitar `prefers-reduced-motion`; animações não podem bloquear operação.
+- Respeitar `prefers-reduced-motion`; animações não podem bloquear operação. Exceção aprovada pelo responsável: LoadingPontos permanece animado durante a espera, inclusive com reduzir movimentos ativado. Não estender a exceção a outros efeitos.
 - Modais prendem o foco enquanto abertos, fecham de maneira previsível e devolvem
   o foco ao acionador.
 - Alvos de toque devem ter pelo menos 44×44px; preferir 48px no mobile.

@@ -1,0 +1,37 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
+import vm from 'node:vm';
+import ts from 'typescript';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+const require=createRequire(import.meta.url);
+const read=file=>readFileSync(file,'utf8');
+const exports={};
+vm.runInNewContext(ts.transpileModule(read('app/components/LoadingPontos.tsx'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{exports,require});
+test('loading compartilha dez pontos decorativos, cor contextual e tamanho compacto',()=>{
+ const normal=renderToStaticMarkup(React.createElement(exports.default,{cor:'#123456'}));
+ const compact=renderToStaticMarkup(React.createElement(exports.default,{compacto:true}));
+ assert.equal((normal.match(/<i /g)||[]).length,10);
+ assert.match(normal,/color:#123456/);assert.match(normal,/aria-hidden="true"/);
+ assert.match(compact,/avanta-loading-pontos--compacto/);
+ assert.doesNotMatch(normal,/<video|<img|role="status"/);
+ const css=read('app/globals.css');
+ const frames=css.slice(css.indexOf('@keyframes avanta-pontos-onda'),css.indexOf('.avanta-loading-spinner'));
+ assert.equal((frames.match(/transform: translate3d/g)||[]).length,81);
+ assert.match(frames,/prefers-reduced-motion:reduce[^]*animation-play-state:running/);
+ assert.doesNotMatch(frames,/animation-play-state:paused|animation:\s*none/);
+ assert.match(normal,/--av-ponto-atraso:-/);
+});
+test('conferência de cadastro/plano mantém a mesma cena, sem remover os gates',()=>{
+ const source=read('app/gestao/page.tsx');
+ const start=source.indexOf('if (acessoLiberado && empresaId && (!cadastroPerfilCarregado');
+ const end=source.indexOf('// Cobrança: Empresa sem assinatura',start);
+ const gate=source.slice(start,end);
+ assert.ok(start>0&&end>start);
+ assert.match(gate,/COBRANCA_ATIVA && !estadoCarregado/);
+ assert.match(gate,/return <TelaCarregandoAcesso preparandoAcesso mensagem="Aguarde um instante\."/);
+ assert.doesNotMatch(gate,/<main|avanta-loading-spinner|Carregando…/);
+ assert.match(source,/precisaPaywallEmpresa\(estadoAcesso\) \|\| bloqueioWebPessoal/);
+});

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { colunasExportacaoTabelasPreco, gerarCodigoTecnicoTabelaPreco } from '../../app/custos/types.ts';
+import { calcularPrecoReajustado, colunasExportacaoTabelasPreco, gerarCodigoTecnicoTabelaPreco } from '../../app/custos/types.ts';
 
 const migracao = readFileSync('supabase/migrations/20260831130000_tabelas_precos_produtos_importacao.sql', 'utf8');
 const desvinculo = readFileSync('supabase/migrations/20260831220000_desvincular_precificacao_avantavendas.sql', 'utf8');
@@ -10,6 +10,7 @@ const migracaoCodigoAutomatico = readFileSync('supabase/migrations/2026090115000
 const migracaoConteudoCatalogo = readFileSync('supabase/migrations/20260908230000_catalogo_conteudo_vendas_operador_completo.sql', 'utf8');
 const migracaoSkuLegado = readFileSync('supabase/migrations/20260908233000_sku_tecnico_produtos_legados_conteudo_vendas.sql', 'utf8');
 const migracaoPublicacaoImediata = readFileSync('supabase/migrations/20260908234500_publicacao_imediata_catalogo_avantavendas.sql', 'utf8');
+const migracaoReajuste = readFileSync('supabase/migrations/20261104190000_reajuste_tabelas_precos.sql', 'utf8');
 const workspace = readFileSync('app/custos/CustosWorkspace.tsx', 'utf8');
 const tabelas = readFileSync('app/custos/TabelasPrecosView.tsx', 'utf8');
 const repositorio = readFileSync('app/custos/repository.ts', 'utf8');
@@ -65,6 +66,36 @@ test('cadastro exporta e importa produtos e preços com prévia e proteção con
   assert.match(migracao, /foi alterado no sistema depois da exportação/);
   assert.match(migracao, /p_aplicar boolean default false/);
   assert.match(migracao, /custos_importacoes_produtos_precos/);
+});
+
+test('reajuste em lote aceita percentual ou valor, seleciona tabelas em grade e exige revisão', () => {
+  assert.match(tabelas, />Reajuste<\/button>/);
+  assert.match(tabelas, /Percentual \(%\)/);
+  assert.match(tabelas, /Valor adicional \(R\$\)/);
+  assert.match(tabelas, /repriceTableGrid/);
+  assert.match(tabelas, /Selecionar todas/);
+  assert.match(tabelas, /Revisar/);
+  assert.match(tabelas, /Aplicar reajuste/);
+  assert.match(repositorio, /custos_aplicar_reajuste_tabelas_rpc/);
+  assert.equal(calcularPrecoReajustado(100, 'percentual', 8), 108);
+  assert.equal(calcularPrecoReajustado(23.9, 'percentual', 8), 25.81);
+  assert.equal(calcularPrecoReajustado(100, 'valor', 3.5), 103.5);
+});
+
+test('reajuste é atômico, auditável, idempotente e ignora cadastros inativos ou excluídos', () => {
+  assert.match(migracaoReajuste, /create table if not exists public\.custos_reajustes_tabelas/);
+  assert.match(migracaoReajuste, /p_reajuste_id uuid/);
+  assert.match(migracaoReajuste, /pg_advisory_xact_lock/);
+  assert.match(migracaoReajuste, /order by tabela\.id\s+for update/i);
+  assert.match(migracaoReajuste, /order by produto\.id\s+for update of produto/i);
+  assert.match(migracaoReajuste, /where id = p_reajuste_id/);
+  assert.match(migracaoReajuste, /order by tabela\.padrao asc/);
+  assert.match(migracaoReajuste, /produto\.ativo/);
+  assert.match(migracaoReajuste, /produto\.excluido_em is null/);
+  assert.match(migracaoReajuste, /'reajuste', p_reajuste_id/);
+  assert.match(migracaoReajuste, /custos_pode_acessar_empresa\(p_empresa_id, true\)/);
+  assert.match(migracaoReajuste, /revoke all on function public\.custos_aplicar_reajuste_tabelas_rpc/);
+  assert.match(migracaoReajuste, /grant execute on function public\.custos_aplicar_reajuste_tabelas_rpc[\s\S]*to authenticated/);
 });
 
 test('precificação da Gestão não se conecta a clientes e pedidos do AvantaVendas', () => {

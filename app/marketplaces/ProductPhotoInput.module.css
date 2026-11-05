@@ -1,0 +1,11 @@
+.dropArea{margin-top:8px;padding:16px;border:2px dashed color-mix(in srgb,var(--marketplace-brand,var(--brand,#003e73)) 45%,transparent);border-radius:12px;background:color-mix(in srgb,var(--marketplace-brand,var(--brand,#003e73)) 4%,transparent);color:inherit;overflow-wrap:anywhere}
+.dragging{border-color:var(--marketplace-brand,var(--brand,#003e73));background:color-mix(in srgb,var(--marketplace-brand,var(--brand,#003e73)) 12%,transparent)}
+.dropArea[aria-disabled="true"]:not([aria-busy="true"]){opacity:.6}
+.help{margin:0 0 8px;font-size:14px;line-height:1.5}
+.error{margin:8px 0 0;color:var(--error,#b91c1c);font-size:14px}
+
+.status{display:flex;align-items:center;gap:8px;min-height:32px;margin-top:8px;font-size:14px;line-height:1.5}
+.message{margin:8px 0 0;font-size:14px;line-height:1.5}
+
+.status > :first-child{margin:0;flex:none}
+.compact{display:contents}.compact .help{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.compact>button{width:64px;height:70px;min-height:44px;padding:0;background:color-mix(in srgb,var(--brand,#003e73) 3%,transparent)}.compact>button>span{display:grid;justify-items:center;gap:1px;padding:4px;height:70px;border-style:dashed}.compact>button>span>span{font-size:23px;line-height:25px}.compact small{font-size:10px}.compact :is(.status,.message,.error){grid-column:1/-1;margin:0;font-size:12px}.compact.dragging>button{outline:2px solid var(--brand,#003e73);outline-offset:2px}

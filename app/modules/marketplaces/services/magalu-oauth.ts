@@ -38,7 +38,12 @@ export const MAGALU_CATALOG_SCOPES = [
   'open:portfolio-prices-seller:write',
   'open:portfolio-stocks-seller:write',
 ] as const;
-export const MAGALU_AUTHORIZATION_SCOPES = [...new Set([...MAGALU_CONNECTION_SCOPES, MAGALU_LABEL_SCOPE, ...MAGALU_CATALOG_SCOPES])];
+export const MAGALU_BASIC_AUTHORIZATION_SCOPES = [...MAGALU_CONNECTION_SCOPES, MAGALU_LABEL_SCOPE];
+export const MAGALU_AUTHORIZATION_SCOPES = [...new Set([...MAGALU_BASIC_AUTHORIZATION_SCOPES, ...MAGALU_CATALOG_SCOPES])];
+// Ativar somente após conferir no IDM que os cinco escopos adicionais de catálogo
+// estão disponíveis para este client. Uma permissão ainda não liberada não pode
+// impedir a conexão básica de pedidos e pós-venda.
+export function magaluCatalogAuthorizationEnabled() { return process.env.MAGALU_CATALOG_OAUTH_ENABLED === 'true'; }
 export function magaluCatalogScopesGranted(scopes: unknown): scopes is string[] {
   return Array.isArray(scopes) && MAGALU_CATALOG_SCOPES.every(scope => scopes.includes(scope));
 }
@@ -82,7 +87,8 @@ export function createMagaluAuthorization(configuration: MagaluConfiguration) {
   const intent: MagaluIntent = { provider: 'magalu', verifier: createPkceVerifier(), clientId: configuration.clientId, redirectUri: configuration.redirectUri };
   const url = new URL('https://id.magalu.com/login');
   for (const [key, value] of Object.entries({ response_type: 'code', client_id: configuration.clientId, redirect_uri: configuration.redirectUri,
-    state, scope: MAGALU_AUTHORIZATION_SCOPES.join(' '), choose_tenants: 'true', code_challenge: createPkceChallenge(intent.verifier), code_challenge_method: 'S256' })) url.searchParams.set(key, value);
+    state, scope: (magaluCatalogAuthorizationEnabled() ? MAGALU_AUTHORIZATION_SCOPES : MAGALU_BASIC_AUTHORIZATION_SCOPES).join(' '),
+    choose_tenants: 'true', code_challenge: createPkceChallenge(intent.verifier), code_challenge_method: 'S256' })) url.searchParams.set(key, value);
   return { state, browserBinding, intent, authorizationUrl: url.toString(), expiresAt: new Date(Date.now() + MAGALU_OAUTH_TTL * 1000).toISOString() };
 }
 

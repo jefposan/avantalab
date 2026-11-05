@@ -1,5 +1,7 @@
 'use client';
 
+import LoadingPontos from './LoadingPontos';
+
 /* eslint-disable @next/next/no-img-element -- a cena usa picture/source para escolher a arte por breakpoint. */
 
 type TelaCarregandoAcessoProps = {
@@ -7,6 +9,10 @@ type TelaCarregandoAcessoProps = {
   titulo?: string;
   nivelTitulo?: 'h1' | 'h2';
   onCancelar?: () => void;
+  preparandoAcesso?: boolean;
+  erro?: string;
+  onTentarNovamente?: () => void;
+  onEntrarNovamente?: () => void;
 };
 
 export function FundoAcessoResponsivo() {
@@ -28,7 +34,10 @@ export default function TelaCarregandoAcesso({
   mensagem,
   titulo = 'Carregando...',
   nivelTitulo = 'h1',
-  onCancelar,
+  preparandoAcesso = false,
+  erro,
+  onTentarNovamente,
+  onEntrarNovamente,
 }: TelaCarregandoAcessoProps) {
   const Titulo = nivelTitulo;
 
@@ -48,28 +57,23 @@ export default function TelaCarregandoAcesso({
       <div className="absolute inset-0 bg-transparent" />
 
       <section className="avanta-loading-stage relative z-10">
-        <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
-          <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
-            <span className="avanta-loading-spinner animate-spin" />
+        <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl" role={erro ? 'alert' : 'status'} aria-busy={!erro}>
+          <div className="mx-auto flex min-h-14 items-center justify-center">
+            {erro ? <span className="text-xl font-bold text-amber-700" aria-hidden="true">!</span> : <LoadingPontos />}
           </div>
 
-          <Titulo className="text-xl font-black text-slate-900">{titulo}</Titulo>
+          <Titulo className="text-xl font-black text-slate-900">{erro ? 'Não foi possível preparar o acesso' : preparandoAcesso ? 'Preparando acesso' : titulo}</Titulo>
 
           <p className="text-sm font-semibold text-slate-500" aria-live="polite">
-            {mensagem}
+            {erro || (preparandoAcesso ? 'Aguarde um instante.' : mensagem)}
           </p>
 
-          {onCancelar && (
-            <button
-              type="button"
-              onClick={onCancelar}
-              className="mt-1 flex min-h-11 w-full items-center justify-center rounded-xl px-1 text-xs font-bold text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-[#1687D9] focus-visible:ring-offset-2"
-            >
-              <span className="flex h-8 w-full items-center justify-center rounded-[10px] border border-slate-300 bg-white/90 px-3 shadow-sm">
-                Cancelar e voltar ao login
-              </span>
+          {erro && onTentarNovamente ? (
+            <button type="button" onClick={onTentarNovamente} autoFocus className="mt-1 flex min-h-11 w-full items-center justify-center rounded-xl px-1 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[#1687D9] focus-visible:ring-offset-2">
+              <span className="flex min-h-8 w-full items-center justify-center rounded-[10px] bg-[#1687D9] px-3 text-white shadow-sm">Tentar novamente</span>
             </button>
-          )}
+          ) : null}
+          {erro && onEntrarNovamente ? <button type="button" onClick={onEntrarNovamente} className="min-h-11 w-full rounded-xl px-3 text-sm font-semibold text-slate-700 underline outline-none focus-visible:ring-2 focus-visible:ring-[#1687D9]">Entrar novamente</button> : null}
         </div>
       </section>
     </main>

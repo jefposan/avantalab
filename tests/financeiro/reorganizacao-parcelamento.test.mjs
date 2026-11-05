@@ -36,8 +36,9 @@ test('Gestão Mobile oferece a mesma edição e confirma a reorganização', () 
   assert.match(mobile, /id="editar-parcela-atual"/);
   assert.match(mobile, /id="editar-total-parcelas"/);
   assert.match(mobile, /titulo: 'Reorganizar parcelamento\?'/);
-  assert.match(mobile, /db\.rpc\('reorganizar_parcelamento_despesa_rpc'/);
-  assert.match(mobile, /Parcelamento reorganizado a partir da parcela/);
+  assert.match(mobile, /db\.rpc\('aplicar_edicao_financeira_mobile_rpc'/);
+  assert.match(mobile, /sequenciaMudou \? 'parcelamento' : tipo/);
+  assert.match(readFileSync('supabase/migrations/20261020190000_edicoes_financeiras_idempotentes.sql','utf8'), /perform public\.reorganizar_parcelamento_despesa_rpc/);
 });
 
 test('RPC reorganiza somente a sequência atual e futura sob autorização', () => {

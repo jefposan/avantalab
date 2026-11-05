@@ -6,12 +6,17 @@ import { objectValue, uuidIsValid } from './listing-model';
 import { readPostSale } from '../post-sale';
 import { inventoryLines } from './inventory-model';
 import type { PostSaleProgress } from '../listing-operations';
+import { normalizedSaleItems, type SaleItem } from '../sale-items';
+import { withSaleItemEans } from './sale-item-ean';
+import { attachFiscalHistory, fiscalHistory } from './fiscal-history';
+import { fiscalPendingShipment, loadFiscalSale, queryDce, reconcileFiscal, sendFiscalCommand } from './mercadolivre-fiscal';
+import { legacyDce, type SaleFiscal } from '../fiscal-state';
 
-export type SaleNotification = { id: string; seller: string; topic: 'orders_v2' | 'orders' | 'shipments' | 'items'; resource: string; orderId?: string; shipmentId?: string; listingId?: string };
-export type MarketplaceSale = { provider?: 'mercado_livre' | 'magalu'; providerOrderStatus?: string; warnings?: string[];
-  labelReleaseAt?: string | null; dispatchDeadline?: string | null;
+export type SaleNotification = { id: string; seller: string; topic: 'orders_v2' | 'orders' | 'shipments' | 'items' | 'invoices'; resource: string; orderId?: string; shipmentId?: string; listingId?: string };
+export type MarketplaceSale = { provider?: 'mercado_livre' | 'magalu' | 'direct'; directSale?: import('../direct-sales').DirectSale; providerOrderStatus?: string; warnings?: string[];
+  fiscal?: SaleFiscal; labelReleaseAt?: string | null; dispatchDeadline?: string | null; dceRequested?: boolean; dceStatus?: 'requested' | 'completed' | 'uncertain' | 'not_requested' | 'unknown' | 'rejected';
   deliveries?: Array<{ id: string; code: string; status: string | null; statusText: string; deadline: string | null; invoices: Array<{ key: string | null; statusText: string }> }>;
-  id: string; connectionId: string; orderId: string; soldAt: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: Array<{ title: string; quantity: number; unitPrice: number | null }> };
+  id: string; connectionId: string; orderId: string; soldAt: string; status: string; shipmentId: string | null; shipmentStatus: string | null; shipmentSubstatus: string | null; labelStatus: 'ready' | 'unavailable' | 'fulfilled'; seenAt: string | null; createdAt: string; updatedAt: string; buyer: string | null; total: number | null; currency: string; items: SaleItem[] };
 
 const orderId = (value: unknown) => /^\d{1,24}$/.test(String(value)) ? String(value) : '';
 const shipmentId = orderId;
@@ -22,7 +27,8 @@ export function parseSaleNotification(value: unknown, applicationId: string): Sa
   const body = objectValue(value);
   const topic = body.topic;
   const resource = body.resource;
-  if (String(body.application_id) !== applicationId || !['orders_v2', 'orders', 'shipments', 'items'].includes(String(topic)) || typeof body._id !== 'string' || !body._id || body._id.length > 160 || !/^\d{1,20}$/.test(String(body.user_id)) || typeof resource !== 'string') return null;
+  if (String(body.application_id) !== applicationId || !['orders_v2', 'orders', 'shipments', 'items', 'invoices'].includes(String(topic)) || typeof body._id !== 'string' || !body._id || body._id.length > 160 || !/^\d{1,20}$/.test(String(body.user_id)) || typeof resource !== 'string') return null;
+  if (topic === 'invoices' && new RegExp(`^/users/${body.user_id}/invoices/[a-zA-Z0-9_-]{1,160}$`).test(resource)) return { id: body._id, seller: String(body.user_id), topic, resource };
   if (topic === 'items' && /^\/items\/MLB\d{6,20}$/.test(resource)) return { id: body._id, seller: String(body.user_id), topic, resource, listingId: resource.slice(7) };
   if (topic === 'shipments' && /^\/shipments\/\d{1,24}$/.test(resource)) return { id: body._id, seller: String(body.user_id), topic, resource, shipmentId: resource.slice(11) };
   if ((topic === 'orders_v2' || topic === 'orders') && /^\/orders\/\d{1,24}$/.test(resource)) return { id: body._id, seller: String(body.user_id), topic, resource, orderId: resource.slice(8) };
@@ -56,7 +62,9 @@ function saleSnapshot(order: Record<string, unknown>, shipment: Record<string, u
 
 export function publicSale(row: Record<string, unknown>): MarketplaceSale {
   const snapshot = objectValue(row.snapshot);
-  return { ...(snapshot.labelReleaseAt ? { labelReleaseAt: text(snapshot.labelReleaseAt, 80) } : {}), ...(snapshot.dispatchDeadline ? { dispatchDeadline: text(snapshot.dispatchDeadline, 80) } : {}), ...(row.provider === 'magalu' ? { provider: 'magalu' as const, providerOrderStatus: text(snapshot.providerOrderStatus),
+  const fiscal = objectValue(snapshot.dceEmission);
+  const dceStatus: MarketplaceSale['dceStatus'] = fiscal.status === 'completed' ? 'completed' : fiscal.emissionId || fiscal.status === 'pending' ? 'requested' : fiscal.requestedAt ? 'uncertain' : 'unknown';
+  return { dceRequested: !!fiscal.requestedAt || ['requested', 'completed'].includes(dceStatus), dceStatus, ...(snapshot.labelReleaseAt ? { labelReleaseAt: text(snapshot.labelReleaseAt, 80) } : {}), ...(snapshot.dispatchDeadline ? { dispatchDeadline: text(snapshot.dispatchDeadline, 80) } : {}), ...(row.provider === 'magalu' ? { provider: 'magalu' as const, providerOrderStatus: text(snapshot.providerOrderStatus),
     warnings: (Array.isArray(snapshot.warnings) ? snapshot.warnings : []).filter((warning): warning is string => typeof warning === 'string').map(warning => text(warning)),
     deliveries: (Array.isArray(snapshot.deliveries) ? snapshot.deliveries : []).map(objectValue).map(delivery => ({ id: text(delivery.id,100), code: text(delivery.code,100), status: typeof delivery.status === 'string' ? text(delivery.status) : null, statusText: text(delivery.statusText), deadline: typeof delivery.deadline === 'string' ? text(delivery.deadline,80) : null,
       invoices: (Array.isArray(delivery.invoices) ? delivery.invoices : []).map(objectValue).map(invoice => ({key: /^\d{44}$/.test(String(invoice.key)) ? String(invoice.key) : null, statusText:text(invoice.statusText)})) })) } : {}),
@@ -64,7 +72,7 @@ export function publicSale(row: Record<string, unknown>): MarketplaceSale {
     shipmentStatus: typeof row.shipment_status === 'string' ? row.shipment_status : null, shipmentSubstatus: typeof row.shipment_substatus === 'string' ? row.shipment_substatus : null,
     labelStatus: row.label_status === 'ready' || row.label_status === 'fulfilled' ? row.label_status : 'unavailable', seenAt: typeof row.seen_at === 'string' ? row.seen_at : null,
     createdAt: String(row.created_at), updatedAt: String(row.updated_at), buyer: typeof snapshot.buyer === 'string' ? snapshot.buyer : null,
-    total: amount(snapshot.total), currency: text(snapshot.currency, 12) || 'BRL', items: (Array.isArray(snapshot.items) ? snapshot.items : []).map(objectValue).map((item) => ({ title: text(item.title) || 'Produto', quantity: Math.max(1, Math.floor(amount(item.quantity) || 1)), unitPrice: amount(item.unitPrice) })).slice(0, 100) };
+    total: amount(snapshot.total), currency: text(snapshot.currency, 12) || 'BRL', items: normalizedSaleItems(snapshot.items,snapshot.inventoryLines) };
 }
 
 export async function syncOrder(db: SupabaseClient, connection: SellerConnection, id: string, deadline = Infinity) {
@@ -81,9 +89,17 @@ export async function syncOrder(db: SupabaseClient, connection: SellerConnection
     } catch { /* Venda continua visível; etiqueta será reavaliada na abertura. */ }
   }
   const snapshot = saleSnapshot(order, shipment);
-  const previous = await db.from('marketplace_sales').select('shipment_id,shipment_status,shipment_substatus,label_status,snapshot')
+  // O ML pode receber a venda pelo anúncio de catálogo associado, com outro MLB.
+  // Falha de conferência não esconde a venda: fica pendente para o worker recuperar.
+  for (const line of snapshot.inventoryLines) {
+    if (line.variationId || Date.now() > deadline - 12_000) continue;
+    try { await (await import('./sale-listing-link')).resolveSaleListingLink(db, connection, line.listingId, deadline); }
+    catch { /* A RPC mantém a pendência e não inventa vínculo ou saldo. */ }
+  }
+  const previous = await db.from('marketplace_sales').select('id,updated_at,shipment_id,shipment_status,shipment_substatus,label_status,snapshot')
     .eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider_order_id', id).maybeSingle();
   if (previous.error) throw new MarketplaceError(503, 'database', 'Não foi possível conferir o envio salvo desta venda.');
+  Object.assign(snapshot, { dceEmission: objectValue(previous.data?.snapshot).dceEmission });
   if (idShipment && !shipment) {
     // Uma falha não apaga o envio conhecido nem libera uma etiqueta sem revalidação.
     if (previous.data?.shipment_id === idShipment) {
@@ -105,9 +121,13 @@ export async function syncOrder(db: SupabaseClient, connection: SellerConnection
   } else if (previousProgress.state === 'closed' && typeof previousProgress.checkedAt === 'string') {
     snapshot.postSaleProgress = { state: 'closed', checkedAt: previousProgress.checkedAt };
   }
-  const { error } = await db.from('marketplace_sales').upsert({ empresa_id: connection.empresa_id, connection_id: connection.id, provider: 'mercado_livre', provider_order_id: id,
-    status: snapshot.status, shipment_id: snapshot.shipmentId, shipment_status: snapshot.shipmentStatus, shipment_substatus: snapshot.shipmentSubstatus, label_status: snapshot.labelStatus, snapshot, operation_checked_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: 'connection_id,provider_order_id' });
-  if (error) throw new MarketplaceError(503, 'database', 'Não foi possível salvar a venda recebida.');
+  const payload = { empresa_id: connection.empresa_id, connection_id: connection.id, provider: 'mercado_livre', provider_order_id: id,
+    status: snapshot.status, shipment_id: snapshot.shipmentId, shipment_status: snapshot.shipmentStatus, shipment_substatus: snapshot.shipmentSubstatus, label_status: snapshot.labelStatus, snapshot, operation_checked_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+  const persisted = previous.data
+    ? await db.from('marketplace_sales').update(payload).eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('id', previous.data.id).eq('updated_at', previous.data.updated_at).select('id').maybeSingle()
+    : await db.from('marketplace_sales').insert(payload).select('id').maybeSingle();
+  if (persisted.error || !persisted.data) throw new MarketplaceError(409, 'sale_changed', 'O pedido recebeu uma atualização concorrente. A fila consultará novamente sem apagar o registro anterior.');
+
 }
 
 export async function queueSaleNotification(db: SupabaseClient, notification: SaleNotification) {
@@ -133,10 +153,29 @@ export async function processSaleNotifications(db: SupabaseClient, connection: S
         if (known.error) throw new MarketplaceError(503, 'database', 'Não foi possível conferir os pedidos deste envio.');
         const ids = [...new Set([orderId(shipment.order_id), ...(known.data || []).map(row => orderId(row.provider_order_id))].filter(Boolean))];
         if (!ids.length) throw new MarketplaceError(503, 'shipment_awaiting_order', 'O envio aguarda a chegada do pedido para ser atualizado.');
-        for (const associatedId of ids) await syncOrder(db, connection, associatedId, deadline);
+        for (const associatedId of ids) {
+          await syncOrder(db, connection, associatedId, deadline);
+          if (Date.now() > deadline - 10_000) throw new MarketplaceError(503, 'worker_time_limit', 'A conferência fiscal continuará na próxima tentativa.');
+          const saved = await db.from('marketplace_sales').select('*').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider_order_id', associatedId).maybeSingle();
+          if (saved.error || !saved.data) throw new MarketplaceError(503, 'database', 'O pedido do envio ainda não foi localizado.');
+          await reconcileFiscal(db, connection, saved.data, id);
+        }
+      }
+      if (event.topic === 'invoices') {
+        // O recurso é validado pelo parser e o seller é conferido novamente no worker.
+        if (!new RegExp(`^/users/${connection.seller_reference}/invoices/[a-zA-Z0-9_-]{1,160}$`).test(String(event.resource))) throw new Error('invalid_invoice_resource');
+        const invoice = objectValue(await mlRequest(db, connection, String(event.resource)));
+        if (String(invoice.id) !== id || String(objectValue(invoice.issuer).user_id) !== connection.seller_reference) throw new Error('invalid_invoice');
+        const ids = [...new Set((Array.isArray(invoice.items) ? invoice.items : []).map(objectValue).map(item => orderId(item.external_order_id)).filter(Boolean))];
+        const shipment = shipmentId(objectValue(invoice.shipment).id);
+        const known = await db.from('marketplace_sales').select('*').eq('empresa_id', connection.empresa_id).eq('connection_id', connection.id).eq('provider', 'mercado_livre');
+        if (known.error) throw new MarketplaceError(503, 'database', 'Não foi possível localizar o pedido do documento fiscal.');
+        const related = (known.data || []).filter(row => ids.includes(row.provider_order_id) || (shipment && row.shipment_id === shipment));
+        if (!related.length) throw new MarketplaceError(503, 'invoice_awaiting_order', 'O documento aguarda a sincronização do pedido.');
+        for (const row of related) await reconcileFiscal(db, connection, row, row.shipment_id);
       }
       if (event.topic === 'items') await (await import('./inventory-listings')).observeInventoryListing(db, connection, id);
-      else if (event.topic !== 'shipments') {
+      else if (event.topic !== 'shipments' && event.topic !== 'invoices') {
         if (!orderId(id)) throw new Error('invalid_resource');
         await syncOrder(db, connection, id, deadline);
       }
@@ -151,11 +190,12 @@ export async function processSaleNotifications(db: SupabaseClient, connection: S
 export async function listSales(db: SupabaseClient, companyId: string, connectionIds: string[]) {
   if (!connectionIds.length) return [];
   const sales: MarketplaceSale[] = [];
+  const eanDeadline=Date.now()+5000;
   for (let offset = 0; ; offset += 500) {
     const { data, error } = await db.from('marketplace_sales').select('*').eq('empresa_id', companyId).in('connection_id', connectionIds).order('updated_at', { ascending: false }).order('id').range(offset, offset + 499);
     if (error) throw new MarketplaceError(503, 'database', 'Não foi possível carregar as vendas.');
-    sales.push(...(data || []).map((row) => publicSale(row as Record<string, unknown>)));
-    if (!data || data.length < 500) return sales;
+    sales.push(...await withSaleItemEans(db,companyId,(data || []).map((row) => publicSale(row as Record<string, unknown>)),Math.max(0,eanDeadline-Date.now())));
+    if (!data || data.length < 500) return attachFiscalHistory(db, companyId, sales);
   }
 }
 
@@ -164,6 +204,12 @@ export async function markSalesSeen(db: SupabaseClient, companyId: string, conne
 }
 
 /** Atualização pontual do pedido ao abrir os detalhes; nenhuma ação de pós-venda é enviada. */
+export async function readDceState(db: SupabaseClient, connection: SellerConnection, id: string, previous: unknown) {
+  const fiscal = await queryDce(db, connection, id, legacyDce(previous));
+  return { ...fiscal, emissionId: fiscal.receiptId };
+
+}
+
 export async function postSaleForSale(db: SupabaseClient, companyId: string, connectionId: unknown, saleId: unknown) {
   if (!uuidIsValid(saleId)) throw new MarketplaceError(400, 'invalid_sale', 'Pedido inválido.');
   const connection = await loadConnection(db, companyId, connectionId);
@@ -185,6 +231,8 @@ export async function postSaleForSale(db: SupabaseClient, companyId: string, con
     })(),
   ]);
   const snapshot = saleSnapshot(order, shipmentResult.shipment);
+  Object.assign(snapshot, { dceEmission: objectValue(saved.snapshot).dceEmission });
+  await reconcileFiscal(db, connection, saved, shippingId);
   snapshot.postSaleProgress = { state: postSale.processState || 'unknown', checkedAt: postSale.checkedAt };
   if (!shipmentResult.complete) {
     // Não transformar indisponibilidade de consulta em alteração logística.
@@ -198,10 +246,11 @@ export async function postSaleForSale(db: SupabaseClient, companyId: string, con
   const { data: persisted, error: saveError } = await db.from('marketplace_sales').update(updated).eq('empresa_id', companyId).eq('connection_id', connection.id).eq('id', saleId).eq('updated_at', saved.updated_at).select('id').maybeSingle();
   if (saveError) throw new MarketplaceError(503, 'database', 'Os dados chegaram, mas não foram salvos. Atualize os detalhes novamente.');
   if (!persisted) throw new MarketplaceError(409, 'sale_changed', 'Outra atualização deste pedido chegou durante a consulta. Atualize o pós-venda novamente para ver a situação mais recente.');
-  return { sale: publicSale({ ...saved, ...updated }), postSale };
+  return { sale: (await attachFiscalHistory(db, companyId, await withSaleItemEans(db,connection.empresa_id,[publicSale({ ...saved, ...updated })])))[0], postSale };
 }
 
-export async function labelForSale(db: SupabaseClient, companyId: string, connectionId: string, saleId: string) {
+export async function labelForSale(db: SupabaseClient, companyId: string, connectionId: string, saleId: string, format: 'pdf' | 'zpl2' = 'pdf') {
+  if (format !== 'pdf' && format !== 'zpl2') throw new MarketplaceError(400, 'invalid_label_format', 'Escolha etiqueta térmica ou PDF para impressora comum.');
   if (!uuidIsValid(saleId)) throw new MarketplaceError(400, 'invalid_sale', 'Pedido inválido.');
   const connection = await loadConnection(db, companyId, connectionId);
   const { data, error } = await db.from('marketplace_sales').select('provider_order_id').eq('empresa_id', companyId).eq('connection_id', connectionId).eq('provider', 'mercado_livre').eq('id', saleId).maybeSingle();
@@ -217,5 +266,26 @@ export async function labelForSale(db: SupabaseClient, companyId: string, connec
   const snapshot = saleSnapshot(order, shipment);
   if (snapshot.labelStatus === 'fulfilled') throw new MarketplaceError(409, 'label_unavailable', 'O envio Full é operado pelo Mercado Livre e não possui etiqueta para impressão local.');
   if (snapshot.labelStatus !== 'ready') throw new MarketplaceError(409, 'label_unavailable', snapshot.shipmentSubstatus === 'buffered' ? 'O Mercado Livre programou o envio para outra data. A etiqueta será liberada pela plataforma.' : 'A etiqueta ainda não está disponível para este envio.');
-  return mlBinaryRequest(db, connection, `/shipment_labels?shipment_ids=${shippingId}&response_type=pdf`);
+  return mlBinaryRequest(db, connection, `/shipment_labels?shipment_ids=${shippingId}&response_type=${format}`, format === 'zpl2' ? 'zip' : 'pdf');
+}
+
+/**
+ * Solicita a DC-e que o próprio Mercado Livre emite para sellers elegíveis.
+ * A situação do pedido é relida antes do comando: nunca assumimos que uma
+ * pendência armazenada ainda pode receber documento fiscal.
+ */
+export async function issueDceForSale(db: SupabaseClient, companyId: string, connectionId: string, saleId: string, firstRequestConfirmed = false, actorId?: string) {
+  const { sale, connection, order, shipmentId } = await loadFiscalSale(db, companyId, connectionId, saleId);
+  const previous = await fiscalHistory(db, sale);
+  const fiscal = await reconcileFiscal(db, connection, sale, shipmentId);
+  if (['completed', 'pending', 'requested'].includes(fiscal.dce.status)) return { emissionId: fiscal.dce.receiptId || null, alreadyRequested: true, completed: fiscal.dce.status === 'completed' };
+  if (previous.dce.requestedAt || fiscal.dce.requestedAt || fiscal.dce.receiptId) throw new MarketplaceError(409, 'dce_uncertain', 'Já existe uma solicitação de DC-e registrada neste pedido. Consulte o documento antes de repetir.');
+  if ((fiscal.dce.status === 'rejected' && !fiscal.dce.retryAllowed) || fiscal.nfe.requestedAt || fiscal.nfe.receiptId || fiscal.nfe.importedInvoiceId || (fiscal.nfe.status !== 'unknown' && !fiscal.nfe.retryAllowed)) throw new MarketplaceError(409, 'dce_review_required', 'Já existe documento ou rejeição fiscal para este pedido. Confira a situação antes de solicitar outra emissão.');
+  await fiscalPendingShipment(db, connection, order, shipmentId, 'dce');
+  // 404 não prova ausência de emissão. A primeira solicitação depende da
+  // pendência logística atual e da declaração explícita do responsável.
+  if (!firstRequestConfirmed) throw new MarketplaceError(400, 'first_request_confirmation_required', 'Confirme o perfil PF/PJ não contribuinte e que não existe uma solicitação anterior sem confirmação.');
+  if (fiscal.dce.query && !fiscal.dce.query.ok && fiscal.dce.query.httpStatus !== 404) throw new MarketplaceError(409, 'fiscal_query_failed', 'A consulta fiscal está indisponível ou sem permissão. Confira o acesso antes de emitir.');
+  if (fiscal.dce.query?.ok && fiscal.dce.status === 'unknown') throw new MarketplaceError(409, 'dce_review_required', 'A resposta fiscal não confirmou uma nova emissão segura. Confira o documento no Mercado Livre antes de repetir.');
+  return sendFiscalCommand(db, sale, shipmentId, 'dce', 'issue', () => mlRequest(db, connection, `/mlb/order/${sale.provider_order_id}/dce/emission`, 'POST'), actorId);
 }

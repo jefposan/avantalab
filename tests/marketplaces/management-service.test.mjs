@@ -16,38 +16,53 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
   if (candidate && existsSync(`${candidate}.ts`)) return next(pathToFileURL(`${candidate}.ts`).href, context);
   return next(specifier, context);
 } });
-const { loadConnection, mlRequest, manageListing, synchronizeListings } = await import('../../app/modules/marketplaces/services/mercadolivre-management.ts');
+const { loadConnection, mlRequest, mlBinaryRequest, manageListing, synchronizeListings } = await import('../../app/modules/marketplaces/services/mercadolivre-management.ts');
 const { sealMarketplaceSecret, openMarketplaceSecret } = await import('../../app/modules/marketplaces/services/secret-vault.ts');
+const {reconcileListingEdits}=await import('../../app/modules/marketplaces/services/listing-edit-confirmation.ts');
+const {refreshKnownListingStatuses}=await import('../../app/modules/marketplaces/services/listing-status-refresh.ts');
 hooks.deregister();
 const company = '11111111-1111-4111-8111-111111111111', connectionId = '22222222-2222-4222-8222-222222222222';
 const itemId = 'MLB5324529993';
+test('edição pendente só é confirmada quando todos os campos relidos correspondem, na empresa/conta exatas',()=>environment(async()=>{
+ const db=database();db.tables.marketplace_listing_actions=[{id:'a',empresa_id:company,connection_id:connectionId,provider_listing_id:itemId,action:'edit',status:'uncertain',request_payload:{changes:{price:150,title:'Produto',description:'Descrição',stock:3,listingType:'gold_special'}}}];
+ const values={price:149,title:'Produto',description:'Descrição',stock:3,listingType:'gold_special'};
+ await reconcileListingEdits(db,company,connectionId,itemId,values);assert.equal(db.tables.marketplace_listing_actions[0].status,'uncertain');
+ await reconcileListingEdits(db,'other',connectionId,itemId,{...values,price:150});assert.equal(db.tables.marketplace_listing_actions[0].status,'uncertain');
+ await reconcileListingEdits(db,company,connectionId,itemId,{...values,price:150});assert.equal(db.tables.marketplace_listing_actions[0].status,'succeeded');
+}));
 
 class Query {
   constructor(db, table) { this.db=db; this.table=table; this.filters=[]; this.mode='select'; }
   select() { return this; }
   eq(key,value) { this.filters.push((row) => row[key]===value); return this; }
+  gt(key,value) { this.filters.push(row=>row[key]>value);return this; }
+  order(key) { this.orderKey=key;return this; }
+  limit(value) { this.max=value;return this; }
   is(key,value) { this.filters.push((row) => (row[key] ?? null)===value); return this; }
   or(expression) { const key=expression.startsWith('sync_') ? 'sync_lock_until' : 'refresh_lock_until';this.filters.push((row) => !row[key] || new Date(row[key]).getTime()<Date.now()); return this; }
   update(values) { this.mode='update'; this.values=values; return this; }
   insert(values) { this.mode='insert'; this.values=values; return this; }
   upsert(values) { this.mode='upsert'; this.values=values; return this; }
-  maybeSingle() { this.single=true; return this; }
-  single() { this.single=true; return this; }
+  maybeSingle() { this.one=true; return this; }
+  single() { this.one=true; return this; }
   then(success,failure) { return Promise.resolve().then(() => this.execute()).then(success,failure); }
   execute() {
     const rows=this.db.tables[this.table] ||= [];
     let matched=rows.filter((row) => this.filters.every((predicate) => predicate(row)));
+    if(this.orderKey)matched.sort((a,b)=>String(a[this.orderKey]).localeCompare(String(b[this.orderKey])));
+    if(this.max!=null)matched=matched.slice(0,this.max);
     if (this.mode==='insert') {
       if(rows.some((row) => row.request_key===this.values.request_key && row.empresa_id===this.values.empresa_id)) return {error:{code:'23505'},data:null};
       const row={id:crypto.randomUUID(),...this.values}; rows.push(row); matched=[row];
     } else if(this.mode==='update') for(const row of matched) Object.assign(row, this.values);
     else if(this.mode==='upsert') { const previous=rows.find((row) => row.connection_id===this.values.connection_id && row.provider_listing_id===this.values.provider_listing_id); if(previous) Object.assign(previous,this.values); else rows.push(this.values); }
-    return {error:null,data: structuredClone(this.single ? matched[0] || null : matched)};
+    return {error:null,data: structuredClone(this.one ? matched[0] || null : matched)};
   }
 }
 function database(expired=false) {
   return { tables: { marketplace_connections: [{ id:connectionId,empresa_id:company,provider:'mercado_livre',seller_reference:'123',status:'connected',
     expires_at:new Date(Date.now()+(expired ? -1000 : 3600000)).toISOString(),token_sealed:sealMarketplaceSecret(JSON.stringify({accessToken:'test-access',refreshToken:'test-refresh'})) }] },
+    observations:[],rpc(name,args){assert.equal(name,'marketplace_observe_listing');this.observations.push(args);return Promise.resolve({error:this.observationError||null});},
     from(table) {return new Query(this,table);} };
 }
 async function environment(task) {
@@ -66,10 +81,27 @@ test('validador do Mercado Livre aceita sucesso 204 sem exigir JSON', () => envi
   globalThis.fetch=async (_url,options) => { assert.equal(options.method,'POST'); return new Response(null,{status:204}); };
   assert.equal(await mlRequest(db,connection,'/items/validate','POST',{title:'Teste'}),null);
 }));
+test('pré-validação 400 com apenas warnings é não bloqueante, mas criação 400 permanece recusada',()=>environment(async()=>{
+  const db=database(),connection=await loadConnection(db,company,connectionId);let calls=0;
+  globalThis.fetch=async()=>{calls++;return Response.json({error:'validation_error',status:400,cause:[{type:'warning',code:'item.shipping.mandatory_free_shipping',message:'Mandatory free shipping added'}]},{status:400});};
+  assert.equal((await mlRequest(db,connection,'/items/validate','POST',{title:'Teste'})).validatedWithWarnings,true);
+  await assert.rejects(mlRequest(db,connection,'/items','POST',{title:'Teste'}),error=>error.code==='invalid_fields');
+  assert.equal(calls,2);
+}));
 test('envios enviam o header oficial novo sem afetar consultas de outros recursos', () => environment(async () => {
   const db=database(),connection=await loadConnection(db,company,connectionId);
   globalThis.fetch=async(url,options)=>{assert.equal(options.headers['X-Format-New'],url.includes('/shipments/')?'true':undefined);return Response.json({id:555});};
   await mlRequest(db,connection,'/shipments/555');await mlRequest(db,connection,'/items/MLB123456');
+}));
+test('etiqueta térmica valida o pacote ZIP e recusa HTML, PDF e conteúdo inválido',()=>environment(async()=>{
+ const db=database(),connection=await loadConnection(db,company,connectionId);
+ const bytes=new Uint8Array(30);bytes.set([0x50,0x4b,0x03,0x04]);
+ globalThis.fetch=async(_url,options)=>{assert.equal(options.headers.Accept,'application/zip');return new Response(bytes,{headers:{'Content-Type':'application/octet-stream'}});};
+ assert.deepEqual(await mlBinaryRequest(db,connection,'/shipment_labels?shipment_ids=555&response_type=zpl2','zip'),bytes);
+ for(const [body,type] of [['<html>Falha</html>','text/html'],['%PDF-falso','application/pdf'],['conteudo invalido'.repeat(3),'application/zip']]){
+  globalThis.fetch=async()=>new Response(body,{headers:{'Content-Type':type}});
+  await assert.rejects(mlBinaryRequest(db,connection,'/shipment_labels?shipment_ids=555&response_type=zpl2','zip'),error=>error.code==='invalid_label');
+ }
 }));
 test('negação de recurso não é apresentada como perda da conexão', () => environment(async () => {
   const db=database(), connection=await loadConnection(db,company,connectionId);
@@ -118,6 +150,7 @@ test('ação aplicada é auditada e reenvio com mesma chave não repete o PUT', 
   await manageListing(db,connection,'actor',input);
   assert.equal(puts,1); assert.equal(db.tables.marketplace_listing_actions[0].status,'succeeded');
   assert.equal(db.tables.marketplace_listings[0].status,'paused');
+  assert.deepEqual(db.observations[0],{p_empresa:company,p_connection:connectionId,p_listing:itemId,p_quantity:null,p_status:'paused'});
   status='active'; await assert.rejects(manageListing(db,connection,'actor',input)); assert.equal(puts,1);
 }));
 test('resposta perdida ao alterar gera resultado incerto, não repete a mutação', () => environment(async () => {
@@ -125,6 +158,46 @@ test('resposta perdida ao alterar gera resultado incerto, não repete a mutaçã
   globalThis.fetch=async (_url,options) => { if(options.method==='PUT') {puts++;throw new Error('network');}return Response.json({id:itemId,seller_id:123,status:'active'}); };
   await assert.rejects(manageListing(db,connection,'actor',{id:itemId,action:'pause',requestKey:crypto.randomUUID(),confirmation:itemId}),/pode ter sido aplicada/);
   assert.equal(puts,1); assert.equal(db.tables.marketplace_listing_actions[0].status,'uncertain');
+}));
+test('pausa aceita mas ainda não observada fica pendente e mantém status real do vínculo',()=>environment(async()=>{
+ const db=database(),connection=await loadConnection(db,company,connectionId);
+ globalThis.fetch=async()=>Response.json({id:itemId,seller_id:123,status:'active'});
+ const result=await manageListing(db,connection,'actor',{id:itemId,action:'pause',requestKey:crypto.randomUUID(),confirmation:itemId});
+ assert.equal(result.pending,true);assert.equal(result.success,false);assert.equal(db.observations[0].p_status,'active');
+ assert.equal(db.tables.marketplace_listing_actions[0].status,'uncertain');
+}));
+test('falha ao persistir vínculo após ação remota não declara conclusão',()=>environment(async()=>{
+ const db=database(),connection=await loadConnection(db,company,connectionId);let status='active';db.observationError=Error('database');
+ globalThis.fetch=async(_url,options)=>{if(options.method==='PUT')status='paused';return Response.json({id:itemId,seller_id:123,status});};
+ await assert.rejects(manageListing(db,connection,'actor',{id:itemId,action:'pause',requestKey:crypto.randomUUID(),confirmation:itemId}),/pode ter sido aplicada/);
+ assert.equal(db.tables.marketplace_listing_actions[0].status,'uncertain');
+}));
+test('pausa, reativação, encerramento e exclusão persistem somente a situação observada do anúncio correto',()=>environment(async()=>{
+ for(const [action,initial,expected] of [['pause','active','paused'],['resume','paused','active'],['close','paused','closed'],['delete','closed','deleted']]){
+  const db=database(),connection=await loadConnection(db,company,connectionId);let status=initial,deleted=false;
+  globalThis.fetch=async(_url,options)=>{if(options.method==='PUT'){const input=JSON.parse(options.body);if(input.deleted)deleted=true;else status=input.status;}return Response.json({id:itemId,seller_id:123,status,sub_status:deleted?['deleted']:[]});};
+  const result=await manageListing(db,connection,'actor',{id:itemId,action,requestKey:crypto.randomUUID(),confirmation:itemId});
+  assert.equal(result.success,true);assert.equal(result.pending,false);assert.equal(db.observations[0].p_status,expected);
+  assert.equal(db.observations[0].p_connection,connectionId);assert.equal(db.observations[0].p_empresa,company);assert.equal(db.observations[0].p_listing,itemId);
+ }
+}));
+test('reativação confere saldo atual no servidor, sem usar saldo do Saldão ou ficha antiga',()=>environment(async()=>{
+ for(const quantity of [0,null]){
+  const db=database(),connection=await loadConnection(db,company,connectionId);let puts=0;
+  db.tables.marketplace_product_links=[{empresa_id:company,connection_id:connectionId,provider_listing_id:itemId,product_id:'produto'}];
+  db.tables.marketplace_products=[{empresa_id:company,id:'produto',stock_quantity:quantity,archived_at:null}];
+  globalThis.fetch=async(_url,options)=>{if(options.method==='PUT')puts++;return Response.json({id:itemId,seller_id:123,status:'paused'});};
+  await assert.rejects(manageListing(db,connection,'actor',{id:itemId,action:'resume',requestKey:crypto.randomUUID(),confirmation:itemId}),/Sem estoque Online/);
+  assert.equal(puts,0);assert.equal(db.tables.marketplace_listing_actions?.length||0,0);
+ }
+}));
+test('reativação vinculada confirma a quantidade atual antes de liberar o anúncio',()=>environment(async()=>{
+ const db=database(),connection=await loadConnection(db,company,connectionId),writes=[];let status='paused',quantity=0;
+ db.tables.marketplace_product_links=[{empresa_id:company,connection_id:connectionId,provider_listing_id:itemId,product_id:'produto'}];
+ db.tables.marketplace_products=[{empresa_id:company,id:'produto',stock_quantity:2,archived_at:null}];
+ globalThis.fetch=async(_url,options)=>{if(options.method==='PUT'){const body=JSON.parse(options.body);writes.push(body);if('available_quantity' in body)quantity=body.available_quantity;if(body.status)status=body.status;}return Response.json({id:itemId,seller_id:123,title:'Produto',status,available_quantity:quantity,shipping:{}});};
+ const result=await manageListing(db,connection,'actor',{id:itemId,action:'resume',requestKey:crypto.randomUUID(),confirmation:itemId});
+ assert.equal(result.success,true);assert.deepEqual(writes,[{available_quantity:2},{status:'active'}]);assert.equal(db.observations[0].p_quantity,2);
 }));
 test('scan enumera IDs antes de cotar; falha no bulk preserva a fila e não pula produtos', () => environment(async () => {
   const db=database(); let scans=0, failBulk=true;
@@ -141,6 +214,44 @@ test('scan enumera IDs antes de cotar; falha no bulk preserva a fila e não pula
   assert.deepEqual(db.tables.marketplace_connections[0].sync_pending_ids,[itemId]);
   failBulk=false; const result=await synchronizeListings(db,await get());
   assert.equal(result.complete,true); assert.equal(scans,2); assert.equal(db.tables.marketplace_listings[0].provider_listing_id,itemId);
+}));
+test('conferência automática percorre todos os IDs locais, mesmo excluídos que não aparecem na busca, e não faz PUT',()=>environment(async()=>{
+ const db=database(),connection=await loadConnection(db,company,connectionId),seen=[];
+ db.tables.marketplace_listings=Array.from({length:10},(_,i)=>({id:String(i).padStart(2,'0'),empresa_id:company,connection_id:connectionId,provider:'mercado_livre',provider_listing_id:`MLB532452${1000+i}`,status:'active',snapshot:{}}));
+ db.tables.marketplace_listings.push({id:'other',empresa_id:'other',connection_id:connectionId,provider:'mercado_livre',provider_listing_id:'MLB9999999999',status:'active'});
+ globalThis.fetch=async(url,options)=>{assert.equal(options.method,'GET');assert.match(new URL(url).pathname,/^\/items\/MLB\d+$/);const id=new URL(url).pathname.split('/').pop();seen.push(id);return Response.json({id,seller_id:123,status:'closed',sub_status:['deleted'],title:'Armário',price:100,available_quantity:1});};
+ let progress=await refreshKnownListingStatuses(db,connection);assert.equal(progress.count,8);assert.equal(progress.complete,false);
+ progress=await refreshKnownListingStatuses(db,connection);assert.equal(progress.count,2);assert.equal(progress.complete,true);
+ assert.equal(new Set(seen).size,10);assert.equal(db.tables.marketplace_listings.filter(x=>x.empresa_id===company&&x.status==='deleted').length,10);assert.equal(db.tables.marketplace_listings.find(x=>x.id==='other').status,'active');
+ assert.ok(db.tables.marketplace_listing_status_checks[0].last_completed_at);assert.equal(db.tables.marketplace_listing_status_checks[0].issue,null);
+}));
+test('falha isolada preserva situação, avança cursor sem bloquear demais e só encerra aviso após ciclo íntegro',()=>environment(async()=>{
+ const db=database(),connection=await loadConnection(db,company,connectionId);let fail=true;
+ db.tables.marketplace_listings=Array.from({length:9},(_,i)=>({id:String(i).padStart(2,'0'),empresa_id:company,connection_id:connectionId,provider:'mercado_livre',provider_listing_id:`MLB532452${1000+i}`,status:'active',snapshot:{}}));
+ globalThis.fetch=async(url,options)=>{assert.equal(options.method,'GET');const id=new URL(url).pathname.split('/').pop();if(fail&&id==='MLB5324521000')return Response.json({}, {status:404});return Response.json({id,seller_id:123,status:'paused',title:'Produto',price:100});};
+ await refreshKnownListingStatuses(db,connection);assert.equal(db.tables.marketplace_listings[0].status,'active');assert.equal(db.tables.marketplace_listings[1].status,'paused');
+ await refreshKnownListingStatuses(db,connection);assert.equal(db.tables.marketplace_listings[8].status,'paused');assert.equal(db.tables.marketplace_listing_status_checks[0].issue,'listing_refresh_partial');assert.equal(db.tables.marketplace_listing_status_checks[0].last_completed_at,null);
+ fail=false;await refreshKnownListingStatuses(db,connection);await refreshKnownListingStatuses(db,connection);assert.equal(db.tables.marketplace_listings[0].status,'paused');assert.equal(db.tables.marketplace_listing_status_checks[0].issue,null);
+}));
+test('tentativa incompatível relê e persiste exclusão antes de recusar pausa; sem PUT nem recibo falso',()=>environment(async()=>{
+ const db=database();db.tables.marketplace_listings=[{id:'local',empresa_id:company,connection_id:connectionId,provider_listing_id:itemId,status:'active',snapshot:{}}];
+ globalThis.fetch=async(url,options)=>{assert.equal(options.method,'GET');return Response.json({id:itemId,seller_id:123,title:'Armário',status:'closed',sub_status:['deleted']});};
+ await assert.rejects(manageListing(db,await loadConnection(db,company,connectionId),'actor',{id:itemId,action:'pause',confirmation:itemId,requestKey:crypto.randomUUID()}),/já foi excluído/);
+ assert.equal(db.tables.marketplace_listings[0].status,'deleted');assert.equal((db.tables.marketplace_listing_actions||[]).length,0);
+}));
+test('conferência respeita trava e orçamento; vendedor divergente não sobrescreve estado',()=>environment(async()=>{
+ const db=database(),connection=await loadConnection(db,company,connectionId);
+ db.tables.marketplace_listings=[{id:'local',empresa_id:company,connection_id:connectionId,provider:'mercado_livre',provider_listing_id:itemId,status:'active',snapshot:{}}];
+ db.tables.marketplace_connections[0].sync_lock_until=new Date(Date.now()+60_000).toISOString();
+ globalThis.fetch=()=>{throw new Error('não deve consultar durante trava/orçamento esgotado');};
+ assert.equal((await refreshKnownListingStatuses(db,connection)).busy,true);
+ db.tables.marketplace_connections[0].sync_lock_until=null;
+ assert.equal((await refreshKnownListingStatuses(db,connection,Date.now())).count,0);
+ assert.equal(db.tables.marketplace_connections[0].sync_lock_owner,null);
+ globalThis.fetch=async()=>Response.json({id:itemId,seller_id:999,status:'paused'});
+ assert.equal((await refreshKnownListingStatuses(db,connection)).partial,true);
+ assert.equal(db.tables.marketplace_listings[0].status,'active');
+ assert.equal(db.tables.marketplace_connections[0].sync_lock_owner,null);
 }));
 test('perda de resposta do scan reinicia em vez de reutilizar cursor já consumido', () => environment(async () => {
   const db=database(); const connection=db.tables.marketplace_connections[0];

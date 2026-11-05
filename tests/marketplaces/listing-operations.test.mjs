@@ -35,7 +35,7 @@ test('vínculo das pendências usa conta e ID do item; não aproxima por nome ne
 });
 test('função SQL usada antes da paginação segue o contrato em todas as combinações de estados', async () => {
   const db = new PGlite(); try {
-    const sql = readFileSync(new URL('../../supabase/migrations/20261012230000_marketplace_sales_history.sql', import.meta.url), 'utf8');
+    const sql = readFileSync(new URL('../../supabase/historico-sem-registro/20261012230000_marketplace_sales_history.sql', import.meta.url), 'utf8');
     await db.exec(sql.match(/create or replace function public\.marketplace_sale_operation[\s\S]*?\$\$;/)[0]);
     for (const status of ['paid', 'confirmed', 'payment_required', 'payment_in_process', 'partially_paid', 'pending_cancel', 'cancelled', 'refunded', 'partially_refunded', 'invalid']) {
       for (const shipment_status of [null, 'pending', 'handling', 'ready_to_ship', 'shipped', 'delivered', 'not_delivered', 'cancelled']) {

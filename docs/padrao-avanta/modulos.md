@@ -85,6 +85,12 @@ Um módulo exclusivo Web não é registrado em menus, scripts ou pacotes mobile.
 
 ## Dados e segurança
 
+### Liberações individuais
+
+Dashboard e módulos possuem concessões independentes por vínculo usuário/empresa (`dashboard_liberada`, `modulos_liberados`). `NULL` nos módulos preserva os direitos legados; uma lista explícita libera somente seus identificadores. Gestor Master mantém Dashboard e todos os módulos. A concessão não amplia o papel, não instala módulos e não supera validade/plano.
+
+Após login, Dashboard liberada tem prioridade. Sem Dashboard, um módulo disponível abre diretamente; vários levam a `/modulos`. Sem módulo disponível, mostrar vazio com orientação ao gestor. Início retorna à Dashboard se concedida ou à seleção de módulos, inclusive quando há só um. Ponto e Conteúdo AvantaVendas reutilizam seus componentes integrados em uma superfície sem financeiro. APIs, operações legadas com service role e RLS reconfirmam a mesma fronteira. Contexto visual e parâmetros de URL nunca concedem acesso.
+
 - Dados do módulo usam tabelas e serviços próprios, com `empresa_id` e RLS quando
   aplicável.
 - A instalação pertence à empresa/perfil ativo, não ao usuário que a solicitou.

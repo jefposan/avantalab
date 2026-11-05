@@ -120,7 +120,6 @@ export default function RecebimentosClient({
     <>
       {erro && <div className={styles.aviso} role="alert" style={{ marginBottom: 12 }}>{erro}</div>}
       <div className={styles.painelDados} aria-hidden={carregando || undefined} inert={carregando || undefined}>
-      {carregando ? <section className={styles.esqueletoPainel} aria-hidden="true"><i /><i /><i /><i /></section> : (
         <PainelAdministrativo
           perfil={perfil}
           darkMode={darkMode}
@@ -172,9 +171,8 @@ export default function RecebimentosClient({
           onCancelarAgendamentoServico={(id) => executar(() => repoAtual.cancelarAgendamentoServico(id))}
           onConcluirAgendamentoServico={(id) => executar(() => repoAtual.concluirAgendamentoServico(id))}
         />
-      )}
       </div>
-      <CarregamentoDadosModulo ativo={carregando} titulo="Preparando Operações de Campo" mensagem="Carregando recebimentos, serviços e equipes…" corPrimaria={corPrimaria} />
+      <CarregamentoDadosModulo ativo={carregando} titulo="Preparando Operações de Campo" mensagem="Carregando os dados do módulo…" corPrimaria={corPrimaria} temaEscuro={darkMode} />
     </>
   );
 

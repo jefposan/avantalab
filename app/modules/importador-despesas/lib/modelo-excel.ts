@@ -123,7 +123,8 @@ export async function personalizarModeloImportacaoDespesas(
   });
 }
 
-export async function baixarModeloImportacaoDespesas(tipos: string[]) {
+export async function baixarModeloImportacaoDespesas(carregarTipos: () => Promise<string[]>) {
+  const tipos = await carregarTipos();
   const resposta = await fetch(CAMINHO_MODELO, { cache: 'no-store' });
   if (!resposta.ok) throw new Error('Não foi possível carregar o arquivo modelo.');
   const conteudo = await personalizarModeloImportacaoDespesas(await resposta.arrayBuffer(), tipos);

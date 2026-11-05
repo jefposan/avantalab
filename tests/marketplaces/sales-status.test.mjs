@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { canPrintSaleLabel, labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, salesInPeriod, salesSummary, saleGroup, validSalePeriod, orderedSaleGroups, SALE_GROUPS } from '../../app/modules/marketplaces/sales-status.ts';
+import { canIssueDce, canPrintSaleLabel, labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, salesInPeriod, salesSummary, saleGroup, validSalePeriod, orderedSaleGroups, SALE_GROUPS } from '../../app/modules/marketplaces/sales-status.ts';
 
 const sale = (overrides = {}) => ({ status: 'paid', shipmentStatus: 'ready_to_ship', shipmentSubstatus: 'ready_to_print', labelStatus: 'ready', ...overrides });
 
@@ -57,6 +57,20 @@ test('botão de etiqueta só é elegível quando a impressão está liberada', (
     { labelStatus: 'fulfilled' },
   ]) assert.equal(canPrintSaleLabel(sale(overrides)), false);
   assert.equal(labelUnavailableText(sale({ labelStatus: 'unavailable', shipmentSubstatus: 'picked_up' })), 'Envio já coletado ou em trânsito. A etiqueta não pode ser emitida nesta etapa.');
+});
+
+test('DC-e só pode ser solicitada para envio pago aguardando documento fiscal', () => {
+  const pendingDce = sale({ labelStatus: 'unavailable', shipmentSubstatus: 'invoice_pending' });
+  assert.equal(canIssueDce(pendingDce), true);
+  for (const overrides of [
+    { provider: 'magalu' },
+    { provider: 'direct' },
+    { shipmentSubstatus: 'ready_to_print', labelStatus: 'ready' },
+    { shipmentStatus: 'handling' },
+    { status: 'cancelled' },
+    { status: 'payment_in_process' },
+    { labelStatus: 'fulfilled' },
+  ]) assert.equal(canIssueDce({ ...pendingDce, ...overrides }), false);
 });
 
 test('não apresenta espera de etiqueta depois do despacho ou encerramento', () => {

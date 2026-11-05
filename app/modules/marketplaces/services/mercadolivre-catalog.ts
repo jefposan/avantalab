@@ -6,6 +6,7 @@ import {
   catalogAttributes,
   catalogCandidate,
   catalogPictures,
+  catalogGtins,
   safeText,
   validEan,
   type CatalogCandidate,
@@ -26,6 +27,7 @@ export type CatalogIdentification = {
   candidates: CatalogCandidate[];
   product?: CatalogProductDetail;
   notice?: string;
+  identifierEvidence?: {ean:string;productId:string};
 };
 
 function searchTerm(input: { ean?: unknown; query?: unknown }) {
@@ -95,12 +97,18 @@ export async function identifyMercadoLivreCatalog(
     throw new MarketplaceError(409, 'catalog_changed', 'A ficha do produto mudou. Faça a consulta novamente.');
   }
 
+  const gtins=catalogGtins(detail.attributes);
+  const returnedIdentifier=validEan(search.product_identifier);
+  const identifierEvidence=term.ean&&returnedIdentifier&&returnedIdentifier.replace(/^0+/,'')===term.ean.replace(/^0+/,'')&&candidates.length===1&&search.results.length===1&&objectValue(search.paging).total===1
+    ? {ean:term.ean,productId:product.id}:undefined;
   return {
     status: 'found',
-    ...(term.ean ? { ean: term.ean } : { query: term.query }),
+    ...(identifierEvidence?{identifierEvidence}:{}),
+    ...(term.ean ? { ean: term.ean } : { query: term.query, ...(gtins.length===1?{ean:gtins[0]}:{}) }),
     candidates,
     product: {
       ...product,
+      source: 'mercadolivre_catalog',
       attributes: catalogAttributes(detail.attributes),
       pictures: catalogPictures(detail.pictures),
       description: safeText(detail.short_description, 5000)

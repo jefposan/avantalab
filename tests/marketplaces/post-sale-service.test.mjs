@@ -24,26 +24,34 @@ const saleId = '33333333-3333-4333-8333-333333333333';
 const providerId = '2000018759586622';
 
 class Query {
-  constructor(db) { this.db = db; this.filters = []; }
+  constructor(db, table) { this.db = db; this.table = table; this.filters = []; }
   select() { return this; }
   eq(key, value) { this.filters.push((row) => row[key] === value); return this; }
-  maybeSingle() { this.single = true; return this; }
+  in(key, values) { this.filters.push(row => values.includes(row[key])); return this; }
+  order() { return this; }
+  limit(value) { this.max=value; return this; }
+  range(a,b) { this.start=a;this.max=b-a+1;return this; }
+  insert(value) { this.insertValue=value;return this; }
+  single() { this.one=true;return this; }
+  maybeSingle() { this.one = true; return this; }
   update(value) { this.value = value; return this; }
   then(success, failure) { return Promise.resolve().then(() => {
-    const found = this.db.rows.filter((row) => this.filters.every((filter) => filter(row)));
-    if (this.value) { if (this.db.saveFails) return { data: null, error: {} }; for (const row of found) Object.assign(row, this.value); }
-    return { data: this.single ? structuredClone(found[0] || null) : structuredClone(found), error: null };
+    const rows=this.table==='marketplace_sales'?this.db.rows:(this.db.tables[this.table] ||= []);
+    if(this.insertValue)rows.push(structuredClone(this.insertValue));
+    const found = rows.filter((row) => this.filters.every((filter) => filter(row)));
+    if (this.value) { if (this.db.saveFails && this.table==='marketplace_sales') return { data: null, error: {} }; for (const row of found) Object.assign(row, this.value); }
+    return { data: this.one ? structuredClone(found[0] || null) : structuredClone(found), error: null };
   }).then(success, failure); }
 }
 function database(overrides = {}) {
-  const db = { company, connection: { id: connectionId, empresa_id: company, seller_reference: '123' }, reads: [], rows: [{ id: saleId, empresa_id: company, connection_id: connectionId, provider_order_id: providerId, status: 'paid', shipment_id: '555', shipment_status: 'delivered', shipment_substatus: null, label_status: 'unavailable', created_at: '2026-10-10T00:00:00Z', updated_at: '2026-10-10T00:00:00Z', snapshot: {} }],
+  const db = { company, connection: { id: connectionId, empresa_id: company, seller_reference: '123' }, reads: [], tables: {}, rows: [{ id: saleId, empresa_id: company, connection_id: connectionId, provider_order_id: providerId, status: 'paid', shipment_id: '555', shipment_status: 'delivered', shipment_substatus: null, label_status: 'unavailable', created_at: '2026-10-10T00:00:00Z', updated_at: '2026-10-10T00:00:00Z', snapshot: {} }],
     read: async (path) => {
       db.reads.push(path);
       if (path === `/orders/${providerId}`) return { id: providerId, seller: { id: 123 }, status: 'cancelled', date_created: '2026-09-01T12:00:00Z', shipping: { id: 555 }, buyer: { nickname: 'TEST' }, ...overrides };
       if (path === '/shipments/555') return { id: 555, status: 'delivered', mode: 'me2' };
       if (path.includes('/claims/search')) return { data: [], paging: { total: 0 } };
       throw new Error('unexpected path');
-    }, from(table) { assert.equal(table, 'marketplace_sales'); return new Query(this); },
+    }, from(table) { return new Query(this,table); },
   };
   return db;
 }
@@ -147,6 +155,16 @@ test('impressão revalida conta/pedido e recusa canceladas, despachadas, Full e 
   }
   const db=database({status:'paid',seller:{id:999}});db.rows[0].provider='mercado_livre';db.binaryReads=[];
   await assert.rejects(labelForSale(db,company,connectionId,saleId),/não confirmou/);assert.deepEqual(db.binaryReads,[]);
+});
+test('etiqueta térmica usa ZPL2 e mantém todas as conferências de pedido e envio',async()=>{
+ const db=database({status:'paid'});db.rows[0].provider='mercado_livre';db.binaryReads=[];const oldRead=db.read;
+ db.read=async(path)=>path==='/shipments/555'?{id:555,status:'ready_to_ship',substatus:'ready_to_print',mode:'me2'}:oldRead(path);
+ await labelForSale(db,company,connectionId,saleId,'zpl2');
+ assert.deepEqual(db.binaryReads,['/shipment_labels?shipment_ids=555&response_type=zpl2']);
+ await assert.rejects(labelForSale(db,company,connectionId,saleId,'html'),error=>error.code==='invalid_label_format');
+ db.read=async(path)=>path==='/shipments/555'?{id:555,status:'shipped',substatus:'printed',mode:'me2'}:oldRead(path);
+ await assert.rejects(labelForSale(db,company,connectionId,saleId,'zpl2'),error=>error.code==='label_unavailable');
+ assert.equal(db.binaryReads.length,1);
 });
 test('buffered conserva data de liberação e não indica etiqueta disponível', async () => {
   const db=database({status:'paid'});const oldRead=db.read;

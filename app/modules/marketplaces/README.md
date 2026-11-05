@@ -2,6 +2,37 @@
 
 Módulo Web e PWA por empresa para conectar contas de marketplaces, preparar publicações por EAN e consultar produtos e preços.
 
+## Exclusão segura de produtos — 3.2.0.76
+
+Web e AvantaPreços compartilham conferência/remoção com autorização de gestão, saldos e anúncios em todas as contas vinculadas. Histórico/vínculos exigem arquivamento; saldo positivo/desconhecido ou anúncio ativo/sem conferência bloqueiam. Não pausa anúncios automaticamente. Fluxo e limitações em [exclusão de produtos](../../../docs/marketplaces/exclusao-produtos.md); migração aplicada conforme [registro da entrega](../../../docs/marketplaces/publicacao-32076.md).
+
+## Estoques por perfil — 3.2.0
+
+- Refinamento 3.2.0.06: produto expandido setorizado em cadastro, estoques/movimentações, publicação e históricos. Ações relacionadas em linha, formulário de publicação alinhado e informação longa recolhível. O botão oficial compacto fica excluído de estilos genéricos que duplicavam borda/padding; headingActions não herda grid. Vendas/saídas tem agrupamento próprio. Sem mudança em permissões, transações, baixa ou financeiro.
+
+- Refinamento 3.2.0.05: Anunciados usa total exato da consulta e a identidade dos filtros/contas para não exibir número de outra seleção. Estoques recebe ProductListCount da lista reutilizada: produtos com saldo no estoque selecionado, incluindo a busca, total completo independentemente da página. Inicializa recolhido com leitura habilitada; “…” indica consulta e “—” indisponibilidade. Zero exige resposta confirmada. Não soma unidades nem conta depósitos. Sem migração adicional, movimentação ou financeiro.
+
+- Refinamento 3.2.0.04: marketplace_direct_sales e RPC marketplace_direct_sale_command gravam venda/saída/devolução na mesma transação; recibos compartilhados com estoques, revisão por saldo/venda, locks e RLS/service_role. Snapshot de produto/EAN/foto/nome do estoque/preço efetivo/data preserva histórico. can_register_sales separado e inicialmente false; permite venda/cancelamento/devolução para o acesso dedicado; Editar estoque continua independente e autoriza outras saídas físicas. Campo de data define competência do filtro, não lançamento financeiro. APIs leem empresa/ator autenticados e relêem permissão. Venda direta usa provider direct e canal warehouse:<id>, nunca inventa conexão externa nem passa por pós-venda/etiqueta do ML. Só Online atualiza legado/fila de anúncios. Prévia 3001 usa PGlite e SQL reais com produtos fictícios; prévia bloqueada em produção. Integração financeira/fiscal deliberadamente não implementada.
+
+- Refinamento 3.2.0.03: Estoques reutiliza o componente ProductsStock em modo de estoque, com o mesmo cabeçalho do produto/detalhe/ações/busca e leitor da base Produtos cadastrados. GET produtos recebe warehouseId opcional, valida estoque ativo da mesma empresa e filtra relação interna de saldos positivos antes da pesquisa normalizada e paginação. Sem warehouseId mantém todos os cadastros. Produtos e saldo legado não são reescritos pela consulta. Estoques são pílulas com cores pseudoaleatórias estáveis por UUID; modal oficial cria/renomeia e mantém recibo idempotente. IDs isolados evitam colisões quando um produto aparece nas duas listas. Sem migração.
+
+- Refinamento local 3.2.0.02, ainda não publicado: Estoques participa do AvantaKanban oficial; padrão Vendas → Anunciados → Estoques → Produtos. `panel-order.ts` migra preferências v1/v2 para v3 mantendo a chave por usuário/empresa e ordens antigas personalizadas, inserindo Estoques antes de Produtos. O antigo padrão vira o novo padrão; v3 preserva quaisquer quatro IDs válidos. Não altera estoque, servidor ou preferências de outros perfis.
+
+- Produto/EAN continua único na empresa. `marketplace_warehouses` define os estoques internos e um único Online ativo; `marketplace_warehouse_balances` guarda quantidade/revisão por produto/estoque; operations/movements guardam recibos e auditoria, incluindo nomes no momento da operação.
+- `marketplace_products.stock_quantity` permanece como projeção SOMENTE do Online. A migração `20261019230000_marketplace_warehouses.sql` copia saldos e confirmações antigos, inclusive null, sem atualizar produtos nem enfileirar anúncios durante o backfill. Trigger mantém essa projeção na estrutura nova para clientes antigos e para a baixa online existente. Nenhuma unidade offline é somada ao legado.
+- `marketplace_warehouse_command`: gestores criam/renomeiam/arquivam/selecionam Online; Editar estoque do PWA concede somente add/set/transfer, com permissão relida e travada pelo helper existente. RLS e RPCs restritos ao service_role. Todas as relações validam a empresa. Revisão de origem/destino, locks, recibo por ator/empresa/chave e transação protegem repetição, saldo insuficiente e concorrência.
+- Dar entrada acrescenta; Ajustar saldo final substitui; Transferir conserva total. Offline não atualiza o produto legado nem a fila de anúncios. Trocar Online exige confirmação, origem confirmada/zerada e nenhum evento de venda pendente. Estoques com saldo positivo/desconhecido não são arquivados. Unificar/arquivar produto com saldo alocado é recusado. Histórico não é excluído.
+- Produtos exibe total/distribuição; Estoques lista produtos com saldo, paginados de 25. AvantaPreços usa as mesmas APIs/saldos; nenhuma consulta isolada dá entrada. Leituras de distribuição paginam sem limitar o número de estoques. Falha de leitura não é saldo zero.
+- Esta fase NÃO cria baixa de venda offline nem altera critérios de pagamento/cancelamento/devolução. Revisão desses critérios é a próxima etapa; não repor estoque automaticamente por mero cancelamento nesta entrega.
+
+### Ativação e reversibilidade
+
+1. Fazer backup e registrar comparação dos produtos/saldos/confirmados antes da migração. Incluir as quatro tabelas novas nos procedimentos de exportação que usarem lista explícita.
+2. Aplicar/testar a migração em ambiente de validação. Conferir igualdade exata entre saldo legado anterior e Online (incluindo null), um Online por perfil e nenhum produto duplicado.
+3. Migração instalada no Supabase produtivo em 19/10/2026 após testes PGlite. Backup privado e comparação transacional confirmaram 65 produtos, saldos/confirmados/revisões legados preservados, dois estoques Online, nenhuma divergência, permissão ou movimentação alterada. Web/PWA 3.2.0 em preparação para publicação isolada da base 3.1.0.70.
+4. Testar criação, entrada offline, transferência e leitura cruzada Web/PWA com o responsável. Não publicar anúncios, conceder permissões ou movimentar produtos reais como simples teste de deploy.
+5. Reversão de interface mantém tabelas/saldos/histórico e o espelho online. Não remover tabelas nem somar offline ao legado. Clientes anteriores só alteram Online; offline fica preservado até a interface nova voltar.
+
 ## Segurança
 
 - Identificação local de contas em `marketplace_connection_labels`, sem
@@ -346,3 +377,11 @@ deve preservar as novas colunas/tabelas e o cache/histórico, desabilitando apen
 o uso das rotas se necessário. Não executar DROP nem apagar credenciais para
 reverter a interface. RLS permanece ativo e anon/authenticated não têm acesso
 direto às tabelas; a service role é exclusiva do backend autorizado por empresa.
+
+## Post Online por conta — 3.2.0.285
+
+No AvantaPreços, Criar post consulta o estoque da empresa. Com saldo Online e Saldão, escolhe-se o formato; somente Online abre texto/link, somente Saldão conserva imagem. O Online exige selecionar conta/anúncio ativo com estoque e URL oficial. O servidor resolve o produto ou histórico na empresa autorizada e retorna somente dados públicos do anúncio.
+
+A legenda conserva descrição e detalhes. De usa market_price_cents da última consulta válida; Por usa o preço anunciado da conta selecionada. Qualquer preço válido é aceito, independentemente da média; não há percentual ou desconto calculado. Ao gerar, a consulta é repetida para confirmar disponibilidade, conta, URL e preço. Nenhum preço, saldo ou anúncio é modificado. Compartilhamento nativo usa texto; copiar é a alternativa. Posts em imagem permanecem armazenados e editáveis como antes.
+
+Condição do post usa a lista compartilhada Novo/Usado/Recondicionado/Avaria/Com detalhe. O Online exige seleção explícita antes de gerar e inclui a condição no texto. Avaria e Com detalhe exigem observação; o seletor de imagem/Saldão e a validação de salvamento aceitam as mesmas chaves. Valores anteriores new/used/damaged permanecem válidos; imagens existentes não são regravadas automaticamente. Nenhuma condição do marketplace é alterada.

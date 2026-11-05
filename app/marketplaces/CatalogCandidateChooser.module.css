@@ -1,0 +1,26 @@
+.dialog { display:grid; gap:14px; padding:18px; color:#1f2937; background:#fff; font-family:var(--av-font-family,Inter,sans-serif); }
+.dark { color:#edf3f8; background:#182235; }
+.dialog header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.dialog h2 { margin:0; font-size:18px; line-height:1.2; letter-spacing:-.01em; }
+.dialog header p,.dialog footer small { margin:5px 0 0; color:#64748b; font-size:12px; line-height:1.45; }
+.dark header p,.dark footer small { color:#b8c5d7; }
+.ean { margin:0; border-radius:12px; padding:9px 10px; color:#164e63; background:color-mix(in srgb,var(--brand,#003e73) 9%,#fff); font-size:12px; overflow-wrap:anywhere; }
+.dark .ean { color:#d7edf7; background:color-mix(in srgb,var(--brand,#93c5fd) 18%,#182235); }
+.options { display:grid; gap:10px; }
+.option { display:grid; grid-template-columns:62px minmax(0,1fr); gap:10px; align-items:start; border:1px solid #dce6ea; border-radius:14px; padding:9px; background:#fff; }
+.dark .option { border-color:#475569; background:#111827; }
+.option > img,.pictureFallback { display:grid; width:62px; height:62px; place-items:center; border-radius:10px; object-fit:contain; color:#64748b; background:#f1f5f9; font-size:10px; text-align:center; }
+.dark .option > img,.dark .pictureFallback { background:#26354c; color:#b8c5d7; }
+.content { display:grid; min-width:0; gap:3px; }
+.content > strong { overflow-wrap:anywhere; font-size:13px; line-height:1.35; }
+.content > small { color:#64748b; font-size:11px; line-height:1.35; overflow-wrap:anywhere; }
+.dark .content > small { color:#b8c5d7; }
+.content dl { display:flex; flex-wrap:wrap; gap:5px 8px; margin:3px 0 0; }
+.content dl div { display:flex; gap:4px; font-size:11px; }
+.content dt { color:#64748b; }
+.content dd { margin:0; font-weight:600; }
+.confirmed { color:#087443 !important; }
+.warning { color:#b42318 !important; font-weight:600; }
+.option > button { grid-column:2; justify-self:start; margin-top:2px; }
+.dialog footer { border-top:1px solid #e2e8f0; padding-top:10px; }
+.dark footer { border-color:#475569; }

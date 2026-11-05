@@ -29,6 +29,7 @@ type CardLancamentoDespesaProps = {
   handleValorChange: (e: ChangeEvent<HTMLInputElement>) => void;
   adicionarDespesa: () => void | Promise<void>;
   despesasCadastradas: DespesaCadastrada[];
+  atualizarTiposModelo?: () => Promise<string[]>;
   estiloTemaPrimario: CSSProperties;
   getMaxDias: (mes: string | null, ano: string | number) => number;
   formatarDescricao: (texto: string) => string;
@@ -69,6 +70,7 @@ export default function CardLancamentoDespesa({
   handleValorChange,
   adicionarDespesa,
   despesasCadastradas,
+  atualizarTiposModelo,
   getMaxDias,
   formatarDescricao,
   expandido,
@@ -353,7 +355,10 @@ export default function CardLancamentoDespesa({
                   if (baixandoModelo) return;
                   setBaixandoModelo(true);
                   setErroModelo('');
-                  void baixarModeloImportacaoDespesas(despesasCadastradas.map((despesa) => despesa.nome))
+                  void baixarModeloImportacaoDespesas(async () => {
+                    if (!atualizarTiposModelo) throw new Error('Perfil indisponível.');
+                    return atualizarTiposModelo();
+                  })
                     .catch(() => setErroModelo('Não foi possível gerar o modelo. Tente novamente.'))
                     .finally(() => setBaixandoModelo(false));
                 }}

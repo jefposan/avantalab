@@ -34,10 +34,12 @@ class Query {
   limit(value) { this.max=value; return this; }
   update(value) { this.updateValue=value; return this; }
   maybeSingle() { this.single = true; return this; }
+  insert(value) { this.insertValue=value;return this; }
   upsert(value, options) { this.value = value; this.options = options; return this; }
   then(ok, bad) { return Promise.resolve().then(() => {
     if (this.db.fail === this.table) return { error: {} };
     const rows = this.db.tables[this.table] ||= [];
+    if(this.insertValue)rows.push({id:crypto.randomUUID(),...structuredClone(this.insertValue)});
     if (this.value) {
       const old = rows.find(row => this.table === 'marketplace_sale_notifications' ? row.id === this.value.id :
         row.connection_id === this.value.connection_id && (this.table !== 'marketplace_sales' || row.provider_order_id === this.value.provider_order_id));
@@ -165,7 +167,7 @@ test('migração SQL real aditiva/idempotente conserva cursor, RLS e permissões
     await db.exec("create role anon; create role authenticated; create role service_role; create table marketplace_inventory_reconciliation(connection_id uuid primary key,empresa_id uuid,checkpoint timestamptz,window_end timestamptz,scan_offset integer); alter table marketplace_inventory_reconciliation enable row level security; revoke all on marketplace_inventory_reconciliation from public,anon,authenticated; grant select,insert,update on marketplace_inventory_reconciliation to service_role;");
     await db.exec('create table marketplace_listings(empresa_id uuid,connection_id uuid,provider_listing_id text,search_text text,status text,snapshot jsonb,synced_at timestamptz); create table marketplace_sales(empresa_id uuid,connection_id uuid,provider text,provider_order_id text,updated_at timestamptz,status text,shipment_status text,snapshot jsonb); create table marketplace_sale_notifications(id text,created_at timestamptz,processed_at timestamptz);');
     await db.query('insert into marketplace_inventory_reconciliation values($1,$2,$3,$3,7)', [connectionId, company, activation]);
-    const sql = readFileSync(resolve(root, 'supabase/migrations/20261012230000_marketplace_sales_history.sql'), 'utf8');
+    const sql = readFileSync(resolve(root, 'supabase/historico-sem-registro/20261012230000_marketplace_sales_history.sql'), 'utf8');
     await db.exec(sql); await db.exec(sql);
     const row = (await db.query('select * from marketplace_inventory_reconciliation')).rows[0];
     assert.equal(new Date(row.checkpoint).toISOString(), activation); assert.equal(row.scan_offset, 7); assert.equal(row.history_scan_offset, 0);

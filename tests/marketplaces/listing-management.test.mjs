@@ -7,6 +7,12 @@ const item = { id: 'MLB5324529993', seller_id: 123, title: 'Gin Bóra', status: 
   shipping: { free_shipping: true, mode: 'me2' }, attributes: [{ id: 'GTIN', name: 'EAN', value_name: '7899882306941' }],
   permalink: 'https://produto.mercadolivre.com.br/MLB-5324529993', seller_address: { secret: 'Não retornar' } };
 
+test('snapshot guarda fotos seguras do ML, prioriza HTTPS, deduplica e aceita snapshots antigos', () => {
+  assert.deepEqual(normalizeListing({...item,pictures:[{secure_url:'https://http2.mlstatic.com/a.jpg',url:'http://http2.mlstatic.com/a.jpg'},{url:'http://http2.mlstatic.com/b.jpg'},{secure_url:'https://evil.example/foto.jpg'},{secure_url:'javascript:bad'}]},'123').pictures,['https://http2.mlstatic.com/a.jpg','https://http2.mlstatic.com/b.jpg']);
+  assert.deepEqual(normalizeListing({...item,thumbnail:'http://http2.mlstatic.com/thumb.jpg'},'123').pictures,['https://http2.mlstatic.com/thumb.jpg']);
+  assert.deepEqual(normalizeListing(item,'123').pictures,[]);
+});
+
 test('snapshot preserva dados reais e não inventa custos nem expõe endereço', () => {
   const snapshot = normalizeListing(item, '123');
   assert.equal(snapshot.stock, 30); assert.equal(snapshot.price, 160); assert.equal(snapshot.ean, '7899882306941');
@@ -25,6 +31,9 @@ test('pausar e reativar são reversíveis; excluir exige encerrado e não reativ
   assert.deepEqual(actionBody('resume', 'paused'), { status: 'active' });
   assert.deepEqual(actionBody('close', 'paused'), { status: 'closed' });
   assert.deepEqual(actionBody('delete', 'closed'), { deleted: 'true' });
+  assert.deepEqual(actionBody('delete','under_review',['forbidden']),{deleted:'true'});
+  assert.throws(()=>actionBody('delete','under_review',[]));
+  assert.throws(()=>actionBody('delete','under_review',['held']));
   for (const [action, status] of [['delete', 'active'], ['resume', 'closed'], ['pause', 'under_review'], ['close', 'closed']]) assert.throws(() => actionBody(action, status));
   assert.throws(() => actionBody('delete', 'closed', ['deleted']), /já foi excluído/);
 });

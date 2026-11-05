@@ -184,9 +184,15 @@ exigir(
   'O card de identificação do menu não pode reintroduzir borda ou sombra lateral assimétrica.',
 );
 exigir(
-  vendas.includes('onclick="cancelarLoginSocialVendas()"') &&
-    vendas.includes('Cancelar e voltar ao login'),
-  'O AvantaVendas precisa manter a referência de cancelamento em Preparando acesso.',
+  vendas.includes('function cancelarLoginSocialVendas()') &&
+    vendas.includes("Browser.addListener('browserFinished'") &&
+    vendas.includes('cancelarLoginSocialVendas();') &&
+    vendas.includes('if (processandoRetornoOAuthNativoVendas) return;') &&
+    vendas.includes('limparLoginSocialPendenteVendas();') &&
+    vendas.includes('Promise.resolve(Browser.close()).catch') &&
+    !vendas.slice(vendas.indexOf('function renderPreparandoAcesso()'), vendas.indexOf('function atualizarProgressoPreparacao(')).includes('Cancelar e voltar ao login') &&
+    !vendas.includes('onclick="cancelarLoginSocialVendas()"'),
+  'O AvantaVendas deve preservar recuperação pelo fechamento do provedor, sem botão visual de cancelar na preparação.',
 );
 
 if (falhas.length) {

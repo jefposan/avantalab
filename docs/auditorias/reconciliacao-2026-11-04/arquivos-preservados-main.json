@@ -1,0 +1,592 @@
+[
+  {
+    "path": "android/.gitignore",
+    "sha256": "deba31682361b7d6b3651f0e810cb712db4cd24183c931a4a1ab52ad2aefeaa1",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/.idea/.gitignore",
+    "sha256": "a9e54fc4f08bc97d82c04bd86ff37d3af84ba9ef4ad87fcfcb438dab622e8aaa",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/.idea/AndroidProjectSystem.xml",
+    "sha256": "bcdc8749688b237f88ee6c20e6cc2e655a600e4ec9e69478f396783b383d48bc",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/.idea/compiler.xml",
+    "sha256": "f66612f3f9425a66cb8026dcde534ab28d45f43e18e5a6734177fe1a122e4203",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/.idea/deploymentTargetSelector.xml",
+    "sha256": "9de16cd1dfdf036193a3806046960739739fa7823c8740359d6b3c43cc220c34",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/.idea/deviceManager.xml",
+    "sha256": "63338b97a54438369aef4796a1a7cb447fa0b696cba89c4ff3fd548988be3446",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/.idea/migrations.xml",
+    "sha256": "b714eb426b7fda953cba49ad303ea7f2c575215359713eb4c79ae8534bc64306",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/.idea/misc.xml",
+    "sha256": "4b6403482e3fe51f07ff95ad5a558c19c3f19befc7d50cb936a66a0f8b5951d4",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/.idea/runConfigurations.xml",
+    "sha256": "f9a438180a87c9074496a4368ffc240cb8ec30fab87f01bce6d6dd00ea03f394",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/.gitignore",
+    "sha256": "99c54e51ee601a60fbde8016b2cbf717483bc2e92773be86c9247d02a7fa6ea4",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/build.gradle",
+    "sha256": "616f4aff1b4476c4d274d59eac6de6decf81e33e839db599f81693a04c84ca9d",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/capacitor.build.gradle",
+    "sha256": "ccff2364e43de574892a3f291f031210836e9d327c3f434f78b0844cba6a03d7",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/proguard-rules.pro",
+    "sha256": "1cf8c57e8f79c250b0af9c1a5a4edad71a5c348a79ab70243b6bae086c150ad2",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/androidTest/java/com/getcapacitor/myapp/ExampleInstrumentedTest.java",
+    "sha256": "ff50b4c110a7434312f9af54171f9e8523b015836f707c9b387b76d4c38a97f8",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/AndroidManifest.xml",
+    "sha256": "fd907e28c1fa54a59f6ca55770b9b85caae6553c338f5587fbfbbde4f34c20ac",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/java/br/com/avantalab/app/AvantaPushSupportPlugin.java",
+    "sha256": "fd5b256123e040e231a4dcdc88ade54288603efd586f50a4f6eea032fc23d25c",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/java/br/com/avantalab/app/MainActivity.java",
+    "sha256": "19ffbe1968f0c83d0a7cb19b02793b486a45a1217388f40c7b7fffb5811456c0",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/java/br/com/avantalab/app/SafePushNotificationsPlugin.java",
+    "sha256": "8a5dfdcde607b0cb5bfad162e9b4ee24bde93986a10913798e746a546bfae752",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-land-hdpi/splash.png",
+    "sha256": "08cc34ad7713fe7ed58bceaa37b2387b670c53cd60264b4bd6442db3098e75dc",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-land-mdpi/splash.png",
+    "sha256": "5cf98b4451bd99b20df26f9e608a46946118be6b0ae90762f9ca1786a30c76ff",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-land-xhdpi/splash.png",
+    "sha256": "22f87e1e3bc89aa01a7dbc39c9a4db058cd0bf4ad3fe9f55712bf69eb997f4bf",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-land-xxhdpi/splash.png",
+    "sha256": "42aa26392546fcdee1b8d3ac6d4b41bfcceb41dc6a4f3a3c30c24a8a8f4db862",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-land-xxxhdpi/splash.png",
+    "sha256": "60393ce8636fd263e4e1fea3fd4ab2de948c6295e898fda9b50ac4e5283be809",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-port-hdpi/splash.png",
+    "sha256": "c5015f4ba3628392b538386c5e210f0b94f352a3160adab934fd0311972137ca",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-port-mdpi/splash.png",
+    "sha256": "07fa579e1c83e04ba7f9cbcbfcf41b68e15fe3638f2c44a04e58b809103e6b69",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-port-xhdpi/splash.png",
+    "sha256": "b73049cb37fe76d6c11b87a796766bf6af0c85483b31eb6a921657b0d764a4b9",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-port-xxhdpi/splash.png",
+    "sha256": "0c7f1212f25b7b90e9a6e1d320013e4ff3d3e03e634cbb07b7b7981cac51627f",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-port-xxxhdpi/splash.png",
+    "sha256": "3db071a03b2f8ffe0dfd4170fc59842d53cd15bba5e88af59401d58efabf7827",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml",
+    "sha256": "a8514094f754b099d3e55ce1d6e0b2de79db418b2eeacb0fc2a6bb0bfadef221",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable/ic_launcher_background.xml",
+    "sha256": "718ba51adf166bb55c3e9936bb8199a0148457f7f0191aaa2f37a94f3159d6ec",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/drawable/splash.png",
+    "sha256": "5cf98b4451bd99b20df26f9e608a46946118be6b0ae90762f9ca1786a30c76ff",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/layout/activity_main.xml",
+    "sha256": "5d770feb791313b947020cbfc57e5c733c556dac5e9e49261a1190e527073253",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+    "sha256": "9c3a7e0a6515c6e1a7ae834a9ae430311ebc3241f7b2e5e7f0460aa690709a7c",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+    "sha256": "9c3a7e0a6515c6e1a7ae834a9ae430311ebc3241f7b2e5e7f0460aa690709a7c",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+    "sha256": "72b71c3581ca3b5a23b1c168d69b9d855b3f184fa079902a01f088eb4f0607d5",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png",
+    "sha256": "32baa10d2632a4417454a579f992bd640e0a3cec79321423559b2c9940de58a9",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png",
+    "sha256": "bfcc1b0fa931b14bb241372c76ab4f04374b67d02363c98d9cb12edfdacdf5f3",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+    "sha256": "27ed3603010ebc278f64f8645741ab132ff517abb5308eb9df6c8e42a48956b2",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png",
+    "sha256": "58e78a618778926b1f6d9472a6468de878de8530970934e94aab5ba4ba08cc00",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png",
+    "sha256": "0166fc333074c373fbd0ce6b5defd71552166165ac778121ca9c9dff6b83f0fc",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+    "sha256": "d35dbfff175b83c13ef59cf924abfc810f7b6a158595d7417c5498ea8c7c7ed1",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png",
+    "sha256": "6f88083b8166cc559102f7044688de7525287632ebe09ac45d001ac8bf4b3eae",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png",
+    "sha256": "40911a00922868686854a4804b93fd6e56b503664696de03f450bff690affb6d",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+    "sha256": "ed346eb1e3f0280f15709393705899b3ff55c20b88f4e0308006b3c33cf5fe14",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png",
+    "sha256": "4a82bc1e9923576275869998925ce0ae021a79aa18b24a0dd87ad6b61ca85053",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png",
+    "sha256": "1ee4cd9ff371dcb2e3938097e434f6fb8731688ed7165e61fc63693ad5b2f455",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+    "sha256": "87cb2f2ffe992652bb4fa768c73719a37b5852ab17fbf8e170e888f7a42b0761",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
+    "sha256": "bd24fd383253bf8d43f0a81f11c071d76d1d555114376dd647cd9fb38fa0a9da",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png",
+    "sha256": "ab93096331e7cd8ec379f73f1e9adcaaa9ee1115c9f4ff10411a811fb9700174",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/values/ic_launcher_background.xml",
+    "sha256": "cd40bafe618ff506f4088778b135cb4faa15f25e0c9b475e22d730c74b7be115",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/values/strings.xml",
+    "sha256": "16081a7719912d26bb686167b69b0625e75c9bc4f9dbccd2d6d5422b48dbefba",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/values/styles.xml",
+    "sha256": "18ebba36575e9461347ee67361b23caf095f158ee85dbefe1b83a4669ba5bd6c",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/main/res/xml/file_paths.xml",
+    "sha256": "a46ed43ef65c90cb6778f4581decf3556e3f0055aad8f36d69dae16f9a0e99aa",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/app/src/test/java/com/getcapacitor/myapp/ExampleUnitTest.java",
+    "sha256": "d4045ae8fac1f0807e6b24eb34e68409a9a235df9d1a3f896fb8c9a49424363d",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/build.gradle",
+    "sha256": "46ade7db7afeb8049ccea59fce83095dca736ceb8c9acd79cc944e988c3357d9",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/capacitor.settings.gradle",
+    "sha256": "7b9d167b302c744e3f0b2e4e0eea19591b34717ca808ec997d5fa6b179e3e9dd",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/gradle.properties",
+    "sha256": "3bab15c5b8bc4c2f4b6cf525497d15ad4abca53a460e6dd2eb0f0135817d31e6",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/gradle/wrapper/gradle-wrapper.jar",
+    "sha256": "7d3a4ac4de1c32b59bc6a4eb8ecb8e612ccd0cf1ae1e99f66902da64df296172",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/gradle/wrapper/gradle-wrapper.properties",
+    "sha256": "9a479a85aa879bb55284fc16d0de5b81a745c3854f4e2d88c42e7debaf007435",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/gradlew",
+    "sha256": "b187b4c52e749f5760afdd6fadc31b2a98ad35fb249bf0dff03b72650f320409",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/gradlew.bat",
+    "sha256": "1d297e00bd21de3ace22b4d7f2de1f9dfa858883d66bbf7c1ccbecccec8f4f3b",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/settings.gradle",
+    "sha256": "6ce098d15ebd69b44c4ecd786bca1bdc366340d2459b2af4d7bb0ab317aa9669",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "android/variables.gradle",
+    "sha256": "83d502c9ed8fcf1dd4791482067abeedbebae49fafe9cd14a8a1f5891deb0d88",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/Icone IOS.png",
+    "sha256": "0bc4f47235ef79e375418bae0c5de60bc210194516123c1ba84b2c6c195e6702",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/Imagem de cabeçalho_Google.png",
+    "sha256": "9b7ea636f4a6b4ba9d329d82e4fdbee3d70bf12f61518c93d27e8dc92e33523e",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/README.md",
+    "sha256": "522acbba8a1212df1bcb0a25ba394dcf45aca83cb036bf46565605d5adf85508",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/antigas/imagem 1.png",
+    "sha256": "9d18a29cf0ae137e7de9619e51d7345417ca398fb213e68c85630e1db3eac8c4",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/antigas/imagem 10.png",
+    "sha256": "70a95eab023f1e8a26b3d537d45a7c56696be4fcdeda9318d33bd960ed129683",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/antigas/imagem 2.png",
+    "sha256": "8f9b142abaf7dd6ce3dd2747dd8c6f7ec8c036ce66bda861e2ee3dec54f8d860",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/antigas/imagem 3.png",
+    "sha256": "3566dd3d2dbf703d5a36725b7e71c052b128b3d7a635ed8e740cf271296fa0f2",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/antigas/imagem 4.png",
+    "sha256": "bac62bb404ae638e2be5de95974e6b4280e066189e8213b8732d1968b3a18178",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/antigas/imagem 5.png",
+    "sha256": "526bb2ceafa3fee6ba1d621926992ca24958a138552578fced95adbc0b578dc0",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/antigas/imagem 6.png",
+    "sha256": "2b906f3fa700c82275ca16e12ee55b0f5370f8471dda6e9c9f514303a308ed63",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/antigas/imagem 7.png",
+    "sha256": "808be9994b64cd3584560e8b69ca40b3a026df66e64fb472f03f9875714e846c",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/antigas/imagem 8.png",
+    "sha256": "e028474b58d4a9d2e49725db111ba5be25a6478f09c4189f2b80ef103b329782",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/antigas/imagem 9.png",
+    "sha256": "22f4600f3643016d362acdac0047d8eba3c60547a22243ea6c8c0d3d55827fe7",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/avanta-admin-pwa-512.png",
+    "sha256": "18237ab2bb2073efc48e02d073bee43d8e4d5f052fd07a09c93cab2dd9ea54b7",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/bg-avantalab-mobile-1080x1920.png",
+    "sha256": "9d08acb98e89555d9a7ba105ed2b7c36187553c2155ca44136974ea4a07064ca",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/bg-avantalab-mobile.png",
+    "sha256": "df2442bc7bffc324d523665757f854ea11d8fa3d799a5cb7296208edff86df2a",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/bg-avantalab.png",
+    "sha256": "607ef2200424d5da7fa162e3b350aab8731979a372b688d1a3bdfbec3bf7a634",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela10_Avantalab.png",
+    "sha256": "16af802762e4e4c8198ceb3a655cb66652077b50aca92ff878a1e81449c1bca1",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela11_Avantalab.png",
+    "sha256": "2c4ec0389a53a40cda91d9c7cf297cb0f22c6e76706df93a5488fc285f0710d7",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela1_Avantalab.png",
+    "sha256": "9eb454b8c92fc3d3eed8af5cda39c295260eb29675a2eee8e377af67a5fcb492",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela2_Avantalab.png",
+    "sha256": "54c6cc32a09a2c09c4f25fda8b7441326189c036d45bbc7c1f59585e71d3e507",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela3_Avantalab.png",
+    "sha256": "9262b538012dfe37b45ad71d64782366d5e440d5acaa6ce72955277f47aca011",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela4_Avantalab.png",
+    "sha256": "1d7c0792415b901516c0963592431e167df11f8778261321ec4579c884244a78",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela5_Avantalab.png",
+    "sha256": "2a79f60e60c435bea6260c6d325128f2bf10ef2d60fa375616486af7f20a0905",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela6_Avantalab.png",
+    "sha256": "1dfb87bb8df4ea71e29bd28fe176d488d4379e8ca80e031ac517da05488d5c85",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela7_Avantalab.png",
+    "sha256": "b6e5ff921bb83c8b29824401af4ceaa590ae797251a65cefd9eaf920c9e7dcbb",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela8_Avantalab.png",
+    "sha256": "42d8c769957542bf9125b114616f90067642028deeb5045209b4d779c5f0c3c9",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/novas/tela9_Avantalab.png",
+    "sha256": "84bfffeb33fa11f0bd14cf23291565375bf084eeeb1610b8a2cb523745374d98",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/ponto-icon-512.png",
+    "sha256": "7d64e7f9c25bb44d163cc89bd2bd6f799a78b2919151721cfe15a2d154604d69",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "imagens diversas/vendas-icon-512.png",
+    "sha256": "5add4be7abed811dcc7c46b1a48c3214dee574b1211d9285ffd6647d17cca89d",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/.gitignore",
+    "sha256": "2b7132a9943d2622e51e656897ca5162f56b121b40b423dedce1fbc699dba88a",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App.xcodeproj/project.pbxproj",
+    "sha256": "bd213cca03b8ce984896acba002013d608feb0bb4a94afa9a33d10f595f57042",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+    "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved",
+    "sha256": "f7cf311d1ddd4967a4b957a18174f01a22fc65187a13c9232a71a1d4ec980f72",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme",
+    "sha256": "f7dcbdada2f517e9310647836b0fdeef7444403554e47f245717516e9f942e7f",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/App.entitlements",
+    "sha256": "080523135221b8a9ce7ab047e6845862af5f83c0610a8819a8af0d6f17a8d4a7",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/AppDelegate.swift",
+    "sha256": "0b0f8ac3e5597593775a9b56d0a1cf3a5e13a03a7e2c63f147e228aa6da913a9",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/Assets.xcassets/AppIcon.appiconset/Contents.json",
+    "sha256": "f3bc1729af76a1feff8cd1ff376c48d02a990b05c7ee7b8b672cd0c573a13a2f",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/Assets.xcassets/AppIcon.appiconset/Icone IOS.png",
+    "sha256": "0bc4f47235ef79e375418bae0c5de60bc210194516123c1ba84b2c6c195e6702",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/Assets.xcassets/Contents.json",
+    "sha256": "972ec1fd42325872438eb085ac29e94f51c10788ec18ec5549439950866c541d",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/Assets.xcassets/Splash.imageset/Contents.json",
+    "sha256": "041481917eb249533ac6dd63d283bc6190b2d0642a93deda11b2ed0f6f7b605a",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-1.png",
+    "sha256": "1b5002b74a5500e697298ced06ca2811ac33f2771f236f3c720ff23243890530",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-2.png",
+    "sha256": "1b5002b74a5500e697298ced06ca2811ac33f2771f236f3c720ff23243890530",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png",
+    "sha256": "1b5002b74a5500e697298ced06ca2811ac33f2771f236f3c720ff23243890530",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/Base.lproj/LaunchScreen.storyboard",
+    "sha256": "87a42e842164d75f39cca56a2cf743652f4d8e858f2eba12ae21a8ddcd9a21c6",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/Base.lproj/Main.storyboard",
+    "sha256": "10623458e6182f7b62c5f53b34a734ae76fb6f232e5c5283e35dab72dbb6812c",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/Info.plist",
+    "sha256": "26edeff827f2019fa3fa3dfc22e87cc6e1fadba3804429f47f032e9a5d73a0e0",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/MainViewController.swift",
+    "sha256": "248ae3d67be401b7dc50f26ff70cf0bcf3dad4d5d948b3278d339e715b58c423",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/App/PrivacyInfo.xcprivacy",
+    "sha256": "0587d155c56a6f4f0647ebc6b6a0bd026615cd610ee8f209a9786b79a96ad335",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/CapApp-SPM/.gitignore",
+    "sha256": "b7936563f2f38a1999785cfa6de4cd4a65c8ed16ad80fa1a22dbe3690f25df3c",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/CapApp-SPM/Package.swift",
+    "sha256": "f5e98751005ea6dad1383bf246a47bbcde556b0667f159e43d1fb10ce31a5599",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/CapApp-SPM/README.md",
+    "sha256": "42c535861f4a866e35f85764ed6af1ea046d6a409bf9852ecb00e5d292a1626e",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/App/CapApp-SPM/Sources/CapApp-SPM/CapApp-SPM.swift",
+    "sha256": "70bf9dafddc35e3877dfb133a996f5be7ccd1e132897a98fdbf4869ff605ece9",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "ios/debug.xcconfig",
+    "sha256": "4838938a72b913b99cfda54a43bbe73f05893071dc6e3702b0adc44794b64272",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  },
+  {
+    "path": "services/video-thumbnail-worker/.dockerignore",
+    "sha256": "db6eb39ff806906433a92d3f9ea7d80762c82b314197afcfbb9bc1d389e21d8f",
+    "decision": "preservado integralmente da main; ausência em pacote web não comprova exclusão"
+  }
+]

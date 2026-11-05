@@ -364,10 +364,38 @@ test('listeners nativos não acumulam e podem ser removidos antes de nova prepar
     return { remove: async () => { removidos++; } };
   };
   await Promise.all([f.contexto.prepararOAuthNativoVendas(), f.contexto.prepararOAuthNativoVendas()]);
-  assert.equal(adicionados, 2);
+  await pausa();
+  assert.equal(adicionados, 3);
   f.contexto.removerListenersOAuthNativoVendas();
   await pausa();
-  assert.equal(removidos, 2);
+  assert.equal(removidos, 3);
   await f.contexto.prepararOAuthNativoVendas();
-  assert.equal(adicionados, 4);
+  await pausa();
+  assert.equal(adicionados, 6);
+});
+
+test('bridge sem appStateChange mantém a preparação OAuth e o retorno por URL', async () => {
+  const f = fluxo();
+  const adicionar = f.contexto.window.Capacitor.Plugins.App.addListener;
+  f.contexto.window.Capacitor.Plugins.App.addListener = async (nome, callback) => {
+    if (nome === 'appStateChange') throw new Error('Não implementado neste bridge');
+    return adicionar(nome, callback);
+  };
+  await f.contexto.prepararOAuthNativoVendas();
+  assert.equal(typeof f.listeners.appUrlOpen, 'function');
+  assert.equal(typeof f.listeners.browserFinished, 'function');
+});
+
+test('observador nativo de retomada sem resposta jamais bloqueia a abertura/OAuth', async () => {
+  const f = fluxo();
+  const adicionar = f.contexto.window.Capacitor.Plugins.App.addListener;
+  f.contexto.window.Capacitor.Plugins.App.addListener = (nome, callback) => {
+    if (nome === 'appStateChange') return new Promise(() => {});
+    return adicionar(nome, callback);
+  };
+  await Promise.race([
+    f.contexto.prepararOAuthNativoVendas(),
+    pausa().then(() => { throw new Error('Abertura presa no observador opcional'); }),
+  ]);
+  assert.equal(typeof f.listeners.appUrlOpen, 'function');
 });

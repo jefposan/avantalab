@@ -1,0 +1,1 @@
+.page{--cp:#003e73;min-height:100vh;}.toolbar{display:flex;gap:12px;flex-wrap:wrap;padding:12px;font-size:12px;background:#e8eef4;color:#25384d;}.toolbar button{min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid #b7c7d7;background:white;}.page details{font-size:12px;margin-top:24px;}.page details summary{padding:12px;cursor:pointer;}

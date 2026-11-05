@@ -26,7 +26,7 @@ export default function WebPopupScrollLock() {
     const popupVisivel = () => {
       if (document.getElementById('mobile-root')) return false;
 
-      return Array.from(document.querySelectorAll<HTMLElement>('.fixed.inset-0')).some((elemento) => {
+      return Array.from(document.querySelectorAll<HTMLElement>('.fixed.inset-0:not([data-av-navigation-loading])')).some((elemento) => {
         const estilo = window.getComputedStyle(elemento);
         return estilo.display !== 'none' && estilo.visibility !== 'hidden';
       });

@@ -1,0 +1,90 @@
+.report { margin-top:24px; --report-surface:#f5f8fb; --report-line:#dce4ee; --report-ink:#243247; --report-muted:#52647c; color:var(--report-ink); }
+.dark { --report-surface:#182235; --report-line:#475569; --report-ink:#f1f5f9; --report-muted:#b8c5d7; }
+.report .heading { margin:0;min-height:44px;gap:12px; }
+.heading h2 { font-size:20px;line-height:1.2;margin:0; }
+.actions { display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+.filters { display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(110px,.6fr);gap:14px;margin:2px 0 10px; }
+.metrics { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px; }
+.metrics>div,.composition>div { display:flex;flex-direction:column;gap:4px;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--brand) 8%,var(--report-surface));min-width:0; }
+.metrics span { font-size:12px; }
+.metrics strong { font-size:clamp(18px,1.55vw,26px);font-weight:600;letter-spacing:-.01em;line-height:1.25;overflow-wrap:anywhere; }
+.metrics small,.note { color:var(--report-muted);font-size:11px;line-height:1.4; }
+.metrics small { min-height:15px; }
+.report div[data-tone="fees"] { background:color-mix(in srgb,#b7791f 9%,var(--report-surface)); }
+.report div[data-tone="shipping"] { background:color-mix(in srgb,#2563eb 8%,var(--report-surface)); }
+.report div[data-tone="net"] { background:color-mix(in srgb,#15803d 9%,var(--report-surface)); }
+.content { display:grid;grid-template-columns:minmax(235px,1fr) minmax(0,3fr);gap:14px; }
+.table { width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums;align-self:start; }
+.table th,.table td { padding:3px 10px;border-bottom:1px solid var(--report-line);text-align:left;font-weight:400;line-height:1.4;height:25px; }
+.table td,.table tr>:last-child { text-align:right;white-space:nowrap; }
+.table thead th,.table tfoot th,.table tfoot td { font-weight:600; }
+.table thead,.table tfoot { background:var(--report-surface); }
+.table tbody tr:nth-child(even) { background:var(--report-surface); }
+.table tr[data-selected="true"] { background:color-mix(in srgb,var(--brand) 14%,var(--report-surface)); }
+.charts { display:grid;gap:10px;align-content:start;min-width:0; }
+.chart { overflow-x:auto;border-radius:12px;background:var(--report-surface);padding:8px 12px;min-width:0; }
+.chart h3 { margin:0 0 8px;font-size:12px;line-height:1.2;font-weight:600;text-transform:uppercase;background:color-mix(in srgb,var(--brand) 6%,var(--report-surface));padding:7px;border-radius:8px;text-align:center; }
+.bars { height:125px;display:grid;grid-template-columns:repeat(12,minmax(44px,1fr));gap:clamp(3px,.7vw,10px);padding:8px 0 0; }
+.barButton { border:0;background:none;color:var(--report-muted);display:flex;align-items:stretch;flex-direction:column;gap:6px;font-size:10px;cursor:pointer;padding:0;min-width:0;min-height:44px; }
+.barTrack { flex:1;display:flex;align-items:flex-end;border-bottom:1px solid var(--report-line);background:repeating-linear-gradient(to top,transparent 0,transparent 24%,var(--report-line) 25%,transparent 25.5%); }
+.bar { display:block;background:var(--brand);width:100%;border-radius:5px 5px 0 0; }
+.barButton[aria-pressed="true"] .bar { outline:2px solid var(--report-ink);outline-offset:2px; }
+.report :is(button,[role="button"],summary):focus-visible { outline:3px solid var(--brand);outline-offset:3px; }
+.composition { min-height:96px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;gap:10px; }
+.composition strong { font-size:clamp(13px,1.1vw,18px);overflow-wrap:anywhere; }
+.composition span { font-size:12px; }
+.waterfall { display:block;width:100%;height:145px;min-width:540px;overflow:visible;font-size:13px;fill:var(--report-ink); }
+.waterfall rect { fill:var(--brand); }
+.waterfall [data-tone="fees"] rect { fill:#c18a2c; }
+.waterfall [data-tone="shipping"] rect { fill:#4284ca; }
+.waterfall [data-tone="net"] rect { fill:#27883f; }
+.waterfall [data-tone="adjustments"] rect { fill:#8072bb; }
+.amount { font-size:13px;font-weight:600; }
+.axis { stroke:var(--report-line);stroke-width:1; }
+.connector { stroke:var(--report-muted);stroke-dasharray:4 4;stroke-width:1; }
+.note { margin:6px 0 0; }
+.issues { color:var(--report-muted);font-size:11px; }
+.issues summary { cursor:pointer;min-height:44px;display:flex;align-items:center; }
+.issues p { margin:4px 0; }
+.message { padding:12px;background:var(--report-surface);border-radius:12px;font-size:13px; }
+.wait { min-height:180px;display:flex;align-items:center;justify-content:center;gap:14px;flex-direction:column; }
+.srOnly { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+@media(max-width:1000px) { .content { grid-template-columns:minmax(210px,1fr) minmax(0,2.5fr); }.metrics>div { padding:10px; } }
+@media(max-width:760px) { .filters,.metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.content { grid-template-columns:1fr; }.composition { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:420px) { .filters { grid-template-columns:1fr; } }
+@media print { .filters,.actions { display:none; } }
+
+@media screen { .report:has(> [id="sales-report-content"]:not([hidden])) { min-block-size:max(0px,calc(100dvh - var(--marketplace-navigation-height,200px) - 8px)); } }
+
+@media (hover:hover) { .table tbody tr:hover { background:color-mix(in srgb,var(--brand) 12%,var(--report-surface)); } .table tbody tr[data-selected="true"]:hover { background:color-mix(in srgb,var(--brand) 20%,var(--report-surface)); } }
+
+.table tbody tr { position:relative; }
+.monthButton { border:0;padding:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer; }
+.monthButton::after { content:'';position:absolute;inset:0;cursor:pointer; }
+.report .monthButton:focus-visible { outline:none; }
+.monthButton:focus-visible::after { outline:3px solid var(--brand);outline-offset:-3px; }
+@media (pointer:coarse) { .monthButton { min-height:44px; } }
+
+.compositionHeading { display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap; }
+.compositionHeading h3 { flex:1;margin:0; }
+.monthSales { margin-top:16px;border-top:1px solid var(--report-line);padding-top:12px; }
+.monthSalesHeading { display:flex;justify-content:space-between;align-items:center;gap:12px; }
+.monthSalesHeading h3 { font-size:15px;margin:0; }
+.monthSalesHeading small { color:var(--report-muted);font-size:12px; }
+.monthSalesScroll { max-height:390px;overflow:auto;border-radius:10px;border:1px solid var(--report-line);margin-top:10px; }
+.monthSalesTable { width:100%;min-width:1050px;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums; }
+.monthSalesTable th,.monthSalesTable td { text-align:left;padding:8px 10px;border-bottom:1px solid var(--report-line);vertical-align:top; }
+.monthSalesTable thead th { position:sticky;top:0;background:var(--report-surface);z-index:1; }
+.monthSalesTable td:nth-child(n+5):nth-child(-n+9) { text-align:right;white-space:nowrap; }
+.monthSalesTable td:nth-child(2) { min-width:200px;max-width:280px; }
+.monthSalesTable td:nth-child(1) { white-space:nowrap; }
+.monthSalesTable small { display:block;font-size:11px;color:var(--report-muted); }
+.monthSalesTable tbody tr:nth-child(even) { background:var(--report-surface); }
+.monthSalesTable summary { cursor:pointer;min-height:44px; }
+.monthSalesTable summary:focus-visible,.monthSalesScroll:focus-visible { outline:3px solid var(--brand);outline-offset:-3px; }
+.saleDetails { padding:8px;background:var(--report-surface);border-radius:8px; }
+.saleDetails p { margin:6px 0;font-size:12px; }
+.monthSalesFooter { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px;background:var(--report-surface);font-size:12px; }
+.monthSalesFooter b { display:block;font-weight:600; }
+.listPagination { display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:8px;font-size:12px; }
+.listLoading { display:flex;justify-content:center;align-items:center;gap:12px;min-height:100px;font-size:13px; }

@@ -562,6 +562,7 @@ body.sheet-open {
   color: #0A1F44;
   background: rgba(255,255,255,.38);
   box-shadow: 0 20px 42px rgba(0,31,60,.18);
+  -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
   text-align: center;
 }
@@ -569,12 +570,16 @@ body.sheet-open {
 .preparing-access-card .loader {
   width: 34px;
   height: 34px;
+  border-top-color: #003E73;
 }
 
 .preparing-access-card h1 {
   margin: 0;
+  color: #0A1F44;
   font-size: 20px;
+  font-weight: 900;
   letter-spacing: -.03em;
+  line-height: 1.2;
 }
 
 .preparing-access-card small {
@@ -584,16 +589,6 @@ body.sheet-open {
   line-height: 1.45;
 }
 
-.preparing-access-cancel {
-  min-height: 36px;
-  width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  color: #334155;
-  background: rgba(255,255,255,.86);
-  font-size: 12px;
-  font-weight: 800;
-}
 .access-progress { width: min(100%, 238px); height: 8px; overflow: hidden; border-radius: 999px; background: rgba(10,31,68,.14); box-shadow: inset 0 1px 2px rgba(10,31,68,.1); }
 .access-progress > i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#1687D9,#1F8A9E); box-shadow: 0 2px 8px rgba(22,135,217,.34); transition: width .24s ease; }
 .access-progress-value { margin-top: -7px; color: #0874a8; font-size: 11px; font-variant-numeric: tabular-nums; }
@@ -1115,8 +1110,10 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .sales-profile-header-button:focus-visible { outline: 3px solid rgba(22,135,217,.5); outline-offset: 1px; }
 .system-header h1 { margin: 0; font-size: 19px; font-weight: 760; }
 .system-brand { display: flex; align-items: center; margin-right: auto; }
+.system-header .system-brand { width: 0; min-width: 0; flex: 1 1 0; overflow: hidden; }
 .system-brand .vendas-brand-logo { width: 140px; }
-.vendas-brand-logo { display: block; aspect-ratio: 480 / 119; }
+.system-header .system-brand .vendas-brand-logo { max-width: 100%; }
+.vendas-brand-logo { display: block; aspect-ratio: 1258 / 184; }
 .vendas-brand-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .vendas-logo-escuro { display: none !important; }
 .dark-theme .vendas-logo-claro { display: none !important; }
@@ -1578,20 +1575,21 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .material-pdf-fullscreen-toggle .svg-icon { width: 20px; height: 20px; }
 .material-pdf-exit-label,.material-pdf-page-status,.material-pdf-fullscreen-share { display: none; }
 .material-pdf-fullscreen-toggle:focus-visible,.material-pdf-fullscreen-share:focus-visible { outline: 3px solid #67e8f9; outline-offset: 2px; }
-.material-preview-nav { position: absolute; top: 50%; z-index: 2; display: grid; width: 48px; height: 48px; place-items: center; transform: translateY(-50%); border: 1px solid rgba(255,255,255,.24); border-radius: 999px; padding: 0; color: #fff; background: rgba(2,8,23,.62); box-shadow: 0 8px 22px rgba(0,0,0,.28); backdrop-filter: blur(5px); font-size: 32px; line-height: 1; }
+.material-preview-nav { position: absolute; top: 50%; z-index: 2; display: grid; width: 48px; min-width: 48px; height: 48px; min-height: 48px; place-items: center; transform: translateY(-50%); border: 1px solid rgba(255,255,255,.24); border-radius: 50%; padding: 0; color: #fff; background: rgba(2,8,23,.62); box-shadow: 0 8px 22px rgba(0,0,0,.28); backdrop-filter: blur(5px); font-size: 0; line-height: 0; }
+.material-preview-nav .svg-icon { display: block; width: 26px; height: 26px; margin: 0; padding: 0; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .material-preview-nav-prev { left: 8px; }.material-preview-nav-next { right: 8px; }
 .material-preview-nav:focus-visible { outline: 3px solid #67e8f9; outline-offset: 2px; }
 .material-share-actions { display: grid; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); gap: 8px; margin-top: 12px; }
 .material-share-actions button { min-width: 0; min-height: 42px; border-radius: 12px; padding: 0 10px; font-size: 10px; font-weight: 850; }
 .material-share { width: 100%; }
 .material-preview-backdrop.material-expanded { z-index: 400; padding: 0; background: #05080d; }
-.material-preview-backdrop.material-expanded .sheet { width: 100vw; max-width: none; height: var(--vendas-viewport-height); max-height: none; border-radius: 0; padding: 0; background: #05080d; }
+.material-preview-backdrop.material-expanded .sheet { width: 100%; max-width: none; height: 100%; min-height: 0; max-height: none; margin: 0; border: 0; border-radius: 0; padding: 0; background: #05080d; box-shadow: none; backdrop-filter: none; }
 .material-preview-backdrop.material-expanded .sheet-header,.material-preview-backdrop.material-expanded .material-share-actions { display: none; }
-.material-preview-backdrop.material-expanded .material-preview-stage { width: 100%; height: 100%; max-height: none; border-radius: 0; }
-.material-preview-backdrop.material-expanded .material-preview { width: 100%; height: 100%; max-height: none; border-radius: 0; }
+.material-preview-backdrop.material-expanded .material-preview-stage { width: 100%; height: 100%; max-height: none; border-radius: 0; background: #05080d; }
+.material-preview-backdrop.material-expanded .material-preview { width: 100%; height: 100%; max-height: none; border: 0; border-radius: 0; background: #05080d; box-shadow: none; }
 .material-preview-backdrop.material-expanded .material-preview img,.material-preview-backdrop.material-expanded .material-preview video { width: 100%; height: 100%; max-height: none; object-fit: contain; }
 .material-preview-backdrop.material-pdf-fullscreen { z-index: 400; padding: 0; background: #05080d; }
-.material-preview-backdrop.material-pdf-fullscreen .sheet { display: grid; width: 100vw; max-width: none; height: var(--vendas-viewport-height); max-height: none; grid-template-rows: auto minmax(0,1fr); border-radius: 0; padding: 0; background: #05080d; }
+.material-preview-backdrop.material-pdf-fullscreen .sheet { display: grid; width: 100%; max-width: none; height: 100%; min-height: 0; max-height: none; grid-template-rows: auto minmax(0,1fr); margin: 0; border: 0; border-radius: 0; padding: 0; background: #05080d; box-shadow: none; backdrop-filter: none; }
 .material-preview-backdrop.material-pdf-fullscreen .material-pdf-header { display: grid; min-height: calc(60px + env(safe-area-inset-top)); grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 10px; margin: 0; padding: calc(8px + env(safe-area-inset-top)) 12px 8px; background: linear-gradient(135deg,#0A1F44,#1687D9); }
 .material-preview-backdrop.material-pdf-fullscreen .material-pdf-header > div:first-child { grid-column: 2; grid-row: 1; min-width: 0; text-align: center; }
 .material-preview-backdrop.material-pdf-fullscreen .material-pdf-header h2 { display: block; overflow: hidden; font-size: 15px; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
@@ -1604,9 +1602,14 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .material-preview-backdrop.material-pdf-fullscreen .material-pdf-header .close,.material-preview-backdrop.material-pdf-fullscreen .material-preview-summary { display: none; }
 .material-preview-backdrop.material-pdf-fullscreen .material-pdf-page-status { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .material-preview-backdrop.material-pdf-fullscreen .material-preview-stage,.material-preview-backdrop.material-pdf-fullscreen .material-preview-document { width: 100%; height: 100%; min-height: 0; max-height: none; border-radius: 0; }
-.material-preview-backdrop.material-pdf-fullscreen .material-preview-pdf { width: 100%; height: 100%; max-height: none; touch-action: pan-x pan-y pinch-zoom; }
-.material-preview-backdrop.material-pdf-fullscreen .material-preview-pdf-page { height: calc(var(--vendas-viewport-height) - 60px - env(safe-area-inset-top)); min-height: 420px; padding: 12px; }
+.material-preview-backdrop.material-pdf-fullscreen .material-preview-pdf { width: 100%; height: 100%; max-height: none; background: #05080d; touch-action: pan-x pan-y pinch-zoom; }
+.material-preview-backdrop.material-pdf-fullscreen .material-preview-pdf-pages { height: 100%; }
+.material-preview-backdrop.material-pdf-fullscreen .material-preview-pdf-page { height: 100%; min-height: 0; padding: 16px; background: #05080d; }
+.material-preview-backdrop.material-expanded .material-preview-nav-prev { left: max(8px, var(--vendas-safe-left)); }
+.material-preview-backdrop.material-expanded .material-preview-nav-next { right: max(8px, var(--vendas-safe-right)); }
 .material-preview-backdrop.material-pdf-fullscreen .material-preview-nav,.material-preview-backdrop.material-pdf-fullscreen .material-share-actions { display: none; }
+.dark-theme .material-preview-backdrop.material-expanded .sheet,
+.dark-theme .material-preview-backdrop.material-pdf-fullscreen .sheet { border: 0; box-shadow: none; }
 .dark-theme .material-cover-pdf { background: linear-gradient(145deg,#3f1d25,#2d1720); }.dark-theme .material-cover-pdf small { color: #fecaca; }
 .dark-theme .material-folder-card,.dark-theme .material-thumb { border-color: #334155; color: #f8fafc; background: #172033; }
 .dark-theme .material-thumb.is-selected { border-color: #38bdf8; background: #102838; box-shadow: 0 0 0 2px rgba(56,189,248,.24), 0 12px 26px rgba(2,8,23,.4); }
@@ -1714,6 +1717,9 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .switch-line input:checked + i { background: var(--tridium); }
 .switch-line input:checked + i::after { transform: translateX(18px); }
 .settings-functions-card .switch-line > span { display: grid; gap: 3px; }
+.settings-haptics-toggle > span { display: grid; gap: 3px; }
+.settings-haptics-toggle > span small { color: #718096; font-size: 11px; font-weight: 600; line-height: 1.35; }
+.dark-theme .settings-haptics-toggle > span small { color: #94a3b8; }
 .settings-functions-card .switch-line > span small { color: #718096; font-size: 11px; font-weight: 600; line-height: 1.35; }
 .settings-functions-card .switch-line > i { flex: 0 0 42px; }
 .settings-form { display: flex; gap: 10px; border-top: 1px solid #e6e8ea; padding-top: 16px; }
@@ -1962,6 +1968,14 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 }
 .login-screen.preparing-access-screen::before {
   background-image: url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp');
+}
+/* Escala aprovada pela altura das letras, sem comprimir a marca mais longa.
+   Limitado à preparação: login, cadastro e demais marcas não mudam. */
+.preparing-access-screen .access-brand-zone img {
+  width: clamp(178.7px, 60.98vw, 325.92px);
+  height: auto;
+  max-width: 90%;
+  transform: translateY(-5px);
 }
 .login-screen.approval-wait-screen {
   padding: 0 max(16px, var(--vendas-safe-right)) 0 max(16px, var(--vendas-safe-left));
@@ -2490,6 +2504,15 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .consignment-generate-button, .consignment-fixed-summary .order-share { min-height: 38px; margin-top: 0; border-radius: 999px; }
 .consignment-generate-button:disabled { border-color: #cbd5e1; color: #64748b; background: #e9eef3; box-shadow: none; cursor: not-allowed; }
 .consignment-view-actions { flex: 0 0 auto; margin-top: 0; }
+.consignment-view-backdrop, .consignment-transaction-backdrop { --consignment-accent: #8550b5; --consignment-strong: #48206d; }
+.consignment-view-backdrop .sheet > .sheet-header, .consignment-transaction-backdrop .sheet > .sheet-header { background: linear-gradient(135deg, var(--consignment-strong), var(--consignment-accent)); }
+.consignment-view-backdrop .consignment-product-table { border-color: color-mix(in srgb, var(--consignment-accent) 26%, white); }
+.consignment-view-backdrop .consignment-product-table > header { color: var(--consignment-strong); background: color-mix(in srgb, var(--consignment-accent) 9%, white); }
+.consignment-view-backdrop .consignment-product-row strong { color: var(--consignment-strong); background: color-mix(in srgb, var(--consignment-accent) 12%, white); }
+.consignment-view-backdrop .consignment-fixed-summary > div { border-color: color-mix(in srgb, var(--consignment-accent) 26%, white); background: color-mix(in srgb, var(--consignment-accent) 7%, white); }
+.consignment-view-backdrop .consignment-fixed-summary > div b { color: var(--consignment-strong); }
+.consignment-view-backdrop .consignment-fixed-summary .primary:not(:disabled) { border-color: var(--consignment-accent); background: var(--consignment-accent); box-shadow: 0 8px 20px color-mix(in srgb, var(--consignment-accent) 20%, transparent); }
+.consignment-view-backdrop .consignment-view-actions .secondary { border-color: color-mix(in srgb, var(--consignment-accent) 45%, white); color: var(--consignment-strong); background: color-mix(in srgb, var(--consignment-accent) 12%, white); }
 .consignment-conversion-help { flex: 0 0 auto; margin: 0; border-radius: 11px; padding: 9px 11px; color: #526477; background: #eef8ff; font-size: 10px; line-height: 1.4; }
 .consignment-conversion-scroll { display: grid; min-height: 0; flex: 1 1 auto; align-content: start; gap: 8px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
 .consignment-conversion-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px; border: 1px solid #d8e3eb; border-radius: 12px; padding: 10px; background: #fff; }
@@ -2752,6 +2775,8 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
   .mobile-menu-card-fallback { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; border-radius: 28px; padding: 12px; color: #fff; background: linear-gradient(145deg,#1687D9,#0A1F44); box-shadow: 0 8px 18px rgba(15,42,80,.24); font-size: 14px !important; font-weight: 900; line-height: 1.15; text-align: center; }
   .mobile-menu-card.image-failed img { display: none; }
   .mobile-menu-card.image-failed .mobile-menu-card-fallback { display: flex; }
+  .mobile-menu-card.image-pending img, .mobile-menu-wide.image-pending img, .mobile-menu-wide.image-failed img { visibility: hidden; }
+  .mobile-menu-card.image-pending .mobile-menu-card-fallback, .mobile-menu-wide.image-pending .mobile-menu-card-fallback, .mobile-menu-wide.image-failed .mobile-menu-card-fallback { position: absolute; inset: 0; display: flex; }
   .mobile-menu-grid-wrap { position: relative; width: 100%; max-width: 760px; margin: 54px auto 0; }
   .mobile-menu-grid-wrap .mobile-menu-grid { margin-top: 0; }
   .mobile-menu-organize-row { position: absolute; z-index: 3; top: -38px; right: 48px; display: flex; align-items: center; gap: 8px; }
@@ -2793,26 +2818,30 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .dark-theme .mobile-suggestions-card small { color: #67e8f9; }
   .vendas-bottom-nav { position: fixed; z-index: var(--vendas-layer-navigation); right: 0; bottom: 0; left: 0; display: block; border-top: 1px solid #e2e8f0; background: rgba(255,255,255,.95); box-shadow: 0 -8px 24px rgba(15,23,42,.10); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); padding-bottom: env(safe-area-inset-bottom); transform: translateZ(0); }
   .vendas-bottom-nav-inner { position: relative; display: grid; height: 66px; max-width: 448px; grid-template-columns: repeat(5,minmax(0,1fr)); align-items: end; margin: 0 auto; padding: 0 8px; }
+  .vendas-nav-indicador-trilho { position: absolute; top: 0; right: 8px; left: 8px; height: 2px; pointer-events: none; }
+  .vendas-nav-indicador { display: block; width: 20%; height: 2px; border-radius: 999px; background: #0891b2; transition: transform 300ms ease-out; }
   .vendas-nav-item, .vendas-nav-add { position: relative; display: flex; min-width: 0; isolation: isolate; flex-direction: column; align-items: center; justify-content: center; gap: 2px; overflow: visible; border: 0; padding: 4px; color: #94a3b8; background: transparent; font-size: 10px; font-weight: 900; }
   .vendas-nav-item > span { position: relative; z-index: 1; display: flex; height: 28px; align-items: center; justify-content: center; }
   .vendas-nav-item .svg-icon { width: 22px; height: 22px; }
   .vendas-nav-item b, .vendas-nav-add b { position: relative; z-index: 1; max-width: 100%; overflow: hidden; font-size: 10px; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
-  .vendas-nav-ripple { position: absolute; z-index: 2; top: 18px; left: 50%; width: 18px; height: 18px; box-sizing: border-box; border: 2px solid rgba(22,135,217,.86); border-radius: 999px; background: transparent; pointer-events: none; transform: translate(-50%, -50%) scale(.02); animation: vendas-nav-ripple 1.15s cubic-bezier(.16,.78,.25,1) forwards; }
   .vendas-nav-add { position: relative; justify-content: flex-end; padding-bottom: 5px; color: #0e7490; }
   .vendas-nav-add > span { position: absolute; z-index: 1; bottom: 22px; display: flex; width: 58px; height: 58px; align-items: center; justify-content: center; border: 4px solid #fff; border-radius: 999px; color: #fff; background: #00A6C8; box-shadow: 0 8px 18px rgba(15,23,42,.25); font-size: 0; line-height: 0; }
   .vendas-nav-add > span::before, .vendas-nav-add > span::after { position: absolute; width: 22px; height: 3px; border-radius: 999px; background: currentColor; content: ''; pointer-events: none; }
   .vendas-nav-add > span::after { transform: rotate(90deg); }
-  .vendas-nav-add > span > .vendas-nav-ripple { top: 50%; left: 50%; }
   .dark-theme .vendas-bottom-nav { border-color: #334155; background: rgba(15,23,42,.95); }
   .dark-theme .vendas-nav-item { color: #94a3b8; }
   .dark-theme .vendas-nav-add > span { border-color: #0f172a; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .vendas-nav-indicador { transition: none; }
+}
+
 @media (max-width: 380px) {
   .system-header .system-brand .vendas-brand-logo { width: 110px; }
+  .system-header .system-header-actions { gap: 5px; }
   .sales-profile-header-button { width: 72px; flex-basis: 72px; }
 }
-@keyframes vendas-nav-ripple { 0% { opacity: .9; transform: translate(-50%, -50%) scale(.02); } 68% { opacity: .32; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(4.5); } }
 
 /* Agenda do Vendas: mesma estrutura de mês, dia e lembretes do Gestão Mobile. */
 @keyframes agenda-vendas-in-prox { from { opacity: .35; transform: translateX(26px); } to { opacity: 1; transform: none; } }
@@ -2920,6 +2949,12 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .dark-theme .consignment-fixed-summary > div b { color: #f8fafc; }
 .dark-theme .consignment-fixed-summary > p, .dark-theme .consignment-conversion-row > div:first-child small, .dark-theme .consignment-convert-stepper small { color: #94a3b8; }
 .dark-theme .consignment-convert-stepper button { border-color: #31536d; color: #7dd3fc; background: #102838; }
+.dark-theme .consignment-view-backdrop .consignment-product-table { border-color: color-mix(in srgb, var(--consignment-accent) 40%, #172033); }
+.dark-theme .consignment-view-backdrop .consignment-product-table > header,
+.dark-theme .consignment-view-backdrop .consignment-product-row strong,
+.dark-theme .consignment-view-backdrop .consignment-fixed-summary > div,
+.dark-theme .consignment-view-backdrop .consignment-view-actions .secondary { border-color: color-mix(in srgb, var(--consignment-accent) 45%, #172033); color: #e4ccf9; background: color-mix(in srgb, var(--consignment-accent) 16%, #172033); }
+.dark-theme .consignment-view-backdrop .consignment-fixed-summary > div b { color: #e4ccf9; }
 .dark-theme .dashboard-sticky-head { border-color: #263449; background: #111d2f; }
 .dark-theme .dashboard-sticky-head .page-heading h2, .dark-theme .dashboard-sticky-head .month-switcher strong { color: #f8fafc; }
 .dark-theme .dashboard-sticky-head .page-heading p { color: #94a3b8; }
@@ -3458,3 +3493,52 @@ html.dark-theme:has(.login-screen) body {
     bottom: calc(82px + var(--vendas-safe-bottom));
   }
 }
+
+/* Mesma paleta do comprovante e da visualização, somente no rascunho consignado. */
+.consignment-transaction-backdrop .transaction-type-switch button.active,
+.consignment-transaction-backdrop .discount-mode button.active { color: #fff; background: var(--consignment-accent); box-shadow: 0 5px 12px color-mix(in srgb, var(--consignment-accent) 22%, transparent); }
+.consignment-transaction-backdrop .order-product-entry { border-color: var(--consignment-accent); background: color-mix(in srgb, var(--consignment-accent) 3%, white); box-shadow: 0 4px 12px color-mix(in srgb, var(--consignment-accent) 12%, transparent); }
+.consignment-transaction-backdrop .transaction-date-field,
+.consignment-transaction-backdrop .order-draft-heading > span,
+.consignment-transaction-backdrop .transaction-totals { border-color: color-mix(in srgb, var(--consignment-accent) 28%, white); color: var(--consignment-strong); background: color-mix(in srgb, var(--consignment-accent) 8%, white); }
+.consignment-transaction-backdrop .transaction-date-field > span,
+.consignment-transaction-backdrop .transaction-date-field input,
+.consignment-transaction-backdrop .transaction-date-field .date-picker-button { color: var(--consignment-strong) !important; border-left-color: color-mix(in srgb, var(--consignment-accent) 28%, white) !important; }
+.consignment-transaction-backdrop .quantity-stepper button { border-color: color-mix(in srgb, var(--consignment-accent) 30%, white); color: var(--consignment-accent); }
+.consignment-transaction-backdrop .order-product-options > button strong,
+.consignment-transaction-backdrop .order-draft-items article .order-draft-total,
+.consignment-transaction-backdrop .transaction-totals .total b { color: var(--consignment-accent); }
+.consignment-transaction-backdrop .order-product-options > button.selected,
+.consignment-transaction-backdrop .order-product-options > button:active,
+.consignment-transaction-backdrop .transaction-client-options > button.selected,
+.consignment-transaction-backdrop .transaction-client-options > button:active { color: var(--consignment-strong); background: color-mix(in srgb, var(--consignment-accent) 10%, white); }
+.consignment-transaction-backdrop .order-draft-items article:not(.order-draft-bonus) { border-color: color-mix(in srgb, var(--consignment-accent) 25%, white); background: color-mix(in srgb, var(--consignment-accent) 6%, white); }
+.consignment-transaction-backdrop .order-draft-items article:not(.order-draft-bonus)::before { background: var(--consignment-accent); }
+.consignment-transaction-backdrop .order-draft-quantity button { color: var(--consignment-accent) !important; background: color-mix(in srgb, var(--consignment-accent) 9%, white) !important; }
+.consignment-transaction-backdrop .order-insert-item { border-color: var(--consignment-strong); color: #fff; background: var(--consignment-strong); }
+.consignment-transaction-backdrop .client-transaction-footer .transaction-confirm-button { border-color: var(--consignment-accent); color: #fff; background: var(--consignment-accent); box-shadow: 0 6px 15px color-mix(in srgb, var(--consignment-accent) 24%, transparent); }
+.consignment-transaction-backdrop .client-transaction-footer .transaction-confirm-button.is-confirming,
+.consignment-transaction-backdrop .client-transaction-footer .transaction-confirm-button:disabled { border-color: var(--consignment-strong); background: var(--consignment-strong); }
+.consignment-transaction-backdrop .transaction-field input:focus { border-color: var(--consignment-accent); outline: 0; box-shadow: inset 0 0 0 1px var(--consignment-accent); }
+.consignment-transaction-backdrop .order-draft-items article:focus-within { border-color: var(--consignment-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--consignment-accent) 16%, transparent); }
+.consignment-transaction-backdrop .order-bonus-toggle input { accent-color: var(--consignment-accent); }
+.dark-theme .consignment-transaction-backdrop { --consignment-readable: #e4ccf9; }
+.dark-theme .consignment-transaction-backdrop .order-product-entry { border-color: var(--consignment-accent); background: #111d2f; }
+.dark-theme .consignment-transaction-backdrop .transaction-totals > div,
+.dark-theme .consignment-transaction-backdrop .transaction-totals > label { color: #cbd5e1; }
+.dark-theme .consignment-transaction-backdrop .transaction-date-field,
+.dark-theme .consignment-transaction-backdrop .order-draft-heading > span,
+.dark-theme .consignment-transaction-backdrop .transaction-totals,
+.dark-theme .consignment-transaction-backdrop .order-draft-items article:not(.order-draft-bonus) { border-color: color-mix(in srgb, var(--consignment-accent) 45%, #172033); color: var(--consignment-readable); background: color-mix(in srgb, var(--consignment-accent) 16%, #172033); }
+.dark-theme .consignment-transaction-backdrop .transaction-date-field > span,
+.dark-theme .consignment-transaction-backdrop .transaction-date-field input,
+.dark-theme .consignment-transaction-backdrop .transaction-date-field .date-picker-button { color: var(--consignment-readable) !important; border-left-color: color-mix(in srgb, var(--consignment-accent) 45%, #172033) !important; }
+.dark-theme .consignment-transaction-backdrop .order-draft-items article .order-draft-total,
+.dark-theme .consignment-transaction-backdrop .transaction-totals .total b,
+.dark-theme .consignment-transaction-backdrop .order-product-options > button strong,
+.dark-theme .consignment-transaction-backdrop .quantity-stepper button { color: var(--consignment-readable); }
+.dark-theme .consignment-transaction-backdrop .order-draft-quantity button { color: var(--consignment-readable) !important; background: color-mix(in srgb, var(--consignment-accent) 16%, #172033) !important; }
+.dark-theme .consignment-transaction-backdrop .order-product-options > button.selected,
+.dark-theme .consignment-transaction-backdrop .order-product-options > button:active,
+.dark-theme .consignment-transaction-backdrop .transaction-client-options > button.selected,
+.dark-theme .consignment-transaction-backdrop .transaction-client-options > button:active { color: var(--consignment-readable); background: color-mix(in srgb, var(--consignment-accent) 16%, #172033); }

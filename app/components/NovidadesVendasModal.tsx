@@ -13,7 +13,7 @@ type Material = {
   miniatura_status: 'nao_aplicavel' | 'pendente' | 'processando' | 'pronta' | 'erro';
   arquivo_hash: string | null; tamanho_bytes: number | null; criado_em: string;
 };
-type Props = { aberto: boolean; empresaId: string | null; nomeEmpresa: string; darkMode: boolean; corPrimaria: string; onFechar: () => void };
+type Props = { aberto: boolean; empresaId: string | null; nomeEmpresa: string; darkMode: boolean; corPrimaria: string; onFechar: () => void; rotuloFechar?: string };
 type ExclusaoPendente =
   | { tipo: 'novidade'; item: Novidade }
   | { tipo: 'material'; item: Material }
@@ -210,7 +210,7 @@ async function uploadCancelavel(caminho: string, arquivo: Blob, nomeArquivo: str
   });
 }
 
-export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, darkMode, corPrimaria, onFechar }: Props) {
+export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, darkMode, corPrimaria, onFechar, rotuloFechar }: Props) {
   const [aba, setAba] = useState<'novidades' | 'divulgacao' | 'produtos'>('divulgacao');
   const [tipo, setTipo] = useState('lancamento'); const [titulo, setTitulo] = useState(''); const [descricao, setDescricao] = useState('');
   const [novidades, setNovidades] = useState<Novidade[]>([]); const [pastas, setPastas] = useState<Pasta[]>([]); const [materiais, setMateriais] = useState<Material[]>([]);
@@ -804,7 +804,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
       </section>
     </div>}
     <section className={`flex h-[94dvh] max-h-[calc(100dvh-2rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border shadow-2xl ${fundo}`} onClick={(e) => e.stopPropagation()}>
-      <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-2.5 text-white" style={{ background: `linear-gradient(135deg, ${corPrimaria}, #1687D9)` }}><div className="min-w-0"><p className="text-[8px] font-black uppercase tracking-[.18em] text-white/70">Conteúdo AvantaVendas</p><h2 className="mt-0.5 whitespace-nowrap text-base font-black leading-tight">Conteúdo para a equipe</h2><p className="mt-0.5 truncate whitespace-nowrap text-[10px] leading-tight text-white/80">Novidades e divulgação de {nomeEmpresa || 'este perfil'}.</p></div><button type="button" onClick={onFechar} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-base font-black hover:bg-white/25">×</button></header>
+      <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-2.5 text-white" style={{ background: `linear-gradient(135deg, ${corPrimaria}, #1687D9)` }}><div className="min-w-0"><p className="text-[8px] font-black uppercase tracking-[.18em] text-white/70">Conteúdo AvantaVendas</p><h2 className="mt-0.5 whitespace-nowrap text-base font-black leading-tight">Conteúdo para a equipe</h2><p className="mt-0.5 truncate whitespace-nowrap text-[10px] leading-tight text-white/80">Novidades e divulgação de {nomeEmpresa || 'este perfil'}.</p></div><button type="button" onClick={onFechar} aria-label={rotuloFechar ? 'Voltar para Meus módulos' : 'Fechar'} className={`flex shrink-0 items-center justify-center bg-white/15 font-medium hover:bg-white/25 ${rotuloFechar ? 'min-h-11 rounded-xl px-3 text-sm' : 'h-8 w-8 rounded-full text-base'}`}>{rotuloFechar || '×'}</button></header>
       <nav className={`grid shrink-0 grid-cols-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => setAba('novidades')} className={`h-9 text-[10px] font-black uppercase ${aba === 'novidades' ? 'text-white' : suave}`} style={aba === 'novidades' ? { backgroundColor: corPrimaria } : undefined}>Novidades</button><button type="button" onClick={() => setAba('divulgacao')} className={`h-9 text-[10px] font-black uppercase ${aba === 'divulgacao' ? 'text-white' : suave}`} style={aba === 'divulgacao' ? { backgroundColor: corPrimaria } : undefined}>Divulgação</button><button type="button" onClick={() => setAba('produtos')} className={`h-9 text-[10px] font-black uppercase ${aba === 'produtos' ? 'text-white' : suave}`} style={aba === 'produtos' ? { backgroundColor: corPrimaria } : undefined}>Produtos</button></nav>
       {erro && <p className="mx-4 mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
       {resultadoEnvio && <p role="status" aria-live="polite" className={`mx-4 mt-3 rounded-lg border px-3 py-2 text-xs font-bold ${resultadoEnvio.tipo === 'sucesso' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-amber-300 bg-amber-50 text-amber-800'}`}>{resultadoEnvio.mensagem}</p>}

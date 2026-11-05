@@ -12,6 +12,7 @@ function carregar(path, dependencias = {}) {
   return exports;
 }
 const politica = carregar('app/lib/sessao-perfil.ts');
+const consultasPorIds = carregar('app/lib/consultas-por-ids-servidor.ts');
 const usuario = '00000000-0000-4000-8000-000000000001';
 const sessao = '00000000-0000-4000-8000-000000000002';
 const token = `cabecalho.${Buffer.from(JSON.stringify({ sub: usuario, session_id: sessao })).toString('base64url')}.assinatura`;
@@ -111,6 +112,7 @@ test('autorização compartilhada bloqueia só sessões revogadas/concorrentes d
       const helper = carregar('app/lib/cobranca-servidor.ts', {
         '@supabase/supabase-js': { createClient: () => ({ from: query, auth: { getUser: async () => ({ data: { user: { id: usuario } }, error: null }) } }) },
         './sessao-perfil': politica, './cobranca': {}, './conta-revisao': {}, './cobranca-fluxo': {}, './planos-comerciais': {}, './perfis-quota': {},
+        './consultas-por-ids-servidor': consultasPorIds,
       });
       const r = await helper.autenticarPerfilCobrancaDetalhado(new Request('https://teste', { headers: { authorization: `Bearer ${token}` } }), 'perfil');
       assert.equal(Boolean(r.erro), bloqueada);

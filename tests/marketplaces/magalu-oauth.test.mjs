@@ -35,16 +35,17 @@ const originalFetch = globalThis.fetch;
 const originalWarn = console.warn;
 const fixtureVaultKey = randomBytes(32).toString('base64url');
 let diagnosticReports = [];
-const fixtureEnvKeys = ['NODE_ENV', 'MAGALU_OAUTH_ENABLED', 'MAGALU_CLIENT_ID', 'MAGALU_CLIENT_SECRET', 'MAGALU_OAUTH_REDIRECT_URI', 'MAGALU_LOCAL_CREDENTIALS_FILE', 'MARKETPLACE_SECRETS_KEY', 'NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const fixtureEnvKeys = ['NODE_ENV', 'MAGALU_OAUTH_ENABLED', 'MAGALU_CATALOG_OAUTH_ENABLED', 'MAGALU_CLIENT_ID', 'MAGALU_CLIENT_SECRET', 'MAGALU_OAUTH_REDIRECT_URI', 'MAGALU_LOCAL_CREDENTIALS_FILE', 'MARKETPLACE_SECRETS_KEY', 'NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
 const originalEnv = Object.fromEntries(fixtureEnvKeys.map(key => [key, process.env[key]]));
 // As rotas locais são uma fixture de desenvolvimento, mesmo no build da Vercel.
 test.beforeEach(() => { process.env.NODE_ENV = 'development'; diagnosticReports=[];console.warn=value=>diagnosticReports.push(JSON.parse(value)); });
 test.before(() => {
+  delete process.env.MAGALU_CATALOG_OAUTH_ENABLED;
   process.env.MAGALU_OAUTH_ENABLED = 'true'; process.env.MAGALU_CLIENT_ID = config.clientId; process.env.MAGALU_CLIENT_SECRET = config.clientSecret;
   process.env.MAGALU_OAUTH_REDIRECT_URI = config.redirectUri; process.env.MARKETPLACE_SECRETS_KEY = fixtureVaultKey;
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://fixture.example'; process.env.SUPABASE_SERVICE_ROLE_KEY = 'fixture-service';
 });
-test.afterEach(() => { globalThis.fetch = originalFetch;console.warn=originalWarn; delete globalThis.magaluDb; delete globalThis.magaluAccess; process.env.MAGALU_OAUTH_ENABLED = 'true'; process.env.MAGALU_CLIENT_ID = config.clientId;process.env.MAGALU_CLIENT_SECRET=config.clientSecret;process.env.MARKETPLACE_SECRETS_KEY=fixtureVaultKey; process.env.MAGALU_OAUTH_REDIRECT_URI = config.redirectUri; });
+test.afterEach(() => { globalThis.fetch = originalFetch;console.warn=originalWarn; delete globalThis.magaluDb; delete globalThis.magaluAccess; delete process.env.MAGALU_CATALOG_OAUTH_ENABLED; process.env.MAGALU_OAUTH_ENABLED = 'true'; process.env.MAGALU_CLIENT_ID = config.clientId;process.env.MAGALU_CLIENT_SECRET=config.clientSecret;process.env.MARKETPLACE_SECRETS_KEY=fixtureVaultKey; process.env.MAGALU_OAUTH_REDIRECT_URI = config.redirectUri; });
 test.after(() => {
   for (const key of fixtureEnvKeys) {
     if (originalEnv[key] === undefined) delete process.env[key];
@@ -112,13 +113,13 @@ test('URL oficial, loja escolhida, PKCE S256, state aleatório e intenções cri
   const {auth,row}=await fixture(); const url=new URL(auth.authorizationUrl);
   assert.equal(url.origin,'https://id.magalu.com'); assert.equal(url.pathname,'/login');assert.equal(url.searchParams.get('choose_tenants'),'true');
   assert.equal(url.searchParams.get('state'),auth.state); assert.equal(url.searchParams.get('code_challenge_method'),'S256');
-  assert.equal(url.searchParams.get('scope'),oauth.MAGALU_AUTHORIZATION_SCOPES.join(' '));
+  assert.equal(url.searchParams.get('scope'),oauth.MAGALU_BASIC_AUTHORIZATION_SCOPES.join(' '));
   assert.ok(!auth.authorizationUrl.includes(config.clientSecret));assert.ok(!auth.authorizationUrl.includes(auth.intent.verifier));
   assert.equal(row.browser_binding_hash,oauth.magaluBrowserHash(auth.browserBinding));assert.equal(row.provider,'magalu');
   assert.deepEqual(oauth.readMagaluIntent(vault.openMarketplaceSecret(row.verifier_sealed),config),auth.intent);
   assert.ok(!JSON.stringify(row).includes(auth.intent.verifier));assert.ok(Date.parse(row.expires_at)-Date.now()<=600000);
 });
-test('uma autorização reúne consultas e catálogo explícito, sem acesso irrestrito',async()=>{
+test('conexão básica não solicita catálogo antes da liberação do client',async()=>{
   const expected=[
     'open:order-order-seller:read','open:portfolio-skus-seller:read','open:portfolio-stocks-seller:read',
     'open:order-delivery-seller:read','open:order-invoice-seller:read','open:order-logistics-seller:read',
@@ -132,12 +133,21 @@ test('uma autorização reúne consultas e catálogo explícito, sem acesso irre
     'open:portfolio-categories-seller:read','open:portfolio-skus-seller:read','open:portfolio-prices-seller:read','open:portfolio-stocks-seller:read',
     'open:portfolio-skus-seller:write','open:portfolio-prices-seller:write','open:portfolio-stocks-seller:write',
   ]);
-  const {auth}=await fixture();assert.deepEqual(new URL(auth.authorizationUrl).searchParams.get('scope').split(' '),oauth.MAGALU_AUTHORIZATION_SCOPES);
+  const {auth}=await fixture();assert.deepEqual(new URL(auth.authorizationUrl).searchParams.get('scope').split(' '),oauth.MAGALU_BASIC_AUTHORIZATION_SCOPES);
+  assert.equal(oauth.MAGALU_BASIC_AUTHORIZATION_SCOPES.length,15);
+  assert.equal(oauth.magaluCatalogAuthorizationEnabled(),false);
   assert.deepEqual(oauth.MAGALU_AUTHORIZATION_SCOPES.filter(scope=>scope.endsWith(':write')),[
     'open:order-logistics-seller:write','open:portfolio-skus-seller:write','open:portfolio-prices-seller:write','open:portfolio-stocks-seller:write',
   ]);
   assert.equal(oauth.magaluCatalogScopesGranted(oauth.MAGALU_CONNECTION_SCOPES),false);
   assert.equal(oauth.magaluCatalogScopesGranted(oauth.MAGALU_AUTHORIZATION_SCOPES),true);
+});
+test('catálogo só é solicitado depois de habilitação explícita no servidor',async()=>{
+  process.env.MAGALU_CATALOG_OAUTH_ENABLED='true';
+  const {auth}=await fixture();
+  assert.equal(oauth.magaluCatalogAuthorizationEnabled(),true);
+  assert.deepEqual(new URL(auth.authorizationUrl).searchParams.get('scope').split(' '),oauth.MAGALU_AUTHORIZATION_SCOPES);
+  assert.equal(oauth.MAGALU_AUTHORIZATION_SCOPES.length,20);
 });
 test('cada consulta omitida impede falsa autorização completa e preserva as contas',async()=>{
   for(const omitted of oauth.MAGALU_CONNECTION_SCOPES){
@@ -422,7 +432,7 @@ test('expiração, cancelamento e confirmação do navegador são diferenciados 
 test('SQL real amplia só pendências OAuth, mantém RLS e registros existentes',async()=>{
   const db=new PGlite();try{
     await db.exec("create role anon;create role authenticated;create role service_role;create table marketplace_oauth_pending(id uuid primary key,provider text not null check(provider='mercado_livre'),state text,verifier_sealed jsonb);insert into marketplace_oauth_pending values(gen_random_uuid(),'mercado_livre','existing','{}');");
-    const sql=readFileSync(resolve(root,'supabase/migrations/20261012160000_marketplace_magalu_oauth.sql'),'utf8');await db.exec(sql);await db.exec(sql);
+    const sql=readFileSync(resolve(root,'supabase/historico-sem-registro/20261012160000_marketplace_magalu_oauth.sql'),'utf8');await db.exec(sql);await db.exec(sql);
     assert.equal((await db.query("select state from marketplace_oauth_pending where provider='mercado_livre'")).rows[0].state,'existing');
     await db.exec("insert into marketplace_oauth_pending values(gen_random_uuid(),'magalu','new','{}',null)");
     await assert.rejects(db.exec("insert into marketplace_oauth_pending values(gen_random_uuid(),'other','bad','{}',null)"));

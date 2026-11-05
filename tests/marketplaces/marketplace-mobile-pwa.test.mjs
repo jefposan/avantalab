@@ -1,9 +1,22 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
+import ts from 'typescript';
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const client = read('app/marketplaces/consulta/MarketplaceMobileApp.tsx');
+
+test('nome do perfil no topo do AvantaPreços é sempre maiúsculo sem modificar o cadastro', () => {
+  const expression = client.match(/<ColaboradorTopbar nomeDoPerfil=\{([^}]+)\}/)?.[1];
+  assert.ok(expression);
+  for (const [nome, expected] of [['Saldão Aline','SALDÃO ALINE'],['tridium cosméticos','TRIDIUM COSMÉTICOS'],['SALDÃO ALINE','SALDÃO ALINE'],['','PERFIL DA EMPRESA']]) {
+    const company = { nome };
+    assert.equal(runInNewContext(expression, { company }), expected);
+    assert.equal(company.nome, nome);
+  }
+  assert.equal(runInNewContext(expression, { company:null }), 'PERFIL DA EMPRESA');
+});
 const css = read('app/marketplaces/consulta/marketplaces-mobile.module.css');
 const api = read('app/api/modulos/marketplaces/precos/route.ts');
 const historyApi = read('app/api/modulos/marketplaces/precos/historico/route.ts');
@@ -62,14 +75,51 @@ test('nova leitura de EAN descarta a pesquisa anterior antes de abrir a câmera'
   assert.match(client, /className=\{styles\.scanButton\} onClick=\{startEanReading\}/);
 });
 
+test('resultado tem Voltar para início e Nova pesquisa abre o leitor no próprio gesto, com recuperação de câmera negada', async () => {
+  const nav = client.match(/<nav className=\{styles.resultNavigation\}([\s\S]*?)<\/nav>/)?.[1];
+  assert.ok(nav);
+  assert.match(nav, /onClick=\{startEanReading\}/);
+  assert.match(nav, /Nova pesquisa/);
+  assert.match(nav, /Voltar/);
+  assert.match(nav, /onClick=\{returnFromProduct\}/);
+  assert.match(client, /<PriceProductStock compactSummary/);
+  const back = client.match(/const returnFromProduct = (\(\) => \{[\s\S]*?\n  \});/)?.[1];
+  assert.ok(back);
+  const returns = [], backContext = {consultationRunRef:{current:0},consultationBusyRef:{current:true},consultationAbortRef:{current:null},resultFromCatalog:true};
+  backContext.cancelPriceSearch=()=>{backContext.consultationBusyRef.current=false;returns.push(['setPricedProductsOpen',false]);};
+  for (const name of ['setSearchCancelable','setSearchNotice','setLoading','setResult','setResultDetailsOpen','setResultError','setResultFromCatalog','setPricedProductsOpen','setHistorySearch','setCatalogPage','setCatalogRefresh']) backContext[name]=value=>returns.push([name,value]);
+  runInNewContext(`(${back})()`,backContext);
+  assert.ok(returns.some(([name,value])=>name==='setResult'&&value===null));
+  assert.ok(returns.some(([name,value])=>name==='setPricedProductsOpen'&&value===false));
+  assert.equal(backContext.consultationBusyRef.current,false);
+  const action = client.match(/const startEanReading = \(\) => \{([\s\S]*?)\n  \};/)?.[1];
+  for (const camera of ['ok', 'denied', 'unavailable']) {
+    const calls = []; let stopped = false;
+    const context = { consultationRunRef: {current:1}, consultationBusyRef:{current:true}, consultationAbortRef:{current:null}, DOMException,
+      navigator: camera === 'unavailable' ? {} : {mediaDevices:{getUserMedia() { calls.push('camera'); return camera === 'ok' ? Promise.resolve({getTracks:()=>[{stop(){stopped=true;}}]}) : Promise.reject(new DOMException('Negado','NotAllowedError')); }}},
+    };
+    context.cancelPriceSearch=()=>{};
+    for (const name of ['setSearchCancelable','setSearchNotice','setLoading','setResultDetailsOpen','setResultError','setPricedProductsOpen','setEan','setQuery','setPendingInput','setCandidates','setResult','setResultFromCatalog','setManualRegistration','setError','setScannerIssue','setScannerOpen']) context[name]=value=>calls.push([name,value]);
+    runInNewContext(ts.transpileModule(`(() => {${action}})()`, {compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText, context);
+    assert.equal(context.consultationRunRef.current,2);
+    assert.equal(context.consultationBusyRef.current,false);
+    if (camera !== 'unavailable') assert.ok(calls.includes('camera'),'permissão solicitada sem outro clique');
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.ok(calls.some(c=>Array.isArray(c)&&c[0]==='setScannerOpen'&&c[1]===true));
+    if (camera === 'ok') assert.equal(stopped,true);
+    else assert.ok(calls.some(c=>Array.isArray(c)&&c[0]==='setScannerIssue'&&c[1]===(camera==='denied'?'denied':'error')));
+  }
+});
+
 test('resultado diferencia os quatro valores e o histórico pode ser reaberto, ajustado e pesquisado novamente', () => {
-  for (const text of ['Média dos até 5 menores preços', 'Preço mínimo', 'Preço médio de venda', 'Preço ideal', 'Últimas consultas', 'Consultar novamente', 'Atualizar cálculos', 'Produtos precificados', 'Registrar cálculo manual']) assert.match(client, new RegExp(text));
+  for (const text of ['Média dos até 5 menores preços', 'Preço mínimo', 'Preço médio de venda', 'Preço ideal', 'Últimas consultas', 'Consultar novamente', 'Atualizar cálculos', 'Resultados da pesquisa']) assert.match(client, new RegExp(text));
+  assert.doesNotMatch(client,/Registrar cálculo manual|saveManualRegistration|manual-product-name/);
   assert.match(client, /openHistoryResult\(item/);
   assert.match(client, /loadHistory\(company\.id\)/);
   assert.match(client, /historyId: result\.historyId/);
-  assert.match(client, /view=catalog&sort=/);
+  assert.match(client, /precos\/produto\?empresaId=/);
   assert.match(client, /CampoBusca/);
-  assert.match(client, /correspondeBusca/);
+  assert.match(client, /encodeURIComponent\(historySearch\)/);
   assert.match(css, /\.marketPrice \{[^}]*background:/);
   assert.match(css, /\.minimumPrice \{[^}]*background:/);
   assert.match(css, /\.mediumPrice \{[^}]*background:/);
@@ -81,9 +131,9 @@ test('resultado diferencia os quatro valores e o histórico pode ser reaberto, a
 
 test('Consultar novamente usa somente a pesquisa web OpenAI e preserva as fontes', () => {
   const historyBranch = api.match(/if \(input\.historyId\) \{([\s\S]*?)\n    \}\n    const connection = await resolveMercadoLivreConnection/)?.[1] || '';
-  assert.match(historyBranch, /refreshHistoryPrice\(db, empresaId, input\.historyId\)/);
+  assert.match(historyBranch, /refreshHistoryPrice\(db, empresaId, input\.historyId, usuario.id, request.signal, body.refreshPrice === true\)/);
   assert.doesNotMatch(historyBranch, /resolveMercadoLivreConnection|consultMercadoLivrePrice/);
-  assert.match(api, /consultOpenAIWebPrices\(\{ ean: stored\.ean, productName: stored\.product_name \}\)/);
+  assert.match(api, /consultOpenAIWebPrices\(\{ ean: stored\.ean, productName: stored\.product_name \}, \{ db, companyId: empresaId, actorId: actor, signal/);
   assert.match(api, /source_offers: lookup\.sample\.offers/);
   assert.match(client, /Ofertas usadas no cálculo/);
   assert.match(client, /href=\{offer\.url\}/);
@@ -93,14 +143,14 @@ test('falha ao consultar novamente permanece no resultado aberto, não no dashbo
   assert.match(client, /const \[resultError, setResultError\] = useState\(''\)/);
   assert.match(client, /const isHistoryRefresh = Boolean\(input\.historyId\)/);
   assert.match(client, /if \(isHistoryRefresh\) setResultError\(message\); else setError\(message\);/);
-  const resultPage = client.match(/\{result\?\.status === 'found'[\s\S]*?<\/section> : pricedProductsOpen/)?.[0] || '';
-  assert.match(resultPage, /\{resultError && <p className=\{styles\.error\} role="alert">\{resultError\}<\/p>\}/);
+  const resultPage = client.match(/\{resultDetailsOpen && result\?\.status === 'found'[\s\S]*?<\/section> : <div className=\{styles.content\}>/)?.[0] || '';
+  assert.match(resultPage, /\{resultError && !priceResearchFeedback\?\.error && <p className=\{styles\.error\} role="alert">\{resultError\}<\/p>\}/);
 });
 
 test('início prioriza a consulta manual, compacta o leitor e deixa o catálogo antes das últimas consultas', () => {
   const manual = client.indexOf('id="manual-title">Consultar manualmente');
   const scan = client.indexOf('className={styles.scanSection}');
-  const priced = client.indexOf('>Ver produtos precificados</button>');
+  const priced = client.indexOf('>Ver produtos e estoque</button>');
   const history = client.indexOf('id="history-title">Últimas consultas');
   assert.ok(manual > -1 && scan > manual, 'A leitura por câmera deve vir após a consulta manual.');
   assert.ok(priced > scan && history > priced, 'O catálogo completo deve anteceder as últimas consultas.');
@@ -121,13 +171,19 @@ test('login do AvantaPreços segue a composição aprovada e o padrão do Recebi
   assert.match(css, /\.loginSubmit \{[^}]*height: 36px;[^}]*background: #1687d9;/);
 });
 
-test('seletores de empresa e conta seguem lista ancorada do sistema', () => {
+test('seletores preservados seguem lista ancorada sem expor contas de integração', () => {
   assert.doesNotMatch(client, /<select|<option/);
   assert.match(client, /role="listbox"/);
   assert.match(client, /role="option"/);
   assert.match(client, /event\.key === 'Escape'/);
   assert.match(css, /\.pickerList \{[^}]*position: absolute;[^}]*top: calc\(100% \+ 5px\);/);
-  assert.match(client, /label="Conta usada na consulta"/);
+  assert.doesNotMatch(client, /Conta usada na consulta|Mercado Livre conectado|styles\.accountPicker/);
+  assert.match(client, /setConnectionStatus\(connected.length \? 'connected' : 'disconnected'\)/);
+  assert.match(client, /connectionStatus !== null && <p[^\n]+role="status"[^\n]+\? 'Conectado' : 'Desconectado'/);
+  assert.match(client, /setConnectionId\(''\); setConnectionStatus\(null\)/);
+  assert.match(client, /setConnectionId\(connected\[0\]\?\.id \|\| ''\)/);
+  assert.match(client, /connectionId: connectionId \|\| undefined/);
+  assert.match(client, /Não foi possível preparar a consulta\. Tente novamente\./);
   assert.doesNotMatch(client, /label="Empresa ativa"/);
   assert.match(client, /Selecione o perfil que será usado nesta sessão/);
   assert.match(client, /Consulta rápida de produtos e preços/);
@@ -141,7 +197,7 @@ test('histórico é isolado por empresa e inacessível diretamente pelo navegado
   assert.match(migration, /revoke all on public\.marketplace_price_consultations from anon, authenticated/);
   assert.match(migration, /grant select, insert, update, delete on public\.marketplace_price_consultations to service_role/);
   assert.match(historyApi, /searchParams\.get\('view'\) === 'catalog'/);
-  assert.match(historyApi, /limit\(ean \? 1 : catalog \? 1_000 : 20\)/);
+  assert.match(historyApi, /limit\(ean \? 1 : catalog \? 1_000 : 10\)/);
 });
 
 test('manifesto, service worker e cópia do endereço tornam o AvantaPreços instalável e compartilhável pelo módulo', () => {
@@ -180,7 +236,8 @@ test('AvantaPreços e Recebimentos usam o mesmo componente de topo e o mesmo CSS
   assert.match(receiptsClient, /<ColaboradorTopbar nomeDoPerfil=\{nomeDoPerfil\} descricaoDaOperacao=\{descricaoDaOperacao\}>/);
   assert.match(client, /import ColaboradorTopbar from '@\/app\/recebimentos\/components\/ColaboradorTopbar'/);
   assert.match(client, /import recebimentosStyles from '@\/app\/recebimentos\/recebimentos\.module\.css'/);
-  assert.match(client, /className=\{`\$\{recebimentosStyles.page\} \$\{styles.page\}`\}/);
+  assert.match(client, /className=\{`\$\{recebimentosStyles.page\} \$\{styles.page\} \$\{effectiveDark/);
+  assert.match(client, /useTemaResolvido\(/);
   assert.match(client, /<ColaboradorTopbar/);
   assert.match(client, /recebimentosStyles.btnGhost/);
   assert.doesNotMatch(css, /\.(?:topbar|topbarInner|topbarMobile|brandTitle|brandSubtitle|logoutButton)\b/);

@@ -1,0 +1,868 @@
+{
+  "schemaCapturedAt": "2026-11-04T13:30:55.522897+00:00",
+  "schemaPublicSha256": "29d4084fe397f355a5597aab62dbf2d3372547e8c9eb2c40e453031a6faec638",
+  "schemaCounts": {
+    "columns": 2508,
+    "constraints": 1336,
+    "extensions": 7,
+    "functions": 352,
+    "indexes": 601,
+    "policies": 401,
+    "tables": 235,
+    "triggers": 181,
+    "views": 2
+  },
+  "records": [
+    {
+      "version": "20260708143000",
+      "path": "supabase/migrations/20260708143000_caixinhas_movimentos.sql",
+      "classification": "SQL histórico diferente da fonte publicada",
+      "definedFunctionNames": [],
+      "currentSchemaFunctions": [],
+      "sourceSha256": "f7230ca9d62a1126c148ab592d112401102ea8fa2f9d03ac516d225d792b271e",
+      "remoteStatementsSha256": "464c3a4519d3696a9566c711269fcf552b2536e1e14c89a3d1ba3ed5149d238c",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [],
+      "publishedSourceSha256": "f7230ca9d62a1126c148ab592d112401102ea8fa2f9d03ac516d225d792b271e",
+      "candidateSourceSha256": "b43d33002b65a1b7297cbe42c4e8a81a2575d601618d2745da487203ace59006"
+    },
+    {
+      "version": "20260718123000",
+      "path": "supabase/migrations/20260718123000_recebimentos_presencial.sql",
+      "classification": "SQL histórico diferente da fonte publicada",
+      "definedFunctionNames": [
+        "recebimentos_baixar",
+        "recebimentos_devolver",
+        "recebimentos_e_colaborador",
+        "recebimentos_estornar",
+        "recebimentos_pode_gerir",
+        "recebimentos_registrar_divergencia"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "recebimentos_e_colaborador(uuid)",
+          "sha256": "3da59af2ad606f45f93973544d01e87d1118cac9a2618013f9ef3c452892d028"
+        },
+        {
+          "signature": "recebimentos_pode_gerir(uuid)",
+          "sha256": "4592c6b1c4533ff5db6dd6c374fadc5a0d3bda79202df17b991c970b8cd7fd9c"
+        },
+        {
+          "signature": "recebimentos_devolver(uuid,text)",
+          "sha256": "ad6f354771fba7287d660e678a937ee44ba06d6017d286b642b3bbd276313f1f"
+        },
+        {
+          "signature": "recebimentos_registrar_divergencia(uuid,text)",
+          "sha256": "5fb1dbcd6c4bcc5a37180b69d7000f31b23f19abdf6287f793b315dbd019ea5d"
+        },
+        {
+          "signature": "recebimentos_baixar(uuid,text)",
+          "sha256": "633dd1b900ed5c5f857483c5387864f6c6e4e4d0c2f7cdf26ea21ed872202171"
+        },
+        {
+          "signature": "recebimentos_baixar(uuid,text,text)",
+          "sha256": "94a22dae56429608acf2c19ba4e458b5313aa990a66e7ed46c6931decbf57947"
+        },
+        {
+          "signature": "recebimentos_estornar(uuid,text)",
+          "sha256": "18b524d9f67a241a7f15f891a651b1cde8c2df6aa834fb127cdb23e0c9cab7ff"
+        }
+      ],
+      "sourceSha256": "00d63068c2e6830b5cd6484261711f9489b031cecabbe7efde785f44fc98f696",
+      "remoteStatementsSha256": "9f170c2add1680b79b60ef449e7b25bb1fb6eb7647dca4c78ffd511a9eac587b",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "recebimentos_pode_gerir",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "recebimentos_pode_gerir(uuid)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "recebimentos_e_colaborador",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "recebimentos_e_colaborador(uuid)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "recebimentos_baixar",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "recebimentos_devolver",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "recebimentos_registrar_divergencia",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "recebimentos_estornar",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "00d63068c2e6830b5cd6484261711f9489b031cecabbe7efde785f44fc98f696",
+      "candidateSourceSha256": "2305912e134a46abb1dd0b2f033aeb58702f1bfd0d1a006e3ee52aeb843e7c3f"
+    },
+    {
+      "version": "20260718173000",
+      "path": "supabase/migrations/20260718173000_integracao_financeira_recebimentos.sql",
+      "classification": "SQL histórico diferente da fonte publicada",
+      "definedFunctionNames": [
+        "proteger_receita_recebimentos_gestao",
+        "recebimentos_integrar_financeiro",
+        "recebimentos_obter_integracao_financeira"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "recebimentos_integrar_financeiro(uuid,integer,integer,text,text)",
+          "sha256": "9e3e7b0d023f2e36b2cf2a19f2e15d87355ad8e1aee30ca65e61c2783b02faa8"
+        },
+        {
+          "signature": "recebimentos_obter_integracao_financeira(uuid,integer,integer)",
+          "sha256": "0e23ef66e04f8c8886d00661aee128f2b6198f862ca1d2bd87fe49dd6cd4ec65"
+        },
+        {
+          "signature": "proteger_receita_recebimentos_gestao()",
+          "sha256": "b9ab274699157027414c961fa042cea7d43448396795d512a7eac2054483b7eb"
+        }
+      ],
+      "sourceSha256": "50222e599a9436b3821986fbae738b66cf5ab781cb0b22aa118f3760ff053c89",
+      "remoteStatementsSha256": "d9299fc10571a43d847ffd0210ba5d7a882d86639527b6e056427fe2222e1ef3",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "proteger_receita_recebimentos_gestao",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "recebimentos_obter_integracao_financeira",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "recebimentos_integrar_financeiro",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "50222e599a9436b3821986fbae738b66cf5ab781cb0b22aa118f3760ff053c89",
+      "candidateSourceSha256": "eb6e5305957dd3eb713cb6c57f9a76ac0e387eaa85d162a3fedb2de18d042a2a"
+    },
+    {
+      "version": "20260801090000",
+      "path": "supabase/migrations/20260801090000_avisos_vencimento_assinatura.sql",
+      "classification": "SQL histórico diferente da fonte publicada",
+      "definedFunctionNames": [],
+      "currentSchemaFunctions": [],
+      "sourceSha256": "4cfda20b7e22a4781cf3dac13695429ccbb7454f32e8e795181e0223eb364a4d",
+      "remoteStatementsSha256": "98dad1e3f6e4fad2748ef75cae80e49fd36e2887507897fbaa06b0bd0691b9d1",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [],
+      "publishedSourceSha256": "4cfda20b7e22a4781cf3dac13695429ccbb7454f32e8e795181e0223eb364a4d",
+      "candidateSourceSha256": "ce5826188b07b11438b08095736ed95e3d611dd26cb60869a442aaa3a2fa96eb"
+    },
+    {
+      "version": "20260807190000",
+      "path": "supabase/migrations/20260807190000_padrao_modulos_e_avanta_projetos.sql",
+      "classification": "histórico remoto sem statements",
+      "definedFunctionNames": [
+        "modulo_ativo_para_empresa",
+        "projetos_documentos_atualizar_metadados"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "modulo_ativo_para_empresa(uuid,text)",
+          "sha256": "ae4c404c3c336ec932db9e0678ad733299c532fbb35767522b264197a0d60294"
+        },
+        {
+          "signature": "projetos_documentos_atualizar_metadados()",
+          "sha256": "f6fc474d89d5084fc05b66673aad732b7cb0ee6218cb9d3fce676f0878959b22"
+        }
+      ],
+      "sourceSha256": "52fabf895b33a2bdd5a6b996d09acebb43aca89889b8c5f99f7f43e3caf8d941",
+      "remoteStatementsSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "modulo_ativo_para_empresa",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "modulo_ativo_para_empresa(uuid,text)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "projetos_documentos_atualizar_metadados",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "projetos_documentos_atualizar_metadados()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "52fabf895b33a2bdd5a6b996d09acebb43aca89889b8c5f99f7f43e3caf8d941",
+      "candidateSourceSha256": "52fabf895b33a2bdd5a6b996d09acebb43aca89889b8c5f99f7f43e3caf8d941"
+    },
+    {
+      "version": "20260820160000",
+      "path": "supabase/migrations/20260820160000_capa_externa_divulgacao_vendas_mobile.sql",
+      "classification": "histórico remoto sem statements",
+      "definedFunctionNames": [
+        "validar_capa_pasta_divulgacao_vendas_mobile"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "validar_capa_pasta_divulgacao_vendas_mobile()",
+          "sha256": "fe5bd3feedf992ec212691144da09c8ef25b524fe4902c30b05431d074454331"
+        }
+      ],
+      "sourceSha256": "89b261622fbeefa4ef04add7d7b768a10b3a8330a98d937a847619b10d2a9afc",
+      "remoteStatementsSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "validar_capa_pasta_divulgacao_vendas_mobile",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "validar_capa_pasta_divulgacao_vendas_mobile()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "89b261622fbeefa4ef04add7d7b768a10b3a8330a98d937a847619b10d2a9afc",
+      "candidateSourceSha256": "89b261622fbeefa4ef04add7d7b768a10b3a8330a98d937a847619b10d2a9afc"
+    },
+    {
+      "version": "20260905152000",
+      "path": "supabase/migrations/20260905152000_vendas_comercial.sql",
+      "classification": "SQL histórico diferente da fonte publicada",
+      "definedFunctionNames": [
+        "vendas_rejeitar_alteracao_imutavel",
+        "vendas_reservar_numero_operacao",
+        "vendas_touch_version",
+        "vendas_validar_item_editavel",
+        "vendas_validar_ordem_servico",
+        "vendas_validar_produto_empresa",
+        "vendas_validar_tabela_preco_empresa"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "vendas_validar_ordem_servico()",
+          "sha256": "ff1b6ac7d3b3927938a5dc4e5602f1cfc7a33aee613bb98963269658b2a9020d"
+        },
+        {
+          "signature": "vendas_touch_version()",
+          "sha256": "0745e516aa543cffd74412fe29e1e701935e39d00ec696cc1b4a81f5908bc121"
+        },
+        {
+          "signature": "vendas_rejeitar_alteracao_imutavel()",
+          "sha256": "007494c9df9ae6412146a720312cb147d6980085cd9b7cda71a91e27dac77103"
+        },
+        {
+          "signature": "vendas_validar_produto_empresa()",
+          "sha256": "e2095d49eb3591af7e380ced7119b981b7b2d5e7f54cb508f8af631573c4351d"
+        },
+        {
+          "signature": "vendas_validar_item_editavel()",
+          "sha256": "130c060ef854f94009f4d76833eaf3205c67242494fcc0c83d5bbd23785e540b"
+        },
+        {
+          "signature": "vendas_validar_tabela_preco_empresa()",
+          "sha256": "a48884eadb1a35104f2b6936604dc9b28f17c1077fe83eb4a63a1c9d33ea244e"
+        },
+        {
+          "signature": "vendas_reservar_numero_operacao(uuid,uuid)",
+          "sha256": "e6657eaca3fdbd247236aa34c919aa9777b22c5fbaf609a7bfcbba102b7b643c"
+        }
+      ],
+      "sourceSha256": "228fdbe8acbc669dfa999edcfd392f0de3fba421ce6bebbcf343b97d9f870734",
+      "remoteStatementsSha256": "1b3e73dea9a06f5894291c5e4fcdccced98d2f32355a84bb270aeca9a8cc38b7",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "vendas_touch_version",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "vendas_touch_version()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "vendas_rejeitar_alteracao_imutavel",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "vendas_rejeitar_alteracao_imutavel()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "vendas_validar_produto_empresa",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "vendas_validar_produto_empresa()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "vendas_validar_item_editavel",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "vendas_validar_item_editavel()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "vendas_validar_tabela_preco_empresa",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "vendas_validar_tabela_preco_empresa()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "vendas_validar_ordem_servico",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "vendas_validar_ordem_servico()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "vendas_reservar_numero_operacao",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "228fdbe8acbc669dfa999edcfd392f0de3fba421ce6bebbcf343b97d9f870734",
+      "candidateSourceSha256": "89b3601c108c89091986ee8a4932d032f05334775158e4c07260a85b22a0f28a"
+    },
+    {
+      "version": "20260907143000",
+      "path": "supabase/migrations/20260907143000_limpa_observacoes_tecnicas_clientes.sql",
+      "classification": "SQL histórico diferente da fonte publicada",
+      "definedFunctionNames": [],
+      "currentSchemaFunctions": [],
+      "sourceSha256": "1355bfc8af7fe109f5c52ad3b0311e619e42a15b1a836fedce081958c7edcd76",
+      "remoteStatementsSha256": "4023c1119d4c89984675bb8ce6e5e0887c1f3760c1ab5baaa4ae998563160ba3",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [],
+      "publishedSourceSha256": "1355bfc8af7fe109f5c52ad3b0311e619e42a15b1a836fedce081958c7edcd76",
+      "candidateSourceSha256": "7a17cd27096d276e549412b8318e09103fb3ecfc83f2462ab796682b3f65aa2e"
+    },
+    {
+      "version": "20261005200000",
+      "path": "supabase/migrations/20261005200000_corrigir_vinculo_comercial_catalogo_imediato.sql",
+      "classification": "histórico remoto sem statements",
+      "definedFunctionNames": [
+        "consultar_codigo_vinculo_vendas_mobile_rpc",
+        "sincronizar_catalogo_vendas_mobile_rpc",
+        "vendas_mobile_aplicar_vinculo_solicitacao_aprovada"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "consultar_codigo_vinculo_vendas_mobile_rpc(text,uuid)",
+          "sha256": "7999fcda7a92a2c3393bf92b22b64d2fb66cb0a1b8e94a56ba97eb36dc52764f"
+        },
+        {
+          "signature": "sincronizar_catalogo_vendas_mobile_rpc()",
+          "sha256": "e22203765d69917b7c21e28a27a81b913ab5c3a1b7d6c79e50b706429830aea3"
+        },
+        {
+          "signature": "sincronizar_catalogo_vendas_mobile_rpc(uuid)",
+          "sha256": "a5c72c85e0f7eef9749e2f587df7f1a548d9faf27a206c26b1c18e956b889cbc"
+        },
+        {
+          "signature": "vendas_mobile_aplicar_vinculo_solicitacao_aprovada()",
+          "sha256": "65b405d1a40c3b47780d17b5152a202d5fd7a3428ed4824db952a146f90af263"
+        }
+      ],
+      "sourceSha256": "f13b3ea37a8a530b1cee00082ebbdf42bf314ca1d80f0741fbbf9429e672ead6",
+      "remoteStatementsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "consultar_codigo_vinculo_vendas_mobile_rpc",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "consultar_codigo_vinculo_vendas_mobile_rpc(text,uuid)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "vendas_mobile_aplicar_vinculo_solicitacao_aprovada",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "vendas_mobile_aplicar_vinculo_solicitacao_aprovada()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "sincronizar_catalogo_vendas_mobile_rpc",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "f13b3ea37a8a530b1cee00082ebbdf42bf314ca1d80f0741fbbf9429e672ead6",
+      "candidateSourceSha256": "f13b3ea37a8a530b1cee00082ebbdf42bf314ca1d80f0741fbbf9429e672ead6"
+    },
+    {
+      "version": "20261016190000",
+      "path": "supabase/migrations/20261016190000_marketplace_price_lots.sql",
+      "classification": "histórico com perda de delimitadores/expressões; não executar registro como SQL",
+      "definedFunctionNames": [
+        "marketplace_price_lot_mutate"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "marketplace_price_lot_mutate(uuid,uuid,text,jsonb)",
+          "sha256": "5d5fb2fb69ea56a3907c6c296b90b42a4cfd787e1ab6e14d3d3a3a4add71aaf1"
+        }
+      ],
+      "sourceSha256": "cea61006adcfae91f39926d1f455b21c74f32e94bb39e5b7b91b5b449261a5bf",
+      "remoteStatementsSha256": "112a6a0c61adef8f978267a4c53c4320cf02ed3cfba967fde631cc4a8722890d",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "marketplace_price_lot_mutate",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_price_lot_mutate(uuid,uuid,text,jsonb)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "cea61006adcfae91f39926d1f455b21c74f32e94bb39e5b7b91b5b449261a5bf",
+      "candidateSourceSha256": "cea61006adcfae91f39926d1f455b21c74f32e94bb39e5b7b91b5b449261a5bf"
+    },
+    {
+      "version": "20261022010000",
+      "path": "supabase/migrations/20261022010000_marketplace_listing_catalog_import.sql",
+      "classification": "histórico remoto contém descrição, não SQL",
+      "definedFunctionNames": [
+        "marketplace_clear_listing_stock_review",
+        "marketplace_hold_import_stock_outbox",
+        "marketplace_import_choose_local",
+        "marketplace_listing_catalog_changed",
+        "marketplace_listing_catalog_import",
+        "marketplace_valid_import_ean"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "marketplace_listing_catalog_import(uuid,uuid,text)",
+          "sha256": "35dd5d80e6a79b7d99e6270a19e8817ac44645483ae42a5908273d788504613f"
+        },
+        {
+          "signature": "marketplace_valid_import_ean(text)",
+          "sha256": "41819c53ed79a8db983ea122f0358227a0177c608df820c8deeb165059cda0d1"
+        },
+        {
+          "signature": "marketplace_import_choose_local(uuid,uuid,uuid,text,uuid,uuid)",
+          "sha256": "e61ced664d271c693a88855f10a021e5767f15a661fed3320f02fa1e53e6815f"
+        },
+        {
+          "signature": "marketplace_listing_catalog_changed()",
+          "sha256": "7f23f4e084cc09d44e5616d4682704b7d8ad501705670e4905464f888ad3b011"
+        },
+        {
+          "signature": "marketplace_clear_listing_stock_review()",
+          "sha256": "81c78f56cd80bf4f48f8744da7fda7d45a7d76b1ea0a43169591c0b926be0621"
+        },
+        {
+          "signature": "marketplace_hold_import_stock_outbox()",
+          "sha256": "1e4c388b9ba5bf83af1b4328c8334eea001f6f6e74215bd5645d800a6167c3ad"
+        }
+      ],
+      "sourceSha256": "5871f8bc2f6c2d323182cea227cbcd19bf7c919e58958d7ae20412312892ce7e",
+      "remoteStatementsSha256": "427a19cb58894e9fcb0d1757bc69a463524e54029aa5642c113f045b06c0702c",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "marketplace_valid_import_ean",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_valid_import_ean(text)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_listing_catalog_import",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_import_choose_local",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_listing_catalog_changed",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_listing_catalog_changed()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_clear_listing_stock_review",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_clear_listing_stock_review()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_hold_import_stock_outbox",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_hold_import_stock_outbox()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "5871f8bc2f6c2d323182cea227cbcd19bf7c919e58958d7ae20412312892ce7e",
+      "candidateSourceSha256": "5871f8bc2f6c2d323182cea227cbcd19bf7c919e58958d7ae20412312892ce7e"
+    },
+    {
+      "version": "20261023050000",
+      "path": "supabase/migrations/20261023050000_marketplace_multi_publication_targets.sql",
+      "classification": "histórico remoto sem statements",
+      "definedFunctionNames": [],
+      "currentSchemaFunctions": [],
+      "sourceSha256": "7315119cfe031566c62363a8201ae4c773a384843cc1d57291fb539fe05e8e21",
+      "remoteStatementsSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [],
+      "publishedSourceSha256": "7315119cfe031566c62363a8201ae4c773a384843cc1d57291fb539fe05e8e21",
+      "candidateSourceSha256": "7315119cfe031566c62363a8201ae4c773a384843cc1d57291fb539fe05e8e21"
+    },
+    {
+      "version": "20261024050000",
+      "path": "supabase/migrations/20261024050000_marketplace_removal_discovery.sql",
+      "classification": "histórico com perda de delimitadores/expressões; não executar registro como SQL",
+      "definedFunctionNames": [
+        "marketplace_product_removal_candidates",
+        "marketplace_product_removal_discovery_access",
+        "marketplace_product_remove_checked"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "marketplace_product_removal_discovery_access(uuid,uuid)",
+          "sha256": "5ca00d212bcb2651a2ea2e846ec9d40d3a95e57c98a9704b014fa22a6847e9fc"
+        },
+        {
+          "signature": "marketplace_product_removal_candidates(uuid,uuid,uuid)",
+          "sha256": "e40c5ec887cdf83816ea7e0c19842905a4e97747bb38242bee59cac19dd99122"
+        },
+        {
+          "signature": "marketplace_product_remove_checked(uuid,uuid,uuid,bigint,text,text,uuid,jsonb,jsonb)",
+          "sha256": "17a0bfa7119a8b65691cab6de2b22c01cabafcd62f7ba711e1c6d34bd60c4be6"
+        }
+      ],
+      "sourceSha256": "29fd22d04616b76abdc22a1af50f5853636a39b13204e9aa304bc55090969379",
+      "remoteStatementsSha256": "f24abc135d96a8e52d66717d60b09ea22a437059ce476064affe6c4c9f42beeb",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "marketplace_product_removal_discovery_access",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_product_removal_discovery_access(uuid,uuid)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_product_removal_candidates",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_product_removal_candidates(uuid,uuid,uuid)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_product_remove_checked",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_product_remove_checked(uuid,uuid,uuid,bigint,text,text,uuid,jsonb,jsonb)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "29fd22d04616b76abdc22a1af50f5853636a39b13204e9aa304bc55090969379",
+      "candidateSourceSha256": "29fd22d04616b76abdc22a1af50f5853636a39b13204e9aa304bc55090969379"
+    },
+    {
+      "version": "20261026020000",
+      "path": "supabase/migrations/20261026020000_marketplace_ean_picture_gallery.sql",
+      "classification": "histórico com definição de função reformatada pelo PostgreSQL",
+      "definedFunctionNames": [
+        "marketplace_price_product_register_gallery"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "marketplace_price_product_register_gallery(uuid,uuid,text,jsonb)",
+          "sha256": "8ab4e773172c40ff955b26683caac696a4db8bba568c93222722626a8ab2ea0e"
+        }
+      ],
+      "sourceSha256": "45249c5fb1a01582f5dd8e95e2ccbf4679b4be56af769fdb079bc478b999d324",
+      "remoteStatementsSha256": "8964af7038240e2751f3f335d655fda6bd4d68170174354a04746af338c8ee8f",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "marketplace_price_product_register_gallery",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_price_product_register_gallery(uuid,uuid,text,jsonb)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "45249c5fb1a01582f5dd8e95e2ccbf4679b4be56af769fdb079bc478b999d324",
+      "candidateSourceSha256": "45249c5fb1a01582f5dd8e95e2ccbf4679b4be56af769fdb079bc478b999d324"
+    },
+    {
+      "version": "20261026030000",
+      "path": "supabase/migrations/20261026030000_marketplace_preparation_content.sql",
+      "classification": "histórico com definição de função reformatada pelo PostgreSQL",
+      "definedFunctionNames": [
+        "marketplace_product_content_save"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "marketplace_product_content_save(uuid,uuid,uuid,bigint,jsonb,uuid)",
+          "sha256": "098e073ff21a8edca0293276efde5548cc7c97f45c611f78f7e0f0ddd71ad700"
+        }
+      ],
+      "sourceSha256": "1106e2b8207f603e442e91f1fac2c1d7da3eb14ca88545b2316aee7b185ab1ef",
+      "remoteStatementsSha256": "c390749811b247add65af9a2fd2a795747c864eeb7a0ab072291a932a88463d4",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "marketplace_product_content_save",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_product_content_save(uuid,uuid,uuid,bigint,jsonb,uuid)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "1106e2b8207f603e442e91f1fac2c1d7da3eb14ca88545b2316aee7b185ab1ef",
+      "candidateSourceSha256": "1106e2b8207f603e442e91f1fac2c1d7da3eb14ca88545b2316aee7b185ab1ef"
+    },
+    {
+      "version": "20261026220000",
+      "path": "supabase/migrations/20261026220000_preservar_saldo_importacao_anuncios.sql",
+      "classification": "histórico com perda de delimitadores/expressões; não executar registro como SQL",
+      "definedFunctionNames": [],
+      "currentSchemaFunctions": [],
+      "sourceSha256": "640af543ff3c3d8b1ba61330cf4f9772bfde0ea136147f1f4dd47dc5e2c1f76f",
+      "remoteStatementsSha256": "6810e56b679c9877845a727e8e68199dd6c6b3e8072eade56c22182425f37ee9",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [],
+      "publishedSourceSha256": "640af543ff3c3d8b1ba61330cf4f9772bfde0ea136147f1f4dd47dc5e2c1f76f",
+      "candidateSourceSha256": "640af543ff3c3d8b1ba61330cf4f9772bfde0ea136147f1f4dd47dc5e2c1f76f"
+    },
+    {
+      "version": "20261027010000",
+      "path": "supabase/migrations/20261027010000_catalog_completion.sql",
+      "classification": "histórico com perda de delimitadores/expressões; não executar registro como SQL",
+      "definedFunctionNames": [
+        "marketplace_catalog_complete_local",
+        "marketplace_catalog_completion_claim",
+        "marketplace_catalog_completion_new_product",
+        "marketplace_catalog_completion_seed"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "marketplace_catalog_completion_seed(uuid,uuid)",
+          "sha256": "55ac05c153f646c25f79609909b6d0a3a2e7d5f9387b86878bc4810ee1e729a0"
+        },
+        {
+          "signature": "marketplace_catalog_complete_local(uuid,uuid,uuid,bigint,uuid,jsonb)",
+          "sha256": "9ec8a3685f638108740a3cd9382b928944e2de420157b4d3030f92ebd76363fa"
+        },
+        {
+          "signature": "marketplace_catalog_completion_claim(uuid,uuid)",
+          "sha256": "2f20ea3da477b793b200753aceadf4e46dc7485aeb1708154f939b128157c706"
+        },
+        {
+          "signature": "marketplace_catalog_completion_new_product()",
+          "sha256": "2f598bfa3bfbb3816613cbbe5f8a575ae6ba3ee2b068717ba3cf720687101520"
+        },
+        {
+          "signature": "marketplace_catalog_completion_claim(uuid,uuid,boolean)",
+          "sha256": "ee50786a40099338d3ed75b640322d0ca62830882f7083af153a497561b3d09d"
+        },
+        {
+          "signature": "marketplace_catalog_completion_claim(uuid,uuid,boolean,boolean)",
+          "sha256": "3a7a0421f3e89bfed65cab63ebd8e6ae412dda7b1ee6f0207c273e1bd56459de"
+        }
+      ],
+      "sourceSha256": "2c041bdecf8084f854066b8e115e279bec8f2973d923dd254b5f164c775ca300",
+      "remoteStatementsSha256": "9313485e5569dca742bf85f287ee8c9cff338a2f5713a85199c5232e6cdd9d9f",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "marketplace_catalog_completion_seed",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_catalog_completion_seed(uuid,uuid)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_catalog_completion_claim",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_catalog_complete_local",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_catalog_complete_local(uuid,uuid,uuid,bigint,uuid,jsonb)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_catalog_completion_new_product",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_catalog_completion_new_product()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "2c041bdecf8084f854066b8e115e279bec8f2973d923dd254b5f164c775ca300",
+      "candidateSourceSha256": "2c041bdecf8084f854066b8e115e279bec8f2973d923dd254b5f164c775ca300"
+    },
+    {
+      "version": "20261027020000",
+      "path": "supabase/migrations/20261027020000_catalog_full_confirmation.sql",
+      "classification": "histórico com perda de delimitadores/expressões; não executar registro como SQL",
+      "definedFunctionNames": [
+        "marketplace_catalog_apply_full_local",
+        "marketplace_catalog_completion_claim",
+        "marketplace_catalog_confirm_full"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "marketplace_catalog_completion_claim(uuid,uuid)",
+          "sha256": "2f20ea3da477b793b200753aceadf4e46dc7485aeb1708154f939b128157c706"
+        },
+        {
+          "signature": "marketplace_catalog_apply_full_local(uuid,uuid,uuid,bigint,uuid)",
+          "sha256": "f30acea73f790cea9518c7e5d5f3d589ec6ab781a47da999a2b18dbdf700b87a"
+        },
+        {
+          "signature": "marketplace_catalog_confirm_full(uuid,uuid,uuid,bigint,jsonb)",
+          "sha256": "56a2d354d8858eeeb10f39d63b749f7158304bfdb0c71fb02498b727db266cb3"
+        },
+        {
+          "signature": "marketplace_catalog_completion_claim(uuid,uuid,boolean)",
+          "sha256": "ee50786a40099338d3ed75b640322d0ca62830882f7083af153a497561b3d09d"
+        },
+        {
+          "signature": "marketplace_catalog_completion_claim(uuid,uuid,boolean,boolean)",
+          "sha256": "3a7a0421f3e89bfed65cab63ebd8e6ae412dda7b1ee6f0207c273e1bd56459de"
+        }
+      ],
+      "sourceSha256": "e16be77bbdd44b9731d5fedcbc06bdd75e23db9937cdbb9af209a1e1bced294a",
+      "remoteStatementsSha256": "a1c04f246786116aa50e4c236722c2b032fd1bd7ca92e30a54c48d4e7b8d4253",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "marketplace_catalog_confirm_full",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_catalog_apply_full_local",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_catalog_completion_claim",
+          "bodyMatchesCurrentSchema": false,
+          "matchingSignatures": [],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "marketplace_catalog_completion_claim",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "marketplace_catalog_completion_claim(uuid,uuid)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "e16be77bbdd44b9731d5fedcbc06bdd75e23db9937cdbb9af209a1e1bced294a",
+      "candidateSourceSha256": "e16be77bbdd44b9731d5fedcbc06bdd75e23db9937cdbb9af209a1e1bced294a"
+    },
+    {
+      "version": "20261104160000",
+      "path": "supabase/migrations/20261104160000_exclusao_segura_produtos_custos.sql",
+      "classification": "histórico remoto contém descrição, não SQL",
+      "definedFunctionNames": [
+        "custos_bloquear_alteracao_produto_excluido",
+        "custos_excluir_produto_rpc"
+      ],
+      "currentSchemaFunctions": [
+        {
+          "signature": "custos_bloquear_alteracao_produto_excluido()",
+          "sha256": "68afe885db03bdde2e24aa6dbf1b8812e8fb61f9ba96a6eac039f6ec6d28b826"
+        },
+        {
+          "signature": "custos_excluir_produto_rpc(uuid,uuid)",
+          "sha256": "1a99814ce80e9e5aaae57609520ba4854222de571cbfdc2975ee80ba606ce7a3"
+        }
+      ],
+      "sourceSha256": "55c7a4d79b9d1b63c8ce388e65d39978ff8250ca8133bb629719a61514465b67",
+      "remoteStatementsSha256": "628ecea2fc0ad9151335aa8b4418271c1a6f57a7a17eb5ea256bf05ec2796fd6",
+      "decision": "Preservar fontes publicadas e evidências; não reexecutar nem reparar histórico. Conteúdo exato da execução original não demonstrado somente por este registro.",
+      "currentBodyChecks": [
+        {
+          "function": "custos_bloquear_alteracao_produto_excluido",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "custos_bloquear_alteracao_produto_excluido()"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        },
+        {
+          "function": "custos_excluir_produto_rpc",
+          "bodyMatchesCurrentSchema": true,
+          "matchingSignatures": [
+            "custos_excluir_produto_rpc(uuid,uuid)"
+          ],
+          "note": "Comparação lexical do corpo atual; não demonstra SQL da execução histórica original."
+        }
+      ],
+      "publishedSourceSha256": "55c7a4d79b9d1b63c8ce388e65d39978ff8250ca8133bb629719a61514465b67",
+      "candidateSourceSha256": "55c7a4d79b9d1b63c8ce388e65d39978ff8250ca8133bb629719a61514465b67"
+    }
+  ],
+  "sourceComparisonScope": "Fontes publicadas 3.2.0.309 comparadas ao schema capturado; ajustes dos seis arquivos no candidato estão em ajustes-historicos.json."
+}

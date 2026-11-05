@@ -49,26 +49,28 @@ test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', as
   assert.match(codigo, /alinhamento: 'center', largura: 460, linhaBase: 'middle'/);
   assert.match(codigo, /'Valor do pedido', 276, yPedido \+ 137/);
   assert.match(codigo, /'Saldo atual', 276, ySaldo \+ 137/);
-  assert.match(codigo, /card\(ctx, yPedido, alturaCardPedido, '', 'PEDIDO REGISTRADO'\)/);
-  assert.match(codigo, /card\(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO'\)/);
-  assert.match(codigo, /card\(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO'\)/);
+  assert.match(codigo, /card\(ctx, yPedido, alturaCardPedido, '', consignado \? 'CONSIGNADO REGISTRADO' : 'PEDIDO REGISTRADO', paleta\)/);
+  assert.match(codigo, /card\(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO', paleta\)/);
+  assert.match(codigo, /card\(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO', paleta\)/);
   assert.match(codigo, /const alturaResumo = 184/);
   assert.match(codigo, /if \(temDesconto\).*'Desconto concedido'.*yPedido \+ 208/s);
   assert.doesNotMatch(codigo, /'Desconto concedido'.*yResumo/s);
-  assert.match(codigo, /card\(ctx, yDetalhes, alturaDetalhes, '', titulo === 'Pedido consignado' \? 'DETALHES DO CONSIGNADO' : 'DETALHES DO PEDIDO'\)/);
+  assert.match(codigo, /card\(ctx, yDetalhes, alturaDetalhes, '', consignado \? 'DETALHES DO CONSIGNADO' : 'DETALHES DO PEDIDO', paleta\)/);
   assert.doesNotMatch(codigo, /icone\(ctx, 'itens',/);
   assert.doesNotMatch(codigo, /card\(ctx, yResumo, alturaResumo, 'carteira'/);
-  assert.match(codigo, /texto\(ctx, titulo, LARGURA \/ 2, y \+ 43, \{ tamanho: 28, peso: 800, cor: '#0A2F6B', alinhamento: 'center', largura: 880, linhaBase: 'middle' \}\)/);
+  assert.match(codigo, /texto\(ctx, titulo, LARGURA \/ 2, y \+ 43, \{ tamanho: 28, peso: 800, cor: paleta.forte, alinhamento: 'center', largura: 880, linhaBase: 'middle' \}\)/);
   assert.match(codigo, /function primeiroNomeClienteComprovante/);
   assert.match(codigo, /function desenharRodapeEmPilula/);
-  assert.match(codigo, /'#FFFFFF', '#DCE6F0'/);
+  assert.match(codigo, /'#FFFFFF', paleta.divisor/);
   assert.doesNotMatch(codigo, /yRodape \+ 35/);
   assert.match(codigo, /const altura = yRodape \+ MARGEM_INFERIOR_RODAPE/);
   assert.doesNotMatch(codigo, /itens\.slice\(0, 44\)/);
   assert.match(codigo, /function desenharFundoAncoradoNoRodape/);
   assert.match(codigo, /alturaFonte - alturaVisivel/);
   assert.match(codigo, /const COR_BORDA_CARD = '#C7D8E8'/);
-  assert.match(codigo, /'#FFFFFF', COR_BORDA_CARD/);
+  assert.match(codigo, /'#FFFFFF', paleta.borda/);
+  assert.ok(preenchimentos.some(({ cor }) => cor === '#063B72'), 'pedido comum mantém cabeçalho azul');
+  assert.ok(preenchimentos.some(({ cor }) => cor === '#1674D1'), 'pedido comum mantém destaque azul');
   await janela.OrderReceiptV2.criarCanvas({
     itens: Array.from({ length: 46 }, (_, indice) => ({ principal: `Produto ${indice + 1}`, valor: 'R$ 10,00' })),
   });
@@ -94,6 +96,30 @@ test('o PWA carrega e coloca em cache o renderizador de pedido', async () => {
   ]);
   assert.match(bootstrap, /order-receipt-v2\.js/);
   assert.match(serviceWorker, /order-receipt-v2\.js\?v=/);
+});
+
+test('consignado usa título próprio e roxo, sem contaminar pedidos comuns', async () => {
+  const codigo = await readFile(new URL('../../app/avantavendas/sistema/order-receipt-v2.js', import.meta.url), 'utf8');
+  const { canvas, preenchimentos, textos } = canvasDeTeste();
+  class ImagemFalsa { set src(valor) { queueMicrotask(() => this.onload?.()); } }
+  const janela = {};
+  vm.runInNewContext(codigo, { Image: ImagemFalsa, Object, Promise, encodeURIComponent, queueMicrotask, window: janela, document: { createElement: () => canvas } });
+  for (const entrada of [{ tipo: 'consignado' }, { titulo: 'Pedido consignado' }, { titulo: 'Comprovante de consignado' }]) {
+    preenchimentos.length = 0; textos.length = 0;
+    await janela.OrderReceiptV2.criarCanvas({ ...entrada, cliente: 'Jeff Ferreira', valorPedido: 'R$ 378,00', saldoAnterior: 'R$ 182,00', saldoAnteriorCredito: true, saldoAtual: 'R$ 34,00', itens: [{ principal: 'Bóra Gin 700ml', secundario: '6 × R$ 63,00', valor: 'R$ 378,00' }] });
+    for (const valor of ['CONSIGNADO REGISTRADO', 'DETALHES DO CONSIGNADO', 'Valor do consignado', 'Comprovante de consignado • Jeff', 'R$ 378,00']) assert.ok(textos.includes(valor), valor);
+    for (const removido of ['R$ 182,00', 'R$ 34,00', 'CRÉDITO', 'RESUMO FINANCEIRO', 'Saldo anterior', 'Saldo atual', 'SITUAÇÃO APÓS O LANÇAMENTO']) assert.ok(!textos.includes(removido), removido);
+    assert.equal(canvas.height, 1026, 'consignado não reserva espaços vazios para saldos financeiros');
+    assert.ok(preenchimentos.some(({ cor }) => cor === '#48206D'));
+    assert.ok(preenchimentos.some(({ cor }) => cor === '#8550B5'));
+    assert.ok(!preenchimentos.some(({ cor }) => cor === '#1674D1'));
+    assert.ok(!textos.includes('PEDIDO REGISTRADO'));
+  }
+  preenchimentos.length = 0; textos.length = 0;
+  await janela.OrderReceiptV2.criarCanvas({});
+  assert.ok(preenchimentos.some(({ cor }) => cor === '#1674D1'));
+  assert.ok(!preenchimentos.some(({ cor }) => cor === '#8550B5'));
+  assert.ok(textos.includes('PEDIDO REGISTRADO'));
 });
 
 test('crédito aparece à esquerda do valor no comprovante compartilhado', async () => {

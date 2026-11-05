@@ -22,7 +22,7 @@ erro. Placeholder é exemplo, não substitui label. Associar label e controle po
 
 ## Regras por tipo
 
-- Moeda: exibir em `pt-BR` (`R$ 1.234,56`) e manter valor numérico normalizado.
+- Moeda: exibir em `pt-BR` (`R$ 1.234,56`) e manter valor numérico normalizado. Todo campo monetário deve digitar por centavos, formatando imediatamente com ponto nos milhares, vírgula e duas casas decimais. Foco/clique posicionam o cursor à direita, preservando teclado, colagem e limpeza. Em React usar `app/components/CampoMoeda.tsx`; fora de React seguir o mesmo contrato com o formatador compartilhado. Não aplicar esta máscara a EAN, quantidade ou percentual. A máscara não salva nem altera valores por conta própria.
 - Datas: persistir em ISO e apresentar em `dd/MM/aaaa` quando não for campo
   nativo de edição.
 - Hora: `HH:mm`, respeitando o fuso definido pelo domínio.

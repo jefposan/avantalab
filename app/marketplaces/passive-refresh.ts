@@ -1,10 +1,11 @@
-/** Leituras automáticas atualizam avisos; só ações explícitas substituem a tela. */
+/** Leituras automáticas são discretas; somente vendas online optam por aplicar a lista em segundo plano. */
 export function createPassiveRefresh<T>(options: {
   read: (signal: AbortSignal) => Promise<T>;
   onLatest: (data: T) => void;
   onVisible: (data: T) => void;
   onLoading: (loading: boolean) => void;
   onError: (error: unknown) => void;
+  backgroundVisible?: () => boolean;
 }) {
   let stopped = false;
   let current: { controller: AbortController; manual: boolean } | null = null;
@@ -20,7 +21,7 @@ export function createPassiveRefresh<T>(options: {
       const data = await options.read(request.controller.signal);
       if (stopped || current !== request || request.controller.signal.aborted) return;
       options.onLatest(data);
-      if (manual) options.onVisible(data);
+      if (manual || options.backgroundVisible?.()) options.onVisible(data);
     } catch (error) {
       if (!stopped && current === request && !request.controller.signal.aborted && manual) options.onError(error);
     } finally {

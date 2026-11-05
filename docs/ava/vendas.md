@@ -1,6 +1,984 @@
+<!-- ava-version: 3.2.0.310 -->
+
+> Revisão 3.2.0.310: fontes históricas de recursos existentes preservadas após auditoria; sem impacto operacional e sem remoção de funcionalidades.
+
+> Auditoria 3.2.0.310: histórico SQL conferido e organizado; sem impacto operacional e sem aplicação de migrações.
+
+> Revisão 3.2.0.310: reconciliação de fontes e proteção da publicação pela main; sem impacto operacional.
+
+> Revisão 3.2.0.309: sem impacto operacional; revisão do download do modelo Excel de despesas na Gestão Web.
+
+> Revisão 3.2.0.308: sem impacto operacional neste aplicativo. O reajuste atua nas tabelas internas de preços de Custos e Precificação e não modifica pedidos anteriores nem os preços próprios do AvantaVendas.
+
+> Revisão 3.2.0.307: produto ou serviço excluído em Custos e Precificação deixa de ser publicado para novos usos, mas sua cópia e os lançamentos anteriores do AvantaVendas permanecem preservados para histórico. Nenhum pedido, pagamento ou movimento anterior é removido.
+
+> Revisão 3.2.0.305: sem impacto operacional neste aplicativo. Alteração em Vendas de Marketplaces Web, sem mudança de binário ou de configuração de impressora.
+
+> Revisão 3.2.0.304: sem impacto operacional neste aplicativo. Recuperação alterada na entrada da Gestão Web; clientes nativos e AvantaVendas mantêm os próprios fluxos.
+
+> Revisão 3.2.0.303: sem impacto operacional no aplicativo nativo. PDF térmico alterado somente em Vendas de Marketplaces na Web.
+
+> Revisão 3.2.0.302: sem impacto operacional no AvantaVendas. Regra de preços padrão e prioridade de post/anúncio pertence ao Ofertas/AvantaPreços/Marketplaces.
+
+> Revisão 3.2.0.300: Sem impacto operacional neste ambiente; download de etiqueta térmica TXT refinado em Vendas de Marketplaces Web, sem alteração nos aplicativos, estoque ou regras financeiras.
+
+> Revisão 3.2.0.299: sem impacto operacional no Vendas; ordenação ajustada somente na Gestão Mobile.
+
+> Revisão 3.2.0.297: O PWA público usa Saldão Aline como nome de instalação inclusive em links de ofertas compartilhadas; prévias sociais mantêm o produto; ícones já criados não são renomeados automaticamente.  Ofertas Web/PWA centraliza Entrar no grupo quando Instalar não aparece, sem mudança operacional nos demais ambientes.  Na lista de Vendas Web, a rolagem continua pela página ao atingir o início ou fim dos detalhes.  Sem impacto operacional neste ambiente; organização visual do cancelamento de vendas diretas na Gestão Web, sem mudança nas regras de devolução.
+
+> Revisão 3.2.0.296: sem impacto operacional; tratamento do cabeçalho no catálogo público Ofertas, sem mudança nos demais PWAs ou apps.
+
+> Revisão 3.2.0.295: sem impacto operacional no aplicativo; contatos com mensagem e atalho de topo somente no catálogo público Web/PWA.
+
+> Revisão 3.2.0.294: sem impacto operacional nos aplicativos; refinamento visual do topo do catálogo público de ofertas Web/PWA.
+
+> Revisão 3.2.0.293: sem impacto operacional; imagem de compartilhamento do catálogo público e alinhamento de filtros Web/PWA.
+
+> Revisão 3.2.0.292: sem impacto operacional nos aplicativos e financeiro; refinamentos do catálogo público Web/PWA, identidade e compartilhamento por oferta.
+
+> Revisão 3.2.0.291: sem impacto operacional no aplicativo; catálogo público de ofertas Web/PWA independente, sem alteração no financeiro, vendas ou importação.
+
+> Revisão 3.2.0.290: sem impacto operacional no financeiro nativo ou AvantaVendas; campo Condição nos posts do AvantaPreços Web/PWA.
+
+> Revisão 3.2.0.284: sem impacto operacional no financeiro nativo ou AvantaVendas; correção do post Online no AvantaPreços Web/PWA para aceitar preço anunciado livre.
+
+> Revisão 3.2.0.283: sem impacto operacional no financeiro nativo ou AvantaVendas; AvantaPreços Web/PWA passa a gerar link Online por conta e conserva imagem no Saldão.
+
+> Revisão 3.2.0.282: sem impacto operacional; tratamento de sincronização ocupada na abertura de Marketplaces Web.
+
+> Revisão 3.2.0.281: sem impacto operacional; limpeza das mensagens da área de contas conectadas na Gestão Web.
+
+> Refinamento 3.2.0.280: sem impacto operacional; fixação da pesquisa no Novo anúncio Web.
+
+> Refinamento 3.2.0.280: sem impacto operacional; rolagem contida no Novo anúncio da Gestão Web.
+
+> Refinamento 3.2.0.280: revisão sem impacto operacional; organização visual da conferência de conteúdo em Marketplaces Web.
+
+> Refinamento 3.2.0.280: revisão sem impacto operacional; retirada de texto explicativo sobre pontuação em Marketplaces Web.
+
+> Refinamento 3.2.0.280: revisão sem impacto operacional; remoção de orientação textual em Marketplaces Web.
+
+> Revisão 3.2.0.280: sem impacto operacional; prévia compacta na preparação de anúncios da Gestão Web.
+
+> Revisão 3.2.0.279: sem impacto operacional; pontuação baixa deixa de gerar pendência nos avisos de Marketplaces Web.
+
+> Revisão 3.2.0.278: sem impacto operacional; correção da conferência de saldos em Marketplaces Web.
+
+> Revisão 3.2.0.277: sem impacto operacional; ajuste da rolagem do Novo anúncio na Gestão Web.
+
+> Revisão 3.2.0.276: sem impacto operacional; correção do enfileiramento de estoque de Marketplaces Web.
+
+> Revisão 3.2.0.275: sem impacto operacional; retirada da tarja de salvamento restrita ao menu do dashboard Web.
+
+> Revisão 3.2.0.274: sem impacto operacional. Editor conjunto de anúncios não altera preços nem fluxos do AvantaVendas.
+
+> Revisão 3.2.0.273: sem impacto operacional. Preços de anúncios no Marketplaces Web não alteram preços ou fluxos do AvantaVendas.
+
+> Revisão 3.2.0.272: sem impacto operacional; comparativo e situação da qualidade alterados somente no cabeçalho de Anunciados Web.
+
+> Revisão 3.2.0.271: sem impacto operacional; correção de rolagem restrita ao popup Revisar anúncio Web.
+
+> Revisão 3.2.0.270: sem impacto operacional; correção pontual no encerramento da publicação de catálogo Web.
+
+> Revisão 3.2.0.269: sem impacto operacional direto; reconfirmação de catálogo é geral na preparação de anúncio Web.
+
+> Revisão 3.2.0.268: sem impacto operacional direto; recuperação da origem da pesquisa ocorre na preparação de anúncio Web, sem alterar o cadastro ou estoque.
+
+> Revisão 3.2.0.267: sem impacto operacional direto; identificação do catálogo compartilhado passa a indicar explicitamente a origem oficial. Validação de publicação alterada somente no Web.
+
+> Revisão 3.2.0.266: sem impacto operacional em Vendas; ajuste no serviço compartilhado de pesquisa por EAN do Web/AvantaPreços.
+
+> Revisão 3.2.0.265: sem impacto operacional; botão de cópia restrito ao cabeçalho de produtos Web.
+
+> Revisão 3.2.0.264: sem impacto operacional; ajuste visual restrito ao popup de publicação Web.
+
+> Revisão 3.2.0.263: sem impacto operacional; folga de rolagem restrita à preparação de anúncio Web.
+
+> Revisão 3.2.0.262: sem impacto operacional; retirada de avisos de salvamento restrita ao Novo anúncio Web.
+
+> Revisão 3.2.0.261: sem impacto operacional neste ambiente; ajuste restrito ao nome do produto na preparação de anúncio Web.
+
+> Revisão 3.2.0.260: suporte à etiqueta térmica L42DT no Marketplaces Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.259: nomes e caminhos das categorias no Novo anúncio Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.258: alinhamento do Novo anúncio Web abaixo da navegação; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.257: popup de publicação e resumo limpo no Novo anúncio Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.256: centralização das ações no Novo anúncio Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.255: destaque da confirmação pendente no Novo anúncio Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.254: retirada de aviso rotineiro no Novo anúncio Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.253: correção do atalho e da cor de Preparar anúncio no Marketplaces Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.252: busca compacta na linha dos estoques no Marketplaces Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.251: ajuste visual das pílulas no Marketplaces Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.250: sem impacto operacional no AvantaVendas; as pílulas de Preparar anúncio e Expandir foram alinhadas no Marketplaces Web.
+
+> Revisão 3.2.0.249: sem impacto operacional no AvantaVendas; o atalho Preparar anúncio foi incluído nos Produtos cadastrados do Marketplaces Web para produtos sem estoque Online informado e sem anúncio.
+
+> Revisão 3.2.0.248: sem impacto operacional no AvantaVendas; a referência de preço foi reposicionada no cabeçalho do Novo anúncio do Marketplaces Web.
+
+> Revisão 3.2.0.247: sem impacto operacional no AvantaVendas; o Novo anúncio do Marketplaces Web passou a escolher entre publicações iguais ou distintas antes de exibir cards por conta.
+
+> Revisão 3.2.0.246: sem impacto operacional neste ambiente; diagnóstico administrativo pertence ao Marketplaces Web.
+
+> Revisão 3.2.0.245: sem impacto operacional no AvantaVendas; o retorno da preparação do Novo anúncio foi organizado no Marketplaces Web.
+
+> Revisão 3.2.0.244: sem impacto operacional no AvantaVendas; a seleção **Todos** de novas contas foi adicionada ao Novo anúncio do Marketplaces Web.
+
+> Revisão 3.2.0.243: sem impacto operacional neste ambiente; organização dos campos de pesquisa na preparação do Marketplaces Web.
+
+> Revisão 3.2.0.242: sem impacto operacional neste ambiente; alinhamento do aviso de pesquisa no Marketplaces Web.
+
+> Revisão 3.2.0.241: sem impacto operacional no AvantaVendas; ajuste de preparação de anúncios no Marketplaces Web.
+
+> Revisão 3.2.0.240: sem impacto operacional no AvantaVendas; regra de expansão dos cinco blocos do Marketplaces Web.
+
+> Revisão 3.2.0.239: sem impacto operacional no AvantaVendas; ajuste de apresentação dos objetivos no Marketplaces Web.
+
+> Revisão 3.2.0.238: sem impacto operacional no AvantaVendas; corrige conflitos de revisão no Marketplaces Web, sem alterar estoque, venda ou aplicativos nativos.
+
+> Revisão 3.2.0.237: sem impacto operacional no AvantaVendas; refinamento do salvamento de nome na preparação Web de anúncios.
+
+> Revisão 3.2.0.236: sem impacto operacional no AvantaVendas; preserva nomes de catálogo ao salvar conteúdo da preparação no Marketplaces Web.
+
+> Revisão 3.2.0.235: sem impacto operacional no AvantaVendas; restaura conferência de frete e corrige nome/diagnóstico na preparação de anúncios do Marketplaces Web.
+
+> Revisão 3.2.0.234: sem impacto operacional no AvantaVendas. Edição de características e escolha explícita de ficha por EAN aplicam-se a Marketplaces/AvantaPreços, sem venda, estoque, anúncio ou binário nativo.
+
+> Revisão 3.2.0.233: Sem impacto operacional neste ambiente; apenas o estado inicial do card Resultado de vendas no Marketplaces Web passa a recolhido.
+
+> Revisão 3.2.0.232: Sem impacto operacional no AvantaVendas; correção da pesquisa AvantaPreços.
+
+> Revisão 3.2.0.231: Sem impacto operacional no AvantaVendas; posição do ícone no AvantaPreços.
+
+> Revisão 3.2.0.230: Sem impacto operacional no AvantaVendas; botão único no AvantaPreços.
+
+> Revisão 3.2.0.229: Sem impacto operacional no AvantaVendas; descrição recolhível no AvantaPreços.
+
+> Revisão 3.2.0.228: Sem impacto operacional no AvantaVendas; ajuste visual do topo de saldos do AvantaPreços.
+
+> Revisão 3.2.0.227: Sem impacto operacional no AvantaVendas; simplificação da legenda no post do AvantaPreços.
+
+> Revisão 3.2.0.226: Sem impacto operacional no AvantaVendas; indicadores do post do AvantaPreços passam a ser somente informativos.
+
+> Revisão 3.2.0.225: Sem impacto operacional no AvantaVendas; barra de estoques somente no post do AvantaPreços.
+
+> Revisão 3.2.0.224: Sem impacto operacional no AvantaVendas; filtro por estoque pertence à base de produtos do AvantaPreços, sem alteração no AvantaVendas.
+
+> Revisão 3.2.0.223: Sem impacto operacional no AvantaVendas; melhoria restrita ao post no AvantaPreços.
+
+> Revisão 3.2.0.222: detalhes na arte do post local ficam maiores, mais leves e afastados das etiquetas. Para atualizar arte já salva, Editar → Gerar e salvar. Sem impacto operacional no AvantaVendas; não publicado.
+
+> Revisão 3.2.0.221: AvantaPreços local remove Copiar legenda e cópia manual; Compartilhar post mantém imagem e legenda automática. Sem impacto operacional no AvantaVendas; não publicado. Esta orientação substitui a alternativa de cópia descrita na revisão anterior.
+
+> Revisão 3.2.0.220: sem impacto operacional no AvantaVendas; fluxo local de post salvo e legenda do WhatsApp pertence ao AvantaPreços.
+
+> Revisão 3.2.0.219: sem impacto operacional; estabilidade da apuração/lista somente no quadro de Marketplaces Web.
+
+> Revisão 3.2.0.218: sem impacto operacional; avisos do padrão connectionMessage centralizados horizontalmente no Marketplaces Web.
+
+> Revisão 3.2.0.217: sem impacto operacional neste ambiente; lista mensal dentro de Resultado de vendas pertence somente ao Marketplaces Web, local e não publicado.
+
+> Revisão 3.2.0.216: sem impacto operacional neste ambiente; atalho Resultados somente no Marketplaces Web.
+
+> Revisão 3.2.0.215: sem impacto operacional neste ambiente; seleção pela linha mensal somente no quadro do Web.
+
+> Revisão 3.2.0.214: sem impacto operacional; destaque visual da linha do mês ao passar o mouse em Resultado de vendas no Web.
+
+> Revisão 3.2.0.213: sem impacto operacional; alinhamento de expansão somente no quadro Resultado de vendas do Web.
+
+> Revisão 3.2.0.212: sem impacto operacional; remoção da borda colorida superior do quadro Resultado de vendas no Web.
+
+> Revisão 3.2.0.211: sem impacto operacional neste ambiente; compactação e consulta financeira pertencem ao quadro de Marketplaces Web, local e não publicado. Sem alteração de saldo ou permissões.
+
+> Revisão 3.2.0.210: sem impacto operacional neste ambiente; quadro Resultado de vendas disponível somente no Marketplaces Web, em desenvolvimento local. Não altera saldos nem permissões.
+
+> Revisão 3.2.0.209: sem impacto operacional no AvantaVendas; ajuste restrito ao LoadingPontos compartilhado das telas React.
+
+> Revisão 3.2.0.208: sem novos passos operacionais neste ambiente; card compacto e personalização de fotos ficam em Marketplaces Web. Estoque e decisões comerciais preservados.
+
+> Revisão 3.2.0.207: sem novo impacto operacional; conferência do identificador do catálogo em Marketplaces Web preserva saldo e decisões comerciais.
+
+> Revisão 3.2.0.206: sem impacto operacional no AvantaVendas; confirmação da ficha completa no Marketplaces Web não modifica preço ou saldo.
+
+> Revisão 3.2.0.205: sem impacto operacional no AvantaVendas; complementação de catálogo restrita aos cadastros/anúncios de Marketplaces, sem alterar preço ou saldo.
+
+> Revisão 3.2.0.204: sem impacto operacional no AvantaVendas; revisão de anúncios Marketplaces Web distingue galeria própria e catálogo.
+
+> Revisão 3.2.0.203: sem impacto operacional adicional; validação da atualização de anúncios Web.
+
+> Revisão 3.2.0.202: sem impacto operacional no AvantaVendas; atualização manual de anúncios do módulo Marketplaces Web mantém a tela disponível e consulta vendas por conta.
+
+<!-- ava-version: 3.2.0.201 -->
+
+> Revisão 3.2.0.201: importar ou vincular novo anúncio ao cadastro com saldo local já informado, inclusive zero, não pede reconfirmação. Não importa nem soma quantidade do marketplace. Apenas saldo local realmente ausente exige conferência inicial. A migração limpa marcadores indevidos, preserva confirmação física, depósitos e históricos. AvantaVendas sem impacto operacional.
+
+<!-- ava-version: 3.2.0.200 -->
+
+> Revisão 3.2.0.200: sem impacto operacional; Pesquisa, Situação e Qualidade alinhados em uma linha no Anunciados Web. Pesquisa 15% mais estreita, seletores com larguras iguais; comportamento dos filtros preservado.
+
+<!-- ava-version: 3.2.0.199 -->
+
+> Revisão 3.2.0.199: sem impacto operacional no AvantaVendas; Marketplaces Web consulta vendas após cada sincronização de anúncios por conta.
+
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 3.1.0 -->
+<!-- ava-version: 3.2.0.197 -->
+
+> Revisão 3.2.0.197: sem impacto operacional.
+
+<!-- ava-version: 3.2.0.196 -->
+
+> Revisão 3.2.0.196: sem impacto operacional.
+
+<!-- ava-version: 3.2.0.195 -->
+
+> Revisão 3.2.0.195: sem impacto operacional.
+
+<!-- ava-version: 3.2.0.194 -->
+
+> Revisão 3.2.0.194: sem impacto operacional.
+
+<!-- ava-version: 3.2.0.193 -->
+
+> Revisão 3.2.0.193: sem impacto operacional.
+
+<!-- ava-version: 3.2.0.192 -->
+
+> Revisão 3.2.0.192: sem impacto operacional.
+
+<!-- ava-version: 3.2.0.191 -->
+
+> Revisão 3.2.0.191: sem impacto operacional.
+
+<!-- ava-version: 3.2.0.190 -->
+
+> Revisão 3.2.0.190: sem impacto operacional no AvantaVendas.
+
+<!-- ava-version: 3.2.0.189 -->
+
+> Revisão 3.2.0.189: sem impacto operacional no AvantaVendas. Correção dos avisos e confirmação de saldo Online zero pertence a Marketplaces/AvantaPreços; não altera regras de venda, estoque offline, financeiro, permissões, plano ou aplicativos nativos.
+
+<!-- ava-version: 3.2.0.188 -->
+
+> Revisão 3.2.0.188: sem impacto operacional neste ambiente. A correção fiscal integra somente o pedido do módulo Marketplaces da Gestão Web; não muda emissão própria, financeiro, autenticação ou permissões deste aplicativo.
+
+> Revisão 3.2.0.187: sem impacto operacional; ocultação temporária dos atalhos do módulo Marketplaces Web.
+
+> Revisão 3.2.0.186: sem impacto operacional; retorno fiscal e botão de DC-e refinados no Marketplaces Web.
+
+> Revisão 3.2.0.185: sem impacto operacional; Cancelar anúncio conserva o texto dentro do botão ativo ou desativado, com quebra da linha de ações em telas estreitas.
+
+> Revisão 3.2.0.184: sem impacto operacional; indicador das contas no Marketplaces Web ampliado, com texto Conectando contas... abaixo.
+
+> Revisão 3.2.0.183: sem impacto operacional; consulta de etiqueta preservada em envios programados do Marketplaces Web.
+
+> Revisão 3.2.0.182: sem impacto operacional; correção de retorno e bloqueio de DC-e no pedido do Marketplaces Web.
+
+> Revisão 3.2.0.181: Sem impacto operacional neste ambiente; organização de Documento e etiqueta e Pós-venda exclusiva do Marketplaces Web.
+
+> Revisão 3.2.0.180: Sem impacto operacional neste ambiente. Emitir DC-e com confirmação e acompanhar a etiqueta é recurso exclusivo do Marketplaces Web; não cria pedido, cobrança ou documento fiscal no AvantaVendas.
+
+> Revisão 3.2.0.179: Sem impacto operacional neste ambiente. Revisados confirmação curta, acompanhamento central e limpeza de aviso de fotos em Marketplaces Web.
+
+> Revisão 3.2.0.178: Sem impacto operacional neste ambiente. Revisada a simplificação visual da confirmação de anúncio em Marketplaces Web.
+
+> Revisão 3.2.0.177: Sem impacto operacional neste ambiente. Revisados carregamento e mensagens locais da área de fotos em Marketplaces Web.
+
+> Revisão 3.2.0.176: Sem impacto operacional neste ambiente. Revisada a conversão de fotos da web na preparação/revisão de Marketplaces Web.
+
+> Revisão 3.2.0.175: Sem impacto operacional neste ambiente; revisados o arraste de fotos e os motivos de bloqueio por anúncio na Gestão Web.
+
+> Revisão 3.2.0.174: sem impacto operacional. Pesquisar e Cancelar anúncio possuem a mesma altura visual e largura igual na Gestão Web.
+
+> Revisão 3.2.0.173: Sem impacto operacional neste ambiente. Revisados os ajustes de preparação e fotos por conta na Gestão Web.
+
+> Revisão 3.2.0.172: sem impacto operacional no AvantaVendas; revisão e galeria por EAN pertencem a Marketplaces/AvantaPreços.
+
+<!-- ava-version: 3.2.0.171 -->
+
+> Revisão 3.2.0.171: sem impacto operacional; recuperação de Ver no estoque exclusiva de Marketplaces Web.
+
+> Revisão 3.2.0.170: sem impacto operacional no AvantaVendas; a consulta de objetivos dentro da revisão é exclusiva de Marketplaces Web.
+
+<!-- ava-version: 3.2.0.170 -->
+
+> Revisão 3.2.0.169: sem impacto operacional no AvantaVendas; a consulta visível de objetivos é exclusiva de Marketplaces Web.
+
+<!-- ava-version: 3.2.0.169 -->
+
+> Revisão 3.2.0.168: sem impacto operacional no AvantaVendas; a identificação de pendência externa por conta é exclusiva de Marketplaces Web.
+
+<!-- ava-version: 3.2.0.168 -->
+
+> Revisão 3.2.0.167: sem impacto operacional no AvantaVendas; ações de objetivos na qualidade são exclusivas de Marketplaces Web.
+
+<!-- ava-version: 3.2.0.167 -->
+
+> Revisão 3.2.0.166: sem impacto operacional no AvantaVendas; estabilização interna exclusiva dos componentes de Marketplaces Web.
+
+<!-- ava-version: 3.2.0.166 -->
+
+> Revisão 3.2.0.165: sem impacto operacional no AvantaVendas; anúncios excluídos deixam de aparecer somente na operação de Marketplaces Web, com auditoria mantida no servidor.
+
+<!-- ava-version: 3.2.0.165 -->
+
+> Revisão 3.2.0.164: sem impacto operacional no AvantaVendas; cabeçalho fixo da revisão é exclusivo de Marketplaces Web.
+
+<!-- ava-version: 3.2.0.164 -->
+
+> Revisão 3.2.0.163: sem impacto operacional no AvantaVendas; conteúdo canônico entre anúncios é exclusivo de Marketplaces Web.
+
+<!-- ava-version: 3.2.0.163 -->
+
+> Revisão 3.2.0.159-av196: marca AvantaVendas aprovada sem slogan, com variantes para cabeçalho claro/escuro; acesso institucional continua claro mesmo com preferência escura. Loading da preparação usa o mesmo componente de dez pontos da Web, mantendo etapas/progresso reais e recuperação. Não muda login, dados, navegação ou botões da Sala. Conteúdo remoto dos apps iOS/Android acompanha o domínio configurado, sem confundir publicação Web com envio de binário às lojas; teste físico não é substituído por simulação.
+
+> Revisão 3.2.0.160: sem impacto operacional no Vendas; Gestão Mobile passa a reutilizar o mesmo loading oficial.
+
+> Revisão 3.2.0.161-av197: reaplica a referência mais recente do logo sem slogan, em variantes diurna/noturna; sem impacto operacional ou mudança de login. Aplicado localmente.
+
+> Revisão 3.2.0.162: sem impacto operacional; correção exclusiva da leitura do loading na Gestão Mobile.
+
+<!-- ava-version: 3.2.0.162 -->
+
+<!-- ava-version: 3.2.0.158 -->
+
+> Revisão 3.2.0.158: sem impacto operacional no AvantaVendas. Revisão geral, IA no rascunho e resumo de preenchimento são exclusivos de Marketplaces Web; preservam preços por conta, estoque e identidade. Sem alteração de pedidos, financeiro, permissões/plano ou publicação nativa.
+
+<!-- ava-version: 3.2.0.157 -->
+
+> Revisão 3.2.0.157: Sem impacto operacional no AvantaVendas; loaders do aplicativo imperativo não foram convertidos nesta etapa. Mudança inicial no acesso e componentes Web da Gestão; publicado na Web em 25/10/2026.
+
+<!-- ava-version: 3.2.0.156 -->
+
+> Revisão 3.2.0.156: sem impacto operacional no AvantaVendas. Pesquisa de dados faltantes/ficha complementar é exclusiva de Marketplaces.
+
+<!-- ava-version: 3.2.0.155 -->
+
+> Revisão 3.2.0.155: sem impacto operacional no AvantaVendas. Correções de gestão de usuários e backups da Gestão separam vínculo empresarial de credencial global e preservam contas existentes. Não mudam pedidos, pagamentos, estoque, regras comerciais do Vendas ou plano. Entrega Web publicada e conferida em 25/10/2026; sem envio às lojas ou escrita em dados reais.
+
+<!-- ava-version: 3.2.0.154 -->
+
+> Revisão 3.2.0.154: sem impacto operacional no AvantaVendas. Ajuste exclusivo da confirmação IA e preparação/envio de conteúdo comum em Marketplaces, preservando preços, estoque e permissões.
+
+> Revisão 3.2.0.153: Qualidade compacta separa visão geral, Objetivos pendentes em botões âmbar e Edição manual azul-acinzentada. Fotos do produto/Ficha técnica abrem o editor conjunto; restrições sem editor levam aos detalhes por conta. Objetivos são lidos da avaliação local salva, sem consulta ao ML/IA na abertura; ausência, falha ou avaliação parcial são informadas. Atualizar objetivos consulta as contas; IA mantém revisão antes de aplicar e orçamento existente. Preços individuais, estoque, permissões e edição conjunta preservados. Inclui layout Estoque/Preços sugeridos da 3.2.0.152; demais ambientes sem impacto operacional.
+
+> Revisão 3.2.0.152: Estoques/Produtos cadastrados separam Estoque (saldos por local e etiqueta de pendência), Preços sugeridos (referência, edição/pesquisa, mínimo/médio/ideal) e Expandir/Recolher. Sem alteração em dados, cálculos ou permissões; não confundir sugestões com preços dos anúncios. Demais ambientes sem impacto operacional. Ajuste local, ainda não publicado nesta etapa.
+
+> Revisão 3.2.0.151: Ver no estoque aceita reabertura do mesmo produto, conclui pelo resultado local sem esperar rolagem e permite Cancelar. Falha/tempo excedido libera a tela com Tentar novamente; cancelar descarta resposta antiga, sem alterar dados. Produtos removidos/vínculo inválido exigem conferência. Etiqueta de pausa separa símbolo e quantidade. Demais ambientes sem impacto operacional.
+
+> Revisão 3.2.0.150: resumo de Anunciados organiza qualidade com nota, situações em etiquetas, quantidade acima das ações e bloco Preço anunciado/Preços dos anúncios. O valor é o anúncio sincronizado, não a referência pesquisada. Sem alterações em dados ou anúncios; demais módulos sem impacto operacional.
+
+> Revisão 3.2.0.149: sem impacto operacional no AvantaVendas. Qualidade diária/IA revisada são exclusivas de Marketplaces; não alteram estoque, preço ou fluxos de venda por IA.
+
+> Revisão 3.2.0.148: sem novo fluxo no AvantaVendas. A proteção de estoque do Marketplaces não reintegra automaticamente item já despachado/devolvido; a entrada permanece manual após avaliação física. Vendas e financeiro do AvantaVendas não são alterados.
+
+> Revisão 3.2.0.147: sem impacto operacional no AvantaVendas. Exclusão confirmada de produto/anúncios é restrita ao Marketplaces; vendas e financeiro existentes permanecem preservados. Nenhuma nova publicação de produto é realizada pelos testes.
+
+> Revisão 3.2.0.146: sem impacto operacional no AvantaVendas. A edição única de qualidade e conteúdo é restrita ao Marketplaces: preserva preço individual por conta e não altera vendas, saldos ou anúncios automaticamente.
+
+> Revisão 3.2.0.144-av195: Sala de Botões volta a apresentar os botões juntos após carregar suas imagens, sem rótulos provisórios individuais. Mantém preloader anterior, limite de espera e tratamento de falha. Kanban, ordem salva e melhorias de acesso/retomada preservados. Não orientar apagar dados ou reinstalar; ajuste local, não publicado.
+
+<!-- ava-version: 3.2.0.145 -->
+
+> Revisão 3.2.0.145: sem impacto operacional no AvantaVendas. Correção restrita à consulta de link e foco de fichas em Marketplaces, sem alterar vendas, saldo ou a apresentação dos botões da Sala.
+
+<!-- ava-version: 3.2.0.143 -->
+
+> Revisão 3.2.0.143: sem impacto operacional no AvantaVendas. Correção da validação de contas e frete somente em Novo anúncio de Marketplaces; não altera vendas nem saldos.
+
+> Revisão 3.2.0.142: sem impacto operacional no AvantaVendas. Edição conjunta de qualidade/conteúdo somente em Marketplaces, sem alterar saldo, vendas ou preços individuais. Entrega local, não publicada.
+
+> Revisão 3.2.0.141: sem impacto operacional no AvantaVendas. Ajuste de foco/navegação e controles somente em Marketplaces, sem alterar vendas, saldo ou anúncios automaticamente.
+
+<!-- ava-version: 3.2.0.140 -->
+
+> Revisão 3.2.0.140: sem impacto operacional no AvantaVendas. Medidor e editores de fotos/ficha técnica são do Marketplaces; não alteram estoque, preço, vendas ou publicações automaticamente.
+
+<!-- ava-version: 3.2.0.139 -->
+
+> Revisão 3.2.0.139: sem impacto operacional no AvantaVendas. Consulta de objetivos e ajustes de qualidade ocorre em Marketplaces, sem mudar saldos ou publicação automaticamente.
+
+<!-- ava-version: 3.2.0.138 -->
+
+> Revisão 3.2.0.138: sem impacto operacional no AvantaVendas. Indicador de abertura do produto no estoque em Marketplaces.
+
+<!-- ava-version: 3.2.0.137 -->
+
+> Revisão 3.2.0.137: sem impacto operacional no AvantaVendas; ajuste de carregamento e posição da ficha em Marketplaces.
+
+<!-- ava-version: 3.2.0.136 -->
+
+> Revisão 3.2.0.136: sem impacto operacional no AvantaVendas. Ajuste visual de navegação por pendência exclusivamente em Marketplaces.
+
+<!-- ava-version: 3.2.0.135 -->
+
+> Revisão 3.2.0.135: sem impacto operacional no AvantaVendas; conciliação de Marketplaces preserva estoque confirmado.
+
+<!-- ava-version: 3.2.0.134 -->
+
+> Revisão 3.2.0.134: sem impacto operacional no AvantaVendas. Correção do vínculo de anúncios e baixa idempotente exclusivamente na integração de Marketplaces.
+
+<!-- ava-version: 3.2.0.133 -->
+
+> Revisão 3.2.0.133: Conferir e ajustar dos avisos de Marketplaces posiciona o produto expandido abaixo da barra fixa antes de bloquear a rolagem externa. Detalhes continuam com rolagem interna; recolher devolve a navegação. Não muda pesquisa, preço, saldo ou anúncios. Gestão Mobile e Vendas sem impacto operacional. Publicação autorizada, ainda não confirmada.
+
+<!-- ava-version: 3.2.0.132 -->
+
+> Revisão 3.2.0.132: sem impacto operacional no AvantaVendas. Otimização de perfis e logos da Gestão sem mudar concessões, planos, sessões, produtos ou vendas. Publicação Web autorizada; sem envio às lojas.
+
+<!-- ava-version: 3.2.0.131 -->
+
+> Revisão 3.2.0.131: AvantaPreços e referências Web usam CampoMoeda oficial: cursor à direita ao focar/clicar, digitação por centavos e máscara imediata 1.234,56, inclusive colagem. Salvar/Atualizar cálculos continua explícito; foco não salva nem pesquisa. PADRÃO AVANTA 1.22.0 somente para moeda, não EAN/quantidade/percentual. Gestão Mobile e Vendas sem impacto operacional. Publicação autorizada, ainda não confirmada.
+
+> Revisão 3.2.0.130: sem impacto operacional no AvantaVendas. Consultas de perfis e logos da Gestão foram otimizadas localmente, sem mudar concessões, planos, sessão, produtos ou vendas e sem publicação dos aplicativos.
+
+<!-- ava-version: 3.2.0.130 -->
+
+> Revisão 3.2.0.129-av194: reenvio da preparação aprovada, corrigindo somente o verificador que exigia o botão removido. Recuperação OAuth, retorno do provedor, sessão e backend preservados. Todos os testes mantidos.
+
+<!-- ava-version: 3.2.0.129 -->
+
+<!-- ava-version: 3.2.0.128 -->
+
+> Revisão 3.2.0.128: AvantaPreços/Web mantêm GPT-5.4 mini, até oito ofertas distintas e média de todas as aprovadas. Consulta inicial combina EAN e marca/modelo/variante, com alternativa de varejistas independentes no mesmo orçamento. Até oito páginas já encontradas são priorizadas por modelo e diversidade, conferindo preço e estoque; sem pesquisas para completar a quantidade. Referência anterior preservada se não houver oferta comprovada. Testes reais Kian, Elgin e Conair confirmaram preços e cálculos. Gestão e Vendas sem impacto operacional; publicação autorizada, ainda não confirmada.
+
+> Revisão 3.2.0.127: sem impacto operacional. Retenção administrativa dos logs técnicos do pg_cron não apaga vendas, produtos ou cadastros, não muda plano e não exige atualização do aplicativo.
+
+<!-- ava-version: 3.2.0.127 -->
+
+> Revisão 3.2.0.126-av194: publicação autorizada do visual de carregamento aprovado na .124; logo atual preservado, sem botão visual de cancelar nesse card. Backend, autenticação, retorno do provedor e recuperação preservados. Adequação da proteção à Vercel contratada sem alteração de plano, recursos ou testes.
+
+<!-- ava-version: 3.2.0.126 -->
+
+> Revisão 3.2.0.125: sem impacto operacional no Vendas Mobile. Pesquisa de preços do AvantaPreços/Web preparada com mini, até oito ofertas comprovadas e sem buscas extras; ainda não publicada.
+
+> Revisão 3.2.0.97: atualização manual de preço mantém produto, lista e filtros, aplica somente a ficha pesquisada e exibe o resultado junto à ação no Web e AvantaPreços, incluindo ausência de ofertas, cache e falhas. Anúncios não sincronizam automaticamente ao entrar, por intervalo ou retorno à aba; demais cards permanecem estáveis após a carga e atualizam por ações explícitas. Somente vendas online aplicam atualizações periódicas; pendências completas são consultadas na carga inicial/ação manual. Mantidas sincronização de estoque no servidor, autorização, limites e modelo econômico. Gestão e AvantaVendas sem impacto operacional. Publicação autorizada; enviado/em build não significa publicado.
+
+> Revisão 3.2.0.96: AvantaPreços avisa Produto cadastrado sem preço e orienta referência manual ou Atualizar preço. Preços são conferidos no cadastro e nos valores retornados pelo histórico antes de confirmar sucesso; divergência exibe erro. Pesquisa sem oferta e edição com preço vazio preservam a referência anterior. Sem pesquisa automática, alteração de estoque ou anúncios; sem impacto operacional na Gestão/AvantaVendas.
+
+> Revisão 3.2.0.95: cards de produtos, estoque, anúncios, vendas e base local do AvantaPreços destacam o carregamento com círculo maior, mensagem, superfície na cor do perfil e três prévias de linhas. Após oito segundos avisam da demora, sem porcentagem fictícia nem bloquear a página. Demais fluxos preservados.
+
+> Revisão 3.2.0.94: sem impacto operacional; corrigidos os testes de cancelamento para o estado de carregamento local, preservando todas as verificações e as melhorias de lista e filtros do AvantaPreços.
+
+> Revisão 3.2.0.93: sem impacto operacional no AvantaVendas. AvantaPreços distingue leitura local de pesquisa de preços e publica lista inicial/filtros .92.
+
+> Revisão 3.2.0.92: sem impacto operacional no AvantaVendas. AvantaPreços abre lista local em A–Z sem busca digitada e oferece filtros por datas, anúncios e estoque, sem IA/fontes externas.
+
+> Revisão 3.2.0.91: publicação autorizada da confirmação única na Gestão Mobile, sem impacto operacional no AvantaVendas. Produção .90 preservada, sem alteração de login, vendas, estoque ou binários. Aguardar confirmação do build e dos domínios.
+
+> Revisão 3.2.0.90: sem impacto operacional no AvantaVendas. AvantaPreços separa busca no cadastro da empresa, sem IA nem pesquisa externa, com retorno, limpeza, ordenação e resultados roláveis.
+
+> Revisão 3.2.0.89: sem impacto operacional no AvantaVendas. Simplificação dos avisos de lançamentos somente na Gestão Mobile, sem alterar vendas, estoque, login ou acessos. Sem publicação nesta tarefa.
+
+> Revisão 3.2.0.88: sem impacto operacional no AvantaVendas. Marketplaces separa rolagem dos detalhes de produtos e vendas da identificação exibida acima.
+
+> Revisão 3.2.0.87: sem impacto operacional no AvantaVendas. Web/AvantaPreços tornam explícita a confirmação de exclusão de produto, preservando histórico e decisão manual após conferência.
+
+> Revisão 3.2.0.86: sem impacto operacional no AvantaVendas. AvantaPreços preserva preço, amostra e data salvos ao abrir consulta; nova pesquisa somente em Atualizar preço.
+
+> Revisão 3.2.0.85: sem impacto operacional no AvantaVendas. Otimização somente de testes/build/fila de publicação; nenhuma mudança de revisão funcional do app, login, estoque, vendas ou acessos.
+
+> Revisão 3.2.0.84-av193: publicação autorizada do formulário consignado roxo e da navegação/ampliação de materiais sem borda clara, com setas centradas. Preserva valores, arquivos e compartilhamento; AvantaPreços não incluído. Aguardar conclusão do build antes de afirmar no ar.
+
+> Revisão 3.2.0.83: sem impacto operacional no AvantaVendas, voz, financeiro ou comprovantes. Esta entrega aplica-se ao Web Marketplaces/AvantaPreços; av192/av193 locais não fazem parte do pacote de publicação .83. Nenhum produto/anúncio alterado nos testes.
+
+> Revisão 3.2.0.82-av193: Divulgação usa setas SVG centralizadas em círculos. A ampliação de imagem/vídeo e a tela cheia do PDF não têm borda clara do card; usam toda a área disponível, sem cortar a mídia. Espaços pela proporção do arquivo ficam escuros. PDF mantém Voltar, compartilhar, páginas e links. Local, não publicado.
+
+> Revisão 3.2.0.81-av192: selecionar Consignado no formulário de pedido, novo ou editado, muda os destaques para o mesmo roxo da visualização e do comprovante. Voltar para Venda restaura o azul. Funciona nos temas claro/escuro sem alterar itens, preços, desconto, totais, estoque ou financeiro. Local, não publicado.
+
+> Revisão 3.2.0.80: sem impacto operacional no AvantaVendas. Preparação de pesquisa mini com controles de consumo é local e não publicada, aguardando aprovação de qualidade das ofertas. Nenhuma venda/produto/anúncio alterado nos testes.
+
+> Revisão 3.2.0.79: tarjas unificadas em Anunciados/Estoques/Produtos cadastrados do módulo Marketplaces; Vendas sem tarja. Sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.78: sem impacto operacional no AvantaVendas. Estoques/Produtos Web perguntam sobre revisar dados/preço em anúncios após salvar cadastro local; não muda venda, receita, comprovante ou estoque financeiro. Sem publicação ou migração nova.
+
+> Revisão 3.2.0.77: sem impacto operacional no AvantaVendas; exclusão de cadastro no Marketplaces preserva vendas e valores históricos, sem estorno financeiro. Apenas Web/AvantaPreços, sem publicação ou binários. Migrações só preparadas/testadas localmente.
+
+> Entrega autorizada 3.2.0.76: migração de exclusão segura Marketplaces aplicada preservando registros. Publicação apenas do sistema Web/AvantaPreços, sem publicar produtos, alterar vendas ou enviar binários do AvantaVendas. As notas locais abaixo são históricas.
+
+> Revisão 3.2.0.76: sem impacto operacional no AvantaVendas. Exclusão/arquivamento do cadastro Marketplaces/AvantaPreços preserva vendas e movimentações; não estorna receitas nem apaga histórico financeiro. Saldo positivo impede remoção. Migração preparada/testada em isolamento, sem aplicação ou publicação.
+
+> Revisão 3.2.0.69: rodapé e atalho do módulo Web Marketplaces; sem impacto operacional no AvantaVendas, financeiro, comprovantes ou vendas. Não publicado.
+
+> Revisão 3.2.0.68: seleção automática title/family_name por conta ML no módulo Marketplaces Web, sem impacto operacional no AvantaVendas, comprovantes, vendas ou financeiro. Nenhuma migração ou publicação de produto durante testes.
+
+> Revisão 3.2.0.67: diagnóstico de recusa ML no formulário Web de Marketplaces; sem impacto operacional no AvantaVendas, comprovantes, financeiro ou estoque. Sem migração ou publicação.
+
+> Revisão 3.2.0.63-av191: o comprovante de consignado mostra somente o valor e os produtos em consignação, no tema roxo, sem Saldo anterior/Saldo atual. Saldos legados não representam cobrança e são ignorados na exibição. Criar/editar consignado não grava saldo; converter preserva o restante e não transporta os saldos antigos. Vendas e pagamentos mantêm seus comprovantes e financeiro; não houve regravação de dados em produção. Publicado em `dpl_8s3BsjTyEPYpnERkpBCkroc6Rzzq`, conferido nos três domínios. Reabrir o app e gerar o comprovante novamente; não reinstalar nem apagar dados.
+
+> Revisão3.2.0.43: no Web de Marketplaces, produto expandido no estoque mostra tarja verde Anunciado quando possui publicação confirmada. Filtro Todos/Anunciado/Não anunciado entre arrastar e Criar estoque atua antes da paginação, junto à pesquisa e estoque selecionado. Pausados do Mercado Livre continuam anunciados; rascunhos/excluídos não contam. Recolher produto libera a troca do filtro. Sem impacto operacional na Gestão nativa e no AvantaPreços/AvantaVendas; sem migração.
+
+> Revisão local3.2.0.42: consultar EAN digitado ou pelo leitor abre diretamente detalhes e preços quando o produto é identificado, local ou externo. Busca por descrição segue listando resultados para seleção; EAN ambíguo/ausente não abre produto por suposição. Cancelar e proteção contra resposta antiga mantidos. Sem migração ou publicação; sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Publicação3.2.0.41 autorizada: migração20261021040000 aplicada com preservação verificada de102produtos,129saldos e registros de10tabelas. Ficha web completa apenas ausências com fontes e EAN válido; Atualizar preço recupera dados faltantes de produto existente. Sem pesquisa em massa ou alteração de estoque/anúncios. Envio à Vercel em preparação; build iniciado não significa no ar. Notas locais anteriores de migração não aplicada são históricas. Gestão nativa e AvantaVendas sem impacto operacional.
+
+> Revisão3.2.0.41: pesquisa web no AvantaPreços completa EAN válido, descrição, foto e características quando encontrados para o produto exato com fonte consultada. Características/fontes nos detalhes; cadastro preserva campos manuais/saldo/anúncios e Atualizar preço completa produto existente. Dado ausente/ambíguo continua vazio. Migração preparada, não aplicada; não publicado. Sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão3.2.0.40: AvantaPreços mantém EAN, descrição, internet e resultados no início; selecionar um produto abre detalhes com Voltar/Nova pesquisa. Cancelar também encerra busca local e abertura de produto, respostas antigas são ignoradas. Consultas auxiliares têm limite; salvar preço não aguarda histórico. Erro de gravação pede conferir valor antes de repetir. Cancelar não desfaz gravação já recebida. Sem impacto operacional na Gestão nativa e AvantaVendas; sem migração.
+
+> Revisão local3.2.0.39: × de limpar adicionado aos campos de consulta do AvantaPreços; sem impacto operacional no AvantaVendas. Não publicado.
+
+> Revisão local3.2.0.38: Cancelar pesquisa adicionado somente no AvantaPreços; sem impacto operacional no AvantaVendas, vendas ou estoque. Não publicado.
+
+> Revisão local3.2.0.37: compactação visual do estoque do AvantaPreços/Marketplaces, sem impacto operacional no AvantaVendas. Não publicado; migração não aplicada.
+
+> Revisão local3.2.0.36: organização do estoque e observações internas somente em Marketplaces/AvantaPreços, sem impacto operacional no AvantaVendas. Não confundir com notas de pedido. Migração não aplicada e entrega não publicada.
+
+> Revisão local 3.2.0.35: ocultação das contas somente no AvantaPreços, mantendo consultas internas e gestão Web. Sem impacto operacional no AvantaVendas; não publicado. Leitor3.2.0.34 já publicado, notas locais anteriores são históricas.
+
+> Revisão local 3.2.0.34: Ler etiqueta procura primeiro nas vendas Mercado Livre registradas no perfil, todas as contas/períodos, pelo ID do envio, sem depender de OAuth ativo nem da conta selecionada. Foto/EAN da mesma conta; sem aproximação por nome ou acesso a outros perfis. Só na ausência de venda local tenta as contas conectadas. Banco indisponível não é ausência. Sem preço/escritas; não publicado. Gestão nativa/AvantaVendas sem impacto operacional.
+
+> Revisão local 3.2.0.33: no AvantaPreços, Ler etiqueta à esquerda e Ler EAN à direita, também na ordem de teclado e na prévia local. Mantém comportamento, modal e acesso. Não publicado; sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão local 3.2.0.32: Ler etiqueta no AvantaPreços também mostra Código da etiqueta (ID do envio lido) e EAN de cada produto, sem preço nem bipagem de conferência. EAN validado da ficha/variação correta; ausente mostra Não informado, sem presumir SKU ou EAN do pai. Somente Fechar; sem alteração de estoque/venda. Prévia fictícia local, não publicado; configuração OAuth real ainda pendente. Sem impacto operacional na Gestão nativa/AvantaVendas.
+
+> Revisão local3.2.0.31: no AvantaPreços, Ler etiqueta fica junto a Ler EAN. QR Mercado Livre → consulta autorizada → foto e descrição dos produtos em modal com somente Fechar. Sem preço, bipagem de conferência EAN, cadastro, histórico de preços, movimentação ou despacho. Prévia fictícia em validacao-etiqueta; teste real local exige configuração OAuth segura. Não publicado. Sem impacto operacional na Gestão nativa e no AvantaVendas.
+
+> Revisão 3.2.0.30-av190: cinco scripts próprios entregues compactados pelo build, sem mudar login, sessão, acesso, telas ou dados. Sem impacto operacional. Recursos continuam versionados; versões anteriores preservadas. Para testar, fechar/reabrir conectado, sem reinstalar nem apagar dados/pendências. Não é atualização nas lojas.
+
+> Revisão 3.2.0.29: otimização da entrega exclusiva da Gestão Mobile. Sem impacto operacional no AvantaVendas; arquivos e login preservados, sem novo binário nativo.
+
+> Revisão de infraestrutura 21/10/2026, aplicação 3.2.0.28 mantida: correção WWW e proteções de cache/cabeçalhos na borda, sem impacto operacional no AvantaVendas. Cache estático versionado preservado; login, dados e versão nativa não alterados. Não orientar reinstalação ou limpeza de dados.
+
+> Revisão 3.2.0.28 (prevalece sobre notas históricas): Magalu passa a compartilhar Anunciados, editor, avisos e conferência Online/anúncios com ML. Pedido novo aprovado baixa por SKU/conta uma vez; histórico anterior à ativação não é rebaixado. Zero só conclui após saldo zero e pausa relidos. Pausa manual preservada; cancelamento não repõe fisicamente por suposição. Reposição espera pedidos recentes/completos. Atualização Magalu é periódica, não instantânea; 202 significa processamento. Etiquetas pelo portal e taxas indisponíveis explicitadas; Full/Multi-Origem protegidos. Sem integração financeira nem impacto operacional no AvantaVendas/Gestão nativa. A versão3.2.0.27 já foi publicada; notas locais .27 abaixo são históricas.
+
+> Revisão local 3.2.0.27: conferência de saldo Online/anúncios no Web e AvantaPreços com confirmação, sem soma entre contas, pausa de saldo zero verificada e Venda bloqueada sem saldo. Sem impacto operacional no AvantaVendas av189 ou financeiro. Migração local; não publicado.
+
+> Revisão 3.2.0.26: Venda no AvantaPreços depende de saldo por estoque; sem impacto operacional no AvantaVendas av189 ou financeiro. Conector de estoque automático atual limitado ao Mercado Livre, não prometer baixa automática de Magalu. Local, não publicado.
+
+> Revisão 3.2.0.25: ajustes de post e campo Detalhes no AvantaPreços, sem impacto operacional no AvantaVendas av189 ou no financeiro. Local, não publicado.
+
+> Revisão 3.2.0.24: saldo e ícone exclusivos do AvantaPreços, sem impacto operacional no AvantaVendas av189, sem movimentação ou integração financeira. Local, não publicado.
+
+> Revisão 3.2.0.23: aviso sem estoque no preparo do Marketplace Web; sem impacto operacional no AvantaVendas, sem venda/baixa/financeiro. Local, não publicado.
+
+> Revisão local 3.2.0.22: preparo de anúncio no Marketplace Web, sem impacto operacional no AvantaVendas av189. Não cria venda, baixa ou lançamento financeiro; ainda não publicado.
+
+> Publicação 3.2.0.18 em 20/10/2026: mudanças somente no módulo Marketplaces/AvantaPreços; AvantaVendas av189 preservado, sem impacto operacional. Criar post gera imagem para compartilhar manualmente, não gera venda, baixa, receita financeira ou anúncio no marketplace. Notas locais .14–.18 abaixo são históricas; demais alterações locais não publicadas.
+
+> Publicação 3.2.0.07-av189 confirmada em 20/10/2026 nos três domínios: acesso/retomada e recursos estáticos no ar, build/TypeScript aprovados. Notas locais av189 abaixo são históricas. Recursos do Vendas vieram da pasta atual; comprovantes, Kanban, SDK/configuração, Gestão e dados preservados. Sem migração ou envio às lojas. Fechar/reabrir uma vez para obter a revisão, depois testar retorno do segundo plano e rascunhos nos apps reais, sem reinstalar/apagar dados. Validação física ainda com o responsável; não afirmar que foi realizada.
+
+> Estado atual: IPA substituto 1.0.1 (6) auditado e upload concluído em 19/10/2026 às 21:57 (GMT-3). Ainda NÃO submetido à revisão: titular escolheu testar no iPhone conectado antes, aparelho ainda não detectado. Build 5 segue retirado (Removed/Developer Rejected); Android sem alteração, em análise. Execução do pacote nativo no simulador 26.5 não comprova abertura em iOS 27 nem sensação tátil. Notas abaixo de pacote ainda não enviado são históricas; upload não é publicação.
+
+> Situação iOS atualizada em 19/10/2026: envio 1.0.1 (5) com vibração retirado da revisão (Removed/Developer Rejected), por manifesto de cenas incompleto no IPA. Substituto 1.0.1 (6) exportado/auditado com manifesto UIScene explícito, janela única e callbacks de login a frio/quente preservados; ainda não enviado. Ícone AV, Haptics e oito plugins mantidos. Processo nativo abriu no simulador iOS 26.5, o que não comprova execução em iOS 27 nem sensação tátil física. Android permanece em análise sem alteração. Notas antigas de build 5 em Waiting for Review são históricas; não afirmar disponibilidade antes da aprovação. Sem mudança Web ou dados.
+
+> Produção 3.2.0.02 confirmada em 19/10/2026 nos dois domínios: revisões 01–02 publicadas. Cabeçalhos com ações compactas de 32 px e expandir/recolher somente setas; Estoques no AvantaKanban, padrão Vendas → Anunciados → Estoques → Produtos, com seis pontos e teclado. Ordens personalizadas antigas preservadas na mesma chave por usuário/empresa. Notas locais 01–02 abaixo são históricas. Recarregar Web sem apagar dados/preferências; sem impacto operacional na Gestão nativa/AvantaVendas/PWA, sem migração ou movimentação real.
+
+> Produção 3.2.0 confirmada em 19/10/2026 nos dois domínios: migração aplicada e estoques separados disponíveis no Web/AvantaPreços. Os 65 produtos e saldos antigos foram preservados no Online; nenhuma movimentação ou permissão real alterada. Notas locais 71/3.2.0 e pendências de publicação abaixo são históricas. Criar/renomear estoques, Dar entrada, Ajustar saldo final e Transferir usam a mesma base por perfil. Só Online alimenta anúncios. Baixa manual por venda offline e novos critérios de cancelamento ficam para a próxima etapa; Gestão nativa/AvantaVendas sem impacto operacional. Recarregar Web ou fechar/reabrir PWA, sem apagar dados/reinstalar. Teste autenticado com o responsável.
+
+> Atualização nativa em 19/10/2026: Android 1.0.4 (5) assinado com a chave oficial, auditado no DEX e em análise em produção, com os oito plugins anteriores preservados e publicação automática integral após aprovação. iOS 1.0.1 (5) compilado/exportado no Xcode 27.1, IPA auditado com Haptics/plugins anteriores, assinatura de distribuição e APNs production. Após acesso ao painel, build processado/numeração conferidos, associado à nova versão e notas públicas/revisão em pt-BR. Apple confirmou “1 Item Submitted” / “Waiting for Review”, liberação automática após aprovação. Nenhuma atualização aprovada/disponível ainda; versão atual permanece na loja. Ícone AV confirmado no IPA e na prévia do build 5 no Connect; o padrão é da produção antiga 1.0.0 (4) e pode continuar no cabeçalho até aprovação. Sem regenerar logo nem novo upload. Não houve teste físico/emulador: titular optou por testar pela atualização oficial. Não orientar que basta atualizar a página para instalar o plugin. Configurações > Aparência > Vibração do menu controla a preferência por usuário/aparelho; navegação não aguarda o feedback. Gestão e Web preservados.
+
+> Produção 3.1.0.70 confirmada em 19/10/2026: revisões 65–70 do Marketplaces Web publicadas. Sem impacto operacional neste aplicativo; arquivos AvantaVendas preservados. Notas locais correspondentes abaixo são históricas.
+
+> Produção 3.1.0.47 confirmada: entregas 44–47 de Marketplaces/AvantaPreços; sem impacto operacional no AvantaVendas. Menu av188, recursos, dados e preferências preservados. Notas locais 44–47 abaixo são históricas; nenhuma publicação de binário nativo.
+
+> Publicação Web 3.1.0.43-av188 confirmada: ajustes do menu das revisões 42/43 no ar, com linha deslizante e sem círculo. Página, arquivos, bundles e cache conferidos; dados e Gestão preservados. As notas locais 42/43 abaixo são históricas. Toque tátil nativo depende da próxima atualização dos apps nas lojas; nenhum binário foi enviado nesta entrega.
+
+> Produção 3.1.0.41 confirmada: ajustes de Marketplaces Web, sem impacto operacional no AvantaVendas independente, preservado por SHA-256. Notas locais 37–41 abaixo são históricas. A revisão local 42 do AvantaVendas não foi publicada nesta entrega.
+
+> Revisão 3.2.0.72: sem impacto operacional no AvantaVendas. O formulário Web Marketplaces consulta frete grátis obrigatório/opcional e estimativa de custo antes de publicar; não altera comprovantes, vendas ou saldo. Publicação somente do sistema, nenhum produto nesta entrega; sem migração.
+
+> Revisão 3.2.0.73: sem impacto operacional no AvantaVendas. Recuperação de formulário após recusa e limite de espera pertencem ao Novo anúncio ML Web; não alteram venda, comprovante ou estoque. Correção local, não publicada; nenhum produto ou migração.
+
+> Revisão 3.2.0.74: sem impacto operacional no AvantaVendas. Ajuste de foco/destaque de EAN pertence ao formulário Novo anúncio ML Web; não altera produto, venda, comprovante ou estoque. Correção local, não publicada; nenhum produto ou migração.
+
+> Revisão 3.2.0.75: sem impacto operacional no AvantaVendas. Conclusão confirmada de anúncio ML/Magalu Web encerra a preparação e volta ao topo; não altera venda/comprovante ou estoque. Sem produto publicado, migração ou publicação do sistema nesta revisão local.
+
+> Revisão 3.2.0.122: sem impacto operacional no AvantaVendas; proteção de EAN em Marketplaces não modifica cadastros ou saldos existentes. Não publicado.
+
+> Revisão 3.2.0.123: sem impacto operacional no AvantaVendas. Exclusão do cadastro em AvantaPreços preserva vendas e histórico, não concede gestão de anúncios. Local, não publicado.
+
+> Revisão 3.2.0.124-av194: preparação do AvantaVendas usa card visual da Gestão e logo ampliado conforme prévia aprovada. Não há botão Cancelar e voltar ao login nesse card; fechamento do provedor, retorno, erros e recuperação existentes permanecem. Sem alteração de autenticação, dados ou backend. Publicação autorizada.
+
+<!-- ava-version: 3.2.0.124 -->
+
+Revisão 3.2.0.121: Marketplaces Web oferece Vendas, Anunciados e Estoque à esquerda do rodapé e pesquisa à direita, todos compactos e com a mesma aparência. Abrem e alinham o card existente, sem trocar filtros ou pesquisar externamente. Produto em foco deve ser recolhido antes. Em telas estreitas usam ícones acessíveis. Gestão Mobile e AvantaVendas sem impacto operacional; local não publicado.
+
+Revisão 3.2.0.120: Anunciados oferece Ver no estoque ao lado de Ver anúncios, levando ao ID vinculado no card Estoques, destacado e recolhido. Expandir permite editar; Voltar à lista retorna aos demais. Sem vínculo a ação é inativa, sem cadastro duplicado/pesquisa externa. Gestão Mobile e AvantaVendas sem impacto operacional.
+
+Revisão 3.2.0.119: Fichas de Produtos cadastrados/Estoques com Expandir/Recolher textual usam pílula e foco exclusivo no produto, com rolagem interna. Recolher desmonta rascunho não salvo, restaura interação/rolagem e mantém envios protegidos. Controles só com seta, Gestão Mobile e AvantaVendas sem impacto operacional.
+
+Revisão 3.2.0.118: Cancelar anúncio no topo e rodapé fica inativo na ficha vazia; digitar EAN/nome ou carregar produto o habilita. Limpar volta a desativá-lo, e preparação/envio continuam bloqueando a ação. Sem impacto operacional na Gestão Mobile e AvantaVendas; local não publicado.
+
+Revisão 3.2.0.117: Novo anúncio oferece Cancelar anúncio no topo, ao lado de Pesquisar, e mantém o do rodapé. Ambos limpam a preparação pelo mesmo fluxo e ficam indisponíveis durante preparação/envio. Inclui preenchimento pela origem e agrupamento 115–116; sem impacto operacional na Gestão Mobile e AvantaVendas. Publicação do sistema autorizada, sem publicar produtos.
+
+Revisão 3.2.0.116: Anunciados reúne anúncios vinculados ao mesmo cadastro local em um grupo, com contagem de contas/anúncios, situações e faixa de preços. Expandir permite editar ou abrir cada anúncio por conta. Saldo Online compartilhado aparece uma vez e não é somado. Sem vínculo local, anúncios permanecem separados. Paginação preserva grupos completos. Sem impacto operacional na Gestão Mobile e AvantaVendas; ajuste local não publicado.
+
+Revisão 3.2.0.115: Anunciar em mais contas abre os dados já preenchidos a partir do anúncio de origem, inclusive com EAN; revalidar não os substitui pelos dados comerciais locais. Valores da origem temporariamente ausentes das opções continuam visíveis, mas precisam de validação na conta nova. Contas existentes são conferidas pelos vínculos persistidos e ficam bloqueadas. Campos editáveis preservados; EAN e saldo Online únicos. Sem impacto operacional na Gestão Mobile e AvantaVendas. Ajuste local não publicado.
+
+Revisão 3.2.0.114: Marketplaces: preparação com seleção de contas ao final, contas já anunciadas marcadas e bloqueadas, validação e resultado por conta, repetição sem duplicar envios confirmados e confirmação separada para atualizar dados comerciais existentes. EAN e saldo Online comuns ao cadastro; envio prioritário de alterações de estoque com fila durável, confirmação remota e preservação das pausas manuais. Magalu mantém o processamento assíncrono e exige revisão dos campos de sua categoria. Nenhum produto real publicado durante os testes. Gestão Mobile e AvantaVendas sem impacto operacional.
+
+Revisão 3.2.0.113: sem impacto operacional no AvantaVendas. Rolagem de cards pertence ao Web Marketplaces e ainda não foi publicada. Produção Web 3.2.0.112 confirmada, sem alteração de vendas/estoque ou upload às lojas.
+
+Revisão 3.2.0.112: sem impacto operacional no AvantaVendas. Ajuste visual dos botões de Novo anúncio ML Web, sem mudança de vendas, estoque ou publicação do sistema.
+
+Revisão 3.2.0.111: sem impacto operacional no AvantaVendas. Tratamento de timeout e consulta compartilhada limitados às contas do módulo Web Marketplaces; sem publicação do sistema.
+
+Revisão 3.2.0.110: sem impacto operacional no AvantaVendas. Ajuste restrito ao preparo de anúncio ML Web, sem alteração de vendas/estoque e sem publicação do sistema.
+
+Revisão 3.2.0.109: sem impacto operacional no AvantaVendas. Ajustes limitados à abertura da Gestão Web e ao módulo Web Marketplaces; sem upload às lojas.
+
+Revisão 3.2.0.108: sem impacto operacional no AvantaVendas. Prévia com foto e campos alinhados aplicada somente em Preparar anúncio Web. Sem publicação do sistema.
+
+Revisão 3.2.0.107: sem impacto operacional no AvantaVendas. Simulação de Preparar anúncio restrita ao desenvolvimento Web, sem integração real, banco ou publicação do sistema.
+
+Revisão 3.2.0.106: sem impacto operacional no AvantaVendas. Resumo flutuante alterado somente em Preparar anúncio do Web; não publicado.
+
+Revisão 3.2.0.105: sem impacto operacional no AvantaVendas. Distribuição de Preparar anúncio alterada somente no módulo Web Marketplaces; não publicada nesta etapa.
+
+Revisão 3.2.0.104: Atualizar anúncios mantém lista e total conhecidos se a mesma seleção falhar, identifica conta/etapa pendente e continua nas outras contas; não garante atualização remota quando houver recusa. Filtro Ativos oferece Ver todas as situações. Sem mudar permissões, preços ou estoque. Gestão mobile e AvantaVendas sem impacto operacional. Sem publicação nesta etapa.
+
+Revisão 3.2.0.103: Preparar anúncio em Marketplaces mostra carregamento central padrão com fundo translúcido e formulário não interativo, removido no sucesso ou erro. Não significa publicação do produto. Gestão mobile e AvantaVendas sem impacto operacional. Sem publicação nesta etapa.
+
+Revisão 3.2.0.102: avisos de ações de preço no Web e AvantaPreços expiram após 20 segundos e ao encerrar/trocar o produto, sem duplicação. Não confundir aviso transitório com pendência real ou estado sem referência. Preços e cadastro preservados; demais módulos sem impacto operacional. Sem publicação nesta etapa.
+
+Revisão 3.2.0.101: Busca geral de preços ampliada com GPT-5.4 mini: termos mais curtos e identificadores do cadastro, distinção entre modelo e medidas, validação de variante e exclusão de vitrines de peças. Uma recuperação limitada tenta outras fontes quando não há ofertas válidas, respeitando cancelamento, tempo e custos. Média dos até cinco menores preços válidos; abertura local e referência anterior preservadas. Sem impacto operacional nos demais módulos; publicação autorizada, envio/build não significa publicado.
+
+Revisão 3.2.0.100: organização vertical dos valores no AvantaPreços, sem impacto operacional no AvantaVendas. Sem publicação nesta etapa.
+
+Revisão 3.2.0.99: restaurada a pesquisa de preços OpenAI do Web/AvantaPreços, sem impacto operacional no AvantaVendas e sem alteração de pedidos, estoque ou vendas. Publicação autorizada após testes.
+
+Revisão 3.2.0.98: correção do extrator de preços do Web/AvantaPreços; sem impacto operacional no AvantaVendas e sem alteração de pedidos, estoque ou vendas. Versão ainda não publicada.
+
+> Revisão 3.2.0.71: correção da pré-validação de publicação ML no módulo Web; sem impacto operacional no AvantaVendas, comprovantes ou financeiro.
+
+> Revisão 3.2.0.70: avisos de publicação no Web Marketplaces em linguagem clara; sem impacto operacional no AvantaVendas, comprovantes ou financeiro. Não publicado.
+
+> Revisão 3.2.0.66: falha de validação inicial da Gestão Web oferece Tentar novamente sem logout. Sem impacto operacional no AvantaVendas; consignado av191, pedidos, saldos e comprovantes preservados.
+
+> Revisão 3.2.0.65: atualização automática de anúncios e rodapé no Marketplaces; sem impacto operacional no AvantaVendas. Correção de consignado av191 preservada nesta entrega consolidada, sem regravação de dados ou integração financeira.
+
+> Revisão 3.2.0.64: inclusão de rodapé no Marketplaces Web, com verificação de cobertura dos módulos. Sem impacto operacional no AvantaVendas; correção de consignado av191 preservada nos arquivos locais, sem nova publicação ou integração financeira.
+
+> Revisão 3.2.0.62: agrupamento visual da navegação de pendência em Estoques Web; sem impacto operacional no AvantaVendas, sem integração financeira e sem publicação.
+
+> Revisão 3.2.0.61: avisos de conferência e ações de anúncio no Marketplaces; sem impacto operacional no AvantaVendas e sem integração financeira. Migração local refinada, não aplicada; não publicado.
+
+> Revisão 3.2.0.60: tarjas e importação de catálogo do Marketplaces/AvantaPreços; sem impacto operacional no AvantaVendas e sem integração financeira. Migração preparada, não aplicada; não publicado.
+
+> Revisão 3.2.0.59: contadores do estoque no Marketplaces Web; sem impacto operacional no AvantaVendas. Sem publicação.
+
+> Revisão 3.2.0.58: rolagem do produto expandido em Marketplaces Web; sem impacto operacional no AvantaVendas. Não publicado.
+
+> Revisão 3.2.0.57: gerenciamento de anúncios pelo produto em Marketplaces Web, sem impacto operacional no AvantaVendas. Encerrar anúncio não é cancelar venda. Não publicado.
+
+> Revisão 3.2.0.56: reorganização visual da sincronização de estoque em Marketplaces/AvantaPreços; sem impacto operacional no AvantaVendas. Não publicado.
+
+> Revisão 3.2.0.55: atalho Conferir e ajustar nos avisos Web de Marketplaces, sem impacto operacional no AvantaVendas. Não publicado.
+
+> Revisão 3.2.0.54: avisos de falta/divergência de estoque ignoram anúncios pausados, inativos, encerrados, excluídos ou cancelados, em Mercado Livre e Magalu. Um vínculo ativo do mesmo produto continua sendo conferido; estado desconhecido não é tratado como desativado. Contador usa avisos aplicáveis, sem recriar alerta pela fila bruta. Vendas já registradas aguardando baixa e falhas de conexão/pausa não confirmada permanecem visíveis. Fila e dados não são alterados; reativar anúncio volta a avaliar saldo. Mesma regra nas indicações Web/AvantaPreços. Sem migração/publicação; sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão 3.2.0.53: Estoques Web agrupa seleção e ações em uma faixa compacta, alinhada à esquerda; Renomear/Usar online/Arquivar ficam junto aos nomes, com divisor e identificação acessível do estoque selecionado. Cores por identidade passam a paleta sóbria de azul/cinza/verde/areia, estável e com contraste verificado; mesma paleta nas etiquetas de vendas diretas Web/AvantaPreços. Seleção mantém marca de confirmação e contorno, Arquivar mantém semântica destrutiva. Sem seletor de cor personalizado, migração ou publicação; dados/permissões preservados e sem impacto operacional na Gestão nativa/AvantaVendas.
+
+> Revisão 3.2.0.52: histórico/detalhes de vendas diretas no Web e AvantaPreços separam Situação da venda e Devoluções em seções verticais distintas, cada uma com título, divisor e espaçamento. Motivo do cancelamento permanece na situação da venda; devoluções só aparecem com retorno registrado. Mesmo arranjo em desktop/mobile, sem competir na mesma linha. Sem alteração de dados, estoque, permissões ou fluxo; sem migração/publicação e sem impacto operacional na Gestão nativa/AvantaVendas.
+
+> Revisão 3.2.0.51: vendas diretas no Web e AvantaPreços mostram somente Venda confirmada ou Venda cancelada quando nenhuma unidade foi devolvida. Havendo devolução física registrada, mostram informação separada: Devolução parcial (quantidade de total) ou Devolução total, com singular/plural correto. Não altera venda, estoque, totais, permissões nem fluxo de cancelamento/devolução. Sem migração/publicação; sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão 3.2.0.50: Próxima e Anterior nas listas de Anunciados, Estoques, Produtos cadastrados e catálogo do AvantaPreços mudam a página e, após o carregamento, rolam ao topo do respectivo card. Estoque usa o card do depósito, não a sublista. Título recebe foco sem rolagem adicional; cabeçalhos fixos e movimento reduzido respeitados. Filtros/contas/estoque preservados, sem rolagem em atualização automática. Sem migração/publicação ou impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão 3.2.0.49: no Web Marketplaces, item expandido em Anunciados/Estoques/Produtos cadastrados não bloqueia navegação. Clicar em filtro, conta, estoque, paginação, atualizar ou outra ação externa recolhe a ficha e executa o comando no mesmo clique; abrir outro item substitui a ficha anterior. Ações/campos internos e modais são preservados. Fechar não salva edições não confirmadas. Gravação/sincronização mantêm bloqueios necessários; atualização automática não descarta ficha aberta. Sem migração ou publicação; sem impacto operacional no AvantaPreços, Gestão nativa e AvantaVendas.
+
+> Revisão 3.2.0.48: todos os usuários com acesso ativo ao AvantaPreços podem Ajustar preço médio/Atualizar cálculos e Atualizar preço nos detalhes do produto. As duas ações atualizam a referência compartilhada no cadastro e recalculam sugestões; não alteram saldo, anúncios ou lotes salvos. Permissão Editar estoque continua independente. Pesquisa explícita preserva cancelamento, limites e proteção de concorrência. Sem impacto operacional na Gestão nativa e AvantaVendas.
+
+> Revisão 3.2.0.47: Estoques Web inicia em Todas as contas e permite escolher uma conta no cabeçalho, junto ao filtro de publicação. Todas mantém produtos sem anúncio; conta específica com Todos mostra produtos vinculados a ela. Anunciado/Não anunciado consideram publicação confirmada na conta escolhida; Não anunciado inclui produtos ainda sem vínculo nela. Lista, busca e contador respeitam esses filtros antes da paginação. Tarja Anunciado aparece na própria linha, sem expandir o produto; com conta selecionada considera somente essa conta. Saldo permanece por depósito, sem soma/duplicação por anúncio. Sem migração/publicação ou impacto na Gestão nativa/AvantaPreços/AvantaVendas.
+
+> Revisão 3.2.0.46: removido Registrar cálculo manual da entrada do AvantaPreços. Produto não localizado mantém a pesquisa e aviso para revisar EAN/descrição ou buscar na internet, sem criar referência vazia ou abrir outro formulário. Produto localizado conserva Ajustar preço médio e Atualizar cálculos nos detalhes. Histórico existente e lotes preservados; consulta não localizada não inventa produto nem preço. Sem migração/publicação e sem impacto operacional na Gestão Web/nativa e AvantaVendas.
+
+> Revisão 3.2.0.45: Web Marketplaces tem contagem leve de Estoques e Anunciados, independente da ficha/lista completa. Total confirmado permanece durante atualização; primeira leitura aguarda consulta real, sem inventar zero. Abrir/recolher card, voltar à aba e ordenar/paginar não recontam; abertura, Atualizar, filtros/estoque/conta e alterações de dados recalculam. Vendas abre registros salvos sem aguardar rede dos marketplaces; Atualizar mantém sincronização. Sem migração/publicação e sem impacto operacional na Gestão nativa/AvantaPreços/AvantaVendas.
+
+> Revisão 3.2.0.44: AvantaPreços abre características recolhidas em cada abertura/troca de produto; seta permite expandir/recolher sem perder os dados. Ler etiqueta tem fundo azul institucional fixo (#003E73), independente do perfil; Ler EAN e demais cores preservados. Sem migração, alteração de dados ou publicação. Sem impacto operacional na Gestão Web/nativa e AvantaVendas.
+
+> Atualização 3.2.0.21 autorizada somente para AvantaPreços: instalação abaixo do login e arte aprovada na prévia WhatsApp. Recursos AvantaVendas av189 permanecem intactos; sem impacto operacional neste aplicativo. Não confundir envio à Vercel com publicação concluída.
+
+> Revisão local 3.2.0.21: sem impacto operacional no AvantaVendas av189. Instalação e proposta de prévia de link pertencem somente ao PWA AvantaPreços. Publicação .20 confirmada sem alterações no Vendas; .21 ainda local e imagem aguarda aprovação.
+
+> Revisão local 3.2.0.20: sem impacto operacional no AvantaVendas; recursos av189 preservados. Mudanças somente no Marketplace/AvantaPreços: saldo vazio aparece como zero, ícone Atualizar corrigido e De do post inicia pela média pesquisada, editável; não gera venda/receita ao criar imagem. Não publicado.
+
+> Publicação 3.2.0.19 confirmada: integração financeira Mobile .13 sobre produção .18. AvantaVendas av189 e sua sincronização preservados, arquivos conferidos; sem impacto operacional neste aplicativo ou novo binário de loja.
+
+> Revisão local 3.2.0.18: identidade visual/De-Por no post do AvantaPreços; sem impacto operacional no AvantaVendas ou financeiro. Não publicado.
+
+> Revisão local 3.2.0.17: proposta de Criar post no PWA AvantaPreços segue o fluxo de arquivo/compartilhamento do comprovante, sem alterar o comprovante, dados, estoque ou operações do AvantaVendas. Sem impacto operacional neste aplicativo; não publicado.
+
+> Revisão local 3.2.0.16: organização do formulário de venda de Marketplaces/AvantaPreços; sem impacto operacional no AvantaVendas, financeiro ou regras de baixa. Não publicado.
+
+> Revisão local 3.2.0.15: atalho de venda no PWA AvantaPreços e alternância Online/Saldão em Marketplaces Web. Sem impacto operacional no AvantaVendas ou integração financeira; cancelamentos/devoluções preservados. Não publicado.
+
+> Revisão local 3.2.0.14: resumo de saldo e navegação do PWA AvantaPreços, sem impacto operacional no AvantaVendas, financeiro ou regras de baixa. Não publicado.
+
+> Revisão 3.2.0.13: fila de inclusão/exclusão da Gestão Mobile incluída na publicação .19, com migração aplicada. Sem impacto operacional no AvantaVendas independente; sincronização de vendas e receitas automáticas preservada.
+
+> Publicação 3.2.0.12-av189 confirmada em 20/10/2026: versão global acompanha a Gestão, mas código operacional do AvantaVendas é idêntico ao anterior. Sem impacto operacional neste aplicativo, sem nova compilação ou envio às lojas. Pendências da Gestão Mobile não se aplicam a pedidos/consignados/pagamentos do AvantaVendas.
+
+> Revisão 3.2.0.12: novo lançamento da Gestão Mobile herda o período da dashboard; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.2.0.11 (incluída na 3.2.0.12): envio de edições em segundo plano na Gestão Mobile; sem impacto operacional no AvantaVendas. Não usar este fluxo de pendências para vendas, recebimentos ou estoque.
+
+> Publicação 3.2.0.10 confirmada em 20/10/2026 nos domínios oficiais: correções da Gestão Mobile no ar e migração numérica aplicada sem alterar registros (2.610 lançamentos, 163 parcelas). Indicador de contas .09 e AvantaVendas av189 preservados. Fechar/reabrir o aplicativo para obter os recursos, sem reinstalar ou apagar dados; teste em aparelho físico com o responsável.
+
+> Revisão 3.2.0.10: publicação das correções da Gestão Mobile sobre produção 3.2.0.09, sem impacto operacional no AvantaVendas; arquivos e revisão av189 preservados.
+
+> Revisão 3.2.0.09: indicador de carregamento das contas no módulo Marketplaces Web; sem impacto operacional neste aplicativo, sem mudança em estoque ou permissões.
+
+> Revisão 3.2.0.08: sem impacto operacional no AvantaVendas. Correções limitadas aos controles, avisos e navegação financeira da Gestão Mobile e à função compartilhada de parcelamento da Gestão; recursos e revisão av189 do Vendas preservados.
+
+> Revisão 3.2.0.07-av189: ajuste local de acesso/retomada, ainda não publicado. Voltar do segundo plano não reinicia o login: o SDK confere/renova a sessão, agrupa eventos e atualiza os dados em segundo plano, sem substituir formulário ou lançamento aberto. Atualização é espaçada em 30 segundos, ou antecipada na reconexão/pendência. Token revogado continua exigindo login; falha de rede não equivale a logout. Imagens do menu e notificações não seguram a tela operacional. Uma posição recente (até seis horas), sem campos ou senhas, pode ser recuperada após nova autorização e cache da mesma conta; sem isso, abre a Sala habitual. Se o sistema operacional descartar a WebView, a recuperação ainda precisa confirmar acesso: não prometer permanência eterna. Lembrar-me, chaves de sessão, permissões, assinatura, compartilhamento e regras financeiras preservados. Não orientar limpar dados/reinstalar. Apps nativos usam somente evento Capacitor já disponível e têm alternativa web; não houve nova compilação nem teste físico. Incremental de histórico e troca de SDK ficam fora desta etapa.
+
+> Revisão 3.2.0.06: organização do produto expandido Web e correção dos estilos dos botões compactos compartilhados com AvantaPreços; sem mudança nas operações ou permissões. Sem impacto operacional neste aplicativo nativo. Integração financeira adiada.
+
+> Revisão 3.2.0.05: contadores de Anunciados/Estoques no módulo Web; sem impacto operacional neste aplicativo. O AvantaPreços mantém vendas diretas/saídas aprovadas, sem integração financeira.
+
+> Revisão 3.2.0.04: sem impacto operacional no AvantaVendas. Registrar venda do módulo Marketplaces/AvantaPreços gera somente venda direta e baixa por estoque; não integra receitas/dashboard financeiro, caixa do AvantaVendas ou documentos fiscais. Fluxo financeiro deste módulo foi adiado pelo responsável.
+
+> Revisão 3.2.0.03: nova apresentação de Estoques/Produtos cadastrados somente no Marketplaces Web; sem impacto operacional neste ambiente. AvantaPreços preserva o fluxo de estoques e permissão individual.
+
+> Revisão local 3.2.0.02: ordem e arraste de Estoques no Marketplaces Web; sem impacto operacional neste ambiente. Ainda não publicado.
+
+> Revisão local 3.2.0.01: controles compactos e setas dos cards Marketplaces Web; sem impacto operacional neste ambiente. Ainda não publicado.
+
+> Entrega 3.2.0: estoques por perfil no Marketplaces/AvantaPreços, migração aplicada em 19/10/2026. Sem impacto operacional no AvantaVendas. Baixa manual por venda offline e critérios de cancelamento ficam para próxima etapa; não orientar esse fluxo como disponível.
+
+> Revisão local 3.1.0.71: quantidade compacta no AvantaPreços; sem impacto operacional neste aplicativo. Ainda não publicado.
+
+> Revisão local 3.1.0.70: ajuste visual do alerta Marketplaces Web; sem impacto operacional neste aplicativo. Ainda não publicado.
+
+> Revisão local 3.1.0.69: alinhamento do título do período no Marketplaces Web; sem impacto operacional neste aplicativo. Ainda não publicado.
+
+> Revisão local 3.1.0.68: indicador de carregamento dos cards Marketplaces Web; sem impacto operacional neste aplicativo. Apresentação padrão do carregamento de módulos preservada. Ainda não publicado.
+
+> Revisão local 3.1.0.67: alerta e lista de pendências do Marketplaces Web; sem impacto operacional neste aplicativo. Variante centralizada dos modais compartilhados preservada. Ainda não publicado.
+
+> Revisão local 3.1.0.66: placeholder de senha no cadastro Web AvantaPreços; sem impacto operacional neste aplicativo. Ainda não publicado.
+
+> Revisão local 3.1.0.65: salvamento silencioso e troca de usuários no cadastro Web; sem impacto operacional neste aplicativo. Ainda não publicado.
+
+> Entrega publicada 3.1.0.64: nome do perfil em maiúsculas no topo do AvantaPreços; sem impacto operacional neste ambiente. Publicado.
+
+> Entrega publicada 3.1.0.63: base de Produtos e estoque compartilhada com o catálogo AvantaPreços; sem impacto operacional no AvantaVendas. Publicado.
+
+> Entrega publicada 3.1.0.62: clareza e isolamento visual da permissão individual Editar estoque no cadastro Web. Sem mudança operacional neste aplicativo; publicado.
+
+> Entrega publicada 3.1.0.61: blocos recolhidos na abertura de Marketplaces Web; sem impacto operacional neste ambiente. Publicado.
+
+> Entrega publicada 3.1.0.60: permissão específica de estoque do AvantaPreços; sem impacto operacional no AvantaVendas. Não concede acesso a este aplicativo. Publicação confirmada; migração instalada sem concessão automática.
+
+> Entrega publicada 3.1.0.59: pendências do Marketplaces Web identificadas e bloqueio de estoque limitado ao produto/conta relacionada; sem impacto operacional no AvantaVendas. Publicado.
+
+> Produção 3.1.0.58 confirmada: revisões 57–58 do Marketplaces Web; sem impacto operacional no AvantaVendas. Recursos preservados; notas locais correspondentes abaixo são históricas.
+
+> Revisão local 3.1.0.58: ações do topo Marketplaces Web compactadas; sem impacto operacional no AvantaVendas. Ainda não publicado.
+
+> Revisão local 3.1.0.57: EAN em itens do pedido no Marketplaces Web; sem impacto operacional no AvantaVendas. Ainda não publicado.
+
+> Produção 3.1.0.56 confirmada, sem impacto operacional no AvantaVendas; seus recursos foram preservados. Revisão 57 segue local. Nenhum saldo/usuário real alterado pelo deploy.
+
+> Revisão local 3.1.0.56: retirada segura de acesso exclusivo AvantaPreços preserva a base por perfil. Sem impacto operacional no AvantaVendas; não altera usuários de Vendas ou saldos. Não publicado.
+
+> Revisão local 3.1.0.55: contraste do ModalConfirmacao compartilhado; sem impacto operacional no AvantaVendas. Nenhuma alteração de estoque ou fluxo de confirmação. Não publicado.
+
+> Produção 3.1.0.53 confirmada: ajustes de Configurações Web, sem impacto operacional no AvantaVendas; recursos preservados. Notas locais 52/53 são históricas; revisão 54 ainda local.
+
+> Revisão 3.1.0.54 local: foto/EAN nos Anunciados Web; sem impacto operacional no AvantaVendas. Não publicado.
+
+> Revisão 3.1.0.53: padrão aditivo de ações compactas e aplicação no modal Web de configurações AvantaPreços; sem impacto operacional ou conversão de botões do AvantaVendas. Não publicado.
+
+> Revisão 3.1.0.52: ajustes visuais no modal de configurações do AvantaPreços Web; sem impacto operacional no AvantaVendas. Local, não publicada.
+
+> Publicação 3.1.0.51 confirmada: consulta/cadastro/estoque do AvantaPreços e suas migrações; sem impacto operacional no AvantaVendas. Recursos publicados de Vendas preservados por hash. Nenhuma quantidade do AvantaVendas foi alterada.
+
+> Revisão 3.1.0.51: estados e ação Adicionar estoque no resultado do AvantaPreços; sem impacto operacional no AvantaVendas ou no seu saldo. Local, não publicada; migrações pendentes.
+
+> Revisão 3.1.0.50: leitura e referência do produto existente no AvantaPreços/Marketplaces; sem impacto operacional no AvantaVendas, catálogo, pedidos, pagamentos ou saldo próprio. Local, não publicado; migrações pendentes.
+
+> Revisão 3.1.0.49: cadastro e saldo do Marketplaces/AvantaPreços, sem impacto operacional no AvantaVendas, seu catálogo ou saldo próprio. Não altera pedidos/pagamentos/anúncios. Local, não publicado; migração preparada.
+
+> Produção 3.1.0.48 confirmada em 19/10/2026: fotos e referência exclusivamente no Marketplaces Web, sem impacto operacional no AvantaVendas. Recursos JavaScript/CSS/recibo idênticos à base 47; não altera pedidos, pagamentos ou estoque. Notas locais 48 abaixo são históricas.
+
+> Revisão 3.1.0.48: recuperação de fotos e pesquisa de referência do Marketplaces Web; sem impacto operacional no AvantaVendas. Não muda estoque, pedidos, pagamentos ou preços de anúncios. Em validação, não publicado.
+
+> Revisão 3.1.0.47: organização das pílulas de marketplaces no card de produto Web; sem impacto operacional no AvantaVendas. Local, não publicado.
+
+> Revisão 3.1.0.46: referência em pílula no card do Marketplaces Web; sem impacto operacional no AvantaVendas. Local, não publicado.
+
+> Revisão 3.1.0.45: card compacto de Produtos e estoque no Marketplaces Web; sem impacto operacional no AvantaVendas. Menu av188, dados e preferências preservados. Local, não publicado.
+
+> Revisão 3.1.0.44: configurações, referência editável e sugestões do Marketplaces/AvantaPreços; sem impacto operacional no AvantaVendas independente. Menu av188 e suas preferências permanecem intactos. Local, não publicado.
+<!-- avantavendas-asset-revision: 197 -->
+
+> Revisão 3.1.0.43-av188: o topo do menu inferior tem linha fina azul-ciano que desliza até o botão acionado, no padrão da Gestão Mobile (2 px, 300 ms). O indicador acompanha atalhos personalizados, Início, Configurações, mudança de tema e Lançar, sem atrasar ações. Ao navegar por outras áreas, volta a indicar o destino representado no menu, ou Início quando não houver atalho correspondente. A preferência de movimento reduzido desativa o deslizamento. Círculo continua removido e resposta tátil opcional preservada. Sem alteração de dados, permissões ou fluxo da Gestão. Testado em Chrome isolado, não em aparelhos físicos. Local, não publicado.
+
+> Revisão 3.1.0.42-av187: o menu inferior não usa mais círculos animados nem espera 130 ms antes de navegar. Toque tátil único, leve e opcional; Configurações > Aparência > Vibração do menu ativa/desativa por usuário neste aparelho, sem alterar preferências das contas. Navegadores compatíveis tentam vibração curta; Safari/PWA iOS não suporta. Apps novos usam API nativa (Android respeita a configuração de resposta tátil do aparelho; iOS usa impacto leve). A resposta tátil nativa exige incorporar esta integração em uma nova compilação do AvantaVendas e atualizar o app pela loja. Ausência/falha da vibração nunca bloqueia a ação, nem exibe aviso de erro. Não afirmar teste físico: validado por testes e compilação Android local, não por aparelho. Não publicado.
+
+> Revisão 3.1.0.41: Contas conectadas inicia recolhido no Marketplaces Web; sem impacto operacional no AvantaVendas independente. Local, não publicada.
+
+> Revisão 3.1.0.40: seta de Contas conectadas em Marketplaces Web; sem impacto operacional no AvantaVendas independente. Local, não publicada.
+
+> Revisão 3.1.0.39: seletor compacto de Marketplaces Web; sem impacto operacional no AvantaVendas independente. Local, não publicada.
+
+> Revisão 3.1.0.38: opacidade do atalho de busca de Marketplaces Web; sem impacto operacional no AvantaVendas independente. Local, não publicada.
+
+> Revisão 3.1.0.37: busca e atalho de cadastros em Marketplaces Web; sem impacto operacional no AvantaVendas independente. Local, não publicada.
+
+> Revisão 3.1.0.36: selo de perfil em uso da Gestão Web/Mobile refinado; sem impacto operacional no AvantaVendas independente.
+
+> Publicação 3.1.0.35 confirmada: refinamentos 30–35 de lotes web/PWA; sem impacto operacional no AvantaVendas independente. Código operacional preservado por SHA-256. Notas locais seguintes são históricas.
+
+> Revisão 3.1.0.35: botões iguais no card de lote salvo web/PWA; sem impacto operacional no AvantaVendas independente. Local, não publicado.
+
+> Revisão 3.1.0.34: datas curtas e campo contido no Marketplaces/AvantaPreços web/PWA; sem impacto operacional no AvantaVendas independente. Local, não publicado.
+
+> Revisão 3.1.0.33: fechamento e cancelamento de esperas nos lotes web/PWA; sem impacto operacional no AvantaVendas independente. Local, não publicado.
+
+> Revisão 3.1.0.32: pares iguais e cor de continuidade no detalhe de lote web/PWA; sem impacto operacional no AvantaVendas independente. Local, não publicado.
+
+> Revisão 3.1.0.31: distribuição igual dos botões do detalhe de lote web/PWA; sem impacto operacional no AvantaVendas independente. Local, não publicado.
+
+> Revisão 3.1.0.30: botões do card de lote ativo no AvantaPreços em colunas iguais; sem impacto operacional no AvantaVendas independente. Local, não publicado.
+
+> Publicação 3.1.0.29 confirmada: refinamentos dos lotes web/PWA; sem impacto operacional no AvantaVendas independente. Arquivo operacional preservado por SHA-256. Notas locais seguintes são históricas.
+
+> Revisão 3.1.0.29: ordem/largura dos botões da lista de lotes web/PWA; sem impacto operacional no AvantaVendas independente. Local, não publicado.
+
+> Revisão 3.1.0.28: botões iguais e cor de leitura no formulário de lote web/PWA; sem impacto operacional no AvantaVendas independente. Local, não publicado.
+
+> Revisão 3.1.0.27: alinhamento e separação dos campos data/valor do lote web/PWA; sem impacto operacional no AvantaVendas independente. Ajuste local, não publicado.
+
+> Publicação 3.1.0.26 confirmada: lotes web/AvantaPreços PWA e migração produtiva instalados; sem impacto operacional no AvantaVendas independente. Arquivo operacional do Vendas preservado por SHA-256; sem atualização nativa necessária para este recurso externo.
+
+> Revisão 3.1.0.26: remoção de orientação visual do leitor de lote web; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.25: fluxo web/PWA de lotes de conferência, sem impacto operacional no AvantaVendas independente. Bipar no lote não cria pedido, estoque, recebimento ou anúncio.
+
+> Revisão 3.1.0.24: data/custo em uma linha e máscara monetária no AvantaPreços Web/PWA; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.23: formulário compacto de lotes no AvantaPreços Web/PWA; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.22: simplificação visual do topo do AvantaPreços Web/PWA; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.21: ajuste de criação/edição/retomada de lotes do AvantaPreços/Marketplaces, sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.20: refinamento do relatório de lotes do AvantaPreços/Marketplaces, sem impacto operacional no AvantaVendas. Nenhuma alteração de cálculos, estoque, vendas ou recebimentos deste aplicativo.
+
+> Revisão 3.1.0.19: lotes de conferência no AvantaPreços/Marketplaces, sem impacto operacional no AvantaVendas. O lote não gera venda, recebimento, estoque ou lançamento financeiro; não confundir diferença bruta projetada com lucro líquido.
+<!-- avantavendas-asset-revision: 186 -->
+
+> Revisão 3.1.0.18-av186: consignados usam **Comprovante de consignado** na tela, imagem e mensagem de compartilhamento, com tema roxo; pedidos permanecem azuis e pagamentos verdes. A marca da entrada e cabeçalhos é AvantaVendas, positiva no modo claro e negativa no escuro (entrada mantém fundo institucional claro). Sem mudança em cálculos, lançamentos, estoque ou conversão de consignados.
+
+> Revisão 3.1.0.17: correção do retorno Google/Apple exclusiva da Gestão nativa; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.16: corrigida a barra de preparação exclusiva da Gestão nativa; sem impacto operacional no AvantaVendas independente.
+
+> Complemento 3.1.0.15 — ativação de catálogo Magalu no Marketplaces Web: sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.15: dashboard da Gestão nativa sem telas intermediárias nem cliques para carregar cards; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.14: removida a segunda preparação exclusiva da Gestão nativa; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.13 Marketplaces Web: retornos de catálogo padronizados e publicados, sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.12: abertura progressiva exclusiva da Gestão nativa; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.11: preparação da localização nativa do Gestão iOS; sem impacto operacional no AvantaVendas. Não altera seu aplicativo Android ou iOS.
+
+> Revisão 3.1.0.10: consulta de anúncios Magalu restaurada no Marketplaces Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.1.0.09: correção da edição de perfil empresa na Gestão Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.1.0.08: verificação de anúncios Magalu apenas no Marketplaces Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.1.0.07: ajuste de estado da conta Magalu no Marketplaces Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.1.0.06: conexão Magalu ajustada somente no Marketplaces Web local; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.1.0.05: responsividade dos cabeçalhos na Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 3.1.0.04: gestão de permissões na Gestão Mobile; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.03: ajuste de rótulo Financeiro e acionador de Conteúdo na Gestão; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 3.1.0.02: numeração da Gestão corrigida para a série 3; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 4.0.0.30: restrição financeira por perfil na Gestão nativa; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 4.0.0.29: seletor restrito da Gestão nativa; sem impacto operacional no acesso independente ao AvantaVendas.
+
+> Revisão 4.0.0.28: preparação de acesso da Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.27-av185: Perfis de vendas disponível no cabeçalho fixo
+> de todas as telas autenticadas, com nome da conta ativa abaixo do ícone.
+> A lista e a troca de contas autorizadas mantêm o fluxo existente.
+
+> Revisão 4.0.0.26: correção do painel administrativo; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.25-av185: o seletor Perfis de vendas fica no cabeçalho fixo
+> de todas as telas autenticadas do AvantaVendas, com o nome do perfil ativo
+> abaixo do ícone. Não é mais necessário retornar à Sala de Botões ou às
+> Configurações para trocar de conta. O seletor abre a lista de contas já
+> autorizadas; a troca mantém a preparação e o isolamento dos dados existentes.
+
+> Revisão 4.0.0.24: seletor de centros da Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.23: correção na ativação de centros de custo da Gestão; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.22: Conteúdo pode abrir internamente no app nativo AvantaLab sem Dashboard; sem impacto operacional no app/PWA AvantaVendas, que mantém login e acesso próprios.
+
+> Revisão 4.0.0.21: Vendas e Serviços Web pode ler seu cadastro empresarial com a concessão do módulo, sem Dashboard. Consultas secundárias chegam em segundo plano. Sem impacto operacional no AvantaVendas independente.
+
+> Revisão 4.0.0.20: otimização da carga financeira na Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.19: marca oficial na seleção Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.18: seleção Web com card inteiro clicável; sem impacto operacional nos comandos do AvantaVendas.
+
+> Revisão 4.0.0.17: preparação da integração Web preserva a página ao fundo; sem impacto nos comandos do AvantaVendas.
+
+> Revisão 4.0.0.16: card de preparação da integração Web padronizado; sem impacto operacional nos comandos do AvantaVendas.
+
+> Revisão 4.0.0.15: troca de perfil na seleção Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.14: abertura imediata pela seleção Web; sem impacto operacional interno no AvantaVendas.
+
+> Revisão 4.0.0.13: realce visual dos módulos Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.12: retorno rápido à seleção Web de módulos; sem impacto operacional no AvantaVendas independente.
+
+> Revisão 4.0.0.11: compactação da apresentação Web de módulos; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.10: grade Web de módulos ajustada; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.09: refinamento dos cards Web de módulos; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.08: refinamento do botão Acessar Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.07: refinamento visual Web de Meus módulos; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.06: apresentação Web de Meus módulos compactada; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.05: fechamento da edição de usuários Web após salvar; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.04: botão Salvar alterações de usuários na Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.03: largura do modal de usuários Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.02: layout do formulário de usuários na Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0.01: melhoria de carregamento da seleção de perfil na Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 4.0.0: liberações individuais de Dashboard e módulos na Gestão; sem impacto operacional nos acessos independentes do AvantaVendas. O módulo Conteúdo AvantaVendas é a administração de publicação, não o acesso do vendedor ao aplicativo.
+
+> Revisão 4.0.0 — filtro de marketplaces em Vendas da Gestão Web; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 3.1.0.01: expansão da lista de Contas conectadas no Marketplaces
+> Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 3.1.0: o fluxo inicial de publicação Magalu pertence ao Marketplaces
 > Web. Sem impacto operacional no AvantaVendas ou no seu caixa; não cria
@@ -404,7 +1382,7 @@
 > Revisão 1.48.0.43.10: a continuidade de preço do **AvantaPreços** pertence
 > ao PWA de consulta e não altera os fluxos do AvantaVendas.
 
-<!-- avantavendas-asset-revision: 184 -->
+<!-- avantavendas-asset-revision: 185 -->
 
 > Revisão 1.48.0.43.11-av175: **Novo produto** conserva sua posição original
 > no canto direito. **Atualizar** ocupa uma posição independente à esquerda e
@@ -4710,6 +5688,12 @@ função existir ali.
 
 ## Produtos, pedidos e pagamentos
 
+- O **Comprovante de consignado**, roxo, identifica somente os produtos e o valor
+  em consignação. Não mostra Saldo anterior/Saldo atual: consignar não gera uma
+  cobrança. Retratos legados desses saldos são ignorados, sem alterar vendas ou
+  pagamentos. Criar/editar consignado e convertê-lo não perpetua esses campos;
+  somente a quantidade convertida em venda entra no débito. Pedidos de venda e
+  pagamentos conservam seus saldos e créditos próprios.
 - Produtos permite cadastrar, editar, ativar/desativar, usar imagens e pacotes.
   Custo e preço de venda alimentam rentabilidade; estoque é opcional e é ajustado
   em **Configurações > Controle de estoque**. Ao registrar uma entrada ou ajuste,
@@ -4845,3 +5829,20 @@ função existir ali.
 
 Ela orienta, não executa ações e não confirma valores, sincronizações ou
 permissões sem evidência no contexto recebido.
+<!-- ava-version: 3.2.0.198 -->
+
+> Revisão 3.2.0.198: sem impacto operacional no AvantaVendas; simplificação da conferência inicial e dos avisos de estoque em Marketplaces.
+
+Revisão 3.2.0.290: Link de compra compacto para telas pequenas; condição abre acima e as ações permanecem acessíveis. Sem mudança na regra de preços ou no compartilhamento.
+
+Post Online 3.2.0.290: valor anunciado na linha 💰 *POR APENAS R$ …*, mantendo De como média consultada, sem percentual ou preço fixo.
+
+Revisão 3.2.0.290: posts por imagem do perfil Saldão Aline incluem na legenda dois links de oferta (11 98304-4391 e 11 98788-5611), sem mensagem preenchida, seguidos do convite curto do grupo. Imagem, preços, posts Online e outras empresas preservados.
+
+Revisão 3.2.0.290: post Online identifica a URL com *Link de compra:* em negrito no WhatsApp. Demais dados e posts de estoque não Online preservados.
+
+Revisão 3.2.0.290: importação de despesas no mês preserva o centro de custo selecionado na revisão, rascunho e confirmação. Na tela independente, escolher o centro quando o perfil usar centros. Rascunhos de centros separados; não transferir lançamentos antigos nem repetir lotes para corrigir alocação sem conferência. Sessão expirada, erro ou confirmação incerta preservam a revisão. Sem impacto operacional no AvantaVendas e nos demais fluxos nativos.
+
+Revisão 3.2.0.290: o tipo informado na planilha é preservado até carregar o cadastro do perfil; acentos, caixa e espaços não impedem reconhecimento. A seleção manual prevalece, e categoria de outro perfil exige revisão. Tabela sem repetir descrição/valor original, mantendo valores de conferência internamente e controles alinhados. Sem alteração de permissões, banco ou lançamentos existentes.
+
+Refinamento 3.2.0.290: opção Automático no tipo de documento mantém a detecção automática e cabe no card. Sem alteração operacional nos demais ambientes.

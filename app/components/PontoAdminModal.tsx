@@ -126,6 +126,7 @@ interface PontoAdminModalProps {
   abaInicial?: AbaPontoAdmin;
   relatorioInicial?: { funcionarioUserId: string; data: string } | null;
   onFechar: () => void;
+  rotuloFechar?: string;
   funcionarios: FuncionarioPonto[];
   carregando: boolean;
   onCriar: (dados: { nome: string; cpf: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
@@ -160,6 +161,7 @@ export default function PontoAdminModal({
   abaInicial = 'lista',
   relatorioInicial = null,
   onFechar,
+  rotuloFechar,
   funcionarios,
   carregando,
   onCriar,
@@ -882,7 +884,7 @@ export default function PontoAdminModal({
             <p className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: 'rgba(255,255,255,0.65)' }}>Controle de Ponto</p>
             <h2 className="mt-0.5 text-lg font-black leading-tight text-white">Administração</h2>
           </div>
-          <button type="button" onClick={onFechar} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg font-black text-white transition hover:bg-white/25" aria-label="Fechar">×</button>
+          <button type="button" onClick={onFechar} className={`flex shrink-0 items-center justify-center bg-white/15 font-medium text-white transition hover:bg-white/25 ${rotuloFechar ? 'min-h-11 rounded-xl px-3 text-sm' : 'h-8 w-8 rounded-full text-lg'}`} aria-label={rotuloFechar ? 'Voltar para Meus módulos' : 'Fechar'}>{rotuloFechar || '×'}</button>
         </div>
 
         <div className={`relative z-10 flex max-w-full shrink-0 gap-2 overflow-x-auto border-b px-3 pt-3 sm:px-4 ${darkMode ? 'bg-slate-900' : 'bg-white'} ${itemBorda}`}>

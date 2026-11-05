@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { stripTypeScriptTypes } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { formatarMoedaDigitada } from '../../app/lib/formatters.ts';
+import {copiedSelectionValue,copiedAttributeValues} from '../../app/modules/marketplaces/publication-prefill.ts';
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const client = read('app/marketplaces/MarketplacesClient.tsx');
@@ -22,7 +23,7 @@ test('card de apresentação é mais baixo sem diminuir texto nem alvos dos bot�
   assert.match(css, /\.hero h1 \{ font-size: 26px; line-height: 1\.2;/);
   assert.match(css, /\.hero \{ align-items: stretch; flex-direction: column; gap: 8px; padding: 8px 20px; \}/);
   assert.doesNotMatch(client, /Conexão e gestão|styles\.eyebrow/);
-  assert.match(client, /<h1 id="module-title">Anúncios em marketplaces<\/h1>/);
+  assert.match(client, /<h1 id="module-title" tabIndex=\{-1\}>Anúncios em marketplaces<\/h1>/);
   assert.match(css, /\.marketplaceMobileLink \{[^}]*min-height: 44px;/);
   assert.match(css, /\.settingsButton, \.iconAction \{[^}]*width: 44px; height: 44px;/);
   assert.match(css, /\.marketplaceMobileLink \{ width: 100%; min-height: 48px; \}/);
@@ -58,6 +59,17 @@ test('seletor mantém marcas coloridas com assets locais, nome acessível e sele
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.page \.provider \{ transition: none; \} \}/);
 });
 
+test('seletor compacto reduz altura em 30% e distribui marcas igualmente sem reduzir o alvo mobile', () => {
+  assert.match(css, /\.marketplaceSelector \{[^}]*padding: 6px 8px;/);
+  assert.match(css, /\.marketplaceSelector \.providerGrid \{ grid-template-columns: repeat\(6, minmax\(0, 1fr\)\); gap: 8px;/);
+  assert.match(css, /\.page \.marketplaceSelector \.provider \{ min-height: 56px; padding: 5px 8px; gap: 4px;/);
+  assert.equal(56 / 80, .7);
+  assert.match(css, /\.page \.marketplaceSelector \.provider\[data-provider\] \.providerLogo \{ height: 20px;/);
+  const mobile = css.slice(css.indexOf('@media (max-width: 760px) { .marketplaceSelector'));
+  assert.match(mobile, /\.marketplaceSelector \.providerGrid \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); gap: 6px;/);
+  assert.match(mobile, /\.page \.marketplaceSelector \.provider \{ min-height: 48px;/);
+});
+
 test('Casas Bahia mantém a imagem clássica intacta sobre fundo branco no seletor e na conta', () => {
   const svg=read('public/images/marketplaces/casas-bahia.svg');
   assert.match(svg,/width="288" height="75" viewBox="16 122 288 75"/);
@@ -75,8 +87,14 @@ test('retorno Magalu é limitado à janela aberta e conta autorizada não habili
   assert.match(client,/if \(!oauthWindow.current \|\| event.source !== oauthWindow.current\) return/);
   assert.match(client,/\['mercado_livre', 'magalu'\]\.includes\(data.provider \|\| ''\)/);
   assert.match(client,/data.empresaId !== companyId/);
-  assert.match(client,/Autorizada · reautorize catálogo/);
-  assert.match(client,/Sincronização automática do Mercado Livre ativa\./);
+  assert.match(client,/Autorizada · reautorize para publicar/);
+  assert.match(client,/Autorizada para vendas · publicação não liberada/);
+  assert.match(client,/MAGALU_CATALOG_MESSAGES\[magaluCatalogChecks\[account.id\] \|\| 'checking'\]\.account/);
+  assert.match(client,/conexoes\/magalu\/anuncios\?empresaId=/);
+  assert.match(client,/account\.provider === 'magalu'\s*\? <small className=\{styles\.accountCatalog\}/);
+  assert.doesNotMatch(client,/catálogo pendente|sem anúncios para exibir/);
+  assert.match(client,/<InventoryNotices key=\{companyId\}/);
+  assert.doesNotMatch(client,/Sincronização automática do Mercado Livre ativa\./);
   assert.match(client,/!account.provider \|\| account.provider === 'mercado_livre'/);
   assert.match(client,/canManage=\{canManage && selectedProvider.available && !connecting\}/);
 });
@@ -126,13 +144,15 @@ test('linhas de Vendas têm destaque suave por mouse e teclado nos dois temas, s
   assert.match(css, /\.saleSummary b\[data-status="cancelled"\]/);
 });
 
-test('a cada abertura somente Vendas inicia aberto, sem persistir expansão dos outros blocos', () => {
+test('a cada abertura Vendas, anúncios e produtos iniciam recolhidos, sem restaurar expansão anterior', () => {
   const products = read('app/marketplaces/ProductsStock.tsx');
-  assert.match(client, /const \[salesExpanded, setSalesExpanded\] = useState\(true\)/);
-  assert.match(listings, /const \[panelExpanded, setPanelExpanded\] = useState\(false\)/);
-  assert.match(products, /const \[expanded, setExpanded\] = useState\(false\)/);
+  assert.match(client, /useMarketplacePanelGroup\(companyId\)/);
+  const expansion=read('app/marketplaces/panel-expansion.ts');assert.match(expansion,/useState<PanelExpansionState>\(\{companyId,active:''\}\)/);
+  assert.match(expansion,/\[localExpanded,setLocalExpanded\]=useState\(false\)/);
+  assert.match(listings, /const \[panelExpanded, setPanelExpanded\] = usePanelExpansion\(/);
+  assert.match(products, /const \[expanded, setExpanded\] = usePanelExpansion\(props\)/);
   assert.match(listings, /id="announced-content" hidden=\{!panelExpanded\}/);
-  assert.match(products, /id="products-content" hidden=\{!expanded\}/);
+  assert.match(products, /"products-content"\} hidden=\{!expanded && !warehouseId\}/);
   for (const source of [listings, products]) assert.doesNotMatch(source, /(?:localStorage|sessionStorage)/);
   assert.match(listings, /onClick=\{\(\) => setPanelExpanded\(\(current\) => !current\)\}/);
   assert.match(products, /onClick=\{\(\) => setExpanded\(value => !value\)\}/);
@@ -145,16 +165,36 @@ test('cards são identificados por título, sem numeração decorativa', () => {
   }
   assert.doesNotMatch(css, /\.step\s*\{/);
   assert.match(client, /<h2 className=\{styles.srOnly\}>Marketplace<\/h2>/);
-  assert.match(client, /<h2 id="new-listing-title">Novo anúncio<\/h2>/);
+  assert.match(client, /<h2 id="new-listing-title" tabIndex=\{-1\}>Novo anúncio<\/h2>/);
   assert.match(sales, /<h2 id="sales-title">Vendas · \{sales\.length\}<\/h2>/);
+});
+
+test('referências de preço ficam no cabeçalho do Novo anúncio', () => {
+  const magalu = read('app/marketplaces/MagaluListing.tsx');
+  assert.match(client, /import \{PreparationPriceReference\} from '\.\/LocalProductPricing';/);
+  assert.match(client, /id="new-listing-heading" className=\{`\$\{styles\.panelHeading\} \$\{styles\.newListingHeading\}`\}/);
+  assert.match(client, /<PreparationPriceReference id="new-listing-price-reference" reference=\{newListingPriceReference\} percentages=\{priceSettings\.settings\?\.percentages\?\?null\}\/>/);
+  assert.match(client, /onPriceReferenceChange=\{setNewListingPriceReference\}/);
+  for (const source of [newListing, magalu]) {
+    assert.match(source, /import usePreparationSummary from '\.\/usePreparationSummary'/);
+    assert.match(source, /ref=\{preparationLayoutRef\}/);
+    assert.match(source, /<section aria-label="Dados do produto para preparar anúncio" className=\{styles.preparationMain\}>/);
+    assert.doesNotMatch(source, /DetalhesRolaveis/, 'formulário usa a rolagem da página');
+    assert.match(source, /onPriceReferenceChange\?: \(reference: number \| null \| undefined\) => void/);
+    assert.doesNotMatch(source, /PreparationPriceReference/);
+  }
+  assert.match(read('app/marketplaces/usePreparationSummary.ts'), /document.getElementById\('new-listing-heading'\)/);
+  assert.match(css, /\.newListingHeading \{[^}]*position: sticky;[^}]*top: var\(--marketplace-navigation-height, 200px\);[^}]*align-items: center; flex-wrap: wrap;/);
+  assert.match(css, /\.preparationLayout \{[^}]*position: relative;/);
+  assert.match(css, /\.newListingHeading \.preparationPriceHeader \{ flex: 1 1 500px;/);
 });
 
 test('expansão individual de produtos tem face de 24px e alvo de 48px sem alterar os blocos', () => {
   const products = read('app/marketplaces/ProductsStock.tsx');
-  assert.match(products, /contexto=\{`produto \$\{product\.name\}`\} controlsId=\{`local-detail-\$\{product\.id\}`\}/);
-  assert.match(css, /\.localProductHeading button\[aria-controls\^="local-detail-"\] \{[^}]*min-height: 24px; height: 24px;[^}]*min-width: 80px;[^}]*font-size: 12px;/);
-  assert.match(css, /\.localProductHeading button\[aria-controls\^="local-detail-"\]::after \{ content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 48px; transform: translateY\(-50%\); \}/);
-  assert.match(css, /\.localProductHeading button\[aria-controls\^="local-detail-"\] svg \{ width: 12px; height: 12px;/);
+  assert.match(products, /contexto=\{`produto \$\{product\.name\}`\} controlsId=\{`\$\{detailPrefix\}-\$\{product\.id\}`\}/);
+  assert.match(css, /\.localProductHeading button:not\(\.localProductName\)\[aria-controls\^="local-detail-"\] \{[^}]*min-height: 24px; height: 24px;[^}]*min-width: 80px;[^}]*font-size: 12px;/);
+  assert.match(css, /\.localProductHeading button:not\(\.localProductName\)\[aria-controls\^="local-detail-"\]::after \{ content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 48px; transform: translateY\(-50%\); \}/);
+  assert.match(css, /\.localProductHeading button:not\(\.localProductName\)\[aria-controls\^="local-detail-"\] svg \{ width: 12px; height: 12px;/);
   assert.match(css, /:not\(:where\(\.localProductHeading button\)\)/);
   assert.match(css, /\.panelHeadingActions \{ --heading-control-height: 40px;/);
   assert.match(css, /\.panelHeadingActions \{ --heading-control-height: 48px;/);
@@ -165,7 +205,7 @@ test('Novo anúncio não exibe as orientações removidas e mantém validação 
   assert.doesNotMatch(newListing, /O produto já está cadastrado\?/);
   assert.doesNotMatch(newListing, /new-search-description-help/);
   assert.match(newListing, /searchDescription\.trim\(\)\.length < 3/);
-  assert.match(newListing, /onClick=\{searchByDescription\}/);
+  assert.match(newListing, /if \(form\.ean\) void prepare\(\); else searchByDescription\(\)/);
 });
 
 test('cópia sem EAN preenche valores visíveis e mantém origem, descrição e opções para revisão', () => {
@@ -178,8 +218,8 @@ test('cópia sem EAN preenche valores visíveis e mantém origem, descrição e 
   const result = { ean: '', product, categoryId: 'MLB1', listingTypes: [{ id: 'gold_pro' }], shippingModes: [{ id: 'me2' }], conditions: [{ id: 'new' }], copySource };
   const state = { form: {}, priceText: '', stockText: '', preserve: false };
   const context = {
-    preserveCopiedFields: false, crypto: { randomUUID: () => 'request-key' }, formatarMoedaDigitada,
-    setPrepared(value) { state.prepared = value; }, setSearchDescription() {}, setRequestKey() {},
+    preserveCopiedFields: false, crypto: { randomUUID: () => 'request-key' }, formatarMoedaDigitada,copiedSelectionValue,copiedAttributeValues,
+    setPrepared(value) { state.prepared = value; }, setNameDraft(value) { state.name = value; }, setSearchDescription() {}, setRequestKey() {},
     setForm(update) { state.form = update(state.form); },
     setPreserveCopiedFields(value) { state.preserve = value; },
     setPriceText(value) { state.priceText = value; }, setStockText(value) { state.stockText = value; },
@@ -191,11 +231,12 @@ test('cópia sem EAN preenche valores visíveis e mantém origem, descrição e 
   assert.equal(state.form.copySource, copySource);
   assert.equal(state.form.listingType, 'gold_pro'); assert.equal(state.preserve, true);
   assert.equal(state.prepared, result);
+  assert.equal(state.name, product.name);
 });
 
 test('Envio uses human-readable labels rather than raw provider codes', () => {
   assert.match(listings, /shippingLabels\(item.shipping\)/);
-  assert.match(listings, /<td>\{shipping.freight\}<small>\{shipping.method\}<\/small><\/td>/);
+  assert.match(listings, /Forma de envio<\/dt><dd>\{shippingLabels\(item.shipping\).method\}/);
   assert.doesNotMatch(listings, /\{item.shipping.mode\}|\{item.shipping.logisticType\}/);
 });
 
@@ -210,31 +251,31 @@ test('editing actions use one visual border, an accessible target and hover feed
 });
 
 test('cancel closes details locally and restores focus without changing the listing', () => {
-  assert.match(listings, /onClick=\{\(\) => cancelEditing\(item.id\)\}>Cancelar<\/button>/);
+  assert.match(listings, /onClick=\{\(\) => cancelEditing\(itemKey\)\}>Cancelar<\/button>/);
   const cancel = listings.match(/function cancelEditing\(id: string\) \{([\s\S]*?)\n  \}/)?.[1];
   assert.ok(cancel);
   assert.match(cancel, /if \(acting\) return;/);
   assert.match(cancel, /setExpanded\(''\);/);
   assert.match(cancel, /editButtons.current.get\(id\)\?\.focus\(\);/);
   assert.doesNotMatch(cancel, /marketplaceClientRequest|fetch|executeAction|setRows|setConfirmation/);
-  assert.match(listings, /ref=\{\(button\) => \{ if \(button\) editButtons.current.set\(item.id, button\); else editButtons.current.delete\(item.id\); \}\}/);
+  assert.match(listings, /ref=\{\(button\) => \{ if \(button\) editButtons.current.set\(itemKey, button\); else editButtons.current.delete\(itemKey\); \}\}/);
 });
 
 test('listing widths fit desktop and keep an accessible pencil visible when scrolling', () => {
   assert.match(css, /\.listingTable \{[^}]*min-width: 960px;[^}]*table-layout: fixed;/);
   assert.doesNotMatch(css, /min-width: 1150px|width: 280px/);
-  assert.match(listings, /<colgroup>[\s\S]*?width: 64[\s\S]*?<\/colgroup>/);
+  assert.match(listings, /<colgroup>[\s\S]*?width: 180[\s\S]*?<\/colgroup>/);
   assert.match(css, /\.listingTable \.listingActions \{[^}]*position: sticky; right: 0;/);
   assert.match(css, /\.dark \.listingTable \.listingActions \{[^}]*background:/);
   assert.match(listings, /aria-label=\{`Editar anúncio: \$\{item.title\}`\} title="Editar anúncio" aria-expanded=/);
-  assert.match(listings, /onClick=\{\(\) => openEditing\(item.id\)\}><Icon name="edit" size=\{18\}/);
+  assert.match(listings, /onClick=\{\(\) => openEditing\(itemKey\)\}><Icon name="edit" size=\{18\}/);
   assert.match(css, /button.editListing \{[^}]*width: 44px;[^}]*border: 0;/);
   assert.match(css, /button.editListing \{ width: 48px; min-height: 48px;/);
   assert.match(read('app/projetos/components/Icon.tsx'), /edit:.*M16.5 3.5/);
 });
 
 test('connected accounts stay in rounded controls at the bottom of the marketplace card', () => {
-  assert.match(client, /<div className=\{styles\.connectedAccounts\} aria-labelledby="connected-accounts-title">/);
+  assert.match(client, /<div className=\{styles\.connectedAccounts\} aria-labelledby="connected-accounts-title" aria-busy=\{accountsLoading\}>/);
   assert.match(client, /<h3 id="connected-accounts-title">Contas conectadas<\/h3>/);
   assert.match(client, /className=\{styles\.connectedAccountSelect\}/);
   assert.match(client, /className=\{`\$\{styles\.disconnectAccountButton\} \$\{styles\.compactConnectionButton\}`\}/);
@@ -274,8 +315,17 @@ test('connecting another marketplace account keeps the existing connections inta
   assert.match(css, /\.connectionHelp \{ margin: 0; color: #64748b; font-size: 12px; \}/);
 });
 
+test('contas conectadas inicia recolhido a cada abertura, sem ocultar ações nem perder contas', () => {
+  assert.match(client, /const \[connectedAccountsExpanded, setConnectedAccountsExpanded\] = useState\(false\)/);
+  assert.match(client, /<BotaoExpandirCard variante="painel" modo="lista" somenteIcone contexto="contas conectadas" controlsId="connected-accounts-content" expandido=\{connectedAccountsExpanded\}/);
+  assert.match(client, /<div id="connected-accounts-content" hidden=\{!connectedAccountsExpanded\}>/);
+  assert.match(client, /setConnectedAccountsExpanded\(value => !value\)/);
+  assert.match(client, /if \(account && data\.canConnect\) \{\s*setConnectedAccountsExpanded\(true\)/);
+  assert.ok(client.indexOf('Atualizar contas') < client.indexOf('id="connected-accounts-content"'));
+});
+
 test('marketplaces and costs reuse the same company header and return action', () => {
-  assert.match(client, /<ModuloHeader empresa=\{empresa\} onBack=\{voltar\}/);
+  assert.match(client, /<ModuloHeader empresa=\{\{ \.\.\.empresa, temaEscuro: effectiveDark \}\} onBack=\{voltar\}/);
   assert.match(read('app/custos/CustosClient.tsx'), /<ModuloHeader empresa=\{access.empresa\}/);
   assert.match(client, /solicitarRetornoAoModuloHospedeiro/);
   assert.match(client, /moduloId=marketplaces/);
@@ -285,22 +335,22 @@ test('marketplaces and costs reuse the same company header and return action', (
 test('AvantaPreços header action copies the mobile link instead of opening it', () => {
   assert.match(client, /new URL\('\/marketplaces\/consulta', window\.location\.origin\)\.toString\(\)/);
   assert.match(client, /navigator\.clipboard\.writeText\(link\)/);
-  assert.match(client, /onClick=\{\(\) => void copyPriceLink\(\)\}/);
-  assert.match(client, /Copiar link do AvantaPreços/);
-  assert.match(client, /Link copiado/);
-  assert.match(client, /aria-live="polite"/);
+  assert.match(client, /onCopy=\{\(\) => void copyPriceLink\(\)\}/);
+  const tools=read('app/marketplaces/PriceToolsActions.tsx');
+  assert.match(tools, /Copiar link do AvantaPreços/);
+  assert.match(tools, /Link copiado/);
+  assert.match(tools, /aria-live="polite"/);
   assert.doesNotMatch(client, /<a className=\{styles\.marketplaceMobileLink\} href="\/marketplaces\/consulta"/);
   assert.match(css, /\.marketplaceMobileLink \{[^}]*border: 0;[^}]*cursor: pointer;/);
 });
 
-test('marketplaces carrega a marca ausente do contexto interno e mantém validação oficial no acesso direto', () => {
-  assert.match(client, /import TelaCarregandoAcesso from '@\/app\/components\/TelaCarregandoAcesso'/);
+test('marketplaces carrega a marca e revalida a concessão mesmo com contexto interno', () => {
+  assert.match(client, /import TransicaoNavegacaoInterna from '@\/app\/components\/TransicaoNavegacaoInterna'/);
   assert.match(client, /const \[accessState, setAccessState\] = useState<'loading' \| 'ready' \| 'error'>\(\(\) => context \? 'ready' : 'loading'\)/);
-  assert.match(client, /async function loadIdentity\(\) \{[\s\S]*?if \(context\?\.empresa\.logoUrl\) return;/);
-  assert.match(client, /const needsAccessValidation = !context;/);
-  assert.match(client, /if \(needsAccessValidation\) \{\s*setAccessState\('loading'\);/);
-  assert.match(client, /if \(!needsAccessValidation\) return;/);
-  assert.match(client, /if \(accessState === 'loading'\) \{\s*return <TelaCarregandoAcesso titulo="Validando acesso" mensagem="Confirmando o módulo e seu perfil…" \/>;/);
+  assert.doesNotMatch(client, /if \(context\?\.empresa\.logoUrl\) return;/);
+  assert.match(client, /if \(!context\) \{\s*setAccessState\('loading'\);/);
+  assert.doesNotMatch(client, /if \(!needsAccessValidation\) return;/);
+  assert.match(client, /if \(accessState === 'loading'\) \{\s*return <TransicaoNavegacaoInterna destino="Anúncios em marketplaces"/);
   assert.match(client, /if \(!response\.ok \|\| !payload\?\.empresa\) throw new Error/);
   assert.match(client, /setAccessState\('ready'\)/);
   assert.match(client, /setAccessState\('error'\)/);
@@ -326,7 +376,7 @@ test('configuração usa blocos horizontais de largura integral: Marketplace ant
 test('static notices are removed without disguising validation or hiding important errors', () => {
   assert.doesNotMatch(client, /OAuth|PKCE|styles.webOnly|styles.security|styles.flow|Nesta etapa/);
   assert.doesNotMatch(listings, /Para adicionar ou reconectar|Atualização automática enquanto|Anúncios da conta selecionada, inclusive/);
-  assert.match(client, /<NewListing key=\{companyId\} companyId=\{companyId\} marketplaceName=\{selectedProvider.name\} accountId=\{publicationAccountId\}/);
+  assert.match(client, /<NewListing key=\{companyId\} companyId=\{companyId\} brand=\{empresa.corPrimaria\} dark=\{effectiveDark\} marketplaceName=\{selectedProvider.name\} accountId=\{publicationAccountId\}/);
   assert.match(newListing, /'Pesquisar'/);
   assert.match(newListing, /EAN não localizado/);
   assert.match(newListing, /'Publicar'/);
@@ -340,7 +390,7 @@ test('static notices are removed without disguising validation or hiding importa
 test('a conta de publicação continua própria, independente do filtro de contas dos anúncios', () => {
   assert.match(client, /return connected\[0\]\?\.id \|\| ''/);
   assert.match(client, /accountId=\{publicationAccountId\}/);
-  assert.match(newListing, /<MarketplaceAccountPicker label="Publicar na conta"/);
+  assert.match(newListing, /<MarketplaceAccountPicker label="Conta"/);
   assert.doesNotMatch(listings, /<MarketplaceAccountPicker label="Conta do Mercado Livre"/);
   assert.match(accountPicker, /<MarketplaceSelect/);
   assert.match(marketplaceSelect, /role="listbox"/);
@@ -352,7 +402,7 @@ test('a conta de publicação continua própria, independente do filtro de conta
 
 test('connections load from the persisted company records and OAuth returns without replacing the module page', () => {
   assert.match(client, /const refreshConnections = useCallback/);
-  assert.match(client, /if \(accessState !== 'ready'\) return;\s*queueMicrotask/);
+  assert.match(client, /if \(accessState !== 'ready'\) return;\s*let active = true;\s*queueMicrotask\(\(\) => \{\s*if \(!active\) return/);
   assert.match(client, /askIdentification \? completeNewConnection\(connectedAccountId\) : refreshConnections\(\)/);
   assert.match(client, /window\.open\('', target.popup/);
   assert.match(read('app/marketplaces/connection-target.ts'), /popup: 'avantalab-mercado-livre-oauth'/);
@@ -365,7 +415,7 @@ test('connections load from the persisted company records and OAuth returns with
 test('every marketplace list opens in the same anchored system component', () => {
   assert.doesNotMatch(newListing, /<select|<option/);
   assert.doesNotMatch(listings, /<select|<option/);
-  assert.match(newListing, /<MarketplaceSelect id="new-productId"/);
+  assert.match(newListing, /<CatalogCandidateChooser aberto=\{!!prepared\?\.candidates\?\.length && !product\}/);
   assert.match(newListing, /label="Categoria"/);
   assert.match(newListing, /label="Tipo de anúncio"/);
   assert.match(newListing, /label="Forma de envio"/);
@@ -379,9 +429,9 @@ test('every marketplace list opens in the same anchored system component', () =>
 });
 
 test('new listing keeps account, a wide EAN field and a compact search action on one desktop row', () => {
-  assert.match(newListing, /<div className=\{styles\.form\}>\s*<MarketplaceAccountPicker[\s\S]*?<div className=\{styles\.eanField\}>[\s\S]*?<button type="button" className=\{`\$\{styles\.primary\} \$\{styles\.searchAction\}`\}/);
-  assert.match(newListing, /\{searchingBy === 'ean' \? 'Pesquisando…' : 'Pesquisar'\}/);
-  assert.match(css, /\.newListing \.form \{ grid-template-columns: minmax\(180px, 1fr\) minmax\(260px, 1\.25fr\) auto; align-items: end;/);
+  assert.match(newListing, /<div className=\{`\$\{styles\.form\} \$\{styles\.preparationSearch\}`\} data-preparation-search data-multi-account=\{multiAccount \|\| undefined\}>[\s\S]*?<MarketplaceAccountPicker[\s\S]*?new-search-description[\s\S]*?<BotaoAcaoCompacto variante="primario"/);
+  assert.match(newListing, /\{searchingBy !== null \? 'Pesquisando…' : 'Pesquisar'\}/);
+  assert.match(css, /\.newListing \.form \{ grid-template-columns: minmax\(150px, 1fr\) minmax\(180px, 1fr\) minmax\(190px, 1.3fr\) auto; align-items: end;/);
   assert.match(css, /\.newListing \.searchAction \{ min-width: 94px; padding-inline: 14px; \}/);
   assert.match(css, /@media \(max-width: 760px\) \{ \.newListing \.form, \.catalogFields, \.catalogAttributes \{ grid-template-columns: 1fr;/);
 });
@@ -404,10 +454,10 @@ test('EAN reader button arms keyboard scanners and submits their Enter suffix', 
   assert.match(read('app/projetos/components/Icon.tsx'), /barcode:.*M4 5v14/);
 });
 
-test('cada botão de busca tem indicador e rótulo próprios, mantendo bloqueio concorrente', () => {
-  assert.match(newListing, /aria-busy=\{searchingBy === 'ean'\}/);
-  assert.match(newListing, /aria-busy=\{searchingBy === 'description'\}/);
-  assert.match(newListing, /searchingBy === 'description' \? 'Pesquisando…' : 'Buscar produto'/);
+test('busca unificada tem indicador e rótulo comuns, mantendo bloqueio concorrente', () => {
+  assert.match(newListing, /aria-busy=\{searchingBy !== null\}/);
+  assert.match(newListing, /aria-busy=\{searchingBy !== null\}/);
+  assert.match(newListing, /searchingBy !== null \? 'Pesquisando…' : 'Pesquisar'/);
   assert.doesNotMatch(newListing, /preparing \? 'Pesquisando…'/);
   assert.match(newListing, /setSearchingBy\(productId \|\| categoryId \? null : query \? 'description' : 'ean'\)/);
   assert.match(newListing, /finally \{ setPreparing\(false\); setSearchingBy\(null\); \}/);
@@ -429,10 +479,11 @@ for (const [mode, args, expected] of [
         canManage: true, accountId: 'account', form: { ean: '7899882306941' },
         preparing: false, publishing: false, activeRef: { current: true }, companyId: 'company',
         searchingBy: null, applied: false,
-        marketplaceClientRequest: () => pending,
+        request: () => pending,
+        publicationRequest: action => action(undefined),
         setPreparing(value) { context.preparing = value; },
         setSearchingBy(value) { context.searchingBy = value; },
-        setScannerArmed() {}, setMessage() {}, setErrors() {}, setPublishedId() {}, setMatched() {}, setPrepared() {},
+        setScannerArmed() {}, setMessage() {}, setErrors() {}, setPublishedId() {}, setMatched() {}, setPrepared() {}, setTechnicalDetails() {},
         applyPreparation() { context.applied = true; },
       };
       const prepare = runInNewContext(`(${source})`, context);
@@ -449,24 +500,24 @@ for (const [mode, args, expected] of [
   });
 }
 
-test('descrição em linha própria usa CampoBusca, Enter e seleção antes de preparar, sem publicar', () => {
-  assert.match(newListing, /className=\{styles\.descriptionSearchRow\}/);
-  assert.match(newListing, /<label htmlFor="new-search-description">Ou pesquise por nome, marca ou modelo/);
+test('descrição na pesquisa unificada usa CampoBusca, Enter e seleção antes de preparar, sem publicar', () => {
+  assert.match(newListing, /if \(form\.ean\) void prepare\(\); else searchByDescription\(\)/);
+  assert.match(newListing, /<label htmlFor="new-search-description">Nome, marca ou modelo/);
   assert.match(newListing, /<CampoBusca id="new-search-description"[^>]*maxLength=\{120\}/);
   assert.match(newListing, /rotuloLimpar="Limpar pesquisa por descrição"/);
   assert.match(newListing, /event\.key === 'Enter'\) \{ event\.preventDefault\(\); searchByDescription\(\)/);
   assert.match(newListing, /searchDescription\.trim\(\)\.length < 3/);
   assert.match(newListing, /void prepare\('', '', '', accountId, undefined, searchDescription\)/);
-  assert.match(newListing, /prepared\.candidates\.length > 0 && !product/);
+  assert.match(newListing, /onChoose=\{\(productId\) => void prepare\(prepared\?\.ean \|\| form\.ean, productId/);
   assert.match(newListing, /prepared\.query \|\| ''/);
   assert.match(newListing, /!prepared\.ean && !!prepared\.gtins\?\.length/);
   assert.match(newListing, /\{\(prepared\.ean \|\| prepared\.copySource \|\| prepared\.localProductId\) && <><div className=\{styles\.catalogFields\}/);
   assert.match(newListing, /prepared\.copySource \|\| prepared\.localProductId \? 'Produto sem EAN'/);
   assert.match(newListing, /change\('copySource', undefined\)/);
-  assert.match(newListing, /function changeEan\(value: string\) \{\s*if \(preparing \|\| publishing\) return;\s*setSearchDescription\(''\)/);
-  assert.match(newListing, /function changeSearchDescription\(value: string\) \{\s*if \(preparing \|\| publishing\) return;\s*setSearchDescription\(value\);\s*change\('ean', ''\)/);
-  assert.match(css, /\.newListing \.descriptionSearchRow \{ grid-column: 1 \/ -1; display: grid; grid-template-columns: minmax\(0, 1fr\) auto;/);
-  assert.match(css, /@media \(max-width: 760px\) \{ \.newListing \.descriptionSearchRow \{ grid-template-columns: 1fr;/);
+  assert.match(newListing, /function changeEan\(value: string\) \{\s*if \(preparing \|\| publishing\) return;\s*setTechnicalDetails\(''\);\s*setSearchDescription\(''\)/);
+  assert.match(newListing, /function changeSearchDescription\(value: string\) \{\s*if \(preparing \|\| publishing\) return;\s*setTechnicalDetails\(''\);\s*setSearchDescription\(value\);\s*change\('ean', ''\)/);
+  assert.match(css, /\.newListing \.form \{ grid-template-columns: minmax\(150px, 1fr\) minmax\(180px, 1fr\) minmax\(190px, 1.3fr\) auto;/);
+  assert.match(css, /@media \(max-width: 760px\) \{ \.newListing \.form, \.newListing \.form\[data-multi-account\] \{ grid-template-columns: 1fr;/);
   const route = read('app/api/modulos/marketplaces/preparar/route.ts');
   assert.match(route, /authorizeMarketplace\(request, body\.empresaId, 'manage'\)/);
   assert.match(route, /loadConnection\(db, empresaId, body\.connectionId\)/);
@@ -486,7 +537,7 @@ test('a publicação pode ser preparada para outra conta com revisão separada',
   assert.match(newListing, /Preparar em outra conta/);
   assert.match(newListing, /A nova conta só recebe o anúncio após uma confirmação separada/);
   assert.match(newListing, /preparar-copia/);
-  assert.match(listings, /Publicar em outra conta/);
+  assert.match(listings, /Anunciar em mais contas/);
   assert.match(listings, /Preparar publicação/);
   assert.match(listings, /Nada é publicado nesta etapa/);
   assert.match(client, /onPublishInAnotherAccount/);

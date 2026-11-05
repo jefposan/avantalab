@@ -1,0 +1,13 @@
+{
+  "scope": "Comando histórico arquivado somente como evidência; não executar.",
+  "sourceFile": "/Users/JEFF/.codex/sessions/2026/10/13/rollout-2026-10-13T15-40-06-01a133e4-abfa-7ee0-9fab-b1c8d64d89d0_01a13690-9275-70a2-933a-48e0f82c2b6a.jsonl.zst",
+  "timestamp": "2026-10-17T05:14:50.037Z",
+  "eventId": "exec-64ef62c7-1667-45af-a82c-0b12d7d16e8e",
+  "historicalCommand": [
+    "/bin/zsh",
+    "-lc",
+    "node --input-type=module -e 'import fs from \"node:fs\";const sql=fs.readFileSync(\"supabase/migrations/20261016190000_marketplace_price_lots.sql\",\"utf8\");const tag=\"$avanta_lotes_migration$\";if(sql.includes(tag))throw new Error(\"Delimitador repetido\");const record=\"insert into supabase_migrations.schema_migrations(version,name,statements) values (\\u002720261016190000\\u0027,\\u0027marketplace_price_lots\\u0027,array[\"+tag+sql+tag+\"]);\\nnotify pgrst, \\u0027reload schema\\u0027;\\ncommit;\";const installed=sql.replace(\"commit;\",record);if(installed===sql)throw new Error(\"Sem transação\");process.stdout.write(\"*** Begin Patch\\n*** Add File: /private/tmp/avanta-lotes-instalar.sql\\n\"+installed.split(\"\\n\").map(l=>\"+\"+l).join(\"\\n\")+\"\\n*** End Patch\");'"
+  ],
+  "historicalExitCode": 0,
+  "explanation": "O gerador original constrói record contendo o SQL e chama sql.replace(\"commit;\", record). O segundo argumento string interpreta $$, $', $& e $`; um callback preserva o texto literal."
+}
