@@ -1,6 +1,7 @@
 ## 3.2.0.310 - 2026-11-04
 
 - Candidato isolado de reconciliação da main com a produção 3.2.0.309, preservando arquivos nativos e histórico da main.
+- Deployments automáticos por Git desativados em `vercel.json` (`git.deploymentEnabled: false`); entregas permanecem no pipeline CLI com fila e revisão da base.
 - Publicação de produção exige SHA exato da main remota, identidade oficial e plano de migrações versionado no mesmo commit.
 - Identificadores ausentes no registro remoto são tratados como lacuna de rastreabilidade, sem inferir ausência de estrutura ou funcionalidade.
 - Auditoria dos 15 SQLs confirma recursos presentes e usados; fontes históricas do produto preservadas em supabase/historico-sem-registro, com bytes e proveniência mantidos. Removida a classificação provisória de material exclusivo de testes.
