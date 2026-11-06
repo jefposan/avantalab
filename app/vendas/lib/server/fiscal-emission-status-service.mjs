@@ -43,8 +43,8 @@ function safeArtifact(artifact) {
   return Object.freeze({ id: text(artifact.id), artifactType: text(artifact.artifactType), available: true });
 }
 
-export function createFiscalEmissionStatusService({ repository } = {}) {
-  return Object.freeze({
+export function createFiscalEmissionStatusService({ repository, reconcile } = {}) {
+  const service = {
     id: 'avantalab-fiscal-emission-status-v1',
     async get(input = {}) {
       const access = evaluateAccessDecision({ boundary: input.boundary, effectivePermissions: input.effectivePermissions, permission: 'fiscal.view' });
@@ -54,7 +54,7 @@ export function createFiscalEmissionStatusService({ repository } = {}) {
       const record = await repository.findEmissionStatus({ companyId: access.session.companyId, emissionId });
       if (!record || record.companyId !== access.session.companyId) return denied('emission_not_found');
       const artifacts = (record.artifacts || []).map(safeArtifact).filter(Boolean);
-      const jobs = (record.recoveryJobs || []).map((job) => ({ jobType: text(job.jobType), state: text(job.state), attemptCount: Number(job.attemptCount || 0), maxAttempts: Number(job.maxAttempts || 0) }));
+      const jobs = (record.recoveryJobs || []).map((job) => ({ jobType: text(job.jobType), state: text(job.state), attemptCount: Number(job.attemptCount || 0), maxAttempts: Number(job.maxAttempts || 0), code: /^AV-FISCAL-RECOVERY-[A-Z0-9-]{1,80}$/.test(job.lastErrorCode || '') ? job.lastErrorCode : '' }));
       const activeJobs = jobs.filter((job) => ACTIVE_RECOVERY_STATES.has(job.state));
       const deadLetterJobs = jobs.filter((job) => job.state === 'dead_letter');
       const action = recommendedAction(record, deadLetterJobs);
@@ -85,6 +85,7 @@ export function createFiscalEmissionStatusService({ repository } = {}) {
           finalDocumentReady: record.state === 'danfe_ready',
           recoveryPending: activeJobs.length > 0,
           needsTechnicalAttention: deadLetterJobs.length > 0,
+          consultationErrorCode: jobs.find(job => job.state !== 'completed' && job.code)?.code || '',
           actionRequired: action.required,
           recommendedAction: action.kind,
           recommendedActionLabel: action.label,
@@ -94,5 +95,21 @@ export function createFiscalEmissionStatusService({ repository } = {}) {
         }),
       };
     },
-  });
+    async consult(input = {}) {
+      // Consulta externa só em ação explícita, depois de autenticar e conferir o perfil.
+      const saved = await service.get(input);
+      if (!saved.ok || typeof reconcile !== 'function') return saved;
+      const status = saved.emission;
+      if (['submitted', 'processing', 'authorized', 'artifacts_stored'].includes(status.state) && status.recoveryPending) {
+        try {
+          const access = evaluateAccessDecision({ boundary: input.boundary, effectivePermissions: input.effectivePermissions, permission: 'fiscal.view' });
+          await reconcile({ companyId: access.session.companyId, emissionId: status.id });
+        }
+        catch { /* conserva o último resultado confirmado; nunca retransmite */ }
+        return service.get(input);
+      }
+      return saved;
+    },
+  };
+  return Object.freeze(service);
 }

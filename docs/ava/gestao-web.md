@@ -1,10 +1,95 @@
-<!-- ava-version: 3.2.0.310 -->
+<!-- ava-version: 3.2.0.363 -->
 
-> Revisão 3.2.0.310: fontes históricas de recursos existentes preservadas após auditoria; sem impacto operacional e sem remoção de funcionalidades.
+> Revisão 3.2.0.363: sem impacto operacional; reconciliação das fontes publicadas com a main, sem publicação nem execução de SQL.
 
-> Auditoria 3.2.0.310: histórico SQL conferido e organizado; sem impacto operacional e sem aplicação de migrações.
+> Revisão 3.2.0.362: Pendências da emissão Web levam ao campo correspondente com foco, rolagem, destaque e mensagem associada. Seções de detalhes são abertas para exibir o campo. Dados digitados são preservados.
 
-> Revisão 3.2.0.310: reconciliação de fontes e proteção da publicação pela main; sem impacto operacional.
+> Revisão 3.2.0.361: Emissão da NF-e em blocos integrada ao perfil ativo. A lista de preços padrão pode ser definida no cadastro do cliente e alterada na nota; com itens, escolher recalcular ou preservar preços. Mensagens padrão pertencem à empresa e têm destino nota/fisco/interno. Mensagem interna nunca compõe XML/DANFE. Transporte, volumes, datas, referência, retenções e detalhes são validados no servidor e incluídos no XML quando informados. A emissão continua em homologação; não cria receitas nem movimenta estoque automaticamente.
+
+> Revisão 3.2.0.360: Prévia local da emissão em /vendas-lab/emissao, organizada em blocos e com dados demonstrativos. Não orientar como emissão real: mensagens/rascunho ficam na página e os novos campos ainda não foram ligados ao XML ou aos cadastros reais. Sem publicação nesta etapa.
+
+> Revisão 3.2.0.359: Ações da nota oferece Editar nota separado de Emitir nota. Para NF-e ainda não enviada com numeração reservada, Editar abre a página completa preenchida; Salvar mantém número e origem e não transmite. Notas autorizadas e envios em andamento não permitem edição.
+
+> Revisão 3.2.0.357: Pedido e nota exibem itens em duas linhas compactas. O lápis abre o cadastro completo do produto no perfil atual; salvar mantém as quantidades, preços e descontos da operação. Dados fiscais inferiores são informativos.
+
+> Revisão 3.2.0.353: Marketplaces: pedidos já postados, coletados ou em centro de distribuição entram em Em trânsito e não devem gerar aviso de despacho pendente. Resolver e Conferir saldos mantêm o fluxo existente. A mesma divergência de estoque continua sendo consultada automaticamente, com intervalo de 30 minutos após repetição, sem inflar o contador de tentativas; mudança de saldo ou confirmação explícita retoma o processamento. Ajuste verificado no ML que alcança ou ultrapassa o alvo antecipa a conferência. Não repor unidades por diferença sem confirmação. Nenhuma mudança no fluxo fiscal.
+
+> Revisão 3.2.0.351: Ao corrigir uma nota rejeitada, alterar CFOP cria exceção somente nessa nota. Não modifica o cadastro do produto nem o padrão da empresa; a UF de destino e os demais requisitos fiscais continuam sendo validados.
+
+> Revisão 3.2.0.350: Nota rejeitada: Corrigir nota abre os dados do documento para alterações. Salvar alterações registra revisão fiscal sem enviar e sem modificar pedido/estoque/receitas; série e número são preservados. A seguir abra a conferência para Salvar e emitir. PIX por chave ou QR fixo usa a opção explícita de estático. Não orientar troca do pagamento para burlar rejeição; cobrança dinâmica requer detalhes reais da transação nos campos apresentados.
+
+> Revisão 3.2.0.349: Corrigida a falha interna “elemento raiz NFe” na validação estrutural do XML compacto. Não orientar alteração de cadastro, número ou série para esse erro. O fluxo de conferência e Salvar e emitir permanece igual.
+
+> Revisão 3.2.0.348: A conferência de nota rejeitada usa os dados já validados no servidor; cadastros locais de demonstração não geram bloqueio de credenciamento. O servidor valida toda correção e envio.
+
+> Revisão 3.2.0.347: A rejeição 588 é técnica, por formatação do XML. Abra a nota e confirme Salvar e emitir; o emissor corrige o formato sem pedir alteração em produto/tributação e preserva série, número e histórico. Salvar ou Cancelar não transmite.
+
+
+> Revisão 3.2.0.346: Em Vendas e Serviços, abra a nota e use Salvar, Salvar e emitir ou Cancelar. Não há etapa de consultar envio. Autorização mostra DANFE/XML e compartilhamento; rejeição/falha apresenta motivo na conferência. Situação da nota abre o Portal Nacional no ambiente da nota, com chave para copiar.
+
+> Revisão 3.2.0.345: Se a consulta oficial retorna 217 para envio sem recibo/autorização, a nota mostra Envio não recebido pela SEFAZ e Retomar emissão. O número e o XML são preservados; somente nova confirmação Salvar e emitir transmite. Falta de resposta não libera reenvio.
+
+> Revisão 3.2.0.344: Em Vendas e Serviços, abrir uma nota mostra o resultado e os documentos salvos. Notas autorizadas permitem baixar/compartilhar sem consulta externa. Verificar envio é reservado à comunicação sem confirmação; não retransmite nem muda faturamento/estoque.
+
+> Revisão 3.2.0.343: sem impacto operacional; preservação da versão imutável do protocolo corrigida para concluir os documentos de Vendas e Serviços Web.
+
+> Revisão 3.2.0.342: Em Vendas e Serviços, Salvar e emitir conclui a conferência, o envio e a consulta do retorno na mesma operação. A autorização confirmada abre o card da nota com chave, protocolo, DANFE e XML disponíveis para baixar ou compartilhar conforme as permissões. O ícone fiscal do pedido e Consultar situação abrem esse mesmo resultado. Rejeições mostram o motivo e a revisão; falha de comunicação não confirma emissão e exige consultar a mesma nota antes de reenviar. O compartilhamento prepara o arquivo protegido e depois permite escolher o aplicativo; navegador sem suporte baixa o arquivo. O cancelamento ordinário paulista exige autorização dentro de 24 horas e confirmação com justificativa; fora do prazo, seguir procedimento fiscal específico. Somente homologação está liberada.
+
+> Revisão 3.2.0.341: Se a transmissão falhar, a conferência informa a etapa e uma referência segura do erro e oferece Consultar situação da nota. Falha interna no registro da fila não se corrige alterando o cadastro fiscal. Consulte a nota existente antes de tentar novamente; o mesmo número e XML assinado permanecem preservados. Se já houver envio registrado ou autorização, não crie outra nota nem force retransmissão.
+
+> Revisão 3.2.0.340: No ajuste de série e numeração da NF-e, Série e Próximo número são campos de digitação numérica com conteúdo centralizado. Série não usa mais uma lista. Informe a série adotada pela empresa e o próximo número livre; continuam válidas as proteções da numeração e o ambiente de homologação indicado no card.
+
+> Revisão 3.2.0.339: Em Ajustes → Empresa e notas → Dados para emissão, use Configurar série e numeração. A mensagem Configure uma série ativa antes de confirmar a emissão também oferece esse atalho no card da nota. O editor consulta o perfil no servidor; selecione a série numérica e informe o próximo número livre. As opções de série não são tipos de nota nem naturezas de operação; faixas especiais não são oferecidas neste fluxo. O card identifica homologação sem valor fiscal. Não existe numeração inicial presumida quando falta configuração. O salvamento não emite a nota; volte à conferência e use Salvar e emitir quando desejar. Alterações concorrentes, reservas e inutilizações são protegidas.
+
+> Revisão 3.2.0.338: Popups bloqueiam a rolagem das páginas de fundo, inclusive nos módulos internos de Vendas e Serviços. Somente o conteúdo interno pode rolar. Com janelas sobrepostas, o bloqueio permanece até fechar a última; depois a posição anterior da página é restaurada. Menus Novo e navegação sobreposta também mantêm o fundo parado.
+
+> Revisão 3.2.0.337: Em Vendas e Serviços, Emitir nota abre a conferência com Salvar, Salvar e emitir e Cancelar. Salvar guarda o rascunho sem transmitir. Salvar e emitir valida, numera, assina e envia em uma única ação, somente em homologação e com acesso fiscal. Cancelar fecha a tentativa sem cancelar a NF-e, permitindo retomada. Preparações antigas canceladas apenas no navegador podem ser retomadas; notas canceladas fiscalmente permanecem somente para consulta. Notas já enviadas/autorizadas não são reenviadas. A nota avulsa segue as mesmas ações; emitir não fatura nem movimenta estoque.
+
+> Revisão 3.2.0.336: Ao expandir Dados fiscais dos itens ou Histórico fiscal nos detalhes da nota, o popup posiciona o bloco para mostrar o conteúdo aberto. Ao recolher, mantém a posição. A rolagem fica dentro do popup e respeita movimento reduzido.
+
+> Revisão 3.2.0.335: Em Notas Fiscais, Emitir nota abre a conferência. Para o rascunho de um pedido, Preparar nota grava o retrato fiscal no perfil sem faturar nem movimentar estoque; use a preparação e a validação disponíveis até a confirmação da emissão. A série/número e o envio continuam exigindo confirmação explícita e acesso fiscal. Revisar emissor abre cadastro e credenciamento e mostra a pendência específica. Ver serviço apresenta a situação do executor; Ver certificado abre o certificado. Certificado ativo não confirma credenciamento do emissor. O faturamento posterior reutiliza a nota vinculada ao pedido.
+
+
+
+> Revisão 3.2.0.334: Os cabeçalhos e ações primárias dos popups de Vendas e Serviços adaptam a cor do texto à cor primária usando a mesma regra da Gestão: branco em tons fortes/escuros e tinta escura em cores claras. A cor do perfil continua inalterada e os selos conservam sua própria apresentação.
+
+> Revisão 3.2.0.333: Os popups de Vendas e Serviços seguem o menu de ações aprovado: cabeçalho na cor do perfil, conteúdo compacto e rodapé sempre acessível. Nos menus de ações, escolha uma ação disponível destacada; condições informam o que falta ou a falta de acesso, e opções previstas ficam desativadas. Cancelamento ou estorno ficam separados no rodapé. Formulários longos rolam somente no conteúdo, mantendo título e ações acessíveis. A organização visual não altera permissões, validações ou efeitos financeiros, fiscais e de estoque.
+
+> Revisão 3.2.0.332: Na lista de operações de Vendas e Serviços, aponte ou use Tab em cada ícone para consultar somente seu estado atual: faturamento, estoque ou nota fiscal. Cada indicador tem ajuda e foco independentes.
+
+
+
+> Revisão 3.2.0.331: Revisar para emissão abre uma lista de pendências com ações específicas, sem repetir a lista de verificações prontas. Regra fiscal já revisada e correspondente não é apresentada como problema. Editar produto abre o cadastro daquele produto em Custos, com o retorno à conferência da mesma nota; não altera automaticamente tributos nem valores. A conferência consulta o estado atual do executor, certificado, catálogo e regras, preservando valores, origem e identidade do documento. Emissões numeradas, assinadas, enviadas ou autorizadas conservam o retrato fiscal. Verificar serviço abre o certificado e diagnóstico existentes; Revisar regras abre a matriz publicada; cada ação respeita suas permissões. Abrir/revisar não fatura, não baixa estoque, não reserva número nem transmite a nota.
+
+> Revisão 3.2.0.330: Notas fiscais → Abrir detalhes prioriza cliente, itens, valores e pendências reais. Dados fiscais dos itens e Histórico fiscal iniciam recolhidos, com o controle oficial Expandir/Recolher; códigos permanecem consultáveis sem abreviações cortadas. Campos técnicos e avisos genéricos não ocupam a tabela de itens. Subtotal desconta o desconto unitário; frete, seguro, outras despesas e desconto geral aparecem quando existentes. A conferência exige o CFOP correspondente à UF da operação, mantendo bloqueios fiscais, permissões e confirmação de emissão. NF-e do Simples em 2026 não exige os campos IBS/CBS por ausência genérica; outros contextos mantêm exigência. A atualização da Tridium marca todos os produtos de todos os catálogos, inclusive inativos, para herdar os padrões fiscais da empresa; preserva NCM, CEST, códigos guardados, dados comerciais e históricos e guarda a opção anterior. Depois, Personalizar neste produto continua disponível. A atualização de banco foi aplicada aos 343 produtos atuais da Tridium, preservando o cadastro excluído e o backup da opção anterior.
+
+> Revisão 3.2.0.329: Em Custos e Precificação → Produtos e serviços → cadastro, Configuração tributária inicia em Usar dados fiscais da empresa. Origem, CST/CSOSN, PIS, COFINS e IBS/CBS são consultados no perfil empresarial; CFOP segue a regra fiscal publicada correspondente à operação e à UF do cliente. NCM, CEST e unidade permanecem no produto. Personalizar neste produto permite exceções; campos vazios continuam usando o padrão da empresa ou da operação. Voltar a Usar dados fiscais da empresa preserva as exceções guardadas, mas deixa de aplicá-las. Códigos manuais/importados existentes são preservados. A Gestão exibe os valores efetivos e encaminha a edição ao cadastro oficial em Custos. A emissão exige os dados e regras válidos; o sistema não inventa códigos ausentes nem transmite notas ao alterar cadastros.
+
+> Revisão 3.2.0.328: Em Menu → Configurações → Perfil, o destaque Perfil ativo oferece Editar cadastro do perfil ativo. O botão abre o mesmo cadastro completo da lista, incluindo dados fiscais, com as mesmas permissões de administrador ou gestor master. Editar dados básicos e acesso continua sendo uma ação distinta.
+
+> Revisão 3.2.0.327: Em Revisar regras fiscais, Publicar regras fiscais verifica todas as pendências antes do envio e leva ao primeiro campo inválido, selecionando a regra correspondente. A lista mostra cada pendência e permite ir diretamente ao campo, com destaque e foco acessível. Responsável, data válida, confirmações e Regra revisada são verificados pela mesma função na tela e no servidor. Regras desativadas ou de tipos fora do escopo podem ficar sem CFOP; reativá-las restaura a obrigatoriedade. Nunca marcar revisão sem a conferência fiscal. A regra geral é uma reserva de enquadramento e não substitui a configuração dos cenários efetivos.
+
+> Revisão 3.2.0.326: No menu de ações do pedido, as opções disponíveis aparecem coloridas em três colunas no desktop e os recursos previstos ficam em cinza, separados. Contas a receber antes de faturar indica Disponíveis após o faturamento; falta de permissão indica Sem acesso, sem classificar como recurso futuro. Cancelar pedido fica separado no rodapé e continua abrindo confirmação. Em telas estreitas, as opções se reorganizam e podem rolar para manter todas acessíveis. Editar pedido segue o fluxo direto da versão 3.2.0.325, com confirmação do servidor antes de abrir o formulário completo. O menu não executa ações durante a sua abertura.
+
+> Revisão 3.2.0.325: Em Vendas → Ações → Editar pedido, o sistema reabre confirmados ou em separação no servidor e leva diretamente ao formulário completo do mesmo pedido, sem o card Abrir edição. Eventuais reservas são liberadas; revise, salve e confirme novamente. O editor só abre após confirmação do servidor e preserva cliente, itens, valores, condições e observações. Falha de acesso mantém o pedido intacto e aparece em alerta de erro, sem aparência de sucesso. Faturamento e cancelamento mantêm suas confirmações. Faturados continuam protegidos contra edição direta.
+
+> Revisão 3.2.0.324: Substitui a prévia 3.2.0.323. Os três indicadores ficam juntos à seta de ações, na ordem Faturamento, Estoque e Nota fiscal, sem coluna própria nem símbolos sobrepostos. Preenchido indica conclusão, contorno indica pendência e a devolução usa retorno no próprio desenho. Aponte ou use Tab no grupo para consultar os três estados. Faturado não é recebido; nota pode permanecer autorizada após cancelar a venda e a ajuda indica revisar o fiscal. Estoque liberado e devolvido conserva sua identificação após recarga. Tipo fica abaixo do número, vendedor nos detalhes. As ações e os efeitos comerciais/fiscais não mudam.
+
+> Revisão 3.2.0.322: Em Vendas e Serviços, use Notas Fiscais no menu esquerdo para consultar notas emitidas e rascunhos do perfil. Busque por número, série, cliente, CPF/CNPJ ou chave e filtre por tipo e situação. A seta de ações de cada documento oferece somente ações pertinentes e autorizadas: detalhes, preparação/revisão/continuação, consulta da situação, XML e DANFE disponíveis e cancelamento fiscal. Notas autorizadas ou em processamento não permitem cancelar como rascunho nem emitir novamente. Configurações fiscais reúne cadastro, certificado e séries; Nova nota fiscal abre o fluxo avulso. Emitir nota não fatura nem movimenta estoque; o ambiente fiscal continua exclusivamente em homologação. O nome de navegação Notas Fiscais substitui Central Fiscal nas orientações anteriores.
+
+> Revisão 3.2.0.321: Novo → Nota fiscal (NF-e), ou Nova nota fiscal na Central Fiscal, abre a NF-e avulsa com destinatário, produtos, preços, descontos, frete e pagamento. Preparar nota fiscal salva o documento independente na Central Fiscal; depois revise e use o fluxo fiscal de preparação/numeração/continuação. Não cria pedido, conta a receber, receita, reserva ou baixa de estoque. As informações de pagamento são fiscais, sem lançamento financeiro. O emissor vem do perfil ativo. A emissão segue somente em homologação, sem valor fiscal. A nota de um pedido continua vinculada ao pedido e sua emissão não refatura nem baixa estoque novamente.
+
+> Revisão 3.2.0.320: Em Vendas, as ações de pedidos confirmados e em separação oferecem Editar pedido (retorna a rascunho e libera reservas), Faturar pedido (escolha Baixar estoque neste faturamento) e Cancelar pedido. Cancelar a venda é independente de cancelar a nota: faturados podem ser cancelados mesmo com NF-e autorizada. A venda sai do faturamento comercial, as parcelas em aberto são canceladas e somente estoque efetivamente baixado retorna. A nota, seus arquivos e sua situação fiscal permanecem preservados; a coluna Fiscal indica revisão pendente. Regularização fiscal é tratada separadamente na Central Fiscal e não é realizada automaticamente pelo cancelamento comercial. Recebimentos já realizados exigem estorno financeiro explícito. Faturamento gera contas a receber; entradas mensais refletem recebimentos líquidos. Não editar diretamente pedidos faturados.
+
+> Revisão 3.2.0.319: Pedidos ainda salvos no servidor aparecem como Rascunho também após recarregar a página. Use a seta de ações → Continuar pedido para retomar o mesmo registro.
+
+> Revisão 3.2.0.318: Em Vendas e Serviços → Vendas, abra as ações de um pedido em Rascunho e use **Continuar pedido**. O mesmo pedido será reaberto com seus dados preservados. **Salvar alterações** mantém o rascunho; **Confirmar pedido** grava as alterações antes de avançar a situação. O número e o vínculo com o perfil empresarial não mudam, e uma falha restaura o conteúdo anterior.
+
+> Revisão 3.2.0.317: Em Vendas e Serviços → Vendas, o menu de ações de um pedido passa a caber integralmente na área visível, sem cortar títulos ou botões. Quando necessário, somente a lista de ações rola verticalmente; o cabeçalho e o botão Fechar permanecem acessíveis. As ações e os registros não foram alterados.
+
+> Revisão 3.2.0.316: Vendas e Serviços mostra itens compactos e subtotal destacado. Controlar estoque neste pedido começa desligado no acesso integrado: permite confirmar e faturar com saldo zero, sem reservar ou baixar estoque no AvantaLab. Ative somente para controlar o saldo neste sistema; nesse caso, saldo insuficiente bloqueia a confirmação. A NF-e continua exigindo cadastro fiscal completo e opera somente em homologação, sem valor fiscal. Datas válidas de vencimento são aceitas no faturamento.
+
+> Revisão 3.2.0.315: Catálogos aceitam vários ativos por destino. Vendas e Serviços e AvantaVendas são independentes. Desativar apenas oculta itens, sem excluir produtos. Produtos e serviços reúne automaticamente todos os catálogos ativos em Vendas e Serviços, sem filtro manual; nenhum ativo deixa a lista vazia. Excluir catálogo manual, com confirmação, desliga os dois destinos e retira seus itens de novas operações, sem transferência ao catálogo local. Preços, históricos e lançamentos anteriores são preservados. Catálogos de sistema são protegidos; catálogo excluído não pode ser reativado nem receber novos itens. Sem alteração de interface na Gestão Mobile.
 
 > Revisão 3.2.0.309: Modelo Excel de despesas consulta os tipos atuais do perfil a cada download e atualiza a lista de reconhecimento, compartilhada pelos centros de custo. Se a consulta falhar, tente novamente; não é gerado modelo antigo. Nomes distintos, como Água e Água / Energia, não são associados por suposição.
 
@@ -1595,6 +1680,7 @@ Revisão 3.2.0.98: pesquisa explícita também verifica a oferta principal Amazo
 > nos filtros atuais. O estado vale durante esta abertura, sem preferência salva.
 
 > Revisão 1.49.0.06: ao abrir uma venda em **Anúncios em marketplaces**, o
+> Nota de atualização 3.2.0.355: o trecho abaixo registra a consulta anterior. Mensagens e soluções confirmadas pelo usuário passaram para Mensagens e atendimento, conforme a seção atual; não há decisões automáticas.
 > **Pós-venda · Mercado Livre** consulta pedido, envio original, reclamações
 > abertas/encerradas e devoluções. Pedido cancelado com envio entregue não
 > comprova devolução nem reembolso. Confira categoria, solicitante e data do
@@ -6146,3 +6232,22 @@ Revisão 3.2.0.290: importação de despesas no mês preserva o centro de custo 
 Revisão 3.2.0.290: o tipo informado na planilha é preservado até carregar o cadastro do perfil; acentos, caixa e espaços não impedem reconhecimento. A seleção manual prevalece, e categoria de outro perfil exige revisão. Tabela sem repetir descrição/valor original, mantendo valores de conferência internamente e controles alinhados. Sem alteração de permissões, banco ou lançamentos existentes.
 
 Refinamento 3.2.0.290: opção Automático no tipo de documento mantém a detecção automática e cabe no card. Sem alteração operacional nos demais ambientes.
+
+Revisão 3.2.0.354: Vendas reutiliza a página de emissão ao corrigir uma nota rejeitada; exclusão operacional de rascunho conserva auditoria e libera apenas reserva não utilizada. Sem alteração no restante da Gestão.
+
+
+### Revisão 3.2.0.355 — atendimento de Marketplaces
+
+Em Anúncios / Marketplaces > Vendas, abra o pedido e use **Mensagens e atendimento**, na área Pós-venda. A conta é a vinculada à venda; o envio usa sua autorização na API, independentemente da conta aberta no navegador do Mercado Livre. Selecione a conversa da venda ou da reclamação. Na mediação, responda ao destinatário liberado pelo Mercado Livre. A consulta da conversa comercial não marca mensagens como lidas.
+
+Digite a resposta (até 350 caracteres), anexe JPG/PNG/PDF ou GIF quando permitido e envie; cada arquivo tem limite de 3 MB. Algumas aberturas de conversa exigem escolher motivo ou template liberado pelo ML. Não orientar a contornar bloqueio de comprador, pagamento, Full, prazo, moderação ou mediação. Mensagem em revisão não significa mensagem entregue.
+
+As soluções do caso vêm da consulta atual: autorizar devolução, reembolsar, oferecer um percentual autorizado, solicitar mediação, informar postagem/previsão e revisar o produto devolvido. O usuário revisa e confirma a ação. A revisão com problema exige motivo informado pelo ML; alguns motivos exigem evidência. Carrinho com vários pedidos não pode ser aprovado integralmente a partir da revisão de um único pedido; o relato de problema se limita ao pedido selecionado. Prova de postagem registrada não pode ser editada no ML. Não inventar rastreio, prazo ou condição do produto.
+
+As solicitações ficam registradas ao recarregar o pedido. Se houver demora, retorno incerto ou análise, usar Atualizar atendimento, sem repetir o envio. O texto em edição é preservado durante consultas. Reembolso e revisão física não repõem o estoque automaticamente; a conferência de saldo e a entrada física seguem o fluxo existente. Fiscal permanece com o comportamento da base anterior.
+
+### Revisão 3.2.0.358 — fechar avisos de venda
+
+No popup Nova venda ou Venda pendente do módulo Marketplaces, **Entendi** fecha somente o pedido exibido e **Ver venda no AvantaLab** abre seus detalhes. **Fechar todos**, abaixo dessas ações, marca os avisos de venda existentes da empresa como lidos apenas para o usuário atual, inclusive os que não cabem na primeira página. A leitura fica salva após atualizar ou reabrir o módulo. Vendas que gerarem novos avisos depois do início da operação continuam aparecendo. Não cancela pedidos, não resolve pendências de sincronização e não movimenta estoque. Em falha, a mensagem permite tentar novamente; não informar sucesso antes da confirmação.
+
+Revisão técnica 3.2.0.358 da página inicial: sem impacto operacional; conteúdo, aparência, acesso e navegação pública preservados.

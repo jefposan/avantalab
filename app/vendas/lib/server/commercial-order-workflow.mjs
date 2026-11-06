@@ -2,7 +2,7 @@ export const COMMERCIAL_ORDER_WORKFLOW_REFERENCE = '2026-09-04';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY = /^[A-Za-z0-9:_-]{8,80}$/;
-const TARGETS = new Set(['confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido']);
+const TARGETS = new Set(['salvo', 'confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido']);
 const clean = (value, max = 1000) => String(value ?? '').trim().slice(0, max);
 const digits = (value, max = 14) => clean(value).replace(/\D/g, '').slice(0, max);
 const issue = (code, field, message) => ({ code, field, message });
@@ -28,7 +28,7 @@ function snapshot(operation, extra = {}) {
 }
 
 export function createCommercialOrderWorkflow({ customerRepository, customerService, operationService, lifecycleService, billingService } = {}) {
-  if (!customerRepository?.findByDocument || !customerService?.create || !operationService?.create || !operationService?.get
+  if (!customerRepository?.findByDocument || !customerService?.create || !operationService?.create || !operationService?.update || !operationService?.get
     || !lifecycleService?.confirm || !lifecycleService?.startSeparation || !lifecycleService?.cancel || !lifecycleService?.returnInvoiced || !billingService?.invoice) {
     throw new TypeError('Informe os serviços server-side do fluxo comercial.');
   }
@@ -49,6 +49,22 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
         const loaded = await operationService.get({ context, operationId: clean(operationId, 36), channel: 'vendas' });
         if (!loaded?.ok || !loaded.operation) return { ok: false, errors: [firstError(loaded, issue('AV-COMMERCIAL-WORKFLOW-NOT-FOUND', 'order', 'Pedido persistido não localizado.'))] };
         current = loaded.operation;
+        if (current.status === 'salvo' && normalizedTarget === 'confirmado' && order && typeof order === 'object' && Array.isArray(order.items)) {
+          const updated = await operationService.update({
+            context,
+            operationId: current.id,
+            expectedVersion: current.version,
+            input: {
+              ...order,
+              type: 'pedido',
+              channel: 'vendas',
+              customerId: clean(order.customerId, 36) || current.customerId,
+              idempotencyKey: `order:${key}:edit`,
+            },
+          });
+          if (!updated?.ok || !updated.operation) return { ok: false, errors: [firstError(updated, issue('AV-COMMERCIAL-WORKFLOW-UPDATE', 'order', 'Não foi possível atualizar o rascunho antes da confirmação.'))] };
+          current = updated.operation;
+        }
       } else {
         const document = digits(customer?.document);
         if (![11, 14].includes(document.length)) return { ok: false, errors: [issue('AV-COMMERCIAL-WORKFLOW-CUSTOMER', 'customer', 'Selecione um cliente com CPF ou CNPJ válido.')] };
@@ -74,6 +90,16 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
       };
 
       try {
+        if (normalizedTarget === 'cancelado' && current.status === 'faturado') {
+          const canceled = await lifecycleService.cancelInvoiced({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:cancel-invoiced` });
+          if (!canceled?.ok) return { ok: false, errors: [firstError(canceled, issue('AV-COMMERCIAL-WORKFLOW-CANCEL', 'order', 'Não foi possível cancelar o pedido faturado.'))] };
+          await refresh();
+        }
+        if (normalizedTarget === 'salvo' && ['confirmado', 'em_separacao'].includes(current.status)) {
+          const reopened = await lifecycleService.reopen({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:reopen:${current.version}` });
+          if (!reopened?.ok) return { ok: false, errors: [firstError(reopened, issue('AV-COMMERCIAL-WORKFLOW-REOPEN', 'order', 'Não foi possível reabrir o pedido.'))] };
+          await refresh();
+        }
         if (normalizedTarget === 'cancelado' && ['salvo', 'confirmado', 'em_separacao'].includes(current.status)) {
           const canceled = await lifecycleService.cancel({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:cancel` });
           if (!canceled?.ok) return { ok: false, errors: [firstError(canceled, issue('AV-COMMERCIAL-WORKFLOW-CANCEL', 'order', 'Não foi possível cancelar o pedido.'))] };
@@ -85,18 +111,18 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
           await refresh();
         }
         if (current.status === 'salvo' && ['confirmado', 'em_separacao', 'faturado'].includes(normalizedTarget)) {
-          const confirmed = await lifecycleService.confirm({ context, orderId: current.id, localId: stockLocationId, expectedVersion: current.version, idempotencyKey: `order:${key}:confirm` });
+          const confirmed = await lifecycleService.confirm({ context, orderId: current.id, localId: stockLocationId, expectedVersion: current.version, idempotencyKey: `order:${key}:confirm:${current.version}` });
           if (!confirmed?.ok) return { ok: false, errors: [firstError(confirmed, issue('AV-COMMERCIAL-WORKFLOW-CONFIRM', 'order', 'Não foi possível confirmar o pedido.'))] };
           await refresh();
         }
         if (current.status === 'confirmado' && ['em_separacao', 'faturado'].includes(normalizedTarget)) {
-          const separated = await lifecycleService.startSeparation({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:separate` });
+          const separated = await lifecycleService.startSeparation({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:separate:${current.version}` });
           if (!separated?.ok) return { ok: false, errors: [firstError(separated, issue('AV-COMMERCIAL-WORKFLOW-SEPARATE', 'order', 'Não foi possível iniciar a separação.'))] };
           await refresh();
         }
         let billing = {};
         if (current.status === 'em_separacao' && normalizedTarget === 'faturado') {
-          const invoiced = await billingService.invoice({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:invoice` });
+          const invoiced = await billingService.invoice({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:invoice`, moveStock: order?.moveStock !== false });
           if (!invoiced?.ok) return { ok: false, errors: [firstError(invoiced, issue('AV-COMMERCIAL-WORKFLOW-INVOICE', 'order', 'Não foi possível faturar o pedido.'))] };
           billing = invoiced.result || {};
           await refresh();

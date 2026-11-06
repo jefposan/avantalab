@@ -1,3 +1,4 @@
+import { nfeTransportDiagnostic } from './nfe-transport-diagnostic.mjs';
 export const NFE_RETURN_REFERENCE = '2026-09-05';
 export const NFE_RECEIPT_ENDPOINT = 'https://homologacao.nfe.fazenda.sp.gov.br/ws/nferetautorizacao4.asmx';
 export const NFE_RECEIPT_ACTION = 'http://www.portalfiscal.inf.br/nfe/wsdl/NFeRetAutorizacao4/nfeRetAutorizacaoLote';
@@ -163,7 +164,7 @@ export function createDisabledNfeReturnTransport() {
 
 export function createNfeReturnAdapter({ certificateAdapter, transport = createDisabledNfeReturnTransport(), receiptEndpoint = NFE_RECEIPT_ENDPOINT, protocolEndpoint = NFE_PROTOCOL_ENDPOINT } = {}) {
   async function run({ kind, request, endpoint, secureReference, expectedDocument, expectedMode, expectedAccessKey }) {
-    const diagnostic = { ok: true, valid: false, kind, environment: 'homologacao', authority: 'SEFAZ/SP', endpoint, endpointValidated: false, requestBuilt: request.valid, certificateActive: false, transportConfigured: Boolean(transport?.configured === true && typeof transport.postSoap === 'function'), networkAttempted: false, responseReceived: false, authorized: false, sensitiveMaterialReturned: false, errors: [...request.errors], warnings: [] };
+    const diagnostic = { ok: true, valid: false, kind, queriedAccessKey: kind === 'protocol' ? request.accessKey : '', environment: 'homologacao', authority: 'SEFAZ/SP', endpoint, endpointValidated: false, requestBuilt: request.valid, certificateActive: false, transportConfigured: Boolean(transport?.configured === true && typeof transport.postSoap === 'function'), networkAttempted: false, responseReceived: false, authorized: false, sensitiveMaterialReturned: false, errors: [...request.errors], warnings: [] };
     const endpointResult = kind === 'receipt' ? validateNfeReceiptEndpoint(endpoint) : validateNfeProtocolEndpoint(endpoint);
     diagnostic.endpointValidated = endpointResult.valid;
     if (!endpointResult.valid) diagnostic.errors.push(error('AV-NFE-RETURN-ENDPOINT', 'transport.endpoint', endpointResult.error));
@@ -178,7 +179,7 @@ export function createNfeReturnAdapter({ certificateAdapter, transport = createD
     let response;
     try {
       response = await transport.postSoap({ endpoint, action: request.action, contentType: request.contentType, body: request.envelope, secureCertificateReference: String(secureReference || ''), timeoutMs: NFE_RETURN_TIMEOUT_MS, maxResponseBytes: NFE_RETURN_RESPONSE_LIMIT, followRedirects: false });
-    } catch { diagnostic.errors.push(error('AV-NFE-RETURN-NETWORK', 'transport', 'A conexão segura de consulta não foi concluída.')); return diagnostic; }
+    } catch (cause) { Object.assign(diagnostic,nfeTransportDiagnostic(cause)); diagnostic.errors.push(error('AV-NFE-RETURN-NETWORK', 'transport', `A conexão segura de consulta não foi concluída${diagnostic.httpStatus ? ` (HTTP ${diagnostic.httpStatus})` : ''}.`)); return diagnostic; }
     diagnostic.responseReceived = true;
     const parsed = kind === 'receipt' ? parseNfeReceiptQuerySoapResponse(response?.body) : parseNfeProtocolQuerySoapResponse(response?.body);
     Object.assign(diagnostic, parsed);

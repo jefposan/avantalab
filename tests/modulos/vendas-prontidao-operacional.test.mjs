@@ -211,7 +211,8 @@ test('perfil integrado não reutiliza contadores nem indicadores demonstrativos'
   assert.match(source, /managementCatalogBridge \? fiscalDocumentCount/);
   assert.match(source, /connected\.company\) setFiscalIssuerRegistry\(createFiscalIssuerRegistry\(connected\.company\)\)/);
   assert.match(source, /integratedQuickActions = dashboardNewOptions\.filter\(\(option\) => option\.type !== 'venda'\)/);
-  assert.match(source, /!managementCatalogBridge \|\| !\['venda', 'nfe', 'nfce', 'nfse'\]\.includes\(option\.type\)/);
+  assert.match(source, /!managementCatalogBridge \|\| !\['venda', 'nfce', 'nfse'\]\.includes\(option\.type\)/);
+  assert.match(source, /onFiscalCreated=\{saveStandaloneFiscal\}/);
   assert.match(source, /connected \? 'Operação vinculada ao perfil\.' : 'Ambiente de demonstração\.'/);
   assert.match(source, /connected \? 'Perfil empresarial' : 'Proposta local'/);
   assert.match(source, /managementProfileReady = !integratedManagementRuntime \|\| Boolean\(managementCatalogBridge\?\.company\)/);
@@ -266,7 +267,7 @@ test('ações integradas aguardam confirmação e não mantêm registro comercia
   assert.match(source, /pendingStockRef\.current\.set\(requestId,\{timer,resolve\}\)/);
   assert.match(source, /if \(!managementCatalogBridge\) writeCompanyStorage\(STORAGE_KEY/);
   assert.match(source, /O registro só permanecerá após a Gestão confirmar o vínculo com o perfil ativo/);
-  assert.match(source, /setCreated\(\(current\) => current\.filter\(\(record\) => record\.id !== pending\.recordId \|\| Boolean\(record\.persistence\)\)\)/);
+  assert.match(source, /pending\.previous \? current\.map\(\(record\) => record\.id === pending\.recordId \? pending\.previous! : record\) : current\.filter\(\(record\) => record\.id !== pending\.recordId \|\| Boolean\(record\.persistence\)\)/);
   assert.match(source, /saving \? 'Confirmando…'/);
 });
 

@@ -1,3 +1,4 @@
+import { usaFiscalEmpresa } from '@/app/lib/fiscal-produto.mjs';
 import { supabase } from '@/app/lib/supabase';
 import type { ProdutoImportadoCatalogo } from './importacao-catalogo';
 import {
@@ -6,9 +7,13 @@ import {
 } from './types';
 
 const CAMPOS_PRODUTO_BASE = 'id,catalogo_id,sku,tipo_item,nome,marca,categoria,descricao,preco_custo,preco_venda,unidade,imagem_url,codigo_barras,ativo,disponivel_catalogo,habilitado_fiscal,fornecedor_id,ncm,cest,origem_mercadoria,unidade_tributavel,cfop_padrao,cst,csosn,cst_pis,cst_cofins,cst_ibs_cbs,classificacao_ibs_cbs,codigo_tributacao_nacional,codigo_tributacao_municipal,nbs,item_lc116,municipio_prestacao,aliquota_iss,atualizado_em';
-const CAMPOS_PRODUTO = CAMPOS_PRODUTO_BASE.replace(',atualizado_em', ',excluido_em,atualizado_em');
+const CAMPOS_PRODUTO = CAMPOS_PRODUTO_BASE.replace(',atualizado_em', ',usar_fiscal_empresa,cfop_interestadual,excluido_em,atualizado_em');
 
 const texto = (valor: unknown) => String(valor || '');
+const rpcDestinoAindaForaDoCache = (erro: { code?: string; message?: string } | null) => {
+  const mensagem = String(erro?.message || '').toLowerCase();
+  return erro?.code === 'PGRST202' || (mensagem.includes('could not find the function') && mensagem.includes('custos_alterar_destino_catalogo_rpc'));
+};
 const mapearCatalogo = (linha: Record<string, unknown>): CatalogoEmpresa => ({
   id: texto(linha.id), empresa_id: texto(linha.empresa_id), nome: texto(linha.nome), codigo: texto(linha.codigo),
   origem: linha.origem === 'custos_local' ? 'custos_local' : linha.origem === 'manual' ? 'manual' : 'externa',
@@ -22,6 +27,8 @@ const mapearProduto = (linha: Record<string, unknown>): ProdutoCustos => ({
   preco_venda: Number(linha.preco_venda) || 0, unidade: texto(linha.unidade) || 'un', imagem_url: texto(linha.imagem_url),
   codigo_barras: texto(linha.codigo_barras), ativo: linha.ativo !== false, disponivel_catalogo: linha.disponivel_catalogo !== false, habilitado_fiscal: linha.habilitado_fiscal === true, fornecedor_id: texto(linha.fornecedor_id),
   ncm: texto(linha.ncm), cest: texto(linha.cest), origem_mercadoria: texto(linha.origem_mercadoria),
+  usar_fiscal_empresa: typeof linha.usar_fiscal_empresa === 'boolean' ? linha.usar_fiscal_empresa : null,
+  cfop_interestadual: texto(linha.cfop_interestadual),
   unidade_tributavel: texto(linha.unidade_tributavel), cfop_padrao: texto(linha.cfop_padrao), cst: texto(linha.cst),
   csosn: texto(linha.csosn), cst_pis: texto(linha.cst_pis), cst_cofins: texto(linha.cst_cofins),
   cst_ibs_cbs: texto(linha.cst_ibs_cbs), classificacao_ibs_cbs: texto(linha.classificacao_ibs_cbs),
@@ -31,50 +38,43 @@ const mapearProduto = (linha: Record<string, unknown>): ProdutoCustos => ({
 });
 
 async function consultarProdutosCustos(catalogoIds: string[]) {
-  const consulta = () => supabase.from('vendas_mobile_catalogo_produtos').select(CAMPOS_PRODUTO).in('catalogo_id', catalogoIds).order('nome');
-  const resultado = await consulta();
-  if (!resultado.error || !resultado.error.message.toLowerCase().includes('excluido_em')) return resultado;
-  // Compatibilidade durante a aplicação coordenada da migração: a página
-  // continua legível, mas a exclusão lógica só é liberada após a coluna existir.
-  return supabase.from('vendas_mobile_catalogo_produtos').select(CAMPOS_PRODUTO_BASE).in('catalogo_id', catalogoIds).order('nome');
+  let campos = CAMPOS_PRODUTO;
+  for (let tentativa = 0; tentativa < 3; tentativa += 1) {
+    const resultado = await supabase.from('vendas_mobile_catalogo_produtos').select(campos).in('catalogo_id', catalogoIds).order('nome');
+    if (!resultado.error) return resultado;
+    const mensagem = resultado.error.message.toLowerCase();
+    if (mensagem.includes('usar_fiscal_empresa') || mensagem.includes('cfop_interestadual')) {
+      campos = campos.replace(',usar_fiscal_empresa,cfop_interestadual', '');
+    } else if (mensagem.includes('excluido_em')) campos = campos.replace(',excluido_em', '');
+    else return resultado;
+  }
+  return supabase.from('vendas_mobile_catalogo_produtos').select(campos).in('catalogo_id', catalogoIds).order('nome');
 }
 
 export async function carregarCustos(empresaId: string, podeEditar: boolean) {
   const tabelaPadrao = await supabase.rpc('custos_garantir_tabela_padrao_rpc', { p_empresa_id: empresaId });
   if (tabelaPadrao.error && podeEditar) throw new Error('Não foi possível preparar a tabela de preços padrão.');
-  let { data: catalogo, error: erroCatalogo } = await supabase.from('vendas_mobile_catalogos')
-    .select('id').eq('empresa_id', empresaId).or('origem.eq.custos_local,codigo.eq.CUSTOS_LOCAL').order('criado_em').limit(1).maybeSingle();
-  if (!catalogo && !erroCatalogo && podeEditar) {
-    const criado = await supabase.from('vendas_mobile_catalogos')
-      .insert({ empresa_id: empresaId, nome: 'Catálogo local de Custos', codigo: 'CUSTOS_LOCAL', origem: 'custos_local' }).select('id').single();
-    catalogo = criado.data;
-    erroCatalogo = criado.error;
-  }
-  if (erroCatalogo) throw new Error('Não foi possível preparar o cadastro mestre desta empresa.');
-
   const catalogosResultado = await supabase.from('vendas_mobile_catalogos')
-    .select('id,empresa_id,nome,codigo,origem,ativo,publicado_avantavendas,padrao,atualizado_em').eq('empresa_id', empresaId)
+    .select('id,empresa_id,nome,codigo,origem,ativo,publicado_avantavendas,padrao,atualizado_em,excluido_em').eq('empresa_id', empresaId)
     .order('padrao', { ascending: false }).order('ativo', { ascending: false }).order('nome');
   if (catalogosResultado.error) throw new Error('Não foi possível carregar os catálogos desta empresa.');
-  const catalogos = ((catalogosResultado.data || []) as unknown as Record<string, unknown>[]).map(mapearCatalogo);
+  const todosCatalogos = ((catalogosResultado.data || []) as unknown as Record<string, unknown>[]);
+  const catalogos = todosCatalogos.filter((item) => !item.excluido_em).map(mapearCatalogo);
 
-  const catalogoAtual = catalogos.find((item) => item.padrao && item.ativo)
-    || catalogos.find((item) => item.ativo)
-    || catalogos.find((item) => item.id === texto(catalogo?.id));
+  // O catálogo administrativo atual não depende de estar publicado em nenhum
+  // destino. Assim, todos os destinos podem ser desligados sem impedir a
+  // manutenção dos cadastros no módulo de Custos.
+  const catalogoAtual = catalogos.find((item) => item.padrao) || catalogos[0];
 
-  if (!catalogoAtual) {
-    const documentoResultado = await supabase.from('custos_documentos').select('documento,revisao').eq('empresa_id', empresaId).maybeSingle();
-    if (documentoResultado.error) throw new Error('Não foi possível carregar composições e simulações.');
-    return { catalogoId: '', catalogos, produtos: [], tabelasPreco: [], precosTabela: [], documento: normalizarDocumento(documentoResultado.data?.documento), revisao: Number(documentoResultado.data?.revisao) || 0 };
-  }
-
-  const [produtosResultado, documentoResultado, tabelasResultado, precosResultado] = await Promise.all([
-    consultarProdutosCustos(catalogos.map((item) => item.id)),
+  const [produtosResultado, documentoResultado, tabelasResultado, precosResultado, perfilResultado] = await Promise.all([
+    todosCatalogos.length ? consultarProdutosCustos(todosCatalogos.map((item) => String(item.id))) : Promise.resolve({ data: [], error: null }),
     supabase.from('custos_documentos').select('documento,revisao').eq('empresa_id', empresaId).maybeSingle(),
     supabase.from('custos_tabelas_preco').select('id,empresa_id,codigo,nome,descricao,padrao,ativo,atualizado_em').eq('empresa_id', empresaId).order('padrao', { ascending: false }).order('nome'),
     supabase.from('custos_tabela_preco_itens').select('tabela_preco_id,produto_id,preco,atualizado_em'),
+    supabase.from('cadastros_perfil').select('regime_tributario,configuracao_fiscal').eq('empresa_id', empresaId).maybeSingle(),
   ]);
   if (produtosResultado.error) throw new Error('A atualização de banco do módulo ainda não foi aplicada neste ambiente.');
+  if (perfilResultado.error) throw new Error('Não foi possível consultar os padrões fiscais desta empresa.');
   if (documentoResultado.error) throw new Error('Não foi possível carregar composições e simulações.');
   if (tabelasResultado.error || precosResultado.error) throw new Error('Não foi possível carregar as tabelas de preços.');
 
@@ -88,7 +88,8 @@ export async function carregarCustos(empresaId: string, podeEditar: boolean) {
     revisao = Number(criado.data?.revisao) || 1;
   }
   return {
-    catalogoId: catalogoAtual.id,
+    perfilFiscal: perfilResultado.data || {},
+    catalogoId: catalogoAtual?.id || '',
     catalogos,
     produtos: ((produtosResultado.data || []) as unknown as Record<string, unknown>[]).map(mapearProduto),
     tabelasPreco: ((tabelasResultado.data || []) as unknown as TabelaPreco[]).map((tabela) => ({ ...tabela, descricao: tabela.descricao || '' })),
@@ -96,6 +97,12 @@ export async function carregarCustos(empresaId: string, podeEditar: boolean) {
     documento,
     revisao,
   };
+}
+
+export async function excluirCatalogoEmpresa(empresaId: string, catalogoId: string) {
+  const { data, error } = await supabase.rpc('custos_excluir_catalogo_rpc', { p_empresa_id: empresaId, p_catalogo_id: catalogoId });
+  if (error) throw new Error(error.message || 'Não foi possível excluir o catálogo.');
+  return data;
 }
 
 export async function salvarCatalogoEmpresa(empresaId: string, catalogo: Partial<CatalogoEmpresa>) {
@@ -117,19 +124,35 @@ export async function criarCatalogoComProdutos(empresaId: string, catalogo: Part
 }
 
 export async function alterarStatusCatalogoEmpresa(empresaId: string, catalogoId: string, ativo: boolean) {
-  const { data, error } = await supabase.rpc('custos_alterar_status_catalogo_empresa_rpc', {
-    p_empresa_id: empresaId, p_catalogo_id: catalogoId, p_ativo: ativo,
+  let resultado = await supabase.rpc('custos_alterar_destino_catalogo_rpc', {
+    p_empresa_id: empresaId, p_catalogo_id: catalogoId, p_destino: 'vendas_servicos', p_ativo: ativo,
   });
+  if (rpcDestinoAindaForaDoCache(resultado.error)) {
+    resultado = await supabase.rpc('custos_alterar_status_catalogo_empresa_rpc', {
+      p_empresa_id: empresaId, p_catalogo_id: catalogoId, p_ativo: ativo,
+    });
+  }
+  const { data, error } = resultado;
   if (error) throw new Error(error.message || 'Não foi possível alterar o status do catálogo.');
-  return mapearCatalogo(data as unknown as Record<string, unknown>);
+  const catalogo = mapearCatalogo(data as unknown as Record<string, unknown>);
+  if (catalogo.ativo !== ativo) throw new Error('Vendas e Serviços não confirmou a alteração solicitada.');
+  return catalogo;
 }
 
 export async function alterarPublicacaoAvantaVendasCatalogo(empresaId: string, catalogoId: string, publicado: boolean) {
-  const { data, error } = await supabase.rpc('custos_alterar_publicacao_avantavendas_catalogo_rpc', {
-    p_empresa_id: empresaId, p_catalogo_id: catalogoId, p_publicado: publicado,
+  let resultado = await supabase.rpc('custos_alterar_destino_catalogo_rpc', {
+    p_empresa_id: empresaId, p_catalogo_id: catalogoId, p_destino: 'avantavendas', p_ativo: publicado,
   });
+  if (rpcDestinoAindaForaDoCache(resultado.error)) {
+    resultado = await supabase.rpc('custos_alterar_publicacao_avantavendas_catalogo_rpc', {
+      p_empresa_id: empresaId, p_catalogo_id: catalogoId, p_publicado: publicado,
+    });
+  }
+  const { data, error } = resultado;
   if (error) throw new Error(error.message || 'Não foi possível alterar a publicação no AvantaVendas.');
-  return mapearCatalogo(data as unknown as Record<string, unknown>);
+  const catalogo = mapearCatalogo(data as unknown as Record<string, unknown>);
+  if (catalogo.publicado_avantavendas !== publicado) throw new Error('AvantaVendas não confirmou a alteração solicitada.');
+  return catalogo;
 }
 
 export async function definirCatalogoAtual(empresaId: string, catalogoId: string) {
@@ -259,6 +282,7 @@ export async function salvarProdutoCustos(produto: ProdutoCustos) {
     codigo_barras: produto.codigo_barras.trim() || null, ativo: produto.ativo,
     disponivel_catalogo: produto.disponivel_catalogo, habilitado_fiscal: produto.habilitado_fiscal, fornecedor_id: produto.fornecedor_id || null, ncm: produto.ncm.trim() || null, cest: produto.cest.trim() || null,
     origem_mercadoria: produto.origem_mercadoria.trim() || null, unidade_tributavel: produto.unidade_tributavel.trim() || null,
+    usar_fiscal_empresa: usaFiscalEmpresa(produto), cfop_interestadual: produto.cfop_interestadual?.trim() || null,
     cfop_padrao: produto.cfop_padrao.trim() || null, cst: produto.cst.trim() || null, csosn: produto.csosn.trim() || null,
     cst_pis: produto.cst_pis.trim() || null, cst_cofins: produto.cst_cofins.trim() || null,
     cst_ibs_cbs: produto.cst_ibs_cbs.trim() || null, classificacao_ibs_cbs: produto.classificacao_ibs_cbs.trim() || null,
@@ -272,6 +296,7 @@ export async function salvarProdutoCustos(produto: ProdutoCustos) {
     : supabase.from('vendas_mobile_catalogo_produtos').insert(payload);
   const { data, error } = await consulta.select(CAMPOS_PRODUTO).single();
   if (error) {
+    if (/usar_fiscal_empresa|cfop_interestadual/i.test(error.message)) throw new Error('A atualização fiscal do banco ainda precisa ser aplicada neste ambiente. O cadastro não foi salvo.');
     if (error.message.toLowerCase().includes('sku')) throw new Error('Este código já está sendo usado neste catálogo.');
     throw new Error('Não foi possível salvar o produto ou serviço.');
   }

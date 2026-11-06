@@ -1,3 +1,4 @@
+import {newFiscalNoteFields} from './fiscal-note-editor.mjs';
 export const NFE_SP_XML_REFERENCE = '2026-09-05';
 export const NFE_SP_SCHEMA_PACKAGE = 'PL_010e_v1.02';
 export const NFE_SP_SCHEMA_VERSION = '4.00';
@@ -22,7 +23,7 @@ function decimal(value, fallback = 0) {
 }
 
 function xmlEscape(value) {
-  return String(value ?? '')
+  return String(value ?? '').replace(/[\r\n\t]+/g, ' ').trim()
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -47,8 +48,12 @@ function taxRegimeCode(value) {
 
 function paymentCode(value) {
   const normalized = text(value).toLocaleLowerCase('pt-BR');
+  if(normalized==='sem pagamento')return '90';
+  if (normalized.includes('pix') && (normalized.includes('estático') || normalized.includes('estatico'))) return '20';
   if (normalized.includes('pix')) return '17';
+  if (normalized.includes('transfer')) return '18';
   if (normalized.includes('boleto')) return '15';
+  if (normalized.includes('cart') && (normalized.includes('débito') || normalized.includes('debito'))) return '04';
   if (normalized.includes('cart')) return '03';
   if (normalized.includes('dinheiro')) return '01';
   return '99';
@@ -116,6 +121,9 @@ function normalizeItem(value = {}, index = 0) {
   };
 }
 
+function retentionXml(form){if(!form)return '';const fields=[['vRetPIS','retainedPis'],['vRetCOFINS','retainedCofins'],['vRetCSLL','retainedCsll'],['vBCIRRF','incomeTaxBase'],['vIRRF','incomeTax'],['vBCRetPrev','socialSecurityBase'],['vRetPrev','socialSecurityTax']];const values=fields.map(([tag,key])=>[tag,Number(String(form[key]||'0').replace(/\./g,'').replace(',','.'))]);return values.some(([,value])=>value>0)?'<retTrib>'+values.filter(([,value])=>value>0).map(([tag,value])=>xmlTag(tag,formatDecimal(value,2))).join('')+'</retTrib>':'';}
+function transportXml(form){if(!form)return '<transp><modFrete>9</modFrete></transp>';const out=['<transp>',xmlTag('modFrete',form.freightMode)];if(form.freightMode!=='9'&&[form.carrierName,form.carrierDocument,form.carrierRegistration,form.carrierAddress,form.carrierCity,form.carrierState].some(Boolean))out.push('<transporta>',xmlTag(form.carrierDocument?.length===11?'CPF':'CNPJ',form.carrierDocument),xmlTag('xNome',form.carrierName),xmlTag('IE',form.carrierRegistration),xmlTag('xEnder',form.carrierAddress),xmlTag('xMun',form.carrierCity),xmlTag('UF',form.carrierState),'</transporta>');if(form.freightMode!=='9'&&form.vehiclePlate)out.push('<veicTransp>',xmlTag('placa',form.vehiclePlate.replace('-','')),xmlTag('UF',form.vehicleState),xmlTag('RNTC',form.rntc),'</veicTransp>');if([form.volumeCount,form.volumeSpecies,form.volumeBrand,form.volumeNumber,form.netWeight,form.grossWeight].some(Boolean))out.push('<vol>',xmlTag('qVol',form.volumeCount),xmlTag('esp',form.volumeSpecies),xmlTag('marca',form.volumeBrand),xmlTag('nVol',form.volumeNumber),xmlTag('pesoL',form.netWeight?formatDecimal(Number(form.netWeight.replace(',','.')),3):''),xmlTag('pesoB',form.grossWeight?formatDecimal(Number(form.grossWeight.replace(',','.')),3):''),'</vol>');out.push('</transp>');return out.join('');}
+
 export function normalizeNfeSpXmlInput(value) {
   const source = value && typeof value === 'object' ? value : {};
   const issuer = source.issuer && typeof source.issuer === 'object' ? source.issuer : {};
@@ -134,7 +142,9 @@ export function normalizeNfeSpXmlInput(value) {
     number: digits(source.number, 9),
     numericCode: digits(source.numericCode, 8),
     emissionType: '1',
-    purpose: '1',
+    purpose: source.fiscalForm?.purpose || '1',
+    direction:source.fiscalForm?.direction || '1',
+    fiscalForm:source.fiscalForm && typeof source.fiscalForm==='object'?{...newFiscalNoteFields(),...source.fiscalForm,internalNotes:'',priceTableId:''}:null,
     consumerFinal: source.consumerFinal === true,
     presence: text(source.presence),
     issuer: {
@@ -164,7 +174,9 @@ export function normalizeNfeSpXmlInput(value) {
     },
     payment: {
       method: text(payment.method),
-      amount: decimal(payment.amount),
+      installments:Math.max(1,Math.min(120,Math.trunc(Number(payment.installments)||1))),
+      amount:paymentCode(payment.method)==='90'?0:decimal(payment.amount),
+      details: payment.details && typeof payment.details === 'object' ? { integrationType: text(payment.details.integrationType), institutionDocument: digits(payment.details.institutionDocument), authorizationCode: text(payment.details.authorizationCode,128) } : null,
     },
     additionalInfo: text(source.additionalInfo, 5000),
     matrixReviewConfirmed: source.matrixReviewConfirmed === true,
@@ -259,7 +271,9 @@ export function validateNfeSpXmlInput(inputValue) {
   if (Math.abs(calculatedProducts - input.totals.products) > 0.01) errors.push(validationError('NFE-W07', 'totals.products', 'A soma dos itens não confere com o total dos produtos.'));
   if (Math.abs(calculatedDiscount - input.totals.discount) > 0.01) errors.push(validationError('NFE-W10', 'totals.discount', 'A soma dos descontos dos itens não confere com o desconto total da NF-e.'));
   if (Math.abs(calculatedInvoice - input.totals.invoice) > 0.01) errors.push(validationError('NFE-W16', 'totals.invoice', 'Frete, seguro, desconto, outras despesas e produtos não fecham o valor da NF-e.'));
-  if (Math.abs(input.payment.amount - input.totals.invoice) > 0.01) errors.push(validationError('NFE-YA03', 'payment.amount', 'O valor do pagamento não confere com o total da NF-e.'));
+  if(input.fiscalForm?.intermediary==='1'&&!['2','3','4','9'].includes(input.fiscalForm.presence))errors.push(validationError('NFE-B25C','fiscalForm.intermediary','Intermediador exige atendimento não presencial na NF-e. Revise o tipo de atendimento.'));
+  if(['3','4'].includes(input.purpose)&&paymentCode(input.payment.method)!=='90')errors.push(validationError('NFE-YA02','payment.method','Para esta finalidade, selecione Sem pagamento na nota fiscal.'));
+  if (paymentCode(input.payment.method)!=='90' && Math.abs(input.payment.amount - input.totals.invoice) > 0.01) errors.push(validationError('NFE-YA03', 'payment.amount', 'O valor do pagamento não confere com o total da NF-e.'));
   if (!input.fiscalReviewConfirmed) errors.push(validationError('AV-NFE-REVIEW', 'fiscalReviewConfirmed', 'A revisão tributária precisa estar confirmada.'));
   if (!input.matrixReviewConfirmed) errors.push(validationError('AV-NFE-MATRIX', 'matrixReviewConfirmed', 'A regra aplicável da matriz fiscal precisa estar revisada.'));
   if (!input.taxReformReviewConfirmed) errors.push(validationError('AV-NFE-RTC', 'taxReformReviewConfirmed', 'A revisão dos campos vigentes de IBS/CBS precisa estar confirmada.'));
@@ -318,7 +332,7 @@ function itemXml(item, index, crt) {
     '        </COFINS>',
     '      </imposto>',
     '    </det>',
-  ].filter(Boolean).join('\n');
+  ].filter(Boolean).join('').replace(/>[ \r\n\t]+</g, '><');
 }
 
 function addressXml(tagName, address, level) {
@@ -357,7 +371,9 @@ export function buildUnsignedNfeSpXml(inputValue) {
     xmlTag('serie', String(Number(input.series)), 3),
     xmlTag('nNF', String(Number(input.number)), 3),
     xmlTag('dhEmi', input.issuedAt, 3),
-    xmlTag('tpNF', '1', 3),
+    xmlTag('dhSaiEnt',input.fiscalForm?.exitDate?`${input.fiscalForm.exitDate}T${input.fiscalForm.exitTime||input.issuedAt.slice(11,16)}:00-03:00`:'',3),
+    xmlTag('dPrevEntrega',input.fiscalForm?.deliveryForecast,3),
+    xmlTag('tpNF', input.direction, 3),
     xmlTag('idDest', idDest, 3),
     xmlTag('cMunFG', input.issuer.address.cityCode, 3),
     xmlTag('tpImp', '1', 3),
@@ -366,10 +382,11 @@ export function buildUnsignedNfeSpXml(inputValue) {
     xmlTag('tpAmb', '2', 3),
     xmlTag('finNFe', input.purpose, 3),
     xmlTag('indFinal', input.consumerFinal ? '1' : '0', 3),
-    xmlTag('indPres', presenceCode(input.presence), 3),
-    xmlTag('indIntermed', '0', 3),
+    xmlTag('indPres', input.fiscalForm?.presence || presenceCode(input.presence), 3),
+    xmlTag('indIntermed', ['2','3','4','9'].includes(input.fiscalForm?.presence || presenceCode(input.presence))?(input.fiscalForm?.intermediary || '0'):'', 3),
     xmlTag('procEmi', '0', 3),
     xmlTag('verProc', input.documentStage === 'signature' ? 'AvantaLab 0.1' : 'AvantaLab 0.1 PRE', 3),
+    ...(input.fiscalForm?.referenceKey?['<NFref>',xmlTag('refNFe',input.fiscalForm.referenceKey),'</NFref>']:[]),
     '    </ide>',
     '    <emit>',
     xmlTag('CNPJ', input.issuer.document, 3),
@@ -377,6 +394,7 @@ export function buildUnsignedNfeSpXml(inputValue) {
     xmlTag('xFant', input.issuer.tradeName, 3),
     addressXml('enderEmit', input.issuer.address, 3),
     xmlTag('IE', input.issuer.stateRegistration, 3),
+    xmlTag('IEST',input.fiscalForm?.substituteRegistration,3),
     xmlTag('CRT', crt, 3),
     '    </emit>',
     '    <dest>',
@@ -385,6 +403,7 @@ export function buildUnsignedNfeSpXml(inputValue) {
     addressXml('enderDest', input.recipient.address, 3),
     xmlTag('indIEDest', input.recipient.stateRegistrationIndicator, 3),
     xmlTag('IE', input.recipient.stateRegistrationIndicator === '1' ? input.recipient.stateRegistration : '', 3),
+    xmlTag('ISUF',input.fiscalForm?.suframa,3),
     xmlTag('email', input.recipient.email, 3),
     '    </dest>',
     input.items.map((item, index) => itemXml(item, index, crt)).join('\n'),
@@ -410,25 +429,28 @@ export function buildUnsignedNfeSpXml(inputValue) {
     xmlTag('vOutro', formatDecimal(input.totals.other, 2), 4),
     xmlTag('vNF', formatDecimal(input.totals.invoice, 2), 4),
     '      </ICMSTot>',
+    retentionXml(input.fiscalForm),
     '    </total>',
-    '    <transp>',
-    xmlTag('modFrete', '9', 3),
-    '    </transp>',
+    transportXml(input.fiscalForm),
     '    <pag>',
     '      <detPag>',
-    xmlTag('indPag', '0', 4),
+    xmlTag('indPag', input.payment.installments>1?'1':'0', 4),
     xmlTag('tPag', paymentCode(input.payment.method), 4),
     xmlTag('vPag', formatDecimal(input.payment.amount, 2), 4),
+    ...(['17','03','04'].includes(paymentCode(input.payment.method)) && input.payment.details ? ['<card>',xmlTag('tpIntegra',input.payment.details.integrationType),xmlTag('CNPJ',input.payment.details.institutionDocument),xmlTag('cAut',input.payment.details.authorizationCode),'</card>'] : []),
     '      </detPag>',
     '    </pag>',
+    ...(input.fiscalForm?.intermediary==='1'?['<infIntermed>',xmlTag('CNPJ',input.fiscalForm.intermediaryDocument),xmlTag('idCadIntTran',input.fiscalForm.intermediaryId),'</infIntermed>']:[]),
     '    <infAdic>',
+    xmlTag('infAdFisco',input.fiscalForm?.fiscalNotes,3),
     xmlTag('infCpl', input.documentStage === 'signature'
       ? input.additionalInfo
       : `${input.additionalInfo ? `${input.additionalInfo} · ` : ''}PRE-XML DE HOMOLOGACAO SEM ASSINATURA E SEM VALOR FISCAL`, 3),
     '    </infAdic>',
+    ...(input.fiscalForm?.purchaseOrder?['<compra>',xmlTag('xPed',input.fiscalForm.purchaseOrder),'</compra>']:[]),
     '  </infNFe>',
     '</NFe>',
-  ].filter(Boolean).join('\n');
+  ].filter(Boolean).join('').replace(/>[ \r\n\t]+</g, '><');
   return { ...validation, xml };
 }
 
@@ -461,7 +483,8 @@ export function prototypeDraftToNfeSpXmlInput({ draft, client, config, issuedAt 
   const recipientIndicator = recipientStateRegistrationIndicator(client?.fiscal, client?.stateRegistration);
   return normalizeNfeSpXmlInput({
     documentStage: config?.documentStage,
-    issuedAt,
+    issuedAt:draft?.fiscalForm?.issueDate?`${draft.fiscalForm.issueDate}${issuedAt.slice(10)}`:issuedAt,
+    fiscalForm:draft?.fiscalForm,
     operationNature: draft?.operationNature,
     series: issuer.series || draft?.series,
     number: config?.testDocumentNumber,
@@ -485,8 +508,8 @@ export function prototypeDraftToNfeSpXmlInput({ draft, client, config, issuedAt 
     },
     items: items.map((item, index) => ({ number: index + 1, code: item.sku, description: item.name, gtin: item.gtin, ncm: item.ncm, cest: item.cest, cfop: item.cfopInternal, commercialUnit: item.unit, quantity: item.quantity, unitValue: item.unitPrice, totalValue: decimal(item.quantity) * decimal(item.unitPrice), discountValue: itemDiscounts[index], taxableUnit: item.taxableUnit || item.unit, taxableQuantity: item.quantity, taxableUnitValue: item.unitPrice, origin: item.fiscalOriginCode, icmsCode: item.icmsCode, pisCst: item.pisCst, cofinsCst: item.cofinsCst })),
     totals: { products: normalizedProducts, freight: normalizedFreight, insurance: normalizedInsurance, discount: discountTotal, other: normalizedOther, invoice: normalizedInvoice },
-    payment: { method: draft?.paymentMethod || 'Outros', amount: draft?.total },
-    additionalInfo: `Rascunho ${draft?.id || 'não identificado'} · origem ${draft?.originId || 'não identificada'}`,
+    payment: { method: draft?.paymentMethod || 'Outros', amount: draft?.total, details: draft?.paymentDetails, installments:draft?.paymentInstallments },
+    additionalInfo: draft?.fiscalForm?text(draft?.additionalInfo,5000):[text(draft?.additionalInfo, 2000), `Rascunho ${draft?.id || 'não identificado'} · origem ${draft?.originId || 'não identificada'}`].filter(Boolean).join(' · '),
     matrixReviewConfirmed: config?.matrixReviewConfirmed,
     fiscalReviewConfirmed: config?.taxReviewConfirmed,
     taxReformReviewConfirmed: config?.taxReformReviewConfirmed,

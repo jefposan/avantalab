@@ -1,6 +1,8 @@
 export type DocumentType = 'orcamento' | 'pedido' | 'venda' | 'ordem_servico' | 'nfe' | 'nfce' | 'nfse';
 
 export type FiscalConfig = {
+  fiscalDestination?: string;
+  issueDate?: string;
   companyDocument: string;
   taxRegime: string;
   cityCode: string;

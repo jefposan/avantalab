@@ -3,7 +3,7 @@ export const COMMERCIAL_ORDER_WORKFLOW_RESPONSE_TYPE = 'AVANTALAB_VENDAS_ORDER_W
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY = /^[A-Za-z0-9:_-]{8,120}$/;
-const TARGETS = new Set(['confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido']);
+const TARGETS = new Set(['salvo', 'confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido']);
 const clean = (value) => String(value ?? '').trim();
 
 export function createCommercialOrderWorkflowRequest(input = {}) {

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { normalizeFiscalMatrix, resolveFiscalMatrixRule, validateFiscalMatrix } from '../fiscal-matrix.mjs';
+import { resolverFiscalProduto } from '../../../lib/fiscal-produto.mjs';
+import { resolveFiscalMatrixRule, validateFiscalMatrixPublication } from '../fiscal-matrix.mjs';
 
 export const COMMERCIAL_FISCAL_RULES_REFERENCE = '2026-09-04';
 
@@ -20,12 +21,6 @@ function digest(value) {
   return createHash('sha256').update(JSON.stringify(stable(value))).digest('hex');
 }
 
-function validReviewDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T12:00:00.000Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
-    && value <= new Date().toISOString().slice(0, 10);
-}
 
 function accessError(context) {
   if (!context || !UUID.test(clean(context.companyId)) || !UUID.test(clean(context.actorId))) {
@@ -49,20 +44,12 @@ function readAccessError(context) {
 }
 
 function normalizePublication(input = {}) {
-  const validation = validateFiscalMatrix(input.matrix, input.documentScope);
+  const validation = validateFiscalMatrixPublication(input);
   const normalizedMatrix = validation.matrix;
   const responsible = clean(input.fiscalResponsible || normalizedMatrix.reviewedBy, 160);
   const reviewedAt = clean(input.reviewedAt || normalizedMatrix.reviewedAt, 40);
   const matrix = { ...normalizedMatrix, reviewedBy: responsible, reviewedAt };
-  const activeRules = matrix.rules.filter((rule) => rule.active && validation.documentScope.includes(rule.documentType));
-  const nfeRules = activeRules.filter((rule) => rule.documentType === 'nfe');
-  const errors = [...validation.errors.map((message) => issue('AV-FISCAL-RULES-MATRIX', 'matrix', message))];
-  if (validation.documentScope.includes('nfe') && !nfeRules.length) errors.push(issue('AV-FISCAL-RULES-COVERAGE', 'matrix', 'Mantenha ao menos uma regra ativa e revisada para NF-e.'));
-  if (activeRules.some((rule) => !rule.reviewed)) errors.push(issue('AV-FISCAL-RULES-REVIEW', 'matrix', 'Revise todas as regras ativas dos tipos de nota habilitados antes de publicá-las.'));
-  if (!responsible) errors.push(issue('AV-FISCAL-RULES-RESPONSIBLE', 'fiscalResponsible', 'Informe o responsável fiscal pela revisão.'));
-  if (!validReviewDate(reviewedAt)) errors.push(issue('AV-FISCAL-RULES-REVIEW-DATE', 'reviewedAt', 'Informe uma data de revisão válida, sem usar uma data futura.'));
-  if (input.taxReviewConfirmed !== true) errors.push(issue('AV-FISCAL-RULES-TAX-REVIEW', 'taxReviewConfirmed', 'Confirme a revisão tributária antes de publicar.'));
-  if (input.taxReformReviewConfirmed !== true) errors.push(issue('AV-FISCAL-RULES-TAX-REFORM', 'taxReformReviewConfirmed', 'Confirme a revisão dos campos tributários vigentes antes de publicar.'));
+  const errors = validation.issues.map(({ code, field, message }) => issue(code, field, message));
   const publication = {
     matrix: { ...matrix, reviewedBy: responsible, reviewedAt },
     documentScope: validation.documentScope,
@@ -279,33 +266,16 @@ function consumerFinal(customer = {}) {
   return ['isento', 'contribuinte_isento'].includes(clean(customer.stateRegistrationIndicator).toLowerCase()) ? 'Sim' : 'Não';
 }
 
-function companyFiscalProfile(issuer = {}) {
-  const source = issuer?.fiscalConfiguration && typeof issuer.fiscalConfiguration === 'object' ? issuer.fiscalConfiguration : {};
-  const simplesNacional = ['mei_simei', 'simples_nacional'].includes(clean(issuer.taxRegime));
-  return {
-    originCode: clean(source.originCode) || '0',
-    icmsCode: simplesNacional ? clean(source.csosn) : clean(source.cstIcms),
-    pisCst: clean(source.pisCst), cofinsCst: clean(source.cofinsCst),
-  };
-}
-
-function itemRule(item, rule, issuer) {
+function itemRule(item, rule, issuer, destination, direction='1') {
   const fiscal = item?.fiscal && typeof item.fiscal === 'object' ? item.fiscal : {};
-  const value = (keys) => keys.map((key) => clean(fiscal[key])).find(Boolean) || '';
-  const companyFiscal = companyFiscalProfile(issuer);
-  const applied = {
-    ncm: value(['ncm']),
-    cest: value(['cest']),
-    cfop: clean(rule.cfopOverride),
-    taxableUnit: value(['taxableUnit', 'unidadeTributavel']) || clean(item.unit),
-    originCode: companyFiscal.originCode,
-    icmsCode: companyFiscal.icmsCode,
-    pisCst: companyFiscal.pisCst,
-    cofinsCst: companyFiscal.cofinsCst,
-  };
+  const resolved = resolverFiscalProduto({ ...fiscal, unit: item.unit }, issuer, { destination, cfop: rule.cfopOverride });
+  const applied = Object.fromEntries(Object.entries(resolved).filter(([key]) => key !== 'useCompanyFiscal'));
+  // Revisão explícita da nota não altera a herança fiscal do produto nem da empresa.
+  if (typeof fiscal.noteCfopOverride === 'string' && /^\d{4}$/.test(fiscal.noteCfopOverride)) applied.cfop = fiscal.noteCfopOverride;
   const missing = [];
   if (!/^\d{8}$/.test(applied.ncm)) missing.push('NCM');
-  if (!/^\d{4}$/.test(applied.cfop)) missing.push('CFOP');
+  const cfopPrefix = destination === 'Dentro da UF' ? (direction==='0'?'1':'5') : destination === 'Fora da UF' ? (direction==='0'?'2':'6') : (direction==='0'?'3':'7');
+  if (!/^\d{4}$/.test(applied.cfop) || !cfopPrefix || !applied.cfop.startsWith(cfopPrefix)) missing.push('CFOP compatível com a UF de destino');
   if (!/^\d$/.test(applied.originCode)) missing.push('origem da mercadoria');
   if (!/^\d{2,3}$/.test(applied.icmsCode)) missing.push('CST/CSOSN');
   if (!/^\d{2}$/.test(applied.pisCst)) missing.push('CST do PIS');
@@ -314,9 +284,9 @@ function itemRule(item, rule, issuer) {
   return { applied, missing };
 }
 
-export function createCommercialFiscalRuleResolver({ repository } = {}) {
+export function createCommercialFiscalRuleResolver({ repository, issuerResolver } = {}) {
   if (!repository?.getPublished) throw new TypeError('Informe a fonte server-side da matriz fiscal publicada.');
-  return async ({ companyId, documentType, issuer, customer, items } = {}) => {
+  return async ({ companyId, documentType, issuer, customer, items, operationNature, fiscalForm } = {}) => {
     if (!UUID.test(clean(companyId)) || documentType !== 'nfe') {
       return { valid: false, errors: [issue('AV-FISCAL-RULES-RESOLVE-INPUT', 'fiscal', 'A configuração fiscal solicitada é inválida.')] };
     }
@@ -326,6 +296,14 @@ export function createCommercialFiscalRuleResolver({ repository } = {}) {
     if (!configuration || configuration.status !== 'publicada'
       || !configuration.taxReviewConfirmed || !configuration.taxReformReviewConfirmed) {
       return { valid: false, errors: [issue('AV-FISCAL-RULES-PENDING', 'fiscal', 'Publique as regras fiscais revisadas da empresa antes de validar a NF-e.')] };
+    }
+    if (typeof issuerResolver === 'function') {
+      try {
+        const currentIssuer = await issuerResolver({ companyId });
+        if (currentIssuer?.establishmentId !== companyId) throw new Error('Issuer scope');
+        // Current defaults come from the authenticated company, never the browser or another profile.
+        issuer = { ...issuer, taxRegime: currentIssuer.taxRegime, fiscalConfiguration: currentIssuer.fiscalConfiguration };
+      } catch { return { valid: false, errors: [issue('AV-FISCAL-RULES-ISSUER', 'issuer', 'Não foi possível consultar os padrões fiscais desta empresa.')] }; }
     }
     const issuerState = clean(issuer?.state, 2).toUpperCase();
     const customerState = clean(customer?.address?.state || customer?.state, 2).toUpperCase();
@@ -337,7 +315,19 @@ export function createCommercialFiscalRuleResolver({ repository } = {}) {
       presence: 'Não presencial',
       issuePurpose: 'Normal',
     };
-    const resolution = resolveFiscalMatrixRule({ matrix: configuration.matrix, documentType: 'nfe', ...context });
+    let matrix=configuration.matrix;
+    if(fiscalForm){
+      context.issuePurpose=({'1':'Normal','2':'Complementar','3':'Ajuste','4':'Devolução'})[fiscalForm.purpose]||'Normal';
+      context.presence=fiscalForm.presence==='1'||fiscalForm.presence==='5'?'Presencial':fiscalForm.presence==='2'?'Internet':fiscalForm.presence==='0'?'Não aplicável':'Não presencial';
+      const wanted=clean(operationNature,60);const named=matrix.rules.filter(rule=>rule.active&&rule.documentType==='nfe'&&clean(rule.operationNature,60)===wanted);
+      if(!wanted||!named.length)return{valid:false,errors:[issue('AV-FISCAL-RULES-NATURE','operationNature','Selecione uma natureza com regra fiscal ativa e publicada neste perfil.')]};
+      const operations=[...new Set(named.filter(rule=>rule.operation!=='Qualquer').map(rule=>rule.operation))];
+      if(operations.length>1)return{valid:false,errors:[issue('AV-FISCAL-RULES-NATURE','operationNature','Diferencie o nome das naturezas que possuem operações fiscais diferentes.')]};
+      context.operation=operations[0]||context.operation;matrix={...matrix,rules:named};
+      const destinationCode=context.destination==='Dentro da UF'?'1':context.destination==='Fora da UF'?'2':'3';
+      if(fiscalForm.destination!=='auto'&&fiscalForm.destination!==destinationCode)return{valid:false,errors:[issue('AV-FISCAL-RULES-DESTINATION','destination','O destino selecionado não corresponde ao endereço do destinatário.')]};
+    }
+    const resolution = resolveFiscalMatrixRule({ matrix, documentType: 'nfe', ...context });
     if (!resolution.matched || !resolution.reviewed || !resolution.rule) {
       return { valid: false, errors: [issue('AV-FISCAL-RULES-NO-MATCH', 'fiscal', 'Nenhuma regra fiscal revisada corresponde a esta venda. Revise a matriz da empresa.')] };
     }
@@ -348,8 +338,8 @@ export function createCommercialFiscalRuleResolver({ repository } = {}) {
     const itemEntries = [];
     const errors = [];
     for (const item of Array.isArray(items) ? items : []) {
-      const { applied, missing } = itemRule(item, resolution.rule, issuer);
-      if (missing.length) errors.push(issue('AV-FISCAL-RULES-ITEM', 'items', `${clean(item.name, 100) || 'Item'}: revise ${missing.join(', ')} antes da emissão. NCM e unidade tributável ficam no produto; CFOP é definido pela operação e os tributos pelo enquadramento da empresa.`));
+      const { applied, missing } = itemRule(item, resolution.rule, issuer, context.destination, fiscalForm?.direction);
+      if (missing.length) errors.push(issue('AV-FISCAL-RULES-ITEM', 'items', `${clean(item.name, 100) || 'Item'}: revise ${missing.join(', ')} antes da emissão. NCM e unidade tributável ficam no produto; CFOP e tributos seguem os padrões da empresa e as exceções salvas no produto.`));
       const key = UUID.test(clean(item.productId)) ? clean(item.productId) : clean(item.sku, 80);
       if (key) itemEntries.push([key, applied]);
     }

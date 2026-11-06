@@ -1,0 +1,12 @@
+{
+  "deploymentId": "dpl_8mj2opjedu3HUfvfSg3RYc1BQ4DB",
+  "sourceSnapshot": "306ca7b910d37d4ff03a63e0627af7ebf544a840",
+  "verifiedSourceFiles": 2438,
+  "snapshotFiles": 2439,
+  "omittedFromUpload": [
+    ".gitignore"
+  ],
+  "unicodeNormalization": "NFC for matching filenames only; source bytes unchanged",
+  "hashAlgorithm": "SHA1 raw bytes, Vercel source UID",
+  "mismatches": []
+}

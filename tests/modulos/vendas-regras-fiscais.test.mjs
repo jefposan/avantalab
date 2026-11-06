@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { createDefaultFiscalMatrix, normalizeFiscalMatrix, resolveFiscalMatrixRule, validateFiscalMatrix } from '../../app/vendas/lib/fiscal-matrix.mjs';
+import { createDefaultFiscalMatrix, normalizeFiscalMatrix, resolveFiscalMatrixRule, validateFiscalMatrix, validateFiscalMatrixPublication } from '../../app/vendas/lib/fiscal-matrix.mjs';
 import { prototypeDraftToNfeSpXmlInput } from '../../app/vendas/lib/nfe-sp-xml.mjs';
 import { createCommercialFiscalRuleResolver, createCommercialFiscalRulesPublicationService } from '../../app/vendas/lib/server/commercial-fiscal-rules.mjs';
 
@@ -95,6 +95,29 @@ test('validação rejeita enum, CFOP e escopo de publicação inválidos', () =>
   assert.match(unknownScope.errors.join(' '), /tipo de nota fiscal inválido/i);
 });
 
+test('regras inativas ou de documentos fora do escopo não exigem CFOP para publicar NF-e', async () => {
+  const inactive = reviewedRule({ id: 'nfe-futura', active: false, reviewed: false, cfopOverride: '' });
+  const outsideScope = reviewedRule({ id: 'nfce-futura', documentType: 'nfce', reviewed: false, cfopOverride: '' });
+  const matrix = reviewedMatrix([reviewedRule(), inactive, outsideScope]);
+  const validation = validateFiscalMatrix(matrix, ['nfe']);
+  assert.equal(validation.ready, true, validation.errors.join('\n'));
+  assert.equal(validation.activeCount, 1);
+  let saved;
+  const service = createCommercialFiscalRulesPublicationService({ repository: { publish: async (input) => {
+    saved = input;
+    return { configuration: { ...input.publication, status: 'publicada', version: 1 } };
+  } } });
+  const result = await service.publish({ context, input: { matrix, documentScope: ['nfe'], taxReviewConfirmed: true, taxReformReviewConfirmed: true }, expectedVersion: 0, idempotencyKey: 'fiscal:rules:inactive' });
+  assert.equal(result.ok, true);
+  assert.equal(saved.publication.matrix.rules.find((rule) => rule.id === inactive.id).active, false);
+  assert.equal(resolveFiscalMatrixRule({ matrix: saved.publication.matrix, documentType: 'nfe', ...inactive }).rule?.id, 'nfe-teste');
+
+  inactive.active = true;
+  assert.match(validateFiscalMatrix(matrix, ['nfe']).errors.join(' '), /CFOP/);
+  inactive.active = false;
+  assert.match(validateFiscalMatrix(matrix, ['nfe', 'nfce']).errors.join(' '), /CFOP/);
+});
+
 test('publicação exige revisão de todas as regras habilitadas e data não futura', async () => {
   let saved;
   const service = createCommercialFiscalRulesPublicationService({ repository: { publish: async (input) => {
@@ -106,7 +129,8 @@ test('publicação exige revisão de todas as regras habilitadas e data não fut
 
   const pending = await service.publish({ context, input: base, expectedVersion: 0, idempotencyKey: 'fiscal:rules:pending' });
   assert.equal(pending.ok, false);
-  assert.match(pending.errors.map((item) => item.message).join(' '), /todas as regras ativas/i);
+  assert.equal(pending.errors[0].code, 'AV-FISCAL-RULES-REVIEW');
+  assert.match(pending.errors[0].message, /Regra revisada/);
 
   const future = await service.publish({ context, input: { ...base, matrix: reviewedMatrix(rules.map((rule) => ({ ...rule, reviewed: true })), ['nfe', 'nfse']), reviewedAt: '2999-01-01' }, expectedVersion: 0, idempotencyKey: 'fiscal:rules:future' });
   assert.equal(future.ok, false);
@@ -115,6 +139,66 @@ test('publicação exige revisão de todas as regras habilitadas e data não fut
   const accepted = await service.publish({ context, input: { ...base, matrix: reviewedMatrix(rules.map((rule) => ({ ...rule, reviewed: true })), ['nfe', 'nfse']) }, expectedVersion: 0, idempotencyKey: 'fiscal:rules:accepted' });
   assert.equal(accepted.ok, true);
   assert.deepEqual(saved.publication.documentScope, ['nfe', 'nfse']);
+});
+
+test('publicação identifica cada campo pendente e sua regra, inclusive fora da seleção atual', async () => {
+  const matrix = reviewedMatrix([
+    reviewedRule({ id: 'preenchida' }),
+    reviewedRule({ id: 'outra-regra', name: 'Venda interestadual', destination: 'Fora da UF', cfopOverride: '', reviewed: false }),
+    reviewedRule({ id: 'inativa', active: false, cfopOverride: '', reviewed: false }),
+  ]);
+  matrix.reviewedBy = '';
+  matrix.reviewedAt = '';
+  const input = { matrix, documentScope: ['nfe'], taxReviewConfirmed: false, taxReformReviewConfirmed: false };
+  const result = validateFiscalMatrixPublication(input);
+  assert.deepEqual(result.issues.map(({ field, ruleId }) => [field, ruleId]), [
+    ['cfopOverride', 'outra-regra'], ['reviewedBy', ''], ['reviewedAt', ''],
+    ['taxReviewConfirmed', ''], ['taxReformReviewConfirmed', ''], ['reviewed', 'outra-regra'],
+  ]);
+  assert.equal(result.errors.length, result.issues.length);
+  let writes = 0;
+  const service = createCommercialFiscalRulesPublicationService({ repository: { publish: async () => { writes++; } } });
+  const blocked = await service.publish({ context, input, expectedVersion: 0, idempotencyKey: 'fiscal:rules:fields' });
+  assert.equal(blocked.ok, false);
+  assert.equal(writes, 0);
+  assert.deepEqual(blocked.errors.map(({ field, message }) => ({ field, message })), result.issues.map(({ field, message }) => ({ field, message })));
+});
+
+test('data de revisão inválida ou futura aponta o campo certo mesmo sem regras marcadas', () => {
+  for (const reviewedAt of ['2026-02-30', '2999-01-01', '']) {
+    const result = validateFiscalMatrixPublication({ matrix: { ...reviewedMatrix([reviewedRule({ reviewed: false })]), reviewedAt }, taxReviewConfirmed: true, taxReformReviewConfirmed: true });
+    assert.equal(result.issues.find((issue) => issue.field === 'reviewedAt')?.code, 'AV-FISCAL-RULES-REVIEW-DATE');
+    assert.equal(result.ready, false);
+  }
+});
+
+test('ação real de publicar navega até a pendência e só envia após completar a revisão', async () => {
+  const source = await readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
+  const component = source.slice(source.indexOf('function FiscalMatrixDialog('), source.indexOf('\ntype AccessTab ='));
+  const saveSource = component.slice(component.indexOf('  const save = () => {'), component.indexOf('  return <Dialog'));
+  const createSave = new Function('readOnly', 'draft', 'documentScope', 'taxReviewConfirmedDraft', 'taxReformReviewConfirmedDraft', 'validateFiscalMatrixPublication', 'setError', 'goToIssue', 'onSave', `${saveSource}\nreturn save;`);
+  const matrix = reviewedMatrix([reviewedRule({ reviewed: false }), reviewedRule({ id: 'inativa', active: false, cfopOverride: '', reviewed: false })]);
+  matrix.reviewedBy = '';
+  matrix.reviewedAt = '';
+  let pending;
+  let sent = 0;
+  const submit = () => createSave(false, matrix, ['nfe'], true, true, validateFiscalMatrixPublication, () => {}, (issue) => { pending = issue; }, () => { sent++; })();
+  submit();
+  assert.equal(pending.field, 'reviewedBy');
+  assert.equal(sent, 0);
+  matrix.reviewedBy = 'Responsável fiscal';
+  submit();
+  assert.equal(pending.field, 'reviewedAt');
+  matrix.reviewedAt = '2026-09-10';
+  submit();
+  assert.equal(pending.field, 'reviewed');
+  assert.equal(pending.ruleId, 'nfe-teste');
+  assert.equal(sent, 0);
+  matrix.rules[0].reviewed = true;
+  submit();
+  assert.equal(sent, 1);
+  assert.equal(matrix.rules[0].cfopOverride, '5102');
+  assert.equal(matrix.rules[1].active, false);
 });
 
 test('resolução server-side exige inscrição estadual quando a regra selecionada determina', async () => {
@@ -133,14 +217,14 @@ test('resolução server-side exige inscrição estadual quando a regra selecion
   assert.equal(complete.ruleId, 'nfe-teste');
 });
 
-test('resolução usa o enquadramento da empresa, não códigos legados do produto', async () => {
+test('modo empresa ignora códigos antigos do produto e exige padrões fiscais preenchidos', async () => {
   const matrix = reviewedMatrix();
   const resolver = createCommercialFiscalRuleResolver({ repository: { getPublished: async () => ({ status: 'publicada', matrixVersion: matrix.version, matrix, version: 2, taxReviewConfirmed: true, taxReformReviewConfirmed: true, contentDigest: 'a'.repeat(64) }) } });
   const result = await resolver({
     companyId, documentType: 'nfe',
     issuer: { state: 'SP', taxRegime: 'simples_nacional', fiscalConfiguration: { originCode: '0', csosn: '', pisCst: '', cofinsCst: '' } },
     customer: { stateRegistrationIndicator: 'contribuinte_icms', consumerFinal: false, stateRegistration: '110042490114', address: { state: 'SP' } },
-    items: [{ ...completeItem(), fiscal: { ...completeItem().fiscal, originCode: '1', icmsCode: '102', pisCst: '49', cofinsCst: '49' } }],
+    items: [{ ...completeItem(), fiscal: { ...completeItem().fiscal, useCompanyFiscal: true, originCode: '1', icmsCode: '102', pisCst: '49', cofinsCst: '49' } }],
   });
   assert.equal(result.valid, false);
   assert.match(result.errors.map((error) => error.message).join(' '), /CST\/CSOSN.*CST do PIS.*CST da COFINS/i);

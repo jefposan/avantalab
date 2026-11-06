@@ -17,6 +17,8 @@ export type ItemCatalogoVendas = {
   codigoBarras: string;
   situacaoFiscal: 'Completo' | 'Revisar cadastro fiscal';
   fiscal: {
+    usarFiscalEmpresa?: boolean | null;
+    cfopInterestadual?: string;
     ncm: string;
     cest: string;
     origemMercadoria: string;

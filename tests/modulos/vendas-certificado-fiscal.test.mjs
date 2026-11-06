@@ -142,8 +142,8 @@ test('interface oferece revalidação sem reabrir automaticamente o formulário 
 test('certificado ativo alimenta a prontidão fiscal sem simular conexão com o autorizador', async () => {
   const source = await readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
   assert.match(source, /certificateValid: certificate\?\.certificateActive === true/);
-  assert.match(source, /providerConnected: certificate\?\.fiscalConnectionAvailable === true/);
-  assert.match(source, /fiscalConfigForIssuer\(moduleSettings, issuer, fiscalCertificateBridgeState\.certificate\)/);
+  assert.match(source, /providerConnected: execution \? execution\.transmissionAllowed === true : certificate\?\.fiscalConnectionAvailable === true/);
+  assert.match(source, /fiscalConfigForIssuer\(moduleSettings, issuer, fiscalCertificateBridgeState\.certificate, fiscalCertificateBridgeState\.execution\)/);
   assert.match(source, /Certificado fiscal ativo/);
   assert.match(source, /Consulta ativa; envio de homologação ainda bloqueado/);
   assert.doesNotMatch(source, /<strong>Fiscal não conectado<\/strong><small>Produção bloqueada com segurança<\/small>/);

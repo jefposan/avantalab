@@ -1,3 +1,5 @@
+import { shipmentHasLeftSeller } from './shipment-progress.ts';
+
 export type SaleStatusInput = {
   status: string;
   shipmentStatus: string | null;
@@ -32,7 +34,10 @@ const shipmentSubstates: Record<string, string> = {
   ready_for_pickup: 'Aguardando retirada pelo comprador',
   ready_for_dropoff: 'Aguardando postagem',
   picked_up: 'Coletado pelo transportador',
+  dropped_off: 'Postado no ponto de envio',
+  authorized_by_carrier: 'Envio autorizado pelo transportador',
   in_hub: 'No centro de distribuição',
+  in_transit: 'Em trânsito',
   out_for_delivery: 'Saiu para entrega',
   soon_deliver: 'Próxima entrega',
   at_the_door: 'Na porta do destinatário',
@@ -107,6 +112,7 @@ export function canConsultSaleLabel(sale: SaleStatusInput & { provider?: string 
   return (!sale.provider || sale.provider === 'mercado_livre')
     && ['paid', 'confirmed', 'partially_refunded'].includes(sale.status)
     && sale.labelStatus !== 'fulfilled'
+    && !shipmentHasLeftSeller(sale)
     && ['pending', 'handling', 'ready_to_ship'].includes(sale.shipmentStatus || '')
     && !canPrintSaleLabel(sale);
 }
@@ -126,7 +132,7 @@ export function labelUnavailableText(sale: SaleStatusInput) {
   if (sale.shipmentStatus === 'not_delivered') return null;
   if (sale.shipmentStatus === 'cancelled' || sale.status === 'cancelled') return null;
   if (sale.labelStatus === 'fulfilled') return 'Envio Full: a etiqueta é operada pelo Mercado Livre.';
-  if (['picked_up', 'in_hub', 'out_for_delivery', 'soon_deliver', 'at_the_door'].includes(sale.shipmentSubstatus || '')) return 'Envio já coletado ou em trânsito. A etiqueta não pode ser emitida nesta etapa.';
+  if (shipmentHasLeftSeller(sale)) return 'Envio já postado, coletado ou em trânsito. A etiqueta não pode ser emitida nesta etapa.';
   if (sale.shipmentSubstatus === 'buffered') {
     // O ML representa o dia civil programado também por meia-noite UTC.
     // Horários efetivos continuam convertidos para o fuso da operação.
@@ -175,7 +181,7 @@ export function saleGroup(sale: SaleStatusInput): SaleGroup {
   if (sale.status === 'invalid') return 'invalid';
   if (sale.shipmentStatus === 'delivered') return 'delivered';
   if (sale.shipmentStatus === 'not_delivered') return 'not_delivered';
-  if (sale.shipmentStatus === 'shipped') return 'in_transit';
+  if (shipmentHasLeftSeller(sale)) return 'in_transit';
   if (sale.status === 'payment_required') return 'payment_pending';
   if (sale.status === 'payment_in_process') return 'payment_processing';
   if (sale.status === 'partially_paid') return 'partially_paid';

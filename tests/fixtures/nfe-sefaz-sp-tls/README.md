@@ -1,0 +1,1 @@
+Cadeia **pública** apresentada por homologacao.nfe.fazenda.sp.gov.br em 06/11/2026. Sem chave privada ou dados de contribuinte. Usada em verificação offline com data fixa para reproduzir o erro de confiança do Node e validar hostname/cadeia. A raiz SSL v10 vem exclusivamente do repositório oficial ITI, documentado em nfe-server-trust.mjs.

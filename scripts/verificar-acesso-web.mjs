@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { publicLandingProtection } from './lib/protecao-landing.mjs';
 
 const raiz = resolve(import.meta.dirname, '..');
 const falhas = [];
@@ -12,11 +13,13 @@ function exigir(condicao, mensagem) {
   if (!condicao) falhas.push(mensagem);
 }
 
-const [autenticacao, retorno, estadoRetorno, landing, gestao, carregamento] = await Promise.all([
+const [autenticacao, retorno, estadoRetorno, landing, landingFinanceira, componenteLanding, gestao, carregamento] = await Promise.all([
   ler('app/hooks/useAuth.ts'),
   ler('app/components/RedirecionamentoPosOAuth.tsx'),
   ler('app/lib/oauth-retorno.ts'),
   ler('app/page.tsx'),
+  ler('app/gestao-financeira/page.tsx'),
+  ler('app/components/AvantaLandingPage.tsx'),
   ler('app/gestao/page.tsx'),
   ler('app/components/TelaCarregandoAcesso.tsx'),
 ]);
@@ -48,7 +51,7 @@ exigir(
   'O retorno OAuth deve limpar também a intenção social antes de navegar.',
 );
 exigir(
-  landing.indexOf('<RedirecionamentoPosOAuth />') < landing.indexOf('<main className='),
+  publicLandingProtection({ home: landing, finance: landingFinanceira, component: componenteLanding }),
   'A proteção de sessão deve ficar fora e antes da estrutura visível da landing.',
 );
 exigir(

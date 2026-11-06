@@ -1,5 +1,6 @@
 import type { CommercialOperationRecord } from './commercial-operation-repository.mjs';
 export const COMMERCIAL_OPERATION_SERVICE_REFERENCE: string;
+export function prepareOperation(options: Record<string, any>): Promise<Record<string, any>>;
 export function createCommercialOperationService(options?: { repository?: any; customerResolver?: any; catalogResolver?: any }): {
   create(input?: Record<string, any>): Promise<{ ok: boolean; operation?: CommercialOperationRecord; reused?: boolean; errors: any[]; warnings: any[] }>;
   update(input?: Record<string, any>): Promise<{ ok: boolean; operation?: CommercialOperationRecord; errors: any[]; warnings: any[] }>;

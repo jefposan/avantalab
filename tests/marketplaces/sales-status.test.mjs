@@ -1,8 +1,35 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { canIssueDce, canPrintSaleLabel, labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, salesInPeriod, salesSummary, saleGroup, validSalePeriod, orderedSaleGroups, SALE_GROUPS } from '../../app/modules/marketplaces/sales-status.ts';
+import { canIssueDce, canPrintSaleLabel, canConsultSaleLabel, labelActionText, labelUnavailableText, saleStatusText, shipmentStatusText, salesInPeriod, salesSummary, saleGroup, validSalePeriod, orderedSaleGroups, SALE_GROUPS } from '../../app/modules/marketplaces/sales-status.ts';
+import { SHIPMENT_IN_TRANSIT_SUBSTATUSES } from '../../app/modules/marketplaces/shipment-progress.ts';
 
 const sale = (overrides = {}) => ({ status: 'paid', shipmentStatus: 'ready_to_ship', shipmentSubstatus: 'ready_to_print', labelStatus: 'ready', ...overrides });
+
+test('substatus após postagem/coleta classificam trânsito e retiram ações de etiqueta', () => {
+  for (const shipmentSubstatus of SHIPMENT_IN_TRANSIT_SUBSTATUSES) {
+    const row = sale({ shipmentSubstatus, labelStatus: 'unavailable', dceRequested: true });
+    assert.equal(saleGroup(row), 'in_transit', shipmentSubstatus);
+    assert.equal(canConsultSaleLabel(row), false, shipmentSubstatus);
+    assert.equal(canPrintSaleLabel(row), false);
+    assert.equal(canIssueDce(row), false);
+    assert.match(labelUnavailableText(row), /já postado, coletado ou em trânsito/);
+  }
+  assert.equal(shipmentStatusText('ready_to_ship', 'dropped_off'), 'Postado no ponto de envio');
+  assert.equal(shipmentStatusText('ready_to_ship', 'in_hub'), 'No centro de distribuição');
+});
+
+test('preparação, emissão, cancelamento e devolução conservam prioridades', () => {
+  for (const shipmentSubstatus of ['buffered', 'invoice_pending', 'waiting_for_label_generation', 'ready_for_dropoff', 'in_pickup_list', 'in_packing_list', 'substatus_novo']) {
+    const row=sale({ shipmentSubstatus, labelStatus:'unavailable' });
+    assert.equal(saleGroup(row),'awaiting_dispatch');
+    assert.equal(canConsultSaleLabel(row),true);
+  }
+  assert.equal(canPrintSaleLabel(sale()),true);
+  assert.equal(canIssueDce(sale({shipmentSubstatus:'invoice_pending',labelStatus:'unavailable'})),true);
+  for (const [patch,expected] of [[{status:'cancelled'},'cancelled'],[{status:'pending_cancel'},'pending_cancel'],[{status:'partially_refunded'},'refunded'],[{shipmentStatus:'delivered'},'delivered'],[{shipmentStatus:'not_delivered'},'not_delivered']]) {
+    assert.equal(saleGroup(sale({shipmentSubstatus:'in_hub',...patch})),expected);
+  }
+});
 
 test('ordena situações da maior contagem para a menor e deixa zeros ao final', () => {
   const counts = { confirmed: 3, awaiting_dispatch: 2, cancelled: 1 };
@@ -56,7 +83,7 @@ test('botão de etiqueta só é elegível quando a impressão está liberada', (
     { status: 'payment_in_process' },
     { labelStatus: 'fulfilled' },
   ]) assert.equal(canPrintSaleLabel(sale(overrides)), false);
-  assert.equal(labelUnavailableText(sale({ labelStatus: 'unavailable', shipmentSubstatus: 'picked_up' })), 'Envio já coletado ou em trânsito. A etiqueta não pode ser emitida nesta etapa.');
+  assert.equal(labelUnavailableText(sale({ labelStatus: 'unavailable', shipmentSubstatus: 'picked_up' })), 'Envio já postado, coletado ou em trânsito. A etiqueta não pode ser emitida nesta etapa.');
 });
 
 test('DC-e só pode ser solicitada para envio pago aguardando documento fiscal', () => {

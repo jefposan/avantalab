@@ -1,4 +1,5 @@
 import { request as nodeHttpsRequest } from 'node:https';
+import { NFE_SERVER_CA } from './nfe-server-trust.mjs';
 
 import { prepareNfeA1Pkcs12ForMutualTls } from './nfe-a1-certificate.mjs';
 import { validateSecureCertificateReference } from './nfe-certificate-vault.mjs';
@@ -105,6 +106,7 @@ function postWithMutualTls({ requestImpl, url, request, pkcs12, passphrase }) {
       servername: url.hostname,
       agent: false,
       rejectUnauthorized: true,
+      ca: NFE_SERVER_CA,
       minVersion: 'TLSv1.2',
       pfx: pkcs12,
       passphrase,

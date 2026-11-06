@@ -23,6 +23,8 @@ const FISCAL_NUMBER_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_NUMBER_RESPONSE_V1'
 const FISCAL_ISSUE_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_ISSUE_REQUEST_V1';
 const FISCAL_ISSUE_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_ISSUE_RESPONSE_V1';
 const FISCAL_CORRECTION_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_CORRECTION_REQUEST_V1';
+const FISCAL_DELETE_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_DELETE_REQUEST_V1';
+const FISCAL_DELETE_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_DELETE_RESPONSE_V1';
 const FISCAL_CORRECTION_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_CORRECTION_RESPONSE_V1';
 const FISCAL_CANCELLATION_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_CANCELLATION_REQUEST_V1';
 const FISCAL_CANCELLATION_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_CANCELLATION_RESPONSE_V1';
@@ -262,6 +264,15 @@ export default function VendasCatalogoLab() {
   }, [carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais]);
 
   useEffect(() => {
+    const refresh = (event: MessageEvent) => {
+      if(event.origin!==origemPrototipo || event.source!==iframeRef.current?.contentWindow || event.data?.type!=='AVANTALAB_VENDAS_CATALOG_REFRESH_V1' || event.data.companyId!==empresaId)return;
+      void carregarCatalogo(empresaId);
+    };
+    window.addEventListener('message',refresh);
+    return ()=>window.removeEventListener('message',refresh);
+  },[carregarCatalogo,empresaId,origemPrototipo]);
+
+  useEffect(() => {
     let ativo = true;
     const iniciar = async () => {
       const { data } = await supabase.auth.getSession();
@@ -378,7 +389,7 @@ export default function VendasCatalogoLab() {
       if ([FISCAL_CERTIFICATE_STATUS_REQUEST_TYPE, FISCAL_CERTIFICATE_INSTALL_REQUEST_TYPE].includes(event.data?.type)) {
         const requestId = event.data?.requestId;
         const destination = iframeRef.current?.contentWindow;
-        const responseType = event.data?.type === FISCAL_CERTIFICATE_INSTALL_REQUEST_TYPE
+        const responseType = event.data?.type === FISCAL_DELETE_REQUEST_TYPE ? FISCAL_DELETE_RESPONSE_TYPE : event.data?.type === FISCAL_CERTIFICATE_INSTALL_REQUEST_TYPE
           ? FISCAL_CERTIFICATE_INSTALL_RESPONSE_TYPE
           : FISCAL_CERTIFICATE_STATUS_RESPONSE_TYPE;
         const responsePort = event.data?.type === FISCAL_CERTIFICATE_INSTALL_REQUEST_TYPE ? event.ports[0] : undefined;
@@ -432,7 +443,7 @@ export default function VendasCatalogoLab() {
         void handleCertificate();
         return;
       }
-      if (![FISCAL_STATUS_REQUEST_TYPE, FISCAL_DOWNLOAD_REQUEST_TYPE, FISCAL_PREPARE_REQUEST_TYPE, FISCAL_VALIDATE_REQUEST_TYPE, FISCAL_NUMBER_REQUEST_TYPE, FISCAL_ISSUE_REQUEST_TYPE, FISCAL_CORRECTION_REQUEST_TYPE, FISCAL_CANCELLATION_REQUEST_TYPE, COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE].includes(event.data?.type)) return;
+      if (![FISCAL_DELETE_REQUEST_TYPE, FISCAL_STATUS_REQUEST_TYPE, FISCAL_DOWNLOAD_REQUEST_TYPE, FISCAL_PREPARE_REQUEST_TYPE, FISCAL_VALIDATE_REQUEST_TYPE, FISCAL_NUMBER_REQUEST_TYPE, FISCAL_ISSUE_REQUEST_TYPE, FISCAL_CORRECTION_REQUEST_TYPE, FISCAL_CANCELLATION_REQUEST_TYPE, COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE].includes(event.data?.type)) return;
       const responder = async () => {
         const requestId = event.data?.requestId;
         const responseType = event.data?.type === COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE
@@ -546,13 +557,24 @@ export default function VendasCatalogoLab() {
             await carregarDocumentosFiscais(empresaId, token);
             return;
           }
+          if (event.data.type === FISCAL_DELETE_REQUEST_TYPE) {
+            const draftId=String(event.data.draftId || ''); const expectedVersion=Number(event.data.expectedVersion);
+            if(!UUID_PATTERN.test(draftId) || !Number.isSafeInteger(expectedVersion) || expectedVersion<0){fail('Rascunho inválido.');return;}
+            const params=new URLSearchParams({companyId:empresaId});
+            const response=await fetch(`/api/modulos/vendas/fiscal/drafts/${encodeURIComponent(draftId)}/delete?${params}`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({expectedVersion,confirmation:'EXCLUIR_RASCUNHO_NFE'}),cache:'no-store'});
+            const payload=await response.json().catch(()=>({}));
+            if(!response.ok || payload.ok!==true){fail(payload.message || 'Não foi possível excluir o rascunho.');return;}
+            destination.postMessage({type:responseType,requestId,ok:true,draftId},origemPrototipo);
+            await carregarDocumentosFiscais(empresaId,token);return;
+          }
           if (event.data.type === FISCAL_CORRECTION_REQUEST_TYPE) {
             const emissionId = String(event.data.emissionId || '');
             const expectedVersion = Number(event.data.expectedVersion);
             const rejectedStatusCode = String(event.data.rejectedStatusCode || '');
             const items = Array.isArray(event.data.items) ? event.data.items : [];
+            const note = event.data.note && typeof event.data.note === 'object' && !Array.isArray(event.data.note) ? event.data.note : null;
             if (!UUID_PATTERN.test(emissionId) || !Number.isSafeInteger(expectedVersion) || expectedVersion < 1
-              || !/^\d{3}$/.test(rejectedStatusCode) || !items.length || items.length > 200) {
+              || !/^\d{3}$/.test(rejectedStatusCode) || (!note && (!items.length || items.length > 200)) || (note && JSON.stringify(note).length > 60000)) {
               fail('Revise os dados fiscais indicados e tente novamente.');
               return;
             }
@@ -560,7 +582,7 @@ export default function VendasCatalogoLab() {
             const response = await fetch(`/api/modulos/vendas/fiscal/documents/${encodeURIComponent(emissionId)}/correction?${params}`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ expectedVersion, rejectedStatusCode, items }),
+              body: JSON.stringify({ expectedVersion, rejectedStatusCode, idempotencyKey: `note-correction:${requestId}`, confirmation: 'REVISAR_NFE_REJEITADA', changes: note ? {note} : {items} }),
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));

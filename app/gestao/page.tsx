@@ -16,6 +16,7 @@ import ModalTermos from '@/app/components/ModalTermos';
 import ModalPrivacidade from '@/app/components/ModalPrivacidade';
 import Tooltip from '@/app/components/Tooltip';
 import BotaoVisibilidadeSenha from '@/app/components/BotaoVisibilidadeSenha';
+import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
 import ModalInstrucoes from '@/app/components/ModalInstrucoes';
 import ModalDespesasBase from '@/app/components/ModalDespesasBase';
 import CentrosCustoModal from '@/app/components/CentrosCustoModal';
@@ -1486,6 +1487,16 @@ const perfilUsuarioFormatado =
         : perfilUsuario === 'operador_simples'
           ? 'Operador Simples'
           : 'Não definido';
+
+const podeEditarCadastroDoPerfil = (perfilId: string | null) => Boolean(perfilId) && empresasDoUsuario.some((perfil) => (
+  perfil.id === perfilId && (perfil.perfil === 'gestor_master' || perfil.perfil === 'administrador')
+));
+
+const abrirCadastroDoPerfil = (perfilId: string | null) => {
+  if (!perfilId || !podeEditarCadastroDoPerfil(perfilId)) return;
+  setModalEmpresasAberto(false);
+  setPerfilCadastroEdicaoId(perfilId);
+};
 
 const tipoPerfilAtualNormalizado = normalizarTipoPerfil(tipoPerfilAtual);
 const tipoPerfilInicialNormalizado = normalizarTipoPerfil(tipoPerfilInicial);
@@ -10131,11 +10142,25 @@ if (validacaoTelefoneObrigatoria) {
         </div>
         {!subAcaoGerenciar && (
           <div className="mt-3 rounded-xl border bg-white/10 p-2.5" style={{ borderColor: bordaSobreCorPrimaria }}>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="h-3 w-1 rounded-full bg-current opacity-90" aria-hidden="true" />
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-80">
-                Perfil ativo
-              </p>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="h-3 w-1 rounded-full bg-current opacity-90" aria-hidden="true" />
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-80">
+                  Perfil ativo
+                </p>
+              </div>
+              <BotaoAcaoCompacto
+                variante="secundario"
+                className="shrink-0"
+                style={{ '--av-action-focus': 'currentColor' } as React.CSSProperties}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={() => abrirCadastroDoPerfil(empresaId)}
+                disabled={!podeEditarCadastroDoPerfil(empresaId)}
+                aria-label="Editar cadastro do perfil ativo"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-6M16 3a2.12 2.12 0 0 1 3 3l-8 8-4 1 1-4Z" /></svg>
+                Editar
+              </BotaoAcaoCompacto>
             </div>
             <div className="grid grid-cols-[minmax(0,2fr)_minmax(72px,1fr)_minmax(64px,1fr)] gap-2 text-xs">
               <div className="min-w-0">
@@ -10200,7 +10225,7 @@ if (validacaoTelefoneObrigatoria) {
               </p>
               <div className="max-h-52 space-y-2 overflow-y-auto pr-1">
                 {empresasDoUsuario.map((perfil) => {
-                  const podeEditarPerfil = perfil.perfil === 'gestor_master' || perfil.perfil === 'administrador';
+                  const podeEditarPerfil = podeEditarCadastroDoPerfil(perfil.id);
                   const perfilAtivo = perfil.id === empresaId;
                   const perfilDependente = Boolean(perfil.assinatura_origem_empresa_id);
                   return (
@@ -10208,10 +10233,7 @@ if (validacaoTelefoneObrigatoria) {
                       key={perfil.id}
                       type="button"
                       disabled={!podeEditarPerfil}
-                      onClick={() => {
-                        setModalEmpresasAberto(false);
-                        setPerfilCadastroEdicaoId(perfil.id);
-                      }}
+                      onClick={() => abrirCadastroDoPerfil(perfil.id)}
                       className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
                         podeEditarPerfil
                           ? darkMode

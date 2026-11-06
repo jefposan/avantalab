@@ -1,10 +1,95 @@
-<!-- ava-version: 3.2.0.310 -->
+<!-- ava-version: 3.2.0.363 -->
 
-> Revisão 3.2.0.310: fontes históricas de recursos existentes preservadas após auditoria; sem impacto operacional e sem remoção de funcionalidades.
+> Revisão 3.2.0.363: sem impacto operacional; reconciliação das fontes publicadas com a main, sem publicação nem execução de SQL.
 
-> Auditoria 3.2.0.310: histórico SQL conferido e organizado; sem impacto operacional e sem aplicação de migrações.
+> Revisão 3.2.0.362: Sem impacto operacional neste ambiente; orientação de pendências no emissor Web.
 
-> Revisão 3.2.0.310: reconciliação de fontes e proteção da publicação pela main; sem impacto operacional.
+> Revisão 3.2.0.361: Sem impacto operacional neste ambiente; integração da página de emissão de NF-e em Vendas e Serviços Web. AvantaVendas não emite notas fiscais.
+
+> Revisão 3.2.0.360: Sem impacto operacional neste ambiente; avaliação local da página de emissão em Vendas e Serviços Web, sem publicação.
+
+> Revisão 3.2.0.359: Sem impacto operacional neste ambiente; acesso à edição da nota pendente em Vendas e Serviços Web.
+
+> Revisão 3.2.0.357: Sem impacto operacional neste ambiente; ajuste dos itens de pedido e nota em Vendas e Serviços Web.
+
+> Revisão 3.2.0.353: sem impacto operacional no AvantaVendas ou na emissão fiscal de Vendas e Serviços; correção restrita a Marketplaces.
+
+> Revisão 3.2.0.351: sem impacto operacional; refinamento da edição de NF-e rejeitada no emissor Web.
+
+> Revisão 3.2.0.350: sem impacto operacional; edição da NF-e rejeitada no emissor Web.
+
+> Revisão 3.2.0.349: sem impacto operacional; correção técnica do validador XML do emissor Web.
+
+> Revisão 3.2.0.348: sem impacto operacional; ajuste da conferência fiscal Web.
+
+> Revisão 3.2.0.347: sem impacto operacional no AvantaVendas, que não emite notas; correção do XML no emissor Web.
+
+
+> Revisão 3.2.0.346: sem impacto operacional no AvantaVendas, que não emite notas; simplificação do emissor de Vendas e Serviços Web.
+
+> Revisão 3.2.0.345: sem impacto operacional no AvantaVendas, que não emite notas; tratamento do retorno no emissor Web.
+
+> Revisão 3.2.0.344: sem impacto operacional no AvantaVendas, que não emite notas; ajuste no emissor de Vendas e Serviços Web.
+
+> Revisão 3.2.0.343: sem impacto operacional; preservação da versão imutável do protocolo corrigida para concluir os documentos de Vendas e Serviços Web.
+
+> Revisão 3.2.0.342: sem impacto operacional no AvantaVendas, que não emite notas; resultado e retorno fiscal ajustados em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.341: sem impacto operacional no AvantaVendas, que não emite notas. Registro e diagnóstico do envio corrigidos em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.340: sem impacto operacional no AvantaVendas, que não emite notas; campos numéricos de Vendas e Serviços Web ajustados.
+
+> Revisão 3.2.0.339: sem impacto operacional no AvantaVendas, que não emite notas. Numeração e atalho da pendência corrigidos em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.338: sem impacto operacional no AvantaVendas; correção aplicada aos popups Web e à integração de Vendas e Serviços na Gestão.
+
+> Revisão 3.2.0.337: sem impacto operacional no AvantaVendas, que não emite notas. Conferência e envio unificados em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.336: sem impacto operacional no AvantaVendas; ajuste de rolagem aplicado nos detalhes fiscais de Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.335: sem impacto operacional no AvantaVendas, que não emite notas; correção aplicada em Vendas e Serviços da Gestão Web.
+
+
+
+> Revisão 3.2.0.334: sem impacto operacional no AvantaVendas; contraste contextual dos popups ajustado somente em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.333: sem impacto operacional no AvantaVendas; padronização dos popups aplicada em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.332: sem impacto operacional no AvantaVendas; tooltips independentes aplicados à lista de operações de Vendas e Serviços da Gestão Web.
+
+
+
+> Revisão 3.2.0.331: sem impacto operacional no AvantaVendas, que não emite notas. Ações de correção fiscal são oferecidas na Gestão Web.
+
+> Revisão 3.2.0.330: sem impacto operacional no AvantaVendas, que não emite notas. A simplificação do emissor e a herança tributária dos produtos são mantidas na Gestão Web.
+
+> Revisão 3.2.0.329: sem impacto operacional neste aplicativo. A configuração tributária herdada e as exceções de produtos são mantidas pela Gestão Web em Custos e Precificação. AvantaVendas não emite notas fiscais.
+
+> Revisão 3.2.0.328: sem impacto operacional no AvantaVendas; atalho do cadastro do perfil ativo incluído somente na Gestão Web.
+
+> Revisão 3.2.0.327: sem impacto operacional no AvantaVendas, que não emite notas. Encaminhamento aos campos pendentes ajustado em Vendas e Serviços Web.
+
+> Revisão 3.2.0.326: sem impacto operacional no AvantaVendas; menu compacto aprovado e correção da edição aplicados somente em Vendas e Serviços Web.
+
+> Revisão 3.2.0.325: sem impacto operacional no AvantaVendas; correção da edição de pedidos aplicada somente em Vendas e Serviços Web.
+
+> Revisão 3.2.0.324: sem impacto operacional no AvantaVendas; visual aprovado dos indicadores aplicado somente em Vendas e Serviços Web.
+
+> Revisão 3.2.0.322: sem impacto operacional no AvantaVendas, que não emite notas; lista e ações de Notas Fiscais reorganizadas em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.321: sem impacto operacional no AvantaVendas, que não emite notas; NF-e avulsa independente adicionada em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.320: sem impacto operacional no AvantaVendas; ações de pedidos ajustadas em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.319: sem impacto operacional no AvantaVendas. Correção da retomada de pedidos após recarga aplicada na Gestão Web.
+
+> Revisão 3.2.0.318: Sem impacto operacional no AvantaVendas. A retomada do mesmo pedido em rascunho foi implementada somente em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.317: Sem impacto operacional no AvantaVendas. O ajuste do modal de ações de pedidos foi aplicado somente em Vendas e Serviços da Gestão Web.
+
+> Revisão 3.2.0.316: Sem impacto operacional neste aplicativo. A Gestão Web recebeu itens de pedido compactos e controle de estoque opcional por pedido, sem alterar os fluxos deste aplicativo.
+
+> Revisão 3.2.0.315: Catálogos aceitam vários ativos por destino. Vendas e Serviços e AvantaVendas são independentes. Desativar apenas oculta itens, sem excluir produtos. Produtos e serviços reúne automaticamente todos os catálogos ativos em Vendas e Serviços, sem filtro manual; nenhum ativo deixa a lista vazia. Excluir catálogo manual, com confirmação, desliga os dois destinos e retira seus itens de novas operações, sem transferência ao catálogo local. Preços, históricos e lançamentos anteriores são preservados. Catálogos de sistema são protegidos; catálogo excluído não pode ser reativado nem receber novos itens. Sem alteração de interface na Gestão Mobile.
 
 > Revisão 3.2.0.309: sem impacto operacional; revisão do download do modelo Excel de despesas na Gestão Web.
 
@@ -5846,3 +5931,12 @@ Revisão 3.2.0.290: importação de despesas no mês preserva o centro de custo 
 Revisão 3.2.0.290: o tipo informado na planilha é preservado até carregar o cadastro do perfil; acentos, caixa e espaços não impedem reconhecimento. A seleção manual prevalece, e categoria de outro perfil exige revisão. Tabela sem repetir descrição/valor original, mantendo valores de conferência internamente e controles alinhados. Sem alteração de permissões, banco ou lançamentos existentes.
 
 Refinamento 3.2.0.290: opção Automático no tipo de documento mantém a detecção automática e cabe no card. Sem alteração operacional nos demais ambientes.
+
+Revisão 3.2.0.354: Corrigir nota abre a mesma página de emissão de uma nota nova, preenchida com a nota rejeitada, sem popup de edição. Salvar conserva a série e o número; Salvar e emitir salva e continua a emissão. Itens, valores, pagamento e informações complementares são editados na página. Excluir rascunho retira a pendência da lista e libera a reserva comprovadamente não utilizada, conservando somente auditoria privada. Nota autorizada ou envio sem resultado confirmado não pode ser excluído.
+
+
+Revisão 3.2.0.355: sem impacto operacional neste manual. O novo atendimento de pedidos de Marketplaces pertence à Gestão Web; não altera a emissão fiscal do Vendas ou as telas Mobile.
+
+Revisão 3.2.0.358: sem impacto operacional neste manual. A opção Fechar todos pertence aos popups de venda de Marketplaces na Gestão Web; não altera as telas deste ambiente.
+
+Revisão técnica 3.2.0.358 da página inicial: sem impacto operacional; conteúdo, aparência, acesso e navegação pública preservados.

@@ -1,3 +1,4 @@
+import { fiscalOperationCfop, fiscalIbsCbsRequired } from './fiscal-item-presentation.mjs';
 import { normalizeFiscalMatrix, validateFiscalMatrix } from './fiscal-matrix.mjs';
 import { resolveMunicipalityCode } from './municipality.mjs';
 
@@ -374,7 +375,7 @@ export function validateFiscalDraft({ documentType, recipient, items, config }) 
     add('classificacao', 'Classificação dos serviços', fiscalItems.length > 0 && fiscalItems.every((item) => item.kind === 'servico' && item.municipalServiceCode?.trim() && item.nationalServiceCode?.trim() && item.nbs?.trim() && Number(item.issRate) > 0 && item.pisCst?.trim() && item.cofinsCst?.trim() && item.serviceIncidenceMode && item.serviceIncidenceMode !== 'Definir por operação'), 'Código municipal, item nacional, NBS, ISS, PIS/COFINS e incidência precisam estar definidos');
   } else {
     add('inscricao', 'Inscrição estadual', config?.stateRegistration?.trim(), 'Cadastro estadual do emitente');
-    add('classificacao', 'Classificação das mercadorias', fiscalItems.length > 0 && fiscalItems.every((item) => item.kind === 'produto' && item.ncm?.trim() && item.taxableUnit?.trim() && item.fiscalOriginCode?.trim() && item.cfopInternal?.trim() && (documentType === 'nfce' || item.cfopInterstate?.trim()) && item.icmsCode?.trim() && item.pisCst?.trim() && item.cofinsCst?.trim() && item.fiscalStatus === 'Completo'), documentType === 'nfce' ? 'NCM, unidade tributável, origem, CFOP da NFC-e, ICMS, PIS/COFINS e complementos fiscais precisam estar completos' : 'NCM, unidade tributável, origem, CFOP interno e interestadual, ICMS, PIS/COFINS e complementos fiscais precisam estar completos');
+    add('classificacao', 'Classificação das mercadorias', fiscalItems.length > 0 && fiscalItems.every((item) => item.kind === 'produto' && item.ncm?.trim() && item.taxableUnit?.trim() && item.fiscalOriginCode?.trim() && (config?.fiscalDestination ? fiscalOperationCfop(item, config.fiscalDestination) : item.cfopInternal?.trim() && (documentType === 'nfce' || item.cfopInterstate?.trim())) && item.icmsCode?.trim() && item.pisCst?.trim() && item.cofinsCst?.trim() && item.fiscalStatus === 'Completo'), documentType === 'nfce' ? 'NCM, unidade tributável, origem, CFOP da NFC-e, ICMS, PIS/COFINS e complementos fiscais precisam estar completos' : 'Revise NCM, unidade tributável, origem, CFOP desta operação, ICMS e PIS/COFINS dos produtos');
   }
   add('certificado', 'Certificado ou assinatura', config?.certificateValid, 'Credencial válida e protegida', 'transmissao');
   add('provedor', 'Provedor ou autorizador', config?.providerConnected, 'Conector homologado e credenciais válidas', 'transmissao');
@@ -382,7 +383,7 @@ export function validateFiscalDraft({ documentType, recipient, items, config }) 
   if (documentType === 'nfse') add('rota-nfse', 'Rota de autorização da NFS-e', config?.nfseAuthorityMode && config.nfseAuthorityMode !== 'Não definido', 'Padrão nacional ou prefeitura/provedor municipal', 'transmissao');
   add('revisao', 'Revisão fiscal', config?.taxReviewConfirmed, 'Regras aprovadas pelo responsável fiscal', 'transmissao');
   add('reforma', 'Revisão IBS/CBS e CNPJ', config?.taxReformReviewConfirmed, 'Leiautes e regras vigentes revisados antes da homologação', 'transmissao');
-  add('reforma-itens', 'IBS/CBS dos itens', fiscalItems.length > 0 && fiscalItems.every((item) => item.ibsCbsCst?.trim() && item.ibsCbsClassification?.trim() && (documentType !== 'nfse' || item.ibsCbsOperationIndicator?.trim())), 'CST, classificação tributária e indicador da operação quando exigido', 'transmissao');
+  if (fiscalIbsCbsRequired({ documentType, taxRegime: config?.taxRegime, issueDate: config?.issueDate })) add('reforma-itens', 'IBS/CBS dos itens', fiscalItems.length > 0 && fiscalItems.every((item) => item.ibsCbsCst?.trim() && item.ibsCbsClassification?.trim() && (documentType !== 'nfse' || item.ibsCbsOperationIndicator?.trim())), 'CST, classificação tributária e indicador da operação quando exigido', 'transmissao');
   const draftReady = checks.filter((check) => check.scope === 'cadastro').every((check) => check.ready);
   const transmissionReady = checks.every((check) => check.ready);
   const errors = checks.filter((check) => !check.ready).map((check) => `${check.label}: ${check.detail}.`);

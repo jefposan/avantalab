@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, type ReactNode } from 'react';
+import SaleServiceWorkspace from './SaleServiceWorkspace';
 import type { PostSaleDetails } from '@/app/modules/marketplaces/post-sale';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import { marketplaceClientRequest } from './Anunciados';
@@ -12,13 +13,14 @@ import { marketplaceDateTime as date } from '@/app/modules/marketplaces/date-for
 
 const formatDate = (value: string) => Number.isFinite(Date.parse(value)) ? date.format(new Date(value)) : 'Data não informada';
 
-export default function SalePostSale({ companyId, saleId, connectionId, provider, accountName, onSaleUpdated }: {
-  companyId: string; saleId: string; connectionId: string; provider?: MarketplaceSale['provider']; accountName?: string; onSaleUpdated: (sale: MarketplaceSale) => void;
+export default function SalePostSale({ companyId, saleId, connectionId, provider, accountName, dark, onSaleUpdated }: {
+  companyId: string; saleId: string; connectionId: string; provider?: MarketplaceSale['provider']; accountName?: string; dark?: boolean; onSaleUpdated: (sale: MarketplaceSale) => void;
 }) {
   const [details, setDetails] = useState<PostSaleDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [revision, setRevision] = useState(0);
+  const atendimentoAlterado = useCallback(() => { setLoading(true); setError(''); setRevision(value => value + 1); }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -32,18 +34,19 @@ export default function SalePostSale({ companyId, saleId, connectionId, provider
     return () => controller.abort();
   }, [companyId, saleId, connectionId, revision, onSaleUpdated]);
 
-  return <SalePostSaleView provider={provider} accountName={accountName} details={details} loading={loading} error={error} onRefresh={() => { setLoading(true); setError(''); setDetails(null); setRevision((value) => value + 1); }} />;
+  return <SalePostSaleView atendimento={provider !== 'magalu' ? <SaleServiceWorkspace key={`${companyId}:${connectionId}:${saleId}`} companyId={companyId} connectionId={connectionId} saleId={saleId} accountName={accountName} dark={dark} onChanged={atendimentoAlterado} /> : undefined} provider={provider} accountName={accountName} details={details} loading={loading} error={error} onRefresh={() => { setLoading(true); setError(''); setDetails(null); setRevision((value) => value + 1); }} />;
 }
 
 /** Apresentação sem acesso a sessão; permite validar todos os estados com dados simulados. */
-export function SalePostSaleView({ details, loading, error, onRefresh, provider, accountName }: {
-  details: PostSaleDetails | null; loading: boolean; error: string; onRefresh: () => void; provider?: MarketplaceSale['provider']; accountName?: string;
+export function SalePostSaleView({ details, loading, error, onRefresh, provider, accountName, atendimento }: {
+  details: PostSaleDetails | null; loading: boolean; error: string; onRefresh: () => void; provider?: MarketplaceSale['provider']; accountName?: string; atendimento?: ReactNode;
 }) {
   const magalu = (details?.provider || provider) === 'magalu';
   const name = magalu ? 'Magalu' : 'Mercado Livre';
   const platformLink = magalu ? 'https://seller.magalu.com' : 'https://www.mercadolivre.com.br/vendas';
   return <div className={`${styles.postSale} ${saleLayout.postSale}`}>
     <div className={`${styles.postSaleHeading} ${saleLayout.postSaleHeading}`}><h3>Pós-venda · {name}</h3><BotaoAcaoCompacto aria-label="Atualizar pós-venda" disabled={loading} onClick={onRefresh}><Icon name="refresh" size={16} />{loading ? 'Consultando…' : 'Atualizar'}</BotaoAcaoCompacto></div>
+    {atendimento}
     {loading && <p className={styles.salesScopeHelp} role="status">Consultando cancelamento, reclamações, devolução e reembolso no {name}…</p>}
     {error && <p className={styles.salesError} role="alert">{error} Não foi possível confirmar devolução ou reembolso. Tente Atualizar pós-venda.</p>}
     {details && <>
@@ -96,7 +99,7 @@ export function SalePostSaleView({ details, loading, error, onRefresh, provider,
       </section>)}
       {!!details.financialEntries?.length && <section className={styles.claimDetails}><h4>Movimentações financeiras informadas</h4><p className={styles.salesScopeHelp}>São registros do Magalu; não representam, por si só, dinheiro recebido ou reembolso pago.</p>{details.financialEntries.map((entry, index) => <p className={styles.salesScopeHelp} key={index}>{entry.date && `${formatDate(entry.date)} · `}{entry.text} · {entry.value == null ? 'Valor em confirmação' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.value)} · {entry.statusText}</p>)}</section>}
     </>}
-    <p className={styles.salesScopeHelp}>Este painel consulta informações; responder, aceitar devoluções ou solicitar reembolsos continua no {name}. Os filtros do cabeçalho classificam o pedido, não o envio de retorno.</p>
+    <p className={styles.salesScopeHelp}>{atendimento ? 'Use Mensagens e atendimento para responder e executar as soluções disponíveis para este caso. Os filtros do cabeçalho classificam o pedido, não o envio de retorno.' : <>Este painel consulta informações; responder, aceitar devoluções ou solicitar reembolsos continua no {name}. Os filtros do cabeçalho classificam o pedido, não o envio de retorno.</>}</p>
     <div className={saleLayout.postSaleFooter}><a className={`${styles.postSaleLink} ${saleLayout.accountLink}`} href={platformLink} target="_blank" rel="noopener noreferrer">Abrir no {name}{accountName ? ` · ${accountName}` : ''} ↗</a>
     <p className={styles.salesScopeHelp}>Na plataforma, entre na mesma conta desta venda e localize o número do pedido.</p></div>
   </div>;

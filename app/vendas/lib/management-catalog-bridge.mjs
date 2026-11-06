@@ -1,3 +1,4 @@
+import { resolverFiscalProduto, usaFiscalEmpresa } from '../../lib/fiscal-produto.mjs';
 import { resolveMunicipalityCode } from './municipality.mjs';
 
 const MESSAGE_TYPE = 'AVANTALAB_VENDAS_CATALOGO_V1';
@@ -79,7 +80,8 @@ export function mapManagementCatalogItem(item) {
     fiscalOriginCode: text(fiscal.origemMercadoria).match(/^\d+/)?.[0] || '',
     taxableUnit: text(fiscal.unidadeTributavel),
     cfopInternal: text(fiscal.cfopPadrao),
-    cfopInterstate: '',
+    cfopInterstate: text(fiscal.cfopInterestadual),
+    useCompanyFiscal: usaFiscalEmpresa({ usar_fiscal_empresa: fiscal.usarFiscalEmpresa, cfop_padrao: fiscal.cfopPadrao, cfop_interestadual: fiscal.cfopInterestadual, cst: fiscal.cst, csosn: fiscal.csosn, cst_pis: fiscal.cstPis, cst_cofins: fiscal.cstCofins, cst_ibs_cbs: fiscal.cstIbsCbs, classificacao_ibs_cbs: fiscal.classificacaoIbsCbs, origem_mercadoria: fiscal.origemMercadoria }),
     icmsCode: text(fiscal.csosn) || text(fiscal.cst),
     pisCst: text(fiscal.cstPis),
     cofinsCst: text(fiscal.cstCofins),
@@ -93,8 +95,12 @@ export function parseManagementCatalogMessage(data) {
   if (!data || data.type !== MESSAGE_TYPE) return null;
   const catalog = data.catalogo;
   if (!catalog || catalog.versao !== 1 || catalog.origem !== 'custos_precificacao' || catalog.somenteLeitura !== true || typeof catalog.estoqueIntegrado !== 'boolean' || !Array.isArray(catalog.itens)) return null;
-  const items = catalog.itens.map(mapManagementCatalogItem).filter((item) => item.catalogItemId && item.sku && item.name && item.price >= 0);
   const companyId = text(catalog.empresaId);
+  const scopedProfile = text(data.perfil?.empresa_id) === companyId ? data.perfil : {};
+  const items = catalog.itens.map(mapManagementCatalogItem).filter((item) => item.catalogItemId && item.sku && item.name && item.price >= 0).map(item => {
+    const fiscal = resolverFiscalProduto(item, scopedProfile);
+    return { ...item, fiscalOriginCode: fiscal.originCode, taxableUnit: fiscal.taxableUnit, icmsCode: fiscal.icmsCode, pisCst: fiscal.pisCst, cofinsCst: fiscal.cofinsCst, ibsCbsCst: fiscal.ibsCbsCst, ibsCbsClassification: fiscal.ibsCbsClassification, operationCfop: true };
+  });
   return {
     items,
     companyId,

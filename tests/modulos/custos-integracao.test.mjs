@@ -51,6 +51,9 @@ const migracaoAtivacaoCatalogo = readFileSync('supabase/migrations/2026100411000
 const migracaoDestinosCatalogo = readFileSync('supabase/migrations/20261006150000_independencia_destinos_catalogo.sql', 'utf8');
 const migracaoMoverCatalogo = readFileSync('supabase/migrations/20261003150000_mover_produtos_entre_catalogos_custos.sql', 'utf8');
 const migracaoExclusaoProduto = readFileSync('supabase/migrations/20261104160000_exclusao_segura_produtos_custos.sql', 'utf8');
+const migracaoCatalogoAdministrativo = readFileSync('supabase/migrations/20261104220000_catalogo_administrativo_independente_destinos.sql', 'utf8');
+const migracaoDestinosMultiplos = readFileSync('supabase/migrations/20261104230000_catalogos_destinos_multiplos_seguros.sql', 'utf8');
+const migracaoCacheDestinos = readFileSync('supabase/migrations/20261104231000_recarregar_cache_destinos_catalogos.sql', 'utf8');
 const fornecedoresCustos = readFileSync('app/api/modulos/custos/fornecedores/route.ts', 'utf8');
 
 test('Custos usa página total e exige o acesso oficial do módulo', () => {
@@ -164,7 +167,7 @@ test('ações da planilha usam a mesma tipografia e área de toque no novo catá
   assert.match(estilos, /@media\(max-width:560px\)\{\.catalogImportActions\{display:grid;grid-template-columns:1fr\}/);
 });
 
-test('empresa organiza múltiplos catálogos e escolhe o destino de cada produto', () => {
+test('empresa organiza múltiplos catálogos e Produtos e serviços segue o destino automaticamente', () => {
   assert.match(workspace, /rotulo: 'Catálogos'/);
   assert.match(workspace, /title="Catálogos"/);
   assert.match(workspace, /Novo catálogo/);
@@ -175,14 +178,17 @@ test('empresa organiza múltiplos catálogos e escolhe o destino de cada produto
   assert.match(workspace, /<strong>AvantaVendas<\/strong>/);
   assert.match(estilos, /\.catalogCardCurrent\{border:4px solid var\(--success\)/);
   assert.match(workspace, /Catálogos da empresa/);
-  assert.match(workspace, /<option value="">Todos os catálogos<\/option>/);
-  assert.match(workspace, /aria-label="Filtrar por catálogo"/);
-  assert.match(workspace, /catalogos\.filter\(\(catalogo\) => catalogo\.ativo\)\.map\(\(catalogo\) => <option key=\{catalogo\.id\} value=\{catalogo\.id\}>\{catalogo\.nome\}<\/option>\)/);
-  assert.match(workspace, /catalogo\.id === catalogoFiltroId && catalogo\.ativo/);
-  assert.match(workspace, /produto\.catalogo_id === catalogoFiltroId/);
+  assert.doesNotMatch(workspace, /Todos os catálogos/);
+  assert.doesNotMatch(workspace, /aria-label="Filtrar por catálogo"/);
+  assert.doesNotMatch(workspace, /catalogoFiltroId/);
+  assert.match(workspace, /catalogosVendasIds = new Set\(catalogos\.filter\(\(catalogo\) => catalogo\.ativo\)\.map\(\(catalogo\) => catalogo\.id\)\)/);
+  assert.match(workspace, /produtos\.filter\(\(produto\) => catalogosVendasIds\.has\(produto\.catalogo_id\)\)/);
   assert.match(workspace, /const listaFiltrada = produtosCatalogo\.filter/);
   assert.match(workspace, /produtosCatalogo\.filter\(\(produto\) => produto\.tipo_item === 'produto'\)\.length/);
-  assert.match(workspace, /setCatalogoFiltroId\(evento\.target\.value\); setProdutosSelecionados\(\[\]\)/);
+  assert.match(workspace, /Itens de todos os catálogos ativos em Vendas e Serviços/);
+  assert.match(workspace, /Nenhum catálogo está ativo em Vendas e Serviços\./);
+  assert.match(workspace, /catalogoIdsAssinatura\.split\(','\)\.filter\(Boolean\)/);
+  assert.match(workspace, /filter: `catalogo_id=eq\.\$\{id\}`/);
   assert.match(workspace, /<table className=\{styles\.catalogProductsTable\}><colgroup>(<col \/>){8}<\/colgroup>/);
   assert.match(estilos, /\.catalogProductsTable\{min-width:1060px;table-layout:fixed\}/);
   assert.match(estilos, /\.catalogProductsTable td\{height:48px\}/);
@@ -202,10 +208,9 @@ test('empresa organiza múltiplos catálogos e escolhe o destino de cada produto
   assert.match(catalogoVendasServidor, /\.eq\('ativo', true\)\.order\('padrao'/);
   assert.match(catalogoVendasServidor, /\.in\('catalogo_id', catalogoIds\)/);
   assert.doesNotMatch(catalogoVendasServidor, /\.eq\('padrao', true\)/);
-  assert.match(migracaoAtivacaoCatalogo, /set ativo = true, padrao = true, atualizado_em = now\(\)/);
-  assert.match(migracaoAtivacaoCatalogo, /set ativo = coalesce\(p_ativo, false\)/);
-  assert.doesNotMatch(migracaoAtivacaoCatalogo, /return public\.custos_definir_catalogo_atual_rpc/);
-  assert.match(migracaoAtivacaoCatalogo, /catalogo\.empresa_id = p_empresa_id and catalogo\.ativo = true/);
+  assert.match(migracaoCatalogoAdministrativo, /set padrao = true, atualizado_em = now\(\)/);
+  assert.match(migracaoCatalogoAdministrativo, /set ativo = coalesce\(p_ativo, false\)/);
+  assert.doesNotMatch(migracaoCatalogoAdministrativo, /set ativo = true, padrao = true/);
   assert.match(catalogoConteudoVendas, /p_ativo: true/);
   assert.match(catalogoConteudoVendas, /Ativo no AvantaVendas/);
   assert.match(catalogoConteudoVendas, /Nenhum catálogo está ativo no AvantaVendas/);
@@ -227,31 +232,72 @@ test('destinos do catálogo são independentes no banco e na interface', () => {
   assert.doesNotMatch(catalogoConteudoVendas, /catalogos\.some\(\(catalogo\) => catalogo\.ativo && catalogo\.publicado_avantavendas\)/);
 });
 
+test('cada botão altera somente seu destino e aceita vários catálogos simultâneos', () => {
+  assert.match(migracaoDestinosMultiplos, /custos_alterar_destino_catalogo_rpc/);
+  assert.match(migracaoDestinosMultiplos, /p_destino = 'vendas_servicos'[\s\S]*set ativo = coalesce\(p_ativo, false\)/);
+  assert.match(migracaoDestinosMultiplos, /else[\s\S]*set publicado_avantavendas = coalesce\(p_ativo, false\)/);
+  assert.match(migracaoDestinosMultiplos, /v_catalogo\.publicado_avantavendas is distinct from v_publicado_anterior/);
+  assert.match(migracaoDestinosMultiplos, /v_catalogo\.ativo is distinct from v_ativo_anterior/);
+  assert.match(migracaoDestinosMultiplos, /p_empresa_id, p_catalogo_id, 'vendas_servicos', p_ativo/);
+  assert.match(migracaoDestinosMultiplos, /p_empresa_id, p_catalogo_id, 'avantavendas', p_publicado/);
+  assert.doesNotMatch(migracaoDestinosMultiplos, /where empresa_id = p_empresa_id and id <> p_catalogo_id/);
+  assert.doesNotMatch(migracaoDestinosMultiplos, /set publicado_avantavendas = false[\s\S]*id <>/);
+  assert.doesNotMatch(migracaoDestinosMultiplos, /set ativo = false[\s\S]*id <>/);
+  assert.match(repositorio, /p_destino: 'vendas_servicos', p_ativo: ativo/);
+  assert.match(repositorio, /p_destino: 'avantavendas', p_ativo: publicado/);
+  assert.match(workspace, /data-destino="vendas_servicos"/);
+  assert.match(workspace, /data-destino="avantavendas"/);
+  assert.match(workspace, /atualizado\.publicado_avantavendas !== catalogo\.publicado_avantavendas/);
+  assert.match(workspace, /atualizado\.ativo !== catalogo\.ativo/);
+  assert.match(catalogoConteudoVendas, /data-destino="avantavendas"/);
+});
+
+test('troca de destino tolera a recarga do cache de esquema sem expor erro técnico', () => {
+  assert.match(repositorio, /erro\?\.code === 'PGRST202'/);
+  assert.match(repositorio, /could not find the function/);
+  assert.match(repositorio, /custos_alterar_status_catalogo_empresa_rpc/);
+  assert.match(repositorio, /custos_alterar_publicacao_avantavendas_catalogo_rpc/);
+  assert.match(migracaoCacheDestinos, /notify pgrst, 'reload schema'/);
+  assert.match(migracaoCacheDestinos, /custos_alterar_destino_catalogo_rpc\(uuid, uuid, text, boolean\)/);
+});
+
 test('ativar e desativar catálogos atualiza os cards sem avisos ou confirmação redundante', () => {
   const gestaoCatalogos = workspace.split('function CatalogosView')[1]?.split('function ProdutosView')[0] || '';
   assert.match(gestaoCatalogos, /desativarCatalogo\(catalogo\)/);
   assert.match(gestaoCatalogos, /ativarCatalogo\(catalogo\)/);
-  assert.doesNotMatch(gestaoCatalogos, /confirmarStatus|ModalConfirmacao|onMensagem|catalogGuidance/);
+  assert.doesNotMatch(gestaoCatalogos, /confirmarStatus|onMensagem|catalogGuidance/);
+  const acoesDestino = gestaoCatalogos.split('const desativarCatalogo')[1]?.split('return <>')[0] || '';
+  assert.doesNotMatch(acoesDestino, /setCatalogoExcluir|ModalConfirmacao/);
+  assert.match(gestaoCatalogos, /ModalConfirmacao aberto=\{Boolean\(catalogoExcluir\)\}/);
   assert.match(gestaoCatalogos, /onErro\(erroTexto\(falha\)\)/);
   assert.match(catalogoConteudoVendas, /void desativarCatalogo\(catalogo\)/);
   assert.doesNotMatch(catalogoConteudoVendas, /catalogoStatusPendente|confirmarStatusCatalogo/);
 });
 
 test('movimentação entre catálogos preserva o cadastro e protege empresa, destino e códigos', () => {
-  assert.match(repositorio, /catalogoAtual = catalogos\.find\(\(item\) => item\.padrao && item\.ativo\)/);
-  assert.match(repositorio, /consultarProdutosCustos\(catalogos\.map\(\(item\) => item\.id\)\)/);
+  assert.match(repositorio, /catalogoAtual = catalogos\.find\(\(item\) => item\.padrao\) \|\| catalogos\[0\]/);
+  assert.match(repositorio, /consultarProdutosCustos\(todosCatalogos\.map/);
   assert.match(repositorio, /\.in\('catalogo_id', catalogoIds\)/);
   assert.match(repositorio, /custos_mover_produtos_catalogo_rpc/);
   assert.match(workspace, /catalogo_id === rascunho\.catalogo_id/);
   assert.match(migracaoMoverCatalogo, /custos_pode_acessar_empresa\(p_empresa_id, true\)/);
   assert.match(migracaoMoverCatalogo, /catalogo\.empresa_id = p_empresa_id/);
-  assert.match(migracaoMoverCatalogo, /catalogo\.ativo = true/);
-  assert.match(migracaoMoverCatalogo, /for update/);
-  assert.match(migracaoMoverCatalogo, /produto\.id = any\(v_ids\)/);
-  assert.match(migracaoMoverCatalogo, /catalogo_id = p_catalogo_destino_id/);
-  assert.match(migracaoMoverCatalogo, /código % aparece mais de uma vez/);
-  assert.match(migracaoMoverCatalogo, /já usa o código % em outro cadastro/);
-  assert.doesNotMatch(migracaoMoverCatalogo, /delete from public\.vendas_mobile_catalogo_produtos/);
+  assert.doesNotMatch(migracaoCatalogoAdministrativo, /catalogo\.ativo = true/);
+  assert.match(migracaoCatalogoAdministrativo, /for update/);
+  assert.match(migracaoCatalogoAdministrativo, /produto\.id = any\(v_ids\)/);
+  assert.match(migracaoCatalogoAdministrativo, /catalogo_id = p_catalogo_destino_id/);
+  assert.match(migracaoCatalogoAdministrativo, /código % aparece mais de uma vez/);
+  assert.match(migracaoCatalogoAdministrativo, /já usa o código % em outro cadastro/);
+  assert.doesNotMatch(migracaoCatalogoAdministrativo, /delete from public\.vendas_mobile_catalogo_produtos/);
+});
+
+test('gestão administrativa e Vendas não alteram a publicação atual do AvantaVendas', () => {
+  assert.match(migracaoCatalogoAdministrativo, /A publicação existente no AvantaVendas não é alterada/);
+  assert.match(migracaoCatalogoAdministrativo, /publicado_avantavendas, criado_por[\s\S]*false, auth\.uid\(\)/);
+  assert.doesNotMatch(migracaoCatalogoAdministrativo, /set publicado_avantavendas/);
+  assert.doesNotMatch(migracaoCatalogoAdministrativo, /publicar_produto_catalogo_avantavendas/);
+  assert.match(catalogoVendasServidor, /\.eq\('ativo', true\)/);
+  assert.match(catalogoVendasServidor, /\.is\('excluido_em', null\)/);
 });
 
 test('Dados próprios preservam composições, simulações e histórico', () => {
@@ -330,7 +376,8 @@ test('insumo fiscal preserva uma identidade com composição, estoque e emissão
   assert.match(migracaoInsumoFiscal, /new\.habilitado_fiscal is not true/);
   assert.match(catalogoVendasServidor, /incluirItensFiscais = false/);
   assert.match(catalogoVendasServidor, /habilitado_fiscal\.eq\.true/);
-  assert.match(catalogoVendas, /CFOP é definido pela operação escolhida na emissão/);
+  assert.match(catalogoVendas, /cfopPadrao: texto\(linha\.cfop_padrao\)/);
+  assert.match(catalogoVendas, /usarFiscalEmpresa/);
 });
 
 test('produtos e insumos escolhem o mesmo fornecedor da empresa', () => {
@@ -349,7 +396,8 @@ test('catálogos mantêm a origem e a publicação pode ser administrada em lote
   assert.match(migracaoCatalogosSeparados, /custos_restaurar_catalogo_externo_e_separar_local_rpc/);
   assert.match(migracaoCatalogosSeparados, /'antes-da-separacao-catalogo-local'/);
   assert.match(migracaoCatalogosSeparados, /disponivel_catalogo = false/);
-  assert.match(repositorio, /origem\.eq\.custos_local,codigo\.eq\.CUSTOS_LOCAL/);
+  assert.doesNotMatch(repositorio, /Catálogo local de Custos/);
+  assert.match(repositorio, /catalogos\.find\(\(item\) => item\.padrao\) \|\| catalogos\[0\]/);
   assert.match(migracaoAcoesLoteCatalogo, /custos_aplicar_acao_produtos_lote_rpc/);
   assert.match(migracaoAcoesLoteCatalogo, /catalogo\.origem = 'custos_local'/);
   assert.match(workspace, /Disponibilizar no catálogo/);
@@ -366,7 +414,7 @@ test('catálogos mantêm a origem e a publicação pode ser administrada em lote
   assert.match(workspace, /Mover' : 'Confirmar'/);
   assert.match(workspace, /styles\.batchActionButton/);
   assert.match(workspace, /<th>Catálogo<\/th>/);
-  assert.match(workspace, /catalogoProduto\?\.ativo \? \(produto\.disponivel_catalogo \? 'No Vendas' : 'Em estudo'\) : 'Catálogo desativado'/);
+  assert.match(workspace, /produto\.disponivel_catalogo \? descricaoDestinosCatalogo\(catalogoProduto\) : 'Em estudo'/);
   assert.doesNotMatch(workspace, /batchActionHelp|ajuda-acao-lote/);
   assert.match(workspace, /className=\{styles\.batchSelectionCount\}><b>\{quantidadeSelecionada\}<\/b><span>/);
   assert.match(estilos, /\.batchActions select option\{font-size:14px\}/);

@@ -76,7 +76,15 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
       return failure('AV-FISCAL-RECOVERY-QUERY', 'A consulta segura não foi concluída e será tentada novamente.');
     }
     if (result?.pending === true) return failure('AV-FISCAL-RECOVERY-PENDING', 'A SEFAZ ainda está processando o lote; a consulta será repetida sem retransmissão.');
-    if (result?.valid !== true) return failure('AV-FISCAL-RECOVERY-RETURN', 'A resposta da consulta não pôde ser validada com segurança.');
+    if (result?.valid !== true) {
+      console.error('AVANTA_FISCAL_QUERY_UNCONFIRMED',{codes:(result?.errors || []).map(item=>/^AV-[A-Z0-9-]{1,80}$/.test(item.code || '')?item.code:'INVALID_RESPONSE'),transportErrorCode:result?.transportErrorCode || '',httpStatus:result?.httpStatus || 0});
+      return result?.httpStatus ? failure(`AV-FISCAL-RECOVERY-HTTP-${result.httpStatus}`, `O serviço de consulta respondeu HTTP ${result.httpStatus}; a autorização não foi confirmada.`) : failure('AV-FISCAL-RECOVERY-RETURN', 'A resposta da consulta não pôde ser validada com segurança.');
+    }
+    if (result.kind === 'protocol' && result.status === '217' && emission.state === 'submitted' && !emission.receiptNumber) {
+      const resumed = await lifecycle.resumeUnreceivedSubmission({ companyId: job.companyId, emissionId: job.emissionId, expectedVersion: emission.version, operationKey: operationKey('recover-not-received', job), query: result });
+      if (!resumed.ok) return failure('AV-FISCAL-RECOVERY-RESUME', 'A consulta retornou 217, mas a identidade da nota não permitiu retomar o envio com segurança.');
+      return { ok: true, reconciled: true, notReceived: true, state: resumed.emission.state, contentReturned: false };
+    }
     if (result.authorized === true && result.protocolXml) {
       let signedLoaded;
       const signed = await snapshot(repository, job, ['signed_xml']);
@@ -91,7 +99,7 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
       if (!protocol.valid) return failure('AV-FISCAL-RECOVERY-PROTOCOL', 'O protocolo consultado não corresponde ao XML assinado.');
       const stored = await persistNfeProtocolArtifact({ artifact: protocol, provider: storageProvider });
       if (!stored.valid) return failure('AV-FISCAL-RECOVERY-PROTOCOL-STORE', 'O protocolo autorizado não pôde ser gravado na guarda fiscal.');
-      const committed = await lifecycle.commitAuthorization({ companyId: job.companyId, emissionId: job.emissionId, expectedVersion: emission.version, operationKey: operationKey('recover-authorize', job), accessKey: emission.accessKey, protocolNumber: protocol.protocolNumber, authorizedAt: protocol.receivedAt, statusReason: protocol.reason, artifact: { artifactType: 'protocol_xml', storageReference: stored.storageReference, storageVersion: stored.versionId, checksum: protocol.checksum, byteLength: protocol.byteLength, contentType: 'application/xml', createdAt: stored.storedAt }, publicPayload: { recoveryJobId: job.id, authority: 'SEFAZ/SP', environment: 'homologacao', queryKind: emission.state === 'processing' ? 'receipt' : 'protocol' } });
+      const committed = await lifecycle.commitAuthorization({ companyId: job.companyId, emissionId: job.emissionId, expectedVersion: emission.version, operationKey: operationKey('recover-authorize', job), accessKey: emission.accessKey, protocolNumber: protocol.protocolNumber, authorizedAt: protocol.receivedAt, statusReason: protocol.reason, artifact: { artifactType: 'protocol_xml', storageReference: stored.storageReference, storageVersion: stored.storageVersion, checksum: protocol.checksum, byteLength: protocol.byteLength, contentType: 'application/xml', createdAt: stored.storedAt }, publicPayload: { recoveryJobId: job.id, authority: 'SEFAZ/SP', environment: 'homologacao', queryKind: emission.state === 'processing' ? 'receipt' : 'protocol' } });
       if (!committed.ok) return failure('AV-FISCAL-RECOVERY-AUTHORIZATION-COMMIT', 'O protocolo foi conferido, mas o estado fiscal precisa ser reconciliado novamente.');
       return { ok: true, reconciled: true, authorized: true, state: committed.emission.state, protocolStored: true, contentReturned: false };
     }
@@ -102,7 +110,8 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
       if (!rejected.ok) return failure('AV-FISCAL-RECOVERY-REJECTION-COMMIT', 'A rejeição foi consultada, mas o estado fiscal precisa ser reconciliado novamente.');
       return { ok: true, reconciled: true, rejected: true, state: rejected.emission.state, contentReturned: false };
     }
-    return failure('AV-FISCAL-RECOVERY-NOT-FOUND', 'A autorização ainda não foi localizada; a consulta será repetida sem retransmissão.');
+    const code = /^\d{3}$/.test(result.status || '') ? result.status : '';
+    return failure(`AV-FISCAL-RECOVERY-SEFAZ-${code || 'UNCONFIRMED'}`, code ? `${code} · ${String(result.reason || 'A SEFAZ não confirmou a autorização.').slice(0, 900)}` : 'A consulta não confirmou a autorização desta nota.');
   }
 
   async function recoverProcessedArtifact(job = {}) {
@@ -120,7 +129,7 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
       try {
         [signed, protocol] = await Promise.all([
           storageProvider.readByReference({ accessKey: emission.accessKey, storageReference: current.artifacts.signed_xml.storageReference, storageVersion: current.artifacts.signed_xml.storageVersion, contentType: 'application/xml', expectedChecksum: current.artifacts.signed_xml.checksum }),
-          storageProvider.readByReference({ accessKey: emission.accessKey, storageReference: current.artifacts.protocol_xml.storageReference, storageVersion: current.artifacts.protocol_xml.storageVersion, contentType: 'application/xml', expectedChecksum: current.artifacts.protocol_xml.checksum }),
+          storageProvider.readByReference({ accessKey: emission.accessKey, storageReference: current.artifacts.protocol_xml.storageReference, storageVersion: current.artifacts.protocol_xml.storageVersion || current.artifacts.protocol_xml.checksum, contentType: 'application/xml', expectedChecksum: current.artifacts.protocol_xml.checksum }),
         ]);
       } catch {
         return failure('AV-FISCAL-RECOVERY-PROCESSED-SOURCE', 'O XML assinado ou o protocolo não passou na verificação de integridade.');

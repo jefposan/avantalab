@@ -828,3 +828,8 @@ html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-
     transition: none;
   }
 }
+
+/* PADRÃO AVANTA: destino de uma pendência após submissão. */
+.av-validation-target { outline: 3px solid var(--av-validation-color, #b91c1c) !important; outline-offset: 3px; scroll-margin-block: 120px; }
+.av-validation-message { display:block; margin-top:6px; color:var(--av-validation-color, #b91c1c); font-size:12px; font-weight:500; line-height:1.4; white-space:normal; }
+[data-theme="dark"] .av-validation-target, [data-theme="dark"] .av-validation-message { --av-validation-color:#fca5a5; }

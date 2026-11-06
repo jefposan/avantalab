@@ -1,0 +1,1 @@
+Fonte SQL presente na publicação 3.2.0.362. O ID não consta no registro remoto consultado em 06/11/2026. As permissões por coluna descritas no arquivo foram confirmadas em leitura; isso não comprova os bytes da execução original. Preservar fora da fila automática, sem executar nem reparar o banco. Evidência e hash em proveniencia.json.

@@ -59,14 +59,16 @@ export function createFiscalRecoveryQueueService({ repository = createDisabledFi
     },
     async claim(input = {}) {
       const workerId = text(input.workerId, 120);
+      const companyId = text(input.companyId, 80), emissionId = text(input.emissionId, 80);
+      if (Boolean(companyId) !== Boolean(emissionId)) return { ok: false, jobs: [], recovered: 0, errors: [error('AV-FISCAL-RECOVERY-SCOPE', 'emissionId', 'Informe empresa e nota para consultar uma tarefa específica.')] };
       if (workerId.length < 6) return { ok: false, jobs: [], recovered: 0, errors: [error('AV-FISCAL-RECOVERY-WORKER', 'workerId', 'O executor precisa de uma identificação estável.')] };
       if (!configured(repository)) return { ...unavailable(), jobs: [], recovered: 0 };
       const limit = integer(input.limit, 1, 25, 5);
       const leaseSeconds = integer(input.leaseSeconds, 30, 900, 120);
       const now = clock();
       return repository.runInTransaction(async (tx) => {
-        const recovered = typeof tx.recoverExpiredRecoveryJobs === 'function' ? await tx.recoverExpiredRecoveryJobs({ now }) : [];
-        const jobs = await tx.claimRecoveryJobs({ workerId, limit, leaseSeconds, now });
+        const recovered = typeof tx.recoverExpiredRecoveryJobs === 'function' ? await tx.recoverExpiredRecoveryJobs({ now, companyId, emissionId }) : [];
+        const jobs = await tx.claimRecoveryJobs({ workerId, limit, leaseSeconds, now, companyId, emissionId });
         return { ok: true, persisted: jobs.length > 0 || recovered.length > 0, jobs, recovered: recovered.length, errors: [] };
       }, { isolationLevel: 'read committed' });
     },
@@ -97,9 +99,9 @@ export function createFiscalRecoveryQueueService({ repository = createDisabledFi
 export function createFiscalRecoveryWorker({ queueService, handlers = {} } = {}) {
   return Object.freeze({
     id: 'avantalab-fiscal-recovery-worker-v1',
-    async runOnce({ workerId, limit = 5, leaseSeconds = 120 } = {}) {
+    async runOnce({ workerId, limit = 5, leaseSeconds = 120, companyId, emissionId } = {}) {
       if (!queueService || typeof queueService.claim !== 'function') return { ok: false, claimed: 0, completed: 0, retried: 0, deadLetter: 0, errors: [error('AV-FISCAL-RECOVERY-QUEUE', 'queueService', 'A fila fiscal não foi fornecida ao executor.')] };
-      const claimed = await queueService.claim({ workerId, limit, leaseSeconds });
+      const claimed = await queueService.claim({ workerId, limit, leaseSeconds, companyId, emissionId });
       if (!claimed.ok) return { ok: false, claimed: 0, completed: 0, retried: 0, deadLetter: 0, errors: claimed.errors || [] };
       const summary = { ok: true, claimed: claimed.jobs.length, completed: 0, retried: 0, deadLetter: 0, errors: [] };
       for (const job of claimed.jobs) {

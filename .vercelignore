@@ -22,5 +22,4 @@ node_modules/
 imagens diversas/
 *.tsbuildinfo
 
-# Estado local do cliente Supabase não pertence à fonte publicada.
 supabase/.temp/

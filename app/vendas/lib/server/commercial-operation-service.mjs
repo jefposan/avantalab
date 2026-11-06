@@ -123,6 +123,8 @@ function customerSnapshot(customer) {
 function catalogSnapshot(item) {
   const fiscal = item.fiscal && typeof item.fiscal === 'object' ? item.fiscal : {};
   return {
+    ...(typeof fiscal.useCompanyFiscal === 'boolean' ? { useCompanyFiscal: fiscal.useCompanyFiscal } : {}),
+    cfopInternal: text(fiscal.cfopInternal, 20), cfopInterstate: text(fiscal.cfopInterstate, 20),
     ncm: text(fiscal.ncm, 8), cest: text(fiscal.cest, 7), cfop: text(fiscal.cfop, 4),
     cst: text(fiscal.cst, 4), csosn: text(fiscal.csosn, 4),
     originCode: text(fiscal.originCode, 1), taxableUnit: text(fiscal.taxableUnit, 20),
@@ -147,7 +149,7 @@ function repositoryError(cause) {
   return known ? error(cause.code, known[0], known[1]) : error('AV-COMMERCIAL-OPERATION-STORAGE', 'storage', 'Não foi possível concluir a operação comercial. Tente novamente.');
 }
 
-async function prepareOperation({ input, context, customerResolver, catalogResolver }) {
+export async function prepareOperation({ input, context, customerResolver, catalogResolver }) {
   const errors = [];
   const warnings = [];
   const type = text(input?.type, 30).toLowerCase();
@@ -218,7 +220,10 @@ async function prepareOperation({ input, context, customerResolver, catalogResol
       unitPrice: moneyFromCents(unitPriceCents), discountUnit: moneyFromCents(discountUnitCents),
       gross: moneyFromCents(grossCents), discount: moneyFromCents(discountCents), net: moneyFromCents(netCents),
       costUnitSnapshot: source.costPrice === undefined || source.costPrice === null ? null : moneyFromCents(parseScaled(source.costPrice, 2) || 0),
-      fiscalSnapshot: fiscal, fiscalReady, controlsStock: source.controlsStock === true && source.type !== 'servico',
+      // Retrato exclusivo deste pedido: não altera catálogo nem saldos globais.
+      // Só false explícito desliga; clientes antigos mantêm o controle existente.
+      fiscalSnapshot: fiscal, fiscalReady, controlsStock: source.controlsStock === true && source.type !== 'servico'
+        && !(type === 'pedido' && channel === 'vendas' && input.reserveStock === false),
     });
     subtotalCents += grossCents;
     itemDiscountCents += discountCents;

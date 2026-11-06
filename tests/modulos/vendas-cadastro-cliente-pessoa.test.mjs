@@ -49,9 +49,9 @@ test('formulário pede tipo de pessoa antes do documento e esconde campos empres
   assert.match(form, /client-municipal-registration/);
   assert.match(form, /Nome fantasia<\/span>/);
   assert.doesNotMatch(form, /Nome fantasia \*/);
-  assert.match(form, /!isIndividual && <label className="field"><span>Contato principal/);
+  assert.match(form, /!isIndividual && <label className="field field-wide"><span>Contato principal/);
   assert.match(form, /contactName: isIndividual \? form\.legalName\.trim\(\) : form\.contactName\.trim\(\)/);
-  assert.match(form, /className=\{`field\$\{isIndividual \? '' : ' field-wide'\}`\}/);
+  assert.match(form, /<label className="field"><span>E-mail \*<\/span><input type="email"/);
   assert.match(form, /className="form-grid client-address-grid"/);
   assert.match(form, /client-address-district/);
   assert.match(form, /client-address-city/);

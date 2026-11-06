@@ -1,3 +1,5 @@
+import { shipmentHasLeftSeller } from './shipment-progress.ts';
+
 export type PostSaleProgress = { state: 'open' | 'closed' | 'unknown'; checkedAt: string };
 export type ListingOperation = { count: number; labels: string[] };
 type OperationalSale = { status: string; shipment_status: string | null; shipment_substatus: string | null; snapshot: unknown; connection_id: string };
@@ -18,8 +20,8 @@ export function pendingSaleOperation(sale: OperationalSale): string | null {
   if (sale.status === 'partially_paid') return 'Pagamento parcial';
   if (postSale.state === 'unknown' && sale.shipment_status === 'delivered') return 'Pós-venda a confirmar';
   if (sale.shipment_status === 'delivered') return null;
-  if (sale.shipment_status === 'shipped') return 'Em trânsito';
   if (sale.shipment_status === 'not_delivered') return 'Não entregue / devolução em andamento';
+  if (shipmentHasLeftSeller({ shipmentStatus: sale.shipment_status, shipmentSubstatus: sale.shipment_substatus })) return 'Em trânsito';
   if (['pending', 'handling', 'ready_to_ship', 'not_verified'].includes(sale.shipment_status || '')) return 'Aguardando envio';
   if (sale.status === 'paid' || sale.status === 'confirmed') return 'Venda confirmada';
   return 'Pedido em atualização';

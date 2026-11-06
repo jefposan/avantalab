@@ -198,3 +198,37 @@ test('falha na conferência não autoriza aumento; pendência de outra empresa n
   const g=fixture();g.job.allow_increase=true;g.db.item.available_quantity=0;g.db.tables.marketplace_inventory_events.push({empresa_id:'outra-empresa',product_id:productId,state:'pending'});
   await deliverStockJob(g.db,g.job);assert.equal(g.outbox().state,'synced');
 });
+
+test('divergência repetida continua sendo consultada sem inflar tentativas ou enviar reposição',async()=>{
+ const f=fixture();f.db.item.available_quantity=1;
+ await deliverStockJob(f.db,f.job);assert.equal(f.outbox().issue,'lower_remote_stock');assert.equal(f.outbox().attempts,1);
+ for(let i=0;i<3;i++){
+  const readCount=f.db.calls.length;
+  await deliverStockJob(f.db,{...f.outbox()});
+  assert.ok(f.db.calls.length>readCount,'a consulta automática continua ativa');
+  assert.equal(f.outbox().attempts,1);assert.equal(f.outbox().state,'pending');
+  assert.ok(Date.parse(f.outbox().next_attempt_at)>Date.now()+29*60000);
+ }
+ assert.equal(f.db.calls.filter(c=>c.method==='PUT').length,0);
+ f.db.item.available_quantity=3;
+ await deliverStockJob(f.db,{...f.outbox()});
+ assert.equal(f.outbox().state,'synced');assert.equal(f.outbox().issue,null);
+ assert.equal(f.db.calls.filter(c=>c.method==='PUT').length,0,'reconhece correção externa sem reenviar');
+});
+
+test('Resolver com nova geração retoma envio imediato e preserva pausa manual',async()=>{
+ const f=fixture();f.db.item.available_quantity=1;f.db.item.status='paused';f.db.item.sub_status=['paused_by_seller'];
+ Object.assign(f.outbox(),{issue:'lower_remote_stock',attempts:185});
+ await deliverStockJob(f.db,{...f.outbox()});assert.equal(f.outbox().attempts,185);
+ const generation=crypto.randomUUID();Object.assign(f.outbox(),{generation,issue:null,allow_increase:true,attempts:0});
+ await deliverStockJob(f.db,{...f.outbox()});
+ assert.equal(f.outbox().generation,generation);assert.equal(f.outbox().state,'synced');
+ assert.equal(f.db.item.status,'paused');assert.deepEqual(f.db.calls.filter(c=>c.method==='PUT').map(c=>c.body),[{available_quantity:3}]);
+});
+
+test('falha técnica continua tendo retry normal e contador de novas tentativas',async()=>{
+ const f=fixture();f.db.override=async()=>{throw Error('network');};
+ await deliverStockJob(f.db,f.job);assert.equal(f.outbox().attempts,1);assert.equal(f.outbox().issue,'processing');
+ await deliverStockJob(f.db,{...f.outbox()});assert.equal(f.outbox().attempts,2);
+ assert.ok(Date.parse(f.outbox().next_attempt_at)<Date.now()+3*60000);
+});

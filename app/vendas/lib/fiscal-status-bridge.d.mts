@@ -15,6 +15,8 @@ export type FiscalEmissionStatus = {
   statusReason: string;
   protocolNumber: string;
   canceledAt?: string;
+  authorizedAt?: string;
+  submittedAt?: string;
   cancellationProtocol?: string;
   cancellationStatusCode?: string;
   updatedAt: string;
@@ -22,6 +24,7 @@ export type FiscalEmissionStatus = {
   finalDocumentReady: boolean;
   recoveryPending: boolean;
   needsTechnicalAttention: boolean;
+  consultationErrorCode?: string;
   actionRequired: boolean;
   recommendedAction: 'review_emission' | 'review_fiscal_data' | '';
   recommendedActionLabel: string;
@@ -96,7 +99,7 @@ export const FISCAL_CERTIFICATE_INSTALL_REQUEST_TYPE: 'AVANTALAB_VENDAS_FISCAL_C
 export const FISCAL_CERTIFICATE_INSTALL_RESPONSE_TYPE: 'AVANTALAB_VENDAS_FISCAL_CERTIFICATE_INSTALL_RESPONSE_V1';
 export const FISCAL_CERTIFICATE_ACTIVATE_REQUEST_TYPE: 'AVANTALAB_VENDAS_FISCAL_CERTIFICATE_ACTIVATE_REQUEST_V1';
 export const FISCAL_CERTIFICATE_ACTIVATE_RESPONSE_TYPE: 'AVANTALAB_VENDAS_FISCAL_CERTIFICATE_ACTIVATE_RESPONSE_V1';
-export function createFiscalStatusRequest(input?: { requestId?: unknown; emissionId?: unknown }): Readonly<{ type: typeof FISCAL_STATUS_REQUEST_TYPE; requestId: string; emissionId: string }> | null;
+export function createFiscalStatusRequest(input?: { requestId?: unknown; emissionId?: unknown; consult?: boolean }): Readonly<{ type: typeof FISCAL_STATUS_REQUEST_TYPE; requestId: string; emissionId: string }> | null;
 export function createFiscalDownloadRequest(input?: { requestId?: unknown; artifactId?: unknown; artifactType?: unknown }): Readonly<{ type: typeof FISCAL_DOWNLOAD_REQUEST_TYPE; requestId: string; artifactId: string; artifactType: FiscalArtifactType }> | null;
 export function createFiscalPrepareRequest(input?: { requestId?: unknown; draftId?: unknown }): Readonly<{ type: typeof FISCAL_PREPARE_REQUEST_TYPE; requestId: string; draftId: string }> | null;
 export function createFiscalValidateRequest(input?: { requestId?: unknown; draftId?: unknown }): Readonly<{ type: typeof FISCAL_VALIDATE_REQUEST_TYPE; requestId: string; draftId: string }> | null;
@@ -104,7 +107,7 @@ export function createFiscalNumberRequest(input?: { requestId?: unknown; emissio
 export function createFiscalSigningReadinessRequest(input?: { requestId?: unknown; emissionId?: unknown; expectedVersion?: unknown }): Readonly<{ type: typeof FISCAL_SIGNING_READINESS_REQUEST_TYPE; requestId: string; emissionId: string; expectedVersion: number }> | null;
 export function createFiscalSignRequest(input?: { requestId?: unknown; emissionId?: unknown; expectedVersion?: unknown }): Readonly<{ type: typeof FISCAL_SIGN_REQUEST_TYPE; requestId: string; emissionId: string; expectedVersion: number }> | null;
 export function createFiscalIssueRequest(input?: { requestId?: unknown; emissionId?: unknown; expectedVersion?: unknown }): Readonly<{ type: typeof FISCAL_ISSUE_REQUEST_TYPE; requestId: string; emissionId: string; expectedVersion: number }> | null;
-export function createFiscalCorrectionRequest(input?: { requestId?: unknown; emissionId?: unknown; expectedVersion?: unknown; rejectedStatusCode?: unknown; items?: ReadonlyArray<{ sku?: unknown; ncm?: unknown }> }): Readonly<{ type: typeof FISCAL_CORRECTION_REQUEST_TYPE; requestId: string; emissionId: string; expectedVersion: number; rejectedStatusCode: string; items: ReadonlyArray<Readonly<{ sku: string; ncm: string }>> }> | null;
+export function createFiscalCorrectionRequest(input?: { requestId?: unknown; emissionId?: unknown; expectedVersion?: unknown; rejectedStatusCode?: unknown; note?: Record<string, unknown>; items?: ReadonlyArray<{ sku?: unknown; ncm?: unknown }> }): Readonly<{ type: typeof FISCAL_CORRECTION_REQUEST_TYPE; requestId: string; emissionId: string; expectedVersion: number; rejectedStatusCode: string; note?: Record<string, unknown>; items?: ReadonlyArray<Readonly<{ sku: string; ncm: string }>> }> | null;
 export function createFiscalCancellationRequest(input?: { requestId?: unknown; emissionId?: unknown; expectedVersion?: unknown; justification?: unknown }): Readonly<{ type: typeof FISCAL_CANCELLATION_REQUEST_TYPE; requestId: string; emissionId: string; expectedVersion: number; justification: string }> | null;
 export function createFiscalCertificateStatusRequest(input?: { requestId?: unknown }): Readonly<{ type: typeof FISCAL_CERTIFICATE_STATUS_REQUEST_TYPE; requestId: string }> | null;
 export function createFiscalCertificateInstallRequest(input?: { requestId?: unknown; certificate?: File | null; passphrase?: unknown }): Readonly<{ type: typeof FISCAL_CERTIFICATE_INSTALL_REQUEST_TYPE; requestId: string; certificate: File; passphrase: string }> | null;
@@ -127,7 +130,7 @@ export function parseFiscalSignResponse(data: unknown): Readonly<{ requestId: st
 export type FiscalIssuedEmission = Readonly<{ emissionId: string; documentType: 'nfe'; model: '55'; environment: 'homologacao'; state: 'authorized' | 'processing' | 'rejected'; version: number; series: string; number: number; signed: true; persisted: true; submitted: true; transmitted: true; authorized: boolean; processing: boolean; rejected: boolean; statusCode: string; statusReason: string; protocolStored: boolean; receiptConsultationPending: boolean; externalContentReturned: false; sensitiveMaterialReturned: false }>;
 export function parseFiscalIssueResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; emission: FiscalIssuedEmission }> | null;
 export type FiscalCorrectedEmission = Readonly<{ emissionId: string; draftId: string; orderId: string; state: 'number_reserved'; version: number; series: string; number: number; correctionRevision: number; correctionPrepared: true; sameNumberPreserved: true; previousAttemptPreserved: true; requiresNewSignature: true; automaticTransmission: false; certificateInspected: false; signed: false; transmitted: false }>;
-export function parseFiscalCorrectionResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; emission: FiscalCorrectedEmission }> | null;
+export function parseFiscalCorrectionResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string;code?:string;field?:string } | { requestId: string; ok: true; emission: FiscalCorrectedEmission }> | null;
 export type FiscalCanceledEmission = Readonly<{ emissionId: string; state: 'canceled'; version: number; series: string; number: number; cancellationStatusCode: '135' | '155'; cancellationProtocol: string; canceledAt: string; canceled: true; eventStored: true; transmitted: true; originalAuthorizationPreserved: true; externalContentReturned: false; sensitiveMaterialReturned: false }>;
 export function parseFiscalCancellationResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; emission: FiscalCanceledEmission }> | null;
 export function fiscalStatusPresentation(status: FiscalEmissionStatus): Readonly<{ label: string; tone: 'success' | 'danger' | 'info' | 'warning'; detail: string }>;

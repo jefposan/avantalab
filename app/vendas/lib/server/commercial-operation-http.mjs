@@ -42,11 +42,14 @@ export async function handleCommercialOperationRequest({ request, runtime, compa
   let body;
   try { body = await request.json(); }
   catch { return reply(400, { ok: false, code: 'AV-COMMERCIAL-OPERATION-BODY', message: 'Revise os dados do documento comercial.' }); }
-  const created = await runtime.operationService.create({ context: resolved.context, input: body?.operation });
-  if (!created?.ok) return failed(created, 'Não foi possível salvar o documento comercial.');
-  if (body?.action !== 'create_service_order') return reply(200, { ...created, errors: undefined });
+  const updating = body?.action === 'update';
+  const saved = updating
+    ? await runtime.operationService.update({ context: resolved.context, operationId: body?.operationId, expectedVersion: Number(body?.expectedVersion), input: body?.operation })
+    : await runtime.operationService.create({ context: resolved.context, input: body?.operation });
+  if (!saved?.ok) return failed(saved, updating ? 'Não foi possível atualizar o rascunho comercial.' : 'Não foi possível salvar o documento comercial.');
+  if (body?.action !== 'create_service_order') return reply(200, { ...saved, errors: undefined });
   if (!runtime.serviceOrderService) return reply(503, { ok: false, code: 'AV-SERVICE-ORDER-PENDING', message: 'A persistência da ordem de serviço ainda não está disponível.' });
-  const converted = await runtime.serviceOrderService.convert({ context: resolved.context, quoteId: created.operation.id, expectedVersion: created.operation.version, idempotencyKey: body?.serviceOrderKey, input: body?.serviceOrder });
+  const converted = await runtime.serviceOrderService.convert({ context: resolved.context, quoteId: saved.operation.id, expectedVersion: saved.operation.version, idempotencyKey: body?.serviceOrderKey, input: body?.serviceOrder });
   if (!converted?.ok) return failed(converted, 'O orçamento foi salvo, mas não foi possível agendar a ordem de serviço. Tente novamente; a chave evita duplicidade.');
-  return reply(200, { ok: true, quote: created.operation, order: converted.order, reused: created.reused && converted.reused, warnings: created.warnings || [] });
+  return reply(200, { ok: true, quote: saved.operation, order: converted.order, reused: saved.reused && converted.reused, warnings: saved.warnings || [] });
 }

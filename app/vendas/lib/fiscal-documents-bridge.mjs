@@ -1,8 +1,10 @@
 export const FISCAL_DOCUMENTS_MESSAGE_TYPE = 'AVANTALAB_VENDAS_FISCAL_DOCUMENTS_V1';
+export const STANDALONE_FISCAL_SAVE_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_AVULSA_SAVE_V1';
+export const STANDALONE_FISCAL_SAVE_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_AVULSA_SAVED_V1';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DOCUMENTS = new Set(['nfe', 'nfce', 'nfse']);
-const ORIGINS = new Set(['pedido', 'ordem_servico']);
+const ORIGINS = new Set(['pedido', 'ordem_servico', 'avulsa']);
 const DRAFT_STATES = new Set(['pendencia_cadastral', 'pronto']);
 const EMISSION_STATES = new Set(['draft', 'prepared', 'number_reserved', 'signed', 'submitted', 'processing', 'authorized', 'artifacts_stored', 'danfe_ready', 'rejected', 'failed', 'canceled']);
 const text = (value, max = 1000) => String(value ?? '').trim().slice(0, max);
@@ -63,6 +65,9 @@ function document(value) {
     clientCity: text(source.clientCity, 120),
     total: Math.max(0, number(source.total)),
     paymentMethod: text(source.paymentMethod, 80),
+    paymentDetails: source.paymentDetails ? {integrationType:text(source.paymentDetails.integrationType,1),institutionDocument:text(source.paymentDetails.institutionDocument,14),authorizationCode:text(source.paymentDetails.authorizationCode,128)} : undefined,
+    paymentInstallments: number(source.paymentInstallments),
+    paymentFirstDueDate: text(source.paymentFirstDueDate,10),
     issuer: Object.freeze({
       establishmentId: text(issuer.establishmentId, 80), document: text(issuer.document, 20),
       legalName: text(issuer.legalName, 180), tradeName: text(issuer.tradeName, 180),
@@ -70,6 +75,9 @@ function document(value) {
     }),
     items: Object.freeze((Array.isArray(source.items) ? source.items : []).slice(0, 500).map(item).filter((entry) => entry.name)),
     totals: Object.freeze({
+      additionalInfo: text(totals.additionalInfo, 5000),
+      operationNature: text(totals.operationNature,60),
+      ...(totals.fiscalForm?{fiscalForm:Object.freeze(object(totals.fiscalForm))}:{}),
       subtotalGross: Math.max(0, number(totals.subtotalGross)), itemDiscount: Math.max(0, number(totals.itemDiscount)),
       generalDiscount: Math.max(0, number(totals.generalDiscount)), freight: Math.max(0, number(totals.freight)),
       insurance: Math.max(0, number(totals.insurance)), otherExpenses: Math.max(0, number(totals.otherExpenses)),

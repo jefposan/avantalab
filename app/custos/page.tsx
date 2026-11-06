@@ -8,11 +8,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, nocache: true },
 };
 
-export default async function CustosPage({ searchParams }: { searchParams: Promise<{ empresaId?: string | string[]; novo?: string | string[]; retorno?: string | string[]; __avctx?: string | string[] }> }) {
+export default async function CustosPage({ searchParams }: { searchParams: Promise<{ empresaId?: string | string[]; novo?: string | string[]; produtoId?: string | string[]; retorno?: string | string[]; __avctx?: string | string[] }> }) {
   const params = await searchParams;
   const empresaId = Array.isArray(params.empresaId) ? params.empresaId[0] : params.empresaId;
   const novo = Array.isArray(params.novo) ? params.novo[0] : params.novo;
+  const produtoId = Array.isArray(params.produtoId) ? params.produtoId[0] : params.produtoId;
   const retorno = Array.isArray(params.retorno) ? params.retorno[0] : params.retorno;
   const contextoVisual = lerContextoVisualModulo(Array.isArray(params.__avctx) ? params.__avctx[0] : params.__avctx, 'custos', empresaId);
-  return <CustosClient companyId={String(empresaId || '').trim()} initialNewType={novo === 'produto' ? 'produto' : undefined} returnTo={retorno === 'vendas' ? 'vendas' : undefined} initialContext={contextoVisual} />;
+  return <CustosClient initialProductId={/^[0-9a-f-]{36}$/i.test(produtoId || '') ? produtoId : undefined} companyId={String(empresaId || '').trim()} initialNewType={novo === 'produto' ? 'produto' : undefined} returnTo={retorno === 'vendas' ? 'vendas' : undefined} initialContext={contextoVisual} />;
 }

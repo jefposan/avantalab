@@ -1,0 +1,11 @@
+{
+  "path": "supabase/historico-sem-registro/runtime/20261105233000_vendas_fila_recuperacao_runtime.sql",
+  "sha256": "d4e04557561128f75af17a0d5335968ae80a4ef9c272cc4260f2a4b180dcda14",
+  "sourceDeploymentId": "dpl_8mj2opjedu3HUfvfSg3RYc1BQ4DB",
+  "sourceSnapshot": "306ca7b910d37d4ff03a63e0627af7ebf544a840",
+  "remoteMigrationIdPresent": false,
+  "currentColumnPrivilegesMatch": true,
+  "originalExecutionBytesProven": false,
+  "catalogEvidence": "docs/auditorias/reconciliacao-2026-11-06/runtime-permissoes-atual.json",
+  "decision": "preserve source outside automatic migration queue; do not execute or repair"
+}

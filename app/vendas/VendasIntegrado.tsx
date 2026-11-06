@@ -1,4 +1,6 @@
 'use client';
+
+import { FISCAL_CHECKOUT_REQUEST_TYPE, FISCAL_CHECKOUT_RESPONSE_TYPE } from './lib/fiscal-checkout.mjs';
 import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
 
 import { useRouter } from 'next/navigation';
@@ -13,9 +15,11 @@ import { CODIGOS_PERMISSOES_VENDAS } from '@/app/modules/vendas/permissions';
 import { RECEIVABLE_MOVE_REQUEST_TYPE, RECEIVABLE_MOVE_RESPONSE_TYPE, RECEIVABLE_READY_TYPE, RECEIVABLE_SNAPSHOT_TYPE } from '@/app/vendas/lib/commercial-receivable-bridge.mjs';
 import { STOCK_MOVE_REQUEST_TYPE, STOCK_MOVE_RESPONSE_TYPE, STOCK_READY_TYPE, STOCK_SNAPSHOT_TYPE } from '@/app/vendas/lib/commercial-stock-bridge.mjs';
 import { COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE, COMMERCIAL_SERVICE_WORKFLOW_RESPONSE_TYPE } from '@/app/vendas/lib/commercial-service-workflow-bridge.mjs';
+import { COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE, COMMERCIAL_ORDER_WORKFLOW_RESPONSE_TYPE, createCommercialOrderWorkflowRequest } from '@/app/vendas/lib/commercial-order-bridge.mjs';
 import { SERVICE_ATTACHMENT_OPEN_REQUEST_TYPE, SERVICE_ATTACHMENT_OPEN_RESPONSE_TYPE, SERVICE_ATTACHMENT_UPLOAD_REQUEST_TYPE, SERVICE_ATTACHMENT_UPLOAD_RESPONSE_TYPE } from '@/app/vendas/lib/commercial-service-attachment-bridge.mjs';
 import { CUSTOMER_READY_TYPE, CUSTOMER_SAVE_REQUEST_TYPE, CUSTOMER_SAVE_RESPONSE_TYPE, CUSTOMER_SNAPSHOT_TYPE, OPERATION_READY_TYPE, OPERATION_SAVE_REQUEST_TYPE, OPERATION_SAVE_RESPONSE_TYPE, OPERATION_SNAPSHOT_TYPE, SUPPLIER_READY_TYPE, SUPPLIER_SAVE_REQUEST_TYPE, SUPPLIER_SAVE_RESPONSE_TYPE, SUPPLIER_SNAPSHOT_TYPE } from '@/app/vendas/lib/commercial-party-bridge.mjs';
 import { FISCAL_PROFILE_READY_TYPE, FISCAL_PROFILE_SAVE_REQUEST_TYPE, FISCAL_PROFILE_SAVE_RESPONSE_TYPE, FISCAL_PROFILE_SNAPSHOT_TYPE } from '@/app/vendas/lib/fiscal-profile-bridge.mjs';
+import { STANDALONE_FISCAL_SAVE_REQUEST_TYPE, STANDALONE_FISCAL_SAVE_RESPONSE_TYPE } from '@/app/vendas/lib/fiscal-documents-bridge.mjs';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const FISCAL_STATUS_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_STATUS_REQUEST_V1';
@@ -31,6 +35,8 @@ const FISCAL_NUMBER_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_NUMBER_RESPONSE_V1'
 const FISCAL_ISSUE_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_ISSUE_REQUEST_V1';
 const FISCAL_ISSUE_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_ISSUE_RESPONSE_V1';
 const FISCAL_CORRECTION_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_CORRECTION_REQUEST_V1';
+const FISCAL_DELETE_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_DELETE_REQUEST_V1';
+const FISCAL_DELETE_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_DELETE_RESPONSE_V1';
 const FISCAL_CORRECTION_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_CORRECTION_RESPONSE_V1';
 const FISCAL_CANCELLATION_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_CANCELLATION_REQUEST_V1';
 const FISCAL_CANCELLATION_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_CANCELLATION_RESPONSE_V1';
@@ -45,8 +51,6 @@ const FISCAL_RULES_SNAPSHOT_TYPE = 'AVANTALAB_VENDAS_FISCAL_RULES_SNAPSHOT_V1';
 const FISCAL_RULES_SAVE_REQUEST_TYPE = 'AVANTALAB_VENDAS_FISCAL_RULES_SAVE_REQUEST_V1';
 const FISCAL_RULES_SAVE_RESPONSE_TYPE = 'AVANTALAB_VENDAS_FISCAL_RULES_SAVE_RESPONSE_V1';
 const FISCAL_DOCUMENTS_MESSAGE_TYPE = 'AVANTALAB_VENDAS_FISCAL_DOCUMENTS_V1';
-const COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE = 'AVANTALAB_VENDAS_ORDER_WORKFLOW_REQUEST_V1';
-const COMMERCIAL_ORDER_WORKFLOW_RESPONSE_TYPE = 'AVANTALAB_VENDAS_ORDER_WORKFLOW_RESPONSE_V1';
 const ACCESS_READY_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_READY_V1';
 const ACCESS_SNAPSHOT_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_SNAPSHOT_V1';
 const ACCESS_SAVE_REQUEST_MESSAGE_TYPE = 'AVANTALAB_VENDAS_ACCESS_SAVE_REQUEST_V1';
@@ -85,7 +89,7 @@ function clienteParaTela(customer: Record<string, any>) {
     email: String(customer.email || ''), phone: String(customer.phone || ''), contactName: String(customer.primaryContact || ''),
     cep: String(customer.postalCode || ''), street: String(customer.street || ''), number: String(customer.number || ''), complement: String(customer.complement || ''), district: String(customer.district || ''),
     cityName, cityCode: String(customer.cityCode || ''), state, city: cityName && state ? `${cityName}/${state}` : cityName,
-    seller: '', paymentTerms: String(customer.paymentTerms || 'À vista'), orders: 0, revenue: 0, lastPurchase: 'Sem compras',
+    seller: '', priceTableId:String(customer.priceTableId||''),paymentTerms: String(customer.paymentTerms || 'À vista'), orders: 0, revenue: 0, lastPurchase: 'Sem compras',
     status: customer.status === 'ativo' ? 'Ativo' : customer.status === 'inativo' ? 'Inativo' : 'Revisar cadastro',
     persistence: { integrated: true, version: Number(customer.version) || 1 },
   };
@@ -100,7 +104,7 @@ function clienteParaApi(customer: Record<string, any>) {
     consumerFinal: customer.consumerFinal === true,
     email: customer.email, phone: customer.phone, primaryContact: customer.contactName,
     postalCode: customer.cep, street: customer.street, number: customer.number, complement: customer.complement, district: customer.district,
-    city: customer.cityName, cityCode: customer.cityCode, state: customer.state, paymentTerms: customer.paymentTerms,
+    city: customer.cityName, cityCode: customer.cityCode, state: customer.state, paymentTerms: customer.paymentTerms,priceTableId:customer.priceTableId||'',
     status: customer.status === 'Ativo' ? 'ativo' : customer.status === 'Inativo' ? 'inativo' : 'revisar_cadastro',
   };
 }
@@ -445,6 +449,15 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   }, [carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes]);
 
   useEffect(() => {
+    const refresh = (event: MessageEvent) => {
+      if(event.origin!==origemPrototipo || event.source!==iframeRef.current?.contentWindow || event.data?.type!=='AVANTALAB_VENDAS_CATALOG_REFRESH_V1' || event.data.companyId!==empresaId)return;
+      void carregarCatalogo(empresaId);
+    };
+    window.addEventListener('message',refresh);
+    return ()=>window.removeEventListener('message',refresh);
+  },[carregarCatalogo,empresaId,origemPrototipo]);
+
+  useEffect(() => {
     let ativo = true;
     const iniciar = async () => {
       const { data } = await aguardarComLimite(supabase.auth.getSession(), 10_000, 'A confirmação da sessão demorou mais que o esperado. Tente novamente.');
@@ -481,11 +494,57 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       if (event.data?.type === CUSTOMER_READY_TYPE) { void carregarClientes(empresaId); return; }
       if (event.data?.type === SUPPLIER_READY_TYPE) { void carregarFornecedores(empresaId); return; }
       if (event.data?.type === OPERATION_READY_TYPE) { void carregarOperacoes(empresaId); return; }
+      if (event.data?.type === FISCAL_CHECKOUT_REQUEST_TYPE) {
+        const port = event.ports?.[0];
+        const requestId = String(event.data.requestId || '');
+        if (!port || !requestIdValido(requestId)) return;
+        const input = event.data.input || {};
+        const deliver = (result: Record<string, unknown>) => { port.postMessage({ type: FISCAL_CHECKOUT_RESPONSE_TYPE, requestId, ...result }); port.close(); };
+        void (async () => {
+          try {
+            const { data } = await supabase.auth.getSession();
+            if (!data.session?.access_token) { deliver({ ok: false, message: 'Confirme novamente sua sessão.' }); return; }
+            const params = new URLSearchParams({ companyId: empresaId });
+            const response = await fetch(`/api/modulos/vendas/fiscal/checkout?${params}`, { method: 'POST', headers: { Authorization: `Bearer ${data.session.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: input.action, draftId: input.draftId, originOrderId: input.originOrderId, expectedVersion: input.expectedVersion, idempotencyKey: input.idempotencyKey, series: input.series, nextNumber: input.nextNumber }) });
+            const payload = await response.json().catch(() => ({ ok: false, message: 'A resposta não pôde ser confirmada. Atualize a situação antes de tentar novamente.' }));
+            if (!['numbering','save-numbering'].includes(input.action)) await carregarDocumentosFiscais(empresaId, data.session.access_token).catch(() => {});
+            deliver({ ...payload, ok: response.ok && payload.ok === true });
+          } catch { deliver({ ok: false, message: 'A conexão foi interrompida. Consulte a situação da nota antes de tentar novamente.' }); }
+        })();
+        return;
+      }
+      if(event.data?.type==='AVANTALAB_VENDAS_FISCAL_EDITOR_V1'){
+        const port=event.ports?.[0],requestId=String(event.data.requestId||'');
+        if(!port||!UUID_PATTERN.test(requestId)||event.data.companyId!==empresaId||!['load','create-message'].includes(event.data.action))return;
+        const action=event.data.action,message=event.data.message;
+        void(async()=>{try{const {data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token)throw Error('Confirme novamente sua sessão.');const params=new URLSearchParams({companyId:empresaId});const response=await fetch(`/api/modulos/vendas/fiscal/editor?${params}`,{method:action==='load'?'GET':'POST',headers:{Authorization:`Bearer ${token}`,...(action==='load'?{}:{'Content-Type':'application/json'})},...(action==='load'?{}:{body:JSON.stringify({message})}),cache:'no-store'});const result=await response.json().catch(()=>({}));port.postMessage({...result,ok:response.ok&&result.ok===true,companyId:empresaId,requestId});}catch(error){port.postMessage({ok:false,message:error instanceof Error?error.message:'Não foi possível consultar a emissão.',companyId:empresaId,requestId});}finally{port.close();}})();return;
+      }
+      if (event.data?.type === STANDALONE_FISCAL_SAVE_REQUEST_TYPE) {
+        const port = event.ports?.[0];
+        const requestId = String(event.data.requestId || '');
+        if (!port || !requestIdValido(requestId)) return;
+        const document = event.data.document;
+        const deliver = (ok: boolean, message: string, draftId = '',issue:Record<string,any>={}) => { port.postMessage({ type: STANDALONE_FISCAL_SAVE_RESPONSE_TYPE, requestId, ok, message, draftId,code:String(issue.code||issue.errors?.[0]?.code||'').slice(0,100),field:String(issue.field||issue.errors?.[0]?.field||'').slice(0,160) }); port.close(); };
+        void (async () => {
+          try {
+            const { data } = await supabase.auth.getSession();
+            const token = data.session?.access_token;
+            if (!token) { deliver(false, 'Confirme novamente sua sessão.'); return; }
+            const params = new URLSearchParams({ companyId: empresaId });
+            const response = await fetch(`/api/modulos/vendas/fiscal/documents?${params}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ document }), cache: 'no-store' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.ok !== true) { deliver(false, payload.message || 'Não foi possível preparar a nota avulsa.','',payload); return; }
+            await carregarDocumentosFiscais(empresaId, token);
+            deliver(true, 'Nota fiscal salva para conferência.', String(payload.document?.draftId || ''));
+          } catch { deliver(false, 'A conexão fiscal foi interrompida. Tente novamente com os mesmos dados.'); }
+        })();
+        return;
+      }
       if ([SERVICE_ATTACHMENT_UPLOAD_REQUEST_TYPE, SERVICE_ATTACHMENT_OPEN_REQUEST_TYPE].includes(event.data?.type)) {
         const destination = iframeRef.current?.contentWindow;
         const responsePort = event.ports[0];
         const requestId = String(event.data?.requestId || '');
-        const responseType = event.data?.type === SERVICE_ATTACHMENT_UPLOAD_REQUEST_TYPE ? SERVICE_ATTACHMENT_UPLOAD_RESPONSE_TYPE : SERVICE_ATTACHMENT_OPEN_RESPONSE_TYPE;
+        const responseType = event.data?.type === FISCAL_DELETE_REQUEST_TYPE ? FISCAL_DELETE_RESPONSE_TYPE : event.data?.type === SERVICE_ATTACHMENT_UPLOAD_REQUEST_TYPE ? SERVICE_ATTACHMENT_UPLOAD_RESPONSE_TYPE : SERVICE_ATTACHMENT_OPEN_RESPONSE_TYPE;
         if (!destination || !responsePort || !requestIdValido(requestId) || !UUID_PATTERN.test(empresaId)) return;
         const deliver = (payload: Record<string, unknown>) => responsePort.postMessage({ type: responseType, requestId, ...payload });
         const handleAttachment = async () => {
@@ -570,10 +629,10 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const { data } = await supabase.auth.getSession(); const token = data.session?.access_token;
             if (!token) { respond(false, 'Confirme novamente sua sessão na Gestão.'); return; }
             const params = new URLSearchParams({ companyId: empresaId });
-            const response = await fetch(`/api/modulos/vendas/commercial/operations?${params}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: event.data.action, operation: event.data.operation, serviceOrder: event.data.serviceOrder, serviceOrderKey: event.data.serviceOrderKey }), cache: 'no-store' });
+            const response = await fetch(`/api/modulos/vendas/commercial/operations?${params}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: event.data.action, operationId: event.data.operationId, expectedVersion: event.data.expectedVersion, operation: event.data.operation, serviceOrder: event.data.serviceOrder, serviceOrderKey: event.data.serviceOrderKey }), cache: 'no-store' });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.ok !== true) { respond(false, payload.message || 'Não foi possível salvar o documento comercial.'); return; }
-            respond(true, payload.order ? 'Ordem de serviço agendada e vinculada ao perfil empresarial.' : payload.reused ? 'Documento já confirmado no perfil empresarial.' : 'Orçamento salvo no perfil empresarial.', { operation: payload.operation || payload.quote, order: payload.order || null });
+            respond(true, payload.order ? 'Ordem de serviço agendada e vinculada ao perfil empresarial.' : event.data.action === 'update' ? 'Rascunho atualizado no perfil empresarial.' : payload.reused ? 'Documento já confirmado no perfil empresarial.' : 'Documento salvo no perfil empresarial.', { operation: payload.operation || payload.quote, order: payload.order || null });
             await carregarOperacoes(empresaId);
           } catch { respond(false, 'A conexão comercial foi interrompida. Tente novamente.'); }
         };
@@ -717,7 +776,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
           if (responsePort) responsePort.postMessage(payload);
           else destination.postMessage(payload, origemPrototipo);
         };
-        const fail = (message: string) => deliver({ type: responseType, requestId, ok: false, message });
+        const fail = (message: string,issue:Record<string,any>={}) => deliver({ type: responseType, requestId, ok: false, message,code:String(issue.code||issue.errors?.[0]?.code||'').slice(0,100),field:String(issue.field||issue.errors?.[0]?.field||'').slice(0,160) });
         const handleCertificate = async () => {
           if (!UUID_PATTERN.test(empresaId)) { fail('Selecione novamente o perfil empresarial.'); return; }
           try {
@@ -731,7 +790,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
                 cache: 'no-store',
               });
               const payload = await response.json().catch(() => ({}));
-              if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível consultar o certificado digital.'); return; }
+              if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível consultar o certificado digital.',payload); return; }
               deliver({ type: responseType, requestId, ok: true, certificate: payload.certificate, execution: payload.execution, message: payload.message || '' });
               return;
             }
@@ -742,7 +801,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
                 cache: 'no-store',
               });
               const payload = await response.json().catch(() => ({}));
-              if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível verificar o certificado digital.'); return; }
+              if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível verificar o certificado digital.',payload); return; }
               deliver({ type: responseType, requestId, ok: true, certificate: payload.certificate, execution: payload.execution, message: payload.message || 'Verificação concluída.' });
               return;
             }
@@ -764,7 +823,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível instalar o certificado digital.'); return; }
+            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível instalar o certificado digital.',payload); return; }
             deliver({ type: responseType, requestId, ok: true, certificate: payload.certificate, execution: payload.execution, message: payload.message || 'Certificado instalado.' });
           } catch {
             fail(event.data.type === FISCAL_CERTIFICATE_ACTIVATE_REQUEST_TYPE
@@ -775,7 +834,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
         void handleCertificate();
         return;
       }
-      if (![FISCAL_STATUS_REQUEST_TYPE, FISCAL_DOWNLOAD_REQUEST_TYPE, FISCAL_PREPARE_REQUEST_TYPE, FISCAL_VALIDATE_REQUEST_TYPE, FISCAL_NUMBER_REQUEST_TYPE, FISCAL_ISSUE_REQUEST_TYPE, FISCAL_CORRECTION_REQUEST_TYPE, FISCAL_CANCELLATION_REQUEST_TYPE, COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE, COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE].includes(event.data?.type)) return;
+      if (![FISCAL_DELETE_REQUEST_TYPE, FISCAL_STATUS_REQUEST_TYPE, FISCAL_DOWNLOAD_REQUEST_TYPE, FISCAL_PREPARE_REQUEST_TYPE, FISCAL_VALIDATE_REQUEST_TYPE, FISCAL_NUMBER_REQUEST_TYPE, FISCAL_ISSUE_REQUEST_TYPE, FISCAL_CORRECTION_REQUEST_TYPE, FISCAL_CANCELLATION_REQUEST_TYPE, COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE, COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE].includes(event.data?.type)) return;
       const responder = async () => {
         const requestId = event.data?.requestId;
         const responseType = event.data?.type === COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE
@@ -804,7 +863,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
           if (responsePort) responsePort.postMessage(payload);
           else destination.postMessage(payload, origemPrototipo);
         };
-        const fail = (message: string) => deliver({ type: responseType, requestId, ok: false, message });
+        const fail = (message: string,issue:Record<string,any>={}) => deliver({ type: responseType, requestId, ok: false, message,code:String(issue.code||issue.errors?.[0]?.code||'').slice(0,100),field:String(issue.field||issue.errors?.[0]?.field||'').slice(0,160) });
         try {
           const { data } = await supabase.auth.getSession();
           const token = data.session?.access_token;
@@ -813,8 +872,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const target = String(event.data.target || '');
             const persistenceKey = String(event.data.persistenceKey || '');
             const operationId = String(event.data.operationId || '');
-            if (!['confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido'].includes(target)
-              || !requestIdValido(persistenceKey) || (operationId && !UUID_PATTERN.test(operationId))) {
+            const workflowRequest = createCommercialOrderWorkflowRequest({ ...event.data, requestId, target, persistenceKey, operationId });
+            if (!workflowRequest) {
               fail('A solicitação comercial é inválida. Atualize o pedido e tente novamente.');
               return;
             }
@@ -822,11 +881,11 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const response = await fetch(`/api/modulos/vendas/commercial/orders/workflow?${params}`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ target, persistenceKey, operationId, customer: event.data.customer, order: event.data.order }),
+              body: JSON.stringify({ target: workflowRequest.target, persistenceKey: workflowRequest.persistenceKey, operationId: workflowRequest.operationId, customer: workflowRequest.customer, order: workflowRequest.order }),
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível persistir o pedido.'); return; }
+            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível persistir o pedido.',payload); return; }
             destination.postMessage({ type: responseType, requestId, ok: true, customerId: payload.customerId, order: payload.order }, origemPrototipo);
             if (payload.order?.fiscalDraftId) await carregarDocumentosFiscais(empresaId, token);
             if (payload.order?.stockIntegrated) await carregarCatalogo(empresaId);
@@ -848,7 +907,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
               body: JSON.stringify({ action, orderId, expectedVersion, idempotencyKey, localId: event.data.localId, input: event.data.input }), cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível atualizar a ordem de serviço.'); return; }
+            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível atualizar a ordem de serviço.',payload); return; }
             destination.postMessage({ type: responseType, requestId, ok: true, result: payload.result }, origemPrototipo);
             await Promise.all([carregarOperacoes(empresaId), carregarCatalogo(empresaId), carregarRecebimentos(empresaId), carregarDocumentosFiscais(empresaId, token)]);
             return;
@@ -857,9 +916,9 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const emissionId = String(event.data.emissionId || '');
             if (!UUID_PATTERN.test(emissionId)) { fail('A consulta fiscal é inválida.'); return; }
             const params = new URLSearchParams({ companyId: empresaId });
-            const response = await fetch(`/api/modulos/vendas/fiscal/status/${encodeURIComponent(emissionId)}?${params}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+            const response = await fetch(`/api/modulos/vendas/fiscal/status/${encodeURIComponent(emissionId)}?${params}`, { method: event.data.consult === true ? 'POST' : 'GET', headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível atualizar a situação fiscal.'); return; }
+            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível atualizar a situação fiscal.',payload); return; }
             destination.postMessage({ type: responseType, requestId, ok: true, emission: payload.emission }, origemPrototipo);
             return;
           }
@@ -873,7 +932,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível preparar a emissão fiscal.'); return; }
+            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível preparar a emissão fiscal.',payload); return; }
             destination.postMessage({ type: responseType, requestId, ok: true, emission: payload.emission }, origemPrototipo);
             await carregarDocumentosFiscais(empresaId, token);
             return;
@@ -888,7 +947,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível validar os dados fiscais da NF-e.'); return; }
+            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível validar os dados fiscais da NF-e.',payload); return; }
             destination.postMessage({ type: responseType, requestId, ok: true, emission: payload.emission }, origemPrototipo);
             await carregarDocumentosFiscais(empresaId, token);
             return;
@@ -908,18 +967,29 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível confirmar a emissão da NF-e.'); return; }
+            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível confirmar a emissão da NF-e.',payload); return; }
             destination.postMessage({ type: responseType, requestId, ok: true, emission: payload.emission }, origemPrototipo);
             await carregarDocumentosFiscais(empresaId, token);
             return;
+          }
+          if (event.data.type === FISCAL_DELETE_REQUEST_TYPE) {
+            const draftId=String(event.data.draftId || ''); const expectedVersion=Number(event.data.expectedVersion);
+            if(!UUID_PATTERN.test(draftId) || !Number.isSafeInteger(expectedVersion) || expectedVersion<0){fail('Rascunho inválido.');return;}
+            const params=new URLSearchParams({companyId:empresaId});
+            const response=await fetch(`/api/modulos/vendas/fiscal/drafts/${encodeURIComponent(draftId)}/delete?${params}`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({expectedVersion,confirmation:'EXCLUIR_RASCUNHO_NFE'}),cache:'no-store'});
+            const payload=await response.json().catch(()=>({}));
+            if(!response.ok || payload.ok!==true){fail(payload.message || 'Não foi possível excluir o rascunho.',payload);return;}
+            destination.postMessage({type:responseType,requestId,ok:true,draftId},origemPrototipo);
+            await carregarDocumentosFiscais(empresaId,token);return;
           }
           if (event.data.type === FISCAL_CORRECTION_REQUEST_TYPE) {
             const emissionId = String(event.data.emissionId || '');
             const expectedVersion = Number(event.data.expectedVersion);
             const rejectedStatusCode = String(event.data.rejectedStatusCode || '');
             const items = Array.isArray(event.data.items) ? event.data.items : [];
+            const note = event.data.note && typeof event.data.note === 'object' && !Array.isArray(event.data.note) ? event.data.note : null;
             if (!UUID_PATTERN.test(emissionId) || !Number.isSafeInteger(expectedVersion) || expectedVersion < 1
-              || !/^\d{3}$/.test(rejectedStatusCode) || !items.length || items.length > 200) {
+              || !/^\d{3}$/.test(rejectedStatusCode) || (!note && (!items.length || items.length > 200)) || (note && JSON.stringify(note).length > 60000)) {
               fail('Revise os dados fiscais indicados e tente novamente.');
               return;
             }
@@ -927,11 +997,11 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const response = await fetch(`/api/modulos/vendas/fiscal/documents/${encodeURIComponent(emissionId)}/correction?${params}`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ expectedVersion, rejectedStatusCode, items }),
+              body: JSON.stringify({ expectedVersion, rejectedStatusCode, idempotencyKey: `note-correction:${requestId}`, confirmation: 'REVISAR_NFE_REJEITADA', changes: note ? {note} : {items} }),
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível revisar os dados fiscais da NF-e.'); return; }
+            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível revisar os dados fiscais da NF-e.',payload); return; }
             destination.postMessage({ type: responseType, requestId, ok: true, emission: payload.emission }, origemPrototipo);
             await carregarDocumentosFiscais(empresaId, token);
             return;
@@ -953,7 +1023,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível cancelar a NF-e.'); return; }
+            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível cancelar a NF-e.',payload); return; }
             destination.postMessage({ type: responseType, requestId, ok: true, emission: payload.emission }, origemPrototipo);
             await carregarDocumentosFiscais(empresaId, token);
             return;
@@ -973,7 +1043,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível continuar a emissão da NF-e.'); return; }
+            if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível continuar a emissão da NF-e.',payload); return; }
             deliver({ type: responseType, requestId, ok: true, emission: payload.emission });
             await carregarDocumentosFiscais(empresaId, token);
             return;
@@ -983,7 +1053,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
           if (!UUID_PATTERN.test(artifactId) || !['processed_xml', 'danfe_pdf'].includes(artifactType)) { fail('A solicitação do arquivo fiscal é inválida.'); return; }
           const response = await fetch(`/api/modulos/vendas/fiscal/documents/${encodeURIComponent(artifactId)}/download`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ companyId: empresaId, artifactType }), cache: 'no-store' });
           const payload = await response.json().catch(() => ({}));
-          if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível preparar o arquivo fiscal.'); return; }
+          if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível preparar o arquivo fiscal.',payload); return; }
           destination.postMessage({ type: responseType, requestId, ok: true, download: payload.download }, origemPrototipo);
         } catch {
           fail('A conexão fiscal está temporariamente indisponível.');

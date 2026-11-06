@@ -1,4 +1,6 @@
+import {fiscalFormForXml} from './fiscal-note-fields.mjs';
 import { createHash } from 'node:crypto';
+import { fiscalDraftOriginReady } from './fiscal-draft-origin.mjs';
 import { NFE_SP_XML_REFERENCE } from '../nfe-sp-xml.mjs';
 import { saoPauloFiscalTimestamp } from './fiscal-local-guard.mjs';
 import { buildNfeIssuancePreparation, NFE_ISSUANCE_PREPARATION_REFERENCE } from './nfe-issuance-preparation.mjs';
@@ -55,7 +57,7 @@ function mapDraft(row) {
   return {
     id: row.id,
     companyId: row.empresa_id,
-    operationId: row.operacao_id,
+    operationId: row.origem_tipo === 'avulsa' ? row.id : row.operacao_id,
     originType: row.origem_tipo,
     documentType: row.documento_tipo,
     status: row.situacao,
@@ -90,9 +92,8 @@ function validateContext(data) {
   if (draft.documentType !== 'nfe' || emission.documentType !== 'nfe' || emission.model !== '55') {
     return issue('AV-NFE-PREPARE-DOCUMENT', 'documentType', 'Esta preparação aceita somente NF-e modelo 55.');
   }
-  if (draft.status !== 'pronto' || draft.originType !== 'pedido' || draft.operationStatus !== 'faturado'
-    || draft.operationFiscalStatus !== 'rascunho_criado') {
-    return issue('AV-NFE-PREPARE-ORIGIN', 'draft', 'O pedido faturado precisa estar com o rascunho fiscal pronto.');
+  if (draft.status !== 'pronto' || !fiscalDraftOriginReady(draft)) {
+    return issue('AV-NFE-PREPARE-ORIGIN', 'draft', 'O rascunho fiscal e sua origem precisam estar prontos para emissão.');
   }
   if (emission.state !== 'draft' || emission.environment !== 'homologacao') {
     return issue('AV-NFE-PREPARE-STATE', 'fiscal', 'A emissão não está no estado inicial de homologação.');
@@ -160,6 +161,8 @@ export function buildCommercialNfePreparationInput(data, rules, idempotencyKey, 
       status: 'Pronto para homologação',
       total: Number(totals.total),
       paymentMethod: draft.paymentSnapshot?.method || 'Outros',
+      paymentDetails: draft.paymentSnapshot?.details,
+      paymentInstallments:Number(draft.paymentSnapshot?.installments)||1,
       commercialTotals: {
         products: Number(totals.subtotalGross),
         lineDiscount: Number(totals.itemDiscount),
@@ -170,7 +173,9 @@ export function buildCommercialNfePreparationInput(data, rules, idempotencyKey, 
         other: Number(totals.otherExpenses),
         invoice: Number(totals.total),
       },
-      operationNature: clean(rules.operationNature, 60),
+      operationNature: clean(totals.operationNature || rules.operationNature, 60),
+      additionalInfo: clean(totals.additionalInfo, 5000),
+      fiscalForm:fiscalFormForXml(totals.fiscalForm),
       operationContext: { presence: clean(rules.presence, 40) },
       issuer: {
         establishmentId: issuer.establishmentId,
@@ -274,7 +279,7 @@ export function createPostgresCommercialNfePreparationRepository({ pool } = {}) 
           e.id as emissao_id,e.establishment_id,e.draft_id,e.origin_id,
           e.document_type as emissao_documento_tipo,e.model,e.environment,e.state,e.version
         from public.vendas_fiscal_rascunhos r
-        join public.vendas_operacoes o on o.empresa_id=r.empresa_id and o.id=r.operacao_id
+        left join public.vendas_operacoes o on o.empresa_id=r.empresa_id and o.id=r.operacao_id
         join fiscal_private.emissions e on e.company_id=r.empresa_id and e.draft_id=r.id::text
         where r.empresa_id=$1 and r.id=$2
       `, [companyId, draftId]);
@@ -287,7 +292,7 @@ export function createPostgresCommercialNfePreparationRepository({ pool } = {}) 
           where company_id=$1 and establishment_id=$2 and document_type='nfe' order by active desc,series`,
         [companyId, emission.establishmentId]),
         pool.query(`select r.* from fiscal_private.number_reservations r
-          where r.company_id=$1 and r.establishment_id=$2 and r.document_type='nfe'`,
+          where r.company_id=$1 and r.establishment_id=$2 and r.document_type='nfe' and r.status<>'released'`,
         [companyId, emission.establishmentId]),
         pool.query(`select * from fiscal_private.number_voids
           where company_id=$1 and establishment_id=$2 and document_type='nfe'`,
@@ -360,6 +365,8 @@ export function createCommercialNfePreparationService({
           issuer: structuredClone(data.draft.issuerSnapshot),
           customer: structuredClone(data.draft.customerSnapshot),
           items: structuredClone(data.draft.itemsSnapshot),
+          operationNature:data.draft.totalsSnapshot?.fiscalForm?data.draft.totalsSnapshot.operationNature:undefined,
+          fiscalForm:data.draft.totalsSnapshot?.fiscalForm,
         });
         if (!rules || rules.valid !== true) {
           return {
@@ -380,7 +387,7 @@ export function createCommercialNfePreparationService({
           };
         }
         const publicPayload = {
-          source: 'commercial_billing',
+          source: data.draft.originType === 'avulsa' ? 'standalone_fiscal' : 'commercial_billing',
           preparationId: preparation.preparationId,
           schemaPackage: 'PL_010e_v1.02',
           schemaVersion: '4.00',

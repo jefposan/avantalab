@@ -1,3 +1,4 @@
+import { resolverFiscalProduto } from '../app/lib/fiscal-produto.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -51,7 +52,7 @@ test('a assinatura e a emissão fiscal seguem exigindo os dados necessários', (
   assert.match(fiscal, /Conclua o cadastro do perfil empresarial com o CNPJ antes de emitir a nota/);
 });
 
-test('configuração tributária fica no cadastro da empresa e não no formulário do produto', () => {
+test('empresa fornece padrões fiscais e produto só aplica exceções quando personalizadas', () => {
   const route = read('app/api/perfil-cadastro/route.ts');
   const modal = read('app/components/CadastroPerfilModal.tsx');
   const migration = read('supabase/migrations/20260920123000_configuracao_tributaria_empresa.sql');
@@ -61,6 +62,11 @@ test('configuração tributária fica no cadastro da empresa e não no formulár
   assert.match(route, /normalizarConfiguracaoFiscal/);
   assert.match(modal, /Parâmetros tributários padrão/);
   assert.match(modal, /CFOP e natureza da operação são definidos na regra da própria emissão/);
-  assert.match(rules, /function companyFiscalProfile/);
-  assert.match(rules, /cfop: clean\(rule\.cfopOverride\)/);
+  assert.match(rules, /resolverFiscalProduto/);
+  assert.match(rules, /cfop: rule\.cfopOverride/);
+  const company = {taxRegime:'simples_nacional',fiscalConfiguration:{originCode:'0',csosn:'102',pisCst:'49',cofinsCst:'49'}};
+  const item = {usar_fiscal_empresa:true,ncm:'33059000',unit:'UN',cst_pis:'04'};
+  assert.equal(resolverFiscalProduto(item,company,{destination:'Dentro da UF',cfop:'5102'}).pisCst,'49');
+  assert.equal(resolverFiscalProduto(item,company,{destination:'Dentro da UF',cfop:'5102'}).cfop,'5102');
+  assert.equal(resolverFiscalProduto({...item,usar_fiscal_empresa:false},company).pisCst,'04');
 });

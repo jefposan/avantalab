@@ -1,5 +1,7 @@
 export type TaxProfileGroup = 'identificacao' | 'tributacao' | 'reforma';
 export type CatalogTaxProfile = {
+  useCompanyFiscal?: boolean;
+  operationCfop?: boolean;
   fiscalProfileVersion: string;
   fiscalReviewedAt: string;
   fiscalReviewedBy: string;

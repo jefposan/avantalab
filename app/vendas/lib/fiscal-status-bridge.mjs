@@ -36,11 +36,11 @@ function text(value) { return typeof value === 'string' ? value.trim() : String(
 function integer(value) { const parsed = Number(value); return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 0; }
 function requestId(value) { const normalized = text(value); return /^[A-Za-z0-9:_-]{8,120}$/.test(normalized) ? normalized : ''; }
 
-export function createFiscalStatusRequest({ requestId: id, emissionId } = {}) {
+export function createFiscalStatusRequest({ requestId: id, emissionId, consult = false } = {}) {
   const safeRequestId = requestId(id);
   const safeEmissionId = text(emissionId);
   if (!safeRequestId || !UUID_PATTERN.test(safeEmissionId)) return null;
-  return Object.freeze({ type: FISCAL_STATUS_REQUEST_TYPE, requestId: safeRequestId, emissionId: safeEmissionId });
+  return Object.freeze({ type: FISCAL_STATUS_REQUEST_TYPE, requestId: safeRequestId, emissionId: safeEmissionId, ...(consult === true ? { consult: true } : {}) });
 }
 
 export function createFiscalDownloadRequest({ requestId: id, artifactId, artifactType } = {}) {
@@ -116,11 +116,12 @@ export function createFiscalIssueRequest({ requestId: id, emissionId, expectedVe
   return Object.freeze({ type: FISCAL_ISSUE_REQUEST_TYPE, requestId: safeRequestId, emissionId: safeEmissionId, expectedVersion: safeExpectedVersion });
 }
 
-export function createFiscalCorrectionRequest({ requestId: id, emissionId, expectedVersion, rejectedStatusCode, items } = {}) {
+export function createFiscalCorrectionRequest({ requestId: id, emissionId, expectedVersion, rejectedStatusCode, items, note } = {}) {
   const safeRequestId = requestId(id);
   const safeEmissionId = text(emissionId);
   const safeExpectedVersion = Number(expectedVersion);
   const safeStatusCode = text(rejectedStatusCode);
+  if (note && safeRequestId && UUID_PATTERN.test(safeEmissionId) && Number.isSafeInteger(safeExpectedVersion) && safeExpectedVersion > 0 && /^\d{3}$/.test(safeStatusCode) && typeof note === 'object' && !Array.isArray(note) && JSON.stringify(note).length <= 60000) return Object.freeze({type:FISCAL_CORRECTION_REQUEST_TYPE,requestId:safeRequestId,emissionId:safeEmissionId,expectedVersion:safeExpectedVersion,rejectedStatusCode:safeStatusCode,note:structuredClone(note)});
   if (!safeRequestId || !UUID_PATTERN.test(safeEmissionId)
     || !Number.isSafeInteger(safeExpectedVersion) || safeExpectedVersion < 1
     || !/^\d{3}$/.test(safeStatusCode) || !Array.isArray(items) || !items.length || items.length > 200) return null;
@@ -280,6 +281,8 @@ export function normalizeFiscalEmissionStatus(value) {
     statusReason: text(value?.statusReason),
     protocolNumber: text(value?.protocolNumber),
     canceledAt: text(value?.canceledAt),
+    authorizedAt: text(value?.authorizedAt),
+    submittedAt: text(value?.submittedAt),
     cancellationProtocol: text(value?.cancellationProtocol),
     cancellationStatusCode: text(value?.cancellationStatusCode),
     updatedAt: text(value?.updatedAt),
@@ -287,6 +290,7 @@ export function normalizeFiscalEmissionStatus(value) {
     finalDocumentReady: value?.finalDocumentReady === true,
     recoveryPending: value?.recoveryPending === true,
     needsTechnicalAttention,
+    consultationErrorCode: /^AV-FISCAL-RECOVERY-[A-Z0-9-]{1,80}$/.test(value?.consultationErrorCode || '') ? text(value.consultationErrorCode) : '',
     actionRequired: action.required,
     recommendedAction: action.kind,
     recommendedActionLabel: action.label,
@@ -449,7 +453,7 @@ export function parseFiscalCorrectionResponse(data) {
   if (!data || data.type !== FISCAL_CORRECTION_RESPONSE_TYPE) return null;
   const id = requestId(data.requestId);
   if (!id) return null;
-  if (data.ok !== true) return Object.freeze({ requestId: id, ok: false, message: text(data.message) || 'Não foi possível revisar os dados fiscais da NF-e.' });
+  if (data.ok !== true) return Object.freeze({ requestId: id, ok: false, code:text(data.code,100),field:text(data.field,160), message: text(data.message) || 'Não foi possível revisar os dados fiscais da NF-e.' });
   const emissionId = text(data.emission?.emissionId);
   const draftId = text(data.emission?.draftId);
   const orderId = text(data.emission?.orderId);
@@ -551,11 +555,16 @@ export function parseFiscalValidateResponse(data) {
 
 export function fiscalStatusPresentation(status) {
   const state = text(status?.state);
+  const labels = {draft:'Rascunho',prepared:'Aguardando emissão',number_reserved:'Aguardando emissão',signed:'Aguardando emissão',submitted:'Emissão não concluída',processing:'Emissão não concluída',authorized:'Autorizada',artifacts_stored:'Autorizada',danfe_ready:'Autorizada',rejected:'Rejeitada',failed:'Falha na emissão',canceled:'Cancelada'};
   const tone = SUCCESS_STATES.has(state) ? 'success' : DANGER_STATES.has(state) ? 'danger' : PROCESSING_STATES.has(state) ? 'info' : 'warning';
   const detail = state === 'canceled'
     ? `Cancelamento confirmado${text(status?.cancellationProtocol) ? ` · protocolo ${text(status.cancellationProtocol)}` : ''}`
+    : status?.consultationErrorCode
+      ? `Falha ao confirmar o retorno · ${text(status.consultationErrorCode)}`
     : status?.actionRequired
     ? text(status?.recommendedActionMessage) || 'Revise a emissão antes de continuar'
+    : ['submitted','processing'].includes(state)
+      ? 'O envio não foi concluído. Abra a nota para tentar novamente.'
     : status?.recoveryPending
       ? 'Documentos finais sendo preparados'
       : status?.finalDocumentReady
@@ -563,5 +572,5 @@ export function fiscalStatusPresentation(status) {
         : status?.authorized
           ? 'Autorização confirmada'
           : text(status?.statusReason) || 'Aguardando atualização';
-  return Object.freeze({ label: text(status?.stateLabel) || 'Situação fiscal', tone, detail });
+  return Object.freeze({ label: labels[state] || text(status?.stateLabel) || 'Situação fiscal', tone, detail });
 }

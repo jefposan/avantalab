@@ -1,7 +1,25 @@
 'use client';
+import {focarCampoComErro} from '@/app/lib/foco-validacao.mjs';
+import {fiscalValidationTarget} from '../lib/fiscal-validation.mjs';
+import dynamic from 'next/dynamic';
+import {requestFiscalEditor} from '../lib/fiscal-editor-bridge.mjs';
+import { NoteOperationFields, NoteTransportFields, NoteDetailsFields, NoteObservationsFields, NoteWithholdingFields, type NoteFields, type FiscalNoteEditorOptions } from '../components/FiscalNoteBlocks';
+import {newFiscalNoteFields,priceFromTable,repriceNoteLines,previewInstallments,validateFiscalNoteFields} from '../lib/fiscal-note-editor.mjs';
+import { usaFiscalEmpresa } from '../../lib/fiscal-produto.mjs';
+import ModalConfirmacao from '@/app/components/ModalConfirmacao';
+import type { ProdutoCustos } from '../../custos/types';
+import CampoMoeda from '@/app/components/CampoMoeda';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { AdaptiveModuleLogo } from '@/app/components/ModuloHeader';
+import Tooltip from '@/app/components/Tooltip';
+import BotaoExpandirCard from '@/app/components/BotaoExpandirCard';
+import { fiscalItemDetails } from '../lib/fiscal-item-presentation.mjs';
+import { fiscalCheckoutCorrection, fiscalCorrectionAction, fiscalItemsForReview, fiscalProductIssues } from '../lib/fiscal-correction.mjs';
+import { canResumeFiscalDraft, fiscalDraftForReview, FISCAL_CHECKOUT_REQUEST_TYPE, FISCAL_CHECKOUT_RESPONSE_TYPE, type FiscalCheckoutResult } from '../lib/fiscal-checkout.mjs';
+import { fiscalNoteResult, nfeStandardCancellationAvailability, nfePublicConsultationUrl } from '../lib/fiscal-note-result.mjs';
+import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
+import { corEhClara } from '@/app/lib/formatters';
 import {
   activeCompany,
   clients,
@@ -73,7 +91,7 @@ import { FISCAL_REFERENCE_DATE, buildFiscalWorkflow, getFiscalDocumentProfile } 
 import { municipalityIsResolved, resolveMunicipalityCode } from '../lib/municipality.mjs';
 import { normalizarEmail } from '../../lib/email';
 import { TAX_PROFILE_REFERENCE, evaluateCatalogTaxProfile, normalizeCatalogTaxProfile, type CatalogTaxProfile } from '../lib/tax-profile.mjs';
-import { createDefaultFiscalMatrix, normalizeFiscalMatrix, resolveFiscalMatrixRule, validateFiscalMatrix, type FiscalMatrix, type FiscalMatrixRule } from '../lib/fiscal-matrix.mjs';
+import { createDefaultFiscalMatrix, normalizeFiscalMatrix, resolveFiscalMatrixRule, validateFiscalMatrix, validateFiscalMatrixPublication, type FiscalMatrix, type FiscalMatrixIssue, type FiscalMatrixRule } from '../lib/fiscal-matrix.mjs';
 import { FISCAL_HOMOLOGATION_REFERENCE, FISCAL_HOMOLOGATION_STATUSES, createDefaultFiscalHomologationPlan, normalizeFiscalHomologationPlan, validateFiscalHomologationPlan, type FiscalHomologationDocument, type FiscalHomologationPlan, type FiscalHomologationScenario, type FiscalHomologationStatus } from '../lib/fiscal-homologation.mjs';
 import { FISCAL_INTEGRATION_DECISION_STATUSES, FISCAL_INTEGRATION_MODES, createDefaultFiscalIntegrationEvaluation, normalizeFiscalIntegrationEvaluation, validateFiscalIntegrationEvaluation, type FiscalIntegrationCandidate, type FiscalIntegrationDocument, type FiscalIntegrationEvaluation, type FiscalIntegrationMode } from '../lib/fiscal-integration-evaluation.mjs';
 import { FISCAL_CSC_STATUSES, FISCAL_NFSE_ROUTE_MODES, FISCAL_REGISTRATION_STATUSES, createFiscalEstablishmentFromCompany, createFiscalIssuerRegistry, normalizeFiscalIssuerRegistry, resolveFiscalIssuerSelection, validateFiscalIssuerRegistry, type FiscalCscStatus, type FiscalDocumentType, type FiscalEstablishment, type FiscalIssuerRegistry, type FiscalIssuerSelectionSnapshot, type FiscalNfseRouteMode, type FiscalRegistrationStatus } from '../lib/fiscal-issuer-routing.mjs';
@@ -82,7 +100,7 @@ import { evaluateNfeCertificateInstallationReadiness } from '../lib/nfe-certific
 import { configureFiscalSequence, createFiscalNumberingLedger, normalizeFiscalNumberingLedger, requestFiscalNumberVoid, validateFiscalNumberingLedger, type FiscalNumberingLedger, type FiscalNumberingSequence } from '../lib/fiscal-numbering.mjs';
 import { isAllowedLocalManagementOrigin, MANAGEMENT_CATALOG_READY_TYPE, parseManagementCatalogMessage, type ManagementCatalogBridge } from '../lib/management-catalog-bridge.mjs';
 import { createFiscalCancellationRequest, createFiscalCertificateActivateRequest, createFiscalCertificateInstallRequest, createFiscalCertificateStatusRequest, createFiscalCorrectionRequest, createFiscalDownloadRequest, createFiscalIssueRequest, createFiscalNumberRequest, createFiscalPrepareRequest, createFiscalStatusRequest, createFiscalValidateRequest, fiscalStatusPresentation, parseFiscalCancellationResponse, parseFiscalCertificateActivateResponse, parseFiscalCertificateInstallResponse, parseFiscalCertificateStatusResponse, parseFiscalCorrectionResponse, parseFiscalDownloadResponse, parseFiscalIssueResponse, parseFiscalNumberResponse, parseFiscalPrepareResponse, parseFiscalStatusResponse, parseFiscalValidateResponse, type FiscalArtifactType, type FiscalCertificateStatus, type FiscalEmissionStatus, type FiscalExecutionReadiness, type FiscalPreparedEmission } from '../lib/fiscal-status-bridge.mjs';
-import { parseFiscalDocumentsMessage, type PersistedFiscalDocument } from '../lib/fiscal-documents-bridge.mjs';
+import { parseFiscalDocumentsMessage, STANDALONE_FISCAL_SAVE_REQUEST_TYPE, STANDALONE_FISCAL_SAVE_RESPONSE_TYPE, type PersistedFiscalDocument } from '../lib/fiscal-documents-bridge.mjs';
 import { createCommercialOrderWorkflowRequest, parseCommercialOrderWorkflowResponse } from '../lib/commercial-order-bridge.mjs';
 import { createCommercialServiceWorkflowRequest, parseCommercialServiceWorkflowResponse } from '../lib/commercial-service-workflow-bridge.mjs';
 import { createServiceAttachmentOpenRequest, createServiceAttachmentUploadRequest, parseServiceAttachmentResponse } from '../lib/commercial-service-attachment-bridge.mjs';
@@ -134,7 +152,7 @@ type View = 'painel' | 'vendas' | 'novo_pedido' | 'novo_orcamento' | 'nova_ordem
 type IconName = 'home' | 'sale' | 'service' | 'users' | 'box' | 'stock' | 'fiscal' | 'money' | 'chart' | 'settings' | 'plus' | 'search' | 'menu' | 'close' | 'chevron' | 'warning' | 'check' | 'clock' | 'document' | 'calendar' | 'arrow' | 'back' | 'copy' | 'print' | 'mail' | 'whatsapp' | 'tag' | 'edit' | 'image';
 type NewActionType = DocumentType | 'cliente' | 'fornecedor' | 'produto';
 type SupplierRecord = { id: string; name: string; document: string; contactName: string; email: string; phone: string; active: boolean; persistence?: { integrated: boolean; version: number } };
-type ConfirmedSave = { ok: boolean; message: string };
+type ConfirmedSave = { ok: boolean; message: string; code?: string; field?: string; draftId?: string };
 type PendingConfirmedSave = { timer: number; resolve: (result: ConfirmedSave) => void };
 
 type ServiceMaterial = { id: string; catalogItemId?: string; sku: string; name: string; quantity: number; unit: string; source: 'Catálogo' | 'Externo' | 'Cliente'; cost: number };
@@ -183,8 +201,16 @@ type CreatedRecord = {
     fiscalDocument: 'nenhum' | 'nfe' | 'nfce' | 'nfse';
     fiscalIssuer?: FiscalIssuerSelectionSnapshot;
     paymentMethod: string;
+    paymentDetails?:{integrationType:string;institutionDocument:string;authorizationCode:string};
     installments: number;
     firstDueDate: string;
+    channel?: string;
+    orderDate?: string;
+    deliveryDate?: string;
+    fulfillment?: string;
+    operationNature?: string;
+    notes?: string;
+    fiscalForm?: NoteFields;
   };
   serviceOrder?: {
     lines: Array<{ sku: string; name: string; kind: 'servico'; unit: string; quantity: number; unitPrice: number; cost: number; municipalServiceCode: string; fiscalStatus: string }>;
@@ -218,7 +244,8 @@ type CreatedRecord = {
   events?: Array<{ date: string; label: string; description: string }>;
 };
 
-type OrderLifecycleAction = 'separar' | 'faturar' | 'cancelar' | 'devolver';
+type OrderLifecycleAction = 'editar' | 'separar' | 'faturar' | 'cancelar' | 'devolver';
+type OrderConfirmationAction = Exclude<OrderLifecycleAction, 'editar'>;
 type ServiceLifecycleAction = 'agendar' | 'iniciar' | 'cancelar';
 type CommercialOperationRecord = CommercialRecord & { localRecord?: CreatedRecord; fiscalDraft?: FiscalDraftRecord };
 type ServiceOperationRecord = ServiceOrder & { localRecord?: CreatedRecord; fiscalDraft?: FiscalDraftRecord };
@@ -256,10 +283,12 @@ type FiscalOrigin = {
   item: string;
   total: number;
   documentType: 'nfe' | 'nfce' | 'nfse';
-  sourceLabel: 'Pedido' | 'Venda rápida' | 'Ordem de serviço';
+  sourceLabel: 'Pedido' | 'Venda rápida' | 'Ordem de serviço' | 'Nota avulsa';
 };
 
 type FiscalDraftItem = {
+  catalogItemId?: string;
+  useCompanyFiscal?: boolean;
   sku: string;
   name: string;
   kind: 'produto' | 'servico';
@@ -302,6 +331,11 @@ type FiscalDraftEvent = {
 };
 
 type FiscalDraftRecord = {
+  paymentDetails?: {integrationType:string;institutionDocument:string;authorizationCode:string};
+  paymentInstallments?: number;
+  paymentFirstDueDate?: string;
+  additionalInfo?: string;
+  fiscalForm?:NoteFields;
   id: string;
   emissionId?: string;
   remoteState?: string;
@@ -347,6 +381,8 @@ type FiscalDraftRecord = {
 function persistedFiscalItem(item: Record<string, any>): FiscalDraftItem {
   const fiscal = item.fiscal && typeof item.fiscal === 'object' ? item.fiscal : {};
   return {
+    ...(typeof fiscal.useCompanyFiscal === 'boolean' ? { useCompanyFiscal: fiscal.useCompanyFiscal } : {}),
+    catalogItemId: String(item.productId || ''),
     sku: String(item.sku || ''), name: String(item.name || ''),
     kind: item.itemType === 'servico' ? 'servico' : 'produto', unit: String(item.unit || ''),
     quantity: Number(item.quantity || 0), unitPrice: Number(item.unitPrice || 0), unitDiscount: Number(item.unitDiscount || 0),
@@ -357,7 +393,7 @@ function persistedFiscalItem(item: Record<string, any>): FiscalDraftItem {
     nationalServiceCode: String(fiscal.nationalServiceCode || fiscal.codigoTributacaoNacional || ''),
     nbs: String(fiscal.nbs || ''), issRate: Number(fiscal.issRate || fiscal.aliquotaIss || 0),
     serviceIncidenceMode: String(fiscal.serviceIncidenceMode || fiscal.municipioPrestacao || ''),
-    fiscalOriginCode: String(fiscal.fiscalOriginCode || fiscal.origemMercadoria || ''),
+    fiscalOriginCode: String(fiscal.fiscalOriginCode || fiscal.originCode || fiscal.origemMercadoria || ''),
     cfopInternal: String(fiscal.cfopInternal || fiscal.cfop || fiscal.cfopPadrao || ''),
     cfopInterstate: String(fiscal.cfopInterstate || ''),
     icmsCode: String(fiscal.icmsCode || fiscal.csosn || fiscal.cst || ''),
@@ -488,8 +524,8 @@ function mapPersistedFiscalDocument(document: PersistedFiscalDocument): FiscalDr
   const blocked = ['rejected', 'failed'].includes(document.emission?.state || '');
   const createdAt = document.createdAt || new Date().toISOString();
   const updatedAt = document.emission?.updatedAt || createdAt;
-  const sourceLabel: FiscalOrigin['sourceLabel'] = document.originType === 'ordem_servico' ? 'Ordem de serviço' : 'Pedido';
-  const originDisplay = document.originNumber ? `${sourceLabel === 'Pedido' ? 'PED' : 'OS'}-${document.originNumber}` : document.originId;
+  const sourceLabel: FiscalOrigin['sourceLabel'] = document.originType === 'avulsa' ? 'Nota avulsa' : document.originType === 'ordem_servico' ? 'Ordem de serviço' : 'Pedido';
+  const originDisplay = document.originNumber ? sourceLabel === 'Pedido' ? String(document.originNumber).replace('-', '/') : `OS-${document.originNumber}` : document.originId;
   const draftReadyDetail = ready ? 'Retrato comercial pronto e íntegro no servidor.' : 'O cadastro fiscal possui pendências.';
   const emissionReady = Boolean(document.emissionId);
   return {
@@ -513,6 +549,12 @@ function mapPersistedFiscalDocument(document: PersistedFiscalDocument): FiscalDr
       other: Number(totals.otherExpenses || 0), invoice: Number(totals.total || document.total || 0),
     },
     paymentMethod: document.paymentMethod || 'Não informado',
+    paymentDetails: document.paymentDetails,
+    paymentInstallments: document.paymentInstallments,
+    paymentFirstDueDate: document.paymentFirstDueDate,
+    additionalInfo: String(totals.additionalInfo || ''),
+    fiscalForm:totals.fiscalForm,
+    ...(totals.operationNature ? {operationNature:String(totals.operationNature)} : {}),
     environment: 'Homologação local',
     series: document.emission?.series || 'Não atribuída',
     number: document.emission?.number ? String(document.emission.number) : 'Não atribuído',
@@ -526,7 +568,7 @@ function mapPersistedFiscalDocument(document: PersistedFiscalDocument): FiscalDr
       { key: 'persisted-emission', label: 'Ciclo fiscal vinculado', ready: emissionReady, detail: emissionReady ? `Emissão ${document.emissionId} vinculada sem duplicidade.` : 'A emissão ainda não foi aberta.', scope: 'transmissao' },
     ],
     warnings: ready ? [] : ['Conclua as pendências cadastrais antes de preparar a emissão.'],
-    events: [{ date: createdAt, label: 'Documento comercial faturado', description: emissionReady ? 'Rascunho e emissão fiscal reencontrados no servidor pelo mesmo vínculo.' : 'Rascunho fiscal persistido; a emissão ainda não foi aberta.', user: 'Sistema' }],
+    events: [{ date: createdAt, label: 'Rascunho fiscal persistido', description: emissionReady ? 'Rascunho e emissão fiscal reencontrados no servidor pelo mesmo vínculo.' : 'Rascunho fiscal persistido; a emissão ainda não foi aberta.', user: 'Sistema' }],
   };
 }
 
@@ -760,6 +802,18 @@ function orderLineFromCatalog(item: CatalogItem): OrderLine {
   };
 }
 
+function orderLineFromRecord(line: NonNullable<CreatedRecord['order']>['lines'][number], catalogRecords: CatalogItem[], index: number): OrderLine {
+  const catalogItem = catalogRecords.find((item) => item.sku === line.sku);
+  return {
+    ...line,
+    id: `${line.sku}-draft-${index}`,
+    catalogItemId: line.catalogItemId || catalogItem?.catalogItemId,
+    available: catalogItem?.available ?? 0,
+    cost: Number.isFinite(line.cost) ? line.cost : catalogItem?.cost ?? 0,
+    fiscalStatus: catalogItem?.fiscal ?? 'Revisar classificação',
+  };
+}
+
 const defaultModuleSettings: ModuleSettings = {
   version: 8,
   company: { ...activeCompany, stateRegistration: '110.042.490.114', municipalRegistration: '', taxRegime: 'Simples Nacional', cityCode: '3550308', cep: '01001-000', street: 'Praça da Sé', number: '100', complement: '', district: 'Sé', email: 'contato@empresa.com.br', phone: '(11) 4000-0000' },
@@ -813,8 +867,8 @@ function applyAccessBridgeSnapshot(settings: ModuleSettings, snapshot: AccessBri
   }, defaultModuleSettings) as ModuleSettings;
 }
 
-function fiscalConfigFromSettings(settings: ModuleSettings, certificate: FiscalCertificateStatus | null = null): FiscalConfig {
-  return { companyDocument: settings.company.document, taxRegime: settings.company.taxRegime, cityCode: settings.company.cityCode, municipalRegistration: settings.company.municipalRegistration, stateRegistration: settings.company.stateRegistration, providerConnected: certificate?.fiscalConnectionAvailable === true, certificateValid: certificate?.certificateActive === true, environment: 'homologacao', fiscalResponsible: settings.fiscal.fiscalResponsible, nfseAuthorityMode: settings.fiscal.nfseAuthorityMode, contingencyPlan: settings.fiscal.contingencyPlan, taxReviewConfirmed: settings.fiscal.taxReviewConfirmed, taxReformReviewConfirmed: settings.fiscal.taxReformReviewConfirmed };
+function fiscalConfigFromSettings(settings: ModuleSettings, certificate: FiscalCertificateStatus | null = null, execution: FiscalExecutionReadiness | null = null): FiscalConfig {
+  return { companyDocument: settings.company.document, taxRegime: settings.company.taxRegime, cityCode: settings.company.cityCode, municipalRegistration: settings.company.municipalRegistration, stateRegistration: settings.company.stateRegistration, providerConnected: execution ? execution.transmissionAllowed === true : certificate?.fiscalConnectionAvailable === true, certificateValid: certificate?.certificateActive === true, environment: 'homologacao', fiscalResponsible: settings.fiscal.fiscalResponsible, nfseAuthorityMode: settings.fiscal.nfseAuthorityMode, contingencyPlan: settings.fiscal.contingencyPlan, taxReviewConfirmed: settings.fiscal.taxReviewConfirmed, taxReformReviewConfirmed: settings.fiscal.taxReformReviewConfirmed };
 }
 
 function fiscalOperationContext(origin: FiscalOrigin, client: ClientRecord | undefined, company: CompanyProfile, issuer?: FiscalIssuerSelectionSnapshot) {
@@ -830,8 +884,8 @@ function fiscalOperationContext(origin: FiscalOrigin, client: ClientRecord | und
   };
 }
 
-function fiscalConfigForIssuer(settings: ModuleSettings, issuer?: FiscalIssuerSelectionSnapshot, certificate: FiscalCertificateStatus | null = null): FiscalConfig {
-  const base = fiscalConfigFromSettings(settings, certificate);
+function fiscalConfigForIssuer(settings: ModuleSettings, issuer?: FiscalIssuerSelectionSnapshot, certificate: FiscalCertificateStatus | null = null, execution: FiscalExecutionReadiness | null = null): FiscalConfig {
+  const base = fiscalConfigFromSettings(settings, certificate, execution);
   if (!issuer) return base;
   return {
     ...base,
@@ -876,7 +930,7 @@ const viewInfo: Record<View, { title: string; subtitle: string; eyebrow: string 
   clientes: { title: 'Clientes', subtitle: 'Cadastro comercial, fiscal, entrega, cobrança e relacionamento.', eyebrow: 'Cadastros' },
   catalogo: { title: 'Produtos e serviços', subtitle: 'Catálogo publicado por Custos e Precificação com complementos fiscais.', eyebrow: 'Catálogo comercial' },
   estoque: { title: 'Estoque', subtitle: 'Saldos, reservas, entradas, saídas, produção e inventário.', eyebrow: 'Movimentações' },
-  fiscal: { title: 'Central fiscal', subtitle: 'Rascunhos, validações, autorizações, rejeições e eventos.', eyebrow: 'NF-e · NFC-e · NFS-e' },
+  fiscal: { title: 'Notas Fiscais', subtitle: 'Consulte as notas emitidas, acompanhe os rascunhos e acesse as ações de cada documento.', eyebrow: 'NF-e · NFC-e · NFS-e' },
   recebimentos: { title: 'Recebimentos', subtitle: 'Parcelas geradas por vendas e serviços, com sincronização futura com a Gestão Financeira.', eyebrow: 'Contas a receber' },
   relatorios: { title: 'Relatórios', subtitle: 'Indicadores comerciais, operacionais, fiscais e de estoque.', eyebrow: 'Análises' },
   configuracoes: { title: 'Ajustes', subtitle: 'Configure a empresa, as notas, a operação e os acessos por assunto.', eyebrow: 'Vendas e serviços' },
@@ -884,8 +938,8 @@ const viewInfo: Record<View, { title: string; subtitle: string; eyebrow: string 
 
 const navGroups: Array<{ label: string; items: Array<[View, string, IconName, string?]> }> = [
   { label: 'Resumo', items: [['painel', 'Visão geral', 'home']] },
-  { label: 'Operação', items: [['vendas', 'Vendas', 'sale', '6'], ['servicos', 'Serviços', 'service', '4'], ['clientes', 'Clientes', 'users'], ['catalogo', 'Produtos e serviços', 'box']] },
-  { label: 'Controle', items: [['estoque', 'Estoque', 'stock', '2'], ['fiscal', 'Central fiscal', 'fiscal', '2'], ['recebimentos', 'Recebimentos', 'money', '3']] },
+  { label: 'Operação', items: [['vendas', 'Vendas', 'sale', '6'], ['servicos', 'Serviços', 'service', '4'], ['fiscal', 'Notas Fiscais', 'fiscal', '2'], ['clientes', 'Clientes', 'users'], ['catalogo', 'Produtos e serviços', 'box']] },
+  { label: 'Controle', items: [['estoque', 'Estoque', 'stock', '2'], ['recebimentos', 'Recebimentos', 'money', '3']] },
   { label: 'Gestão', items: [['relatorios', 'Relatórios', 'chart'], ['configuracoes', 'Ajustes', 'settings']] },
 ];
 
@@ -897,7 +951,7 @@ const newOptions: Array<{ type: NewActionType; title: string; description: strin
   { type: 'orcamento', title: 'Orçamento', description: 'Proposta sem movimentar estoque.', icon: 'document' },
   { type: 'venda', title: 'Venda rápida', description: 'Atendimento simples de balcão.', icon: 'money' },
   { type: 'ordem_servico', title: 'Ordem de serviço', description: 'Agenda, execução e conclusão.', icon: 'service' },
-  { type: 'nfe', title: 'NF-e', description: 'Nota fiscal de produtos e mercadorias.', icon: 'fiscal' },
+  { type: 'nfe', title: 'Nota fiscal (NF-e)', description: 'Nota avulsa, sem faturamento ou estoque.', icon: 'fiscal' },
   { type: 'nfce', title: 'NFC-e', description: 'Nota fiscal para venda ao consumidor.', icon: 'fiscal' },
   { type: 'nfse', title: 'NFS-e', description: 'Prestação de serviços.', icon: 'fiscal' },
 ];
@@ -968,14 +1022,12 @@ function SearchToolbar({ value, onChange, children, placeholder = 'Buscar por cl
   return <div className="toolbar"><label className="search-field"><span className="sr-only">Buscar</span><Icon name="search" size={18}/><input type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder}/>{value && <button type="button" className="search-field-clear" onClick={() => onChange('')} aria-label="Limpar pesquisa">×</button>}</label>{children}</div>;
 }
 
-function Dialog({ open, title, description, onClose, children, eyebrow = 'Vendas e serviços' }: { open: boolean; title: string; description: string; onClose: () => void; children: ReactNode; eyebrow?: string }) {
+function Dialog({ open, title, description, onClose, children, eyebrow = 'Vendas e serviços', titleExtra }: { open: boolean; title: string; description: string; onClose: () => void; children: ReactNode; eyebrow?: string; titleExtra?: ReactNode }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (!open) return;
     openerRef.current = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     const timer = window.setTimeout(() => dialogRef.current?.querySelector<HTMLElement>('input,select,textarea,button')?.focus(), 0);
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { onClose(); return; }
@@ -991,12 +1043,11 @@ function Dialog({ open, title, description, onClose, children, eyebrow = 'Vendas
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener('keydown', handleKey);
-      document.body.style.overflow = previousOverflow;
       openerRef.current?.focus();
     };
   }, [open, onClose]);
   if (!open) return null;
-  return <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><div ref={dialogRef} className="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header><div><span>{eyebrow}</span><h2 id="dialog-title">{title}</h2><p>{description}</p></div><button type="button" className="icon-button" onClick={onClose} aria-label="Fechar"><Icon name="close"/></button></header>{children}</div></div>;
+  return <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><div ref={dialogRef} className="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header><div><span>{eyebrow}</span>{titleExtra ? <div className="dialog-title-line"><h2 id="dialog-title">{title}</h2>{titleExtra}</div> : <h2 id="dialog-title">{title}</h2>}<p>{description}</p></div><button type="button" className="icon-button" onClick={onClose} aria-label="Fechar"><Icon name="close"/></button></header>{children}</div></div>;
 }
 
 function NewRecordDialog({ type, fiscalOrigin, fiscalConfig, settings, onClose, onCreated }: { type: DocumentType | null; fiscalOrigin?: FiscalOrigin | null; fiscalConfig: FiscalConfig; settings: ModuleSettings; onClose: () => void; onCreated: (record: CreatedRecord) => void }) {
@@ -1046,7 +1097,7 @@ function NewRecordDialog({ type, fiscalOrigin, fiscalConfig, settings, onClose, 
       {validated && fiscal && <div className="validation-result" role="status"><div className="validation-title"><Icon name={fiscal.ready ? 'check' : 'warning'}/><strong>{fiscal.ready ? 'Pré-requisitos atendidos' : `${fiscal.errors.length} bloqueios encontrados`}</strong></div>{fiscal.errors.map((message) => <p key={message}>• {message}</p>)}{fiscal.warnings.map((message) => <p key={message}>• {message}</p>)}</div>}
       {error && <p className="form-error" id="new-record-error" role="alert">{error}</p>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Cancelar</button><button type="button" className="button primary" onClick={submit}>{isFiscal ? (validated ? 'Salvar rascunho' : 'Validar pré-requisitos') : 'Criar demonstração'}</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={submit}>{isFiscal ? (validated ? 'Salvar rascunho' : 'Validar pré-requisitos') : 'Criar demonstração'}</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -1161,7 +1212,7 @@ function MoneyInput({ value, onChange, ariaLabel, placeholder }: { value: string
   </div>;
 }
 
-function LineNumberEditor({ label, value, onChange, step = 1, moneyValue = false, unit, showSteppers = false, disabled = false }: { label: string; value: number; onChange: (value: number) => void; step?: number; moneyValue?: boolean; unit?: string; showSteppers?: boolean; disabled?: boolean }) {
+function LineNumberEditor({ label, value, onChange, step = 1, moneyValue = false, unit, showSteppers = false, disabled = false, compact = false }: { label: string; value: number; onChange: (value: number) => void; step?: number; moneyValue?: boolean; unit?: string; showSteppers?: boolean; disabled?: boolean; compact?: boolean }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(() => formatLineNumber(value, moneyValue));
   useEffect(() => { if (!editing) setDraft(formatLineNumber(value, moneyValue)); }, [editing, moneyValue, value]);
@@ -1170,12 +1221,13 @@ function LineNumberEditor({ label, value, onChange, step = 1, moneyValue = false
     onChange(next);
     setDraft(formatLineNumber(next, moneyValue));
   };
-  const usableInputWidth = moneyValue ? 98 : showSteppers ? 58 : 112;
+  const usableInputWidth = compact ? (showSteppers ? 36 : 82) : moneyValue ? 98 : showSteppers ? 58 : 112;
   const inputFontSize = fittedNumericFontSize(draft, usableInputWidth, 13);
-  return <div className="line-editor-wrap">
-    <span className="line-editor-caption">{label.split(' de ')[0]}</span>
-    <div className={`line-number-editor ${moneyValue ? 'money-editor' : ''} ${showSteppers ? 'with-steppers' : ''}`}>
-      {moneyValue && <span aria-hidden="true">R$</span>}
+  return <div className={`line-editor-wrap${compact ? ' line-editor-compact' : ''}`}>
+    <span className="line-editor-caption">{compact && showSteppers ? 'Qtd.' : label.split(' de ')[0]}{compact && (unit || moneyValue) ? ` (${moneyValue ? 'R$' : unit})` : ''}</span>
+    <div className={`line-number-editor ${moneyValue && !compact ? 'money-editor' : ''} ${showSteppers ? compact ? 'horizontal-steppers' : 'with-steppers' : ''}`}>
+      {moneyValue && !compact && <span aria-hidden="true">R$</span>}
+      {compact && showSteppers && <button type="button" onClick={() => changeBy(-1)} aria-label={`Diminuir ${label.toLocaleLowerCase('pt-BR')}`} disabled={disabled || value <= 0}>−</button>}
       <input
         aria-label={label}
         inputMode="decimal"
@@ -1186,46 +1238,93 @@ function LineNumberEditor({ label, value, onChange, step = 1, moneyValue = false
         onChange={(event) => { const nextDraft = event.target.value; setDraft(nextDraft); const parsed = parseCommercialNumber(nextDraft); if (parsed !== null) onChange(Math.max(0, parsed)); }}
         onBlur={() => { setEditing(false); setDraft(formatLineNumber(value, moneyValue)); }}
       />
-      {showSteppers && <div className="line-step-buttons">
+      {compact && showSteppers && <button type="button" onClick={() => changeBy(1)} aria-label={`Aumentar ${label.toLocaleLowerCase('pt-BR')}`} disabled={disabled}>+</button>}
+      {showSteppers && !compact && <div className="line-step-buttons">
         <button type="button" onClick={() => changeBy(1)} aria-label={`Aumentar ${label.toLocaleLowerCase('pt-BR')}`} disabled={disabled}><Icon name="chevron" size={18}/></button>
         <button type="button" onClick={() => changeBy(-1)} aria-label={`Diminuir ${label.toLocaleLowerCase('pt-BR')}`} disabled={disabled || value <= 0}><Icon name="chevron" size={18}/></button>
       </div>}
     </div>
-    <small aria-hidden={!unit}>{unit || '\u00a0'}</small>
+    {!compact && <small aria-hidden={!unit}>{unit || '\u00a0'}</small>}
   </div>;
 }
 
-function NewOrderView({ clientRecords, catalogRecords, settings, issuerRegistry, connected, initialClient = '', initialSku = '', onCancel, onCreated }: { clientRecords: ClientRecord[]; catalogRecords: CatalogItem[]; settings: ModuleSettings; issuerRegistry: FiscalIssuerRegistry; connected: boolean; initialClient?: string; initialSku?: string; onCancel: () => void; onCreated: (record: CreatedRecord) => void }) {
+const ProductRegistration = dynamic(()=>import('../../custos/CustosClient'),{ssr:false,loading:()=> <p role="status">Carregando cadastro do produto…</p>});
+
+type NoteCorrection = { draft: FiscalDraftRecord; status: FiscalEmissionStatus; onSave: (note: Record<string, unknown>, issue: boolean) => Promise<ConfirmedSave> };
+
+function NewOrderView({ companyId = '', fiscalEditor, correction, clientRecords, catalogRecords, settings, issuerRegistry, connected, initialClient = '', initialSku = '', initialRecord = null, fiscalOnly = false, onFiscalCreated, onFiscalCorrection, onCancel, onCreated }: { companyId?: string; fiscalEditor?: FiscalNoteEditorOptions; correction?: NoteCorrection; clientRecords: ClientRecord[]; catalogRecords: CatalogItem[]; settings: ModuleSettings; issuerRegistry: FiscalIssuerRegistry; connected: boolean; initialClient?: string; initialSku?: string; initialRecord?: CreatedRecord | null; fiscalOnly?: boolean; onFiscalCreated?: (record: CreatedRecord, issue?: boolean) => Promise<ConfirmedSave>; onFiscalCorrection?: (result: ConfirmedSave) => void; onCancel: () => void; onCreated: (record: CreatedRecord) => void }) {
+  const [noteFields,setNoteFields]=useState<NoteFields>(()=>({...newFiscalNoteFields(),series:fiscalEditor?.series??'1',number:fiscalEditor?.number??'',priceTableId:fiscalEditor?.clientPriceTables[clientRecords.find(client=>client.name===(initialRecord?.client||initialClient))?.id||'']||fiscalEditor?.defaultPriceTableId||'standard',...initialRecord?.order?.fiscalForm,...(correction?{series:String(correction.status.series),number:String(correction.status.number)}:{})}));
+  const [pendingTable,setPendingTable]=useState<string|null>(null);
+  const patchNoteFields=(patch:Partial<NoteFields>)=>setNoteFields(current=>({...current,...patch}));
   const { can } = useContext(PermissionContext);
   const clientRef = useRef<HTMLSelectElement>(null);
-  const [clientName, setClientName] = useState(initialClient);
-  const [seller, setSeller] = useState(settings.commercial.defaultSeller);
-  const [channel, setChannel] = useState('Atendimento direto');
-  const [orderDate, setOrderDate] = useState(() => todayIso());
-  const [deliveryDate, setDeliveryDate] = useState(() => isoAfterDays(3));
+  const [editingProduct, setEditingProduct] = useState<CatalogItem | null>(null);
+  const [productDirty, setProductDirty] = useState(false);
+  const [productBusy, setProductBusy] = useState(false);
+  const [confirmProductClose, setConfirmProductClose] = useState(false);
+  const closeProduct=()=>{if(productBusy)return;if(productDirty){setConfirmProductClose(true);return;}setEditingProduct(null);};
+  const [registeredProducts, setRegisteredProducts] = useState<Record<string,CatalogItem>>({});
+  useEffect(()=>setRegisteredProducts({}),[catalogRecords]);
+  const initialOrder = initialRecord?.order;
+  const editing = Boolean(correction || (initialRecord?.status === 'Rascunho' && initialOrder));
+  const [clientName, setClientName] = useState(initialRecord?.client || initialClient);
+  const [seller, setSeller] = useState(initialOrder?.seller || settings.commercial.defaultSeller);
+  const [channel, setChannel] = useState(initialOrder?.channel || 'Atendimento direto');
+  const [orderDate, setOrderDate] = useState(() => initialOrder?.orderDate || initialRecord?.createdAt?.slice(0, 10) || todayIso());
+  const [deliveryDate, setDeliveryDate] = useState(() => initialOrder?.deliveryDate || isoAfterDays(3));
   const [lines, setLines] = useState<OrderLine[]>(() => {
+    if (initialOrder?.lines.length) return initialOrder.lines.map((line, index) => orderLineFromRecord(line, catalogRecords, index));
     const initialItem = catalogRecords.find((item) => item.sku === initialSku);
     return initialItem ? [orderLineFromCatalog(initialItem)] : [];
   });
-  const [paymentMethod, setPaymentMethod] = useState(settings.payments.defaultMethod);
-  const [installments, setInstallments] = useState(String(settings.payments.defaultInstallments));
-  const [firstDueDate, setFirstDueDate] = useState(() => isoAfterDays(settings.payments.firstDueDays));
-  const [freight, setFreight] = useState('0');
-  const [globalDiscount, setGlobalDiscount] = useState('0');
-  const [fulfillment, setFulfillment] = useState('Entrega');
-  const [reserveStock, setReserveStock] = useState(settings.commercial.reserveStockDefault);
+  const [paymentMethod, setPaymentMethod] = useState<string>(() => correction ? (/^pix$/i.test(correction.draft.paymentMethod) ? '' : correction.draft.paymentMethod) : fiscalEditor ? (initialOrder?.paymentMethod || '') : (settings.payments.enabledMethods.includes(initialOrder?.paymentMethod as PaymentMethod) ? initialOrder?.paymentMethod : settings.payments.defaultMethod) || '');
+  const [paymentDetails, setPaymentDetails] = useState(correction?.draft.paymentDetails || initialOrder?.paymentDetails || {integrationType:'',institutionDocument:'',authorizationCode:''});
+  const [insurance, setInsurance] = useState(formatLineNumber(initialOrder?.commercialTotals.insurance ?? 0,true));
+  const [otherExpenses, setOtherExpenses] = useState(formatLineNumber(initialOrder?.commercialTotals.other ?? 0,true));
+  const [quantityDrafts,setQuantityDrafts]=useState<Record<string,string>>({});
+  const [itemTax, setItemTax] = useState<Record<string,{ncm:string;cfop:string}>>(() => Object.fromEntries((correction?.draft.items || []).map(item=>[item.sku,{ncm:item.ncm,cfop:correction?.draft.operationContext?.destination==='Fora da UF'?item.cfopInterstate:item.cfopInternal||item.cfopInterstate||''}])));
+  const [installments, setInstallments] = useState(String(initialOrder?.installments || settings.payments.defaultInstallments));
+  const [firstDueDate, setFirstDueDate] = useState(() => initialOrder?.firstDueDate || isoAfterDays(settings.payments.firstDueDays));
+  const [freight, setFreight] = useState(() => formatLineNumber(initialOrder?.commercialTotals.freight ?? 0, true));
+  const [globalDiscount, setGlobalDiscount] = useState(() => formatLineNumber(initialOrder?.commercialTotals.orderDiscount ?? 0, true));
+  const [fulfillment, setFulfillment] = useState(initialOrder?.fulfillment || 'Entrega');
+  const [reserveStock, setReserveStock] = useState(fiscalOnly ? false : initialOrder?.reserveStock ?? settings.commercial.reserveStockDefault);
+  const [savingFiscal, setSavingFiscal] = useState(false);
+  const formRef=useRef<HTMLDivElement>(null);
+  const [validationFocus,setValidationFocus]=useState<{message:string;field?:string;code?:string;attempt:number}|null>(null);
+  const [fiscalSaveError, setFiscalSaveError] = useState('');
+  const [fiscalSaveIssue, setFiscalSaveIssue] = useState<ConfirmedSave | null>(null);
+  const fiscalSaveCorrection = fiscalCheckoutCorrection(fiscalSaveIssue || {});
   const enabledFiscalDocuments = settings.fiscal.documentScope;
   const initialFiscalDocument = settings.commercial.defaultFiscalDocument !== 'nenhum' && enabledFiscalDocuments.includes(settings.commercial.defaultFiscalDocument) ? settings.commercial.defaultFiscalDocument : 'nenhum';
-  const [fiscalDocument, setFiscalDocument] = useState<'nenhum' | 'nfe' | 'nfce' | 'nfse'>(initialFiscalDocument);
-  const [fiscalIssuerId, setFiscalIssuerId] = useState(issuerRegistry.defaultEstablishmentId);
-  const [operationNature, setOperationNature] = useState('Venda de mercadoria');
-  const [notes, setNotes] = useState('');
+  const [fiscalDocument, setFiscalDocument] = useState<'nenhum' | 'nfe' | 'nfce' | 'nfse'>(fiscalOnly ? 'nfe' : initialOrder?.fiscalDocument ?? initialFiscalDocument);
+  const [fiscalIssuerId, setFiscalIssuerId] = useState(initialOrder?.fiscalIssuer?.establishmentId || issuerRegistry.defaultEstablishmentId);
+  const natureEditedRef=useRef(Boolean(initialOrder?.operationNature));
+  const suggestedNature=(name:string)=>{const client=clientRecords.find(item=>item.name===name);if(!client)return '';const context=fiscalOperationContext({id:'suggestion',client:name,item:'',total:0,documentType:'nfe',sourceLabel:'Nota avulsa'},client,settings.company);const resolution=resolveFiscalMatrixRule({matrix:settings.fiscal.matrix,documentType:'nfe',...context});return resolution.reviewed?resolution.rule?.operationNature||'':'';};
+  const [operationNature, setOperationNature] = useState(()=>initialOrder?.operationNature || (fiscalEditor?suggestedNature(initialRecord?.client||initialClient):'Venda de mercadoria'));
+  const [notes, setNotes] = useState(initialOrder?.notes || '');
   const [submitted, setSubmitted] = useState(false);
   const selectedClient = clientRecords.find((client) => client.name === clientName);
-  const totals = calculateOrder(lines.map((line) => ({ quantity: line.quantity, unitPrice: Math.max(0, line.unitPrice - line.unitDiscount) })), commercialNumber(globalDiscount), commercialNumber(freight));
+  const pricedCatalog=fiscalEditor?catalogRecords.map(item=>({...item,price:priceFromTable(item,fiscalEditor.priceTables.find(table=>table.id===noteFields.priceTableId))})):catalogRecords;
+  const requestPriceTable=(id:string)=>{if(id===noteFields.priceTableId)return;if(lines.length){setPendingTable(id);return;}patchNoteFields({priceTableId:id});};
+  const applyPriceTable=(reprice:boolean)=>{if(!pendingTable||!fiscalEditor)return;if(reprice)setLines(current=>repriceNoteLines(current,catalogRecords,fiscalEditor.priceTables.find(table=>table.id===pendingTable)));patchNoteFields({priceTableId:pendingTable});setPendingTable(null);};
+  const totals = calculateOrder(lines.map((line) => ({ quantity: line.quantity, unitPrice: Math.max(0, line.unitPrice - line.unitDiscount) })), commercialNumber(globalDiscount), commercialNumber(freight) + ((correction || fiscalEditor) ? commercialNumber(insurance) + commercialNumber(otherExpenses) : 0));
+  const operationContext = fiscalOperationContext({id:initialRecord?.id || 'preview',client:clientName,item:'',total:totals.total,documentType:fiscalDocument==='nenhum'?'nfe':fiscalDocument,sourceLabel:'Pedido'},selectedClient,settings.company);
+  const selectedNatureRules=fiscalEditor?settings.fiscal.matrix.rules.filter(rule=>rule.active&&rule.operationNature===operationNature):settings.fiscal.matrix.rules;
+  const operationCfop = resolveFiscalMatrixRule({matrix:{...settings.fiscal.matrix,rules:selectedNatureRules},documentType:fiscalDocument==='nenhum'?'nfe':fiscalDocument,...operationContext,...(fiscalEditor?{operation:selectedNatureRules.find(rule=>rule.operation!=='Qualquer')?.operation||operationContext.operation,issuePurpose:({'1':'Normal','2':'Complementar','3':'Ajuste','4':'Devolução'} as Record<string,string>)[noteFields.purpose],presence:noteFields.presence==='1'||noteFields.presence==='5'?'Presencial':noteFields.presence==='2'?'Internet':noteFields.presence==='0'?'Não aplicável':'Não presencial'}:{})}).rule?.cfopOverride || '';
+  const savedProduct = (product: ProdutoCustos) => {
+    const previous=editingProduct;if(!previous || product.id!==previous.catalogItemId)return;
+    const inherited=usaFiscalEmpresa(product);
+    const updated={...previous,sku:product.sku,name:product.nome,unit:product.unidade,ncm:product.ncm,cfopInternal:product.cfop_padrao,cfopInterstate:product.cfop_interestadual,icmsCode:inherited?(previous.useCompanyFiscal?previous.icmsCode:''):product.csosn || product.cst,pisCst:inherited?(previous.useCompanyFiscal?previous.pisCst:''):product.cst_pis,cofinsCst:inherited?(previous.useCompanyFiscal?previous.cofinsCst:''):product.cst_cofins,useCompanyFiscal:inherited} as CatalogItem;
+    setRegisteredProducts(current=>({...current,[product.id]:updated}));
+    setLines(current=>current.map(line=>line.catalogItemId===product.id?{...line,sku:product.sku,name:product.nome,unit:product.unidade}:line));
+    setItemTax(current=>({...current,[product.sku]:{ncm:product.ncm,cfop:operationCfop || (operationContext.destination==='Fora da UF'?product.cfop_interestadual:product.cfop_padrao) || current[previous.sku]?.cfop || ''}}));
+    setProductDirty(false);setProductBusy(false);setEditingProduct(null);
+    if(window.parent!==window)window.parent.postMessage({type:'AVANTALAB_VENDAS_CATALOG_REFRESH_V1',companyId},window.location.origin);
+  };
   const productsTotal = lines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
   const lineDiscountTotal = lines.reduce((sum, line) => sum + line.quantity * Math.min(line.unitPrice, Math.max(0, line.unitDiscount)), 0);
-  const commercialTotals: CommercialTotals = { products: productsTotal, lineDiscount: lineDiscountTotal, orderDiscount: totals.discount, discount: lineDiscountTotal + totals.discount, freight: totals.freight, insurance: 0, other: 0, invoice: totals.total };
+  const commercialTotals: CommercialTotals = { products: productsTotal, lineDiscount: lineDiscountTotal, orderDiscount: totals.discount, discount: lineDiscountTotal + totals.discount, freight: commercialNumber(freight), insurance: (correction || fiscalEditor) ? commercialNumber(insurance) : 0, other: (correction || fiscalEditor) ? commercialNumber(otherExpenses) : 0, invoice: totals.total };
   const totalCost = lines.reduce((sum, line) => sum + line.quantity * line.cost, 0);
   const physicalProductCount = lines.filter((line) => line.kind === 'produto').length;
   const estimatedMargin = totals.total > 0 ? ((totals.total - totalCost) / totals.total) * 100 : 0;
@@ -1243,11 +1342,12 @@ function NewOrderView({ clientRecords, catalogRecords, settings, issuerRegistry,
   const issuerEvaluation = validateFiscalIssuerRegistry(issuerRegistry, settings.company);
   const availableIssuers = fiscalDocument === 'nenhum' ? [] : issuerEvaluation.establishments.filter((issuer) => issuer.active && issuer.documents[fiscalDocument].enabled);
   const issuerSelection = fiscalDocument === 'nenhum' ? undefined : resolveFiscalIssuerSelection(issuerRegistry, fiscalDocument, fiscalIssuerId, settings.company);
-  const issuerError = fiscalDocument !== 'nenhum' && !issuerSelection?.valid ? `Revise os dados fiscais da empresa ativa para usar ${documentLabel(fiscalDocument)}.` : '';
+  const issuerError = !correction && fiscalDocument !== 'nenhum' && !issuerSelection?.valid ? `Revise os dados fiscais da empresa ativa para usar ${documentLabel(fiscalDocument)}.` : '';
   const issuerRouteNotice = issuerSelection?.warnings[0] || '';
-  const orderReady = validation.ready && !issuerError;
+  const previewIssues=fiscalEditor?validateFiscalNoteFields(noteFields):[];
+  const orderReady = validation.ready && !issuerError && !previewIssues.length;
 
-  useEffect(() => setClientName(initialClient), [initialClient]);
+  useEffect(() => { if (!editing) setClientName(initialClient); }, [editing, initialClient]);
   useEffect(() => {
     if (fiscalDocument === 'nenhum') return;
     const selectedIsAvailable = availableIssuers.some((issuer) => issuer.id === fiscalIssuerId);
@@ -1264,18 +1364,49 @@ function NewOrderView({ clientRecords, catalogRecords, settings, issuerRegistry,
   };
   const updateLine = (id: string, patch: Partial<OrderLine>) => setLines((current) => current.map((line) => line.id === id ? { ...line, ...patch } : line));
   const removeLine = (id: string) => setLines((current) => current.filter((line) => line.id !== id));
-  const finish = (status: 'Rascunho' | 'Confirmado') => {
+  const showIssue=(issue:ConfirmedSave)=>{setFiscalSaveError(issue.message);setFiscalSaveIssue(issue);setValidationFocus(current=>({...issue,attempt:(current?.attempt||0)+1}));};
+  useEffect(()=>{
+    if(!validationFocus||savingFiscal||!formRef.current)return;
+    const root=formRef.current,key=fiscalValidationTarget(validationFocus);
+    let target:HTMLElement|null=null;
+    if(key==='items'){
+      const indexMatch=validationFocus.field?.match(/items(?:\[|\.)(\d+)/);
+      const namedIndex=lines.findIndex(line=>validationFocus.message.includes(line.name));
+      const index=indexMatch?Number(indexMatch[1]):Math.max(0,namedIndex);
+      const row=root.querySelector<HTMLElement>(`[data-item-index="${index}"]`);
+      const message=validationFocus.message.toLocaleLowerCase('pt-BR');
+      const itemField=/quantidade/.test(message)?'itemQuantity':/preço|preco|valor unit/.test(message)?'itemPrice':/desconto/.test(message)?'itemDiscount':'';
+      target=row?.querySelector<HTMLElement>(itemField?`[name="${itemField}"]`:'button.order-product-edit:not([disabled])')||row?.querySelector<HTMLElement>('input:not([disabled])')||root.querySelector<HTMLElement>('#order-catalog-search');
+    }else if(key)target=root.querySelector<HTMLElement>(`[name="${key}"]:not([disabled])`);
+    target=target||root.querySelector<HTMLElement>('[data-fiscal-correction-action] button:not([disabled])')||root.querySelector<HTMLElement>('[data-validation-summary]');
+    return focarCampoComErro(target,{message:validationFocus.message,id:'note-field-validation-error'});
+  },[validationFocus,savingFiscal]);
+  const finish = async (status: 'Rascunho' | 'Confirmado', issue = false) => {
+    if (savingFiscal) return;
+    if(fiscalEditor&&(!operationNature.trim()||!settings.fiscal.matrix.rules.some(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe'&&rule.operationNature===operationNature))){setSubmitted(true);showIssue({ok:false,field:'operationNature',message:'Selecione uma natureza com regra fiscal ativa e publicada neste perfil.'});return;}
+    if(fiscalEditor&&previewIssues.length){setSubmitted(true);showIssue({ok:false,message:previewIssues[0]});return;}
     if (status === 'Confirmado' && !orderReady) {
       setSubmitted(true);
-      window.setTimeout(() => (!clientName ? clientRef.current : document.getElementById('order-catalog-search'))?.focus(), 0);
+      showIssue({ok:false,message:validation.errors[0]||issuerError||'Revise os dados da nota.'});
       return;
     }
-    onCreated({
-      id: `PED-${Date.now().toString().slice(-6)}`,
-      type: 'pedido',
+    if (correction) {
+      setSavingFiscal(true); setFiscalSaveError(''); setFiscalSaveIssue(null);
+      try {
+        const result = await correction.onSave({customerName:clientName,customerDocument:(selectedClient?.document || correction.draft.clientDocument).replace(/\D/g,''),paymentMethod,paymentDetails: ['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(paymentMethod)?paymentDetails:undefined,items:lines.map(line=>({sku:line.sku,productId:line.catalogItemId,quantity:line.quantity,unitPrice:line.unitPrice,unitDiscount:line.unitDiscount,ncm:itemTax[line.sku]?.ncm || catalogRecords.find(item=>item.sku===line.sku)?.ncm || '',cfop:itemTax[line.sku]?.cfop || ''})),freight:commercialNumber(freight),insurance:commercialNumber(insurance),otherExpenses:commercialNumber(otherExpenses),generalDiscount:commercialNumber(globalDiscount),additionalInfo:notes,...(fiscalEditor?{fiscalForm:noteFields}:{}),operationNature,installments:Number(installments),firstDueDate},issue);
+        if (!result.ok) showIssue({...result,message:result.message || 'Não foi possível salvar a nota.'});
+      } catch { showIssue({ok:false,message:'A conexão foi interrompida. Os dados permanecem nesta página.'}); }
+      finally {setSavingFiscal(false);}
+      return;
+    }
+    const now = new Date().toISOString();
+    const record: CreatedRecord = {
+      ...initialRecord,
+      id: initialRecord?.id || `PED-${Date.now().toString().slice(-6)}`,
+      type: fiscalOnly ? 'nfe' : 'pedido',
       client: clientName || 'Cliente não definido',
       total: totals.total,
-      createdAt: new Date().toISOString(),
+      createdAt: initialRecord?.createdAt || now,
       status,
       order: {
         lines: lines.map((line) => ({ catalogItemId: line.catalogItemId, sku: line.sku, name: line.name, kind: line.kind, unit: line.unit, quantity: line.quantity, unitPrice: line.unitPrice, unitDiscount: Math.min(line.unitPrice, Math.max(0, line.unitDiscount)), cost: line.cost })),
@@ -1286,52 +1417,83 @@ function NewOrderView({ clientRecords, catalogRecords, settings, issuerRegistry,
         fiscalDocument,
         fiscalIssuer: fiscalDocument !== 'nenhum' ? issuerSelection?.snapshot : undefined,
         paymentMethod,
+        ...(fiscalEditor?{paymentDetails}:{}),
         installments: Number(installments),
         firstDueDate,
+        channel,
+        orderDate,
+        deliveryDate,
+        fulfillment,
+        operationNature,
+        notes,
+        ...(fiscalEditor?{fiscalForm:noteFields}:{}),
       },
-      events: [{ date: new Date().toISOString(), label: status === 'Confirmado' ? 'Pedido confirmado' : 'Rascunho salvo', description: status === 'Confirmado' && reserveStock ? connected ? 'Reserva enviada ao estoque do perfil empresarial.' : 'Saldo dos produtos reservado localmente.' : 'Nenhum efeito de estoque executado.' }],
-    });
+      events: [...(initialRecord?.events ?? []), { date: now, label: status === 'Confirmado' ? 'Pedido confirmado' : editing ? 'Rascunho atualizado' : 'Rascunho salvo', description: status === 'Confirmado' && reserveStock ? connected ? 'Reserva enviada ao estoque do perfil empresarial.' : 'Saldo dos produtos reservado localmente.' : 'Nenhum efeito de estoque executado.' }],
+    };
+    if (fiscalOnly) {
+      setSavingFiscal(true); setFiscalSaveError(''); setFiscalSaveIssue(null);
+      try {
+        const saved = await onFiscalCreated?.(record, issue);
+        if (!saved?.ok) showIssue({ok:false,...saved,message:saved?.message || 'Não foi possível preparar a nota fiscal.'});
+      } catch { showIssue({ok:false,message:'A conexão foi interrompida. Os dados permanecem no formulário.'}); }
+      finally { setSavingFiscal(false); }
+      return;
+    }
+    onCreated(record);
   };
 
   return <>
+    <ModalConfirmacao aberto={pendingTable!==null} titulo="Aplicar nova lista de preços?" variante="alerta" corPrimaria={fiscalEditor?.primaryColor} darkMode={fiscalEditor?.dark} mensagem="Escolha se a nova lista deve recalcular os itens já adicionados ou valer somente para novos itens." textoCancelar="Cancelar troca" textoConfirmar="Recalcular itens" aoCancelar={()=>setPendingTable(null)} aoConfirmar={()=>applyPriceTable(true)} acaoAdicional={{texto:'Aplicar somente aos novos itens',aoClicar:()=>applyPriceTable(false)}}/>
+
+    {editingProduct && companyId && <Dialog open title={`Cadastro de ${editingProduct.name}`} description="" onClose={closeProduct}><div className="dialog-body order-product-registration"><ProductRegistration companyId={companyId} initialProductId={editingProduct.catalogItemId} embeddedProduct onProductSaved={savedProduct} onProductCancel={()=>{setProductDirty(false);setEditingProduct(null);}} onProductDirtyChange={setProductDirty} onProductBusyChange={setProductBusy}/></div></Dialog>}
+    <ModalConfirmacao aberto={confirmProductClose} titulo="Descartar alterações do cadastro?" mensagem="As alterações não salvas deste produto serão descartadas. O pedido ou a nota permanecerá aberto." textoCancelar="Continuar editando" textoConfirmar="Descartar" variante="alerta" aoCancelar={()=>setConfirmProductClose(false)} aoConfirmar={()=>{setConfirmProductClose(false);setProductDirty(false);setEditingProduct(null);}}/>
     <div className="order-page-heading">
-      <div><span>Pedido comercial</span><h1>Novo pedido</h1><p>O pedido concentra condições comerciais, reserva de estoque, recebimento e preparação fiscal.</p></div>
+      <div><span>{fiscalOnly ? 'Documento fiscal' : 'Pedido comercial'}</span><h1>{correction ? `${correction.status.state==='rejected'?'Corrigir':'Editar'} NF-e ${correction.status.number} · série ${correction.status.series}` : fiscalOnly ? 'Nova nota fiscal avulsa' : editing ? `Continuar pedido ${initialRecord?.id}` : 'Novo pedido'}</h1><p>{correction ? correction.status.state==='rejected'?`Rejeição ${correction.status.statusCode}: ${correction.status.statusReason}`:'Revise os dados da nota. Salvar não transmite o documento.' : fiscalOnly ? 'Preencha destinatário, produtos e valores para preparar a NF-e.' : editing ? 'Revise o rascunho salvo e continue do ponto em que parou.' : 'O pedido concentra condições comerciais, reserva de estoque, recebimento e preparação fiscal.'}</p></div>
       <Badge tone={connected ? 'info' : 'warning'}>{connected ? 'Perfil empresarial' : 'Rascunho local'}</Badge>
     </div>
-    <div className="order-safety"><Icon name={connected ? 'check' : 'warning'} size={18}/><p><strong>{connected ? 'Operação vinculada ao perfil.' : 'Ambiente de demonstração.'}</strong> {connected ? 'Ao confirmar, o pedido e a reserva de estoque serão gravados para a empresa ativa. A nota fiscal continuará condicionada às validações da Central Fiscal.' : 'Confirmar pode reservar o estoque local deste protótipo; nenhuma cobrança ou nota fiscal será transmitida.'}</p></div>
-    <div className="order-layout">
+    <div className="order-safety"><Icon name={connected ? 'check' : 'warning'} size={18}/><p><strong>{fiscalOnly ? 'Somente emissão fiscal.' : connected ? 'Operação vinculada ao perfil.' : 'Ambiente de demonstração.'}</strong> {fiscalOnly ? 'Preparar ou emitir esta nota não cria pedido, não gera contas a receber, não entra nas receitas e não movimenta estoque.' : connected ? 'Ao confirmar, o pedido será gravado para a empresa ativa. Estoque só será movimentado se o controle estiver ligado neste pedido. A nota fiscal continua sujeita às validações da Central Fiscal.' : 'Confirmar pode reservar o estoque local deste protótipo; nenhuma cobrança ou nota fiscal será transmitida.'}</p></div>
+    <div ref={formRef} className="order-layout" aria-busy={savingFiscal} inert={savingFiscal}>
       <div className="order-main">
+        {fiscalEditor&&<NoteOperationFields value={noteFields} onChange={patchNoteFields} nature={operationNature} onNature={value=>{natureEditedRef.current=true;setOperationNature(value);}} natures={[...new Set(settings.fiscal.matrix.rules.filter(rule=>rule.documentType==='nfe'&&rule.active&&rule.reviewed).map(rule=>rule.operationNature))]}/>}
+
         <section className="order-card" aria-labelledby="order-identification-title">
-          <header><div><h2 id="order-identification-title">Identificação</h2><p>Cliente, responsável e datas da operação.</p></div><Badge>Pedido novo</Badge></header>
+          <header><div><h2 id="order-identification-title">{fiscalEditor?'Destinatário':'Identificação'}</h2><p>{fiscalOnly ? 'Destinatário da nota fiscal.' : 'Cliente, responsável e datas da operação.'}</p></div><Badge>{correction ? 'Correção da nota' : fiscalOnly ? 'Nota avulsa' : editing ? 'Rascunho em edição' : 'Pedido novo'}</Badge></header>
           <div className="order-card-body">
             <div className="order-form-grid">
-              <label className="field field-wide"><span>Cliente *</span><select ref={clientRef} value={clientName} onChange={(event) => { setClientName(event.target.value); setSubmitted(false); }} aria-invalid={submitted && !clientName}><option value="">Selecione um cliente</option>{clientRecords.map((client) => <option key={client.id} value={client.name}>{client.name} · {client.document}</option>)}</select>{submitted && !clientName && <small className="field-message error">Selecione o cliente para confirmar o pedido.</small>}</label>
+              <label className="field field-wide"><span>Cliente *</span><select name="customerId" ref={clientRef} value={clientName} onChange={(event) => { setClientName(event.target.value);setSubmitted(false);if(fiscalEditor){if(!natureEditedRef.current)setOperationNature(suggestedNature(event.target.value));const client=clientRecords.find(item=>item.name===event.target.value);requestPriceTable(fiscalEditor.clientPriceTables[client?.id||'']||fiscalEditor.defaultPriceTableId||'standard');} }} aria-invalid={submitted && !clientName}><option value="">Selecione um cliente</option>{!clientRecords.some(client=>client.name===clientName) && clientName && <option value={clientName}>{clientName}</option>}{clientRecords.map((client) => <option key={client.id} value={client.name}>{client.name} · {client.document}</option>)}</select>{submitted && !clientName && <small className="field-message error">Selecione o cliente para confirmar o pedido.</small>}</label>
               {selectedClient && <div className="client-snapshot field-wide"><div><span>Documento</span><strong>{selectedClient.document}</strong></div><div><span>Município</span><strong>{selectedClient.city}</strong></div><div><span>Perfil fiscal</span><strong>{selectedClient.fiscal}</strong></div><Badge tone={selectedClient.status === 'Ativo' ? 'success' : 'warning'}>{selectedClient.status}</Badge></div>}
-              <label className="field"><span>Vendedor</span><select value={seller} onChange={(event) => setSeller(event.target.value)}>{settings.commercial.sellers.map((name) => <option key={name}>{name}</option>)}</select></label>
+              {fiscalEditor&&<><label className="field"><span>Vendedor</span><select value={seller} onChange={event=>setSeller(event.target.value)}>{settings.commercial.sellers.map(name=><option key={name}>{name}</option>)}</select></label><label className="field"><span>Lista de preços</span><select aria-label="Lista de preços" value={noteFields.priceTableId} onChange={event=>requestPriceTable(event.target.value)}>{!fiscalEditor.priceTables.some(table=>table.id===noteFields.priceTableId)&&<option value={noteFields.priceTableId} disabled>Lista indisponível — selecione outra</option>}{fiscalEditor.priceTables.map(table=><option key={table.id} value={table.id}>{table.name}</option>)}</select></label></>}
+              {!fiscalOnly && <><label className="field"><span>Vendedor</span><select value={seller} onChange={(event) => setSeller(event.target.value)}>{settings.commercial.sellers.map((name) => <option key={name}>{name}</option>)}</select></label>
               <label className="field"><span>Canal</span><select value={channel} onChange={(event) => setChannel(event.target.value)}><option>Atendimento direto</option><option>WhatsApp</option><option>Loja física</option><option>Indicação</option></select></label>
-              <label className="field"><span>Data do pedido</span><input type="date" value={orderDate} onChange={(event) => setOrderDate(event.target.value)}/></label>
-              <label className="field"><span>Previsão de entrega</span><input type="date" value={deliveryDate} onChange={(event) => setDeliveryDate(event.target.value)}/></label>
+              <label className="field"><span>Data do pedido</span><input type="date" name="orderDate" value={orderDate} onChange={(event) => setOrderDate(event.target.value)}/></label>
+              <label className="field"><span>Previsão de entrega</span><input type="date" name="deliveryDate" value={deliveryDate} onChange={(event) => setDeliveryDate(event.target.value)}/></label></>}
             </div>
           </div>
         </section>
 
         <section className="order-card" aria-labelledby="order-items-title">
-          <header><div><h2 id="order-items-title">Itens do pedido</h2><p>Preços e custos são retratos do catálogo no momento da inclusão.</p></div><Badge tone="info">{lines.length} {lines.length === 1 ? 'item' : 'itens'}</Badge></header>
+          <header><div><h2 id="order-items-title">{fiscalOnly ? 'Itens da nota' : 'Itens do pedido'}</h2><p>Preços e custos são retratos do catálogo no momento da inclusão.</p></div><Badge tone="info">{lines.length} {lines.length === 1 ? 'item' : 'itens'}</Badge></header>
           <div className="order-card-body">
-            <CatalogSearch id="order-catalog-search" items={catalogRecords} onAdd={addItem}/>
-            {lines.length === 0 ? <EmptyState title="Nenhum item adicionado" description="Selecione um produto ou serviço do catálogo para começar o pedido."/> : <div className="order-items">
-              {lines.map((line) => {
+            <CatalogSearch id="order-catalog-search" items={pricedCatalog} onAdd={addItem}/>
+            {lines.length === 0 ? <EmptyState title="Nenhum item adicionado" description={fiscalOnly ? 'Selecione os produtos para compor a nota fiscal.' : 'Selecione um produto ou serviço do catálogo para começar o pedido.'}/> : <div className="order-items order-items-compact">
+              {lines.map((line,index) => {
                 const lineTotal = line.quantity * Math.max(0, line.unitPrice - line.unitDiscount);
-                const insufficient = line.kind === 'produto' && line.quantity > line.available;
-                return <div className="order-item" key={line.id}>
-                  <div className="order-item-name"><strong>{line.name}</strong><small>{line.sku} · {line.kind === 'produto' ? `Disponível: ${line.available} ${line.unit}` : 'Serviço sem controle físico'}</small><Badge tone={insufficient ? 'danger' : line.fiscalStatus === 'Completo' ? 'success' : 'warning'}>{insufficient ? 'Saldo insuficiente' : line.fiscalStatus}</Badge></div>
-                  <div className="order-item-controls">
-                    <LineNumberEditor label={`Quantidade de ${line.name}`} value={line.quantity} onChange={(value) => updateLine(line.id, { quantity: value })} step={line.kind === 'servico' ? 0.5 : 1} unit={line.unit} showSteppers/>
-                    <LineNumberEditor label={`Preço de ${line.name}`} value={line.unitPrice} onChange={(value) => updateLine(line.id, { unitPrice: value })} moneyValue/>
-                    <LineNumberEditor label={`Desconto de ${line.name}`} value={line.unitDiscount} onChange={(value) => updateLine(line.id, { unitDiscount: value })} moneyValue/>
+                const insufficient = reserveStock && line.kind === 'produto' && line.quantity > line.available;
+                const product=registeredProducts[line.catalogItemId || ''] || catalogRecords.find(item=>item.catalogItemId===line.catalogItemId || item.sku===line.sku);
+                const frozen=correction?.draft.items.find(item=>item.sku===line.sku);
+                const tax=product || frozen;
+                const cfop=itemTax[line.sku]?.cfop || operationCfop || (operationContext.destination==='Fora da UF'?tax?.cfopInterstate:tax?.cfopInternal) || '';
+                const details=[['CFOP',cfop],['NCM',itemTax[line.sku]?.ncm || tax?.ncm],['ICMS %',product && product.icmsRate>0?formatLineNumber(product.icmsRate,true):'—'],[settings.company.taxRegime.toLowerCase().includes('simples')?'CSOSN':'CST ICMS',tax?.icmsCode],['CST PIS',tax?.pisCst],['CST COFINS',tax?.cofinsCst]];
+                return <div className="order-item order-item-compact order-item-two-line" key={line.id} data-item-index={index}>
+                  <div className="order-item-commercial">
+                    <div className="order-item-name"><strong>{line.name}</strong><small>{line.sku} · {line.unit}</small>{insufficient&&<span className="field-error">Saldo insuficiente</span>}</div>
+                    <label className="order-inline-field order-inline-quantity"><span>Qtd.</span><div className="order-inline-control"><input name="itemQuantity" aria-label={`Quantidade de ${line.name}`} inputMode="decimal" value={quantityDrafts[line.id] ?? String(line.quantity).replace('.',',')} onChange={event=>{const raw=event.target.value;if(!/^[0-9]*[,.]?[0-9]*$/.test(raw))return;setQuantityDrafts(current=>({...current,[line.id]:raw}));const value=parseCommercialNumber(raw);if(value!==null)updateLine(line.id,{quantity:Math.max(0,value)});}} onBlur={()=>setQuantityDrafts(current=>{const next={...current};delete next[line.id];return next;})}/></div></label>
+                    <label className="order-inline-field"><span>Valor unit. (R$)</span><div className="order-inline-control"><CampoMoeda name="itemPrice" aria-label={`Preço de ${line.name}`} value={formatLineNumber(line.unitPrice,true)} onChange={value=>updateLine(line.id,{unitPrice:commercialNumber(value)})}/></div></label>
+                    <label className="order-inline-field"><span>Desconto (R$)</span><div className="order-inline-control"><CampoMoeda name="itemDiscount" aria-label={`Desconto de ${line.name}`} value={formatLineNumber(line.unitDiscount,true)} onChange={value=>updateLine(line.id,{unitDiscount:commercialNumber(value)})}/></div></label>
+                    <div className="order-inline-field order-inline-subtotal"><span>Subtotal (R$)</span><div className="order-inline-control"><output aria-label={`Subtotal de ${line.name}`} style={{fontSize:`${fittedNumericFontSize(formatLineNumber(lineTotal,true),100,12,11)}px`}}>{formatLineNumber(lineTotal,true)}</output></div></div>
+                    <div className="order-item-actions"><button type="button" className="icon-button order-product-edit" disabled={!companyId || !product?.catalogItemId || !can('catalog.edit')} onClick={()=>product&&setEditingProduct(product)} aria-label={`Editar cadastro de ${line.name}`} title="Editar cadastro"><Icon name="edit" size={16}/></button><button type="button" className="icon-button" onClick={()=>removeLine(line.id)} aria-label={`Remover ${line.name}`} title="Excluir item"><Icon name="close" size={16}/></button></div>
                   </div>
-                  <div className="order-item-result"><span>Subtotal</span><strong style={{ fontSize: `${fittedNumericFontSize(money(lineTotal), 174, 15, 7)}px` }}>{money(lineTotal)}</strong></div>
-                  <button type="button" className="icon-button" onClick={() => removeLine(line.id)} aria-label={`Remover ${line.name}`} title="Remover item"><Icon name="close" size={17}/></button>
+                  {line.kind==='produto'&&<dl className="order-item-tax-summary">{details.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value || '—'}</dd></div>)}</dl>}
                 </div>;
               })}
             </div>}
@@ -1339,38 +1501,45 @@ function NewOrderView({ clientRecords, catalogRecords, settings, issuerRegistry,
         </section>
 
         <section className="order-card" aria-labelledby="order-conditions-title">
-          <header><div><h2 id="order-conditions-title">Condições comerciais</h2><p>Pagamento, descontos, entrega e observações do pedido.</p></div></header>
+          <header><div><h2 id="order-conditions-title">{fiscalOnly ? 'Totais e pagamento' : 'Condições comerciais'}</h2><p>{fiscalOnly ? 'Valores e condições que constarão no documento fiscal.' : 'Pagamento, descontos, entrega e observações do pedido.'}</p></div></header>
           <div className="order-card-body order-form-grid">
-            <label className="field"><span>Forma de pagamento *</span><select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}>{settings.payments.enabledMethods.map((method) => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}</select></label>
-            <label className="field"><span>Parcelas</span><select value={installments} onChange={(event) => setInstallments(event.target.value)}><option value="1">1 parcela</option><option value="2">2 parcelas</option><option value="3">3 parcelas</option><option value="6">6 parcelas</option></select></label>
-            <label className="field"><span>Primeiro vencimento</span><input type="date" value={firstDueDate} onChange={(event) => setFirstDueDate(event.target.value)}/></label>
-            <label className="field"><span>Entrega ou retirada</span><select value={fulfillment} onChange={(event) => setFulfillment(event.target.value)}><option>Entrega</option><option>Retirada</option><option>Serviço no local</option></select></label>
-            <label className="field"><span>Frete</span><MoneyInput value={freight} onChange={setFreight} ariaLabel="Valor do frete"/></label>
-            <label className="field"><span>Desconto geral</span><MoneyInput value={globalDiscount} onChange={setGlobalDiscount} ariaLabel="Desconto geral"/></label>
-            <label className="field field-wide"><span>Observações internas</span><textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} placeholder="Informações para separação, entrega ou atendimento"/></label>
+            {fiscalEditor&&<label className="field"><span>Condição de pagamento</span><select value={installments==='1'?'cash':'installments'} onChange={event=>setInstallments(event.target.value==='cash'?'1':'2')}><option value="cash">À vista</option><option value="installments">Parcelado</option></select></label>}
+            <label className="field"><span>Forma de pagamento *</span><select name="paymentMethod" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}>{(correction || fiscalEditor) ? <><option value="">Selecione o meio utilizado</option>{['PIX estático','PIX dinâmico','Dinheiro','Boleto','Transferência bancária','Cartão de crédito','Cartão de débito','Sem pagamento'].map(method=><option value={method} key={method}>{method==='PIX estático'?'PIX — chave ou QR Code fixo':method==='PIX dinâmico'?'PIX — cobrança com QR Code dinâmico':method}</option>)}</> : settings.payments.enabledMethods.map((method) => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}</select></label>
+            {(correction || fiscalEditor) && ['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(paymentMethod) && <><label className="field"><span>Integração do pagamento</span><select name="integrationType" value={paymentDetails.integrationType} onChange={event=>setPaymentDetails(current=>({...current,integrationType:event.target.value}))}><option value="">Selecione</option><option value="1">Integrado ao sistema da empresa</option><option value="2">Pagamento externo, sem integração</option></select></label><label className="field"><span>CNPJ da instituição de pagamento</span><input name="institutionDocument" value={paymentDetails.institutionDocument} inputMode="numeric" maxLength={14} onChange={event=>setPaymentDetails(current=>({...current,institutionDocument:event.target.value.replace(/\D/g,'')}))}/></label><label className="field"><span>{paymentMethod==='PIX dinâmico'?'Identificador da transação PIX (EndToEndId)':'Código de autorização do pagamento'}</span><input name="authorizationCode" value={paymentDetails.authorizationCode} maxLength={128} onChange={event=>setPaymentDetails(current=>({...current,authorizationCode:event.target.value}))}/></label></>}
+            <label className="field"><span>Parcelas</span><select name="installments" value={installments} onChange={(event) => setInstallments(event.target.value)}><option value="1">1 parcela</option><option value="2">2 parcelas</option><option value="3">3 parcelas</option><option value="6">6 parcelas</option>{![1,2,3,6].includes(Number(installments))&&<option value={installments}>{installments} parcelas</option>}</select></label>
+            <label className="field"><span>Primeiro vencimento</span><input type="date" name="firstDueDate" value={firstDueDate} onChange={(event) => setFirstDueDate(event.target.value)}/></label>
+            {!fiscalOnly && <label className="field"><span>Entrega ou retirada</span><select value={fulfillment} onChange={(event) => setFulfillment(event.target.value)}><option>Entrega</option><option>Retirada</option><option>Serviço no local</option></select></label>}
+            <label className="field"><span>Frete</span>{fiscalEditor?<CampoMoeda name="freight" value={freight} onChange={setFreight} aria-label="Valor do frete"/>:<MoneyInput value={freight} onChange={setFreight} ariaLabel="Valor do frete"/>}</label>
+            <label className="field"><span>Desconto geral</span>{fiscalEditor?<CampoMoeda name="generalDiscount" value={globalDiscount} onChange={setGlobalDiscount} aria-label="Desconto geral"/>:<MoneyInput value={globalDiscount} onChange={setGlobalDiscount} ariaLabel="Desconto geral"/>}</label>
+            {(correction || fiscalEditor) && <><label className="field"><span>Seguro</span><CampoMoeda name="insurance" value={insurance} onChange={setInsurance}/></label><label className="field"><span>Outras despesas</span><CampoMoeda name="otherExpenses" value={otherExpenses} onChange={setOtherExpenses}/></label></>}
+            {!fiscalEditor&&<label className="field field-wide"><span>{fiscalOnly ? 'Informações complementares da nota' : 'Observações internas'}</span><textarea value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={fiscalOnly ? 5000 : undefined} rows={3} placeholder={fiscalOnly ? 'Informações que devem constar na NF-e' : 'Informações para separação, entrega ou atendimento'}/></label>}
+            {fiscalEditor&&<><details className="note-extra-details field-wide"><summary>Totais dos tributos</summary><dl className="note-tax-totals">{['Base do ICMS','ICMS','Base do ICMS-ST','ICMS-ST','IPI','PIS','COFINS','IBS / CBS'].map(label=><div key={label}><dt>{label}</dt><dd>—</dd></div>)}</dl><p className="note-fiscal-placeholder">A apuração fiscal será exibida na conferência da nota.</p></details><NoteWithholdingFields value={noteFields} onChange={patchNoteFields}/></>}
+            {fiscalEditor&&<div className="note-installments field-wide"><span className="note-installments-title">Parcelas previstas</span>{previewInstallments(totals.total,installments,firstDueDate).map(part=><div key={part.number}><span>{part.number}ª parcela</span><span>{part.dueDate?new Date(part.dueDate+'T12:00:00').toLocaleDateString('pt-BR'):'Data não informada'}</span><strong>{money(part.amount)}</strong></div>)}</div>}
           </div>
         </section>
-
-        <section className="order-card" aria-labelledby="order-stock-fiscal-title">
-          <header><div><h2 id="order-stock-fiscal-title">Estoque e preparação fiscal</h2><p>Defina a reserva e o documento fiscal previsto para a operação.</p></div></header>
+        {fiscalEditor&&<><NoteTransportFields value={noteFields} onChange={patchNoteFields}/><NoteDetailsFields value={noteFields} onChange={patchNoteFields}/><NoteObservationsFields value={noteFields} onChange={patchNoteFields} additional={notes} onAdditional={setNotes} editor={fiscalEditor}/></>}
+        {!fiscalEditor&&<section className="order-card" aria-labelledby="order-stock-fiscal-title">
+          <header><div><h2 id="order-stock-fiscal-title">{fiscalOnly ? 'Preparação fiscal' : 'Estoque e preparação fiscal'}</h2><p>{fiscalOnly ? 'O emissor e as regras fiscais pertencem ao perfil empresarial ativo.' : 'Defina a reserva e o documento fiscal previsto para a operação.'}</p></div></header>
           <div className="order-card-body order-form-grid">
-            <label className="order-check field-wide"><input type="checkbox" checked={reserveStock} onChange={(event) => setReserveStock(event.target.checked)}/><span><strong>Reservar estoque ao confirmar</strong><small>A reserva atualizará o saldo vinculado ao pedido.</small></span></label>
-            <label className="field"><span>Documento fiscal previsto</span><select value={fiscalDocument} onChange={(event) => setFiscalDocument(event.target.value as typeof fiscalDocument)}>{enabledFiscalDocuments.includes('nfe') && <option value="nfe">NF-e</option>}{enabledFiscalDocuments.includes('nfce') && <option value="nfce">NFC-e</option>}{enabledFiscalDocuments.includes('nfse') && <option value="nfse">NFS-e</option>}<option value="nenhum">Não definido</option></select></label>
-            <label className="field"><span>Natureza da operação</span><select value={operationNature} onChange={(event) => setOperationNature(event.target.value)}><option>Venda de mercadoria</option><option>Venda para consumidor final</option><option>Prestação de serviço</option><option>Remessa futura</option></select></label>
-            <div className="order-fiscal-note field-wide"><Icon name="fiscal" size={18}/><p><strong>Documento apenas previsto.</strong> A empresa ativa e a rota fiscal serão aplicadas automaticamente quando a nota for preparada. {issuerError || issuerRouteNotice || 'Nenhuma configuração técnica é necessária neste pedido.'}</p></div>
+            {!fiscalOnly && <label className="order-check field-wide"><input type="checkbox" checked={reserveStock} onChange={(event) => setReserveStock(event.target.checked)}/><span><strong>Controlar estoque neste pedido</strong><small>{reserveStock ? 'Reserva ao confirmar e baixa ao faturar; exige saldo disponível.' : 'Pedido e NF-e sem reserva ou baixa no AvantaLab. Use quando o estoque é controlado em outro sistema.'}</small></span></label>}
+            <label className="field"><span>Documento fiscal previsto</span><select value={fiscalDocument} disabled={fiscalOnly} onChange={(event) => setFiscalDocument(event.target.value as typeof fiscalDocument)}>{(fiscalOnly || enabledFiscalDocuments.includes('nfe')) && <option value="nfe">NF-e</option>}{!fiscalOnly && enabledFiscalDocuments.includes('nfce') && <option value="nfce">NFC-e</option>}{!fiscalOnly && enabledFiscalDocuments.includes('nfse') && <option value="nfse">NFS-e</option>}{!fiscalOnly && <option value="nenhum">Não definido</option>}</select></label>
+            {(!fiscalOnly || correction) && <label className="field"><span>Natureza da operação</span><select value={operationNature} onChange={(event) => setOperationNature(event.target.value)}><option>Venda de mercadoria</option><option>Venda para consumidor final</option><option>Prestação de serviço</option><option>Remessa futura</option></select></label>}
+            <div className="order-fiscal-note field-wide"><Icon name="fiscal" size={18}/><p><strong>{fiscalOnly ? 'Preparação da NF-e.' : 'Documento apenas previsto.'}</strong> {fiscalOnly ? 'O emissor, a natureza e a tributação serão aplicados pelas regras fiscais do perfil. Revise na Central Fiscal antes de transmitir.' : 'A empresa ativa e a rota fiscal serão aplicadas automaticamente quando a nota for preparada.'} {issuerError || issuerRouteNotice || ''}</p></div>
           </div>
-        </section>
+        </section>}
       </div>
 
-      <aside className="order-summary" aria-label="Resumo do pedido">
+      <aside className="order-summary" aria-label={fiscalOnly ? 'Resumo da nota' : 'Resumo do pedido'}>
         <section>
-          <header><span>Resumo do pedido</span><Badge tone={orderReady ? 'success' : 'warning'}>{orderReady ? 'Pronto para confirmar' : 'Revisar pedido'}</Badge></header>
-          <dl><div><dt>Itens</dt><dd>{money(totals.subtotal)}</dd></div><div><dt>Desconto</dt><dd>− {money(totals.discount)}</dd></div><div><dt>Frete</dt><dd>{money(totals.freight)}</dd></div><div className="order-total"><dt>Total</dt><dd>{money(totals.total)}</dd></div></dl>
-          <div className="order-margin"><span>Margem bruta estimada</span><strong>{percent(estimatedMargin)}</strong><small>Custo publicado: {money(totalCost)}</small></div>
+          <header><span>{fiscalOnly ? 'Resumo da nota' : 'Resumo do pedido'}</span><Badge tone={orderReady ? 'success' : 'warning'}>{orderReady ? 'Pronto para confirmar' : fiscalOnly ? 'Revisar nota' : 'Revisar pedido'}</Badge></header>
+          <dl><div><dt>Itens</dt><dd>{money(fiscalEditor?productsTotal:totals.subtotal)}</dd></div><div><dt>Desconto</dt><dd>− {money(fiscalEditor?lineDiscountTotal+totals.discount:totals.discount)}</dd></div><div><dt>Frete</dt><dd>{money(commercialNumber(freight))}</dd></div>{fiscalEditor&&<><div><dt>Seguro</dt><dd>{money(commercialNumber(insurance))}</dd></div><div><dt>Outras despesas</dt><dd>{money(commercialNumber(otherExpenses))}</dd></div></>}<div className="order-total"><dt>Total</dt><dd>{money(totals.total)}</dd></div></dl>
+          {!fiscalOnly && <div className="order-margin"><span>Margem bruta estimada</span><strong>{percent(estimatedMargin)}</strong><small>Custo publicado: {money(totalCost)}</small></div>}
           <div className="order-effects"><div><Icon name="stock" size={16}/><span><strong>{reserveStock ? 'Reserva prevista' : 'Sem reserva'}</strong><small>{physicalProductCount} {physicalProductCount === 1 ? 'produto físico' : 'produtos físicos'}</small></span></div><div><Icon name="money" size={16}/><span><strong>{installments} {installments === '1' ? 'parcela' : 'parcelas'}</strong><small>{paymentMethod.toLocaleUpperCase('pt-BR')}</small></span></div><div><Icon name="fiscal" size={16}/><span><strong>{fiscalDocument === 'nenhum' ? 'Fiscal não definido' : fiscalDocument.toLocaleUpperCase('pt-BR')}</strong><small>{fiscalDocument === 'nenhum' ? operationNature : issuerError || 'Empresa ativa aplicada automaticamente'}</small></span></div></div>
         </section>
+        {submitted&&previewIssues.length>0&&<section role="alert" className="order-validation">{previewIssues.map(issue=><p className="error" key={issue}>{issue}</p>)}</section>}
         {(submitted || validation.warnings.length > 0) && <section className="order-validation" aria-live="polite"><h3>Validação</h3>{submitted && [...validation.errors, ...(issuerError ? [issuerError] : [])].map((message) => <p className="error" key={message}><Icon name="warning" size={15}/>{message}</p>)}{validation.warnings.map((message) => <p className="warning" key={message}><Icon name="warning" size={15}/>{message}</p>)}</section>}
-        <div className="order-actions"><button type="button" className="button secondary" onClick={onCancel}>Cancelar</button><button type="button" className="button secondary" onClick={() => finish('Rascunho')}>Salvar rascunho</button><button type="button" className="button primary" disabled={!can('sales.edit') || !can('stock.exit')} title={!can('sales.edit') || !can('stock.exit') ? 'Seu acesso permite salvar o rascunho, mas não confirmar o pedido.' : undefined} onClick={() => finish('Confirmado')}><Icon name="check" size={17}/> Confirmar pedido</button></div>
+        {fiscalSaveError && <div role="alert" tabIndex={-1} data-validation-summary><p className="field-error">{fiscalSaveError}</p>{fiscalSaveCorrection&&fiscalSaveIssue&&onFiscalCorrection&&<span data-fiscal-correction-action><BotaoAcaoCompacto disabled={!can(fiscalCorrectionAction(fiscalSaveCorrection).permission)} onClick={()=>onFiscalCorrection(fiscalSaveIssue)}>{fiscalCorrectionAction(fiscalSaveCorrection).label}</BotaoAcaoCompacto></span>}</div>}
+        <div className={`order-actions${fiscalOnly ? ' fiscal-checkout-actions' : ''}`}>{fiscalOnly ? <><BotaoAcaoCompacto variante="secundario" disabled={savingFiscal||!can('fiscal.prepare')||!connected} onClick={()=>void finish('Confirmado',false)}>{savingFiscal?'Salvando…':'Salvar'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" disabled={savingFiscal||!can('fiscal.prepare')||!can('fiscal.issue')||!connected} onClick={()=>void finish('Confirmado',true)}>{savingFiscal?'Aguarde…':'Salvar e emitir'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="secundario" disabled={savingFiscal} onClick={onCancel}>Cancelar</BotaoAcaoCompacto></> : <><button type="button" className="button secondary" onClick={onCancel}>Cancelar</button><button type="button" className="button secondary" onClick={()=>void finish('Rascunho')}>{editing?'Salvar alterações':'Salvar rascunho'}</button><button type="button" className="button primary" disabled={!can('sales.edit')||!can('stock.exit')} onClick={()=>void finish('Confirmado')}><Icon name="check" size={17}/>Confirmar pedido</button></>}</div>
       </aside>
     </div>
   </>;
@@ -1413,7 +1582,7 @@ async function shareQuote(record: CreatedRecord, onNotify: (message: string) => 
 
 function QuoteActions({ record, onNotify }: { record: CreatedRecord; onNotify: (message: string) => void }) {
   const [open, setOpen] = useState(false);
-  return <><button type="button" className="button secondary quote-options-button" onClick={() => setOpen(true)}><Icon name="document" size={16}/> Compartilhar ou salvar</button><Dialog open={open} title={`Enviar ${record.id}`} description="Escolha como deseja disponibilizar o orçamento em PDF." onClose={() => setOpen(false)}><div className="dialog-body quote-file-options"><button type="button" onClick={() => { setOpen(false); void shareQuote(record, onNotify); }}><Icon name="arrow" size={19}/><span><strong>Compartilhar orçamento</strong><small>Abre as opções disponíveis no dispositivo</small></span><Icon name="chevron" size={17}/></button><button type="button" onClick={() => { setOpen(false); downloadQuote(record); }}><Icon name="document" size={19}/><span><strong>Salvar arquivo PDF</strong><small>Baixa uma cópia pronta para envio</small></span><Icon name="chevron" size={17}/></button></div><footer className="dialog-footer"><button type="button" className="button secondary" onClick={() => setOpen(false)}>Cancelar</button></footer></Dialog></>;
+  return <><button type="button" className="button secondary quote-options-button" onClick={() => setOpen(true)}><Icon name="document" size={16}/> Compartilhar ou salvar</button><Dialog open={open} title={`Enviar ${record.id}`} description="Escolha como deseja disponibilizar o orçamento em PDF." onClose={() => setOpen(false)}><div className="dialog-body quote-file-options"><button type="button" onClick={() => { setOpen(false); void shareQuote(record, onNotify); }}><Icon name="arrow" size={19}/><span><strong>Compartilhar orçamento</strong><small>Abre as opções disponíveis no dispositivo</small></span><Icon name="chevron" size={17}/></button><button type="button" onClick={() => { setOpen(false); downloadQuote(record); }}><Icon name="document" size={19}/><span><strong>Salvar arquivo PDF</strong><small>Baixa uma cópia pronta para envio</small></span><Icon name="chevron" size={17}/></button></div><footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={() => setOpen(false)}>Cancelar</BotaoAcaoCompacto></footer></Dialog></>;
 }
 
 function servicePdfInput(record: CreatedRecord, client: ClientRecord | undefined, company: CompanyProfile): ServiceOrderPdfInput | null {
@@ -1483,12 +1652,12 @@ async function shareServiceOrder(record: CreatedRecord, client: ClientRecord | u
 
 function ServicePdfDialog({ record, client, company, onNotify, onClose }: { record: CreatedRecord | null; client?: ClientRecord; company: CompanyProfile; onNotify: (message: string) => void; onClose: () => void }) {
   if (!record) return null;
-  return <Dialog open title={`Documento operacional · ${record.id}`} description="O PDF usa a identificação da empresa ativa e os apontamentos preservados nesta ordem." onClose={onClose}><div className="dialog-body quote-file-options"><button type="button" onClick={() => { onClose(); void shareServiceOrder(record, client, company, onNotify); }}><Icon name="arrow" size={19}/><span><strong>Compartilhar ordem de serviço</strong><small>Abre as opções disponíveis no dispositivo</small></span><Icon name="chevron" size={17}/></button><button type="button" onClick={() => { onClose(); downloadServiceOrder(record, client, company); }}><Icon name="document" size={19}/><span><strong>Salvar arquivo PDF</strong><small>Baixa o documento operacional com execução e aceite</small></span><Icon name="chevron" size={17}/></button></div><footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Cancelar</button></footer></Dialog>;
+  return <Dialog open title={`Documento operacional · ${record.id}`} description="O PDF usa a identificação da empresa ativa e os apontamentos preservados nesta ordem." onClose={onClose}><div className="dialog-body quote-file-options"><button type="button" onClick={() => { onClose(); void shareServiceOrder(record, client, company, onNotify); }}><Icon name="arrow" size={19}/><span><strong>Compartilhar ordem de serviço</strong><small>Abre as opções disponíveis no dispositivo</small></span><Icon name="chevron" size={17}/></button><button type="button" onClick={() => { onClose(); downloadServiceOrder(record, client, company); }}><Icon name="document" size={19}/><span><strong>Salvar arquivo PDF</strong><small>Baixa o documento operacional com execução e aceite</small></span><Icon name="chevron" size={17}/></button></div><footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Cancelar</BotaoAcaoCompacto></footer></Dialog>;
 }
 
 function ServicePdfActions({ record, client, company, onNotify, compact = false }: { record: CreatedRecord; client?: ClientRecord; company: CompanyProfile; onNotify: (message: string) => void; compact?: boolean }) {
   const [open, setOpen] = useState(false);
-  return <><button type="button" className={`button secondary ${compact ? 'service-pdf-compact' : ''}`} onClick={() => setOpen(true)}><Icon name="document" size={16}/> {compact ? 'PDF da OS' : 'Compartilhar ou salvar PDF'}</button><ServicePdfDialog record={open ? record : null} client={client} company={company} onNotify={onNotify} onClose={() => setOpen(false)}/></>;
+  return <><BotaoAcaoCompacto variante="secundario" className={compact ? 'service-pdf-compact' : ''} onClick={() => setOpen(true)}><Icon name="document" size={16}/> {compact ? 'PDF da OS' : 'Compartilhar ou salvar PDF'}</BotaoAcaoCompacto><ServicePdfDialog record={open ? record : null} client={client} company={company} onNotify={onNotify} onClose={() => setOpen(false)}/></>;
 }
 
 type RecordAction = {
@@ -1503,28 +1672,41 @@ type RecordAction = {
   permissions?: string[];
 };
 
-function RecordActionsDialog({ title, description, actions, triggerLabel }: { title: string; description: string; actions: RecordAction[]; triggerLabel: string }) {
+function groupCommercialRecordActions(actions: RecordAction[], can: (permission: string) => boolean) {
+  const denied = (action: RecordAction) => Boolean((action.permission && !can(action.permission)) || action.permissions?.some((permission) => !can(permission)));
+  const destructive = actions.find((action) => /^(Cancelar|Estornar)\b/.test(action.label) && !action.planned);
+  const remaining = actions.filter((action) => action !== destructive);
+  const rank = (action: RecordAction) => ['Continuar pedido', 'Abrir pedido', 'Editar pedido', 'Iniciar separação', 'Faturar pedido', 'Contas do pedido', 'Estoque e reserva'].indexOf(action.label);
+  return {
+    available: remaining.filter((action) => !action.planned && !action.disabled && !denied(action)).sort((a, b) => (rank(a) < 0 ? 99 : rank(a)) - (rank(b) < 0 ? 99 : rank(b))),
+    unavailable: remaining.filter((action) => !action.planned && (action.disabled || denied(action))).map((action) => ({ ...action, reason: denied(action) ? 'Sem acesso' : action.disabledLabel || 'Indisponível' })),
+    planned: remaining.filter((action) => action.planned),
+    destructive: destructive ? { ...destructive, disabled: Boolean(destructive.disabled || denied(destructive)) } : null,
+  };
+}
+
+function RecordActionsDialog({ title, description, actions, triggerLabel, compactOrder = false, recordStatus }: { title: string; description: string; actions: RecordAction[]; triggerLabel: string; compactOrder?: boolean; recordStatus?: string }) {
   const [open, setOpen] = useState(false);
   const { can } = useContext(PermissionContext);
+  const sections = groupCommercialRecordActions(actions, can);
+  const select = (action: RecordAction) => { setOpen(false); action.onSelect?.(); };
+  const brief: Record<string, string> = { 'Abrir pedido': 'Itens, valores e histórico', 'Editar pedido': 'Abrir o formulário completo', 'Continuar pedido': 'Retomar o formulário completo', 'Iniciar separação': 'Preparar os itens do pedido', 'Faturar pedido': 'Gerar contas; estoque opcional', 'Estoque e reserva': 'Consultar baixas e reservas', 'Abrir histórico fiscal': 'Consultar documentos e eventos', 'Abrir rascunho fiscal': 'Consultar dados e pendências fiscais' };
   return <>
     <button type="button" className="row-action" aria-label={triggerLabel} onClick={() => setOpen(true)}><Icon name="chevron" size={18}/></button>
-    <Dialog open={open} title={title} description={description} onClose={() => setOpen(false)}>
-      <div className="dialog-body record-action-options">
-        {actions.map((action) => { const denied = Boolean((action.permission && !can(action.permission)) || action.permissions?.some((permission) => !can(permission))); const disabled = Boolean(action.planned || action.disabled || denied); return <button type="button" key={action.label} disabled={disabled} onClick={() => { setOpen(false); action.onSelect?.(); }}>
-          <span className="record-action-icon"><Icon name={action.icon} size={19}/></span>
-          <span><strong>{action.label}</strong><small>{action.description}</small></span>
-          {disabled
-            ? <Badge tone="neutral">{denied ? 'Sem acesso' : action.disabledLabel || (action.planned ? 'Planejada' : 'Indisponível')}</Badge>
-            : <Icon name="chevron" size={17}/>
-          }
-        </button>; })}
-      </div>
-      <footer className="dialog-footer"><button type="button" className="button secondary" onClick={() => setOpen(false)}>Fechar</button></footer>
+    <Dialog open={open} title={title} description={description} titleExtra={recordStatus ? <Badge>{recordStatus}</Badge> : undefined} onClose={() => setOpen(false)}>
+      <>
+        <div className="dialog-body commercial-action-menu">
+          {sections.available.length > 0 && <section aria-label="Ações disponíveis"><h3>Ações disponíveis</h3><div className="record-action-options commercial-action-available">{sections.available.map((action) => <button type="button" key={action.label} onClick={() => select(action)}><span className="record-action-icon"><Icon name={action.icon} size={21}/></span><span><strong>{action.label}</strong><small>{(compactOrder && brief[action.label]) || action.description}</small></span><Icon name="chevron" size={14}/></button>)}</div></section>}
+          {sections.unavailable.length > 0 && <div className="commercial-action-conditions">{sections.unavailable.map((action) => <div key={action.label}><span><Icon name={action.icon} size={16}/>{action.label}</span><Badge tone="neutral">{action.reason}</Badge></div>)}</div>}
+          {sections.planned.length > 0 && <section className="commercial-action-planned-section" aria-label="Opções previstas"><h3>Opções previstas</h3><div className="record-action-options commercial-action-planned">{sections.planned.map((action) => <button type="button" key={action.label} disabled aria-label={`${action.label}: opção prevista`}><Icon name={action.icon} size={17}/><strong>{action.label}</strong></button>)}</div></section>}
+        </div>
+        <footer className="dialog-footer commercial-action-footer"><div>{sections.destructive && <BotaoAcaoCompacto variante="destrutivo" disabled={sections.destructive.disabled} onClick={() => select(sections.destructive!)}><Icon name="close" size={16}/>{sections.destructive.label}</BotaoAcaoCompacto>}</div><BotaoAcaoCompacto variante="primario" onClick={() => setOpen(false)}>Fechar</BotaoAcaoCompacto></footer>
+      </>
     </Dialog>
   </>;
 }
 
-function CommercialRecordActions({ record, fiscalPrepareLoading, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onOpenLocal, onLifecycleRequest }: { record: CommercialOperationRecord; fiscalPrepareLoading?: boolean; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onOpenLocal: (record: CreatedRecord) => void; onLifecycleRequest: (record: CreatedRecord, action: OrderLifecycleAction) => void }) {
+function CommercialRecordActions({ record, fiscalPrepareLoading, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onOpenLocal, onContinueOrder, onLifecycleRequest }: { record: CommercialOperationRecord; fiscalPrepareLoading?: boolean; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onOpenLocal: (record: CreatedRecord) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycleRequest: (record: CreatedRecord, action: OrderLifecycleAction) => void }) {
   const local = record.localRecord;
   const openDetails: RecordAction = local?.order
     ? { label: `Abrir ${record.type.toLocaleLowerCase('pt-BR')}`, description: 'Itens, valores, estoque e histórico do registro', icon: 'document', onSelect: () => onOpenLocal(local), permission: 'sales.view' }
@@ -1559,17 +1741,22 @@ function CommercialRecordActions({ record, fiscalPrepareLoading, onNavigate, onF
     const financialAvailable = !local || ['Faturado', 'Devolvido'].includes(local.status ?? '');
     const lifecycleActions: RecordAction[] = local?.type === 'pedido' && local.order ? [
       ...(local.status === 'Confirmado' ? [{ label: 'Iniciar separação', description: 'Mantém a reserva e registra o pedido em preparação', icon: 'stock' as IconName, onSelect: () => onLifecycleRequest(local, 'separar' as OrderLifecycleAction), permissions: ['sales.edit', 'stock.exit'] }] : []),
-      ...(['Confirmado', 'Em separação'].includes(local.status ?? '') ? [{ label: 'Faturar e baixar estoque', description: 'Converte a reserva em saída física vinculada ao pedido', icon: 'check' as IconName, onSelect: () => onLifecycleRequest(local, 'faturar' as OrderLifecycleAction), permissions: ['sales.invoice', 'stock.exit', ...(local.order.fiscalDocument !== 'nenhum' ? ['fiscal.prepare'] : [])] }, { label: 'Cancelar e liberar reserva', description: 'Cancela o pedido e devolve o saldo reservado ao disponível', icon: 'close' as IconName, onSelect: () => onLifecycleRequest(local, 'cancelar' as OrderLifecycleAction), permissions: ['sales.cancel', 'stock.exit'] }] : []),
+      ...(['Confirmado', 'Em separação'].includes(local.status ?? '') ? [
+        { label: 'Editar pedido', description: 'Volta ao rascunho e libera eventual reserva para revisar os dados', icon: 'edit' as IconName, onSelect: () => onLifecycleRequest(local, 'editar' as OrderLifecycleAction), permissions: ['sales.edit', 'stock.exit'] },
+        { label: 'Faturar pedido', description: 'Gera as contas a receber e permite escolher a baixa de estoque', icon: 'check' as IconName, onSelect: () => onLifecycleRequest(local, 'faturar' as OrderLifecycleAction), permissions: ['sales.invoice', 'stock.exit', ...(local.order.fiscalDocument !== 'nenhum' ? ['fiscal.prepare'] : [])] },
+      ] : []),
+      ...(['Confirmado', 'Em separação', 'Faturado'].includes(local.status ?? '') ? [{ label: 'Cancelar pedido', description: local.status === 'Faturado' ? 'Cancela a venda e estorna estoque e parcelas; a nota fiscal permanece preservada' : 'Cancela o pedido e libera eventual reserva', icon: 'close' as IconName, onSelect: () => onLifecycleRequest(local, 'cancelar' as OrderLifecycleAction), permissions: local.status === 'Faturado' ? ['sales.cancel', 'stock.adjust'] : ['sales.cancel', 'stock.exit'] }] : []),
       ...(local.status === 'Rascunho' ? [{ label: 'Cancelar rascunho', description: 'Cancela o registro sem efeito sobre o estoque', icon: 'close' as IconName, onSelect: () => onLifecycleRequest(local, 'cancelar' as OrderLifecycleAction), permission: 'sales.cancel' }] : []),
       ...(local.status === 'Faturado' ? [{ label: 'Registrar devolução total', description: 'Recoloca os produtos no saldo físico e disponível', icon: 'back' as IconName, onSelect: () => onLifecycleRequest(local, 'devolver' as OrderLifecycleAction), permissions: ['sales.cancel', 'stock.exit'] }] : []),
     ] : [];
     actions = [
+      ...(local?.status === 'Rascunho' && local.order ? [{ label: 'Continuar pedido', description: 'Reabre este rascunho para revisar itens, condições e confirmar', icon: 'edit' as IconName, onSelect: () => onContinueOrder(local), permission: 'sales.edit' }] : []),
       openDetails,
       ...lifecycleActions,
       { label: 'Copiar pedido', description: 'Criará um novo pedido com base neste registro', icon: 'copy', planned: true },
       financialAvailable
         ? { label: 'Contas do pedido', description: 'Parcelas, recebimentos e possíveis estornos', icon: 'money', onSelect: () => onReceivables(record.id), permission: 'receivables.view' }
-        : { label: 'Contas ainda não geradas', description: local?.status === 'Confirmado' || local?.status === 'Em separação' ? 'As parcelas serão criadas quando o pedido for faturado' : 'A situação atual não possui lançamento financeiro', icon: 'money', planned: true },
+        : { label: 'Contas a receber', description: 'As parcelas serão criadas quando o pedido for faturado', icon: 'money', disabled: true, disabledLabel: 'Disponíveis após o faturamento' },
       { label: 'Estoque e reserva', description: 'Reserva, separação, baixa e estorno do estoque', icon: 'stock', onSelect: () => onNavigate('estoque'), permission: 'stock.view' },
       ...(fiscalDraft?.persistenceSource === 'server' && fiscalDraft.documentType === 'nfe' && !fiscalDraft.emissionId
         ? [{ label: fiscalPrepareLoading ? 'Abrindo emissão…' : 'Abrir emissão fiscal', description: 'Cria o vínculo privado da NF-e em homologação, sem validar XML, reservar número ou transmitir', icon: 'fiscal' as IconName, onSelect: () => onFiscalPrepare(fiscalDraft), disabled: fiscalPrepareLoading, disabledLabel: 'Abrindo', permission: 'fiscal.prepare' }]
@@ -1579,16 +1766,16 @@ function CommercialRecordActions({ record, fiscalPrepareLoading, onNavigate, onF
         : fiscalAuthorized
         ? { label: 'Abrir NF-e autorizada', description: 'Consulta o documento e seus eventos na Central Fiscal', icon: 'fiscal', onSelect: () => onNavigate('fiscal') }
         : local?.order?.fiscalDocument === 'nenhum'
-          ? { label: 'Documento fiscal não definido', description: 'Edite a configuração fiscal do pedido antes de preparar um rascunho', icon: 'fiscal', planned: true }
+          ? { label: 'Documento fiscal não definido', description: 'Edite a configuração fiscal do pedido antes de preparar um rascunho', icon: 'fiscal', disabled: true, disabledLabel: 'Defina o documento no pedido' }
         : localOperational
           ? { label: `Preparar ${documentLabel(local?.order?.fiscalDocument ?? 'nfe')}`, description: 'Cria um rascunho local vinculado ao pedido, sem transmitir ao governo', icon: 'fiscal', onSelect: () => onFiscalStart({ id: record.id, client: record.client, item: `Pedido ${record.id}`, total: record.total, documentType: local?.order?.fiscalDocument === 'nfce' || local?.order?.fiscalDocument === 'nfse' ? local.order.fiscalDocument : 'nfe', sourceLabel: 'Pedido' }), permission: 'fiscal.prepare' }
-          : { label: 'Emissão fiscal indisponível', description: 'A situação atual do pedido não permite iniciar uma nova nota', icon: 'fiscal', planned: true },
+          : { label: 'Emissão fiscal indisponível', description: 'A situação atual do pedido não permite iniciar uma nova nota', icon: 'fiscal', disabled: true, disabledLabel: 'Aguardando confirmação do pedido' },
       { label: 'Imprimir pedido', description: 'Versão comercial com identidade da empresa', icon: 'print', planned: true },
       { label: 'Etiquetas', description: 'Separação, expedição e identificação dos volumes', icon: 'tag', planned: true },
       ...communication,
     ];
   }
-  return <RecordActionsDialog title={`Ações de ${record.id}`} description={`${record.type} de ${record.client}. As ações integradas já levam à área correspondente; as demais estão identificadas como planejadas.`} actions={actions} triggerLabel={`Ações de ${record.id}`}/>;
+  return <RecordActionsDialog title={`Ações ${record.type === 'Pedido' ? 'do pedido' : 'de'} ${record.id}`} description={record.type === 'Pedido' ? record.client : `${record.type} de ${record.client}`} actions={actions} compactOrder={record.type === 'Pedido'} recordStatus={record.status} triggerLabel={`Ações de ${record.id}`}/>;
 }
 
 function NewServiceOrderView({ clientRecords, catalogRecords, settings, issuerRegistry, connected, initialClient = '', initialSku = '', onCancel, onCreated }: { clientRecords: ClientRecord[]; catalogRecords: CatalogItem[]; settings: ModuleSettings; issuerRegistry: FiscalIssuerRegistry; connected: boolean; initialClient?: string; initialSku?: string; onCancel: () => void; onCreated: (record: CreatedRecord) => void }) {
@@ -1749,29 +1936,32 @@ function OrderDetailsDialog({ record, onClose }: { record: CreatedRecord | null;
       <section><div className="client-section-heading"><h3>Itens do pedido</h3><p>Retrato de quantidade, preço e custo usado na confirmação.</p></div><Table headers={['Produto ou serviço', 'Quantidade', 'Preço', 'Subtotal']} minWidth={0} className="order-detail-table"><>{record.order.lines.map((line) => <tr key={line.sku}><td data-label="Item"><strong>{line.name}</strong><small>{line.sku}</small></td><td data-label="Quantidade" className="numeric">{line.quantity} {line.unit}</td><td data-label="Preço" className="numeric">{money(line.unitPrice)}</td><td data-label="Subtotal" className="numeric"><strong>{money(line.quantity * line.unitPrice)}</strong></td></tr>)}</></Table></section>
       <section><div className="client-section-heading"><h3>Histórico</h3><p>Transições comerciais e seus efeitos operacionais.</p></div><div className="order-event-list">{(record.events ?? []).map((event, index) => <div key={`${event.date}-${index}`}><span><Icon name="check" size={15}/></span><div><strong>{event.label}</strong><small>{new Date(event.date).toLocaleString('pt-BR')} · {event.description}</small></div></div>)}</div></section>
     </div>
-    <footer className="dialog-footer"><button type="button" className="button primary" onClick={onClose}>Fechar</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="primario" onClick={onClose}>Fechar</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
-function OrderLifecycleDialog({ request, onClose, onConfirm }: { request: { record: CreatedRecord; action: OrderLifecycleAction } | null; onClose: () => void; onConfirm: (record: CreatedRecord, action: OrderLifecycleAction) => void }) {
+function OrderLifecycleDialog({ request, onClose, onConfirm }: { request: { record: CreatedRecord; action: OrderConfirmationAction } | null; onClose: () => void; onConfirm: (record: CreatedRecord, action: OrderLifecycleAction, moveStock?: boolean) => void }) {
+  const [moveStock, setMoveStock] = useState(false);
+  useEffect(() => { setMoveStock(request?.record.order?.reserveStock === true); }, [request]);
   if (!request) return null;
   const { record, action } = request;
   const order = record.order;
   if (!order) return null;
   const info = {
     separar: { title: 'Iniciar separação', description: 'O saldo continuará reservado enquanto o pedido é preparado.', button: 'Confirmar separação' },
-    faturar: { title: 'Faturar e baixar estoque', description: `${order.stockState === 'Reservado' || order.stockState === 'Em separação' ? 'A reserva será convertida em saída física.' : 'O saldo disponível será baixado diretamente.'} As parcelas serão geradas em Recebimentos${order.fiscalDocument !== 'nenhum' ? ` e um rascunho de ${documentLabel(order.fiscalDocument)} será preparado automaticamente na Central Fiscal` : ''}; nenhuma nota será transmitida.`, button: 'Confirmar faturamento' },
-    cancelar: { title: 'Cancelar pedido', description: order.stockState === 'Reservado' || order.stockState === 'Em separação' ? 'A reserva será liberada e o saldo voltará ao disponível.' : 'O rascunho será cancelado sem movimentar estoque.', button: 'Cancelar pedido' },
+    faturar: { title: 'Faturar pedido', description: `As parcelas serão geradas em Recebimentos${order.fiscalDocument !== 'nenhum' ? ` e um rascunho de ${documentLabel(order.fiscalDocument)} será preparado na Central Fiscal` : ''}. As entradas mensais serão atualizadas quando o recebimento for registrado.`, button: 'Confirmar faturamento' },
+    cancelar: { title: 'Cancelar pedido', description: record.status === 'Faturado' ? 'A venda sairá do faturamento comercial, as parcelas em aberto serão canceladas e a saída de estoque será estornada. A nota fiscal continuará com sua situação atual na Central Fiscal. Valores já recebidos exigem estorno em Recebimentos.' : order.stockState === 'Reservado' || order.stockState === 'Em separação' ? 'A reserva será liberada e o saldo voltará ao disponível.' : 'O pedido será cancelado sem movimentar estoque.', button: 'Cancelar pedido' },
     devolver: { title: 'Registrar devolução total', description: 'Os produtos retornarão ao saldo disponível e as parcelas e recebimentos vinculados serão estornados.', button: 'Confirmar devolução' },
   }[action];
   const productLines = order.lines.filter((line) => line.kind === 'produto');
   return <Dialog open title={`${info.title} · ${record.id}`} description={info.description} onClose={onClose}>
     <div className="dialog-body lifecycle-confirmation">
       <div className="lifecycle-summary"><div><span>Cliente</span><strong>{record.client}</strong></div><div><span>Situação atual</span><Badge>{record.status}</Badge></div><div><span>Estoque atual</span><Badge tone="info">{order.stockState}</Badge></div><div><span>Total</span><strong>{money(record.total)}</strong></div></div>
-      <div className="lifecycle-effect"><Icon name={action === 'cancelar' ? 'warning' : 'stock'} size={19}/><div><strong>Efeito previsto no estoque local</strong><p>{productLines.length ? productLines.map((line) => `${line.name}: ${line.quantity} ${line.unit}`).join(' · ') : 'Este pedido não possui produto com controle físico.'}</p></div></div>
+      {action === 'faturar' && <label className="check-field"><input type="checkbox" checked={moveStock} disabled={!order.reserveStock} onChange={(event) => setMoveStock(event.target.checked)}/><span><strong>Baixar estoque neste faturamento</strong><small>{!order.reserveStock ? 'Este pedido está sem controle de estoque. Para ativar, edite e confirme novamente o pedido.' : moveStock ? 'A reserva será convertida em saída física.' : 'Sem saída física; eventual reserva será liberada.'}</small></span></label>}
+      <div className="lifecycle-effect"><Icon name={action === 'cancelar' ? 'warning' : 'stock'} size={19}/><div><strong>Efeito previsto no estoque</strong><p>{action === 'faturar' && !moveStock ? 'Nenhuma baixa de estoque. Eventual reserva será liberada.' : productLines.length ? productLines.map((line) => `${line.name}: ${line.quantity} ${line.unit}`).join(' · ') : 'Este pedido não possui produto com controle físico.'}</p></div></div>
       <p className="lifecycle-safety">{record.persistence?.operationId ? 'A operação será registrada no perfil empresarial e refletida em estoque, recebimentos e Central Fiscal. A transmissão fiscal real permanece condicionada à homologação.' : 'A operação será registrada somente neste navegador e poderá ser conferida no histórico local.'}</p>
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Voltar</button><button type="button" className={`button ${action === 'cancelar' ? 'danger' : 'primary'}`} onClick={() => { onConfirm(record, action); onClose(); }}>{info.button}</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Voltar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante={action === 'cancelar' ? 'destrutivo' : 'primario'} onClick={() => { onConfirm(record, action, moveStock); onClose(); }}>{info.button}</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -1792,7 +1982,7 @@ function ServiceOrderDetailsDialog({ record, client, company, onClose, onNotify,
       {order.acceptance && <section><div className="client-section-heading"><h3>Aceite do cliente</h3><p>Registro declaratório vinculado à conclusão; não equivale a assinatura eletrônica certificada.</p></div><dl className="receivable-definition-list"><div><dt>Situação</dt><dd>{order.acceptance.status}</dd></div><div><dt>Responsável</dt><dd>{order.acceptance.acceptedBy || 'Não informado'}</dd></div><div><dt>Data e hora</dt><dd>{order.acceptance.acceptedAt ? displayDateTime(order.acceptance.acceptedAt) : 'Não registrada'}</dd></div><div><dt>Observação</dt><dd>{order.acceptance.notes || 'Sem observações'}</dd></div></dl></section>}
       <section><div className="client-section-heading"><h3>Histórico</h3><p>Eventos registrados sem apagar as etapas anteriores.</p></div><div className="receivable-event-list">{(record.events ?? []).map((event, index) => <div key={`${event.date}-${index}`}><span><Icon name="clock" size={15}/></span><div><strong>{event.label}</strong><small>{new Date(event.date).toLocaleString('pt-BR')}</small><p>{event.description}</p></div></div>)}</div></section>
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Fechar</button><ServicePdfActions record={record} client={client} company={company} onNotify={onNotify}/></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto><ServicePdfActions record={record} client={client} company={company} onNotify={onNotify}/></footer>
   </Dialog>;
 }
 
@@ -1810,7 +2000,7 @@ function ServiceLifecycleDialog({ request, onClose, onConfirm }: { request: { re
       ? { title: 'Estornar conclusão da ordem', description: 'Materiais consumidos retornarão ao estoque e os efeitos financeiros e fiscais locais serão estornados, preservando todo o histórico.', button: 'Estornar conclusão' }
       : { title: 'Cancelar ordem de serviço', description: 'A agenda será cancelada, mantendo o histórico e estornando efeitos financeiros ou fiscais existentes.', button: 'Cancelar ordem' },
   }[action];
-  return <Dialog open title={`${info.title} · ${record.id}`} description={info.description} onClose={onClose}><div className="dialog-body lifecycle-confirmation"><div className="lifecycle-summary"><div><span>Cliente</span><strong>{record.client}</strong></div><div><span>Situação atual</span><Badge>{record.status}</Badge></div><div><span>Agenda</span><strong>{displayIsoDate(serviceOrder.scheduledDate)} · {serviceOrder.scheduledTime}</strong></div><div><span>Total</span><strong>{money(record.total)}</strong></div></div><label className="field"><span>{action === 'cancelar' ? 'Motivo do cancelamento ou estorno' : 'Observação da etapa'}</span><textarea rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Registre informações úteis para o histórico da ordem"/></label><p className="lifecycle-safety">{record.persistence?.operationId ? 'A operação ficará vinculada ao perfil empresarial. Emissão e transmissão fiscal reais permanecem condicionadas à homologação.' : 'A operação ficará registrada somente neste navegador.'}</p></div><footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Voltar</button><button type="button" className={`button ${action === 'cancelar' ? 'danger' : 'primary'}`} onClick={() => { onConfirm(record, action, notes); onClose(); }}>{info.button}</button></footer></Dialog>;
+  return <Dialog open title={`${info.title} · ${record.id}`} description={info.description} onClose={onClose}><div className="dialog-body lifecycle-confirmation"><div className="lifecycle-summary"><div><span>Cliente</span><strong>{record.client}</strong></div><div><span>Situação atual</span><Badge>{record.status}</Badge></div><div><span>Agenda</span><strong>{displayIsoDate(serviceOrder.scheduledDate)} · {serviceOrder.scheduledTime}</strong></div><div><span>Total</span><strong>{money(record.total)}</strong></div></div><label className="field"><span>{action === 'cancelar' ? 'Motivo do cancelamento ou estorno' : 'Observação da etapa'}</span><textarea rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Registre informações úteis para o histórico da ordem"/></label><p className="lifecycle-safety">{record.persistence?.operationId ? 'A operação ficará vinculada ao perfil empresarial. Emissão e transmissão fiscal reais permanecem condicionadas à homologação.' : 'A operação ficará registrada somente neste navegador.'}</p></div><footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Voltar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante={action === 'cancelar' ? 'destrutivo' : 'primario'} onClick={() => { onConfirm(record, action, notes); onClose(); }}>{info.button}</BotaoAcaoCompacto></footer></Dialog>;
 }
 
 function ServiceExecutionDialog({ record, catalogRecords, onClose, onSave }: { record: CreatedRecord | null; catalogRecords: CatalogItem[]; onClose: () => void; onSave: (record: CreatedRecord, execution: ServiceExecutionInput, conclude: boolean) => boolean }) {
@@ -1923,7 +2113,7 @@ function ServiceExecutionDialog({ record, catalogRecords, onClose, onSave }: { r
       </div></section>
       {(submitted || validation.warnings.length > 0) && <div className="service-execution-validation" aria-live="polite">{submitted && validation.errors.map((message) => <p className="error" key={message}><Icon name="warning" size={15}/>{message}</p>)}{validation.warnings.map((message) => <p className="warning" key={message}><Icon name="warning" size={15}/>{message}</p>)}</div>}
     </div>
-    <footer className="dialog-footer service-execution-footer"><button type="button" className="button secondary" onClick={onClose}>Cancelar</button><button type="button" className="button secondary" onClick={() => submit(false)}>Salvar apontamentos</button>{canConclude && <button type="button" className="button primary" onClick={() => submit(true)}><Icon name="check" size={17}/> Concluir serviço</button>}</footer>
+    <footer className="dialog-footer service-execution-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="secundario" onClick={() => submit(false)}>Salvar apontamentos</BotaoAcaoCompacto>{canConclude && <BotaoAcaoCompacto type="button" variante="primario" onClick={() => submit(true)}><Icon name="check" size={17}/> Concluir serviço</BotaoAcaoCompacto>}</footer>
   </Dialog>;
 }
 
@@ -2055,7 +2245,7 @@ function CatalogItemDialog({ item, onClose, onSave }: { item: CatalogItem | null
       <section className="catalog-tax-readiness" aria-labelledby="catalog-readiness-title"><div className="client-section-heading"><h3 id="catalog-readiness-title">Prontidão do perfil</h3><p>Campos ausentes ficam registrados; o item pode ser salvo para revisão posterior.</p></div><div className="catalog-tax-readiness-summary"><div><span>Cadastro-base</span><Badge tone={taxEvaluation.coreReady ? 'success' : 'warning'}>{taxEvaluation.coreReady ? 'Pronto' : 'Pendente'}</Badge></div><div><span>IBS/CBS</span><Badge tone={taxEvaluation.reformReady ? 'success' : 'warning'}>{taxEvaluation.reformReady ? 'Revisado' : 'Pendente'}</Badge></div><div><span>Preenchimento</span><strong>{taxEvaluation.completion}%</strong></div></div><div className="catalog-tax-checks">{taxEvaluation.checks.map((check) => <div key={check.key}><span className={check.ready ? 'ready' : 'pending'}><Icon name={check.ready ? 'check' : 'clock'} size={14}/></span><p><strong>{check.label}</strong><small>{check.detail}</small></p><Badge tone={check.ready ? 'success' : 'warning'}>{check.ready ? 'Informado' : 'Pendente'}</Badge></div>)}</div></section>
       <div className="catalog-sync-foot"><span>Última publicação</span><strong>{draft.syncedAt}</strong><Badge tone={draft.syncStatus === 'Sincronizado' ? 'success' : 'warning'}>{draft.syncStatus}</Badge></div>
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Cancelar</button><button type="button" className="button primary" onClick={save}>Salvar complementos</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={save}>Salvar complementos</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -2202,11 +2392,44 @@ function Dashboard({ onNew, onNavigate, connected, created, receivableRecords, c
   </>;
 }
 
-function SalesView({ created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onLifecycle }: { created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void }) {
+function commercialRecordIndicators(record: CommercialOperationRecord) {
+  type Indicator = { key: string; icon: IconName; label: string; tone: 'success' | 'info' | 'warning' | 'danger' | 'neutral'; mark: 'check' | 'clock' | 'back' | 'close' | 'warning' | 'none' };
+  const inactive = ['Cancelado', 'Devolvido'].includes(record.status);
+  const billed = record.status === 'Faturado' || (record.type === 'Venda rápida' && record.status === 'Concluído');
+  const billing: Indicator = { key: 'billing', icon: 'money', label: inactive ? 'Faturamento: sem faturamento ativo · venda cancelada ou devolvida' : billed ? 'Faturamento: realizado · não indica pagamento recebido' : record.type === 'Orçamento' ? 'Faturamento: não se aplica ao orçamento' : 'Faturamento: não realizado', tone: inactive ? 'neutral' : billed ? 'success' : 'neutral', mark: inactive ? 'close' : billed ? 'check' : 'none' };
+  const stock: Indicator = { key: 'stock', icon: 'stock', label: `Estoque: ${record.stock}`, tone: record.stock === 'Baixado' ? 'success' : ['Devolvido', 'Liberado'].includes(record.stock) ? 'warning' : ['Reservado', 'Em separação'].includes(record.stock) ? 'info' : 'neutral', mark: record.stock === 'Baixado' ? 'check' : ['Devolvido', 'Liberado'].includes(record.stock) ? 'back' : ['Reservado', 'Em separação'].includes(record.stock) ? 'clock' : 'none' };
+  const draft = record.fiscalDraft;
+  const state = draft?.remoteState || '';
+  const canceled = draft?.status === 'Cancelado' || state === 'canceled';
+  const authorized = ['authorized', 'artifacts_stored', 'danfe_ready'].includes(state) || (!draft && /^(?:NF-e |NFC-e |NFS-e )?autorizada\b/i.test(record.fiscal));
+  const rejected = ['rejected', 'failed'].includes(state);
+  const processing = ['number_reserved', 'signed', 'submitted', 'processing'].includes(state);
+  const needsReview = record.fiscal.includes('revisar fiscal');
+  const fiscalLabel = canceled ? 'cancelada' : authorized ? 'autorizada' : rejected ? 'rejeitada ou com falha' : processing ? 'em emissão' : draft ? draft.status : record.fiscal;
+  const fiscal: Indicator = { key: 'fiscal', icon: 'fiscal', label: `Nota fiscal: ${fiscalLabel}${needsReview ? ' · venda cancelada; revisar situação fiscal' : ''}`, tone: canceled || rejected ? 'danger' : authorized ? 'success' : needsReview || draft?.status === 'Com pendências' ? 'warning' : processing ? 'info' : 'neutral', mark: canceled ? 'close' : rejected ? 'warning' : authorized ? 'check' : needsReview || draft?.status === 'Com pendências' ? 'warning' : processing || draft ? 'clock' : 'none' };
+  return [billing, stock, fiscal];
+}
+
+function CommercialIndicatorIcon({ indicator }: { indicator: ReturnType<typeof commercialRecordIndicators>[number] }) {
+  const filled = indicator.mark === 'check';
+  const ink = filled ? '#fff' : 'currentColor';
+  return <svg className={`commercial-indicator ${indicator.tone}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {indicator.key === 'billing' ? <><circle cx="12" cy="12" r={filled ? 10 : 9} fill={filled ? 'currentColor' : 'none'} stroke={filled ? 'none' : 'currentColor'}/><path d="M15 8.8c-.8-1-5.5-1.4-5.6 1-.2 2.3 5.5 1.6 5.3 4-.2 2.3-4.7 2.1-5.9.7M12 6v12" stroke={ink} strokeWidth="1.5"/></>
+      : indicator.key === 'stock' ? filled ? <><path d="M3 4.5h18v5H3zM4.5 10.5h15V21h-15z" fill="currentColor" stroke="none"/><path d="M9 14h6" stroke={ink}/></> : <><path d="M3 5h18v4H3zM4.5 9v11h15V9"/>{indicator.mark === 'back' ? <path d="M15 15H9m0 0 2.5-2.5M9 15l2.5 2.5"/> : <path d="M9 13h6"/>}</>
+      : <><path d={filled ? 'M5 2h9l6 6v14H5z' : 'M5 3h9l5 5v13H5z'} fill={filled ? 'currentColor' : 'none'} stroke={filled ? 'none' : 'currentColor'}/><path d={filled ? 'M14 2v6h6' : 'M14 3v6h5'} stroke={ink}/>{indicator.mark === 'close' ? <path d="m9 13 6 5m0-5-6 5"/> : indicator.mark === 'warning' ? <path d="M12 12v3m0 3h.01"/> : <path d="M8.5 13h7M8.5 17h5" stroke={ink}/>}</>}
+  </svg>;
+}
+
+function CommercialRecordIndicators({ record, onFiscal }: { record: CommercialOperationRecord; onFiscal?: () => void }) {
+  const indicators = commercialRecordIndicators(record);
+  return <span className="commercial-indicators" role="group" aria-label="Situação da operação">{indicators.map((indicator) => <Tooltip key={indicator.key} texto={indicator.label} posicao="bottom">{indicator.key==='fiscal'&&onFiscal ? <button type="button" className="commercial-indicator-target" aria-label={`${indicator.label} · Abrir nota fiscal`} onClick={onFiscal}><CommercialIndicatorIcon indicator={indicator}/></button> : <span className="commercial-indicator-target" tabIndex={0} role="img" aria-label={indicator.label}><CommercialIndicatorIcon indicator={indicator}/></span>}</Tooltip>)}</span>;
+}
+
+function SalesView({ created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle }: { created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void }) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todas as situações');
   const [detailRecord, setDetailRecord] = useState<CreatedRecord | null>(null);
-  const [lifecycleRequest, setLifecycleRequest] = useState<{ record: CreatedRecord; action: OrderLifecycleAction } | null>(null);
+  const [lifecycleRequest, setLifecycleRequest] = useState<{ record: CreatedRecord; action: OrderConfirmationAction } | null>(null);
   const localQuotes = created.filter((item) => item.type === 'orcamento' && item.quote);
   const localOperations = created.filter((item) => ['pedido', 'venda'].includes(item.type));
   const records = useMemo<CommercialOperationRecord[]>(() => {
@@ -2220,7 +2443,7 @@ function SalesView({ created, connected, fiscalDrafts, fiscalPrepareState, onNew
         status: record.status ?? 'Rascunho',
         total: record.total,
         seller: record.order?.seller ?? 'Usuário local',
-        fiscal: fiscalDraft?.status ?? (record.order?.fiscalDocument && record.order.fiscalDocument !== 'nenhum' ? `${documentLabel(record.order.fiscalDocument)} prevista` : 'Não definida'),
+        fiscal: record.status === 'Cancelado' && fiscalDraft && fiscalDraft.status !== 'Cancelado' ? `${fiscalDraft.status} · revisar fiscal` : fiscalDraft?.status ?? (record.order?.fiscalDocument && record.order.fiscalDocument !== 'nenhum' ? `${documentLabel(record.order.fiscalDocument)} prevista` : 'Não definida'),
         stock: record.order?.stockState ?? 'Sem movimentação',
         localRecord: record,
         fiscalDraft,
@@ -2241,7 +2464,14 @@ function SalesView({ created, connected, fiscalDrafts, fiscalPrepareState, onNew
     </Panel>
     <Panel title="Operações comerciais" subtitle="Pedidos locais aparecem aqui com reserva, separação, baixa e devolução rastreáveis">
       <SearchToolbar value={query} onChange={setQuery}><select aria-label="Situação" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>Todas as situações</option><option>Rascunho</option><option>Confirmado</option><option>Em separação</option><option>Faturado</option><option>Cancelado</option><option>Devolvido</option><option>Enviado</option></select><select aria-label="Período"><option>Últimos 30 dias</option><option>Este mês</option><option>Este ano</option></select></SearchToolbar>
-      <Table headers={['Número', 'Data', 'Cliente', 'Tipo', 'Situação', 'Fiscal', 'Estoque', 'Total', 'Vendedor', 'Ações']} minWidth={0} className="commercial-operations-table"><>{records.map((record) => <tr key={record.id}><td data-label="Número"><button type="button" className="row-link" onClick={() => record.localRecord && setDetailRecord(record.localRecord)}>{record.id}</button></td><td data-label="Data">{record.date}</td><td data-label="Cliente"><strong>{record.client}</strong></td><td data-label="Tipo">{record.type}</td><td data-label="Situação"><Badge>{record.status}</Badge></td><td data-label="Fiscal"><Badge>{record.fiscal}</Badge></td><td data-label="Estoque"><Badge tone={record.stock === 'Baixado' || record.stock === 'Devolvido' ? 'success' : record.stock === 'Liberado' || record.stock === 'Sem movimentação' ? 'neutral' : 'info'}>{record.stock}</Badge></td><td data-label="Total" className="numeric"><strong>{money(record.total)}</strong></td><td data-label="Vendedor">{record.seller}</td><td data-label="Ações" className="commercial-actions-cell"><CommercialRecordActions record={record} fiscalPrepareLoading={record.fiscalDraft ? fiscalPrepareState[record.fiscalDraft.id]?.loading : false} onNavigate={onNavigate} onFiscalStart={onFiscalStart} onFiscalPrepare={onFiscalPrepare} onReceivables={onReceivables} onOpenLocal={setDetailRecord} onLifecycleRequest={(localRecord, action) => setLifecycleRequest({ record: localRecord, action })}/></td></tr>)}</></Table>
+      <Table headers={['Número', 'Data', 'Cliente', 'Situação', 'Total', 'Ações']} minWidth={0} className="commercial-operations-table"><>{records.map((record) => <tr key={record.id}>
+        <td data-label="Número"><button type="button" className="row-link" onClick={() => record.localRecord && setDetailRecord(record.localRecord)}>{record.id}</button><small className="commercial-record-type">{record.type}</small></td>
+        <td data-label="Data">{record.date}</td>
+        <td data-label="Cliente"><strong>{record.client}</strong></td>
+        <td data-label="Situação"><Badge>{record.status}</Badge></td>
+        <td data-label="Total" className="numeric"><strong>{money(record.total)}</strong></td>
+        <td data-label="Ações" className="commercial-actions-cell"><div className="commercial-row-actions"><CommercialRecordIndicators record={record} onFiscal={record.fiscalDraft ? ()=>onFiscalStart({id:record.id,client:record.client,item:`Pedido ${record.id}`,total:record.total,documentType:record.fiscalDraft!.documentType,sourceLabel:'Pedido'}) : undefined}/><CommercialRecordActions record={record} fiscalPrepareLoading={record.fiscalDraft ? fiscalPrepareState[record.fiscalDraft.id]?.loading : false} onNavigate={onNavigate} onFiscalStart={onFiscalStart} onFiscalPrepare={onFiscalPrepare} onReceivables={onReceivables} onOpenLocal={setDetailRecord} onContinueOrder={onContinueOrder} onLifecycleRequest={(localRecord, action) => action === 'editar' ? onLifecycle(localRecord, action) : setLifecycleRequest({ record: localRecord, action })}/></div></td>
+      </tr>)}</></Table>
       {records.length === 0 && <EmptyState title="Nenhuma operação encontrada" description="Ajuste a busca ou limpe os filtros para ver as vendas."/>}
     </Panel>
     <OrderDetailsDialog record={detailRecord} onClose={() => setDetailRecord(null)}/>
@@ -2336,7 +2566,7 @@ function formatName(value: string) {
   }).join('');
 }
 
-function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller, connected, onClose, onSave }: { open: boolean; client: ClientRecord | null; clientRecords: ClientRecord[]; sellers: string[]; defaultSeller: string; connected: boolean; onClose: () => void; onSave: (client: ClientRecord) => Promise<ConfirmedSave> }) {
+function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers, defaultSeller, connected, onClose, onSave }: { priceTables?:FiscalNoteEditorOptions['priceTables'];open: boolean; client: ClientRecord | null; clientRecords: ClientRecord[]; sellers: string[]; defaultSeller: string; connected: boolean; onClose: () => void; onSave: (client: ClientRecord) => Promise<ConfirmedSave> }) {
   const [form, setForm] = useState<ClientRecord>(() => client ? { ...client } : emptyClient(defaultSeller));
   const [error, setError] = useState('');
   const [lookup, setLookup] = useState<{ kind: 'cnpj' | 'cep'; message: string; tone: 'success' | 'error' } | null>(null);
@@ -2566,9 +2796,9 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
       <section className="client-form-section" aria-labelledby="client-contact-title">
         <div className="client-section-heading"><h3 id="client-contact-title">Contato e relacionamento</h3></div>
         <div className="form-grid">
-          {!isIndividual && <label className="field"><span>Contato principal</span><input value={form.contactName} onChange={(event) => update('contactName', formatName(event.target.value))} placeholder="Nome do contato"/></label>}
+          {!isIndividual && <label className="field field-wide"><span>Contato principal</span><input value={form.contactName} onChange={(event) => update('contactName', formatName(event.target.value))} placeholder="Nome do contato"/></label>}
           <label className="field"><span>Telefone *</span><input inputMode="tel" value={form.phone} onChange={(event) => update('phone', formatPhone(event.target.value))} placeholder="(00) 00000-0000"/></label>
-          <label className={`field${isIndividual ? '' : ' field-wide'}`}><span>E-mail *</span><input type="email" value={form.email} onChange={(event) => update('email', normalizarEmail(event.target.value))} placeholder="financeiro@empresa.com.br"/></label>
+          <label className="field"><span>E-mail *</span><input type="email" value={form.email} onChange={(event) => update('email', normalizarEmail(event.target.value))} placeholder="financeiro@empresa.com.br"/></label>
         </div>
       </section>
       <section className="client-form-section" aria-labelledby="client-address-title">
@@ -2589,12 +2819,13 @@ function ClientFormDialog({ open, client, clientRecords, sellers, defaultSeller,
         <div className="form-grid client-commercial-grid">
           <label className="field client-commercial-seller"><span>Vendedor responsável</span><select value={form.seller} onChange={(event) => update('seller', event.target.value)}>{sellers.map((seller) => <option key={seller}>{seller}</option>)}</select></label>
           <label className="field client-commercial-terms"><span>Condição padrão</span><select value={form.paymentTerms} onChange={(event) => update('paymentTerms', event.target.value)}><option>À vista</option><option>7 dias</option><option>14 dias</option><option>28 dias</option><option>30 dias</option></select></label>
+          <label className="field client-commercial-price"><span>Lista de preços padrão</span><select value={form.priceTableId||''} onChange={event=>update('priceTableId',event.target.value)}><option value="">Usar a lista padrão do perfil</option>{form.priceTableId&&!priceTables.some(table=>table.id===form.priceTableId)&&<option value={form.priceTableId} disabled>Lista indisponível — selecione outra</option>}{priceTables.filter(table=>table.id!=='standard').map(table=><option key={table.id} value={table.id}>{table.name}</option>)}</select></label>
           <label className="field client-commercial-status"><span>Status</span><select value={form.status} onChange={(event) => update('status', event.target.value as ClientRecord['status'])}><option>Ativo</option><option>Revisar cadastro</option><option>Inativo</option></select></label>
         </div>
       </section>
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose} disabled={saving}>Cancelar</button><button type="button" className="button primary" onClick={() => void save()} disabled={saving}>{saving ? 'Salvando…' : client ? 'Salvar alterações' : 'Cadastrar cliente'}</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose} disabled={saving}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={() => void save()} disabled={saving}>{saving ? 'Salvando…' : client ? 'Salvar alterações' : 'Cadastrar cliente'}</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -2641,7 +2872,7 @@ function SupplierFormDialog({ open, suppliers, onClose, onSave }: { open: boolea
       </section>
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose} disabled={saving}>Cancelar</button><button type="button" className="button primary" onClick={() => void save()} disabled={saving}>{saving ? 'Salvando…' : 'Cadastrar fornecedor'}</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose} disabled={saving}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={() => void save()} disabled={saving}>{saving ? 'Salvando…' : 'Cadastrar fornecedor'}</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -2684,7 +2915,7 @@ function ClientReportDialog({ client, createdRecords, receivableRecords, onClose
       </div>
       <section className="client-history"><div className="client-section-heading"><h3>Histórico recente</h3><p>Pedidos, orçamentos e serviços vinculados ao cadastro deste perfil.</p></div>{snapshot.operations.length > 0 ? <Table headers={['Registro', 'Data ou agenda', 'Tipo', 'Situação', 'Valor']} minWidth={0} className="client-history-table"><>{snapshot.operations.map((record) => <tr key={record.id}><td data-label="Registro"><strong>{record.id}</strong></td><td data-label="Data ou agenda">{record.serviceOrder?.scheduledDate ? displayIsoDate(record.serviceOrder.scheduledDate) : new Date(record.createdAt).toLocaleDateString('pt-BR')}</td><td data-label="Tipo">{documentLabel(record.type)}</td><td data-label="Situação"><Badge>{record.status || 'Salvo'}</Badge></td><td data-label="Valor" className="numeric"><strong>{money(record.total)}</strong></td></tr>)}</></Table> : <EmptyState title="Cliente sem operações" description="O primeiro pedido, orçamento ou serviço passará a compor este histórico."/>}</section>
     </div>
-    <footer className="dialog-footer client-report-footer"><button type="button" className="button secondary" onClick={onClose}>Fechar</button><button type="button" className="button secondary" onClick={() => { onClose(); onNewQuote(client); }}>Novo orçamento</button><button type="button" className="button secondary" onClick={() => { onClose(); onNewService(client); }}>Nova OS</button><button type="button" className="button primary" onClick={() => { onClose(); onNewOrder(client); }}>Novo pedido</button></footer>
+    <footer className="dialog-footer client-report-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="secundario" onClick={() => { onClose(); onNewQuote(client); }}>Novo orçamento</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="secundario" onClick={() => { onClose(); onNewService(client); }}>Nova OS</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={() => { onClose(); onNewOrder(client); }}>Novo pedido</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -2706,7 +2937,7 @@ function ClientRecordActions({ client, onEdit, onReport, onNewOrder, onNewServic
   return <RecordActionsDialog title={`Ações de ${client.tradeName}`} description="Crie novas operações ou consulte tudo o que já está relacionado a este cliente." actions={actions} triggerLabel={`Ações de ${client.tradeName}`}/>;
 }
 
-function ClientsView({ clientRecords, createdRecords, receivableRecords, settings, connected, onSave, onNewOrder, onNewService, onNewQuote, onNotify }: { clientRecords: ClientRecord[]; createdRecords: CreatedRecord[]; receivableRecords: ReceivableRecord[]; settings: ModuleSettings; connected: boolean; onSave: (client: ClientRecord) => Promise<ConfirmedSave>; onNewOrder: (client: ClientRecord) => void; onNewService: (client: ClientRecord) => void; onNewQuote: (client: ClientRecord) => void; onNotify: (message: string) => void }) {
+function ClientsView({ priceTables,clientRecords, createdRecords, receivableRecords, settings, connected, onSave, onNewOrder, onNewService, onNewQuote, onNotify }: { priceTables?:FiscalNoteEditorOptions['priceTables'];clientRecords: ClientRecord[]; createdRecords: CreatedRecord[]; receivableRecords: ReceivableRecord[]; settings: ModuleSettings; connected: boolean; onSave: (client: ClientRecord) => Promise<ConfirmedSave>; onNewOrder: (client: ClientRecord) => void; onNewService: (client: ClientRecord) => void; onNewQuote: (client: ClientRecord) => void; onNotify: (message: string) => void }) {
   const { can } = useContext(PermissionContext);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('Todos');
@@ -2744,7 +2975,7 @@ function ClientsView({ clientRecords, createdRecords, receivableRecords, setting
       </Table>
       {records.length === 0 && <EmptyState title="Nenhum cliente encontrado" description="Ajuste a busca ou o filtro para consultar a carteira."/>}
     </Panel>
-    <ClientFormDialog open={formOpen} client={editingClient} clientRecords={clientRecords} sellers={settings.commercial.sellers} defaultSeller={settings.commercial.defaultSeller} connected={connected} onClose={() => setFormOpen(false)} onSave={onSave}/>
+    <ClientFormDialog priceTables={priceTables} open={formOpen} client={editingClient} clientRecords={clientRecords} sellers={settings.commercial.sellers} defaultSeller={settings.commercial.defaultSeller} connected={connected} onClose={() => setFormOpen(false)} onSave={onSave}/>
     <ClientReportDialog client={reportClient} createdRecords={createdRecords} receivableRecords={receivableRecords} onClose={() => setReportClient(null)} onNewOrder={onNewOrder} onNewService={onNewService} onNewQuote={onNewQuote}/>
   </>;
 }
@@ -2792,7 +3023,7 @@ function CatalogView({ catalogRecords, onSave, onNavigate, onOpenCosts, onNewOrd
             <td data-label="Fiscal"><div className="catalog-fiscal-cell"><Badge tone={taxEvaluation.coreReady ? 'success' : 'warning'}>{taxEvaluation.coreReady ? 'Base pronta' : taxEvaluation.status}</Badge><small>IBS/CBS {taxEvaluation.reformReady ? 'revisado' : 'pendente'} · {taxEvaluation.completion}%</small></div></td>
             <td data-label="Sincronização"><div className="catalog-sync-cell"><Badge tone={item.syncStatus === 'Sincronizado' ? 'success' : 'warning'}>{item.syncStatus}</Badge><small>{item.syncedAt}</small></div></td>
             <td data-label="Status"><Badge tone={item.saleStatus === 'Ativo' ? 'success' : 'neutral'}>{item.saleStatus}</Badge></td>
-            <td data-label="Ações" className="catalog-actions-cell"><CatalogRecordActions item={item} onNavigate={onNavigate} onEdit={() => setEditingItem(item)} onNewOrder={() => onNewOrder(item)} onNewService={() => onNewService(item)} onNewQuote={() => onNewQuote(item)}/></td>
+            <td data-label="Ações" className="catalog-actions-cell"><CatalogRecordActions item={item} onNavigate={onNavigate} onEdit={() => item.origin === 'Custos e Precificação' ? onOpenCosts() : setEditingItem(item)} onNewOrder={() => onNewOrder(item)} onNewService={() => onNewService(item)} onNewQuote={() => onNewQuote(item)}/></td>
           </tr>;
         })}</>
       </Table>
@@ -2891,7 +3122,7 @@ function StockMovementForm({ mode, products, suppliers, initialItem, settings, o
       {submitted && errors.length > 0 && <div className="validation-result" role="alert"><div className="validation-title"><Icon name="warning" size={17}/><strong>Revise a movimentação</strong></div>{errors.map((error) => <p key={error}>{error}</p>)}</div>}
       {saveError && <p className="form-error" role="alert">{saveError}</p>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose} disabled={saving}>Cancelar</button><button type="button" className="button primary" onClick={() => void save()} disabled={saving}>{saving ? 'Confirmando…' : mode === 'entrada' ? 'Confirmar entrada' : 'Confirmar saída'}</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose} disabled={saving}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={() => void save()} disabled={saving}>{saving ? 'Confirmando…' : mode === 'entrada' ? 'Confirmar entrada' : 'Confirmar saída'}</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -2968,7 +3199,7 @@ function StockInventoryForm({ products, initialItem, settings, onClose, onSave }
       {submitted && errors.length > 0 && <div className="validation-result" role="alert"><div className="validation-title"><Icon name="warning" size={17}/><strong>Revise o inventário</strong></div>{errors.map((error) => <p key={error}>{error}</p>)}</div>}
       {saveError && <p className="form-error" role="alert">{saveError}</p>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose} disabled={saving}>Cancelar</button><button type="button" className="button primary" onClick={() => void save()} disabled={saving}>{saving ? 'Confirmando…' : 'Concluir inventário'}</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose} disabled={saving}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={() => void save()} disabled={saving}>{saving ? 'Confirmando…' : 'Concluir inventário'}</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -2980,7 +3211,7 @@ function StockMovementDetails({ movement, onClose }: { movement: StockMovementRe
       <dl><div><dt>Documento</dt><dd>{movement.document || 'Não informado'}</dd></div><div><dt>Saldo resultante</dt><dd>{movement.balance}</dd></div><div><dt>Local</dt><dd>{movement.location}</dd></div><div><dt>Responsável</dt><dd>{movement.user}</dd></div><div><dt>Parceiro/origem</dt><dd>{movement.partner || 'Não informado'}</dd></div><div><dt>Lote</dt><dd>{movement.lot || 'Não informado'}</dd></div><div><dt>Validade</dt><dd>{movement.expiry ? movement.expiry.split('-').reverse().join('/') : 'Não informada'}</dd></div><div><dt>Registro</dt><dd>{movement.id}</dd></div></dl>
       <section><h3>Observações</h3><p>{movement.notes || 'Nenhuma observação registrada.'}</p></section>
     </div>
-    <footer className="dialog-footer"><button type="button" className="button primary" onClick={onClose}>Fechar</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="primario" onClick={onClose}>Fechar</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -3094,118 +3325,149 @@ function fiscalDraftTone(status: FiscalDraftRecord['status']): 'success' | 'warn
 }
 
 function fiscalDraftUserStatus(draft: FiscalDraftRecord): { label: string; tone: 'success' | 'warning' | 'danger' | 'info' } {
-  if (draft.status === 'Cancelado') return { label: 'Cancelado', tone: 'danger' };
+  if (draft.status === 'Cancelado') return canResumeFiscalDraft(draft) ? { label: 'Rascunho', tone: 'info' } : { label: 'Cancelado', tone: 'danger' };
   if (draft.status === 'Com pendências') return { label: 'Para revisar', tone: 'warning' };
   if (draft.status === 'Pronto para homologação') return { label: 'Preparação concluída', tone: 'success' };
   return { label: 'Aguardando emissão', tone: 'info' };
 }
 
+function useFiscalSectionScroll(expanded: boolean, sectionKey?: string) {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!expanded) return;
+    const frame = window.requestAnimationFrame(() => {
+      const section = sectionRef.current;
+      const container = section?.closest<HTMLElement>('.dialog-body');
+      if (!section || !container) return;
+      const top = Math.max(0, container.scrollTop + section.getBoundingClientRect().top - container.getBoundingClientRect().top - 12);
+      container.scrollTo({ top, behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [expanded, sectionKey]);
+  return sectionRef;
+}
+
+function FiscalItemTaxDetails({ draft }: { draft: FiscalDraftRecord }) {
+  const [expanded, setExpanded] = useState(false);
+  const sectionRef = useFiscalSectionScroll(expanded, draft.id);
+  const contentId = `fiscal-item-details-${draft.id}`;
+  return <section ref={sectionRef} className="fiscal-secondary-section"><div className="client-section-heading"><h3>Dados fiscais dos itens</h3><BotaoExpandirCard variante="painel" modo="lista" somenteIcone expandido={expanded} onClick={() => setExpanded((value) => !value)} contexto="dados fiscais dos itens" controlsId={contentId} corPrimaria="var(--av-blue-900)"/></div>
+    <div id={contentId} hidden={!expanded}>{draft.items.map((item, index) => <article className="fiscal-item-tax-sheet" key={`${item.sku}-${index}`}><h4>{item.name}<small>{item.sku}</small></h4><dl className="fiscal-draft-definition-list">{fiscalItemDetails(item, draft.operationContext?.destination).map((field) => <div key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}</dl></article>)}</div>
+  </section>;
+}
+
 function FiscalDraftDetailsDialog({ draft, remoteStatus, company, onClose, onRevalidate }: { draft: FiscalDraftRecord | null; remoteStatus?: FiscalEmissionStatus; company: CompanyProfile; onClose: () => void; onRevalidate: (draft: FiscalDraftRecord) => void }) {
   const { can } = useContext(PermissionContext);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const historySectionRef = useFiscalSectionScroll(historyExpanded, draft?.id);
   if (!draft) return null;
-  const registrationChecks = draft.checks.filter((check) => check.scope === 'cadastro');
-  const transmissionChecks = draft.checks.filter((check) => check.scope === 'transmissao');
   const userStatus = fiscalDraftUserStatus(draft);
   const remotePresentation = remoteStatus ? fiscalStatusPresentation(remoteStatus) : null;
-  return <Dialog open title={`${draft.id} · ${documentLabel(draft.documentType)}`} description={`${draft.sourceLabel} ${draft.originId} · atualizado em ${new Date(draft.updatedAt).toLocaleString('pt-BR')}`} onClose={onClose}>
+  const concluded = draft.status === 'Cancelado' || ['authorized', 'artifacts_stored', 'danfe_ready', 'canceled'].includes(remoteStatus?.state || draft.remoteState || '');
+  const pending = concluded ? [] : fiscalIssueReviewChecks(draft).filter((check) => !check.ready);
+  const number = remoteStatus?.number || Number(draft.number) || 0;
+  const historyId = `fiscal-history-${draft.id}`;
+  return <Dialog open title={number ? `${documentLabel(draft.documentType)} ${number} · série ${remoteStatus?.series || draft.series}` : `Rascunho de ${documentLabel(draft.documentType)}`} description={`${company.name} · ${draft.sourceLabel} ${draft.originId}`} onClose={onClose}>
     <div className="dialog-body fiscal-draft-details">
-      <div className={`fiscal-draft-safety ${remoteStatus?.authorized ? 'authorized' : ''}`}><Icon name={remoteStatus?.authorized ? 'check' : 'warning'} size={19}/><p><strong>{remoteStatus?.authorized ? 'Autorização fiscal confirmada.' : 'Rascunho sem validade fiscal.'}</strong> {remoteStatus?.authorized ? 'Número, chave, protocolo e arquivos são apresentados somente após confirmação do serviço fiscal.' : 'A nota ainda não foi emitida e não possui número ou chave fiscal.'}</p></div>
-      <div className="fiscal-draft-summary"><div><span>Situação</span><Badge tone={remotePresentation?.tone ?? userStatus.tone}>{remotePresentation?.label ?? userStatus.label}</Badge></div><div><span>Origem</span><strong>{draft.originId}</strong></div><div><span>Documento</span><strong>{documentLabel(draft.documentType)}</strong></div><div><span>Valor</span><strong>{money(draft.total)}</strong></div></div>
-      {remoteStatus && <section><div className="client-section-heading"><h3>Retorno da emissão</h3><p>Situação confirmada pela consulta autenticada da empresa.</p></div><dl className="fiscal-draft-definition-list"><div><dt>Número</dt><dd>{remoteStatus.number ? `${remoteStatus.series}/${remoteStatus.number.toLocaleString('pt-BR')}` : 'Aguardando autorização'}</dd></div><div><dt>Chave de acesso</dt><dd>{remoteStatus.accessKey || 'Ainda não disponível'}</dd></div><div><dt>Protocolo</dt><dd>{remoteStatus.protocolNumber || 'Ainda não disponível'}</dd></div><div><dt>Arquivos</dt><dd>{remoteStatus.finalDocumentReady ? 'XML e DANFE disponíveis nas ações' : remoteStatus.recoveryPending ? 'Em preparação' : 'Ainda não disponíveis'}</dd></div></dl></section>}
-      <section><div className="client-section-heading"><h3>Composição comercial preservada</h3><p>Valores congelados na origem para conferir o fechamento do documento fiscal.</p></div><dl className="fiscal-draft-definition-list"><div><dt>Produtos</dt><dd>{money(draft.commercialTotals.products)}</dd></div><div><dt>Desconto nos itens</dt><dd>− {money(draft.commercialTotals.lineDiscount)}</dd></div><div><dt>Desconto geral</dt><dd>− {money(draft.commercialTotals.orderDiscount)}</dd></div><div><dt>Frete</dt><dd>{money(draft.commercialTotals.freight)}</dd></div><div><dt>Total</dt><dd>{money(draft.commercialTotals.invoice)}</dd></div><div><dt>Pagamento</dt><dd>{paymentMethodLabel(draft.paymentMethod)}</dd></div></dl></section>
-      <section><div className="client-section-heading"><h3>Destinatário ou tomador</h3><p>Dados recuperados do cadastro vinculado à operação.</p></div><dl className="fiscal-draft-definition-list"><div><dt>Nome</dt><dd>{draft.client}</dd></div><div><dt>CNPJ/CPF</dt><dd>{draft.clientDocument || 'Não informado'}</dd></div><div><dt>Município</dt><dd>{draft.clientCity || 'Não informado'}</dd></div><div><dt>Emitente</dt><dd>{company.name}</dd></div></dl></section>
-      <section><div className="client-section-heading"><h3>Informações da nota</h3><p>Dados comerciais que acompanharão a emissão quando ela for liberada.</p></div><dl className="fiscal-draft-definition-list"><div><dt>Empresa</dt><dd>{company.name}</dd></div><div><dt>Documento</dt><dd>{documentLabel(draft.documentType)}</dd></div><div><dt>Natureza da operação</dt><dd>{draft.operationNature || 'Não definida'}</dd></div><div><dt>Série</dt><dd>{draft.series || 'Será definida automaticamente'}</dd></div><div><dt>Responsável fiscal</dt><dd>{draft.fiscalResponsible || 'Não informado'}</dd></div><div><dt>Revisão fiscal</dt><dd>{draft.fiscalRuleStatus === 'Revisada' ? 'Concluída' : 'Pendente'}</dd></div></dl></section>
-      <section><div className="client-section-heading"><h3>Conferência</h3><p>Resumo dos dados necessários antes da emissão.</p></div><div className="fiscal-simple-readiness"><div><span className={registrationChecks.every((check) => check.ready) ? 'ready' : 'blocked'}><Icon name={registrationChecks.every((check) => check.ready) ? 'check' : 'warning'} size={17}/></span><p><strong>Dados da nota</strong><small>{registrationChecks.filter((check) => check.ready).length} de {registrationChecks.length} verificações concluídas</small></p><Badge tone={registrationChecks.every((check) => check.ready) ? 'success' : 'warning'}>{registrationChecks.every((check) => check.ready) ? 'Pronto' : 'Revisar'}</Badge></div><div><span className={transmissionChecks.every((check) => check.ready) ? 'ready' : 'blocked'}><Icon name={transmissionChecks.every((check) => check.ready) ? 'check' : 'warning'} size={17}/></span><p><strong>Emissão fiscal</strong><small>{transmissionChecks.every((check) => check.ready) ? 'Disponível para emissão' : 'Aguardando configuração interna'}</small></p><Badge tone={transmissionChecks.every((check) => check.ready) ? 'success' : 'warning'}>{transmissionChecks.every((check) => check.ready) ? 'Disponível' : 'Indisponível'}</Badge></div></div></section>
-      <section><div className="client-section-heading"><h3>Itens do documento</h3><p>Classificação fiscal e desconto unitário recuperados da operação e do catálogo.</p></div><Table headers={['Item', 'Qtd.', 'Valor unit.', 'Desconto unit.', 'Classificação', 'Subtotal bruto']} minWidth={0} className="fiscal-draft-items-table"><>{draft.items.map((item) => <tr key={`${draft.id}-${item.sku}`}><td data-label="Item"><strong>{item.name}</strong><small>{item.sku} · {item.kind === 'servico' ? 'Serviço' : 'Produto'}</small></td><td data-label="Quantidade">{item.quantity} {item.unit}</td><td data-label="Valor unit." className="numeric">{money(item.unitPrice)}</td><td data-label="Desconto unit." className="numeric">{money(item.unitDiscount)}</td><td data-label="Classificação"><strong>{item.kind === 'servico' ? item.municipalServiceCode || 'Código pendente' : item.ncm || 'NCM pendente'}</strong><small>{item.kind === 'servico' ? `Lista ${item.nationalServiceCode || 'pendente'} · NBS ${item.nbs || 'pendente'} · ISS ${percent(item.issRate || 0)}` : `Origem ${item.fiscalOriginCode || 'pendente'} · uTrib ${item.taxableUnit || 'pendente'} · CFOP ${item.cfopInternal || 'pendente'}${draft.documentType === 'nfe' ? `/${item.cfopInterstate || 'pendente'}` : ''} · ICMS ${item.icmsCode || 'pendente'}`}</small>{item.kind === 'produto' && (item.ipiCst || item.stBaseMode || item.fiscalBenefitCode) && <small>{item.ipiCst ? `IPI ${item.ipiCst}/${item.ipiLegalCode || 'enquadramento pendente'}` : 'IPI não aplicável'} · {item.stBaseMode ? `ICMS-ST ${item.stBaseMode} · ${percent(item.stIcmsRate)}` : 'ST não aplicável'}{item.fiscalBenefitCode ? ` · Benefício ${item.fiscalBenefitCode}` : ''}</small>}<small>IBS/CBS {item.ibsCbsCst && item.ibsCbsClassification ? `${item.ibsCbsCst}/${item.ibsCbsClassification}` : 'pendente'} · {item.fiscalStatus}</small></td><td data-label="Subtotal bruto" className="numeric"><strong>{money(item.quantity * item.unitPrice)}</strong></td></tr>)}</></Table></section>
-      {draft.warnings.length > 0 && <section><div className="client-section-heading"><h3>Pontos para revisar</h3><p>Informações que precisam ser conferidas antes da emissão.</p></div><ul className="fiscal-warning-list">{draft.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></section>}
-      <section><div className="client-section-heading"><h3>Histórico fiscal</h3><p>Eventos locais preservados sem apagar registros anteriores.</p></div><div className="fiscal-event-list">{draft.events.map((event, index) => <div key={`${event.date}-${index}`}><span><Icon name={event.label.includes('cancelado') ? 'close' : 'document'} size={15}/></span><div><strong>{event.label}</strong><small>{new Date(event.date).toLocaleString('pt-BR')} · {event.user}</small><p>{event.description}</p></div></div>)}</div></section>
+      <div className="fiscal-draft-summary"><div><span>Situação</span><Badge tone={remotePresentation?.tone ?? userStatus.tone}>{remotePresentation?.label ?? userStatus.label}</Badge></div><div><span>Cliente</span><strong>{draft.client}</strong></div><div><span>CPF/CNPJ</span><strong>{draft.clientDocument || 'Não informado'}</strong></div><div><span>Total</span><strong>{money(draft.total)}</strong></div></div>
+      {(!remoteStatus || remoteStatus.environment === 'homologacao') && <p className="fiscal-environment-note">Homologação · documento sem validade fiscal</p>}
+      {remoteStatus?.statusReason && ['rejected', 'failed'].includes(remoteStatus.state) && <div className="fiscal-pending-summary" role="alert"><strong>Emissão não concluída</strong><p>{remoteStatus.statusReason}</p></div>}
+      {pending.length > 0 && <section className="fiscal-pending-summary" aria-label="Pendências para emissão"><h3>O que falta para emitir</h3><ul>{pending.map((check) => <li key={check.label}><strong>{check.label}</strong><span>{check.detail}</span></li>)}</ul></section>}
+      {remoteStatus && (remoteStatus.number || remoteStatus.accessKey || remoteStatus.protocolNumber) && <section><dl className="fiscal-draft-definition-list">{remoteStatus.accessKey && <div><dt>Chave de acesso</dt><dd>{remoteStatus.accessKey}</dd></div>}{remoteStatus.protocolNumber && <div><dt>Protocolo</dt><dd>{remoteStatus.protocolNumber}</dd></div>}<div><dt>Arquivos</dt><dd>{remoteStatus.finalDocumentReady ? 'XML e DANFE disponíveis nas ações' : remoteStatus.recoveryPending ? 'Em preparação' : 'Ainda não disponíveis'}</dd></div></dl></section>}
+      <section><div className="client-section-heading"><h3>Itens da nota</h3></div><Table headers={['Produto ou serviço', 'Quantidade', 'Valor unit.', 'Desconto unit.', 'Subtotal']} minWidth={0} className="fiscal-draft-items-table fiscal-detail-items-table"><>{draft.items.map((item, index) => <tr key={`${item.sku}-${index}`}><td data-label="Produto ou serviço"><strong>{item.name}</strong><small>{item.sku}</small></td><td data-label="Quantidade">{item.quantity} {item.unit}</td><td data-label="Valor unit." className="numeric">{money(item.unitPrice)}</td><td data-label="Desconto unit." className="numeric">{money(item.unitDiscount)}</td><td data-label="Subtotal" className="numeric"><strong>{money(item.quantity * Math.max(0, item.unitPrice - item.unitDiscount))}</strong></td></tr>)}</></Table></section>
+      <dl className="fiscal-draft-definition-list fiscal-detail-totals"><div><dt>Pagamento</dt><dd>{paymentMethodLabel(draft.paymentMethod)}</dd></div>{draft.commercialTotals.orderDiscount > 0 && <div><dt>Desconto geral</dt><dd>− {money(draft.commercialTotals.orderDiscount)}</dd></div>}{draft.commercialTotals.freight > 0 && <div><dt>Frete</dt><dd>{money(draft.commercialTotals.freight)}</dd></div>}{draft.commercialTotals.insurance > 0 && <div><dt>Seguro</dt><dd>{money(draft.commercialTotals.insurance)}</dd></div>}{draft.commercialTotals.other > 0 && <div><dt>Outras despesas</dt><dd>{money(draft.commercialTotals.other)}</dd></div>}<div><dt>Natureza da operação</dt><dd>{draft.operationNature || 'A definir pela regra fiscal'}</dd></div></dl>
+      <FiscalItemTaxDetails key={draft.id} draft={draft}/>
+      <section ref={historySectionRef} className="fiscal-secondary-section"><div className="client-section-heading"><h3>Histórico fiscal</h3><BotaoExpandirCard variante="painel" modo="lista" somenteIcone expandido={historyExpanded} onClick={() => setHistoryExpanded((value) => !value)} contexto="histórico fiscal" controlsId={historyId} corPrimaria="var(--av-blue-900)"/></div><div id={historyId} hidden={!historyExpanded}><div className="fiscal-event-list">{draft.events.map((event, index) => <div key={`${event.date}-${index}`}><span><Icon name={event.label.includes('cancelado') ? 'close' : 'document'} size={15}/></span><div><strong>{event.label}</strong><small>{new Date(event.date).toLocaleString('pt-BR')} · {event.user}</small><p>{event.description}</p></div></div>)}</div></div></section>
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Fechar</button>{!remoteStatus?.authorized && <button type="button" className="button primary" onClick={() => onRevalidate(draft)} disabled={draft.status === 'Cancelado' || !can('fiscal.prepare')}>Atualizar conferência</button>}</footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto>{!concluded && <BotaoAcaoCompacto onClick={() => onRevalidate(draft)} disabled={!can('fiscal.prepare')}>Atualizar conferência</BotaoAcaoCompacto>}</footer>
   </Dialog>;
 }
 
 function fiscalIssueReviewChecks(draft: FiscalDraftRecord) {
   const displayCopy: Record<string, { label: string; readyDetail: string; pendingDetail: string }> = {
     'issuer-selection': { label: 'Empresa emissora', readyDetail: 'Empresa ativa identificada automaticamente', pendingDetail: 'Revise os dados fiscais da empresa ativa' },
-    'issuer-route': { label: 'Serviço de emissão', readyDetail: 'Conexão disponível para este documento', pendingDetail: 'Liberação interna do serviço de emissão pendente' },
+    'issuer-route': { label: 'Cadastro e credenciamento do emissor', readyDetail: 'Emissor apto para este documento', pendingDetail: '' },
     provedor: { label: 'Serviço de emissão', readyDetail: 'Conexão disponível para este documento', pendingDetail: 'Liberação interna do serviço de emissão pendente' },
     'rota-nfse': { label: 'Serviço de emissão', readyDetail: 'Conexão disponível para a NFS-e', pendingDetail: 'Liberação interna do serviço de emissão da NFS-e pendente' },
     certificado: { label: 'Certificado digital', readyDetail: 'Certificado ativo para a empresa', pendingDetail: 'Adicione e valide o certificado digital da empresa' },
     reforma: { label: 'Regras tributárias atuais', readyDetail: 'Revisão fiscal registrada', pendingDetail: 'Solicite a revisão das regras tributárias atuais' },
     'reforma-itens': { label: 'Tributação dos itens', readyDetail: 'Classificações tributárias conferidas', pendingDetail: 'Revise a classificação tributária dos itens' },
   };
-  const grouped = new Map<string, { label: string; ready: boolean; detail: string }>();
+  const grouped = new Map<string, { key: string; label: string; ready: boolean; detail: string }>();
   draft.checks.forEach((check) => {
     const copy = displayCopy[check.key];
     const label = copy?.label ?? check.label;
-    const detail = check.ready ? copy?.readyDetail ?? check.detail : copy?.pendingDetail ?? check.detail;
+    const detail = check.ready ? copy?.readyDetail ?? check.detail : copy?.pendingDetail || check.detail;
     const current = grouped.get(label);
-    grouped.set(label, current ? { label, ready: current.ready && check.ready, detail: current.ready && !check.ready ? detail : current.detail } : { label, ready: check.ready, detail });
+    grouped.set(label, current ? { key: current.ready && !check.ready ? check.key : current.key, label, ready: current.ready && check.ready, detail: current.ready && !check.ready ? detail : current.detail } : { key: check.key, label, ready: check.ready, detail });
   });
   return [...grouped.values()];
 }
 
-function FiscalRejectedCorrectionDialog({ draft, remoteStatus, loading, onClose, onSubmit, onNavigate }: { draft: FiscalDraftRecord; remoteStatus: FiscalEmissionStatus; loading?: boolean; onClose: () => void; onSubmit: (items: Array<{ sku: string; ncm: string }>) => void; onNavigate: (view: View) => void }) {
-  const products = useMemo(() => draft.items.filter((item) => item.kind === 'produto'), [draft.items]);
-  const [ncms, setNcms] = useState<Record<string, string>>(() => Object.fromEntries(products.map((item) => [item.sku, item.ncm.replace(/\D/g, '').slice(0, 8)])));
-  useEffect(() => setNcms(Object.fromEntries(products.map((item) => [item.sku, item.ncm.replace(/\D/g, '').slice(0, 8)]))), [draft.id, remoteStatus.version, products]);
-  const ncmCorrection = remoteStatus.statusCode === '778';
-  const valid = ncmCorrection && products.length > 0 && products.every((item) => /^\d{8}$/.test(ncms[item.sku] || '') && !/^0{8}$/.test(ncms[item.sku] || ''));
-  const changed = products.some((item) => (ncms[item.sku] || '') !== item.ncm.replace(/\D/g, '').slice(0, 8));
-  return <Dialog open title="Revisar dados fiscais" description={`${draft.sourceLabel} ${draft.originId} · NF-e ${remoteStatus.series}/${remoteStatus.number.toLocaleString('pt-BR')}`} onClose={onClose}>
-    <div className="dialog-body fiscal-rejection-correction">
-      <div className="fiscal-draft-safety"><Icon name="warning" size={19}/><p><strong>Rejeição {remoteStatus.statusCode || 'registrada'}.</strong> {remoteStatus.statusReason || 'Revise os dados indicados antes de uma nova tentativa.'}</p></div>
-      <div className="fiscal-rejection-preservation" role="status"><Icon name="check" size={18}/><p><strong>Número e histórico preservados</strong><small>A série {remoteStatus.series} e o número {remoteStatus.number.toLocaleString('pt-BR')} serão mantidos. Esta revisão não assina nem envia a nota.</small></p></div>
-      {ncmCorrection ? <section>
-        <div className="client-section-heading"><h3>Corrigir NCM dos produtos</h3><p>Informe somente os 8 dígitos da classificação fiscal indicada na rejeição.</p></div>
-        <div className="fiscal-rejection-items">{products.map((item) => <label className="field" key={item.sku}><span>{item.name}</span><input value={ncms[item.sku] || ''} onChange={(event) => setNcms((current) => ({ ...current, [item.sku]: event.target.value.replace(/\D/g, '').slice(0, 8) }))} inputMode="numeric" autoComplete="off" maxLength={8} placeholder="8 dígitos" aria-describedby={`ncm-${item.sku}`}/><small id={`ncm-${item.sku}`} className="field-message">{item.sku} · NCM atual: {item.ncm || 'não informado'}</small></label>)}</div>
-        {!products.length && <p className="field-message error">A nota não possui produtos disponíveis para esta correção.</p>}
-      </section> : <section>
-        <div className="client-section-heading"><h3>Cadastro a revisar</h3><p>Esta rejeição ainda não possui correção direta nesta tela. Abra o cadastro indicado e atualize a Central Fiscal depois.</p></div>
-        <button type="button" className="button secondary" onClick={() => onNavigate('catalogo')}>Revisar produtos e serviços</button>
-      </section>}
+function FiscalEmissionServiceDialog({ open, execution, onClose }: { open: boolean; execution: FiscalExecutionReadiness | null; onClose: () => void }) {
+  const steps: Array<[string, boolean]> = [
+    ['Preparação fiscal', execution?.workflowEnabled === true],
+    ['Guarda de XML e DANFE', execution?.durableStorageReady === true],
+    ['Assinatura com certificado', execution?.certificateRuntimeReady === true],
+    ['Conexão para envio', execution?.authorizationReady === true],
+    ['Consulta do retorno', execution?.returnServiceReady === true],
+    ['Executor de emissão', execution?.orchestratorReady === true],
+  ];
+  return <Dialog open={open} title="Serviço de emissão" description="Situação atual da emissão em homologação, sem valor fiscal." onClose={onClose}><div className="dialog-body"><div className="checklist">{steps.map(([label, ready]) => <div key={label}><span className={ready ? 'ready' : 'blocked'}><Icon name={ready ? 'check' : 'warning'} size={16}/></span><div><strong>{label}</strong></div><Badge tone={ready ? 'success' : 'warning'}>{execution ? ready ? 'Disponível' : 'Pendente' : 'Não consultado'}</Badge></div>)}</div><p className="field-message">{execution?.transmissionAllowed ? 'O serviço está disponível. Pendências do cadastro ou do credenciamento do emissor devem ser corrigidas em Revisar emissor.' : 'A liberação depende da configuração interna do serviço. Não é necessário substituir um certificado que já esteja ativo.'}</p></div><footer className="dialog-footer"><BotaoAcaoCompacto variante="primario" onClick={onClose}>Fechar</BotaoAcaoCompacto></footer></Dialog>;
+}
+
+function FiscalIssueReviewDialog({ draft, remoteStatus, company, onClose, onCorrect, onResolveIssue, onCheckout }: { draft: FiscalDraftRecord | null; remoteStatus?: FiscalEmissionStatus; company: CompanyProfile; onClose: () => void; onCorrect: (view: View) => void; onResolveIssue?: (draft: FiscalDraftRecord, key: string, productTarget?: string) => void; onCheckout?: (draft: FiscalDraftRecord, action: 'save' | 'issue') => Promise<FiscalCheckoutResult> }) {
+  const { can } = useContext(PermissionContext);
+  const [busy, setBusy] = useState<'save' | 'issue' | null>(null);
+  const [error, setError] = useState('');
+  const [correctionKey, setCorrectionKey] = useState('');
+  useEffect(() => { setError(''); setCorrectionKey(''); }, [draft?.id]);
+  if (!draft) return null;
+  const pendingChecks = fiscalIssueReviewChecks(draft).filter(check => !check.ready && check.key !== 'persisted-emission');
+  const editable = canResumeFiscalDraft(draft, remoteStatus) || ['submitted','processing'].includes(remoteStatus?.state || draft.remoteState || '') || (remoteStatus?.state === 'rejected' && remoteStatus.statusCode === '588');
+  const submit = async (action: 'save' | 'issue') => {
+    if (busy || !onCheckout) return;
+    setBusy(action); setError(''); setCorrectionKey('');
+    try {
+      const result = await onCheckout(draft, action);
+      if (result.ok) onClose();
+      else { setError(result.message || 'Não foi possível concluir a operação.'); setCorrectionKey(fiscalCheckoutCorrection(result)); }
+    } catch { setError('Não foi possível confirmar a emissão. Tente novamente nesta mesma nota.'); }
+    finally { setBusy(null); }
+  };
+  return <Dialog open title={`Conferência da ${documentLabel(draft.documentType)}`} description={`${draft.sourceLabel} ${draft.originId} · Homologação, sem valor fiscal`} onClose={busy ? () => undefined : onClose}>
+    <div className="dialog-body fiscal-issue-review">
+      {remoteStatus?.state === 'rejected' && remoteStatus.statusCode === '588' && <div className="fiscal-draft-safety" role="status"><Icon name="warning" size={18}/><p><strong>Correção técnica do XML.</strong> A formatação será corrigida automaticamente ao confirmar Salvar e emitir. A série e o número serão preservados.</p></div>}
+      <section><div className="client-section-heading"><h3>Dados da nota</h3></div><dl className="fiscal-draft-definition-list"><div><dt>Empresa</dt><dd>{company.legalName || company.name}</dd></div><div><dt>CNPJ</dt><dd>{company.document}</dd></div><div><dt>Destinatário</dt><dd>{draft.client}</dd></div><div><dt>CPF/CNPJ</dt><dd>{draft.clientDocument}</dd></div>{draft.clientCity && <div><dt>Município</dt><dd>{draft.clientCity}</dd></div>}{draft.operationNature && <div><dt>Natureza da operação</dt><dd>{draft.operationNature}</dd></div>}<div><dt>Série</dt><dd>{remoteStatus?.series || draft.series || 'Automática'}</dd></div><div><dt>Número</dt><dd>{remoteStatus?.number || (Number(draft.number) || 'Atribuído ao emitir')}</dd></div></dl></section>
+      <section><div className="client-section-heading"><h3>Produtos</h3></div><Table headers={['Produto', 'Qtd.', 'Valor unit.', 'Desconto unit.', 'CFOP', 'Subtotal']} minWidth={0} className="fiscal-draft-items-table fiscal-detail-items-table"><>{draft.items.map((item,index) => <tr key={`${item.sku}-${index}`}><td data-label="Produto"><strong>{item.name}</strong><small>{item.sku} · NCM {item.ncm || 'Pendente'}</small></td><td data-label="Qtd.">{item.quantity} {item.unit}</td><td data-label="Valor unit." className="numeric">{money(item.unitPrice)}</td><td data-label="Desconto unit." className="numeric">{money(item.unitDiscount)}</td><td data-label="CFOP">{draft.operationContext?.destination === 'Fora da UF' ? item.cfopInterstate : item.cfopInternal || item.cfopInterstate}</td><td data-label="Subtotal" className="numeric"><strong>{money(item.quantity * Math.max(0,item.unitPrice-item.unitDiscount))}</strong></td></tr>)}</></Table></section>
+      <dl className="fiscal-draft-definition-list fiscal-detail-totals"><div><dt>Pagamento</dt><dd>{paymentMethodLabel(draft.paymentMethod)}</dd></div>{draft.commercialTotals.orderDiscount > 0 && <div><dt>Desconto geral</dt><dd>− {money(draft.commercialTotals.orderDiscount)}</dd></div>}{draft.commercialTotals.freight > 0 && <div><dt>Frete</dt><dd>{money(draft.commercialTotals.freight)}</dd></div>}{draft.commercialTotals.insurance > 0 && <div><dt>Seguro</dt><dd>{money(draft.commercialTotals.insurance)}</dd></div>}{draft.commercialTotals.other > 0 && <div><dt>Outras despesas</dt><dd>{money(draft.commercialTotals.other)}</dd></div>}<div><dt>Total da nota</dt><dd><strong>{money(draft.total)}</strong></dd></div></dl>
+      {pendingChecks.length > 0 && <section><div className="client-section-heading"><h3>O que falta corrigir</h3></div><div className="fiscal-issue-checks">{pendingChecks.map(check => { const action=fiscalCorrectionAction(check.key);const products=action.target==='product'?fiscalProductIssues(draft.items,check.key,draft.operationContext?.destination):[];return <div key={check.key}><span><Icon name="warning" size={16}/></span><div className="fiscal-correction-content"><p><strong>{check.label}</strong>{!products.length && <small>{check.detail}</small>}</p>{products.map(product=><div className="fiscal-product-correction" key={product.target}><p><strong>{product.name}</strong><small>{product.fields.join(', ')}</small></p><BotaoAcaoCompacto onClick={()=>onResolveIssue?.(draft,check.key,product.target)} disabled={Boolean(busy)||!can(action.permission)}>{action.label}</BotaoAcaoCompacto></div>)}</div>{!products.length && <BotaoAcaoCompacto onClick={()=>onResolveIssue?onResolveIssue(draft,check.key):onCorrect('configuracoes')} disabled={Boolean(busy)||!can(action.permission)}>{action.label}</BotaoAcaoCompacto>}</div>;})}</div></section>}
+      {error && <div className="fiscal-issue-checks" role="alert"><p className="form-error">{error}</p>{correctionKey && onResolveIssue && <BotaoAcaoCompacto disabled={Boolean(busy)||!can(fiscalCorrectionAction(correctionKey).permission)} onClick={()=>onResolveIssue(draft,correctionKey)}>{fiscalCorrectionAction(correctionKey).label}</BotaoAcaoCompacto>}</div>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose} disabled={loading}>Fechar</button>{ncmCorrection && <button type="button" className="button primary" onClick={() => onSubmit(products.map((item) => ({ sku: item.sku, ncm: ncms[item.sku] || '' })))} disabled={loading || !valid || !changed}>{loading ? 'Salvando revisão…' : 'Salvar revisão fiscal'}</button>}</footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto variante="secundario" onClick={()=>void submit('save')} disabled={Boolean(busy)||!editable||!can('fiscal.prepare')||!onCheckout}>{busy==='save'?'Salvando…':'Salvar'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" onClick={()=>void submit('issue')} disabled={Boolean(busy)||!editable||pendingChecks.length>0||!can('fiscal.prepare')||!can('fiscal.issue')||!onCheckout}>{busy==='issue'?'Emitindo…':'Salvar e emitir'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="secundario" onClick={onClose} disabled={Boolean(busy)}>Cancelar</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
-function FiscalIssueReviewDialog({ draft, remoteStatus, loading, company, numberingLedger, onClose, onReserveNumber, onContinueIssuance, onRevalidate, onCorrect }: { draft: FiscalDraftRecord | null; remoteStatus?: FiscalEmissionStatus; loading?: boolean; company: CompanyProfile; numberingLedger: FiscalNumberingLedger; onClose: () => void; onReserveNumber: (draft: FiscalDraftRecord, expectedVersion: number) => void; onContinueIssuance: (draft: FiscalDraftRecord, expectedVersion: number) => void; onRevalidate: (draft: FiscalDraftRecord) => void; onCorrect: (view: View) => void }) {
+function FiscalNoteResultDialog({ draft, status, loading, message, sharingFile, onShareReady, onClose, onDownload, onShare, onDetails, onReview, onCancel }: { draft: FiscalDraftRecord; status?: FiscalEmissionStatus; loading?: boolean; message?: string; sharingFile?: File | null; onShareReady: () => void; onClose: () => void; onDownload: (id: string, type: FiscalArtifactType) => void; onShare: (id: string, type: FiscalArtifactType) => void; onDetails: () => void; onReview: () => void; onCancel: () => void }) {
   const { can } = useContext(PermissionContext);
-  if (!draft) return null;
-  const checks = fiscalIssueReviewChecks(draft);
-  const pendingChecks = checks.filter((check) => !check.ready);
-  const reviewReady = draft.status !== 'Cancelado' && pendingChecks.length === 0;
-  const canConfirmEmission = reviewReady && draft.persistenceSource === 'server' && draft.documentType === 'nfe' && remoteStatus?.state === 'prepared' && remoteStatus.version > 0;
-  const numberAlreadyReserved = ['number_reserved', 'signed'].includes(remoteStatus?.state ?? '');
-  const canContinueIssuance = reviewReady && draft.persistenceSource === 'server' && draft.documentType === 'nfe' && numberAlreadyReserved && (remoteStatus?.version ?? 0) > 0;
-  const userStatus = fiscalDraftUserStatus(draft);
-  const numberReservation = numberingLedger.reservations.find((entry) => entry.draftId === draft.id);
-  const activeNumbering = fiscalActiveSequence(numberingLedger, draft.documentType);
-  const classificationLabel = draft.documentType === 'nfse' ? 'Serviço' : 'Mercadoria';
-  const firstPendingKey = draft.checks.find((check) => !check.ready)?.key ?? '';
-  const correction = firstPendingKey === 'destinatario'
-    ? { label: 'Revisar cliente', view: 'clientes' as View }
-    : ['itens', 'classificacao', 'reforma-itens'].includes(firstPendingKey)
-      ? { label: 'Revisar produtos e serviços', view: 'catalogo' as View }
-      : { label: 'Revisar ajustes', view: 'configuracoes' as View };
-  return <Dialog open title={`Revisar emissão de ${documentLabel(draft.documentType)}`} description={`${draft.sourceLabel} ${draft.originId} · confira todos os dados antes de emitir`} onClose={onClose}>
-    <div className="dialog-body fiscal-issue-review">
-      <div className="fiscal-draft-safety"><Icon name="warning" size={19}/><p><strong>Conferência anterior à emissão.</strong> {numberAlreadyReserved ? 'Ao continuar, o sistema confere o documento, usa automaticamente o certificado ativo da empresa, assina e transmite a NF-e. Se o certificado não estiver válido, nada será enviado.' : 'Ao confirmar esta etapa em homologação, o sistema vincula a próxima série e o número. A assinatura e a transmissão acontecem automaticamente na continuação.'}</p></div>
-      <div className="fiscal-draft-summary"><div><span>Documento</span><strong>{documentLabel(draft.documentType)}</strong></div><div><span>Origem</span><strong>{draft.originId}</strong></div><div><span>Situação</span><Badge tone={userStatus.tone}>{userStatus.label}</Badge></div><div><span>Total</span><strong>{money(draft.total)}</strong></div></div>
-      <div className="fiscal-issue-grid">
-        <section><div className="client-section-heading"><h3>Empresa e destinatário</h3><p>Identificação das partes que constará na nota.</p></div><dl className="fiscal-draft-definition-list"><div><dt>Empresa</dt><dd>{company.legalName || company.name}</dd></div><div><dt>CNPJ da empresa</dt><dd>{company.document || 'Pendente'}</dd></div><div><dt>{draft.documentType === 'nfse' ? 'Tomador' : 'Destinatário'}</dt><dd>{draft.client}</dd></div><div><dt>CNPJ/CPF</dt><dd>{draft.clientDocument || 'Pendente'}</dd></div><div><dt>Município</dt><dd>{draft.clientCity || 'Pendente'}</dd></div><div><dt>Documento de origem</dt><dd>{draft.sourceLabel} {draft.originId}</dd></div></dl></section>
-        <section><div className="client-section-heading"><h3>Dados fiscais</h3><p>Informações aplicadas automaticamente conforme a operação.</p></div><dl className="fiscal-draft-definition-list"><div><dt>Tipo de nota</dt><dd>{documentLabel(draft.documentType)}</dd></div><div><dt>Natureza da operação</dt><dd>{draft.operationNature || 'Pendente'}</dd></div><div><dt>Série</dt><dd>{remoteStatus?.series || numberReservation?.series || activeNumbering?.series || draft.series || 'Definição automática pendente'}</dd></div><div><dt>Número</dt><dd>{remoteStatus?.number ? remoteStatus.number.toLocaleString('pt-BR') : numberReservation ? numberReservation.number.toLocaleString('pt-BR') : `Será reservado na emissão${activeNumbering ? ` · próximo ${activeNumbering.nextNumber.toLocaleString('pt-BR')}` : ''}`}</dd></div><div><dt>Regra fiscal</dt><dd>{draft.fiscalRuleStatus === 'Revisada' ? 'Revisada' : 'Pendente'}</dd></div><div><dt>Responsável fiscal</dt><dd>{draft.fiscalResponsible || 'Pendente'}</dd></div><div><dt>Pagamento</dt><dd>{paymentMethodLabel(draft.paymentMethod)}</dd></div></dl></section>
-      </div>
-      <section className="fiscal-issue-values"><div className="client-section-heading"><h3>Valores da nota</h3><p>Composição preservada do pedido ou serviço de origem.</p></div><dl className="fiscal-draft-definition-list"><div><dt>Itens</dt><dd>{money(draft.commercialTotals.products)}</dd></div><div><dt>Desconto nos itens</dt><dd>− {money(draft.commercialTotals.lineDiscount)}</dd></div><div><dt>Desconto geral</dt><dd>− {money(draft.commercialTotals.orderDiscount)}</dd></div><div><dt>Frete</dt><dd>{money(draft.commercialTotals.freight)}</dd></div><div><dt>Total da nota</dt><dd><strong>{money(draft.commercialTotals.invoice)}</strong></dd></div></dl></section>
-      <section><div className="client-section-heading"><h3>Itens da nota</h3><p>Quantidade, valor e classificação usados na preparação fiscal.</p></div><Table headers={['Item', 'Qtd.', 'Valor unit.', 'Desconto unit.', classificationLabel, 'Subtotal']} minWidth={0} className="fiscal-draft-items-table"><>{draft.items.map((item) => {
-        const classification = item.kind === 'servico' ? item.municipalServiceCode || item.nationalServiceCode : item.ncm;
-        const fiscalCode = item.kind === 'servico' ? item.nbs : draft.documentType === 'nfe' ? item.cfopInternal || item.cfopInterstate : item.cfopInternal;
-        return <tr key={`review-${draft.id}-${item.sku}`}><td data-label="Item"><strong>{item.name}</strong><small>{item.sku} · {item.kind === 'servico' ? 'Serviço' : 'Produto'}</small></td><td data-label="Quantidade">{item.quantity} {item.unit}</td><td data-label="Valor unit." className="numeric">{money(item.unitPrice)}</td><td data-label="Desconto unit." className="numeric">{money(item.unitDiscount)}</td><td data-label={classificationLabel}><strong>{classification || 'Pendente'}</strong><small>{fiscalCode ? `${item.kind === 'servico' ? 'NBS' : 'CFOP'} ${fiscalCode}` : 'Classificação complementar pendente'}</small></td><td data-label="Subtotal" className="numeric"><strong>{money(item.quantity * Math.max(0, item.unitPrice - item.unitDiscount))}</strong></td></tr>;
-      })}</></Table></section>
-      <section><div className="client-section-heading"><h3>Conferência final</h3><p>{pendingChecks.length ? `${pendingChecks.length} ${pendingChecks.length === 1 ? 'ponto precisa' : 'pontos precisam'} ser resolvido${pendingChecks.length === 1 ? '' : 's'} antes da emissão.` : 'Todos os dados necessários desta etapa foram conferidos.'}</p></div><div className="fiscal-issue-checks">{checks.map((check) => <div key={check.label}><span className={check.ready ? 'ready' : 'blocked'}><Icon name={check.ready ? 'check' : 'warning'} size={16}/></span><p><strong>{check.label}</strong><small>{check.detail}</small></p><Badge tone={check.ready ? 'success' : 'warning'}>{check.ready ? 'Pronto' : 'Pendente'}</Badge></div>)}</div></section>
-      <div className={`fiscal-issue-result ${reviewReady ? 'ready' : ''}`} role="status"><span><Icon name={reviewReady ? 'check' : 'warning'} size={20}/></span><p><strong>{draft.status === 'Cancelado' ? 'Documento cancelado' : numberAlreadyReserved ? 'Pronta para continuar' : canConfirmEmission ? 'Pronta para confirmar' : reviewReady ? 'Conferência concluída' : 'Emissão bloqueada por pendências'}</strong><small>{draft.status === 'Cancelado' ? 'Este rascunho permanece disponível somente para consulta.' : numberAlreadyReserved ? 'O certificado ativo será utilizado automaticamente, sem novo preenchimento.' : canConfirmEmission ? 'A confirmação reserva a numeração com segurança.' : reviewReady ? 'Abra e valide a emissão fiscal antes de confirmar.' : 'Atualize a conferência após corrigir os pontos indicados.'}</small></p></div>
+  const [keyCopied, setKeyCopied] = useState(false);
+  const [copyError, setCopyError] = useState('');
+  const publicUrl = nfePublicConsultationUrl(status?.environment);
+  const result = fiscalNoteResult(status, draft.remoteState);
+  const cancellation = nfeStandardCancellationAvailability(status);
+  const number = status?.number || Number(draft.number) || 0;
+  const documents = [{ artifact: result.danfe, type: 'danfe_pdf' as const, label: 'DANFE', permission: 'fiscal.documents.danfe.download', icon: 'print' as IconName }, { artifact: result.xml, type: 'processed_xml' as const, label: 'XML', permission: 'fiscal.documents.xml.download', icon: 'document' as IconName }];
+  return <Dialog open title={number ? `Nota fiscal nº ${number.toLocaleString('pt-BR')} · série ${status?.series || draft.series}` : 'Situação da nota fiscal'} description={`${draft.client} · ${draft.sourceLabel}: ${draft.originId}`} onClose={onClose}>
+    <div className="dialog-body fiscal-note-result">
+      <div className={`fiscal-note-outcome ${result.tone}`} role="status" aria-live="polite"><Icon name={result.authorized ? 'check' : result.rejected || result.canceled ? 'warning' : 'clock'} size={24}/><div><strong>{loading && !status ? 'Consultando a situação da nota…' : result.title}</strong><p>{result.description}</p></div></div>
+      {status?.accessKey && <dl className="fiscal-note-identity"><div><dt>Chave de acesso</dt><dd>{status.accessKey}</dd></div>{status.protocolNumber && <div><dt>Protocolo de autorização</dt><dd>{status.protocolNumber}</dd></div>}{status.authorizedAt && <div><dt>Autorizada em</dt><dd>{new Date(status.authorizedAt).toLocaleString('pt-BR')}</dd></div>}{status.cancellationProtocol && <div><dt>Protocolo de cancelamento</dt><dd>{status.cancellationProtocol}</dd></div>}</dl>}
+      {status?.statusCode && !result.authorized && <p className="form-error" role="status">{status.statusCode} · {status.statusReason}</p>}
+      {(result.authorized || result.canceled) && <section aria-label="Documentos da nota"><div className="fiscal-note-files">{documents.filter(doc => can(doc.permission)).map(doc => <div key={doc.type}><Icon name={doc.icon} size={22}/><strong>{doc.label}</strong><BotaoAcaoCompacto variante="primario" disabled={!doc.artifact} onClick={()=>doc.artifact && onDownload(doc.artifact.id,doc.type)}>Baixar {doc.label}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="secundario" disabled={!doc.artifact} onClick={()=>doc.artifact && onShare(doc.artifact.id,doc.type)}>Compartilhar {doc.label}</BotaoAcaoCompacto></div>)}</div>{(!result.xml || !result.danfe) && <p className="fiscal-note-message">{status?.consultationErrorCode ? `Não foi possível concluir os documentos. Referência: ${status.consultationErrorCode}. Consulte novamente a situação desta nota.` : 'A autorização foi confirmada; consulte a situação para obter os documentos.'}</p>}</section>}
+      {message && <p className="fiscal-note-message" role="status">{message}</p>}
+      {sharingFile && <BotaoAcaoCompacto variante="primario" onClick={onShareReady}>Escolher aplicativo para compartilhar</BotaoAcaoCompacto>}
+      <div className="fiscal-note-secondary">{(result.authorized || result.canceled) && publicUrl && /^\d{44}$/.test(status?.accessKey || '') && <><BotaoAcaoCompacto variante="secundario" onClick={()=>window.open(publicUrl,'_blank','noopener,noreferrer')}>Situação da nota</BotaoAcaoCompacto><BotaoAcaoCompacto variante="secundario" onClick={()=>{setCopyError('');const copying=navigator.clipboard?.writeText(status!.accessKey);if(!copying){setCopyError('Selecione a chave de acesso acima para copiar.');return;}void copying.then(()=>setKeyCopied(true)).catch(()=>setCopyError('Não foi possível copiar. Selecione a chave de acesso acima.'));}}>{keyCopied ? 'Chave copiada' : 'Copiar chave'}</BotaoAcaoCompacto></>}{copyError && <small role="status">{copyError}</small>}<BotaoAcaoCompacto variante="discreto" onClick={onDetails}>Dados e histórico</BotaoAcaoCompacto>{(result.retryAvailable || (result.rejected && status?.state==='rejected')) && <BotaoAcaoCompacto variante="primario" onClick={onReview} disabled={!can('fiscal.prepare')}>{result.retryAvailable ? 'Voltar à nota' : 'Corrigir nota'}</BotaoAcaoCompacto>}</div>
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Fechar</button>{draft.status !== 'Cancelado' && <><button type="button" className="button secondary" onClick={pendingChecks.length ? () => onCorrect(correction.view) : () => onRevalidate(draft)} disabled={loading || !can(pendingChecks.length ? correction.view === 'configuracoes' ? 'settings.view' : correction.view === 'clientes' ? 'clients.view' : 'catalog.view' : 'fiscal.prepare')}>{pendingChecks.length ? correction.label : 'Atualizar conferência'}</button>{numberAlreadyReserved ? <button type="button" className="button primary" onClick={() => canContinueIssuance && onContinueIssuance(draft, remoteStatus?.version ?? 0)} disabled={loading || !canContinueIssuance || !can('fiscal.issue')}>{loading ? 'Emitindo…' : 'Continuar emissão'}</button> : <button type="button" className="button primary" onClick={() => canConfirmEmission && onReserveNumber(draft, remoteStatus?.version ?? 0)} disabled={loading || !canConfirmEmission || !can('fiscal.issue')} title={!reviewReady ? 'Resolva todas as pendências antes de emitir' : !canConfirmEmission ? 'Abra e valide a emissão fiscal antes de confirmar' : undefined}>{loading ? 'Confirmando…' : 'Confirmar emissão'}</button>}</>}</footer>
+    <footer className="dialog-footer">{result.authorized && can('fiscal.cancel') && <div className="fiscal-note-cancel"><BotaoAcaoCompacto variante="destrutivo" onClick={onCancel} disabled={!cancellation.allowed || Boolean(loading)}>Cancelar nota</BotaoAcaoCompacto>{!cancellation.allowed && <small>{cancellation.reason}</small>}</div>}<BotaoAcaoCompacto variante="primario" onClick={onClose}>Fechar</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -3220,28 +3482,40 @@ function FiscalCancellationDialog({ draft, remoteStatus, loading, onClose, onSub
       <div className="lifecycle-effect"><Icon name="warning" size={19}/><div><strong>Esta ação envia um evento fiscal</strong><p>A autorização, o protocolo e os documentos originais continuarão preservados no histórico.</p></div></div>
       <dl className="fiscal-cancellation-summary"><div><dt>Documento</dt><dd>NF-e série {remoteStatus.series}, número {remoteStatus.number.toLocaleString('pt-BR')}</dd></div><div><dt>Autorização original</dt><dd>Protocolo {remoteStatus.protocolNumber || 'registrado'}</dd></div></dl>
       <label className={`field ${justification.length > 0 && !valid ? 'invalid' : ''}`}><span>Justificativa do cancelamento</span><textarea value={justification} maxLength={255} rows={4} placeholder="Explique o motivo do cancelamento" onChange={(event) => setJustification(event.target.value)}/><small className="field-message">{justification.length > 0 && normalized.length < 15 ? 'Informe pelo menos 15 caracteres.' : 'A justificativa será registrada no evento e no histórico fiscal.'} <b>{normalized.length}/255</b></small></label>
-      <label className="fiscal-cancellation-confirm"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)}/><span>Confirmo que desejo solicitar o cancelamento desta NF-e autorizada.</span></label>
+      <label className="fiscal-cancellation-confirm"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)}/><span>Confirmo que não houve circulação da mercadoria e desejo solicitar o cancelamento desta NF-e.</span></label>
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose} disabled={loading}>Manter NF-e</button><button type="button" className="button danger" onClick={() => onSubmit(normalized)} disabled={loading || !valid || !confirmed || !can('fiscal.cancel')}>{loading ? 'Solicitando…' : 'Solicitar cancelamento'}</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose} disabled={loading}>Manter NF-e</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="destrutivo" onClick={() => onSubmit(normalized)} disabled={loading || !valid || !confirmed || !can('fiscal.cancel') || !nfeStandardCancellationAvailability(remoteStatus).allowed}>{loading ? 'Solicitando…' : 'Solicitar cancelamento'}</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
-function FiscalDraftRecordActions({ draft, remoteStatus, statusLoading, prepareLoading, onDetails, onReview, onPrepare, onValidate, onRevalidate, onRefreshStatus, onDownload, onCancel }: { draft: FiscalDraftRecord; remoteStatus?: FiscalEmissionStatus; statusLoading?: boolean; prepareLoading?: boolean; onDetails: () => void; onReview?: () => void; onPrepare?: () => void; onValidate?: () => void; onRevalidate: () => void; onRefreshStatus?: () => void; onDownload?: (artifactId: string, artifactType: FiscalArtifactType) => void; onCancel: () => void }) {
+function FiscalDraftRecordActions({ draft, remoteStatus, statusLoading, prepareLoading, onDetails, onReview, onEdit, onPrepare, onValidate, onRevalidate, onDownload, onCancel }: { draft: FiscalDraftRecord; remoteStatus?: FiscalEmissionStatus; statusLoading?: boolean; prepareLoading?: boolean; onDetails: () => void; onReview?: () => void; onEdit?: () => void; onPrepare?: () => void; onValidate?: () => void; onRevalidate: () => void; onDownload?: (artifactId: string, artifactType: FiscalArtifactType) => void; onCancel: () => void }) {
+  const state = remoteStatus?.state || draft.remoteState || '';
+  const authorized = Boolean(remoteStatus?.authorized || ['authorized', 'artifacts_stored', 'danfe_ready', 'canceled'].includes(state));
+  const canceled = state === 'canceled' || (draft.status === 'Cancelado' && !canResumeFiscalDraft(draft, remoteStatus));
+  const displayNumber = remoteStatus?.number || (Number(draft.number) || 0);
+  const identity = displayNumber ? `${documentLabel(draft.documentType)} ${displayNumber} · série ${remoteStatus?.series || draft.series}` : documentLabel(draft.documentType);
   const xml = remoteStatus?.artifacts.find((artifact) => artifact.artifactType === 'processed_xml');
   const danfe = remoteStatus?.artifacts.find((artifact) => artifact.artifactType === 'danfe_pdf');
   const actions: RecordAction[] = [
-    { label: 'Abrir detalhes', description: 'Dados, itens, pendências e histórico do rascunho', icon: 'document', onSelect: onDetails },
-    ...(onPrepare ? [{ label: prepareLoading ? 'Abrindo emissão…' : 'Abrir emissão fiscal', description: 'Cria o vínculo privado da NF-e em homologação, sem validar XML, reservar número ou transmitir', icon: 'fiscal' as IconName, onSelect: onPrepare, disabled: prepareLoading, disabledLabel: 'Abrindo', permission: 'fiscal.prepare' }] : []),
-    ...(onValidate ? [{ label: prepareLoading ? 'Validando dados fiscais…' : 'Validar dados fiscais', description: 'Aplica a regra revisada e valida o pré-XML no XSD, sem consumir número, certificado ou transmitir', icon: 'check' as IconName, onSelect: onValidate, disabled: prepareLoading, disabledLabel: 'Validando', permission: 'fiscal.prepare' }] : []),
-    ...(draft.emissionId && onRefreshStatus ? [{ label: statusLoading ? 'Atualizando situação…' : 'Atualizar situação fiscal', description: 'Consulta a situação mais recente sem reenviar a nota', icon: 'clock' as IconName, onSelect: onRefreshStatus, disabled: statusLoading, disabledLabel: 'Atualizando', permission: 'fiscal.view' }] : []),
-    ...(onReview && draft.status !== 'Cancelado' && !remoteStatus?.authorized ? [{ label: remoteStatus?.state === 'rejected' ? 'Revisar dados fiscais' : remoteStatus?.state === 'prepared' ? 'Emitir NF-e' : ['number_reserved', 'signed'].includes(remoteStatus?.state ?? '') ? 'Continuar emissão' : 'Revisar para emissão', description: remoteStatus?.state === 'rejected' ? 'Corrige somente os dados indicados pela rejeição, sem reenviar automaticamente' : remoteStatus?.state === 'prepared' ? 'Confere os dados e confirma a série e o número da nota' : ['number_reserved', 'signed'].includes(remoteStatus?.state ?? '') ? 'Usa automaticamente o certificado ativo e segue com a emissão' : 'Confere destinatário, itens, valores, tributação e pendências', icon: 'fiscal' as IconName, onSelect: onReview, permission: ['prepared', 'number_reserved', 'signed'].includes(remoteStatus?.state ?? '') ? 'fiscal.issue' : 'fiscal.prepare' }] : []),
-    ...(draft.status !== 'Cancelado' && !remoteStatus?.authorized ? [{ label: 'Atualizar conferência', description: 'Verifica novamente os dados da empresa, cliente e itens', icon: 'check' as IconName, onSelect: onRevalidate, permission: 'fiscal.prepare' }, { label: 'Cancelar rascunho', description: 'Encerra a preparação e preserva o histórico', icon: 'close' as IconName, onSelect: onCancel, permission: 'fiscal.cancel' }] : []),
-    ...(remoteStatus?.authorized && remoteStatus.state !== 'canceled' ? [{ label: 'Cancelar NF-e', description: 'Solicita o evento fiscal e preserva a autorização original no histórico', icon: 'warning' as IconName, onSelect: onCancel, permission: 'fiscal.cancel' }] : []),
+    ...(!authorized && !['submitted','processing','canceled'].includes(state) ? [{label:'Editar nota',description:'Abrir o formulário completo com os dados da nota',icon:'edit' as IconName,onSelect:onEdit || onReview || onDetails,permission:'fiscal.prepare',disabled:!onEdit || statusLoading,disabledLabel:statusLoading?'Carregando dados':'Edição indisponível'}] : []),
+    { label: authorized || ['submitted','processing'].includes(state) ? 'Abrir nota' : state === 'rejected' ? 'Corrigir nota' : 'Emitir nota', description: authorized ? 'Resultado, DANFE, XML e compartilhamento' : 'Conferir os dados, salvar ou emitir', icon: 'document', onSelect: !authorized && onReview ? onReview : onDetails },
+    ...(!authorized && !['submitted','processing','canceled'].includes(state) ? [{label:'Excluir rascunho',description:'Retira da lista e libera numeração ainda não utilizada',icon:'close' as IconName,onSelect:onCancel,permission:'fiscal.cancel'}] : []),
+    ...(authorized && !canceled ? [{ label: 'Cancelar NF-e', description: 'Solicita o cancelamento fiscal e preserva a autorização no histórico', icon: 'warning' as IconName, onSelect: onCancel, permission: 'fiscal.cancel', disabled: !remoteStatus?.authorized || statusLoading || !nfeStandardCancellationAvailability(remoteStatus).allowed, disabledLabel: remoteStatus?.authorized ? 'Fora do prazo' : 'Consultar situação' }] : []),
     ...(xml && onDownload ? [{ label: 'Baixar XML autorizado', description: 'Arquivo fiscal processado e vinculado à autorização', icon: 'document' as IconName, onSelect: () => onDownload(xml.id, xml.artifactType), permission: 'fiscal.documents.xml.download' }] : []),
     ...(danfe && onDownload ? [{ label: 'Baixar DANFE', description: 'Representação em PDF da nota autorizada', icon: 'print' as IconName, onSelect: () => onDownload(danfe.id, danfe.artifactType), permission: 'fiscal.documents.danfe.download' }] : []),
-    ...(!xml && !danfe ? [{ label: 'XML e DANFE indisponíveis', description: 'Os arquivos aparecem aqui após a autorização e preparação final', icon: 'print' as IconName, planned: true }] : []),
   ];
-  return <RecordActionsDialog title={`Ações de ${draft.id}`} description={`${documentLabel(draft.documentType)} vinculada a ${draft.originId}. A emissão será liberada quando todas as pendências forem concluídas.`} actions={actions} triggerLabel={`Ações fiscais de ${draft.originId}`}/>;
+  return <RecordActionsDialog title={`Ações da nota · ${identity}`} description={`${draft.client} · ${draft.sourceLabel}: ${draft.originId}`} actions={actions} triggerLabel={`Ações fiscais de ${draft.originId}`}/>;
+}
+
+function fiscalDraftListCategory(draft: FiscalDraftRecord, remoteStatus?: FiscalEmissionStatus) {
+  const state = remoteStatus?.state || draft.remoteState || '';
+  if (state === 'canceled' || (draft.status === 'Cancelado' && !canResumeFiscalDraft(draft, remoteStatus))) return 'cancelados';
+  if (remoteStatus?.authorized || ['authorized', 'artifacts_stored', 'danfe_ready'].includes(state)) return 'autorizados';
+  if (['rejected', 'failed'].includes(state)) return 'rejeitados';
+  if (['submitted', 'processing'].includes(state)) return 'processando';
+  if (['prepared','number_reserved','signed'].includes(state)) return 'preparados';
+  if (draft.status === 'Com pendências') return 'revisar';
+  return draft.status === 'Pronto para homologação' ? 'preparados' : 'aguardando';
 }
 
 function homologationTone(status: FiscalHomologationStatus): 'success' | 'warning' | 'danger' | 'info' | 'neutral' {
@@ -3347,7 +3621,7 @@ function FiscalHomologationDialog({ open, plan, company, settings, readOnly, onC
       </div>
       {submitted && validation.errors.length > 1 && <ul className="fiscal-warning-list">{validation.errors.slice(1).map((error) => <li key={error}>{error}</li>)}</ul>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</button><button type="button" className="button primary" onClick={save} disabled={readOnly}>Salvar plano de homologação</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={save} disabled={readOnly}>Salvar plano de homologação</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -3455,7 +3729,7 @@ function FiscalIntegrationEvaluationDialog({ open, evaluation, readOnly, onClose
       <div className={`homologation-validation ${submitted && result.errors.length ? 'error' : result.approvedForHomologation ? 'ready' : ''}`} role="status"><span><Icon name={result.errors.length ? 'warning' : result.approvedForHomologation ? 'check' : 'clock'} size={18}/></span><div><strong>{result.errors.length ? `${result.errors.length} bloqueios na avaliação` : result.approvedForHomologation ? 'Alternativa aprovada para homologação' : recommended ? `Melhor alternativa completa: ${recommended.name}` : 'Comparação ainda incompleta'}</strong><small>{result.errors[0] ?? result.warnings[0] ?? 'A decisão foi documentada sem liberar produção.'}</small></div></div>
       {submitted && result.errors.length > 1 && <ul className="fiscal-warning-list">{result.errors.slice(1).map((error) => <li key={error}>{error}</li>)}</ul>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</button><button type="button" className="button primary" onClick={save} disabled={readOnly}>Salvar avaliação</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={save} disabled={readOnly}>Salvar avaliação</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -3614,7 +3888,7 @@ function FiscalIssuerRegistryDialog({ open, registry, company, readOnly, onClose
       <div className={`homologation-validation ${submitted && validation.errors.length ? 'error' : validation.valid ? 'ready' : ''}`} role="status"><span><Icon name={validation.errors.length ? 'warning' : 'check'} size={18}/></span><div><strong>{validation.errors.length ? `${validation.errors.length} bloqueios no cadastro` : 'Estrutura de emissores consistente'}</strong><small>{validation.errors[0] ?? validation.warnings[0] ?? 'As rotas foram calculadas sem liberar qualquer conexão externa.'}</small></div></div>
       {submitted && validation.errors.length > 1 && <ul className="fiscal-warning-list">{validation.errors.slice(1).map((error) => <li key={error}>{error}</li>)}</ul>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</button><button type="button" className="button primary" onClick={save} disabled={readOnly}>Salvar estabelecimentos</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={save} disabled={readOnly}>Salvar estabelecimentos</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -3884,7 +4158,7 @@ function NfeSpHomologationDialog({ open, config, issuerRegistry, drafts, clients
         <ol className="fiscal-workflow nfe-sp-plan">{executionPlan.steps.map((step, index) => <li key={step.id}><span className={step.state}><b>{index + 1}</b></span><div><strong>{step.label}</strong><small>{step.service}</small></div><Badge tone={step.state === 'implemented' ? 'success' : step.state === 'contract' || step.state === 'lab' || step.state === 'planned' ? 'info' : 'danger'}>{step.state === 'implemented' ? 'Implementado' : step.state === 'contract' ? 'Contrato' : step.state === 'lab' ? 'Laboratório' : step.state === 'planned' ? 'Planejado' : 'Bloqueado'}</Badge></li>)}</ol>
       </section>
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</button><button type="button" className="button secondary" onClick={runDiagnostic}><Icon name="check" size={16}/> Executar diagnóstico local</button><button type="button" className="button primary" onClick={() => onSave(normalizeNfeSpHomologationConfig(draft))} disabled={readOnly}>Salvar bancada</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="secundario" onClick={runDiagnostic}><Icon name="check" size={16}/> Executar diagnóstico local</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={() => onSave(normalizeNfeSpHomologationConfig(draft))} disabled={readOnly}>Salvar bancada</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -3969,12 +4243,12 @@ function FiscalDeveloperView({ origin, drafts, clients, config, company, setting
       <div className="fiscal-profile-grid"><section><h3>Cadastro exigido no catálogo</h3><ul>{profile.requiredCatalogFields.map((field) => <li key={field}><Icon name="check" size={14}/><span>{field}</span></li>)}</ul></section><section><h3>Eventos previstos</h3><ul>{profile.events.map((event) => <li key={event}><Icon name="document" size={14}/><span>{event}</span></li>)}</ul></section><section><h3>Referências acompanhadas</h3><ul>{profile.technicalReferences.map((reference) => <li key={reference}><Icon name="fiscal" size={14}/><span>{reference}</span></li>)}</ul></section></div>
     </Panel>
     <Panel title="Exemplos visuais de documentos" subtitle="Referência de interface: estes registros não pertencem à fila local e não foram emitidos por este navegador"><Table headers={['Documento', 'Emissão', 'Destinatário/tomador', 'Modelo', 'Ambiente', 'Situação', 'Chave', 'Valor', 'Último evento', '']} minWidth={0} className="fiscal-examples-table"><>{fiscalDocuments.map((document) => <tr key={`${document.number}-${document.client}`}><td data-label="Documento"><button type="button" className="row-link">{document.number}</button></td><td data-label="Emissão">{document.date}</td><td data-label="Destinatário/tomador"><strong>{document.client}</strong></td><td data-label="Modelo">{document.model}</td><td data-label="Ambiente">{document.environment}</td><td data-label="Situação"><Badge>{document.status}</Badge></td><td data-label="Chave">{document.key}</td><td data-label="Valor" className="numeric"><strong>{money(document.total)}</strong></td><td data-label="Último evento">{document.event}</td><td data-label="Ações"><button type="button" className="row-action" aria-label={`Abrir ${document.number}`}>›</button></td></tr>)}</></Table></Panel>
-    <FiscalDraftDetailsDialog draft={detailDraft ? drafts.find((draft) => draft.id === detailDraft.id) ?? detailDraft : null} company={company} onClose={() => setDetailDraft(null)} onRevalidate={onRevalidate}/>
+    <FiscalDraftDetailsDialog key={detailDraft?.id} draft={detailDraft ? drafts.find((draft) => draft.id === detailDraft.id) ?? detailDraft : null} company={company} onClose={() => setDetailDraft(null)} onRevalidate={onRevalidate}/>
     <FiscalIssuerRegistryDialog open={issuerRegistryOpen} registry={issuerRegistry} company={company} readOnly={!can('fiscal.configure')} onClose={() => setIssuerRegistryOpen(false)} onSave={(next) => { onSaveIssuerRegistry(next); setIssuerRegistryOpen(false); }}/>
     <NfeSpHomologationDialog open={nfeSpOpen} config={nfeSpConfig} issuerRegistry={issuerRegistry} drafts={drafts} clients={clients} company={company} settings={settings} readOnly={!can('fiscal.homologate')} onClose={() => setNfeSpOpen(false)} onSave={(next) => { onSaveNfeSpConfig(next); setNfeSpOpen(false); }}/>
     <FiscalHomologationDialog open={homologationOpen} plan={homologationPlan} company={company} settings={settings} readOnly={!can('fiscal.homologate')} onClose={() => setHomologationOpen(false)} onSave={(next) => { onSaveHomologation(next); setHomologationOpen(false); }}/>
     <FiscalIntegrationEvaluationDialog open={integrationEvaluationOpen} evaluation={integrationEvaluation} readOnly={!can('fiscal.homologate')} onClose={() => setIntegrationEvaluationOpen(false)} onSave={(next) => { onSaveIntegrationEvaluation(next); setIntegrationEvaluationOpen(false); }}/>
-    {cancelDraft && <Dialog open title={`Cancelar rascunho de ${cancelDraft.originId}`} description="O histórico será preservado e nenhuma transmissão será realizada." onClose={() => setCancelDraft(null)}><div className="dialog-body lifecycle-confirmation"><div className="lifecycle-effect"><Icon name="warning" size={19}/><div><strong>Encerrar preparação fiscal local</strong><p>O rascunho ficará como cancelado. Como não existe documento autorizado, não haverá cancelamento junto ao governo.</p></div></div></div><footer className="dialog-footer"><button type="button" className="button secondary" onClick={() => setCancelDraft(null)}>Manter rascunho</button><button type="button" className="button danger" disabled={!can('fiscal.cancel')} onClick={() => { onCancel(cancelDraft); setCancelDraft(null); }}>Cancelar rascunho</button></footer></Dialog>}
+    {cancelDraft && <Dialog open title={`Cancelar rascunho de ${cancelDraft.originId}`} description="O histórico será preservado e nenhuma transmissão será realizada." onClose={() => setCancelDraft(null)}><div className="dialog-body lifecycle-confirmation"><div className="lifecycle-effect"><Icon name="warning" size={19}/><div><strong>Encerrar preparação fiscal local</strong><p>O rascunho ficará como cancelado. Como não existe documento autorizado, não haverá cancelamento junto ao governo.</p></div></div></div><footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={() => setCancelDraft(null)}>Manter rascunho</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="destrutivo" disabled={!can('fiscal.cancel')} onClick={() => { onCancel(cancelDraft); setCancelDraft(null); }}>Cancelar rascunho</BotaoAcaoCompacto></footer></Dialog>}
   </>;
 }
 
@@ -3983,16 +4257,42 @@ function fiscalActiveSequence(ledger: FiscalNumberingLedger, documentType: Fisca
     ?? ledger.sequences.find((sequence) => sequence.documentType === documentType);
 }
 
-function FiscalNumberingDialog({ open, ledger, documentScope, actor, readOnly, onClose, onSave }: { open: boolean; ledger: FiscalNumberingLedger; documentScope: FiscalDocumentType[]; actor: string; readOnly: boolean; onClose: () => void; onSave: (ledger: FiscalNumberingLedger, message: string) => boolean }) {
+function FiscalNumberingDialog({ open, ledger, documentScope, actor, readOnly, onClose, onSave, onLoadRemote, onSaveRemote }: { open: boolean; ledger: FiscalNumberingLedger; documentScope: FiscalDocumentType[]; actor: string; readOnly: boolean; onClose: () => void; onSave: (ledger: FiscalNumberingLedger, message: string) => boolean; onLoadRemote?: () => Promise<FiscalCheckoutResult>; onSaveRemote?: (input: {series: string; nextNumber: number; expectedVersion: number}) => Promise<FiscalCheckoutResult> }) {
   const [draft, setDraft] = useState(ledger);
   const [error, setError] = useState('');
+  const remoteLoaderRef = useRef(onLoadRemote);
+  useEffect(() => { remoteLoaderRef.current = onLoadRemote; }, [onLoadRemote]);
+  const [remote, setRemote] = useState<FiscalCheckoutResult['numbering']>();
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const [remoteSaving, setRemoteSaving] = useState(false);
+  const [remoteSeries, setRemoteSeries] = useState('');
+  const [remoteNext, setRemoteNext] = useState('');
+  useEffect(() => {
+    if (!open || !remoteLoaderRef.current) return;
+    let live = true;
+    setRemoteLoading(true); setRemote(undefined); setError('');
+    void remoteLoaderRef.current().then(result => {
+      if (!live) return;
+      if (!result.ok || !result.numbering) { setError(result.message || 'Não foi possível consultar a numeração fiscal.'); return; }
+      setRemote(result.numbering); setRemoteSeries(result.numbering.series ? String(Number(result.numbering.series)) : ''); setRemoteNext(result.numbering.nextNumber ? String(result.numbering.nextNumber) : '');
+    }).catch(()=>{if(live)setError('Não foi possível consultar a numeração. Feche e abra novamente.');}).finally(()=>{if(live)setRemoteLoading(false);});
+    return () => { live = false; };
+  }, [open]);
+  const saveRemote = async () => {
+    if (!remote || !onSaveRemote || remoteSaving) return;
+    if (!/^\d{1,3}$/.test(remoteSeries) || !/^\d{1,9}$/.test(remoteNext) || Number(remoteNext)<1) { setError('Informe a série e o próximo número livre.'); return; }
+    setRemoteSaving(true); setError('');
+    try { const result = await onSaveRemote({series:remoteSeries,nextNumber:Number(remoteNext),expectedVersion:remote.version}); if(result.ok)onClose();else setError(result.message); }
+    catch {setError('Não foi possível confirmar o salvamento. Reabra o ajuste antes de tentar novamente.');}
+    finally {setRemoteSaving(false);}
+  };
   const [voidOpen, setVoidOpen] = useState(false);
   const [voidDocument, setVoidDocument] = useState<FiscalDocumentType>(documentScope[0] ?? 'nfe');
   const [voidStart, setVoidStart] = useState('');
   const [voidEnd, setVoidEnd] = useState('');
   const [voidReason, setVoidReason] = useState('');
   useEffect(() => {
-    if (!open) return;
+    if (!open || onLoadRemote) return;
     setDraft(normalizeFiscalNumberingLedger(ledger));
     setError('');
     setVoidOpen(false);
@@ -4002,6 +4302,16 @@ function FiscalNumberingDialog({ open, ledger, documentScope, actor, readOnly, o
     setVoidReason('');
   }, [open, ledger, documentScope]);
   if (!open) return null;
+  if (onLoadRemote) return <Dialog open title="Série e numeração da NF-e" description="Dados para emissão · Homologação, sem valor fiscal." onClose={remoteSaving?()=>undefined:onClose}>
+    <div className="dialog-body fiscal-numbering-body" aria-busy={remoteLoading||remoteSaving}>
+      {remoteLoading?<p role="status">Consultando a numeração do perfil…</p>:remote&&<>
+        {!remote.exists&&<p>Cadastre a série e informe o próximo número livre. Nada será emitido ao salvar este ajuste.</p>}
+        <div className="form-grid fiscal-numbering-fields"><label className="field"><span>Série *</span><input aria-label="Série da NF-e" inputMode="numeric" pattern="[0-9]*" maxLength={3} value={remoteSeries} onChange={event=>{setRemoteSeries(event.target.value.replace(/\D/g,''));setRemoteNext('');}} disabled={readOnly||remoteSaving}/></label><label className="field"><span>Próximo número *</span><input aria-label="Próximo número da NF-e" inputMode="numeric" pattern="[0-9]*" maxLength={9} value={remoteNext} placeholder="Informe o próximo número livre" onChange={event=>setRemoteNext(event.target.value.replace(/\D/g,''))} disabled={readOnly||remoteSaving}/></label></div>
+        {remote.lastReservedNumber>0&&<p>Último número protegido nesta série: {remote.lastReservedNumber.toLocaleString('pt-BR')}.</p>}
+      </>}
+      {error&&<p className="form-error" role="alert">{error}</p>}
+    </div><footer className="dialog-footer"><BotaoAcaoCompacto variante="secundario" onClick={onClose} disabled={remoteSaving}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" onClick={()=>void saveRemote()} disabled={readOnly||remoteLoading||remoteSaving||!remote}>{remoteSaving?'Salvando…':'Salvar numeração'}</BotaoAcaoCompacto></footer>
+  </Dialog>;
   const updateSequence = (documentType: FiscalDocumentType, patch: Partial<FiscalNumberingSequence>) => setDraft((current) => ({ ...current, sequences: current.sequences.map((sequence) => sequence.documentType === documentType && sequence.active ? { ...sequence, ...patch } : sequence) }));
   const saveConfiguration = () => {
     let next = normalizeFiscalNumberingLedger(draft);
@@ -4041,25 +4351,34 @@ function FiscalNumberingDialog({ open, ledger, documentScope, actor, readOnly, o
       </section>
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Fechar</button>{!readOnly && <button type="button" className="button primary" onClick={saveConfiguration}>Salvar numeração</button>}</footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto>{!readOnly && <BotaoAcaoCompacto type="button" variante="primario" onClick={saveConfiguration}>Salvar numeração</BotaoAcaoCompacto>}</footer>
   </Dialog>;
 }
 
-function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, company, settings, numberingLedger, activeUserName, onClearOrigin, onPrepare, onValidate, onReserveNumber, onContinueIssuance, onRevalidate, onCancel, onOpenCertificate, onNavigate, onSaveNumbering }: { origin: FiscalOrigin | null; drafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; config: FiscalConfig; execution: FiscalExecutionReadiness | null; company: CompanyProfile; settings: ModuleSettings; numberingLedger: FiscalNumberingLedger; activeUserName: string; onClearOrigin: () => void; onPrepare: (draft: FiscalDraftRecord) => void; onValidate: (draft: FiscalDraftRecord) => void; onReserveNumber: (draft: FiscalDraftRecord, expectedVersion: number) => void; onContinueIssuance: (draft: FiscalDraftRecord, expectedVersion: number) => void; onRevalidate: (draft: FiscalDraftRecord) => void; onCancel: (draft: FiscalDraftRecord) => void; onOpenCertificate: () => void; onNavigate: (view: View) => void; onSaveNumbering: (ledger: FiscalNumberingLedger, message: string) => boolean }) {
+function FiscalView({ fiscalEditor,editorError,onReloadEditor,companyId, catalogRecords, clientRecords, issuerRegistry, records, origin, drafts, fiscalPrepareState, config, execution, company, settings, numberingLedger, activeUserName, onClearOrigin, onPrepare, onValidate, onReserveNumber, onContinueIssuance, onRevalidate, onCancel, onOpenCertificate, onNavigate, onSaveNumbering, onNewFiscal, onPreviewDraft, onResolveIssue, resumeDraftId, onCheckout, onOpenNumbering, resultRequest }: { fiscalEditor?:FiscalNoteEditorOptions;editorError?:string;onReloadEditor?:()=>void;companyId: string; catalogRecords: CatalogItem[]; clientRecords: ClientRecord[]; issuerRegistry: FiscalIssuerRegistry; records: CreatedRecord[]; origin: FiscalOrigin | null; drafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; config: FiscalConfig; execution: FiscalExecutionReadiness | null; company: CompanyProfile; settings: ModuleSettings; numberingLedger: FiscalNumberingLedger; activeUserName: string; onClearOrigin: () => void; onPrepare: (draft: FiscalDraftRecord) => void; onValidate: (draft: FiscalDraftRecord) => void; onReserveNumber: (draft: FiscalDraftRecord, expectedVersion: number) => void; onContinueIssuance: (draft: FiscalDraftRecord, expectedVersion: number) => void; onRevalidate: (draft: FiscalDraftRecord) => void; onCancel: (draft: FiscalDraftRecord) => void; onOpenCertificate: () => void; onNavigate: (view: View) => void; onSaveNumbering: (ledger: FiscalNumberingLedger, message: string) => boolean; onNewFiscal: () => void; onPreviewDraft?: (draft: FiscalDraftRecord) => FiscalDraftRecord; onResolveIssue?: (draft: FiscalDraftRecord, key: string, productTarget?: string) => void; resumeDraftId?: string; onCheckout?: (draft: FiscalDraftRecord, action: 'save' | 'issue') => Promise<FiscalCheckoutResult>; onOpenNumbering?: () => void; resultRequest?: {draftId: string; requestId: string} }) {
+  const correctionWaiters = useRef(new Map<string,(result: ConfirmedSave)=>void>());
   const { can } = useContext(PermissionContext);
   const [documentType, setDocumentType] = useState<FiscalDocumentType>(() => settings.fiscal.documentScope[0] ?? 'nfe');
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'revisar' | 'aguardando' | 'preparados' | 'processando' | 'autorizados' | 'rejeitados' | 'cancelados'>('todos');
   const [detailDraft, setDetailDraft] = useState<FiscalDraftRecord | null>(null);
   const [issueDraft, setIssueDraft] = useState<FiscalDraftRecord | null>(null);
+  const [resultDraft, setResultDraft] = useState<FiscalDraftRecord | null>(null);
+  const [sharingFile, setSharingFile] = useState<File | null>(null);
+  const resultOpenedRef = useRef('');
+  const resultGenerationRef = useRef(0);
   const [cancelDraft, setCancelDraft] = useState<FiscalDraftRecord | null>(null);
   const [numberingOpen, setNumberingOpen] = useState(false);
+  const [fiscalSetupOpen, setFiscalSetupOpen] = useState(false);
+  const [documentFilter, setDocumentFilter] = useState('todos');
+  const resumedDraftRef = useRef('');
+  useEffect(() => { if (!resumeDraftId || resumedDraftRef.current === resumeDraftId) return; const draft = drafts.find((record) => record.id === resumeDraftId); if (draft) { resumedDraftRef.current = resumeDraftId; setIssueDraft(draft); } }, [resumeDraftId, drafts]);
   const [fiscalBridgeOrigin, setFiscalBridgeOrigin] = useState('');
   const [remoteStatuses, setRemoteStatuses] = useState<Record<string, FiscalEmissionStatus>>({});
   const [statusSync, setStatusSync] = useState<Record<string, { loading: boolean; message: string }>>({});
   const [fiscalBridgeMessage, setFiscalBridgeMessage] = useState('');
   const requestedEmissionsRef = useRef(new Set<string>());
-  const pendingFiscalRequestsRef = useRef(new Map<string, { kind: 'status' | 'download' | 'correction' | 'cancellation'; targetId: string; timer: number }>());
+  const pendingFiscalRequestsRef = useRef(new Map<string, { kind: 'status' | 'download' | 'share' | 'correction' | 'cancellation' | 'delete'; targetId: string; timer: number }>());
 
   useEffect(() => {
     setRemoteStatuses((current) => {
@@ -4067,6 +4386,7 @@ function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, com
       const next = { ...current };
       for (const draft of drafts) {
         if (!draft.emissionId || !draft.remoteState) continue;
+        if (current[draft.emissionId] && draft.remoteVersion && current[draft.emissionId].version > draft.remoteVersion) continue;
         if (!current[draft.emissionId] && draft.demoScenario && draft.remoteState === 'rejected') {
           changed = true;
           next[draft.emissionId] = rejectedNcmDemoStatus(draft);
@@ -4098,21 +4418,49 @@ function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, com
   }, [drafts]);
 
   const nextFiscalRequestId = (prefix: string) => `${prefix}:${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
-  const requestFiscalStatus = useCallback((draft: FiscalDraftRecord) => {
+  const requestFiscalStatus = useCallback((draft: FiscalDraftRecord, consult = false) => {
     if (!fiscalBridgeOrigin || !draft.emissionId) return;
+    if ([...pendingFiscalRequestsRef.current.values()].some(item=>item.kind==='status'&&item.targetId===draft.emissionId)) return;
     const requestId = nextFiscalRequestId('status');
-    const message = createFiscalStatusRequest({ requestId, emissionId: draft.emissionId });
+    const message = createFiscalStatusRequest({ requestId, emissionId: draft.emissionId, consult });
     if (!message) return;
-    setStatusSync((current) => ({ ...current, [draft.emissionId as string]: { loading: true, message: 'Atualizando situação…' } }));
+    setStatusSync((current) => ({ ...current, [draft.emissionId as string]: { loading: true, message: consult ? 'Verificando o resultado do envio na SEFAZ…' : '' } }));
     const timer = window.setTimeout(() => {
       pendingFiscalRequestsRef.current.delete(requestId);
-      setStatusSync((current) => ({ ...current, [draft.emissionId as string]: { loading: false, message: 'A atualização demorou mais que o esperado. Tente novamente.' } }));
-    }, 12_000);
+      setStatusSync((current) => ({ ...current, [draft.emissionId as string]: { loading: false, message: 'Não foi possível carregar o resultado desta nota. Tente novamente.' } }));
+    }, 120_000);
     pendingFiscalRequestsRef.current.set(requestId, { kind: 'status', targetId: draft.emissionId, timer });
     window.parent.postMessage(message, fiscalBridgeOrigin);
   }, [fiscalBridgeOrigin]);
 
-  const requestFiscalDownload = useCallback((artifactId: string, artifactType: FiscalArtifactType) => {
+  const openFiscalResult = (draft: FiscalDraftRecord, savedStatus?: FiscalEmissionStatus) => {
+    const state = savedStatus?.state || (draft.emissionId ? remoteStatuses[draft.emissionId]?.state : '') || draft.remoteState;
+    if (!['authorized','artifacts_stored','danfe_ready','canceled'].includes(state || '')) {
+      setResultDraft(null); setDetailDraft(null); setFiscalBridgeMessage(''); setIssueDraft(draft);
+      if (draft.emissionId && !remoteStatuses[draft.emissionId]) requestFiscalStatus(draft);
+      return;
+    }
+    resultGenerationRef.current++;
+    setIssueDraft(null); setDetailDraft(null); setSharingFile(null); setFiscalBridgeMessage(''); setResultDraft(draft);
+    if (savedStatus && savedStatus.id === draft.emissionId) {
+      requestedEmissionsRef.current.add(savedStatus.id);
+      setRemoteStatuses(current => current[savedStatus.id]?.version > savedStatus.version ? current : ({...current,[savedStatus.id]:savedStatus}));
+    } else if (draft.emissionId && !remoteStatuses[draft.emissionId]) requestFiscalStatus(draft);
+  };
+  useEffect(() => {
+    if (!resultRequest || resultOpenedRef.current === resultRequest.requestId || !fiscalBridgeOrigin) return;
+    const draft = drafts.find(item => item.id === resultRequest.draftId);
+    if (draft) { resultOpenedRef.current = resultRequest.requestId; openFiscalResult(draft); }
+  }, [resultRequest, drafts, fiscalBridgeOrigin]);
+  const checkoutAndShowResult = async (draft: FiscalDraftRecord, action: 'save' | 'issue') => {
+    if (!onCheckout) return {ok:false,message:'A emissão não está disponível.'};
+    const response = await onCheckout(draft,action);
+    if (response.status && response.status.id === response.emission?.emissionId) setRemoteStatuses(current => current[response.status!.id]?.version > response.status!.version ? current : ({...current,[response.status!.id]:response.status!}));
+    if (action === 'issue' && response.ok && response.emission && ['authorized','artifacts_stored','danfe_ready'].includes(response.emission.state)) openFiscalResult({...draft,id:response.draftId || draft.id,emissionId:response.emission.emissionId,remoteState:response.emission.state,remoteVersion:response.emission.version,series:response.emission.series || draft.series,number:String(response.emission.number || draft.number)},response.status);
+    return response;
+  };
+
+  const requestFiscalDownload = useCallback((artifactId: string, artifactType: FiscalArtifactType, share = false) => {
     if (!fiscalBridgeOrigin) return;
     const requestId = nextFiscalRequestId('download');
     const message = createFiscalDownloadRequest({ requestId, artifactId, artifactType });
@@ -4122,31 +4470,43 @@ function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, com
       pendingFiscalRequestsRef.current.delete(requestId);
       setFiscalBridgeMessage('A preparação do arquivo demorou mais que o esperado. Tente novamente.');
     }, 12_000);
-    pendingFiscalRequestsRef.current.set(requestId, { kind: 'download', targetId: artifactId, timer });
+    pendingFiscalRequestsRef.current.set(requestId, { kind: share ? 'share' : 'download', targetId: artifactId, timer });
     window.parent.postMessage(message, fiscalBridgeOrigin);
   }, [fiscalBridgeOrigin]);
 
-  const requestFiscalCorrection = useCallback((draft: FiscalDraftRecord, remoteStatus: FiscalEmissionStatus, items: Array<{ sku: string; ncm: string }>) => {
-    if (!draft.emissionId) return;
+  const requestFiscalCorrection = useCallback((draft: FiscalDraftRecord, remoteStatus: FiscalEmissionStatus, items: Array<{ sku: string; ncm: string }>, note?: Record<string, unknown>) => {
+    if (!draft.emissionId) return Promise.resolve({ok:false,message:'Nota não localizada.'});
     const requestId = nextFiscalRequestId('correction');
-    const message = createFiscalCorrectionRequest({ requestId, emissionId: draft.emissionId, expectedVersion: remoteStatus.version, rejectedStatusCode: remoteStatus.statusCode, items });
-    if (!message) { setFiscalBridgeMessage('Revise o NCM dos produtos e tente novamente.'); return; }
+    const message = createFiscalCorrectionRequest({ requestId, emissionId: draft.emissionId, expectedVersion: remoteStatus.version, rejectedStatusCode: remoteStatus.state==='rejected'?remoteStatus.statusCode:(note?'000':''), items, note });
+    if (!message) return Promise.resolve({ok:false,message:'Revise os dados da nota e tente novamente.'});
     if (!fiscalBridgeOrigin) {
-      if (!draft.demoScenario) { setFiscalBridgeMessage('Abra o módulo pela Gestão para salvar uma revisão fiscal real.'); return; }
+      if (!draft.demoScenario) return Promise.resolve({ok:false,message:'Abra o módulo pela Gestão para salvar a correção.'});
       setRemoteStatuses((current) => ({ ...current, [draft.emissionId as string]: { ...current[draft.emissionId as string], state: 'number_reserved', stateLabel: 'Revisão concluída · demonstração', version: remoteStatus.version + 2, statusCode: '', statusReason: 'NCM revisado no cenário fictício. Nenhuma nota foi assinada ou transmitida.', actionRequired: false, recommendedAction: '', recommendedActionLabel: '', recommendedActionMessage: '' } }));
       setStatusSync((current) => ({ ...current, [draft.emissionId as string]: { loading: false, message: 'Revisão demonstrada sem certificado ou transmissão.' } }));
       setFiscalBridgeMessage('Demonstração concluída: o NCM foi revisado e nenhuma nota real foi transmitida. Recarregue a página para repetir.');
       setIssueDraft(null);
-      return;
+      return Promise.resolve({ok:true,message:"Correção salva."});
     }
+    const completion = new Promise<ConfirmedSave>(resolve=>correctionWaiters.current.set(requestId,resolve));
     setStatusSync((current) => ({ ...current, [draft.emissionId as string]: { loading: true, message: 'Salvando revisão fiscal…' } }));
     const timer = window.setTimeout(() => {
       pendingFiscalRequestsRef.current.delete(requestId);
+      correctionWaiters.current.get(requestId)?.({ok:false,message:'Não foi possível confirmar o salvamento. Seus dados permanecem nesta página.'});
+      correctionWaiters.current.delete(requestId);
       setStatusSync((current) => ({ ...current, [draft.emissionId as string]: { loading: false, message: 'A revisão demorou mais que o esperado. Atualize e tente novamente.' } }));
     }, 20_000);
     pendingFiscalRequestsRef.current.set(requestId, { kind: 'correction', targetId: draft.emissionId, timer });
     window.parent.postMessage(message, fiscalBridgeOrigin);
+    return completion;
   }, [fiscalBridgeOrigin]);
+
+  const requestDraftDelete = (draft: FiscalDraftRecord) => {
+    if(!fiscalBridgeOrigin){setFiscalBridgeMessage('Abra o módulo pela Gestão para excluir este rascunho.');return;}
+    const requestId=nextFiscalRequestId('delete');
+    const timer=window.setTimeout(()=>{pendingFiscalRequestsRef.current.delete(requestId);setFiscalBridgeMessage('Não foi possível confirmar a exclusão. Atualize a lista antes de repetir.');},20000);
+    pendingFiscalRequestsRef.current.set(requestId,{kind:'delete',targetId:draft.id,timer});
+    window.parent.postMessage({type:'AVANTALAB_VENDAS_FISCAL_DELETE_REQUEST_V1',requestId,draftId:draft.id,expectedVersion:(draft.emissionId ? remoteStatuses[draft.emissionId]?.version || draft.remoteVersion : 0) || 0},fiscalBridgeOrigin);
+  };
 
   const requestFiscalCancellation = useCallback((draft: FiscalDraftRecord, remoteStatus: FiscalEmissionStatus, justification: string) => {
     if (!draft.emissionId) return;
@@ -4182,7 +4542,7 @@ function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, com
 
   useEffect(() => {
     if (!fiscalBridgeOrigin) return;
-    const receive = (event: MessageEvent) => {
+    const receive = async (event: MessageEvent) => {
       if (event.source !== window.parent || event.origin !== fiscalBridgeOrigin) return;
       const statusResponse = parseFiscalStatusResponse(event.data);
       if (statusResponse) {
@@ -4191,13 +4551,21 @@ function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, com
         window.clearTimeout(pending.timer);
         pendingFiscalRequestsRef.current.delete(statusResponse.requestId);
         if (statusResponse.ok && statusResponse.emission.id === pending.targetId) {
-          setRemoteStatuses((current) => ({ ...current, [statusResponse.emission.id]: statusResponse.emission }));
-          setStatusSync((current) => ({ ...current, [statusResponse.emission.id]: { loading: false, message: `Atualizado em ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` } }));
+          setRemoteStatuses((current) => current[statusResponse.emission.id]?.version > statusResponse.emission.version ? current : ({ ...current, [statusResponse.emission.id]: statusResponse.emission }));
+          setStatusSync((current) => ({ ...current, [statusResponse.emission.id]: { loading: false, message: '' } }));
+          if (['submitted','processing'].includes(statusResponse.emission.state) && statusResponse.emission.consultationErrorCode) setFiscalBridgeMessage(`A consulta não confirmou a autorização. Referência: ${statusResponse.emission.consultationErrorCode}. Nenhuma nova nota foi enviada.`);
         } else {
           const message = statusResponse.ok ? 'A resposta fiscal não corresponde ao documento consultado.' : statusResponse.message;
           setStatusSync((current) => ({ ...current, [pending.targetId]: { loading: false, message } }));
         }
         return;
+      }
+      if(event.data?.type==='AVANTALAB_VENDAS_FISCAL_DELETE_RESPONSE_V1'){
+        const pending=pendingFiscalRequestsRef.current.get(event.data.requestId);
+        if(!pending || pending.kind!=='delete')return;
+        window.clearTimeout(pending.timer);pendingFiscalRequestsRef.current.delete(event.data.requestId);
+        if(event.data.ok!==true){setFiscalBridgeMessage(String(event.data.message || 'Não foi possível excluir.'));return;}
+        setCancelDraft(null);setIssueDraft(null);setResultDraft(null);setFiscalBridgeMessage('');return;
       }
       const correctionResponse = parseFiscalCorrectionResponse(event.data);
       if (correctionResponse) {
@@ -4205,12 +4573,16 @@ function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, com
         if (!pending || pending.kind !== 'correction') return;
         window.clearTimeout(pending.timer);
         pendingFiscalRequestsRef.current.delete(correctionResponse.requestId);
+        const complete = correctionWaiters.current.get(correctionResponse.requestId);
+        correctionWaiters.current.delete(correctionResponse.requestId);
         if (!correctionResponse.ok) {
+          complete?.({ok:false,message:correctionResponse.message,code:correctionResponse.code,field:correctionResponse.field});
           setStatusSync((current) => ({ ...current, [pending.targetId]: { loading: false, message: correctionResponse.message } }));
           setFiscalBridgeMessage(correctionResponse.message);
           return;
         }
         const emission = correctionResponse.emission;
+        complete?.({ok:true,message:"Correção salva."});
         setRemoteStatuses((current) => ({ ...current, [emission.emissionId]: { ...current[emission.emissionId], state: 'number_reserved', stateLabel: 'Dados fiscais revisados', version: emission.version, series: emission.series, number: emission.number, statusCode: '', statusReason: '', actionRequired: false, recommendedAction: '', recommendedActionLabel: '', recommendedActionMessage: '' } }));
         setStatusSync((current) => ({ ...current, [emission.emissionId]: { loading: false, message: 'Revisão salva. A nota está pronta para uma nova assinatura.' } }));
         setFiscalBridgeMessage('Dados fiscais revisados. Nenhuma transmissão foi realizada.');
@@ -4238,10 +4610,25 @@ function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, com
       const downloadResponse = parseFiscalDownloadResponse(event.data);
       if (!downloadResponse) return;
       const pending = pendingFiscalRequestsRef.current.get(downloadResponse.requestId);
-      if (!pending || pending.kind !== 'download') return;
+      if (!pending || !['download','share'].includes(pending.kind)) return;
       window.clearTimeout(pending.timer);
       pendingFiscalRequestsRef.current.delete(downloadResponse.requestId);
       if (!downloadResponse.ok) { setFiscalBridgeMessage(downloadResponse.message); return; }
+      if (pending.kind === 'share') {
+        const shareGeneration = resultGenerationRef.current;
+        try {
+          const response = await fetch(downloadResponse.download.url, {credentials:'omit', cache:'no-store', signal:AbortSignal.timeout(30_000)});
+          if (!response.ok) throw new Error('download');
+          const blob = await response.blob();
+          if (!blob.size || blob.size > 20 * 1024 * 1024) throw new Error('file');
+          const file = new File([blob], downloadResponse.download.filename, {type:downloadResponse.download.contentType});
+          if (resultGenerationRef.current !== shareGeneration) return;
+          setSharingFile(file);
+          setFiscalBridgeMessage('Arquivo pronto. Escolha o aplicativo para compartilhar.');
+        } catch { setFiscalBridgeMessage('Não foi possível preparar o arquivo para compartilhar. Tente baixar o documento.'); }
+        return;
+      }
+
       const link = document.createElement('a');
       link.href = downloadResponse.download.url;
       link.target = '_blank';
@@ -4268,35 +4655,33 @@ function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, com
   useEffect(() => () => {
     pendingFiscalRequestsRef.current.forEach((request) => window.clearTimeout(request.timer));
     pendingFiscalRequestsRef.current.clear();
+    correctionWaiters.current.forEach(resolve=>resolve({ok:false,message:"A página foi fechada."}));
+    correctionWaiters.current.clear();
   }, []);
   useEffect(() => {
     if (!origin) return;
     setDocumentType(origin.documentType);
     const selected = drafts.find((draft) => draft.originId === origin.id);
-    if (selected) setDetailDraft(selected);
-  }, [origin, drafts]);
+    if (selected) { if (selected.emissionId) openFiscalResult(selected); else setDetailDraft(selected); }
+  }, [origin?.id, fiscalBridgeOrigin]);
   useEffect(() => {
     if (origin || settings.fiscal.documentScope.includes(documentType)) return;
     setDocumentType(settings.fiscal.documentScope[0] ?? 'nfe');
   }, [documentType, origin, settings.fiscal.documentScope]);
 
+  const currentResultDraft = resultDraft ? drafts.find(item=>item.id===resultDraft.id) ?? resultDraft : null;
+  const resultEmissionId = currentResultDraft?.emissionId || resultDraft?.emissionId;
   const filteredDrafts = drafts.filter((draft) => {
     const remoteStatus = draft.emissionId ? remoteStatuses[draft.emissionId] : undefined;
-    const matchesQuery = normalizeSearch(`${draft.id} ${draft.originId} ${draft.client} ${draft.status} ${draft.documentType} ${remoteStatus?.stateLabel ?? ''} ${remoteStatus?.number ?? ''} ${remoteStatus?.accessKey ?? ''}`).includes(normalizeSearch(query));
-    const matchesStatus = statusFilter === 'todos'
-      || (statusFilter === 'revisar' && draft.status === 'Com pendências')
-      || (statusFilter === 'aguardando' && draft.status === 'Bloqueado para transmissão')
-      || (statusFilter === 'preparados' && draft.status === 'Pronto para homologação')
-      || (statusFilter === 'processando' && Boolean(remoteStatus && ['number_reserved', 'signed', 'submitted', 'processing', 'artifacts_stored'].includes(remoteStatus.state)))
-      || (statusFilter === 'autorizados' && Boolean(remoteStatus?.authorized && remoteStatus.state !== 'canceled'))
-      || (statusFilter === 'rejeitados' && Boolean(remoteStatus && ['rejected', 'failed'].includes(remoteStatus.state)))
-      || (statusFilter === 'cancelados' && (draft.status === 'Cancelado' || remoteStatus?.state === 'canceled'));
-    return matchesQuery && matchesStatus;
+    const matchesQuery = normalizeSearch(`${draft.id} ${draft.originId} ${draft.client} ${draft.clientDocument} ${draft.status} ${draft.documentType} ${remoteStatus?.stateLabel ?? ''} ${remoteStatus?.number || draft.number || ''} ${remoteStatus?.series || draft.series || ''} ${remoteStatus?.accessKey || draft.key || ''}`).includes(normalizeSearch(query));
+    const matchesStatus = statusFilter === 'todos' || statusFilter === fiscalDraftListCategory(draft, remoteStatus);
+    return matchesQuery && matchesStatus && (documentFilter === 'todos' || draft.documentType === documentFilter);
   });
   const selectedOriginDraft = origin ? drafts.find((draft) => draft.originId === origin.id) : null;
-  const pendingCount = drafts.filter((draft) => draft.status === 'Com pendências' || (draft.emissionId && ['rejected', 'failed'].includes(remoteStatuses[draft.emissionId]?.state || ''))).length;
-  const readyCount = drafts.filter((draft) => draft.status === 'Pronto para homologação' || (draft.emissionId && ['prepared', 'number_reserved', 'signed'].includes(remoteStatuses[draft.emissionId]?.state || ''))).length;
-  const canceledCount = drafts.filter((draft) => draft.status === 'Cancelado' || (draft.emissionId && remoteStatuses[draft.emissionId]?.state === 'canceled')).length;
+  const categories = drafts.map((draft) => fiscalDraftListCategory(draft, draft.emissionId ? remoteStatuses[draft.emissionId] : undefined));
+  const pendingCount = categories.filter((category) => ['revisar', 'rejeitados'].includes(category)).length;
+  const readyCount = categories.filter((category) => category === 'preparados').length;
+  const canceledCount = categories.filter((category) => category === 'cancelados').length;
   const companyReady = Boolean(config.companyDocument && config.taxRegime && config.cityCode);
   const registrationReady = Boolean(documentType === 'nfse' ? config.municipalRegistration : config.stateRegistration);
   const certificateReady = config.certificateValid;
@@ -4319,28 +4704,52 @@ function FiscalView({ origin, drafts, fiscalPrepareState, config, execution, com
     ['Serviço de emissão', emissionServiceReady, emissionServiceReady ? 'NF-e de homologação disponível, sem valor fiscal' : documentType === 'nfe' && execution?.statusServiceReady ? 'Consulta ativa; envio de homologação ainda bloqueado' : documentType === 'nfe' ? 'Guarda fiscal e executor ainda não liberados' : 'Documento sem executor neste piloto'],
   ] as const;
 
+  const [editingDraft,setEditingDraft]=useState<FiscalDraftRecord|null>(null);
+  const editingStatus=editingDraft?.emissionId?remoteStatuses[editingDraft.emissionId]:undefined;
+  const editableDraft=editingDraft && editingStatus && ['prepared','number_reserved','rejected'].includes(editingStatus.state) ? (drafts.find(draft=>draft.id===editingDraft.id)||editingDraft):null;
+  const rejectedDraft = editableDraft || (issueDraft?.emissionId && ['rejected','prepared','number_reserved'].includes(remoteStatuses[issueDraft.emissionId]?.state) ? (drafts.find(draft=>draft.id===issueDraft.id) || issueDraft) : null);
+  if (rejectedDraft?.emissionId) {
+    if(fiscalBridgeOrigin&&!fiscalEditor)return <section role="alert"><p>{editorError||'Carregando dados da emissão…'}</p><BotaoAcaoCompacto onClick={onReloadEditor}>Tentar novamente</BotaoAcaoCompacto></section>;
+    const status=remoteStatuses[rejectedDraft.emissionId];
+    const original=records.find(record=>record.id===rejectedDraft.originId);
+    const initialRecord: CreatedRecord={...original,id:original?.id || rejectedDraft.originId,type:'nfe',client:rejectedDraft.client,status:'Rascunho',createdAt:rejectedDraft.createdAt,total:rejectedDraft.total,order:{...original?.order,lines:rejectedDraft.items.map(item=>({catalogItemId:catalogRecords.find(product=>product.sku===item.sku)?.catalogItemId,sku:item.sku,name:item.name,kind:item.kind,unit:item.unit,quantity:item.quantity,unitPrice:item.unitPrice,unitDiscount:item.unitDiscount,cost:0})),commercialTotals:rejectedDraft.commercialTotals,reserveStock:false,stockState:'Sem movimentação',seller:original?.order?.seller || '',fiscalDocument:'nfe',paymentMethod:rejectedDraft.paymentMethod,installments:rejectedDraft.paymentInstallments || original?.order?.installments || 1,firstDueDate:rejectedDraft.paymentFirstDueDate || original?.order?.firstDueDate || todayIso(),operationNature:rejectedDraft.operationNature || original?.order?.operationNature,notes:rejectedDraft.additionalInfo || '',fiscalForm:rejectedDraft.fiscalForm}};
+    return <NewOrderView fiscalEditor={fiscalEditor?{...fiscalEditor,series:status.series,number:String(status.number)}:undefined} companyId={companyId} key={`correct-note-${rejectedDraft.id}-${status.version}`} clientRecords={clientRecords} catalogRecords={catalogRecords.filter(item=>item.category!=='Serviço')} settings={settings} issuerRegistry={issuerRegistry} connected={Boolean(fiscalBridgeOrigin)} initialRecord={initialRecord} fiscalOnly correction={{draft:rejectedDraft,status,onSave:async(note,issue)=>{
+      const saved=await requestFiscalCorrection(rejectedDraft,status,[],note);
+      if(!saved.ok)return saved;
+      if(issue){const response=await checkoutAndShowResult({...rejectedDraft,remoteState:'number_reserved',remoteVersion:status.version+2},'issue');if(!response.ok){setIssueDraft({...rejectedDraft,remoteState:'number_reserved'});return response;}return response;}
+      setIssueDraft(null);setEditingDraft(null);return saved;
+    }}} onCancel={()=>{setIssueDraft(null);setEditingDraft(null);}} onCreated={()=>undefined}/>;
+  }
+
   return <>
-    <PageHeading view="fiscal" action={<button type="button" className="button primary" onClick={() => onNavigate(documentType === 'nfse' ? 'servicos' : 'vendas')}><Icon name="plus" size={18}/> {documentType === 'nfse' ? 'Nova ordem de serviço' : 'Nova venda'}</button>}/>
+    <PageHeading view="fiscal" action={<div className="heading-actions"><button type="button" className="button secondary" onClick={() => setFiscalSetupOpen(true)}><Icon name="settings" size={17}/> Configurações fiscais</button><button type="button" className="button primary" disabled={!can('fiscal.prepare')} onClick={onNewFiscal}><Icon name="plus" size={18}/> Nova nota fiscal</button></div>}/>
     {origin && (() => { const originStatus = selectedOriginDraft ? fiscalDraftUserStatus(selectedOriginDraft) : null; return <div className="fiscal-origin-banner" role="status"><span><Icon name="fiscal" size={20}/></span><div><strong>{selectedOriginDraft ? `Documento de ${origin.id} localizado` : `Preparação iniciada a partir de ${origin.id}`}</strong><p>{origin.sourceLabel} de {origin.client} · {money(origin.total)}. A origem permanece vinculada e uma nova seleção não cria duplicidade.</p></div><Badge tone={originStatus?.tone ?? 'info'}>{originStatus?.label ?? documentLabel(origin.documentType)}</Badge><button type="button" className="button secondary" onClick={onClearOrigin}>Limpar seleção</button></div>; })()}
-    {!readyForIssue && <div className="fiscal-warning fiscal-operational-warning"><div><Icon name="warning" size={22}/></div><span><strong>Emissão fiscal ainda não liberada</strong><p>{readinessGuidance}</p></span><button type="button" className="button secondary" onClick={() => onNavigate('configuracoes')} disabled={!can('settings.view')}>Revisar ajustes</button></div>}
+    <div className="metric-grid compact"><Metric label="Documentos" value={String(drafts.length)} note="Notas e rascunhos do perfil"/><Metric label="Para revisar" value={String(pendingCount)} note="Dados ou rejeições" tone="warning"/><Metric label="Para emitir" value={String(readyCount)} note="Aguardando emissão" tone="cyan"/><Metric label="Cancelados" value={String(canceledCount)} note="Histórico preservado"/></div>
+    <Dialog open={fiscalSetupOpen} title="Configurações fiscais" description="Cadastro, certificado e numeração do perfil empresarial." onClose={() => setFiscalSetupOpen(false)}>
+    <div className="dialog-body">
+    {!readyForIssue && <div className="fiscal-warning fiscal-operational-warning"><div><Icon name="warning" size={22}/></div><span><strong>Emissão fiscal ainda não liberada</strong><p>{readinessGuidance}</p></span><button type="button" className="button secondary" onClick={() => { setFiscalSetupOpen(false); onNavigate('configuracoes'); }} disabled={!can('settings.view')}>Revisar ajustes</button></div>}
     {readyForIssue && <div className="fiscal-status-message" role="status"><Icon name="check" size={17}/><span>NF-e liberada exclusivamente no ambiente de homologação. O documento de teste não possui valor fiscal e a produção permanece bloqueada.</span></div>}
-    <div className="metric-grid compact"><Metric label="Documentos" value={String(Math.max(0, drafts.length - canceledCount))} note="Originados nas operações"/><Metric label="Para revisar" value={String(pendingCount)} note="Dados ou rejeições" tone="warning"/><Metric label="Preparados" value={String(readyCount)} note="Aguardando emissão" tone="cyan"/><Metric label="Cancelados" value={String(canceledCount)} note="Histórico preservado"/></div>
     <div className="fiscal-layout fiscal-user-overview">
       <Panel title="Situação para emissão" subtitle="Confira somente o que exige ação da empresa"><div className="segmented" role="group" aria-label="Tipo de documento fiscal">{settings.fiscal.documentScope.map((type) => <button key={type} type="button" className={documentType === type ? 'active' : ''} aria-pressed={documentType === type} onClick={() => setDocumentType(type)}>{documentLabel(type)}</button>)}</div><div className="checklist">{readinessItems.map(([label, ready, detail]) => <div key={label}><span className={ready ? 'ready' : 'blocked'}><Icon name={ready ? 'check' : 'warning'} size={16}/></span><div><strong>{label}</strong><small>{detail}</small></div><Badge tone={ready ? 'success' : 'warning'}>{ready ? 'Pronto' : 'Pendente'}</Badge></div>)}</div></Panel>
-      <Panel title="Certificado digital" subtitle="Assinatura da empresa ativa"><div className="fiscal-certificate-summary"><span className={certificateReady ? 'active' : ''}><Icon name={certificateReady ? 'check' : 'document'} size={24}/></span><div><Badge tone={certificateReady ? 'success' : 'warning'}>{certificateReady ? 'Certificado ativo' : 'Não configurado'}</Badge><h3>{certificateReady ? 'Certificado pronto para uso' : 'Adicione o certificado A1'}</h3><p>O vínculo com a empresa e as validações fiscais acontecem automaticamente.</p></div><button type="button" className="button primary" onClick={onOpenCertificate} disabled={!can('fiscal.configure')} title={!can('fiscal.configure') ? 'Somente Gestor ou Administrador pode configurar o certificado' : undefined}>{certificateReady ? 'Ver certificado' : 'Adicionar certificado'}</button></div></Panel>
+      <Panel title="Certificado digital" subtitle="Assinatura da empresa ativa"><div className="fiscal-certificate-summary"><span className={certificateReady ? 'active' : ''}><Icon name={certificateReady ? 'check' : 'document'} size={24}/></span><div><Badge tone={certificateReady ? 'success' : 'warning'}>{certificateReady ? 'Certificado ativo' : 'Não configurado'}</Badge><h3>{certificateReady ? 'Certificado pronto para uso' : 'Adicione o certificado A1'}</h3><p>O vínculo com a empresa e as validações fiscais acontecem automaticamente.</p></div><button type="button" className="button primary" onClick={() => { setFiscalSetupOpen(false); onOpenCertificate(); }} disabled={!can('fiscal.configure')} title={!can('fiscal.configure') ? 'Somente Gestor ou Administrador pode configurar o certificado' : undefined}>{certificateReady ? 'Ver certificado' : 'Adicionar certificado'}</button></div></Panel>
     </div>
-    <Panel title="Séries e numeração" subtitle="Próximo número protegido para cada tipo de nota" action={<button type="button" className="button secondary" onClick={() => setNumberingOpen(true)}><Icon name="settings" size={17}/> Configurar</button>}><div className="fiscal-numbering-summary">{settings.fiscal.documentScope.map((type) => { const sequence = fiscalActiveSequence(numberingLedger, type); return <div key={type}><span>{documentLabel(type)}</span><strong>Série {sequence?.series || 'não definida'}</strong><small>Próximo número: {sequence?.nextNumber?.toLocaleString('pt-BR') ?? 'não definido'}</small></div>; })}<div className="fiscal-numbering-summary-note"><Icon name="check" size={18}/><p><strong>Reserva automática e sem duplicidade</strong><small>O número só será reservado na confirmação da emissão. Consultas e revisões não alteram a sequência.</small></p></div></div></Panel>
-    <Panel title="Documentos fiscais" subtitle="Notas preparadas a partir de pedidos e serviços">
+    <Panel title="Séries e numeração" subtitle="Próximo número protegido para cada tipo de nota" action={<button type="button" className="button secondary" onClick={() => { setFiscalSetupOpen(false); if(onOpenNumbering)onOpenNumbering();else setNumberingOpen(true); }}><Icon name="settings" size={17}/> Configurar</button>}><div className="fiscal-numbering-summary">{settings.fiscal.documentScope.map((type) => { const sequence = fiscalActiveSequence(numberingLedger, type); return <div key={type}><span>{documentLabel(type)}</span><strong>Série {sequence?.series || 'não definida'}</strong><small>Próximo número: {sequence?.nextNumber?.toLocaleString('pt-BR') ?? 'não definido'}</small></div>; })}<div className="fiscal-numbering-summary-note"><Icon name="check" size={18}/><p><strong>Reserva automática e sem duplicidade</strong><small>O número só será reservado na confirmação da emissão. Consultas e revisões não alteram a sequência.</small></p></div></div></Panel>
+    </div>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={() => setFiscalSetupOpen(false)}>Fechar</BotaoAcaoCompacto></footer>
+    </Dialog>
+    <Panel title="Notas fiscais" subtitle="Notas avulsas e vinculadas a pedidos ou serviços">
       {fiscalBridgeMessage && <div className="fiscal-status-message" role="status"><Icon name="document" size={17}/><span>{fiscalBridgeMessage}</span></div>}
-      <SearchToolbar value={query} onChange={setQuery} placeholder="Buscar por documento, origem, cliente ou situação"><select aria-label="Situação fiscal" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}><option value="todos">Todas as situações</option><option value="revisar">Para revisar</option><option value="aguardando">Aguardando emissão</option><option value="preparados">Preparação concluída</option><option value="processando">Em processamento</option><option value="autorizados">Autorizados</option><option value="rejeitados">Rejeitados ou com falha</option><option value="cancelados">Cancelados</option></select></SearchToolbar>
-      {filteredDrafts.length > 0 ? <Table headers={['Documento', 'Origem', 'Cliente', 'Tipo', 'Situação fiscal', 'Valor', 'Ações']} minWidth={0} className="fiscal-drafts-table"><>{filteredDrafts.map((draft) => { const userStatus = fiscalDraftUserStatus(draft); const unresolvedChecks = draft.checks.filter((check) => !check.ready).length; const remoteStatus = draft.emissionId ? remoteStatuses[draft.emissionId] : undefined; const remotePresentation = remoteStatus ? fiscalStatusPresentation(remoteStatus) : null; const sync = draft.emissionId ? statusSync[draft.emissionId] : undefined; const prepare = fiscalPrepareState[draft.id]; return <tr key={draft.id}><td data-label="Documento"><button type="button" className="row-link" onClick={() => setDetailDraft(draft)}>{remoteStatus?.number ? `${remoteStatus.series}/${remoteStatus.number.toLocaleString('pt-BR')}` : draft.id}</button><small>{new Date(draft.createdAt).toLocaleDateString('pt-BR')}{draft.demoScenario ? ' · Demonstração' : ''}</small></td><td data-label="Origem"><strong>{draft.originId}</strong><small>{draft.sourceLabel}</small></td><td data-label="Cliente"><strong>{draft.client}</strong><small>{draft.clientDocument || 'Documento pendente'}</small></td><td data-label="Tipo">{documentLabel(draft.documentType)}</td><td data-label="Situação fiscal"><Badge tone={remotePresentation?.tone ?? userStatus.tone}>{prepare?.loading ? 'Validando…' : sync?.loading ? 'Atualizando…' : remotePresentation?.label ?? userStatus.label}</Badge><small>{prepare?.message || (sync?.loading ? 'Consultando situação mais recente' : remotePresentation?.detail ?? sync?.message ?? (draft.status !== 'Cancelado' ? unresolvedChecks ? `${unresolvedChecks} ${unresolvedChecks === 1 ? 'item pendente' : 'itens pendentes'}` : 'Conferência completa' : 'Histórico preservado'))}</small></td><td data-label="Valor" className="numeric"><strong>{money(draft.total)}</strong></td><td data-label="Ações" className="fiscal-actions-cell"><FiscalDraftRecordActions draft={draft} remoteStatus={remoteStatus} statusLoading={sync?.loading} prepareLoading={prepare?.loading} onDetails={() => setDetailDraft(draft)} onReview={remoteStatus?.authorized || (draft.demoScenario && remoteStatus?.state !== 'rejected') ? undefined : () => setIssueDraft(draft)} onPrepare={draft.persistenceSource === 'server' && draft.documentType === 'nfe' && !draft.emissionId ? () => onPrepare(draft) : undefined} onValidate={draft.persistenceSource === 'server' && draft.documentType === 'nfe' && remoteStatus?.state === 'draft' ? () => onValidate(draft) : undefined} onRevalidate={() => onRevalidate(draft)} onRefreshStatus={draft.emissionId && fiscalBridgeOrigin ? () => requestFiscalStatus(draft) : undefined} onDownload={fiscalBridgeOrigin ? requestFiscalDownload : undefined} onCancel={() => setCancelDraft(draft)}/></td></tr>; })}</></Table> : <EmptyState title="Nenhum documento fiscal encontrado" description="Fature um pedido ou conclua uma ordem de serviço para preparar o primeiro documento."/>}
+      <SearchToolbar value={query} onChange={setQuery} placeholder="Número, série, cliente, CPF/CNPJ ou chave"><select aria-label="Tipo de nota fiscal" value={documentFilter} onChange={(event) => setDocumentFilter(event.target.value)}><option value="todos">Todos os tipos</option>{settings.fiscal.documentScope.map((type) => <option key={type} value={type}>{documentLabel(type)}</option>)}</select><select aria-label="Situação fiscal" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}><option value="todos">Todas as situações</option><option value="revisar">Para revisar</option><option value="aguardando">Aguardando emissão</option><option value="preparados">Prontos para emitir</option><option value="processando">Emissão não concluída</option><option value="autorizados">Autorizados</option><option value="rejeitados">Rejeitados ou com falha</option><option value="cancelados">Cancelados</option></select></SearchToolbar>
+      {filteredDrafts.length > 0 ? <Table headers={['Documento', 'Origem', 'Cliente', 'Tipo', 'Situação fiscal', 'Valor', 'Ações']} minWidth={0} className="fiscal-drafts-table"><>{filteredDrafts.map((draft) => { const userStatus = fiscalDraftUserStatus(draft); const unresolvedChecks = draft.checks.filter((check) => !check.ready).length; const remoteStatus = draft.emissionId ? remoteStatuses[draft.emissionId] : undefined; const remotePresentation = remoteStatus ? fiscalStatusPresentation(remoteStatus) : null; const sync = draft.emissionId ? statusSync[draft.emissionId] : undefined; const prepare = fiscalPrepareState[draft.id]; const noteNumber = remoteStatus?.number || Number(draft.number) || 0; const noteSeries = remoteStatus?.series || draft.series; return <tr key={draft.id}><td data-label="Documento"><button type="button" className="row-link" onClick={() => draft.emissionId ? openFiscalResult(draft) : setDetailDraft(draft)}>{noteNumber ? `${noteSeries}/${noteNumber.toLocaleString('pt-BR')}` : 'Rascunho'}</button><small>{new Date(draft.createdAt).toLocaleDateString('pt-BR')}{draft.demoScenario ? ' · Demonstração' : ''}</small></td><td data-label="Origem"><strong>{draft.originId}</strong><small>{draft.sourceLabel}</small></td><td data-label="Cliente"><strong>{draft.client}</strong><small>{draft.clientDocument || 'Documento pendente'}</small></td><td data-label="Tipo">{documentLabel(draft.documentType)}</td><td data-label="Situação fiscal"><Badge tone={remotePresentation?.tone ?? userStatus.tone}>{prepare?.loading ? 'Validando…' : remotePresentation?.label ?? userStatus.label}</Badge><small>{prepare?.message || (remotePresentation?.detail ?? sync?.message ?? (draft.status !== 'Cancelado' ? unresolvedChecks ? `${unresolvedChecks} ${unresolvedChecks === 1 ? 'item pendente' : 'itens pendentes'}` : 'Conferência completa' : 'Histórico preservado'))}</small></td><td data-label="Valor" className="numeric"><strong>{money(draft.total)}</strong></td><td data-label="Ações" className="fiscal-actions-cell"><FiscalDraftRecordActions draft={draft} remoteStatus={remoteStatus} statusLoading={sync?.loading} prepareLoading={prepare?.loading} onDetails={() => draft.emissionId ? openFiscalResult(draft) : setDetailDraft(draft)} onEdit={remoteStatus && ['prepared','number_reserved','rejected'].includes(remoteStatus.state) ? ()=>setEditingDraft(draft) : undefined} onReview={remoteStatus?.authorized || (draft.demoScenario && remoteStatus?.state !== 'rejected') ? undefined : () => setIssueDraft(draft)} onPrepare={draft.persistenceSource === 'server' && draft.documentType === 'nfe' && !draft.emissionId ? () => onPrepare(draft) : undefined} onValidate={draft.persistenceSource === 'server' && draft.documentType === 'nfe' && remoteStatus?.state === 'draft' ? () => onValidate(draft) : undefined} onRevalidate={() => onRevalidate(draft)} onDownload={fiscalBridgeOrigin ? requestFiscalDownload : undefined} onCancel={() => setCancelDraft(draft)}/></td></tr>; })}</></Table> : <EmptyState title="Nenhum documento fiscal encontrado" description="Crie uma nova nota fiscal ou ajuste a busca e os filtros para consultar os documentos do perfil."/>}
     </Panel>
-    <FiscalDraftDetailsDialog draft={detailDraft ? drafts.find((draft) => draft.id === detailDraft.id) ?? detailDraft : null} remoteStatus={detailDraft?.emissionId ? remoteStatuses[detailDraft.emissionId] : undefined} company={company} onClose={() => setDetailDraft(null)} onRevalidate={onRevalidate}/>
-    {issueDraft?.emissionId && remoteStatuses[issueDraft.emissionId]?.state === 'rejected' ? <FiscalRejectedCorrectionDialog draft={drafts.find((draft) => draft.id === issueDraft.id) ?? issueDraft} remoteStatus={remoteStatuses[issueDraft.emissionId]} loading={statusSync[issueDraft.emissionId]?.loading} onClose={() => setIssueDraft(null)} onSubmit={(items) => requestFiscalCorrection(issueDraft, remoteStatuses[issueDraft.emissionId as string], items)} onNavigate={(target) => { setIssueDraft(null); onNavigate(target); }}/> : <FiscalIssueReviewDialog draft={issueDraft ? drafts.find((draft) => draft.id === issueDraft.id) ?? issueDraft : null} remoteStatus={issueDraft?.emissionId ? remoteStatuses[issueDraft.emissionId] : undefined} loading={issueDraft ? fiscalPrepareState[issueDraft.id]?.loading : false} company={company} numberingLedger={numberingLedger} onClose={() => setIssueDraft(null)} onReserveNumber={(draft, expectedVersion) => { onReserveNumber(draft, expectedVersion); setIssueDraft(null); }} onContinueIssuance={(draft, expectedVersion) => { onContinueIssuance(draft, expectedVersion); setIssueDraft(null); }} onRevalidate={onRevalidate} onCorrect={(target) => { setIssueDraft(null); onNavigate(target); }}/>}
+    <FiscalDraftDetailsDialog key={detailDraft?.id} draft={detailDraft ? drafts.find((draft) => draft.id === detailDraft.id) ?? detailDraft : null} remoteStatus={detailDraft?.emissionId ? remoteStatuses[detailDraft.emissionId] : undefined} company={company} onClose={() => setDetailDraft(null)} onRevalidate={onRevalidate}/>
+    {<FiscalIssueReviewDialog onCheckout={checkoutAndShowResult}   draft={issueDraft ? onPreviewDraft?.(fiscalDraftForReview(drafts.find((draft) => draft.id === issueDraft.id) ?? issueDraft, issueDraft.emissionId ? remoteStatuses[issueDraft.emissionId] : undefined)) ?? fiscalDraftForReview(drafts.find((draft) => draft.id === issueDraft.id) ?? issueDraft) : null} onResolveIssue={(draft,key,productTarget)=>{setIssueDraft(null);if(key==='submission-status')openFiscalResult(draft);else onResolveIssue?.(draft,key,productTarget);}} remoteStatus={issueDraft?.emissionId ? remoteStatuses[issueDraft.emissionId] : undefined}  company={company}  onClose={() => setIssueDraft(null)}    onCorrect={(target) => { setIssueDraft(null); onNavigate(target); }}/>}
+    {resultDraft && <FiscalNoteResultDialog draft={currentResultDraft ?? resultDraft} status={resultEmissionId ? remoteStatuses[resultEmissionId] : undefined} loading={resultEmissionId ? statusSync[resultEmissionId]?.loading : false} message={fiscalBridgeMessage || (resultEmissionId ? statusSync[resultEmissionId]?.message : '')} sharingFile={sharingFile} onClose={()=>{resultGenerationRef.current++;setResultDraft(null);setSharingFile(null);}} onShareReady={()=>{if(!sharingFile)return;if(navigator.share&&navigator.canShare?.({files:[sharingFile]})){void navigator.share({title:'Nota fiscal',files:[sharingFile]}).then(()=>{setSharingFile(null);setFiscalBridgeMessage('');}).catch(error=>{if(error?.name!=='AbortError')setFiscalBridgeMessage('O compartilhamento não foi concluído. Você pode baixar o arquivo.');});}else{const url=URL.createObjectURL(sharingFile);const link=document.createElement('a');link.href=url;link.download=sharingFile.name;link.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);setSharingFile(null);setFiscalBridgeMessage('Este navegador não oferece compartilhamento de arquivos. O documento foi baixado para compartilhar manualmente.');}}} onDownload={requestFiscalDownload} onShare={(id,type)=>requestFiscalDownload(id,type,true)} onDetails={()=>{setResultDraft(null);setDetailDraft(resultDraft);}} onReview={()=>{setResultDraft(null);setIssueDraft(resultDraft);}} onCancel={()=>{setResultDraft(null);setCancelDraft(resultDraft);}}/>}
     <FiscalNumberingDialog open={numberingOpen} ledger={numberingLedger} documentScope={settings.fiscal.documentScope} actor={activeUserName} readOnly={!can('fiscal.configure')} onClose={() => setNumberingOpen(false)} onSave={onSaveNumbering}/>
     {cancelDraft && cancelDraft.emissionId && remoteStatuses[cancelDraft.emissionId]?.authorized && remoteStatuses[cancelDraft.emissionId]?.state !== 'canceled'
       ? <FiscalCancellationDialog draft={cancelDraft} remoteStatus={remoteStatuses[cancelDraft.emissionId]} loading={statusSync[cancelDraft.emissionId]?.loading} onClose={() => setCancelDraft(null)} onSubmit={(justification) => requestFiscalCancellation(cancelDraft, remoteStatuses[cancelDraft.emissionId as string], justification)}/>
-      : cancelDraft && <Dialog open title={`Cancelar rascunho de ${cancelDraft.originId}`} description="O histórico será preservado e nenhuma nota será emitida." onClose={() => setCancelDraft(null)}><div className="dialog-body lifecycle-confirmation"><div className="lifecycle-effect"><Icon name="warning" size={19}/><div><strong>Cancelar preparação da nota</strong><p>O rascunho ficará cancelado e poderá ser consultado no histórico.</p></div></div></div><footer className="dialog-footer"><button type="button" className="button secondary" onClick={() => setCancelDraft(null)}>Manter rascunho</button><button type="button" className="button danger" disabled={!can('fiscal.cancel')} onClick={() => { onCancel(cancelDraft); setCancelDraft(null); }}>Cancelar rascunho</button></footer></Dialog>}
+      : cancelDraft && <Dialog open title="Excluir rascunho" description="O rascunho sairá da lista. Nenhuma nota autorizada será excluída." onClose={() => setCancelDraft(null)}><div className="dialog-body"><p>Deseja excluir este rascunho e liberar a numeração ainda não utilizada?</p>{fiscalBridgeMessage&&<p role="alert" className="field-error">{fiscalBridgeMessage}</p>}</div><footer className="dialog-footer"><BotaoAcaoCompacto variante="secundario" onClick={()=>setCancelDraft(null)}>Manter rascunho</BotaoAcaoCompacto><BotaoAcaoCompacto variante="destrutivo" disabled={!can('fiscal.cancel')} onClick={()=>requestDraftDelete(cancelDraft)}>Excluir rascunho</BotaoAcaoCompacto></footer></Dialog>}
+
   </>;
 }
 
@@ -4365,7 +4774,7 @@ function ReceivableDetailsDialog({ record, onClose }: { record: ReceivableRecord
       <section><div className="client-section-heading"><h3>Dados da parcela</h3><p>Origem comercial e condição preservadas para auditoria.</p></div><dl className="receivable-definition-list"><div><dt>Cliente</dt><dd>{record.client}</dd></div><div><dt>Operação de origem</dt><dd>{record.origin}</dd></div><div><dt>Vencimento</dt><dd>{displayIsoDate(record.dueDate)}</dd></div><div><dt>Forma prevista</dt><dd>{record.method}</dd></div><div><dt>Valor estornado</dt><dd>{money(record.reversed)}</dd></div><div><dt>Recebimentos estornados</dt><dd>{money(record.refunded)}</dd></div></dl></section>
       <section><div className="client-section-heading"><h3>Histórico financeiro</h3><p>Geração, recebimentos e estornos desta parcela.</p></div><div className="receivable-event-list">{record.events.map((event, index) => <div key={`${event.date}-${index}`}><span className={event.type.includes('Estorno') ? 'reversal' : ''}><Icon name={event.type === 'Recebimento' ? 'money' : event.type.includes('Estorno') ? 'back' : 'document'} size={15}/></span><div><strong>{event.type} · {money(event.amount)}</strong><small>{new Date(event.date).toLocaleString('pt-BR')} · {event.user}</small><p>{event.description}{event.account && event.account !== 'Não aplicável' ? ` · ${event.account}` : ''}</p></div></div>)}</div></section>
     </div>
-    <footer className="dialog-footer"><button type="button" className="button primary" onClick={onClose}>Fechar</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="primario" onClick={onClose}>Fechar</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -4412,7 +4821,7 @@ function ReceivableOperationDialog({ mode, records, initialId, connected, onClos
       {selected && <div className="receivable-operation-balance"><div><span>Valor da parcela</span><strong>{money(selected.value)}</strong></div><div><span>{isRefund ? 'Disponível para estorno' : 'Saldo antes do recebimento'}</span><strong>{money(available)}</strong></div><div><span>Saldo após operação</span><strong>{money(Math.max(0, available - commercialNumber(amount)))}</strong></div></div>}
       {error && <p id="receivable-operation-error" className="form-error" role="alert">{error}</p>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose} disabled={saving}>Cancelar</button><button type="button" className={`button ${isRefund ? 'danger' : 'primary'}`} onClick={() => void submit()} disabled={!selected || saving}>{saving ? 'Confirmando…' : isRefund ? 'Confirmar estorno' : 'Registrar recebimento'}</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose} disabled={saving}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante={isRefund ? 'destrutivo' : 'primario'} onClick={() => void submit()} disabled={!selected || saving}>{saving ? 'Confirmando…' : isRefund ? 'Confirmar estorno' : 'Registrar recebimento'}</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -4542,7 +4951,7 @@ function splitTeam(value: string) {
   return [...new Set(value.split(/[\n,;]/).map((item) => item.trim()).filter(Boolean))];
 }
 
-function SettingsDialog({ section, settings, onClose, onSave }: { section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => void }) {
+function SettingsDialog({ section, settings, onClose, onSave, onOpenNumbering }: { section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => void; onOpenNumbering?: () => void }) {
   const [draft, setDraft] = useState(settings);
   const [error, setError] = useState('');
   const [lookup, setLookup] = useState<{ kind: 'cnpj' | 'cep'; message: string; tone: 'success' | 'error' } | null>(null);
@@ -4707,11 +5116,11 @@ function SettingsDialog({ section, settings, onClose, onSave }: { section: Setti
           return <label className="check-field" key={option.type}><input type="checkbox" checked={checked} disabled={lastSelected} onChange={(event) => toggleFiscalDocument(option.type, event.target.checked)}/><span><strong>{option.title}</strong><small>{option.description}{lastSelected ? ' Ao menos um tipo deve permanecer selecionado.' : ''}</small></span></label>;
         })}</div></section>
         <section className="settings-form-section"><div className="client-section-heading"><h3>Responsável fiscal</h3><p>Identifique quem confere as informações tributárias da empresa.</p></div><div className="form-grid"><label className="field field-wide"><span>Responsável ou escritório contábil</span><input value={draft.fiscal.fiscalResponsible} onChange={(event) => updateFiscal({ fiscalResponsible: event.target.value })} maxLength={100} placeholder="Nome do responsável ou escritório contábil"/></label></div></section>
-        <section className="settings-form-section"><div className="client-section-heading"><h3>Séries cadastradas</h3><p>A série e o próximo número são administrados em Central Fiscal &gt; Séries e numeração, com proteção contra duplicidade.</p></div><div className="series-grid">
+        <section className="settings-form-section"><div className="client-section-heading"><h3>Séries cadastradas</h3>{onOpenNumbering&&<BotaoAcaoCompacto onClick={onOpenNumbering}>Configurar série e numeração</BotaoAcaoCompacto>}<p>Configure a série e o próximo número livre, com proteção contra duplicidade.</p></div>{!onOpenNumbering&&<div className="series-grid">
           {draft.fiscal.documentScope.includes('nfe') && <div><span>NF-e</span><strong>Série {draft.fiscal.nfeSeries || 'não definida'}</strong><small>Gerenciada na Central Fiscal</small></div>}
           {draft.fiscal.documentScope.includes('nfce') && <div><span>NFC-e</span><strong>Série {draft.fiscal.nfceSeries || 'não definida'}</strong><small>Gerenciada na Central Fiscal</small></div>}
           {draft.fiscal.documentScope.includes('nfse') && <div><span>NFS-e</span><strong>Série {draft.fiscal.nfseSeries || 'não definida'}</strong><small>Gerenciada na Central Fiscal</small></div>}
-        </div></section>
+        </div>}</section>
         <section className="settings-form-section"><div className="client-section-heading"><h3>Conferência contábil</h3><p>Estas confirmações registram a revisão; não conectam o governo nem emitem notas.</p></div><div className="form-grid">
           <label className="check-field field-wide"><input type="checkbox" checked={draft.fiscal.taxReviewConfirmed} onChange={(event) => updateFiscal({ taxReviewConfirmed: event.target.checked })}/><span><strong>Cadastro fiscal conferido</strong><small>O responsável fiscal confirmou os dados da empresa e as regras utilizadas nas operações.</small></span></label>
           <label className="check-field field-wide"><input type="checkbox" checked={draft.fiscal.taxReformReviewConfirmed} onChange={(event) => updateFiscal({ taxReformReviewConfirmed: event.target.checked })}/><span><strong>Regras tributárias atuais conferidas</strong><small>O contador confirmou que as configurações acompanham as obrigações vigentes da empresa.</small></span></label>
@@ -4719,7 +5128,7 @@ function SettingsDialog({ section, settings, onClose, onSave }: { section: Setti
       </div>}
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>Cancelar</button><button type="button" className="button primary" onClick={save}>Salvar configurações</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={save}>Salvar configurações</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -4755,6 +5164,15 @@ function FiscalMatrixDialog({ open, matrix, documentScope, taxReviewConfirmed, t
   const [selectedId, setSelectedId] = useState(matrix.rules.find((rule) => documentScope.includes(rule.documentType))?.id ?? '');
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState('');
+  const issueFormRef = useRef<HTMLDivElement>(null);
+  const [issueTarget, setIssueTarget] = useState<(FiscalMatrixIssue & { sequence: number }) | null>(null);
+  useEffect(() => {
+    if (!issueTarget || !editing) return;
+    const field = Array.from(issueFormRef.current?.querySelectorAll<HTMLElement>('[data-fiscal-field]') || []).find((element) => element.dataset.fiscalField === issueTarget.field);
+    const target = field || issueFormRef.current?.querySelector<HTMLElement>('.fiscal-matrix-validation');
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: 'center', behavior: 'instant' });
+  }, [issueTarget, selectedId, editing]);
   useEffect(() => {
     const normalized = normalizeFiscalMatrix(matrix);
     setDraft(normalized);
@@ -4763,11 +5181,21 @@ function FiscalMatrixDialog({ open, matrix, documentScope, taxReviewConfirmed, t
     setTaxReformReviewConfirmedDraft(taxReformReviewConfirmed);
     setEditing(false);
     setError('');
+    setIssueTarget(null);
   }, [documentScope, matrix, open, taxReformReviewConfirmed, taxReviewConfirmed]);
   if (!open) return null;
   const visibleRules = draft.rules.filter((rule) => documentScope.includes(rule.documentType));
   const selected = visibleRules.find((rule) => rule.id === selectedId) ?? visibleRules[0];
-  const validation = validateFiscalMatrix(draft, documentScope);
+  const validation = validateFiscalMatrixPublication({ matrix: draft, documentScope, taxReviewConfirmed: taxReviewConfirmedDraft, taxReformReviewConfirmed: taxReformReviewConfirmedDraft });
+  const fieldProps = (field: string, ruleId = '') => {
+    const index = validation.issues.findIndex((item) => item.field === field && item.ruleId === ruleId);
+    return { 'data-fiscal-field': field, 'aria-invalid': index >= 0 || undefined, 'aria-describedby': editing && index >= 0 ? `fiscal-pending-${index}` : undefined };
+  };
+  const goToIssue = (pending: FiscalMatrixIssue) => {
+    if (pending.ruleId) setSelectedId(pending.ruleId);
+    setEditing(true);
+    setIssueTarget((current) => ({ ...pending, sequence: (current?.sequence || 0) + 1 }));
+  };
   const activeRules = visibleRules.filter((rule) => rule.active);
   const reviewedRules = activeRules.filter((rule) => rule.reviewed);
   const coveredDocuments = new Set(activeRules.map((rule) => rule.documentType)).size;
@@ -4799,14 +5227,12 @@ function FiscalMatrixDialog({ open, matrix, documentScope, taxReviewConfirmed, t
   };
   const save = () => {
     if (readOnly) return;
-    const result = validateFiscalMatrix(draft, documentScope);
-    if (!result.ready) { setError(result.errors[0]); return; }
-    if (!taxReviewConfirmedDraft) { setError('Confirme a revisão do cadastro fiscal da empresa.'); return; }
-    if (!taxReformReviewConfirmedDraft) { setError('Confirme que as regras tributárias atuais foram conferidas.'); return; }
+    const result = validateFiscalMatrixPublication({ matrix: draft, documentScope, taxReviewConfirmed: taxReviewConfirmedDraft, taxReformReviewConfirmed: taxReformReviewConfirmedDraft });
+    if (!result.ready) { setError(''); goToIssue(result.issues[0]); return; }
     onSave({ matrix: result.matrix, taxReviewConfirmed: taxReviewConfirmedDraft, taxReformReviewConfirmed: taxReformReviewConfirmedDraft });
   };
   return <Dialog open title={editing ? 'Revisar regras fiscais' : 'Regras fiscais'} description={editing ? 'Ajuste os critérios com o contador ou responsável fiscal da empresa.' : 'Acompanhe a revisão das regras usadas nos tipos de nota ativados para a empresa.'} onClose={onClose}>
-    <div className="dialog-body access-settings-body fiscal-matrix-body">
+    <div ref={issueFormRef} className="dialog-body access-settings-body fiscal-matrix-body">
       <div className="access-safety-note fiscal-matrix-context" role={bridge.integrated ? 'status' : undefined} aria-live={bridge.integrated ? 'polite' : undefined}><Icon name={bridge.integrated ? bridge.loading ? 'clock' : bridge.available && bridge.configuration ? 'check' : 'warning' : 'warning'} size={18}/><p><strong>{bridge.integrated ? bridge.loading ? 'Consultando publicação fiscal' : bridge.configuration ? `Versão ${bridge.configuration.version} publicada` : bridge.available ? 'Regras ainda não publicadas' : 'Publicação protegida indisponível' : 'Revisão do responsável fiscal'}</strong><small>{bridge.integrated ? `${bridge.message || (bridge.configuration ? 'Esta é a versão utilizada pelo servidor para preparar novas NF-e.' : 'A emissão permanece bloqueada até existir uma versão revisada e publicada.')} Confira os cenários utilizados com o contador ou responsável fiscal.` : 'O sistema considera somente os tipos de nota ativados. Confira os cenários utilizados com o contador ou responsável fiscal antes da emissão real.'}</small></p></div>
       <div className="access-metrics fiscal-matrix-metrics" aria-label="Resumo das regras fiscais"><div><span>Tipos de nota</span><strong>{documentScope.length}</strong><small>{coveredDocuments} com regra ativa</small></div><div><span>Regras ativas</span><strong>{activeRules.length}</strong><small>nos tipos utilizados</small></div><div><span>Revisadas</span><strong>{reviewedRules.length}</strong><small>de {activeRules.length} regras ativas</small></div><div><span>Última revisão</span><strong>{draft.reviewedAt ? new Date(draft.reviewedAt + 'T12:00:00').toLocaleDateString('pt-BR') : 'Pendente'}</strong><small>{draft.reviewedBy || 'Responsável não informado'}</small></div></div>
       {readOnly && <p className="access-readonly-note"><Icon name="warning" size={16}/> Consulta liberada. A permissão Configurar matriz fiscal é necessária para alterar regras.</p>}
@@ -4819,21 +5245,24 @@ function FiscalMatrixDialog({ open, matrix, documentScope, taxReviewConfirmed, t
         })}</section>
         <section className="fiscal-matrix-review-summary"><div><span className="fiscal-matrix-document-icon"><Icon name="users" size={20}/></span><p><strong>Conferência registrada</strong><small>{draft.reviewedBy && draft.reviewedAt ? draft.reviewedBy + ' · ' + new Date(draft.reviewedAt + 'T12:00:00').toLocaleDateString('pt-BR') : 'Ainda não há responsável e data de revisão registrados.'}</small></p></div><Badge tone={validation.ready && reviewedRules.length === activeRules.length ? 'success' : 'warning'}>{validation.ready && reviewedRules.length === activeRules.length ? 'Concluída' : 'Pendente'}</Badge></section>
       </> : <>
-      <section className="fiscal-matrix-review"><div className="client-section-heading"><h3>Responsável pela revisão</h3><p>Identifica quem aprovou as regras marcadas como revisadas.</p></div><div className="fiscal-matrix-review-fields"><label className="field"><span>Revisado por</span><input value={draft.reviewedBy} disabled={readOnly} onChange={(event) => setDraft((current) => ({ ...current, reviewedBy: event.target.value }))} maxLength={100} placeholder="Responsável fiscal ou escritório"/></label><label className="field"><span>Data da revisão</span><input type="date" value={draft.reviewedAt} disabled={readOnly} onChange={(event) => setDraft((current) => ({ ...current, reviewedAt: event.target.value }))}/></label><label className="check-field fiscal-matrix-review-check"><input type="checkbox" checked={taxReviewConfirmedDraft} disabled={readOnly} onChange={(event) => { setTaxReviewConfirmedDraft(event.target.checked); setError(''); }}/><span><strong>Cadastro fiscal conferido</strong><small>Dados da empresa e regras validados.</small></span></label><label className="check-field fiscal-matrix-review-check"><input type="checkbox" checked={taxReformReviewConfirmedDraft} disabled={readOnly} onChange={(event) => { setTaxReformReviewConfirmedDraft(event.target.checked); setError(''); }}/><span><strong>Regras atuais conferidas</strong><small>Obrigações vigentes validadas.</small></span></label></div></section>
+      <section className="fiscal-matrix-review"><div className="client-section-heading"><h3>Responsável pela revisão</h3><p>Identifica quem aprovou as regras marcadas como revisadas.</p></div><div className="fiscal-matrix-review-fields"><label className="field"><span>Revisado por</span><input {...fieldProps('reviewedBy')} value={draft.reviewedBy} disabled={readOnly} onChange={(event) => setDraft((current) => ({ ...current, reviewedBy: event.target.value }))} maxLength={100} placeholder="Responsável fiscal ou escritório"/></label><label className="field"><span>Data da revisão</span><input {...fieldProps('reviewedAt')} type="date" value={draft.reviewedAt} disabled={readOnly} onChange={(event) => setDraft((current) => ({ ...current, reviewedAt: event.target.value }))}/></label><label className="check-field fiscal-matrix-review-check"><input {...fieldProps('taxReviewConfirmed')} type="checkbox" checked={taxReviewConfirmedDraft} disabled={readOnly} onChange={(event) => { setTaxReviewConfirmedDraft(event.target.checked); setError(''); }}/><span><strong>Cadastro fiscal conferido</strong><small>Dados da empresa e regras validados.</small></span></label><label className="check-field fiscal-matrix-review-check"><input {...fieldProps('taxReformReviewConfirmed')} type="checkbox" checked={taxReformReviewConfirmedDraft} disabled={readOnly} onChange={(event) => { setTaxReformReviewConfirmedDraft(event.target.checked); setError(''); }}/><span><strong>Regras atuais conferidas</strong><small>Obrigações vigentes validadas.</small></span></label></div></section>
       {selected && <div className="access-workspace fiscal-matrix-workspace">
         <div className="fiscal-matrix-rule-toolbar"><div><span>Regras fiscais</span><strong>{visibleRules.length} {visibleRules.length === 1 ? 'regra cadastrada' : 'regras cadastradas'}</strong></div><div className="fiscal-matrix-actions"><button type="button" className="button secondary" onClick={addRule} disabled={readOnly}><Icon name="plus" size={16}/> Adicionar</button><button type="button" className="button secondary" onClick={duplicateRule} disabled={readOnly}><Icon name="copy" size={15}/> Duplicar</button><button type="button" className="button danger" onClick={removeRule} disabled={readOnly || draft.rules.filter((rule) => rule.documentType === selected.documentType).length <= 1}><Icon name="close" size={15}/> Excluir</button></div></div>
         <aside className="fiscal-matrix-sidebar"><div className="access-option-list" aria-label="Regras fiscais">{visibleRules.map((rule) => <button type="button" key={rule.id} className={rule.id === selected.id ? 'active' : ''} onClick={() => setSelectedId(rule.id)}><span><strong>{rule.name}</strong><small>{fiscalDocumentLabels[rule.documentType]} · prioridade {rule.priority}</small></span><Badge tone={!rule.active ? 'neutral' : rule.reviewed ? 'success' : 'warning'}>{!rule.active ? 'Inativa' : rule.reviewed ? 'Revisada' : 'Pendente'}</Badge></button>)}</div></aside>
         <section className="access-editor fiscal-matrix-editor"><div className="access-editor-heading"><div><span>Regra selecionada</span><h3>{selected.name}</h3><p>{fiscalDocumentLabels[selected.documentType]} · prioridade {selected.priority} · {selected.active ? 'ativa' : 'inativa'}</p></div></div>
-          <section className="settings-form-section"><div className="client-section-heading"><h3>Identificação e controle</h3><p>Prioridades menores vencem quando duas regras possuem a mesma especificidade.</p></div><div className="form-grid"><label className="field field-wide"><span>Nome da regra *</span><input value={selected.name} disabled={readOnly} onChange={(event) => updateRule({ name: event.target.value, reviewed: false })} maxLength={100}/></label><label className="field"><span>Documento *</span><select value={selected.documentType} disabled={readOnly} onChange={(event) => changeDocument(event.target.value as FiscalMatrixRule['documentType'])}>{documentScope.map((documentType) => <option value={documentType} key={documentType}>{fiscalDocumentLabels[documentType]}</option>)}</select></label><label className="field"><span>Prioridade *</span><input type="number" min="1" max="999" value={selected.priority} disabled={readOnly} onChange={(event) => updateRule({ priority: Math.max(1, Math.min(999, Number(event.target.value) || 1)), reviewed: false })}/></label><label className="check-field"><input type="checkbox" checked={selected.active} disabled={readOnly} onChange={(event) => updateRule({ active: event.target.checked })}/><span><strong>Regra ativa</strong><small>Regras inativas permanecem no histórico, mas não participam do enquadramento.</small></span></label><label className="check-field"><input type="checkbox" checked={selected.reviewed} disabled={readOnly} onChange={(event) => updateRule({ reviewed: event.target.checked })}/><span><strong>Regra revisada</strong><small>Exige responsável e data da revisão antes de salvar.</small></span></label></div></section>
-          <section className="settings-form-section"><div className="client-section-heading"><h3>Condições de correspondência</h3><p>Use “Qualquer” como fallback. A regra mais específica é escolhida antes da prioridade.</p></div><div className="form-grid"><label className="field"><span>Operação</span><select value={selected.operation} disabled={readOnly} onChange={(event) => updateRule({ operation: event.target.value, reviewed: false })}><option>Qualquer</option><option>Venda</option><option>Prestação de serviço</option><option>Devolução</option><option>Remessa</option><option>Retorno</option></select></label><label className="field"><span>Destino</span><select value={selected.destination} disabled={readOnly || selected.documentType === 'nfse'} onChange={(event) => updateRule({ destination: event.target.value, reviewed: false })}><option>Qualquer</option><option>Dentro da UF</option><option>Fora da UF</option><option>Exterior</option><option>Não aplicável</option></select></label><label className="field"><span>Situação da inscrição estadual</span><select value={selected.recipientProfile} disabled={readOnly || selected.documentType === 'nfse'} onChange={(event) => updateRule({ recipientProfile: event.target.value, reviewed: false })}><option>Qualquer</option><option>Contribuinte ICMS</option><option>Contribuinte isento</option><option>Não contribuinte</option><option>Não aplicável</option></select></label><label className="field"><span>Consumidor final</span><select value={selected.consumerFinal} disabled={readOnly || selected.documentType === 'nfse'} onChange={(event) => updateRule({ consumerFinal: event.target.value, reviewed: false })}><option>Qualquer</option><option>Sim</option><option>Não</option><option>Não aplicável</option></select></label><label className="field"><span>Presença</span><select value={selected.presence} disabled={readOnly || selected.documentType === 'nfse'} onChange={(event) => updateRule({ presence: event.target.value, reviewed: false })}><option>Qualquer</option><option>Presencial</option><option>Internet</option><option>Não presencial</option><option>Não aplicável</option></select></label><label className="field"><span>Finalidade fiscal</span><select value={selected.issuePurpose} disabled={readOnly} onChange={(event) => updateRule({ issuePurpose: event.target.value, reviewed: false })}><option>Normal</option><option>Complementar</option><option>Devolução</option><option>Ajuste</option></select></label></div></section>
-          <section className="settings-form-section"><div className="client-section-heading"><h3>Definições da emissão</h3><p>Natureza e CFOP pertencem à operação emitida; a regra é escolhida pelo destinatário, destino e finalidade da nota.</p></div><div className="form-grid"><label className="field field-wide"><span>Natureza da operação *</span><input value={selected.operationNature} disabled={readOnly} onChange={(event) => updateRule({ operationNature: event.target.value, reviewed: false })} maxLength={120} placeholder="Descrição que identifica a natureza da operação"/></label>{selected.documentType !== 'nfse' && <label className="field"><span>CFOP da operação *</span><input inputMode="numeric" value={selected.cfopOverride} disabled={readOnly} onChange={(event) => updateRule({ cfopOverride: event.target.value.replace(/\D/g, '').slice(0, 4), reviewed: false })} placeholder="0000" maxLength={4}/><small className="field-message">Obrigatório para esta regra de emissão; não é herdado do produto.</small></label>}{selected.documentType === 'nfse' && <label className="field"><span>Incidência do ISS</span><select value={selected.serviceIncidenceMode} disabled={readOnly} onChange={(event) => updateRule({ serviceIncidenceMode: event.target.value, reviewed: false })}><option>Herdar do serviço</option><option>Município do prestador</option><option>Município do tomador</option><option>Local da execução</option><option>Definir por operação</option></select></label>}<label className="check-field"><input type="checkbox" checked={selected.requiresStateRegistration} disabled={readOnly || selected.documentType === 'nfse'} onChange={(event) => updateRule({ requiresStateRegistration: event.target.checked, reviewed: false })}/><span><strong>Exigir inscrição estadual</strong><small>Adiciona a conferência do destinatário para esta regra.</small></span></label><label className="check-field"><input type="checkbox" checked={selected.requiresMunicipalIncidence} disabled={readOnly || selected.documentType !== 'nfse'} onChange={(event) => updateRule({ requiresMunicipalIncidence: event.target.checked, reviewed: false })}/><span><strong>Exigir município de incidência</strong><small>Usado na preparação da DPS/NFS-e.</small></span></label></div></section>
+          <section className="settings-form-section"><div className="client-section-heading"><h3>Identificação e controle</h3><p>Prioridades menores vencem quando duas regras possuem a mesma especificidade.</p></div><div className="form-grid"><label className="field field-wide"><span>Nome da regra *</span><input {...fieldProps('name', selected.id)} value={selected.name} disabled={readOnly} onChange={(event) => updateRule({ name: event.target.value, reviewed: false })} maxLength={100}/></label><label className="field"><span>Documento *</span><select {...fieldProps('documentType', selected.id)} value={selected.documentType} disabled={readOnly} onChange={(event) => changeDocument(event.target.value as FiscalMatrixRule['documentType'])}>{documentScope.map((documentType) => <option value={documentType} key={documentType}>{fiscalDocumentLabels[documentType]}</option>)}</select></label><label className="field"><span>Prioridade *</span><input {...fieldProps('priority', selected.id)} type="number" min="1" max="999" value={selected.priority} disabled={readOnly} onChange={(event) => updateRule({ priority: Math.max(1, Math.min(999, Number(event.target.value) || 1)), reviewed: false })}/></label><label className="check-field"><input {...fieldProps('active', selected.id)} type="checkbox" checked={selected.active} disabled={readOnly} onChange={(event) => updateRule({ active: event.target.checked })}/><span><strong>Regra ativa</strong><small>Regras inativas permanecem no histórico, mas não participam do enquadramento.</small></span></label><label className="check-field"><input {...fieldProps('reviewed', selected.id)} type="checkbox" checked={selected.reviewed} disabled={readOnly} onChange={(event) => updateRule({ reviewed: event.target.checked })}/><span><strong>Regra revisada</strong><small>Exige responsável e data da revisão antes de salvar.</small></span></label></div></section>
+          <section className="settings-form-section"><div className="client-section-heading"><h3>Condições de correspondência</h3><p>Use “Qualquer” como fallback. A regra mais específica é escolhida antes da prioridade.</p></div><div className="form-grid"><label className="field"><span>Operação</span><select {...fieldProps('operation', selected.id)} value={selected.operation} disabled={readOnly} onChange={(event) => updateRule({ operation: event.target.value, reviewed: false })}><option>Qualquer</option><option>Venda</option><option>Prestação de serviço</option><option>Devolução</option><option>Remessa</option><option>Retorno</option></select></label><label className="field"><span>Destino</span><select {...fieldProps('destination', selected.id)} value={selected.destination} disabled={readOnly || selected.documentType === 'nfse'} onChange={(event) => updateRule({ destination: event.target.value, reviewed: false })}><option>Qualquer</option><option>Dentro da UF</option><option>Fora da UF</option><option>Exterior</option><option>Não aplicável</option></select></label><label className="field"><span>Situação da inscrição estadual</span><select {...fieldProps('recipientProfile', selected.id)} value={selected.recipientProfile} disabled={readOnly || selected.documentType === 'nfse'} onChange={(event) => updateRule({ recipientProfile: event.target.value, reviewed: false })}><option>Qualquer</option><option>Contribuinte ICMS</option><option>Contribuinte isento</option><option>Não contribuinte</option><option>Não aplicável</option></select></label><label className="field"><span>Consumidor final</span><select {...fieldProps('consumerFinal', selected.id)} value={selected.consumerFinal} disabled={readOnly || selected.documentType === 'nfse'} onChange={(event) => updateRule({ consumerFinal: event.target.value, reviewed: false })}><option>Qualquer</option><option>Sim</option><option>Não</option><option>Não aplicável</option></select></label><label className="field"><span>Presença</span><select {...fieldProps('presence', selected.id)} value={selected.presence} disabled={readOnly || selected.documentType === 'nfse'} onChange={(event) => updateRule({ presence: event.target.value, reviewed: false })}><option>Qualquer</option><option>Presencial</option><option>Internet</option><option>Não presencial</option><option>Não aplicável</option></select></label><label className="field"><span>Finalidade fiscal</span><select {...fieldProps('issuePurpose', selected.id)} value={selected.issuePurpose} disabled={readOnly} onChange={(event) => updateRule({ issuePurpose: event.target.value, reviewed: false })}><option>Normal</option><option>Complementar</option><option>Devolução</option><option>Ajuste</option></select></label></div></section>
+          <section className="settings-form-section"><div className="client-section-heading"><h3>Definições da emissão</h3><p>Natureza e CFOP pertencem à operação emitida; a regra é escolhida pelo destinatário, destino e finalidade da nota.</p></div><div className="form-grid"><label className="field field-wide"><span>Natureza da operação *</span><input {...fieldProps('operationNature', selected.id)} value={selected.operationNature} disabled={readOnly} onChange={(event) => updateRule({ operationNature: event.target.value, reviewed: false })} maxLength={120} placeholder="Descrição que identifica a natureza da operação"/></label>{selected.documentType !== 'nfse' && <label className="field"><span>CFOP da operação *</span><input {...fieldProps('cfopOverride', selected.id)} inputMode="numeric" value={selected.cfopOverride} disabled={readOnly} onChange={(event) => updateRule({ cfopOverride: event.target.value.replace(/\D/g, '').slice(0, 4), reviewed: false })} placeholder="0000" maxLength={4}/><small className="field-message">Obrigatório para esta regra de emissão; não é herdado do produto.</small></label>}{selected.documentType === 'nfse' && <label className="field"><span>Incidência do ISS</span><select {...fieldProps('serviceIncidenceMode', selected.id)} value={selected.serviceIncidenceMode} disabled={readOnly} onChange={(event) => updateRule({ serviceIncidenceMode: event.target.value, reviewed: false })}><option>Herdar do serviço</option><option>Município do prestador</option><option>Município do tomador</option><option>Local da execução</option><option>Definir por operação</option></select></label>}<label className="check-field"><input type="checkbox" checked={selected.requiresStateRegistration} disabled={readOnly || selected.documentType === 'nfse'} onChange={(event) => updateRule({ requiresStateRegistration: event.target.checked, reviewed: false })}/><span><strong>Exigir inscrição estadual</strong><small>Adiciona a conferência do destinatário para esta regra.</small></span></label><label className="check-field"><input type="checkbox" checked={selected.requiresMunicipalIncidence} disabled={readOnly || selected.documentType !== 'nfse'} onChange={(event) => updateRule({ requiresMunicipalIncidence: event.target.checked, reviewed: false })}/><span><strong>Exigir município de incidência</strong><small>Usado na preparação da DPS/NFS-e.</small></span></label></div></section>
         </section>
       </div>}
-      <div className={`fiscal-matrix-validation ${validation.errors.length ? 'invalid' : ''}`} role="status"><div><Icon name={validation.errors.length ? 'warning' : validation.warnings.length ? 'clock' : 'check'} size={18}/><p><strong>{validation.errors.length ? `${validation.errors.length} bloqueios nas regras` : validation.warnings.length ? 'Estrutura válida, revisão pendente' : 'Regras estruturadas e revisadas'}</strong><small>{validation.errors[0] || validation.warnings[0] || 'Todos os tipos de nota ativados possuem cobertura.'}</small></p></div></div>
+      <div className={`fiscal-matrix-validation ${validation.issues.length ? 'invalid' : ''}`} tabIndex={-1} aria-label="Pendências para publicar regras fiscais">
+        <div role="status"><Icon name={validation.issues.length ? 'warning' : 'check'} size={18}/><p><strong>{validation.issues.length ? `${validation.issues.length} ${validation.issues.length === 1 ? 'pendência para publicar' : 'pendências para publicar'}` : 'Regras prontas para publicação'}</strong><small>{validation.issues.length ? 'Selecione uma pendência para ir ao campo correspondente.' : 'Campos obrigatórios e confirmações preenchidos.'}</small></p></div>
+        {validation.issues.length > 0 && <ul>{validation.issues.map((pending, index) => <li key={`${pending.ruleId}:${pending.field}:${index}`}><button id={`fiscal-pending-${index}`} type="button" onClick={() => goToIssue(pending)}>{pending.message}<Icon name="chevron" size={14}/></button></li>)}</ul>}
+      </div>
       {error && <p className="form-error" role="alert">{error}</p>}
       </>}
     </div>
-    <footer className="dialog-footer">{editing ? <><button type="button" className="button secondary" onClick={() => { setEditing(false); setError(''); }} disabled={bridge.loading}>Voltar ao resumo</button><button type="button" className="button primary" onClick={save} disabled={readOnly || bridge.loading}>{bridge.loading ? 'Publicando…' : bridge.integrated ? 'Publicar regras fiscais' : 'Salvar regras fiscais'}</button></> : <><button type="button" className="button secondary" onClick={onClose}>Fechar</button>{!readOnly && <button type="button" className="button primary" onClick={() => setEditing(true)}>Revisar regras fiscais</button>}</>}</footer>
+    <footer className="dialog-footer">{editing ? <><BotaoAcaoCompacto type="button" variante="secundario" onClick={() => { setEditing(false); setError(''); }} disabled={bridge.loading}>Voltar ao resumo</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={save} disabled={readOnly || bridge.loading}>{bridge.loading ? 'Publicando…' : bridge.integrated ? 'Publicar regras fiscais' : 'Salvar regras fiscais'}</BotaoAcaoCompacto></> : <><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto>{!readOnly && <BotaoAcaoCompacto type="button" variante="primario" onClick={() => setEditing(true)}>Revisar regras fiscais</BotaoAcaoCompacto>}</>}</footer>
   </Dialog>;
 }
 
@@ -4930,7 +5359,7 @@ function AccessSettingsDialog({ open, settings, readOnly, bridge, onClose, onSav
       </div>}
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>
-    <footer className="dialog-footer"><button type="button" className="button secondary" onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</button><button type="button" className="button primary" onClick={save} disabled={readOnly}>Salvar controle de acesso</button></footer>
+    <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={save} disabled={readOnly}>Salvar controle de acesso</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -5102,7 +5531,7 @@ function CertificateDigitalDialog({ open, company, bridge, onClose, onRequestCom
         </div>
       </>}
     </div>
-    <footer className="dialog-footer">{!companyRegistration.ready ? <><button type="button" className="button secondary" onClick={onClose}>Fechar</button><button type="button" className="button primary" onClick={onRequestCompanyRegistration}><Icon name="edit" size={16}/> Completar cadastro</button></> : adding ? <><button type="button" className="button secondary" onClick={() => { resetSensitiveFields(); setValidationError(''); onClose(); }} disabled={validating}>Cancelar</button><button type="button" className="button primary" onClick={validateCertificate} disabled={validating || (bridge.integrated && !bridge.available)}>{validating ? bridge.integrated ? 'Instalando…' : 'Validando…' : bridge.integrated ? 'Instalar certificado' : 'Validar certificado'}</button></> : <><button type="button" className="button secondary" onClick={onClose}>Fechar</button>{certificateInstalled && !certificateActive && <button type="button" className="button primary" onClick={retryActivation} disabled={bridge.loading}>{bridge.loading ? 'Verificando…' : 'Verificar novamente'}</button>}<button type="button" className="button secondary" onClick={() => { setValidationError(''); setAdding(true); }} disabled={bridge.loading}><Icon name="plus" size={16}/> {certificateInstalled || validationResult?.valid ? 'Substituir certificado' : 'Adicionar certificado'}</button></>}</footer>
+    <footer className="dialog-footer">{!companyRegistration.ready ? <><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={onRequestCompanyRegistration}><Icon name="edit" size={16}/> Completar cadastro</BotaoAcaoCompacto></> : adding ? <><BotaoAcaoCompacto type="button" variante="secundario" onClick={() => { resetSensitiveFields(); setValidationError(''); onClose(); }} disabled={validating}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={validateCertificate} disabled={validating || (bridge.integrated && !bridge.available)}>{validating ? bridge.integrated ? 'Instalando…' : 'Validando…' : bridge.integrated ? 'Instalar certificado' : 'Validar certificado'}</BotaoAcaoCompacto></> : <><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto>{certificateInstalled && !certificateActive && <BotaoAcaoCompacto type="button" variante="primario" onClick={retryActivation} disabled={bridge.loading}>{bridge.loading ? 'Verificando…' : 'Verificar novamente'}</BotaoAcaoCompacto>}<BotaoAcaoCompacto type="button" variante="secundario" onClick={() => { setValidationError(''); setAdding(true); }} disabled={bridge.loading}><Icon name="plus" size={16}/> {certificateInstalled || validationResult?.valid ? 'Substituir certificado' : 'Adicionar certificado'}</BotaoAcaoCompacto></>}</footer>
   </Dialog>;
 }
 
@@ -5110,7 +5539,7 @@ type SettingsTarget = SettingsSection | 'acessos' | 'matriz' | 'certificado' | n
 type SettingsGroupId = 'empresa-notas' | 'operacao' | 'equipe-acessos' | 'integracoes';
 type SettingsItem = { title: string; description: string; icon: IconName; status: string; target: SettingsTarget };
 
-function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate }: { settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => void; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void }) {
+function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate, onOpenNumbering }: { settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => void; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void; onOpenNumbering?: () => void }) {
   const [section, setSection] = useState<SettingsSection | null>(null);
   const [accessOpen, setAccessOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
@@ -5168,7 +5597,7 @@ function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAc
         return <button type="button" key={title} onClick={() => openTarget(target)} disabled={unavailable} title={!target ? 'Disponível quando a integração for conectada' : unavailable ? 'Seu perfil não permite alterar este ajuste' : undefined}><span><Icon name={icon}/></span><div><strong>{title}</strong><small>{description}</small><Badge tone={unavailable ? 'neutral' : attention ? 'warning' : 'neutral'}>{unavailable && target ? 'Sem acesso' : status}</Badge></div><Icon name={!unavailable ? 'chevron' : 'clock'} size={17}/></button>;
       })}</div>
     </section>
-    <SettingsDialog section={section} settings={settings} onClose={() => setSection(null)} onSave={(next) => { onSave(next); setSection(null); }}/>
+    <SettingsDialog onOpenNumbering={onOpenNumbering?()=>{setSection(null);onOpenNumbering();}:undefined} section={section} settings={settings} onClose={() => setSection(null)} onSave={(next) => { onSave(next); setSection(null); }}/>
     <FiscalMatrixDialog open={matrixOpen} matrix={settings.fiscal.matrix} documentScope={settings.fiscal.documentScope} taxReviewConfirmed={settings.fiscal.taxReviewConfirmed} taxReformReviewConfirmed={settings.fiscal.taxReformReviewConfirmed} bridge={fiscalRulesBridge} readOnly={!canConfigureFiscal || (fiscalRulesBridge.integrated && !fiscalRulesBridge.writable)} onClose={() => setMatrixOpen(false)} onSave={onSaveFiscalMatrix}/>
     <AccessSettingsDialog open={accessOpen} settings={settings} bridge={accessBridge} readOnly={!canManageAccess || (accessBridge.integrated && !accessBridge.writable)} onClose={() => setAccessOpen(false)} onSave={(next) => { onSaveAccess(next); setAccessOpen(false); }}/>
   </>;
@@ -5179,12 +5608,17 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [mobileMenu, setMobileMenu] = useState(false);
   const [newMenu, setNewMenu] = useState(false);
   const [newType, setNewType] = useState<DocumentType | null>(null);
+  const [standaloneFiscal, setStandaloneFiscal] = useState(false);
+  const fiscalCheckoutPendingRef = useRef(new Set<string>());
+  const fiscalCheckoutKeysRef = useRef(new Map<string, string>());
+  const standaloneSubmissionRef = useRef<{ fingerprint: string; draftId: string } | null>(null);
   const [clientCreateOpen, setClientCreateOpen] = useState(false);
   const [supplierCreateOpen, setSupplierCreateOpen] = useState(false);
   const [quoteSource, setQuoteSource] = useState<'vendas' | 'servicos'>('vendas');
   const [commercialClient, setCommercialClient] = useState('');
   const [commercialSku, setCommercialSku] = useState('');
   const [commercialReturnView, setCommercialReturnView] = useState<'vendas' | 'servicos' | 'clientes' | 'catalogo'>('vendas');
+  const [editingOrder, setEditingOrder] = useState<CreatedRecord | null>(null);
   const [serviceClient, setServiceClient] = useState('');
   const [serviceSku, setServiceSku] = useState('');
   const [serviceReturnView, setServiceReturnView] = useState<'servicos' | 'clientes' | 'catalogo'>('servicos');
@@ -5194,6 +5628,13 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [stockOrigin, setStockOrigin] = useState('');
   const [certificateOpen, setCertificateOpen] = useState(false);
   const [companyRegistrationOpen, setCompanyRegistrationOpen] = useState(false);
+  const [fiscalCorrectionMatrixOpen, setFiscalCorrectionMatrixOpen] = useState(false);
+  const [fiscalCorrectionIssuerOpen, setFiscalCorrectionIssuerOpen] = useState(false);
+  const [fiscalNumberingOpen, setFiscalNumberingOpen] = useState(false);
+  const fiscalNumberingTargetRef = useRef<string | undefined>(undefined);
+  const [fiscalServiceOpen, setFiscalServiceOpen] = useState(false);
+  const [fiscalResumeId, setFiscalResumeId] = useState('');
+  const [fiscalResultRequest, setFiscalResultRequest] = useState<{draftId:string;requestId:string}>();
   const [created, setCreated] = useState<CreatedRecord[]>([]);
   const [clientRecords, setClientRecords] = useState<ClientRecord[]>(clients);
   const [supplierRecords, setSupplierRecords] = useState<SupplierRecord[]>([]);
@@ -5208,6 +5649,11 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [stockMovementRecords, setStockMovementRecords] = useState<StockMovementRecord[]>(stockMoves);
   const [receivableRecords, setReceivableRecords] = useState<ReceivableRecord[]>(initialReceivables);
   const [moduleSettings, setModuleSettings] = useState<ModuleSettings>(defaultModuleSettings);
+  const [realFiscalEditor,setRealFiscalEditor]=useState<FiscalNoteEditorOptions>();
+  const [editorError,setEditorError]=useState('');
+  const editorGenerationRef=useRef(0);
+  const loadRealFiscalEditor=useCallback(async()=>{const generation=++editorGenerationRef.current;const companyId=managementCatalogBridge?.companyId;if(!companyId||!managementBridgeOrigin)return;setEditorError('');try{const response=await requestFiscalEditor({companyId,origin:managementBridgeOrigin});if(generation!==editorGenerationRef.current)return;const config=response.editor as FiscalNoteEditorOptions;setRealFiscalEditor({...config,primaryColor:managementCatalogBridge.primaryColor,canManageMessages:response.canManage===true,onCreateMessage:async(message)=>{const result=await requestFiscalEditor({companyId,origin:managementBridgeOrigin,action:'create-message',message});if(generation!==editorGenerationRef.current)throw Error('O perfil foi alterado. Abra novamente as mensagens.');setRealFiscalEditor(current=>current?{...current,messages:[...(current.messages||[]).filter(item=>item.id!==result.message.id),result.message]}:current);return result.message;}});}catch(error){if(generation===editorGenerationRef.current)setEditorError(error instanceof Error?error.message:'Não foi possível carregar as opções da emissão.');}},[managementCatalogBridge?.companyId,managementBridgeOrigin,managementCatalogBridge?.primaryColor]);
+  useEffect(()=>{setRealFiscalEditor(undefined);void loadRealFiscalEditor();return()=>{editorGenerationRef.current++;};},[loadRealFiscalEditor]);
   const [fiscalNumberingLedger, setFiscalNumberingLedger] = useState<FiscalNumberingLedger>(() => createFiscalNumberingLedger({ nfe: defaultModuleSettings.fiscal.nfeSeries, nfce: defaultModuleSettings.fiscal.nfceSeries, nfse: defaultModuleSettings.fiscal.nfseSeries }));
   const [fiscalHomologationPlan, setFiscalHomologationPlan] = useState<FiscalHomologationPlan>(() => ({
     ...createDefaultFiscalHomologationPlan(defaultModuleSettings.company),
@@ -5219,19 +5665,22 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [fiscalIssuerRegistry, setFiscalIssuerRegistry] = useState<FiscalIssuerRegistry>(() => createFiscalIssuerRegistry(defaultModuleSettings.company));
   const [nfeSpHomologationConfig, setNfeSpHomologationConfig] = useState<NfeSpHomologationConfig>(() => createDefaultNfeSpHomologationConfig());
   const [activeUserId, setActiveUserId] = useState(defaultModuleSettings.access.users[0].id);
-  const [toast, setToast] = useState('');
+  const [toast, setToastMessage] = useState('');
+  const [toastTone, setToastTone] = useState<'info' | 'error'>('info');
+  const setToast = useCallback((message: string) => { setToastTone('info'); setToastMessage(message); }, []);
+  const showOrderError = useCallback((message: string) => { setToastTone('error'); setToastMessage(message); }, []);
   const newMenuRef = useRef<HTMLDivElement>(null);
   const pendingFiscalPrepareRef = useRef(new Map<string, { draftId: string; timer: number }>());
   const pendingFiscalValidationRef = useRef(new Map<string, { draftId: string; timer: number }>());
   const pendingFiscalNumberRef = useRef(new Map<string, { draftId: string; timer: number }>());
   const pendingFiscalIssueRef = useRef(new Map<string, { draftId: string; timer: number }>());
-  const pendingOrderWorkflowRef = useRef(new Map<string, { recordId: string; target: 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido'; timer: number }>());
+  const pendingOrderWorkflowRef = useRef(new Map<string, { recordId: string; target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido'; timer: number; previous?: CreatedRecord }>());
   const pendingServiceWorkflowRef = useRef(new Map<string, { recordId: string; action: 'start' | 'complete' | 'cancel' | 'reverse'; timer: number }>());
   const pendingReceivableRef = useRef(new Map<string, PendingConfirmedSave>());
   const pendingStockRef = useRef(new Map<string, PendingConfirmedSave>());
   const pendingCustomerRef = useRef(new Map<string, PendingConfirmedSave>());
   const pendingSupplierRef = useRef(new Map<string, PendingConfirmedSave>());
-  const pendingOperationSaveRef = useRef(new Map<string, { recordId: string; timer: number }>());
+  const pendingOperationSaveRef = useRef(new Map<string, { recordId: string; timer: number; previous?: CreatedRecord }>());
   const pendingAccessSaveRef = useRef(new Map<string, number>());
   const pendingFiscalRulesSaveRef = useRef(new Map<string, number>());
   const pendingFiscalProfileSaveRef = useRef(new Map<string, number>());
@@ -5240,7 +5689,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const salesRecordCount = created.filter((item) => ['orcamento', 'pedido', 'venda'].includes(item.type)).length;
   const serviceRecordCount = created.filter((item) => item.type === 'ordem_servico').length;
   const fiscalDocumentCount = fiscalDraftRecords.length;
-  const currentFiscalConfig = useMemo(() => fiscalConfigFromSettings(moduleSettings, fiscalCertificateBridgeState.certificate), [moduleSettings, fiscalCertificateBridgeState.certificate]);
+  const currentFiscalConfig = useMemo(() => fiscalConfigFromSettings(moduleSettings, fiscalCertificateBridgeState.certificate, fiscalCertificateBridgeState.execution), [moduleSettings, fiscalCertificateBridgeState.certificate, fiscalCertificateBridgeState.execution]);
+  useEffect(() => { const id = readCompanyStorage('avanta-fiscal-retorno'); if (id && fiscalDraftRecords.some((draft) => draft.id === id)) { removeCompanyStorage('avanta-fiscal-retorno'); setFiscalResumeId(id); setView('fiscal'); } }, [fiscalDraftRecords]);
   const managementProfileReady = !integratedManagementRuntime || Boolean(managementCatalogBridge?.company);
   const managementAccessReady = !integratedManagementRuntime || accessBridgeState.available;
   const managementContextReady = managementProfileReady && managementAccessReady;
@@ -5532,11 +5982,11 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         window.clearTimeout(pending.timer);
         pendingOrderWorkflowRef.current.delete(commercial.requestId);
         if (!commercial.ok) {
-          if (pending.target === 'confirmado') setCreated((current) => current.filter((record) => record.id !== pending.recordId || Boolean(record.persistence)));
-          setToast(commercial.message);
+          if (pending.target === 'confirmado') setCreated((current) => pending.previous ? current.map((record) => record.id === pending.recordId ? pending.previous! : record) : current.filter((record) => record.id !== pending.recordId || Boolean(record.persistence)));
+          showOrderError(commercial.message);
           return;
         }
-        const status = commercial.order.status === 'faturado' ? 'Faturado' as const
+        const status = commercial.order.status === 'salvo' ? 'Rascunho' as const : commercial.order.status === 'faturado' ? 'Faturado' as const
           : commercial.order.status === 'em_separacao' ? 'Em separação' as const
             : commercial.order.status === 'cancelado' ? 'Cancelado' as const
               : commercial.order.status === 'devolvido' ? 'Devolvido' as const : 'Confirmado' as const;
@@ -5564,10 +6014,22 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           } : record);
           return next;
         });
-        setToast(status === 'Faturado'
+        if (pending.target === 'salvo' && pending.previous?.order) {
+          const reopened: CreatedRecord = { ...pending.previous, status: 'Rascunho', persistence: { ...pending.previous.persistence, operationId: commercial.order.operationId, customerId: commercial.customerId || pending.previous.persistence?.customerId || '', version: commercial.order.version, status: 'salvo' }, order: { ...pending.previous.order, stockState: 'Sem movimentação' } };
+          setEditingOrder(reopened);
+          setStandaloneFiscal(false);
+          setNewMenu(false);
+          setNewType(null);
+          setCommercialClient(reopened.client);
+          setCommercialSku('');
+          setCommercialReturnView('vendas');
+          setView('novo_pedido');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        setToast(status === 'Rascunho' ? '' : status === 'Faturado'
           ? 'Pedido faturado e persistido. A nota permaneceu como rascunho na Central Fiscal.'
           : status === 'Em separação' ? 'Separação registrada no repositório comercial.'
-            : status === 'Cancelado' ? 'Pedido cancelado e reserva liberada no perfil ativo.'
+            : status === 'Cancelado' ? 'Pedido cancelado comercialmente. A situação da nota fiscal foi preservada.'
               : status === 'Devolvido' ? 'Devolução registrada com estoque, parcelas e fiscal sincronizados.' : 'Pedido confirmado e persistido no perfil ativo.');
         return;
       }
@@ -5628,6 +6090,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         window.clearTimeout(pending.timer);
         pendingCustomerRef.current.delete(customerSave.requestId);
         if (customerSave.ok && customerSave.record) {
+          void loadRealFiscalEditor();
           const saved = customerSave.record as ClientRecord;
           setClientRecords((current) => current.some((record) => record.id === saved.id) ? current.map((record) => record.id === saved.id ? saved : record) : [saved, ...current]);
         }
@@ -5656,12 +6119,12 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         if (!pending) return;
         window.clearTimeout(pending.timer); pendingOperationSaveRef.current.delete(event.data.requestId);
         if (event.data.ok !== true) {
-          setCreated((current) => current.filter((record) => record.id !== pending.recordId || Boolean(record.persistence)));
+          setCreated((current) => pending.previous ? current.map((record) => record.id === pending.recordId ? pending.previous! : record) : current.filter((record) => record.id !== pending.recordId || Boolean(record.persistence)));
           setToast(String(event.data.message || 'Não foi possível persistir o documento comercial.'));
           return;
         }
         const persisted = event.data.order || event.data.operation;
-        if (persisted?.id) setCreated((current) => current.map((record) => record.id === pending.recordId ? { ...record, id: `${persisted.year}/${persisted.number}`, persistence: { operationId: persisted.id, customerId: persisted.customerId || '', version: Number(persisted.version) || 1, status: String(persisted.status || '') } } : record));
+        if (persisted?.id) setCreated((current) => current.map((record) => record.id === pending.recordId ? { ...record, id: `${persisted.year}/${persisted.number}`, persistence: { operationId: persisted.id, customerId: persisted.customerId || record.persistence?.customerId || '', version: Number(persisted.version) || 1, status: String(persisted.status || '') } } : record));
         return;
       }
       if (event.data?.type === OPERATION_SNAPSHOT_TYPE && typeof event.data.ok === 'boolean') {
@@ -5672,7 +6135,15 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           const items = Array.isArray(operation.items) ? operation.items : [];
           const base = { id: `${operation.year}/${operation.number}`, type: operation.type as DocumentType, client: String(operation.customerSnapshot?.displayName || operation.customerSnapshot?.legalName || 'Cliente'), total: Number(operation.total) || 0, createdAt: String(operation.createdAt || new Date().toISOString()), status: statusLabel(String(operation.status || 'salvo')), persistence: { operationId: operation.id, customerId: operation.customerId || '', version: Number(operation.version) || 1, status: String(operation.status || '') } };
           if (operation.type === 'orcamento') return [{ ...base, quote: { number: base.id, validUntil: operation.validityDate ? String(operation.validityDate).split('-').reverse().join('/') : '', company: moduleSettings.company, client: base.client, clientDocument: String(operation.customerSnapshot?.document || ''), clientCity: String(operation.customerSnapshot?.address?.city || ''), items: items.map((line: any) => ({ sku: line.sku, name: line.name, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice) - Number(line.discountUnit || 0) })), subtotal: Number(operation.subtotalGross), discount: Number(operation.itemDiscount) + Number(operation.generalDiscount), freight: Number(operation.freight), total: Number(operation.total), notes: String(operation.customerNotes || ''), source: operation.channel === 'servicos' ? 'servicos' : 'vendas' } }];
-          if (operation.type === 'pedido') return [{ ...base, order: { lines: items.map((line: any) => ({ catalogItemId: line.productId, sku: line.sku, name: line.name, kind: line.itemType === 'servico' ? 'servico' : 'produto', unit: line.unit, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice), unitDiscount: Number(line.discountUnit), cost: Number(line.costUnitSnapshot || 0) })), commercialTotals: { subtotal: Number(operation.subtotalGross), lineDiscount: Number(operation.itemDiscount), orderDiscount: Number(operation.generalDiscount), freight: Number(operation.freight), insurance: Number(operation.insurance), other: Number(operation.otherExpenses), invoice: Number(operation.total) }, reserveStock: operation.stockStatus !== 'sem_movimentacao', stockState: operation.stockStatus === 'reservado' ? 'Reservado' : operation.stockStatus === 'em_separacao' ? 'Em separação' : operation.stockStatus === 'baixado' ? 'Baixado' : 'Sem movimentação', seller: String(operation.sellerName || ''), fiscalDocument: operation.fiscalDocument || 'nenhum', paymentMethod: String(operation.paymentSnapshot?.method || ''), installments: Number(operation.paymentSnapshot?.installments || 1), firstDueDate: String(operation.paymentSnapshot?.firstDueDate || '') } }];
+          if (operation.type === 'pedido') return [{ ...base, status: operation.status === 'salvo' ? 'Rascunho' : base.status, order: {
+            lines: items.map((line: any) => ({ catalogItemId: line.productId, sku: line.sku, name: line.name, kind: line.itemType === 'servico' ? 'servico' : 'produto', unit: line.unit, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice), unitDiscount: Number(line.discountUnit), cost: Number(line.costUnitSnapshot || 0) })),
+            commercialTotals: { products: Number(operation.subtotalGross), lineDiscount: Number(operation.itemDiscount), orderDiscount: Number(operation.generalDiscount), discount: Number(operation.itemDiscount) + Number(operation.generalDiscount), freight: Number(operation.freight), insurance: Number(operation.insurance), other: Number(operation.otherExpenses), invoice: Number(operation.total) },
+            reserveStock: operation.stockStatus !== 'sem_movimentacao',
+            stockState: operation.stockStatus === 'reservado' ? 'Reservado' : operation.stockStatus === 'em_separacao' ? 'Em separação' : operation.stockStatus === 'baixado' ? 'Baixado' : operation.stockStatus === 'liberado' ? 'Liberado' : operation.stockStatus === 'devolvido' ? 'Devolvido' : 'Sem movimentação',
+            seller: String(operation.sellerName || ''), fiscalDocument: operation.fiscalDocument || 'nenhum',
+            paymentMethod: String(operation.paymentSnapshot?.method || ''), installments: Number(operation.paymentSnapshot?.installments || 1), firstDueDate: String(operation.paymentSnapshot?.firstDueDate || ''),
+            channel: String(operation.deliverySnapshot?.notes || 'Atendimento direto'), orderDate: String(operation.createdAt || '').slice(0, 10), deliveryDate: String(operation.deliverySnapshot?.expectedDate || ''), fulfillment: String(operation.deliverySnapshot?.mode || 'Entrega'), notes: String(operation.internalNotes || ''),
+          } }];
           const service = operation.serviceOrder || {};
           const scheduled = String(service.scheduledAt || '');
           return [{ ...base, serviceOrder: { lines: items.filter((line: any) => line.itemType === 'servico').map((line: any) => ({ sku: line.sku, name: line.name, kind: 'servico', unit: line.unit, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice), cost: Number(line.costUnitSnapshot || 0), municipalServiceCode: String(line.fiscalSnapshot?.municipalServiceCode || ''), fiscalStatus: line.fiscalReady ? 'Completo' : 'Revisar' })), scheduledDate: scheduled.slice(0, 10), scheduledTime: scheduled.slice(11, 16), durationMinutes: Number(service.expectedDurationMinutes || 60), technician: String(service.technicianName || ''), location: String(service.executionLocation || ''), contactName: String(service.onSiteContact || ''), paymentMethod: String(operation.paymentSnapshot?.method || ''), installments: Number(operation.paymentSnapshot?.installments || 1), firstDueDate: String(operation.paymentSnapshot?.firstDueDate || ''), fiscalDocument: operation.fiscalDocument === 'nfse' ? 'nfse' : 'nenhum', internalNotes: String(operation.internalNotes || ''), customerNotes: String(operation.customerNotes || ''), completionNotes: String(service.completionNotes || ''), startedAt: String(service.startedAt || ''), completedAt: String(service.completedAt || ''), actualDurationMinutes: Number(service.actualDurationMinutes || 0), materials: (Array.isArray(service.materials) ? service.materials : []).map((material: any) => ({ id: String(material.id), catalogItemId: String(material.productId || ''), sku: String(material.sku || ''), name: String(material.name || ''), quantity: Number(material.usedQuantity || material.plannedQuantity || 0), unit: String(material.unit || 'un'), source: material.origin === 'catalogo' ? 'Catálogo' : material.origin === 'cliente' ? 'Cliente' : 'Externo', cost: Number(material.costUnitSnapshot || 0) })), checklist: (Array.isArray(service.checklist) ? service.checklist : []).map((item: any) => ({ id: String(item.id), label: String(item.description || ''), complete: item.completed === true })), attachments: (Array.isArray(service.attachments) ? service.attachments : []).map((item: any) => ({ id: String(item.id), name: String(item.name || ''), type: String(item.type || 'application/octet-stream'), size: Number(item.size || 0), checksum: String(item.checksum || ''), addedAt: String(item.addedAt || '') })), acceptance: { status: service.acceptanceStatus === 'aceito' ? 'Aceito' : service.acceptanceStatus === 'recusado' ? 'Recusado' : 'Pendente', acceptedBy: String(service.acceptedBy || ''), acceptedAt: String(service.acceptedAt || ''), notes: String(service.acceptanceNotes || '') }, materialStockState: operation.stockStatus === 'baixado' ? 'Baixado' : operation.stockStatus === 'devolvido' ? 'Estornado' : operation.stockStatus === 'reservado' ? 'Pendente' : 'Não aplicável', laborCostTotal: Number(service.laborCost || 0), materialCostTotal: Number(service.materialCost || 0), actualCostTotal: Number(service.actualCost || 0) } }];
@@ -5777,7 +6248,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       const fiscalDocuments = parseFiscalDocumentsMessage(event.data);
       if (fiscalDocuments) {
         const persisted = fiscalDocuments.documents.map(mapPersistedFiscalDocument);
-        setFiscalDraftRecords((current) => [...persisted, ...current.filter((draft) => draft.persistenceSource !== 'server')].slice(0, 100));
+        setFiscalDraftRecords((current) => [...persisted, ...current.filter((draft) => draft.persistenceSource !== 'server' && !persisted.some((record) => record.originId === draft.originId && record.documentType === draft.documentType && record.sourceLabel === draft.sourceLabel))].slice(0, 100));
         return;
       }
       const connected = parseManagementCatalogMessage(event.data);
@@ -5788,7 +6259,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       setModuleSettings((current) => ({
         ...current,
         ...(connected.company ? { company: { ...current.company, ...connected.company } } : {}),
-        commercial: { ...current.commercial, reserveStockDefault: connected.stockIntegrated },
+        commercial: { ...current.commercial, reserveStockDefault: false },
       }));
       if (!connected.catalogAvailable) setToast(connected.message || 'O catálogo de Custos está indisponível para este perfil.');
     };
@@ -6160,6 +6631,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     if (localRecord?.order) return localRecord.order.lines.map((line) => {
       const catalogItem = catalogRecords.find((item) => item.sku === line.sku);
       return {
+        catalogItemId: catalogItem?.catalogItemId,
         sku: line.sku,
         name: line.name,
         kind: line.kind,
@@ -6167,7 +6639,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         quantity: line.quantity,
         unitPrice: line.unitPrice,
         unitDiscount: line.unitDiscount,
-        taxableUnit: catalogItem?.taxableUnit ?? line.unit,
+        useCompanyFiscal: catalogItem?.useCompanyFiscal,
+        taxableUnit: catalogItem?.taxableUnit || line.unit,
         fiscalBenefitCode: catalogItem?.fiscalBenefitCode ?? '',
         ncm: catalogItem?.ncm ?? '',
         cest: catalogItem?.cest ?? '',
@@ -6195,6 +6668,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     if (localRecord?.serviceOrder) return localRecord.serviceOrder.lines.map((line) => {
       const catalogItem = catalogRecords.find((item) => item.sku === line.sku);
       return {
+        catalogItemId: catalogItem?.catalogItemId,
         sku: line.sku,
         name: line.name,
         kind: line.kind,
@@ -6266,14 +6740,14 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const items = sourceItems.map((item) => {
       if (!matrixResolution.reviewed || !matrixRule) return item;
       if (item.kind === 'servico' && matrixRule.serviceIncidenceMode && !['Herdar do serviço', 'Não aplicável'].includes(matrixRule.serviceIncidenceMode)) return { ...item, serviceIncidenceMode: matrixRule.serviceIncidenceMode };
-      if (item.kind === 'produto' && matrixRule.cfopOverride) return context.destination === 'Fora da UF' ? { ...item, cfopInterstate: matrixRule.cfopOverride } : { ...item, cfopInternal: matrixRule.cfopOverride };
+      if (item.kind === 'produto' && matrixRule.cfopOverride) return context.destination === 'Fora da UF' ? { ...item, cfopInterstate: item.useCompanyFiscal === false && item.cfopInterstate ? item.cfopInterstate : matrixRule.cfopOverride } : { ...item, cfopInternal: item.useCompanyFiscal === false && item.cfopInternal ? item.cfopInternal : matrixRule.cfopOverride };
       return item;
     });
     const baseValidation = validateFiscalDraft({
       documentType: origin.documentType,
       recipient: { name: origin.client, document: client?.document ?? '', city: client?.city ?? '' },
       items,
-      config: { ...fiscalConfigForIssuer(moduleSettings, issuer, fiscalCertificateBridgeState.certificate), fiscalMatrixRuleMatched: matrixResolution.matched, fiscalMatrixRuleReviewed: matrixResolution.reviewed, fiscalMatrixRuleName: matrixRule?.name ?? '', fiscalMatrixRequirementsMet: requirementsMet, fiscalMatrixRuleDetail: !matrixResolution.matched ? matrixResolution.reason : !matrixResolution.reviewed ? `${matrixRule?.name} ainda depende de revisão fiscal` : requirementsMet ? `${matrixRule?.name} revisada e correspondente ao contexto` : `${matrixRule?.name}: informe ${requirements.join(' e ')}` },
+      config: { ...fiscalConfigForIssuer(moduleSettings, issuer, fiscalCertificateBridgeState.certificate, fiscalCertificateBridgeState.execution), fiscalDestination: context.destination, fiscalMatrixRuleMatched: matrixResolution.matched, fiscalMatrixRuleReviewed: matrixResolution.reviewed, fiscalMatrixRuleName: matrixRule?.name ?? '', fiscalMatrixRequirementsMet: requirementsMet, fiscalMatrixRuleDetail: !matrixResolution.matched ? matrixResolution.reason : !matrixResolution.reviewed ? `${matrixRule?.name} ainda depende de revisão fiscal` : requirementsMet ? `${matrixRule?.name} revisada e correspondente ao contexto` : `${matrixRule?.name}: informe ${requirements.join(' e ')}` },
     });
     const issuerSelected = issuerSelection.valid && Boolean(issuer);
     const issuerRouteReady = issuerSelected && Boolean(issuer?.routeReadyForHomologation);
@@ -6347,19 +6821,24 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     persistFiscalDrafts([draft, ...fiscalDraftRecords]);
     return draft;
   };
-  const revalidateFiscalDraft = (draft: FiscalDraftRecord) => {
-    if (!authorize('fiscal.prepare', 'preparar documentos fiscais')) return;
+  const previewFiscalDraft = (draft: FiscalDraftRecord): FiscalDraftRecord => {
+    // A rejeição usa os retratos validados no servidor; cadastros locais não os substituem.
+    if (draft.persistenceSource === 'server' && draft.remoteState === 'rejected') return draft;
+    if (draft.status === 'Cancelado' || ['prepared', 'number_reserved', 'signed', 'submitted', 'processing', 'authorized', 'artifacts_stored', 'danfe_ready', 'canceled'].includes(draft.remoteState || '')) return draft;
     const localRecord = created.find((record) => record.id === draft.originId);
     const origin: FiscalOrigin = { id: draft.originId, client: draft.client, item: draft.items.map((item) => item.name).join(', '), total: draft.total, documentType: draft.documentType, sourceLabel: draft.sourceLabel };
-    const sourceItems = fiscalItemsForOrigin(origin, localRecord);
-    const commercialSnapshot = commercialSnapshotForOrigin(origin, localRecord);
+    const sourceItems = fiscalItemsForReview(draft.items, catalogRecords);
     const issuerSelection = issuerSelectionForOrigin(origin, localRecord, draft.issuer);
-    const { client, items, issuer, validation, matrixResolution } = evaluateFiscalDraft(origin, sourceItems, issuerSelection);
-    const profile = getFiscalDocumentProfile(draft.documentType);
+    const { items, validation, matrixResolution } = evaluateFiscalDraft(origin, sourceItems, issuerSelection);
+    return { ...draft, items, checks: validation.checks, warnings: validation.warnings, operationContext: matrixResolution.context, operationNature: matrixResolution.rule?.operationNature || draft.operationNature, fiscalRuleStatus: !matrixResolution.matched ? 'Sem correspondência' : matrixResolution.reviewed ? 'Revisada' : 'Pendente', status: validation.transmissionReady ? 'Pronto para homologação' : validation.draftReady ? 'Bloqueado para transmissão' : 'Com pendências' };
+  };
+  const revalidateFiscalDraft = (draft: FiscalDraftRecord) => {
+    if (!authorize('fiscal.prepare', 'preparar documentos fiscais')) return;
     const now = new Date().toISOString();
-    const nextDraft: FiscalDraftRecord = { ...draft, clientDocument: client?.document ?? draft.clientDocument, clientCity: client?.city ?? draft.clientCity, commercialTotals: commercialSnapshot.totals, paymentMethod: commercialSnapshot.paymentMethod, issuer: issuer ?? draft.issuer, series: issuer?.series || draft.series, schemaReference: profile.payload, authorityRoute: issuer?.authorityRoute ?? draft.authorityRoute, fiscalResponsible: moduleSettings.fiscal.fiscalResponsible, taxReformStatus: moduleSettings.fiscal.taxReformReviewConfirmed ? 'Revisado' : 'Pendente', contingencyPlan: issuer?.contingency ?? draft.contingencyPlan, matrixReference: matrixResolution.matrixReference, fiscalRuleId: matrixResolution.rule?.id ?? '', fiscalRuleName: matrixResolution.rule?.name ?? '', fiscalRuleStatus: !matrixResolution.matched ? 'Sem correspondência' : matrixResolution.reviewed ? 'Revisada' : 'Pendente', operationNature: matrixResolution.rule?.operationNature ?? '', operationContext: matrixResolution.context, items, checks: validation.checks, warnings: validation.warnings, status: validation.transmissionReady ? 'Pronto para homologação' : validation.draftReady ? 'Bloqueado para transmissão' : 'Com pendências', updatedAt: now, events: [...draft.events, { date: now, label: 'Conferência atualizada', description: validation.draftReady ? 'Dados da empresa, cliente e itens conferidos. A emissão permanece aguardando as demais liberações.' : 'Existem pendências que impedem concluir a preparação do documento.', user: activeUser?.name ?? 'Sistema' }] };
+    const reviewed = previewFiscalDraft(draft);
+    if (reviewed === draft) return;
+    const nextDraft = { ...reviewed, updatedAt: now, events: [...draft.events, { date: now, label: 'Conferência atualizada', description: 'Cadastros e regras atuais conferidos sem alterar os valores ou a identidade da nota.', user: activeUser?.name ?? 'Sistema' }] };
     persistFiscalDrafts(fiscalDraftRecords.map((record) => record.id === draft.id ? nextDraft : record));
-    setToast(`Conferência fiscal atualizada para ${draft.originId}.`);
   };
   const cancelFiscalDraft = (draft: FiscalDraftRecord, reason = 'Rascunho cancelado antes da emissão da nota fiscal.') => {
     if (!authorize('fiscal.cancel', 'cancelar documentos fiscais')) return;
@@ -6376,13 +6855,13 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     return 1;
   };
 
-  const navigate = (next: View) => { const required = viewPermission[next]; if (required && !authorize(required, `acessar ${viewInfo[next].title.toLocaleLowerCase('pt-BR')}`)) return; if (next !== 'fiscal') setFiscalOrigin(null); if (next === 'recebimentos') setReceivableOrigin(''); if (next === 'estoque') setStockOrigin(''); setView(next); setMobileMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const navigate = (next: View) => { const required = viewPermission[next]; if (required && !authorize(required, `acessar ${viewInfo[next].title.toLocaleLowerCase('pt-BR')}`)) return; if (next !== 'novo_pedido') setStandaloneFiscal(false); if (next !== 'fiscal') setFiscalOrigin(null); if (next === 'recebimentos') setReceivableOrigin(''); if (next === 'estoque') setStockOrigin(''); setView(next); setMobileMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const openReceivables = (origin: string) => { if (!authorize('receivables.view', 'consultar recebimentos')) return; setFiscalOrigin(null); setReceivableOrigin(origin); setView('recebimentos'); setMobileMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const openStockMovements = (origin: string) => { if (!authorize('stock.view', 'consultar movimentações de estoque')) return; setFiscalOrigin(null); setStockOrigin(origin); setView('estoque'); setMobileMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const startFiscal = (origin: FiscalOrigin) => {
-    if (!authorize('fiscal.prepare', 'preparar documentos fiscais')) return;
-    setNewMenu(false);
     const existing = fiscalDraftRecords.find((draft) => draft.originId === origin.id);
+    if (!authorize(existing?.emissionId ? 'fiscal.view' : 'fiscal.prepare', existing?.emissionId ? 'consultar nota fiscal' : 'preparar documentos fiscais')) return;
+    setNewMenu(false);
     ensureFiscalDraft(origin);
     setFiscalOrigin(origin);
     setView('fiscal');
@@ -6390,8 +6869,72 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     setToast(existing ? `Rascunho fiscal de ${origin.id} aberto sem criar duplicidade.` : `Rascunho fiscal criado para ${origin.id}. Nenhuma transmissão foi realizada.`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+  const requestFiscalCheckout = (input: Record<string, unknown>): Promise<FiscalCheckoutResult> => new Promise((resolve) => {
+    if (!managementBridgeOrigin || window.parent === window) { resolve({ ok: false, message: 'Abra a nota pelo perfil empresarial na Gestão.' }); return; }
+    const requestId = `checkout:${crypto.randomUUID()}`;
+    const channel = new MessageChannel();
+    const timer = window.setTimeout(() => { channel.port1.close(); resolve({ ok: false, message: 'Não foi possível concluir a emissão. A tentativa foi preservada; tente novamente nesta mesma nota.' }); }, 125_000);
+    channel.port1.onmessage = event => {
+      if (event.data?.type !== FISCAL_CHECKOUT_RESPONSE_TYPE || event.data.requestId !== requestId || typeof event.data.ok !== 'boolean') return;
+      window.clearTimeout(timer); channel.port1.close();
+      resolve({ ok: event.data.ok, message: String(event.data.message || ''), draftId: event.data.draftId, emission: event.data.emission, code: event.data.code, field: event.data.field, numbering: event.data.numbering, status: (() => { const saved=parseFiscalStatusResponse({type:"AVANTALAB_VENDAS_FISCAL_STATUS_RESPONSE_V1",requestId,ok:true,emission:event.data.status}); return saved?.ok ? saved.emission : undefined; })() });
+    };
+    window.parent.postMessage({ type: FISCAL_CHECKOUT_REQUEST_TYPE, requestId, input }, managementBridgeOrigin, [channel.port2]);
+  });
+  const checkoutFiscalDraft = async (draft: FiscalDraftRecord, action: 'save' | 'issue'): Promise<FiscalCheckoutResult> => {
+    if (!authorize(action === 'issue' ? 'fiscal.issue' : 'fiscal.prepare', action === 'issue' ? 'emitir nota fiscal' : 'salvar nota fiscal')) return { ok: false, message: 'Seu acesso não permite esta ação.' };
+    if (fiscalCheckoutPendingRef.current.has(draft.id)) return { ok: false, message: 'Aguarde a conclusão da solicitação em andamento.' };
+    const record = created.find(item => item.id === draft.originId);
+    const keyId = `${draft.id}:${action}`;
+    if (!fiscalCheckoutKeysRef.current.has(keyId)) fiscalCheckoutKeysRef.current.set(keyId, `checkout:${crypto.randomUUID()}`);
+    fiscalCheckoutPendingRef.current.add(draft.id);
+    try {
+      const result = await requestFiscalCheckout({ action, idempotencyKey: fiscalCheckoutKeysRef.current.get(keyId), ...(draft.persistenceSource === 'server' ? { draftId: draft.id } : { originOrderId: record?.persistence?.operationId, expectedVersion: record?.persistence?.version }) });
+      if (result.ok || result.code === 'AV-FISCAL-CHECKOUT-REJECTED') fiscalCheckoutKeysRef.current.delete(keyId);
+      if (result.draftId) {
+        const targetId = result.draftId;
+        setFiscalDraftRecords(current => current.map(item => item.id === targetId ? { ...item, status: item.status === 'Cancelado' && canResumeFiscalDraft(item) ? 'Pronto para homologação' : item.status, ...(result.emission ? { emissionId: result.emission.emissionId, remoteState: result.emission.state, remoteVersion: result.emission.version, series: result.emission.series || item.series, number: result.emission.number ? String(result.emission.number) : item.number } : {}) } : item));
+      }
+      return result;
+    } finally { fiscalCheckoutPendingRef.current.delete(draft.id); }
+  };
+  const loadRemoteFiscalNumbering = () => requestFiscalCheckout({ action: 'numbering', draftId: fiscalNumberingTargetRef.current });
+  const saveRemoteFiscalNumbering = async (input: {series: string; nextNumber: number; expectedVersion: number}) => {
+    const result = await requestFiscalCheckout({ action: 'save-numbering', draftId: fiscalNumberingTargetRef.current, ...input });
+    if (result.ok && result.numbering) {
+      setModuleSettings(current => ({ ...current, fiscal: { ...current.fiscal, nfeSeries: result.numbering!.series } }));
+      setFiscalNumberingLedger(current => ({ ...current, sequences: current.sequences.map(sequence => sequence.documentType === 'nfe' ? { ...sequence, series: result.numbering!.series, nextNumber: result.numbering!.nextNumber!, lastReservedNumber: result.numbering!.lastReservedNumber, active: true } : sequence) }));
+    }
+    return result;
+  };
+  const openRemoteFiscalNumbering = () => { fiscalNumberingTargetRef.current = undefined; setFiscalNumberingOpen(true); };
   const preparePersistedFiscalEmission = (draft: FiscalDraftRecord) => {
     if (!authorize('fiscal.prepare', 'preparar a emissão fiscal')) return;
+    if (draft.persistenceSource !== 'server' && draft.documentType === 'nfe') {
+      const record = created.find((item) => item.id === draft.originId);
+      const operationId = record?.persistence?.operationId;
+      const expectedVersion = record?.persistence?.version;
+      if (!operationId || !expectedVersion || !managementBridgeOrigin || window.parent === window) { setToast('Abra o pedido salvo no perfil empresarial antes de preparar sua nota.'); return; }
+      if (fiscalPrepareState[draft.id]?.loading) return;
+      setFiscalPrepareState((current) => ({ ...current, [draft.id]: { loading: true, message: 'Salvando o retrato fiscal do pedido, sem faturar ou movimentar estoque…' } }));
+      const requestId = `fiscal-pedido:${crypto.randomUUID()}`;
+      const channel = new MessageChannel();
+      const timer = window.setTimeout(() => { channel.port1.close(); setFiscalPrepareState((current) => ({ ...current, [draft.id]: { loading: false, message: 'A confirmação demorou. Tente novamente para consultar o mesmo vínculo, sem duplicá-lo.' } })); }, 20_000);
+      channel.port1.onmessage = (event) => {
+        if (event.data?.type !== STANDALONE_FISCAL_SAVE_RESPONSE_TYPE || event.data.requestId !== requestId || typeof event.data.ok !== 'boolean') return;
+        window.clearTimeout(timer); channel.port1.close();
+        const savedId = String(event.data.draftId || '');
+        const success = event.data.ok && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(savedId);
+        const message = success ? 'Nota preparada para conferência. Nenhum faturamento ou estoque foi alterado.' : String(event.data.message || 'Não foi possível preparar a nota.');
+        setFiscalPrepareState((current) => ({ ...current, [draft.id]: { loading: false, message } }));
+        if (success) {
+          setFiscalDraftRecords((current) => current.filter((item) => item.id !== draft.id));
+          setFiscalResumeId(savedId);
+        } else setToast(message);
+      };
+      window.parent.postMessage({ type: STANDALONE_FISCAL_SAVE_REQUEST_TYPE, requestId, document: { originOrderId: operationId, expectedVersion } }, managementBridgeOrigin, [channel.port2]);
+      return;
+    }
     if (draft.persistenceSource !== 'server' || draft.documentType !== 'nfe' || draft.emissionId) {
       setToast(draft.emissionId ? 'Esta emissão fiscal já foi aberta.' : 'Somente rascunhos persistidos de NF-e podem iniciar esta etapa.');
       return;
@@ -6499,14 +7042,30 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     setView('novo_orcamento');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  const openCosts = (newProduct = false) => {
+  const openCosts = (newProduct = false, productId = '') => {
     const companyId = managementCatalogBridge?.companyId || new URLSearchParams(window.location.search).get('empresaId') || '';
     if (!companyId) {
       setToast('Selecione um perfil empresarial na Gestão antes de abrir Custos e Precificação.');
       return;
     }
-    const destination = `/custos?empresaId=${encodeURIComponent(companyId)}${newProduct ? '&novo=produto' : ''}&retorno=vendas`;
+    const destination = `/custos?empresaId=${encodeURIComponent(companyId)}${newProduct ? '&novo=produto' : ''}${productId ? `&produtoId=${encodeURIComponent(productId)}` : ''}&retorno=vendas`;
     window.top?.location.assign(destination);
+  };
+  const resolveFiscalIssue = (draft: FiscalDraftRecord, key: string, productTarget = '') => {
+    const action = fiscalCorrectionAction(key);
+    if (!authorize(action.permission, action.label.toLocaleLowerCase('pt-BR'))) return;
+    if (action.target === 'product') {
+      const item = productTarget ? draft.items.find((line) => line.catalogItemId === productTarget || line.sku === productTarget) : undefined;
+      const matches = catalogRecords.filter((product) => item?.catalogItemId ? product.catalogItemId === item.catalogItemId : item ? product.sku === item.sku : false);
+      writeCompanyStorage('avanta-fiscal-retorno', draft.id);
+      openCosts(false, matches.length === 1 ? matches[0].catalogItemId || '' : '');
+    } else if (action.target === 'numbering') { fiscalNumberingTargetRef.current = draft.persistenceSource === 'server' ? draft.id : undefined; setFiscalNumberingOpen(true); }
+    else if (action.target === 'certificate') setCertificateOpen(true);
+    else if (action.target === 'issuer') setFiscalCorrectionIssuerOpen(true);
+    else if (action.target === 'service') setFiscalServiceOpen(true);
+    else if (action.target === 'status') { setFiscalResultRequest({draftId:draft.id,requestId:crypto.randomUUID()}); navigate('fiscal'); }
+    else if (action.target === 'rules') setFiscalCorrectionMatrixOpen(true);
+    else navigate(action.target === 'customer' ? 'clientes' : 'configuracoes');
   };
   const openNew = (type: NewActionType) => {
     setNewMenu(false);
@@ -6519,16 +7078,30 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       openCosts(true);
       return;
     }
-    if (type === 'pedido') { setNewType(null); setCommercialClient(''); setCommercialSku(''); setCommercialReturnView('vendas'); setView('novo_pedido'); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    if (type === 'pedido' || type === 'nfe') { setStandaloneFiscal(type === 'nfe'); standaloneSubmissionRef.current = null; setNewType(null); setEditingOrder(null); setCommercialClient(''); setCommercialSku(''); setCommercialReturnView('vendas'); setView('novo_pedido'); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     if (type === 'orcamento') { openQuote('vendas'); return; }
     if (type === 'ordem_servico') { setNewType(null); setServiceClient(''); setServiceSku(''); setServiceReturnView('servicos'); setView('nova_ordem_servico'); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-    if (type === 'nfe' || type === 'nfce' || type === 'nfse') setFiscalOrigin(null);
+    if (type === 'nfce' || type === 'nfse') setFiscalOrigin(null);
     setNewType(type);
+  };
+  const continueOrder = (record: CreatedRecord) => {
+    if (!record.order || record.status !== 'Rascunho') { setToast('Somente pedidos em rascunho podem ser retomados para edição.'); return; }
+    if (!authorize('sales.edit', 'continuar pedidos em rascunho')) return;
+    setStandaloneFiscal(false);
+    setNewMenu(false);
+    setNewType(null);
+    setEditingOrder(record);
+    setCommercialClient(record.client);
+    setCommercialSku('');
+    setCommercialReturnView('vendas');
+    setView('novo_pedido');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const openClientOrder = (client: ClientRecord) => {
     if (!authorize('sales.create', 'criar pedidos')) return;
     setNewMenu(false);
     setNewType(null);
+    setEditingOrder(null);
     setCommercialClient(client.name);
     setCommercialSku('');
     setCommercialReturnView('clientes');
@@ -6560,6 +7133,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     if (!authorize('sales.create', 'criar pedidos')) return;
     setNewMenu(false);
     setNewType(null);
+    setEditingOrder(null);
     setCommercialClient('');
     setCommercialSku(item.sku);
     setCommercialReturnView('catalogo');
@@ -6874,25 +7448,63 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     setStockMovementRecords(nextMovements);
     writeCompanyStorage(STOCK_STORAGE_KEY, JSON.stringify({ version: 1, movements: nextMovements }));
   };
-  const syncCommercialOrder = (record: CreatedRecord, target: 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido') => {
+  const saveStandaloneFiscal = async (record: CreatedRecord, issue = false): Promise<ConfirmedSave> => {
+    if (!can('fiscal.prepare') || !managementCatalogBridge || !managementBridgeOrigin || !record.order) return { ok: false, message: 'Abra a nota pelo perfil empresarial com acesso à emissão fiscal.' };
+    const client = clientRecords.find((item) => item.name === record.client);
+    if (!client?.persistence?.integrated) return { ok: false, message: 'Confirme o cadastro do destinatário no perfil empresarial.' };
+    const document = {
+      customerId: client.id, fiscalDocument: 'nfe',
+      additionalInfo: record.order.notes || '',operationNature:record.order.operationNature,
+      fiscalForm:record.order.fiscalForm,
+      priceTableId:record.order.fiscalForm?.priceTableId==='standard'?'':record.order.fiscalForm?.priceTableId || managementCatalogBridge.priceTable?.id || '',
+      generalDiscount: record.order.commercialTotals.orderDiscount, freight: record.order.commercialTotals.freight,
+      insurance: record.order.commercialTotals.insurance, otherExpenses: record.order.commercialTotals.other,
+      payment: { method: record.order.paymentMethod, details:record.order.paymentDetails,installments: record.order.installments, firstDueDate: record.order.firstDueDate },
+      items: record.order.lines.map((line) => ({ catalogItemId: line.catalogItemId || catalogRecords.find((item) => item.sku === line.sku)?.catalogItemId || '', quantity: line.quantity, unitPrice: line.unitPrice, discountUnit: line.unitDiscount })),
+    };
+    const fingerprint = JSON.stringify(document);
+    if (standaloneSubmissionRef.current?.fingerprint !== fingerprint) standaloneSubmissionRef.current = { fingerprint, draftId: crypto.randomUUID() };
+    const draftId = standaloneSubmissionRef.current!.draftId;
+    const requestId = `fiscal-avulsa:${crypto.randomUUID()}`;
+    return new Promise((resolve) => {
+      const channel = new MessageChannel();
+      const timer = window.setTimeout(() => { channel.port1.close(); resolve({ ok: false, message: 'A confirmação demorou. Tente novamente com os mesmos dados para consultar a gravação sem duplicá-la.' }); }, 20_000);
+      channel.port1.onmessage = async (event) => {
+        if (event.data?.type !== STANDALONE_FISCAL_SAVE_RESPONSE_TYPE || event.data.requestId !== requestId || typeof event.data.ok !== 'boolean') return;
+        window.clearTimeout(timer); channel.port1.close();
+        let result: ConfirmedSave = { ok: event.data.ok, message: String(event.data.message || ''),code:String(event.data.code||''),field:String(event.data.field||'') };
+        if (result.ok && issue) {
+          const savedId = String(event.data.draftId || '');
+          result = savedId ? await requestFiscalCheckout({ action: 'issue', draftId: savedId, idempotencyKey: `avulsa-checkout:${savedId}` }) : { ok: false, message: 'O vínculo da nota não foi confirmado. Atualize as notas antes de emitir.' };
+        }
+        if (issue && result.draftId) setFiscalResultRequest({draftId:result.draftId,requestId:crypto.randomUUID()});
+        if (result.ok) { setStandaloneFiscal(false); setEditingOrder(null); setFiscalOrigin(null); setView('fiscal'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        resolve(result);
+      };
+      window.parent.postMessage({ type: STANDALONE_FISCAL_SAVE_REQUEST_TYPE, requestId, document: { ...document, draftId } }, managementBridgeOrigin, [channel.port2]);
+    });
+  };
+
+  const syncCommercialOrder = (record: CreatedRecord, target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido', previous?: CreatedRecord, moveStock?: boolean) => {
     if (!record.order || !managementCatalogBridge || !managementBridgeOrigin || window.parent === window) return false;
     if (record.order.fiscalDocument === 'nfse') { setToast('Pedido de venda não pode gerar NFS-e. Use uma ordem de serviço ou selecione NF-e.'); return true; }
     if ([...pendingOrderWorkflowRef.current.values()].some((pending) => pending.recordId === record.id)) {
       setToast('Este pedido já está sendo atualizado. Aguarde a conclusão.');
       return true;
     }
+    const persistedLifecycle = Boolean(record.persistence?.operationId && target !== 'confirmado');
     const client = clientRecords.find((item) => item.name === record.client);
-    if (!client) { setToast('Selecione novamente o cliente do pedido.'); return true; }
+    if (!client && !persistedLifecycle) { setToast('Selecione novamente o cliente do pedido.'); return true; }
     const items = record.order.lines.map((line) => ({
       catalogItemId: line.catalogItemId || catalogRecords.find((item) => item.sku === line.sku)?.catalogItemId || '',
       quantity: line.quantity,
       unitPrice: line.unitPrice,
       discountUnit: line.unitDiscount,
     }));
-    if (items.some((item) => !item.catalogItemId)) { setToast('Atualize o catálogo de Custos e selecione novamente os itens deste pedido.'); return true; }
+    if (!persistedLifecycle && items.some((item) => !item.catalogItemId)) { setToast('Atualize o catálogo de Custos e selecione novamente os itens deste pedido.'); return true; }
     const persistenceKey = record.persistenceKey || (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `local-${Date.now()}-${Math.random().toString(16).slice(2)}`);
     const requestId = `order:${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
-    const customer = {
+    const customer = client ? {
       documentType: client.profile === 'Pessoa física' ? 'cpf' : 'cnpj', document: client.document, legalName: client.legalName, tradeName: client.tradeName,
       displayName: client.name, stateRegistration: client.stateRegistration === 'Isento' ? '' : client.stateRegistration,
       municipalRegistration: client.municipalRegistration,
@@ -6900,16 +7512,19 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       email: client.email, phone: client.phone, primaryContact: client.contactName, postalCode: client.cep,
       street: client.street, number: client.number, complement: client.complement, district: client.district,
       city: client.cityName || client.city, cityCode: client.cityCode, state: client.state,
-      paymentTerms: client.paymentTerms, status: client.status === 'Inativo' ? 'inativo' : client.status === 'Revisar cadastro' ? 'revisar_cadastro' : 'ativo',
-    };
+      paymentTerms: client.paymentTerms, priceTableId:client.priceTableId||'',status: client.status === 'Inativo' ? 'inativo' : client.status === 'Revisar cadastro' ? 'revisar_cadastro' : 'ativo',
+    } : {};
     const order = {
-      priceTableId: managementCatalogBridge.priceTable?.id || '', sellerName: record.order.seller,
+      customerId: client?.id || record.persistence?.customerId || '', priceTableId: managementCatalogBridge.priceTable?.id || '', sellerName: record.order.seller,
+      reserveStock: record.order.reserveStock === true,
+      moveStock: moveStock !== false,
       stockLocationId: catalogRecords.find((item) => item.trackStock && item.stockLocationId)?.stockLocationId || '',
       generalDiscount: record.order.commercialTotals.orderDiscount, freight: record.order.commercialTotals.freight,
       insurance: record.order.commercialTotals.insurance, otherExpenses: record.order.commercialTotals.other,
       fiscalDocument: record.order.fiscalDocument,
       payment: { method: record.order.paymentMethod, installments: record.order.installments, firstDueDate: record.order.firstDueDate },
-      delivery: {}, items,
+      delivery: { mode: record.order.fulfillment || '', expectedDate: record.order.deliveryDate || '', notes: record.order.channel || '' },
+      internalNotes: record.order.notes || '', items,
     };
     const message = createCommercialOrderWorkflowRequest({
       requestId, persistenceKey, target, operationId: record.persistence?.operationId || '', customer, order,
@@ -6922,22 +7537,22 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     }
     const timer = window.setTimeout(() => {
       pendingOrderWorkflowRef.current.delete(requestId);
-      if (target === 'confirmado') setCreated((current) => current.filter((item) => item.id !== record.id || Boolean(item.persistence)));
-      setToast('A persistência do pedido demorou mais que o esperado. Tente novamente; a chave evita duplicidade.');
+      if (target === 'confirmado') setCreated((current) => previous ? current.map((item) => item.id === record.id ? previous : item) : current.filter((item) => item.id !== record.id || Boolean(item.persistence)));
+      showOrderError('A persistência do pedido demorou mais que o esperado. Tente novamente; a chave evita duplicidade.');
     }, 15_000);
-    pendingOrderWorkflowRef.current.set(requestId, { recordId: record.id, target, timer });
+    pendingOrderWorkflowRef.current.set(requestId, { recordId: record.id, target, timer, previous: target === 'salvo' ? record : previous });
     window.parent.postMessage(message, managementBridgeOrigin);
-    setToast(target === 'faturado' ? 'Faturando o pedido no repositório comercial…' : target === 'em_separacao' ? 'Registrando a separação…' : target === 'cancelado' ? 'Cancelando o pedido e liberando a reserva…' : target === 'devolvido' ? 'Registrando devolução e estornos integrados…' : 'Persistindo e confirmando o pedido…');
+    setToast(target === 'salvo' ? 'Abrindo o pedido para edição…' : target === 'faturado' ? 'Faturando o pedido no repositório comercial…' : target === 'em_separacao' ? 'Registrando a separação…' : target === 'cancelado' ? 'Cancelando o pedido e liberando a reserva…' : target === 'devolvido' ? 'Registrando devolução e estornos integrados…' : 'Persistindo e confirmando o pedido…');
     return true;
   };
-  const syncSavedOperation = (record: CreatedRecord) => {
+  const syncSavedOperation = (record: CreatedRecord, previous?: CreatedRecord) => {
     if (!managementCatalogBridge || !managementBridgeOrigin || window.parent === window || !['orcamento', 'pedido', 'ordem_servico'].includes(record.type)) return false;
     const client = clientRecords.find((item) => item.name === record.client);
     if (!client?.persistence?.integrated || !/^[0-9a-f-]{36}$/i.test(client.id)) { setToast('Salve e confirme o cliente no perfil empresarial antes de criar este documento.'); return true; }
     const sourceLines = record.quote?.items ?? record.order?.lines ?? record.serviceOrder?.lines ?? [];
     const items = sourceLines.map((line) => {
       const catalog = catalogRecords.find((item) => item.sku === line.sku);
-      return { catalogItemId: catalog?.catalogItemId || '', quantity: line.quantity, unitPrice: line.unitPrice, discountUnit: 0 };
+      return { catalogItemId: catalog?.catalogItemId || '', quantity: line.quantity, unitPrice: line.unitPrice, discountUnit: 'unitDiscount' in line ? line.unitDiscount : 0 };
     });
     if (!items.length || items.some((item) => !item.catalogItemId)) { setToast('Atualize o catálogo e selecione novamente os itens do documento.'); return true; }
     const persistenceKey = record.persistenceKey || `operation:${Date.now()}:${Math.random().toString(36).slice(2, 9)}`;
@@ -6946,71 +7561,91 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const firstDueDate = record.order?.firstDueDate || record.serviceOrder?.firstDueDate || isoValidity || new Date().toISOString().slice(0, 10);
     const operation = {
       type: record.type === 'pedido' ? 'pedido' : 'orcamento', channel: record.type === 'ordem_servico' || record.quote?.source === 'servicos' ? 'servicos' : 'vendas',
-      customerId: client.id, priceTableId: managementCatalogBridge.priceTable?.id || '', sellerName: record.serviceOrder?.technician || '',
+      customerId: client.id, priceTableId: managementCatalogBridge.priceTable?.id || '', sellerName: record.order?.seller || record.serviceOrder?.technician || '',
       idempotencyKey: persistenceKey, validityDate: isoValidity || firstDueDate,
       generalDiscount: record.quote?.discount || record.order?.commercialTotals.orderDiscount || 0, freight: record.quote?.freight || record.order?.commercialTotals.freight || 0, insurance: record.order?.commercialTotals.insurance || 0, otherExpenses: record.order?.commercialTotals.other || 0,
-      fiscalDocument: record.order?.fiscalDocument || record.serviceOrder?.fiscalDocument || 'nenhum', payment: { method: record.order?.paymentMethod || record.serviceOrder?.paymentMethod || 'a_definir', installments: record.order?.installments || record.serviceOrder?.installments || 1, firstDueDate }, delivery: {},
-      customerNotes: record.serviceOrder?.customerNotes || record.quote?.notes || '', internalNotes: record.serviceOrder?.internalNotes || '', items,
+      fiscalDocument: record.order?.fiscalDocument || record.serviceOrder?.fiscalDocument || 'nenhum', payment: { method: record.order?.paymentMethod || record.serviceOrder?.paymentMethod || 'a_definir', installments: record.order?.installments || record.serviceOrder?.installments || 1, firstDueDate }, delivery: record.order ? { mode: record.order.fulfillment || '', expectedDate: record.order.deliveryDate || '', notes: record.order.channel || '' } : {},
+      ...(record.order ? { reserveStock: record.order.reserveStock === true } : {}),
+      customerNotes: record.serviceOrder?.customerNotes || record.quote?.notes || '', internalNotes: record.order?.notes || record.serviceOrder?.internalNotes || '', items,
     };
     const serviceOrder = record.serviceOrder ? {
       scheduledAt: `${record.serviceOrder.scheduledDate}T${record.serviceOrder.scheduledTime}:00-03:00`, expectedDurationMinutes: record.serviceOrder.durationMinutes,
       technicianName: record.serviceOrder.technician, executionLocation: record.serviceOrder.location, onSiteContact: record.serviceOrder.contactName,
       checklist: [], materials: [],
     } : null;
-    const timer = window.setTimeout(() => { pendingOperationSaveRef.current.delete(requestId); setCreated((current) => current.filter((item) => item.id !== record.id || Boolean(item.persistence))); setToast('A gravação do documento demorou além do esperado. O registro não confirmado foi removido; tente novamente com segurança.'); }, 20_000);
-    pendingOperationSaveRef.current.set(requestId, { recordId: record.id, timer });
-    window.parent.postMessage({ type: OPERATION_SAVE_REQUEST_TYPE, requestId, action: serviceOrder ? 'create_service_order' : 'create', operation, serviceOrder, serviceOrderKey: `${persistenceKey}:os` }, managementBridgeOrigin);
-    setToast(serviceOrder ? 'Salvando e agendando a ordem de serviço no perfil…' : 'Salvando o orçamento no perfil empresarial…');
+    const updating = Boolean(record.persistence?.operationId && previous);
+    const timer = window.setTimeout(() => { pendingOperationSaveRef.current.delete(requestId); setCreated((current) => previous ? current.map((item) => item.id === record.id ? previous : item) : current.filter((item) => item.id !== record.id || Boolean(item.persistence))); setToast(updating ? 'A atualização do rascunho demorou além do esperado. O conteúdo anterior foi restaurado.' : 'A gravação do documento demorou além do esperado. O registro não confirmado foi removido; tente novamente com segurança.'); }, 20_000);
+    pendingOperationSaveRef.current.set(requestId, { recordId: record.id, timer, previous });
+    window.parent.postMessage({ type: OPERATION_SAVE_REQUEST_TYPE, requestId, action: updating ? 'update' : serviceOrder ? 'create_service_order' : 'create', operationId: record.persistence?.operationId || '', expectedVersion: record.persistence?.version || 0, operation, serviceOrder, serviceOrderKey: `${persistenceKey}:os` }, managementBridgeOrigin);
+    setToast(updating ? 'Salvando as alterações do rascunho no perfil…' : serviceOrder ? 'Salvando e agendando a ordem de serviço no perfil…' : 'Salvando o documento no perfil empresarial…');
     return true;
   };
   const createRecord = (incomingRecord: CreatedRecord) => {
     const connectedOrder = incomingRecord.type === 'pedido' && managementCatalogBridge && incomingRecord.order
-      ? { ...incomingRecord, persistenceKey: incomingRecord.persistenceKey || (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `local-${Date.now()}-${Math.random().toString(16).slice(2)}`), order: { ...incomingRecord.order, reserveStock: managementCatalogBridge.stockIntegrated, stockState: 'Sem movimentação' as const } }
+      ? { ...incomingRecord, persistenceKey: incomingRecord.persistenceKey || (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `local-${Date.now()}-${Math.random().toString(16).slice(2)}`), order: { ...incomingRecord.order, reserveStock: incomingRecord.order.reserveStock === true && managementCatalogBridge.stockIntegrated, stockState: 'Sem movimentação' as const } }
       : managementCatalogBridge && ['orcamento', 'ordem_servico'].includes(incomingRecord.type)
         ? { ...incomingRecord, persistenceKey: incomingRecord.persistenceKey || `operation:${Date.now()}:${Math.random().toString(36).slice(2, 9)}` }
         : incomingRecord;
     const record = connectedOrder;
+    const previous = created.find((item) => item.id === record.id);
     const required = newPermission[record.type];
     if (required && !authorize(required, `criar ${documentLabel(record.type).toLocaleLowerCase('pt-BR')}`)) return;
     if (record.type === 'pedido' && record.status === 'Confirmado' && (!authorize('sales.edit', 'confirmar pedidos') || !authorize('stock.exit', 'confirmar o efeito de estoque do pedido'))) return;
     if (record.type === 'pedido' && record.status === 'Confirmado' && record.order?.reserveStock && !managementCatalogBridge && !applyOrderStockEffect(record, 'reservar')) return;
-    const next = [record, ...created].slice(0, 20);
+    const next = previous ? created.map((item) => item.id === record.id ? record : item) : [record, ...created].slice(0, 20);
     setCreated(next);
     if (!managementCatalogBridge) writeCompanyStorage(STORAGE_KEY, JSON.stringify({ version: 1, created: next }));
     setNewType(null);
     setToast(managementCatalogBridge
       ? `${documentLabel(record.type)} em confirmação. O registro só permanecerá após a Gestão confirmar o vínculo com o perfil ativo.`
       : `${documentLabel(record.type)} ${record.status ? record.status.toLocaleLowerCase('pt-BR') : 'demonstrativo criado'}. Nenhum dado foi enviado.`);
-    if (record.type === 'pedido' && record.status === 'Confirmado') window.setTimeout(() => syncCommercialOrder(record, 'confirmado'), 0);
-    if (['orcamento', 'ordem_servico'].includes(record.type) || (record.type === 'pedido' && record.status === 'Rascunho')) window.setTimeout(() => syncSavedOperation(record), 0);
+    if (record.type === 'pedido' && record.status === 'Confirmado') window.setTimeout(() => syncCommercialOrder(record, 'confirmado', previous), 0);
+    if (['orcamento', 'ordem_servico'].includes(record.type) || (record.type === 'pedido' && record.status === 'Rascunho')) window.setTimeout(() => syncSavedOperation(record, previous), 0);
+    setEditingOrder(null);
     if (['pedido', 'orcamento', 'venda'].includes(record.type)) setView('vendas');
     else if (record.type === 'ordem_servico') setView('servicos');
     else setView('fiscal');
     window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0);
   };
-  const updateOrderLifecycle = (record: CreatedRecord, action: OrderLifecycleAction) => {
+  const updateOrderLifecycle = (record: CreatedRecord, action: OrderLifecycleAction, moveStock?: boolean) => {
     if (!record.order) return;
     const commercialPermission = action === 'faturar' ? 'sales.invoice' : action === 'cancelar' || action === 'devolver' ? 'sales.cancel' : 'sales.edit';
     if (!authorize(commercialPermission, action === 'faturar' ? 'faturar pedidos' : action === 'cancelar' || action === 'devolver' ? 'cancelar ou devolver pedidos' : 'alterar pedidos')) return;
-    if (!authorize(action === 'devolver' ? 'stock.adjust' : 'stock.exit', 'executar o efeito de estoque do pedido')) return;
-    if (action === 'devolver' && (!authorize('receivables.refund', 'estornar as parcelas da devolução') || !authorize('fiscal.cancel', 'encerrar o vínculo fiscal da devolução'))) return;
+    const reversesInvoice = action === 'devolver' || (action === 'cancelar' && record.status === 'Faturado');
+    if (!authorize(reversesInvoice ? 'stock.adjust' : 'stock.exit', 'executar o efeito de estoque do pedido')) return;
+    if (action === 'devolver' && (!authorize('receivables.refund', 'estornar as parcelas') || !authorize('fiscal.cancel', 'encerrar o vínculo fiscal'))) return;
     if (action === 'faturar' && record.order.fiscalDocument !== 'nenhum' && !authorize('fiscal.prepare', 'preparar o documento fiscal do faturamento')) return;
     if (action === 'faturar' && !(record.total > 0)) {
       setToast('O pedido precisa ter valor total maior que zero antes do faturamento.');
       return;
     }
     if (managementCatalogBridge && (record.persistence || record.persistenceKey)) {
-      if (action === 'separar' || action === 'faturar' || action === 'cancelar' || action === 'devolver') {
-        syncCommercialOrder(record, action === 'faturar' ? 'faturado' : action === 'cancelar' ? 'cancelado' : action === 'devolver' ? 'devolvido' : 'em_separacao');
+      if (action === 'editar' || action === 'separar' || action === 'faturar' || action === 'cancelar' || action === 'devolver') {
+        syncCommercialOrder(record, action === 'editar' ? 'salvo' : action === 'faturar' ? 'faturado' : action === 'cancelar' ? 'cancelado' : action === 'devolver' ? 'devolvido' : 'em_separacao', undefined, moveStock);
         return;
       }
     }
-    const hasProducts = record.order.lines.some((line) => line.kind === 'produto');
+    if (action === 'editar') {
+      if (!['Confirmado', 'Em separação'].includes(record.status ?? '')) return;
+      if (['Reservado', 'Em separação'].includes(record.order.stockState) && !applyOrderStockEffect(record, 'liberar')) return;
+      const reopened: CreatedRecord = { ...record, status: 'Rascunho', order: { ...record.order, stockState: 'Sem movimentação' }, events: [...(record.events ?? []), { date: new Date().toISOString(), label: 'Pedido reaberto para edição', description: 'Reserva liberada; confirme novamente após editar.' }] };
+      const next = created.map((item) => item.id === record.id ? reopened : item);
+      setCreated(next);
+      writeCompanyStorage(STORAGE_KEY, JSON.stringify({ version: 1, created: next }));
+      continueOrder(reopened);
+      return;
+    }
+    if (action === 'faturar' && moveStock === false) {
+      if (['Reservado', 'Em separação'].includes(record.order.stockState) && !applyOrderStockEffect(record, 'liberar')) return;
+      record = { ...record, order: { ...record.order, reserveStock: false, stockState: 'Sem movimentação' } };
+    }
+    if (!record.order) return;
+    const hasProducts = record.order.reserveStock && record.order.lines.some((line) => line.kind === 'produto');
     const transition = action === 'faturar' && hasProducts
       ? (['Reservado', 'Em separação'].includes(record.order.stockState) ? 'baixar' : 'baixar_direto')
       : action === 'cancelar' && ['Reservado', 'Em separação'].includes(record.order.stockState)
         ? 'liberar'
-        : action === 'devolver' && hasProducts
+        : (action === 'devolver' || (action === 'cancelar' && record.status === 'Faturado')) && hasProducts
           ? 'devolver'
           : null;
     if (transition && !applyOrderStockEffect(record, transition)) return;
@@ -7023,14 +7658,14 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const fiscalDraftCreated = action === 'faturar' && record.order.fiscalDocument !== 'nenhum'
       ? (ensureFiscalDraft({ id: record.id, client: record.client, item: `Pedido ${record.id}`, total: record.total, documentType: record.order.fiscalDocument, sourceLabel: 'Pedido' }), hadFiscalDraft ? 0 : 1)
       : 0;
-    const fiscalDraftCanceled = action === 'cancelar' || action === 'devolver'
+    const fiscalDraftCanceled = action === 'devolver'
       ? cancelOrderFiscalDraft(record, action === 'devolver' ? `Rascunho encerrado pela devolução total de ${record.id}. Nenhum documento foi transmitido.` : `Rascunho encerrado pelo cancelamento de ${record.id}. Nenhum documento foi transmitido.`)
       : 0;
     const now = new Date().toISOString();
     const lifecycle = {
       separar: { status: 'Em separação' as const, stockState: record.order.stockState === 'Reservado' ? 'Em separação' as const : record.order.stockState, label: 'Separação iniciada', description: record.order.stockState === 'Reservado' ? 'A reserva foi preservada durante a preparação do pedido.' : 'Separação iniciada sem reserva de estoque.' },
       faturar: { status: 'Faturado' as const, stockState: hasProducts ? 'Baixado' as const : 'Sem movimentação' as const, label: 'Pedido faturado', description: `${hasProducts ? transition === 'baixar' ? 'A reserva foi convertida em saída física.' : 'O saldo disponível foi baixado diretamente.' : 'Pedido sem produto físico faturado.'} ${generatedInstallments ? `${generatedInstallments} ${generatedInstallments === 1 ? 'parcela gerada' : 'parcelas geradas'} em Recebimentos.` : 'As parcelas já estavam vinculadas.'}${fiscalDraftCreated ? ' Rascunho fiscal local criado sem transmissão.' : ''}` },
-      cancelar: { status: 'Cancelado' as const, stockState: transition === 'liberar' ? 'Liberado' as const : record.order.stockState, label: 'Pedido cancelado', description: `${transition === 'liberar' ? 'A reserva foi liberada e retornou ao disponível.' : 'Cancelamento sem efeito de estoque.'}${reversedInstallments ? ` ${reversedInstallments} ${reversedInstallments === 1 ? 'parcela estornada' : 'parcelas estornadas'}.` : ''}${fiscalDraftCanceled ? ' Rascunho fiscal cancelado.' : ''}` },
+      cancelar: { status: 'Cancelado' as const, stockState: transition === 'devolver' ? 'Devolvido' as const : transition === 'liberar' ? 'Liberado' as const : record.order.stockState, label: 'Pedido cancelado', description: `${transition === 'devolver' ? 'A saída de estoque foi estornada.' : transition === 'liberar' ? 'A reserva foi liberada e retornou ao disponível.' : 'Cancelamento sem efeito de estoque.'}${reversedInstallments ? ` ${reversedInstallments} ${reversedInstallments === 1 ? 'parcela estornada' : 'parcelas estornadas'}.` : ''}${fiscalDraftCanceled ? ' Rascunho fiscal cancelado.' : ''}` },
       devolver: { status: 'Devolvido' as const, stockState: hasProducts ? 'Devolvido' as const : record.order.stockState, label: 'Devolução registrada', description: `${hasProducts ? 'Os produtos retornaram ao saldo físico e disponível.' : 'Pedido sem produto físico.'}${reversedInstallments ? ` ${reversedInstallments} ${reversedInstallments === 1 ? 'parcela e seu recebimento foram estornados' : 'parcelas e seus recebimentos foram estornados'}.` : ''}${fiscalDraftCanceled ? ' Rascunho fiscal cancelado sem transmissão.' : ''}` },
     }[action];
     const next = created.map((item) => item.id === record.id ? { ...item, status: lifecycle.status, order: { ...record.order!, stockState: lifecycle.stockState }, events: [...(item.events ?? []), { date: now, label: lifecycle.label, description: lifecycle.description }] } : item);
@@ -7218,7 +7853,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   };
 
   const visibleNewOptions = newOptions.filter((option) => can(newPermission[option.type] ?? '')
-    && (!managementCatalogBridge || !['venda', 'nfe', 'nfce', 'nfse'].includes(option.type))
+    && (!managementCatalogBridge || !['venda', 'nfce', 'nfse'].includes(option.type))
     && (!['nfe', 'nfce', 'nfse'].includes(option.type) || moduleSettings.fiscal.documentScope.includes(option.type as FiscalDocumentType)));
   const visibleNavGroups = navGroups.map((group) => ({ ...group, items: group.items.filter(([id]) => can(viewPermission[id as View] ?? '')) })).filter((group) => group.items.length > 0);
   const gestaoHref = managementCatalogBridge?.companyId
@@ -7234,7 +7869,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     window.location.assign(gestaoHref);
   };
 
-  return <PermissionContext.Provider value={{ can, user: activeUser, role: activeRole }}><div className="commercial-app" style={{ '--av-profile-primary': profileColor } as CSSProperties}>
+  return <PermissionContext.Provider value={{ can, user: activeUser, role: activeRole }}><div className="commercial-app" style={{ '--av-profile-primary': profileColor, '--av-profile-on-primary': corEhClara(profileColor) ? '#0f172a' : '#ffffff' } as CSSProperties}>
     <header className="topbar">
       <div className="topbar-start">
         <button type="button" onClick={retornarGestao} className="module-exit" aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16}/> Início</button>
@@ -7249,9 +7884,9 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         {managementContextReady && can('settings.view') && <button type="button" className="module-settings-button" onClick={() => navigate('configuracoes')} aria-label="Abrir ajustes de Vendas e Serviços" title="Ajustes"><Icon name="settings" size={18}/></button>}
       </div>
     </header>
-    {newMenu && <button type="button" className="new-selection-backdrop" aria-label="Fechar opções de novo cadastro" onClick={() => setNewMenu(false)}/>} 
+    {newMenu && <button type="button" className="new-selection-backdrop" data-av-popup-open="true" aria-label="Fechar opções de novo cadastro" onClick={() => setNewMenu(false)}/>}
     <div className="app-body">
-      {mobileMenu && <button className="nav-backdrop" type="button" aria-label="Fechar menu" onClick={() => setMobileMenu(false)}/>} 
+      {mobileMenu && <button className="nav-backdrop" data-av-popup-open="true" type="button" aria-label="Fechar menu" onClick={() => setMobileMenu(false)}/>}
       <aside className={`sidebar ${mobileMenu ? 'open' : ''} ${newMenu ? 'new-selection-open' : ''}`}>
         {newMenu && <button type="button" className="new-selection-sidebar-backdrop" aria-label="Fechar opções de novo cadastro" onClick={() => setNewMenu(false)}/>} 
         <div className="sidebar-mobile-head"><strong>Menu comercial</strong><button type="button" className="icon-button" onClick={() => setMobileMenu(false)} aria-label="Fechar menu"><Icon name="close"/></button></div>
@@ -7276,13 +7911,15 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           onFiscalStart={startFiscal}
           onFiscalPrepare={preparePersistedFiscalEmission}
           onReceivables={openReceivables}
+          onContinueOrder={continueOrder}
           onLifecycle={updateOrderLifecycle}
         />}
-        {view === 'novo_pedido' && <NewOrderView clientRecords={clientRecords} catalogRecords={catalogRecords} settings={moduleSettings} issuerRegistry={fiscalIssuerRegistry} connected={Boolean(managementCatalogBridge)} initialClient={commercialClient} initialSku={commercialSku} onCancel={() => navigate(commercialReturnView)} onCreated={createRecord}/>}
+        {view==='novo_pedido'&&standaloneFiscal&&!realFiscalEditor&&<section role="alert"><p>{editorError||'Carregando dados do perfil para a emissão…'}</p><BotaoAcaoCompacto onClick={()=>void loadRealFiscalEditor()}>Tentar novamente</BotaoAcaoCompacto></section>}
+        {view === 'novo_pedido' && (!standaloneFiscal||realFiscalEditor) && <NewOrderView fiscalEditor={standaloneFiscal?realFiscalEditor:undefined} companyId={managementCatalogBridge?.companyId || ''} key={standaloneFiscal ? 'nova-nota-avulsa' : editingOrder?.persistence?.operationId || editingOrder?.id || 'novo-pedido'} clientRecords={clientRecords} catalogRecords={standaloneFiscal ? catalogRecords.filter((item) => item.category !== 'Serviço') : catalogRecords} settings={moduleSettings} issuerRegistry={fiscalIssuerRegistry} connected={Boolean(managementCatalogBridge)} initialClient={commercialClient} initialSku={commercialSku} initialRecord={editingOrder} fiscalOnly={standaloneFiscal} onFiscalCreated={saveStandaloneFiscal} onFiscalCorrection={result=>{const key=fiscalCheckoutCorrection(result);if(!key||!authorize(fiscalCorrectionAction(key).permission,'corrigir a configuração fiscal'))return;if(key==='numbering'){fiscalNumberingTargetRef.current=result.draftId;setFiscalNumberingOpen(true);}else if(key==='certificado')setCertificateOpen(true);else if(key==='submission-status'&&result.draftId){setFiscalResultRequest({draftId:result.draftId,requestId:crypto.randomUUID()});setStandaloneFiscal(false);setView('fiscal');}}} onCancel={() => { setStandaloneFiscal(false); setEditingOrder(null); navigate(commercialReturnView); }} onCreated={createRecord}/>}
         {view === 'novo_orcamento' && <QuoteView source={quoteSource} clientRecords={clientRecords} catalogRecords={catalogRecords} settings={moduleSettings} connected={Boolean(managementCatalogBridge)} initialClient={commercialClient} initialSku={commercialSku} onCancel={() => navigate(commercialReturnView)} onCreated={createRecord}/>}
         {view === 'nova_ordem_servico' && <NewServiceOrderView clientRecords={clientRecords} catalogRecords={catalogRecords} settings={moduleSettings} issuerRegistry={fiscalIssuerRegistry} connected={Boolean(managementCatalogBridge)} initialClient={serviceClient} initialSku={serviceSku} onCancel={() => navigate(serviceReturnView)} onCreated={createRecord}/>}
         {view === 'servicos' && <ServicesView created={created} connected={Boolean(managementCatalogBridge)} clients={clientRecords} catalogRecords={catalogRecords} fiscalDrafts={fiscalDraftRecords} company={moduleSettings.company} onNew={openNew} onQuote={() => openQuote('servicos')} onNavigate={navigate} onFiscalStart={startFiscal} onReceivables={openReceivables} onStock={openStockMovements} onLifecycle={updateServiceLifecycle} onExecutionSave={saveServiceExecution} onOpenAttachment={openServiceAttachment} onNotify={setToast}/>} 
-        {view === 'clientes' && <ClientsView clientRecords={clientRecords} createdRecords={created} receivableRecords={receivableRecords} settings={moduleSettings} connected={Boolean(managementCatalogBridge)} onSave={saveClient} onNewOrder={openClientOrder} onNewService={openClientService} onNewQuote={openClientQuote} onNotify={setToast}/>}
+        {view === 'clientes' && <ClientsView priceTables={realFiscalEditor?.priceTables} clientRecords={clientRecords} createdRecords={created} receivableRecords={receivableRecords} settings={moduleSettings} connected={Boolean(managementCatalogBridge)} onSave={saveClient} onNewOrder={openClientOrder} onNewService={openClientService} onNewQuote={openClientQuote} onNotify={setToast}/>}
         {view === 'catalogo' && <CatalogView catalogRecords={catalogRecords} onSave={saveCatalogItem} onNavigate={navigate} onOpenCosts={() => openCosts()} onNewOrder={openCatalogOrder} onNewService={openCatalogService} onNewQuote={openCatalogQuote}/>} 
         {view === 'estoque' && (
           <InventoryView
@@ -7295,7 +7932,9 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             onSave={saveStockMovement}
           />
         )}
-        {view === 'fiscal' && <FiscalView
+        {view === 'fiscal' && <FiscalView fiscalEditor={realFiscalEditor} editorError={editorError} onReloadEditor={()=>void loadRealFiscalEditor()}
+          companyId={managementCatalogBridge?.companyId || ''}
+          catalogRecords={catalogRecords} clientRecords={clientRecords} issuerRegistry={fiscalIssuerRegistry} records={created}
           origin={fiscalOrigin}
           drafts={fiscalDraftRecords}
           fiscalPrepareState={fiscalPrepareState}
@@ -7310,11 +7949,12 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           onValidate={validatePersistedFiscalEmission}
           onReserveNumber={reservePersistedFiscalNumber}
           onContinueIssuance={continuePersistedFiscalEmission}
-          onRevalidate={revalidateFiscalDraft}
+          onCheckout={checkoutFiscalDraft} onRevalidate={revalidateFiscalDraft} onPreviewDraft={previewFiscalDraft} onResolveIssue={resolveFiscalIssue} resumeDraftId={fiscalResumeId} resultRequest={fiscalResultRequest}
           onCancel={cancelFiscalDraft}
           onOpenCertificate={() => setCertificateOpen(true)}
           onNavigate={navigate}
-          onSaveNumbering={persistFiscalNumbering}
+          onOpenNumbering={managementCatalogBridge?openRemoteFiscalNumbering:undefined} onSaveNumbering={persistFiscalNumbering}
+          onNewFiscal={() => openNew('nfe')}
         />}
         {view === 'recebimentos' && <ReceivablesView records={receivableRecords} initialOrigin={receivableOrigin} connected={Boolean(managementCatalogBridge)} onReceive={receiveInstallment} onRefund={refundInstallment}/>}
         {view === 'relatorios' && <ReportsView created={created} catalogRecords={catalogRecords} movementRecords={stockMovementRecords} receivableRecords={receivableRecords} fiscalDrafts={fiscalDraftRecords}/>}
@@ -7332,6 +7972,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             onSave={saveModuleSettings}
             onSaveAccess={saveAccessSettings}
             onSaveFiscalMatrix={saveFiscalMatrix}
+            onOpenNumbering={managementCatalogBridge?openRemoteFiscalNumbering:undefined}
             onOpenCertificate={() => setCertificateOpen(true)}
           />
         )}
@@ -7339,10 +7980,38 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       </main>
     </div>
     <NewRecordDialog type={newType} fiscalOrigin={fiscalOrigin} fiscalConfig={currentFiscalConfig} settings={moduleSettings} onClose={() => setNewType(null)} onCreated={createRecord}/>
+    <FiscalMatrixDialog open={fiscalCorrectionMatrixOpen} matrix={moduleSettings.fiscal.matrix} documentScope={moduleSettings.fiscal.documentScope} taxReviewConfirmed={moduleSettings.fiscal.taxReviewConfirmed} taxReformReviewConfirmed={moduleSettings.fiscal.taxReformReviewConfirmed} bridge={fiscalRulesBridgeState} readOnly={!effectivePermissions['fiscal.configure'] || (fiscalRulesBridgeState.integrated && !fiscalRulesBridgeState.writable)} onClose={() => setFiscalCorrectionMatrixOpen(false)} onSave={saveFiscalMatrix}/>
+    <FiscalIssuerRegistryDialog open={fiscalCorrectionIssuerOpen} registry={fiscalIssuerRegistry} company={moduleSettings.company} readOnly={!effectivePermissions['fiscal.configure']} onClose={() => setFiscalCorrectionIssuerOpen(false)} onSave={(next) => { saveFiscalIssuerRegistry(next); setFiscalCorrectionIssuerOpen(false); }}/>
+    <FiscalNumberingDialog open={fiscalNumberingOpen} ledger={fiscalNumberingLedger} documentScope={['nfe']} actor={activeUser?.name ?? 'Sistema'} readOnly={!effectivePermissions['fiscal.configure']} onClose={()=>setFiscalNumberingOpen(false)} onSave={persistFiscalNumbering} onLoadRemote={loadRemoteFiscalNumbering} onSaveRemote={saveRemoteFiscalNumbering}/>
+    <FiscalEmissionServiceDialog open={fiscalServiceOpen} execution={fiscalCertificateBridgeState.execution} onClose={() => setFiscalServiceOpen(false)}/>
     <CertificateDigitalDialog open={certificateOpen} company={moduleSettings.company} bridge={fiscalCertificateBridgeState} onClose={() => setCertificateOpen(false)} onRequestCompanyRegistration={() => { setCertificateOpen(false); setCompanyRegistrationOpen(true); }} onInstall={installProtectedCertificate} onActivate={activateProtectedCertificate}/>
-    <ClientFormDialog open={clientCreateOpen} client={null} clientRecords={clientRecords} sellers={moduleSettings.commercial.sellers} defaultSeller={moduleSettings.commercial.defaultSeller} connected={Boolean(managementCatalogBridge)} onClose={() => setClientCreateOpen(false)} onSave={saveClient}/>
+    <ClientFormDialog priceTables={realFiscalEditor?.priceTables} open={clientCreateOpen} client={null} clientRecords={clientRecords} sellers={moduleSettings.commercial.sellers} defaultSeller={moduleSettings.commercial.defaultSeller} connected={Boolean(managementCatalogBridge)} onClose={() => setClientCreateOpen(false)} onSave={saveClient}/>
     <SupplierFormDialog open={supplierCreateOpen} suppliers={supplierRecords} onClose={() => setSupplierCreateOpen(false)} onSave={saveSupplier}/>
     <SettingsDialog section={companyRegistrationOpen ? 'empresa' : null} settings={moduleSettings} onClose={() => { setCompanyRegistrationOpen(false); setCertificateOpen(true); }} onSave={(next) => { if (!saveModuleSettings(next)) return; setCompanyRegistrationOpen(false); setCertificateOpen(true); }}/>
-    {toast && <div className="toast" role="status"><Icon name="check" size={18}/><span>{toast}</span><button type="button" onClick={() => setToast('')} aria-label="Fechar mensagem"><Icon name="close" size={16}/></button></div>}
+    {toast && <div className={`toast ${toastTone}`} role={toastTone === 'error' ? 'alert' : 'status'}><Icon name={toastTone === 'error' ? 'warning' : 'document'} size={18}/><span>{toast}</span><button type="button" onClick={() => setToast('')} aria-label="Fechar mensagem"><Icon name="close" size={16}/></button></div>}
   </div></PermissionContext.Provider>;
+}
+
+/** Página de avaliação local: reutiliza o formulário e os itens reais, com dados sintéticos. */
+export function FiscalNoteLayoutPreview() {
+  const [saved,setSaved]=useState<CreatedRecord|null>(null);
+  const [review,setReview]=useState(false);
+  const [reset,setReset]=useState(false);
+  const [generation,setGeneration]=useState(0);
+  const [theme,setTheme]=useState(false);
+  const [color,setColor]=useState('#00aaa7');
+  if(process.env.NODE_ENV!=='development')return null;
+  const company={...defaultModuleSettings.company,name:'Empresa demonstrativa',legalName:'Empresa demonstrativa Ltda',document:'12.345.678/0001-95'};
+  const settings={...defaultModuleSettings,company,commercial:{...defaultModuleSettings.commercial,sellers:['Equipe comercial'],defaultSeller:'Equipe comercial'},payments:{...defaultModuleSettings.payments,enabledMethods:['pix','boleto','prazo'] as PaymentMethod[]}};
+  const issuer=createFiscalIssuerRegistry(company);issuer.establishments[0].documents.nfe.registrationStatus='Homologação';
+  const demoClients=clients.slice(0,2).map((client,index)=>({...client,id:`preview-client-${index}`,name:index?'Cliente parceiro':'Cliente demonstrativo',legalName:index?'Cliente parceiro':'Cliente demonstrativo',document:index?'11.222.333/0001-81':'111.444.777-35',status:'Ativo' as const,profile:index?'Pessoa jurídica' as const:'Pessoa física' as const,fiscal:index?'Contribuinte isento' as const:'Não contribuinte' as const,consumerFinal:!index,stateRegistration:index?client.stateRegistration:''}));
+  const demoCatalog:CatalogItem[]=[{sku:'DEMO-001',name:'CONDICIONADOR CRONO 200ml',price:16.5,ncm:'33059000'},{sku:'DEMO-002',name:'OXIGENADA 10 volumes',price:20.83,ncm:'28470000'},{sku:'DEMO-003',name:'PÓ DESCOLORANTE',price:50.58,ncm:'33059000'}].map((product,index)=>({...inventory[0],...product,catalogItemId:`preview-product-${index}`,description:product.name,category:'Produto acabado' as const,unit:'UN',fiscal:'Completo',available:100,current:100,reserved:0,icmsCode:'102',pisCst:'49',cofinsCst:'49',cfopInternal:'5102',cfopInterstate:'6102',icmsRate:0})).map(item=>normalizeCatalogTaxProfile(item) as CatalogItem);
+  const preview:FiscalNoteEditorOptions={primaryColor:color,dark:theme,priceTables:[{id:'standard',name:'Lista padrão',prices:{}},{id:'partner',name:'Parceiros',prices:{'DEMO-001':14.85,'DEMO-002':18.75,'DEMO-003':45.52}},{id:'retail',name:'Varejo',prices:{'DEMO-001':19.9,'DEMO-002':24.9,'DEMO-003':59.9}}],clientPriceTables:{'preview-client-0':'standard','preview-client-1':'partner'}};
+  return <div className={`vendas-app note-local-page ${theme?'theme-dark':''}`} style={{'--av-blue-900':color,'--brand':color,'--av-profile-on-primary':corEhClara(color)?'#172839':'#ffffff','--av-action-on-brand':corEhClara(color)?'#172839':'#ffffff'} as CSSProperties}><div className="page-content">
+    <div className="note-local-toolbar"><div><a href="/vendas-lab">← Laboratório de Vendas</a><span> · Prévia local com dados demonstrativos</span></div><div className="heading-actions"><label aria-label="Cor da prévia"><input aria-label="Cor da prévia" type="color" value={color} onChange={event=>setColor(event.target.value)}/></label><BotaoAcaoCompacto onClick={()=>setTheme(current=>!current)}>{theme?'Tema claro':'Tema escuro'}</BotaoAcaoCompacto></div></div>
+    {saved&&<div className="order-safety" role="status"><Icon name="check" size={18}/><p>Rascunho guardado nesta página para avaliação. A prévia não transmite notas nem altera cadastros.</p><BotaoAcaoCompacto onClick={()=>{const blob=new Blob([JSON.stringify(saved,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='previa-nota-fiscal.json';link.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);}}>Baixar rascunho</BotaoAcaoCompacto></div>}
+    <NewOrderView key={generation} fiscalEditor={preview} clientRecords={demoClients} catalogRecords={demoCatalog} settings={settings} issuerRegistry={issuer} connected initialClient="Cliente demonstrativo" initialSku="DEMO-001" fiscalOnly onFiscalCreated={async(record,issue)=>{setSaved(record);if(issue)setReview(true);return{ok:true,message:'Prévia salva localmente.'};}} onCancel={()=>setReset(true)} onCreated={()=>undefined}/>
+    <ModalConfirmacao aberto={review} titulo="Conferência local concluída" variante="primaria" rotuloCabecalho="PRÉVIA LOCAL" corPrimaria={color} darkMode={theme} mensagem={`Total da prévia: ${money(saved?.total||0)}. Os dados foram guardados nesta página. Nenhuma nota foi enviada.`} textoConfirmar="Voltar ao preenchimento" ocultarCancelar aoCancelar={()=>setReview(false)} aoConfirmar={()=>setReview(false)}/>
+    <ModalConfirmacao aberto={reset} titulo="Reiniciar a prévia?" corPrimaria={color} darkMode={theme} mensagem="O preenchimento atual será descartado somente nesta página de teste." textoCancelar="Continuar editando" textoConfirmar="Reiniciar" variante="alerta" aoCancelar={()=>setReset(false)} aoConfirmar={()=>{setGeneration(value=>value+1);setSaved(null);setReset(false);}}/>
+  </div></div>;
 }

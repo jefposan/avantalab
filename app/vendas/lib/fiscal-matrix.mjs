@@ -80,49 +80,81 @@ function signature(rule) {
 export function validateFiscalMatrix(input, requestedDocumentScope) {
   const matrix = normalizeFiscalMatrix(input);
   const errors = [];
+  const issues = [];
+  const addError = (message, field = 'matrix', ruleId = '') => { errors.push(message); issues.push({ code: 'AV-FISCAL-RULES-MATRIX', message, field, ruleId }); };
   const warnings = [];
   const rawRules = Array.isArray(input?.rules) ? input.rules : [];
-  if (rawRules.length > 100) errors.push('A matriz fiscal aceita no máximo 100 regras.');
+  const requestedScope = Array.isArray(requestedDocumentScope) ? requestedDocumentScope : matrix.documentScope;
+  const documentScope = [...new Set(requestedScope.filter((documentType) => documentTypes.includes(documentType)))];
+  const effectiveDocumentScope = documentScope.length ? documentScope : [...documentTypes];
+  if (rawRules.length > 100) addError('A matriz fiscal aceita no máximo 100 regras.');
   const allowed = [
     ['documento', 'documentType', documentTypes], ['operação', 'operation', operations], ['destino', 'destination', destinations],
     ['situação da inscrição estadual', 'recipientProfile', [...recipientProfiles, 'Consumidor final']], ['consumidor final', 'consumerFinal', consumerFinalOptions],
     ['presença', 'presence', presences], ['finalidade fiscal', 'issuePurpose', issuePurposes], ['incidência do ISS', 'serviceIncidenceMode', serviceIncidenceModes],
   ];
   rawRules.forEach((rule, index) => {
-    if (!rule || typeof rule !== 'object') { errors.push(`A regra ${index + 1} possui formato inválido.`); return; }
+    if (!rule || typeof rule !== 'object') { addError(`A regra ${index + 1} possui formato inválido.`); return; }
     for (const [label, field, values] of allowed) {
       if (field === 'consumerFinal' && rule[field] == null) continue;
-      if (!values.includes(rule[field])) errors.push(`${String(rule.name || rule.id || `Regra ${index + 1}`)}: selecione uma opção válida para ${label}.`);
+      if (!values.includes(rule[field])) addError(`${String(rule.name || rule.id || `Regra ${index + 1}`)}: selecione uma opção válida para ${label}.`, field, matrix.rules[index].id);
     }
-    if (rule.cfopOverride && !/^\d{4}$/.test(String(rule.cfopOverride))) errors.push(`${String(rule.name || rule.id || `Regra ${index + 1}`)}: informe o CFOP com quatro dígitos.`);
-    if (['nfe', 'nfce'].includes(rule.documentType) && !String(rule.cfopOverride || '').trim()) errors.push(`${String(rule.name || rule.id || `Regra ${index + 1}`)}: informe o CFOP da operação para a emissão.`);
+    if (rule.cfopOverride && !/^\d{4}$/.test(String(rule.cfopOverride))) addError(`${String(rule.name || rule.id || `Regra ${index + 1}`)}: informe o CFOP com quatro dígitos.`, 'cfopOverride', matrix.rules[index].id);
+    if (rule.active !== false && effectiveDocumentScope.includes(rule.documentType)
+      && ['nfe', 'nfce'].includes(rule.documentType) && !String(rule.cfopOverride || '').trim()) addError(`${String(rule.name || rule.id || `Regra ${index + 1}`)}: informe o CFOP da operação para a emissão.`, 'cfopOverride', matrix.rules[index].id);
   });
-  const requestedScope = Array.isArray(requestedDocumentScope) ? requestedDocumentScope : matrix.documentScope;
-  const documentScope = [...new Set(requestedScope.filter((documentType) => documentTypes.includes(documentType)))];
   if (Array.isArray(requestedDocumentScope)) {
-    if (!requestedDocumentScope.length) errors.push('Selecione ao menos um tipo de nota fiscal para publicar as regras.');
+    if (!requestedDocumentScope.length) addError('Selecione ao menos um tipo de nota fiscal para publicar as regras.');
     const invalidDocumentTypes = requestedDocumentScope.filter((documentType) => !documentTypes.includes(documentType));
-    if (invalidDocumentTypes.length) errors.push('O escopo da publicação contém um tipo de nota fiscal inválido.');
+    if (invalidDocumentTypes.length) addError('O escopo da publicação contém um tipo de nota fiscal inválido.');
   }
-  const effectiveDocumentScope = documentScope.length ? documentScope : [...documentTypes];
   const activeRules = matrix.rules.filter((rule) => rule.active && effectiveDocumentScope.includes(rule.documentType));
   for (const documentType of effectiveDocumentScope) {
-    if (!activeRules.some((rule) => rule.documentType === documentType)) errors.push(`Mantenha ao menos uma regra ativa para ${documentType.toUpperCase()}.`);
+    if (!activeRules.some((rule) => rule.documentType === documentType)) addError(`Mantenha ao menos uma regra ativa para ${documentType.toUpperCase()}.`, 'active', matrix.rules.find((rule) => rule.documentType === documentType)?.id || '');
   }
   const signatures = new Map();
   for (const rule of activeRules) {
-    if (!rule.name) errors.push(`Informe o nome da regra ${rule.id}.`);
-    if (!rule.operationNature) errors.push(`${rule.name || rule.id}: informe a natureza da operação.`);
+    if (!rule.name) addError(`Informe o nome da regra ${rule.id}.`, 'name', rule.id);
+    if (!rule.operationNature) addError(`${rule.name || rule.id}: informe a natureza da operação.`, 'operationNature', rule.id);
     const key = signature(rule);
-    if (signatures.has(key)) errors.push(`${rule.name || rule.id}: existe outra regra ativa com o mesmo escopo.`);
+    if (signatures.has(key)) addError(`${rule.name || rule.id}: existe outra regra ativa com o mesmo escopo.`, 'operation', rule.id);
     signatures.set(key, rule.id);
   }
   const reviewedRules = activeRules.filter((rule) => rule.reviewed);
-  if (reviewedRules.length && (!matrix.reviewedBy || !matrix.reviewedAt)) errors.push('Informe responsável e data para registrar regras como revisadas.');
+  if (reviewedRules.length && !matrix.reviewedBy) addError('Revisado por: informe o responsável pela revisão.', 'reviewedBy');
+  if (reviewedRules.length && !matrix.reviewedAt) addError('Data da revisão: informe a data da conferência.', 'reviewedAt');
   const pending = activeRules.filter((rule) => !rule.reviewed).length;
   if (pending) warnings.push(`${pending} ${pending === 1 ? 'regra ativa ainda precisa' : 'regras ativas ainda precisam'} de revisão fiscal.`);
   if (activeRules.some((rule) => rule.cfopOverride)) warnings.push('CFOPs são definidos pela regra fiscal da operação e exigem revisão antes da emissão.');
-  return { matrix, ready: errors.length === 0, errors, warnings, activeCount: activeRules.length, reviewedCount: reviewedRules.length, documentScope: effectiveDocumentScope };
+  return { matrix, ready: errors.length === 0, errors, issues, warnings, activeCount: activeRules.length, reviewedCount: reviewedRules.length, documentScope: effectiveDocumentScope };
+}
+
+export function validFiscalReviewDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T12:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+    && value <= new Date().toISOString().slice(0, 10);
+}
+
+export function validateFiscalMatrixPublication(input = {}) {
+  const source = input.matrix && typeof input.matrix === 'object' ? input.matrix : {};
+  const reviewedBy = String(input.fiscalResponsible || source.reviewedBy || '').trim();
+  const reviewedAt = String(input.reviewedAt || source.reviewedAt || '').trim();
+  const validation = validateFiscalMatrix({ ...source, reviewedBy, reviewedAt }, input.documentScope);
+  const issues = [...validation.issues];
+  const add = (code, field, message, ruleId = '') => {
+    if (!issues.some((issue) => issue.field === field && issue.ruleId === ruleId)) issues.push({ code, field, message, ruleId });
+  };
+  if (!reviewedBy) add('AV-FISCAL-RULES-RESPONSIBLE', 'reviewedBy', 'Revisado por: informe o responsável pela revisão.');
+  if (!validFiscalReviewDate(reviewedAt)) add('AV-FISCAL-RULES-REVIEW-DATE', 'reviewedAt', 'Data da revisão: informe uma data válida, sem usar uma data futura.');
+  if (input.taxReviewConfirmed !== true) add('AV-FISCAL-RULES-TAX-REVIEW', 'taxReviewConfirmed', 'Cadastro fiscal conferido: confirme a revisão dos dados da empresa.');
+  if (input.taxReformReviewConfirmed !== true) add('AV-FISCAL-RULES-TAX-REFORM', 'taxReformReviewConfirmed', 'Regras atuais conferidas: confirme a revisão tributária.');
+  for (const rule of validation.matrix.rules) {
+    if (rule.active && validation.documentScope.includes(rule.documentType) && !rule.reviewed) {
+      add('AV-FISCAL-RULES-REVIEW', 'reviewed', `${rule.name || rule.id}: marque Regra revisada após conferir os dados.`, rule.id);
+    }
+  }
+  return { ...validation, issues, errors: issues.map((issue) => issue.message), ready: issues.length === 0 };
 }
 
 function matches(expected, actual) {

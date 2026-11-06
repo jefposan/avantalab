@@ -8,6 +8,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 const KEY = /^[A-Za-z0-9:_-]{8,120}$/;
 const clean = (value) => String(value ?? '').trim();
 const issue = (code, field, message) => ({ code, field, message });
+const SUBMISSION_STAGES = {
+  document: ['DOCUMENT-READ', 'leitura do documento fiscal'], artifact: ['ARTIFACT-READ', 'leitura do XML assinado'],
+  signature: ['SIGNATURE-CHECK', 'conferência da assinatura'], binding: ['BINDING-READ', 'consulta do vínculo do certificado'],
+  registration: ['REGISTRATION', 'registro da tentativa de envio na fila fiscal'], authority: ['AUTHORITY', 'comunicação com a SEFAZ'],
+  protocol: ['PROTOCOL', 'guarda do protocolo de autorização'], result: ['RESULT', 'registro do retorno da SEFAZ'],
+};
 
 function accessError(context) {
   if (!context || !UUID.test(clean(context.companyId)) || !UUID.test(clean(context.actorId))) return issue('AV-COMMERCIAL-SESSION', 'session', 'Confirme novamente a sessão e a empresa ativa.');
@@ -85,45 +91,67 @@ export function createCommercialNfeSubmissionService({ repository, certificateBi
       const normalizedEmissionId = clean(emissionId);
       const normalizedKey = clean(idempotencyKey);
       if (!UUID.test(normalizedEmissionId) || !Number.isInteger(expectedVersion) || expectedVersion < 1 || !KEY.test(normalizedKey)) return { ok: false, errors: [issue('AV-NFE-SUBMISSION-INPUT', 'emission', 'Atualize a Central Fiscal e tente novamente.')] };
+      let stage = 'document';
+      let transmissionAttempted = false;
       try {
         const data = await repository.load({ companyId: context.companyId, emissionId: normalizedEmissionId });
         const invalid = validateLoaded(data, expectedVersion);
         if (invalid) return { ok: false, errors: [invalid] };
+        stage = 'artifact';
         const loaded = await artifactStorage.readByReference({ accessKey: data.emission.accessKey, storageReference: data.signedArtifact.storageReference, storageVersion: data.signedArtifact.storageVersion, contentType: 'application/xml', expectedChecksum: data.signedArtifact.checksum });
         const signedXml = new TextDecoder().decode(loaded.content);
+        stage = 'signature';
         const verification = await verifyProtectedSignedNfeXml(signedXml, data.draft.issuerSnapshot.document);
         if (!verification.valid || verification.accessKey !== data.emission.accessKey) return { ok: false, errors: [issue('AV-NFE-SUBMISSION-VERIFY', 'signature', 'O XML assinado armazenado não passou pela conferência anterior ao envio.')] };
+        stage = 'binding';
         const binding = await certificateBindingResolver({ companyId: context.companyId, establishmentId: data.emission.establishmentId, documentType: 'nfe' });
         if (!binding?.secureReference) return { ok: false, errors: [issue('AV-NFE-SUBMISSION-CERTIFICATE', 'certificate', 'Ative o certificado digital da empresa antes de transmitir a NF-e.')] };
         const batchId = deriveNfeLotId(normalizedKey, normalizedEmissionId);
-        const begun = await lifecycle.beginSubmission({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion, operationKey: normalizedKey, actorId: context.actorId, accessKey: data.emission.accessKey, signedChecksum: data.emission.signedChecksum, batchId, publicPayload: { authority: 'SEFAZ/SP', environment: 'homologacao', synchronous: true } });
-        if (!begun?.ok) return begun;
-        const authorization = await authorizationAdapter.authorizeProtected({ signedXml, lotId: batchId, secureReference: binding.secureReference, expectedDocument: data.draft.issuerSnapshot.document, expectedMode: binding.expectedMode || 'Certificado A1', expectedAccessKey: data.emission.accessKey });
+        stage = 'authority';
+        let begun;
+        const authorization = await authorizationAdapter.authorizeProtected({ signedXml, lotId: batchId, secureReference: binding.secureReference, expectedDocument: data.draft.issuerSnapshot.document, expectedMode: binding.expectedMode || 'Certificado A1', expectedAccessKey: data.emission.accessKey, beforeTransmission: async () => {
+          stage = 'registration';
+          begun = await lifecycle.beginSubmission({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion, operationKey: normalizedKey, actorId: context.actorId, accessKey: data.emission.accessKey, signedChecksum: data.emission.signedChecksum, batchId, publicPayload: { authority: 'SEFAZ/SP', environment: 'homologacao', synchronous: true } });
+          if (begun?.ok) { stage = 'authority'; transmissionAttempted = true; }
+          return begun;
+        } });
+        if (!begun?.ok) return { ok: false, pendingRecovery: false, errors: authorization.errors?.length ? authorization.errors : [issue('AV-NFE-SUBMISSION-PREFLIGHT', 'submission', 'A conferência anterior ao envio não foi concluída. Nenhuma nota foi transmitida.')] };
         if (authorization.authorized === true && authorization.valid === true && authorization.protocolXml) {
+          stage = 'protocol';
           const protocol = buildNfeProtocolArtifact({ signedXml, protocolXml: authorization.protocolXml, expectedAccessKey: data.emission.accessKey });
           if (!protocol.valid) return { ok: false, pendingRecovery: true, state: begun.emission.state, errors: [issue('AV-NFE-SUBMISSION-PROTOCOL', 'protocol', 'A autorização foi recebida, mas o protocolo aguarda reconciliação segura.')] };
           const stored = await persistNfeProtocolArtifact({ artifact: protocol, provider: artifactStorage });
           if (!stored.valid) return { ok: false, pendingRecovery: true, state: begun.emission.state, errors: stored.errors };
+          stage = 'result';
           const committed = await lifecycle.commitAuthorization({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion: begun.emission.version, operationKey: followupKey('authorize', normalizedKey, normalizedEmissionId), actorId: context.actorId, accessKey: data.emission.accessKey, protocolNumber: protocol.protocolNumber, authorizedAt: protocol.receivedAt, statusReason: protocol.reason, artifact: { artifactType: 'protocol_xml', storageReference: stored.storageReference, storageVersion: stored.storageVersion, checksum: protocol.checksum, byteLength: protocol.byteLength, contentType: 'application/xml', createdAt: stored.storedAt }, publicPayload: { batchStatus: authorization.batchStatus, statusCode: protocol.status, authority: 'SEFAZ/SP', environment: 'homologacao' } });
           if (!committed?.ok) return committed;
           return { ok: true, result: { emissionId: committed.emission.id, state: committed.emission.state, version: committed.emission.version, batchId, accessKey: committed.emission.accessKey, authorized: true, protocolNumber: committed.emission.protocolNumber, protocolStored: true, processedDocumentPending: true, externalContentReturned: false, sensitiveMaterialReturned: false }, errors: [] };
         }
         if (authorization.valid === true && authorization.needsReceiptConsultation === true) {
+          stage = 'result';
           const processing = await lifecycle.transition({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion: begun.emission.version, operationKey: followupKey('receipt', normalizedKey, normalizedEmissionId), actorId: context.actorId, toState: 'processing', patch: { receiptNumber: authorization.receiptNumber }, eventType: 'emission.processing', publicPayload: { batchStatus: authorization.batchStatus, authority: 'SEFAZ/SP', environment: 'homologacao' } });
           if (!processing?.ok) return processing;
           return { ok: true, result: { emissionId: processing.emission.id, state: processing.emission.state, version: processing.emission.version, batchId, receiptNumber: processing.emission.receiptNumber, authorized: false, receiptConsultationPending: true, externalContentReturned: false, sensitiveMaterialReturned: false }, errors: [] };
         }
-        if (authorization.valid === true && authorization.batchProcessed === true && /^\d{3}$/.test(clean(authorization.protocolStatus)) && authorization.protocolStatus !== '100') {
-          const rejected = await lifecycle.transition({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion: begun.emission.version, operationKey: followupKey('reject', normalizedKey, normalizedEmissionId), actorId: context.actorId, toState: 'rejected', patch: { statusCode: authorization.protocolStatus, statusReason: authorization.protocolReason || authorization.batchReason }, eventType: 'emission.rejected', publicPayload: { batchStatus: authorization.batchStatus, statusCode: authorization.protocolStatus, authority: 'SEFAZ/SP', environment: 'homologacao' } });
+        if (authorization.valid === true && (authorization.batchRejected === true || (authorization.batchProcessed === true && /^\d{3}$/.test(clean(authorization.protocolStatus)) && authorization.protocolStatus !== '100' && !['204','539'].includes(authorization.protocolStatus)))) {
+          stage = 'result';
+          const rejectedCode = authorization.batchRejected ? authorization.batchStatus : authorization.protocolStatus;
+          const rejected = await lifecycle.transition({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion: begun.emission.version, operationKey: followupKey('reject', normalizedKey, normalizedEmissionId), actorId: context.actorId, toState: 'rejected', patch: { statusCode: rejectedCode, statusReason: authorization.protocolReason || authorization.batchReason }, eventType: 'emission.rejected', publicPayload: { batchStatus: authorization.batchStatus, statusCode: rejectedCode, authority: 'SEFAZ/SP', environment: 'homologacao' } });
           if (!rejected?.ok) return rejected;
           return { ok: true, result: { emissionId: rejected.emission.id, state: rejected.emission.state, version: rejected.emission.version, batchId, authorized: false, rejected: true, statusCode: rejected.emission.statusCode, statusReason: rejected.emission.statusReason, externalContentReturned: false, sensitiveMaterialReturned: false }, errors: [] };
         }
-        return { ok: false, pendingRecovery: true, state: begun.emission.state, version: begun.emission.version, errors: [issue('AV-NFE-SUBMISSION-PENDING', 'authorization', 'O envio foi registrado e será consultado com segurança antes de qualquer nova transmissão.')] };
+        const diagnosticCodes = (authorization.errors || []).map(item => /^[A-Z0-9-]{1,80}$/.test(item.code || '') ? item.code : 'AV-NFE-AUTH-RETURN');
+        console.error('AVANTA_FISCAL_AUTHORIZATION_UNCONFIRMED', { codes: diagnosticCodes, batchStatus: /^\d{3}$/.test(authorization.batchStatus || '') ? authorization.batchStatus : '', transmissionAttempted: authorization.transmissionAttempted === true, transportErrorCode:authorization.transportErrorCode || '',httpStatus:authorization.httpStatus || 0 });
+        return { ok: false, pendingRecovery: true, state: begun.emission.state, version: begun.emission.version, errors: [issue('AV-NFE-SUBMISSION-PENDING', 'authorization', `O retorno da autorização não foi confirmado${diagnosticCodes.length ? ` (${diagnosticCodes.join(', ')})` : ''}. A situação da mesma nota precisa ser consultada antes de reenviar.`)] };
       } catch (cause) {
+        const diagnosticCode = /^(?:[0-9A-Z]{5}|AV-[A-Z0-9-]{1,80})$/.test(clean(cause?.code)) ? clean(cause.code) : 'INTERNAL';
+        const diagnostic = { stage, code: diagnosticCode, transmissionAttempted };
         if (typeof internalErrorReporter === 'function') {
-          try { await internalErrorReporter({ service: 'commercial-nfe-submission', cause }); } catch {}
-        }
-        return { ok: false, errors: [issue('AV-NFE-SUBMISSION-SERVER', 'submission', 'Não foi possível concluir o envio controlado. Consulte a Central Fiscal antes de tentar novamente.')] };
+          try { await internalErrorReporter({ service: 'commercial-nfe-submission', cause, diagnostic }); } catch {}
+        } else console.error('AVANTA_FISCAL_SUBMISSION', diagnostic);
+        const [suffix, label] = SUBMISSION_STAGES[stage];
+        const next = transmissionAttempted ? 'O resultado precisa ser consultado antes de qualquer nova transmissão.' : 'A SEFAZ não foi acionada nesta tentativa. Consulte a situação da mesma nota, sem criar outra.';
+        return { ok: false, pendingRecovery: transmissionAttempted, errors: [issue(`AV-NFE-SUBMISSION-${suffix}`, 'submission', `Falha interna na etapa de ${label}. ${next} Referência: ${diagnosticCode}.`)] };
       }
     },
   });

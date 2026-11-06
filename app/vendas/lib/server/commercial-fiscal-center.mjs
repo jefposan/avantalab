@@ -17,12 +17,13 @@ function mapFiscalItem(value) {
     unitPrice: Math.max(0, number(source.unitPrice)), unitDiscount: Math.max(0, number(source.unitDiscount)),
     fiscalReady: source.fiscalReady === true,
     fiscal: Object.freeze({
+      ...(typeof fiscal.useCompanyFiscal === 'boolean' ? { useCompanyFiscal: fiscal.useCompanyFiscal } : {}),
       ncm: text(fiscal.ncm, 8), cest: text(fiscal.cest, 7), taxableUnit: text(fiscal.taxableUnit || fiscal.unidadeTributavel, 20),
       municipalServiceCode: text(fiscal.municipalServiceCode || fiscal.codigoTributacaoMunicipal, 40),
       nationalServiceCode: text(fiscal.nationalServiceCode || fiscal.codigoTributacaoNacional, 40),
       nbs: text(fiscal.nbs, 20), issRate: Math.max(0, number(fiscal.issRate || fiscal.aliquotaIss)),
       serviceIncidenceMode: text(fiscal.serviceIncidenceMode || fiscal.municipioPrestacao, 80),
-      fiscalOriginCode: text(fiscal.fiscalOriginCode || fiscal.origemMercadoria, 10),
+      fiscalOriginCode: text(fiscal.fiscalOriginCode || fiscal.originCode || fiscal.origemMercadoria, 10),
       cfopInternal: text(fiscal.cfopInternal || fiscal.cfop || fiscal.cfopPadrao, 10),
       cfopInterstate: text(fiscal.cfopInterstate, 10), icmsCode: text(fiscal.icmsCode || fiscal.csosn || fiscal.cst, 10),
       pisCst: text(fiscal.pisCst || fiscal.cstPis, 10), cofinsCst: text(fiscal.cofinsCst || fiscal.cstCofins, 10),
@@ -51,7 +52,7 @@ function mapDocument(row) {
   return Object.freeze({
     draftId: text(row.rascunho_id, 80),
     emissionId: text(row.emissao_id, 80),
-    originId: text(row.operacao_id, 80),
+    originId: text(row.origem_tipo === 'avulsa' ? row.rascunho_id : row.operacao_id, 80),
     originNumber: row.operacao_numero && row.operacao_ano
       ? `${Number(row.operacao_ano)}-${Number(row.operacao_numero)}` : '',
     originType: text(row.origem_tipo, 40),
@@ -59,9 +60,12 @@ function mapDocument(row) {
     draftStatus: row.rascunho_cancelado_em ? 'cancelado' : text(row.rascunho_situacao, 40),
     client: text(customer.displayName || customer.name || customer.legalName, 180),
     clientDocument: text(customer.document, 20),
-    clientCity: text(customer.city, 120),
+    clientCity: text(customer.address?.city || customer.city, 120),
     total: number(totals.total),
     paymentMethod: text(payment.method, 80),
+    paymentDetails: payment.details ? {integrationType:text(payment.details.integrationType,1),institutionDocument:text(payment.details.institutionDocument,14),authorizationCode:text(payment.details.authorizationCode,128)} : undefined,
+    paymentInstallments: number(payment.installments),
+    paymentFirstDueDate: text(payment.firstDueDate,10),
     issuer: Object.freeze({
       establishmentId: text(issuer.establishmentId, 80),
       document: text(issuer.document, 20),
@@ -72,6 +76,9 @@ function mapDocument(row) {
     }),
     items: Object.freeze((Array.isArray(row.itens_retrato) ? row.itens_retrato : []).slice(0, 500).map(mapFiscalItem)),
     totals: Object.freeze({
+      additionalInfo: text(totals.additionalInfo, 5000),
+      operationNature: text(totals.operationNature,60),
+      ...(totals.fiscalForm?{fiscalForm:totals.fiscalForm}:{}),
       subtotalGross: Math.max(0, number(totals.subtotalGross)), itemDiscount: Math.max(0, number(totals.itemDiscount)),
       generalDiscount: Math.max(0, number(totals.generalDiscount)), freight: Math.max(0, number(totals.freight)),
       insurance: Math.max(0, number(totals.insurance)), otherExpenses: Math.max(0, number(totals.otherExpenses)),
@@ -103,21 +110,22 @@ export function createPostgresCommercialFiscalCenterRepository({ pool } = {}) {
         const result = await client.query(`
           select
             r.id as rascunho_id,r.operacao_id,r.origem_tipo,r.documento_tipo,
-            r.situacao as rascunho_situacao,c.criado_em as rascunho_cancelado_em,r.emitente_retrato,r.destinatario_retrato,
-            r.itens_retrato,r.totais_retrato,r.pagamento_retrato,r.criado_em as rascunho_criado_em,
+            r.situacao as rascunho_situacao,c.criado_em as rascunho_cancelado_em,coalesce(rev.issuer_snapshot,r.emitente_retrato) as emitente_retrato,coalesce(rev.recipient_snapshot,r.destinatario_retrato) as destinatario_retrato,
+            coalesce(rev.items_snapshot,r.itens_retrato) as itens_retrato,coalesce(rev.totals_snapshot,r.totais_retrato) as totais_retrato,coalesce(rev.payment_snapshot,r.pagamento_retrato) as pagamento_retrato,r.criado_em as rascunho_criado_em,
             o.ano as operacao_ano,o.numero as operacao_numero,
             e.id as emissao_id,e.environment as emissao_ambiente,e.state as emissao_situacao,
             e.version as emissao_versao,e.series as emissao_serie,e.number as emissao_numero,
             e.access_key as emissao_chave,e.updated_at as emissao_atualizada_em
           from public.vendas_fiscal_rascunhos r
-          join public.vendas_operacoes o
+          left join public.vendas_operacoes o
             on o.empresa_id=r.empresa_id and o.id=r.operacao_id
           left join fiscal_private.emissions e
             on e.company_id=r.empresa_id and e.draft_id=r.id::text
-              and e.origin_id=r.operacao_id::text
+              and e.origin_id=coalesce(r.operacao_id,r.id)::text
+          left join lateral (select x.* from fiscal_private.emission_corrections x where x.company_id=r.empresa_id and x.emission_id=e.id order by x.revision desc limit 1) rev on true
           left join public.vendas_fiscal_rascunho_cancelamentos c
             on c.empresa_id=r.empresa_id and c.rascunho_id=r.id
-          where r.empresa_id=$1
+          where r.empresa_id=$1 and not exists(select 1 from fiscal_private.draft_deletions deleted where deleted.company_id=r.empresa_id and deleted.draft_id=r.id)
           order by r.criado_em desc,r.id desc
           limit $2
         `, [text(companyId, 80), safeLimit]);

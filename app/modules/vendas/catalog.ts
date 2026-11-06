@@ -11,7 +11,7 @@ export function situacaoFiscalItemCustos(linha: LinhaCatalogoCustos): ItemCatalo
     ? true
     : Boolean(
       texto(linha.ncm)
-      && texto(linha.unidade_tributavel)
+      && texto(linha.unidade_tributavel || linha.unidade)
     );
   return completo ? 'Completo' : 'Revisar cadastro fiscal';
 }
@@ -47,8 +47,9 @@ export function mapearItemCustosParaVendas(
       cest: texto(linha.cest),
       origemMercadoria: texto(linha.origem_mercadoria),
       unidadeTributavel: texto(linha.unidade_tributavel),
-      // CFOP é definido pela operação escolhida na emissão; nunca pelo item.
-      cfopPadrao: '',
+      usarFiscalEmpresa: typeof linha.usar_fiscal_empresa === 'boolean' ? linha.usar_fiscal_empresa : null,
+      // Exceções são resolvidas somente quando a operação e a UF forem conhecidas.
+      cfopPadrao: texto(linha.cfop_padrao), cfopInterestadual: texto(linha.cfop_interestadual),
       cst: texto(linha.cst),
       csosn: texto(linha.csosn),
       cstPis: texto(linha.cst_pis),
