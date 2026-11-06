@@ -1,8 +1,10 @@
 {
-  "baseDeploymentId": "dpl_6Nnzz6todLKRMq71ZmaQWQSvvwoU",
-  "version": "3.2.0.370",
-  "scope": "Vendas: interpretar XML do resultado individual da autorização",
-  "migrations": [],
+  "baseDeploymentId": "dpl_8cwmi52rXMLXQdZXRqskH4yuYSou",
+  "version": "3.2.0.371",
+  "scope": "Vendas: aceitar retornos RTC e retomar edição após ausência confirmada",
+  "migrations": [
+    "20261106180000_vendas_cstat_rtc.sql"
+  ],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base 3.2.0.369 preservada; parser XML existente fixado como dependência de execução, sem SQL ou mudança de numeração."
+  "auditReview": "Base main 3.2.0.370 preservada; TStat oficial de três ou quatro dígitos; retomada exige consulta 217 auditada. Migração de três checks validada em PostgreSQL local; execução remota depende de autorização específica."
 }

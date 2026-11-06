@@ -105,12 +105,12 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
     }
     if (result.canceled === true) return failure('AV-FISCAL-RECOVERY-CANCELED', 'A consulta encontrou cancelamento e exige reconciliação fiscal específica antes de alterar o estado.');
     const rejectionCode = String(result.protocolStatus || '');
-    if (/^\d{3}$/.test(rejectionCode) && rejectionCode !== '100') {
+    if (/^\d{3,4}$/.test(rejectionCode) && rejectionCode !== '100') {
       const rejected = await lifecycle.transition({ companyId: job.companyId, emissionId: job.emissionId, expectedVersion: emission.version, operationKey: operationKey('recover-reject', job), toState: 'rejected', patch: { statusCode: rejectionCode, statusReason: result.protocolReason || result.reason }, eventType: 'emission.rejected.after_query', publicPayload: { recoveryJobId: job.id, authority: 'SEFAZ/SP', environment: 'homologacao', statusCode: rejectionCode } });
       if (!rejected.ok) return failure('AV-FISCAL-RECOVERY-REJECTION-COMMIT', 'A rejeição foi consultada, mas o estado fiscal precisa ser reconciliado novamente.');
       return { ok: true, reconciled: true, rejected: true, state: rejected.emission.state, contentReturned: false };
     }
-    const code = /^\d{3}$/.test(result.status || '') ? result.status : '';
+    const code = /^\d{3,4}$/.test(result.status || '') ? result.status : '';
     return failure(`AV-FISCAL-RECOVERY-SEFAZ-${code || 'UNCONFIRMED'}`, code ? `${code} · ${String(result.reason || 'A SEFAZ não confirmou a autorização.').slice(0, 900)}` : 'A consulta não confirmou a autorização desta nota.');
   }
 

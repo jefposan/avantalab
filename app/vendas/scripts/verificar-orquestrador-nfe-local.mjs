@@ -99,6 +99,7 @@ function createTransactionalMemoryRepository() {
           draft.emissions.set(emission.id, structuredClone(emission));
           return true;
         },
+        async findNotReceivedConfirmation(companyId,emissionId,sequence) {return draft.events.some(e=>e.companyId===companyId&&e.emissionId===emissionId&&e.sequence===sequence&&e.eventType==='emission.not_received_confirmed'&&e.toState==='signed'&&e.publicPayload?.statusCode==='217');},
         async appendEvent(event) { draft.events.push(structuredClone(event)); },
         async insertOperation(operation) { draft.operations.set(`${operation.companyId}:${operation.operationKey}`, structuredClone(operation)); },
         async findArtifact(companyId, emissionId, artifactType) { return structuredClone(draft.artifacts.get(`${companyId}:${emissionId}:${artifactType}`) || null); },

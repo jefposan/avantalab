@@ -1,3 +1,9 @@
+## 3.2.0.371 — Vendas: aceitar retornos RTC e retomar edição após ausência confirmada
+
+- Alinha o retorno, persistência e correção ao TStat oficial de três ou quatro dígitos da NT 2025.002-RTC; rejeições reais deixam de ser tratadas como resultado ausente.
+- Permite editar e salvar a tentativa cuja ausência foi confirmada por consulta 217, verificando prova imutável e preservando número, reserva e versões dos artefatos. Envios incertos e autorizados permanecem protegidos.
+- Migração 20261106180000 amplia somente três validações de códigos, sem alterar registros, permissões ou numeração.
+
 ## 3.2.0.370 — Vendas: interpretar XML do resultado individual da autorização
 
 - Substitui a leitura por expressões regulares do retorno de autorização por parser XML com namespaces, referências numéricas e CDATA.

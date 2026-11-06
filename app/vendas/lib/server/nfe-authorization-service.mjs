@@ -160,13 +160,13 @@ export function parseNfeAuthorizationSoapResponse(value, { issuerCode = '35', en
     if (result.environment !== authority.environmentCode) result.errors.push(error('AV-NFE-AUTH-RESPONSE-ENVIRONMENT', 'response.tpAmb', 'A resposta não pertence ao ambiente fiscal esperado.'));
     if (result.stateCode !== authority.issuerCode) result.errors.push(error('AV-NFE-AUTH-RESPONSE-UF', 'response.cUF', 'A resposta não pertence ao autorizador da UF emitente.'));
   }
-  if (!/^\d{3}$/.test(result.batchStatus) || !result.batchReason) result.errors.push(error('AV-NFE-AUTH-RESPONSE-STATUS', 'response.cStat', 'A resposta do lote não contém situação e motivo válidos.'));
+  if (!/^\d{3,4}$/.test(result.batchStatus) || !result.batchReason) result.errors.push(error('AV-NFE-AUTH-RESPONSE-STATUS', 'response.cStat', 'A resposta do lote não contém situação e motivo válidos.'));
   result.batchProcessed = result.batchStatus === '104';
-  result.batchRejected = /^\d{3}$/.test(result.batchStatus) && Number(result.batchStatus) >= 200 && !['204', '539'].includes(result.batchStatus) && !result.protocolStatus;
+  result.batchRejected = /^\d{3,4}$/.test(result.batchStatus) && Number(result.batchStatus) >= 200 && !['204', '539'].includes(result.batchStatus) && !result.protocolStatus;
   result.needsReceiptConsultation = result.batchStatus === '103' && /^\d{15}$/.test(result.receiptNumber);
   result.authorized = result.batchProcessed && result.protocolStatus === '100' && /^\d{44}$/.test(result.accessKey) && Boolean(result.protocolNumber);
   result.needsProtocolConsultation = result.batchProcessed && ['204', '539'].includes(result.protocolStatus);
-  if (result.batchProcessed && !/^\d{3}$/.test(result.protocolStatus)) result.errors.push(error('AV-NFE-AUTH-RESPONSE-PROTOCOL', 'response.protNFe', 'O lote foi processado sem resultado individual da NF-e.'));
+  if (result.batchProcessed && !/^\d{3,4}$/.test(result.protocolStatus)) result.errors.push(error('AV-NFE-AUTH-RESPONSE-PROTOCOL', 'response.protNFe', 'O lote foi processado sem resultado individual da NF-e.'));
   result.valid = result.errors.length === 0 && (result.authorized || result.needsReceiptConsultation || result.batchRejected || Boolean(result.protocolStatus));
   return result;
 }

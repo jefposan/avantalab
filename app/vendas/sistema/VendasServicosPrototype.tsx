@@ -1291,7 +1291,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const [fulfillment, setFulfillment] = useState(initialOrder?.fulfillment || 'Entrega');
   const [reserveStock, setReserveStock] = useState(fiscalOnly ? false : initialOrder?.reserveStock ?? settings.commercial.reserveStockDefault);
   const [savingFiscal, setSavingFiscal] = useState(false);
-  const fiscalAttemptLocked=Boolean(correction && ['signed','submitted','processing'].includes(correction.status.state));
+  const fiscalAttemptLocked=Boolean(correction && ['signed','submitted','processing'].includes(correction.status.state) && !(correction.status.state==='signed' && correction.status.statusCode==='217'));
   const formRef=useRef<HTMLDivElement>(null);
   const [validationFocus,setValidationFocus]=useState<{message:string;field?:string;code?:string;attempt:number}|null>(null);
   const [fiscalSaveError, setFiscalSaveError] = useState('');
@@ -4727,7 +4727,7 @@ function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,comp
     const original=records.find(record=>record.id===rejectedDraft.originId);
     const initialRecord: CreatedRecord={...original,id:original?.id || rejectedDraft.originId,type:'nfe',client:rejectedDraft.client,status:'Rascunho',createdAt:rejectedDraft.createdAt,total:rejectedDraft.total,order:{...original?.order,lines:rejectedDraft.items.map(item=>({catalogItemId:catalogRecords.find(product=>product.sku===item.sku)?.catalogItemId,sku:item.sku,name:item.name,kind:item.kind,unit:item.unit,quantity:item.quantity,unitPrice:item.unitPrice,unitDiscount:item.unitDiscount,cost:0})),commercialTotals:rejectedDraft.commercialTotals,reserveStock:false,stockState:'Sem movimentação',seller:original?.order?.seller || '',fiscalDocument:'nfe',paymentMethod:rejectedDraft.paymentMethod,installments:rejectedDraft.paymentInstallments || original?.order?.installments || 1,firstDueDate:rejectedDraft.paymentFirstDueDate || original?.order?.firstDueDate || todayIso(),operationNature:rejectedDraft.operationNature || original?.order?.operationNature,notes:rejectedDraft.additionalInfo || '',fiscalForm:rejectedDraft.fiscalForm}};
     return <NewOrderView onSaveClient={onSaveClient} fiscalEditor={fiscalEditor?{...fiscalEditor,series:status.series,number:String(status.number)}:undefined} companyId={companyId} key={`correct-note-${rejectedDraft.id}`} clientRecords={clientRecords} catalogRecords={catalogRecords.filter(item=>item.category!=='Serviço')} settings={settings} issuerRegistry={issuerRegistry} connected={Boolean(fiscalBridgeOrigin)} initialRecord={initialRecord} fiscalOnly correction={{draft:rejectedDraft,status,onSave:async(note,issue)=>{
-      if(['signed','submitted','processing'].includes(status.state)){
+      if(['signed','submitted','processing'].includes(status.state) && !(status.state==='signed' && status.statusCode==='217')){
         if(!issue)return {ok:false,message:'Os dados da tentativa assinada estão preservados. Conclua a emissão antes de alterar a nota.'};
         const response=await checkoutAndShowResult({...rejectedDraft,remoteState:status.state,remoteVersion:status.version},'issue');
         if(response.ok && response.emission && ['authorized','artifacts_stored','danfe_ready'].includes(response.emission.state)){setIssueDraft(null);setEditingDraft(null);}

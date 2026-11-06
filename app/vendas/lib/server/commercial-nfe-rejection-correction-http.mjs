@@ -2,7 +2,7 @@ import { NFE_REJECTION_CORRECTION_CONFIRMATION } from './commercial-nfe-rejectio
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY_PATTERN = /^[A-Za-z0-9:_-]{8,120}$/;
-const STATUS_PATTERN = /^\d{3}$/;
+const STATUS_PATTERN = /^\d{3,4}$/;
 const headers = Object.freeze({ 'Cache-Control': 'no-store, max-age=0', Pragma: 'no-cache', 'X-Content-Type-Options': 'nosniff' });
 const text = (value) => String(value ?? '').trim();
 const reply = (status, body) => Response.json(body, { status, headers });

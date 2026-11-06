@@ -124,7 +124,7 @@ export function parseNfeReceiptQuerySoapResponse(value) {
   if (result.version !== '4.00') result.errors.push(error('AV-NFE-RECEIPT-VERSION', 'response.versao', 'A resposta não usa o leiaute 4.00.'));
   if (result.environment !== '2') result.errors.push(error('AV-NFE-RECEIPT-ENVIRONMENT', 'response.tpAmb', 'A resposta não pertence ao ambiente de homologação.'));
   if (result.stateCode !== '35') result.errors.push(error('AV-NFE-RECEIPT-UF', 'response.cUF', 'A resposta não pertence ao autorizador de São Paulo.'));
-  if (!/^\d{3}$/.test(result.status) || !result.reason) result.errors.push(error('AV-NFE-RECEIPT-STATUS', 'response.cStat', 'A consulta não contém situação e motivo válidos.'));
+  if (!/^\d{3,4}$/.test(result.status) || !result.reason) result.errors.push(error('AV-NFE-RECEIPT-STATUS', 'response.cStat', 'A consulta não contém situação e motivo válidos.'));
   result.processed = result.status === '104';
   result.pending = result.status === '105';
   result.authorized = result.processed && result.protocolStatus === '100' && result.protocolEnvironment === '2' && /^\d{44}$/.test(result.accessKey) && Boolean(result.protocolNumber);
@@ -149,7 +149,7 @@ export function parseNfeProtocolQuerySoapResponse(value) {
   if (result.version !== '4.00') result.errors.push(error('AV-NFE-PROTOCOL-VERSION', 'response.versao', 'A resposta não usa o leiaute 4.00.'));
   if (result.environment !== '2') result.errors.push(error('AV-NFE-PROTOCOL-ENVIRONMENT', 'response.tpAmb', 'A resposta não pertence ao ambiente de homologação.'));
   if (result.stateCode !== '35') result.errors.push(error('AV-NFE-PROTOCOL-UF', 'response.cUF', 'A resposta não pertence ao autorizador de São Paulo.'));
-  if (!/^\d{3}$/.test(result.status) || !result.reason) result.errors.push(error('AV-NFE-PROTOCOL-STATUS', 'response.cStat', 'A consulta não contém situação e motivo válidos.'));
+  if (!/^\d{3,4}$/.test(result.status) || !result.reason) result.errors.push(error('AV-NFE-PROTOCOL-STATUS', 'response.cStat', 'A consulta não contém situação e motivo válidos.'));
   result.authorized = result.protocolStatus === '100' && result.protocolEnvironment === '2' && /^\d{44}$/.test(result.accessKey) && Boolean(result.protocolNumber);
   result.canceled = ['101', '135', '151', '155'].includes(result.protocolStatus || result.status);
   result.found = result.authorized || result.canceled || Boolean(result.protocolStatus);

@@ -121,10 +121,10 @@ export function createFiscalCorrectionRequest({ requestId: id, emissionId, expec
   const safeEmissionId = text(emissionId);
   const safeExpectedVersion = Number(expectedVersion);
   const safeStatusCode = text(rejectedStatusCode);
-  if (note && safeRequestId && UUID_PATTERN.test(safeEmissionId) && Number.isSafeInteger(safeExpectedVersion) && safeExpectedVersion > 0 && /^\d{3}$/.test(safeStatusCode) && typeof note === 'object' && !Array.isArray(note) && JSON.stringify(note).length <= 60000) return Object.freeze({type:FISCAL_CORRECTION_REQUEST_TYPE,requestId:safeRequestId,emissionId:safeEmissionId,expectedVersion:safeExpectedVersion,rejectedStatusCode:safeStatusCode,note:structuredClone(note),saveOnly:saveOnly===true});
+  if (note && safeRequestId && UUID_PATTERN.test(safeEmissionId) && Number.isSafeInteger(safeExpectedVersion) && safeExpectedVersion > 0 && /^\d{3,4}$/.test(safeStatusCode) && typeof note === 'object' && !Array.isArray(note) && JSON.stringify(note).length <= 60000) return Object.freeze({type:FISCAL_CORRECTION_REQUEST_TYPE,requestId:safeRequestId,emissionId:safeEmissionId,expectedVersion:safeExpectedVersion,rejectedStatusCode:safeStatusCode,note:structuredClone(note),saveOnly:saveOnly===true});
   if (!safeRequestId || !UUID_PATTERN.test(safeEmissionId)
     || !Number.isSafeInteger(safeExpectedVersion) || safeExpectedVersion < 1
-    || !/^\d{3}$/.test(safeStatusCode) || !Array.isArray(items) || !items.length || items.length > 200) return null;
+    || !/^\d{3,4}$/.test(safeStatusCode) || !Array.isArray(items) || !items.length || items.length > 200) return null;
   const safeItems = items.map((item) => ({
     sku: text(item?.sku).slice(0, 80),
     ncm: text(item?.ncm).replace(/\D/g, '').slice(0, 8),

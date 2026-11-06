@@ -13,7 +13,7 @@ export const NFE_REJECTION_CORRECTION_CONFIRMATION = 'REVISAR_NFE_REJEITADA';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY = /^[A-Za-z0-9:_-]{8,90}$/;
-const STATUS = /^\d{3}$/;
+const STATUS = /^\d{3,4}$/;
 const clean = (value, max = 1000) => String(value ?? '').trim().slice(0, max);
 const issue = (code, field, message) => ({ code, field, message });
 
@@ -284,6 +284,11 @@ export function createCommercialNfeRejectionCorrectionService({ repository, emis
         if (prior && (prior.emissionId !== normalizedEmissionId || prior.correctionDigest !== normalized.correctionDigest)) return { ok: false, errors: [issue('AV-NFE-CORRECTION-IDEMPOTENCY', 'idempotencyKey', 'Esta solicitação já foi utilizada em outra correção fiscal.')] };
         if(prior&&saveOnly===true)return {ok:true,result:{...publicResult({id:prior.emissionId,draftId:prior.draftId,originId:prior.orderId,state:prior.state,version:prior.version,series:prior.series,number:prior.number,reservationId:prior.reservationId},prior,true),savedOnly:true,correctionPrepared:false},errors:[]};
         if (prior && !['rejected', 'prepared'].includes(prior.state)) return { ok: true, result: publicResult({ id: prior.emissionId, draftId: prior.draftId, originId: prior.orderId, state: prior.state, version: prior.version, series: prior.series, number: prior.number, reservationId: prior.reservationId }, prior, true), errors: [] };
+        if(!prior && data.emission?.state==='signed' && data.emission.statusCode==='217' && statusCode==='000') {
+          const reopened=await emissionLifecycle.reopenUnreceivedForCorrection?.({companyId:context.companyId,emissionId:normalizedEmissionId,expectedVersion,operationKey:`${normalizedKey}:reopen`,actorId:context.actorId});
+          if(!reopened?.ok)return {ok:false,errors:reopened?.errors||[issue('AV-NFE-CORRECTION-STATE','state','Confirme o retorno da SEFAZ antes de editar esta nota.')]};
+          data.emission={...data.emission,...reopened.emission};expectedVersion=reopened.emission.version;
+        }
         const invalid = validateSource(data, expectedVersion, statusCode);
         if (invalid && !prior) return { ok: false, errors: [invalid] };
         if(saveOnly===true){

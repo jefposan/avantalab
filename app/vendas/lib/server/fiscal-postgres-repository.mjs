@@ -212,6 +212,10 @@ function createTransaction(client, schema) {
       const result = await client.query(`update ${emissions} set ${assignments} where id = $1 and version = $34`, [...values, expectedVersion]);
       return result.rowCount === 1;
     },
+    async findNotReceivedConfirmation(companyId,emissionId,sequence) {
+      const result=await client.query(`select 1 from ${events} where company_id=$1 and emission_id=$2 and sequence=$3 and event_type='emission.not_received_confirmed' and to_state='signed' and public_payload->>'statusCode'='217' limit 1`,[companyId,emissionId,sequence]);
+      return result.rows?.length===1;
+    },
     async appendEvent(event) {
       await client.query(`insert into ${events} (company_id,emission_id,sequence,from_state,to_state,event_type,actor_id,public_payload,occurred_at) values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9)`, [event.companyId, event.emissionId, event.sequence, nullable(event.fromState), event.toState, event.eventType, nullable(event.actorId), JSON.stringify(event.publicPayload || {}), event.occurredAt]);
     },

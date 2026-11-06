@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.370 -->
+<!-- ava-version: 3.2.0.371 -->
+
+> Revisão 3.2.0.371: Sem impacto operacional neste ambiente; ajuste do retorno fiscal e retomada da edição no emissor Web.
 
 > Revisão 3.2.0.370: Sem impacto operacional neste ambiente; leitura do XML de autorização no emissor Web.
 

@@ -181,7 +181,7 @@ function validateTransition(current, toState, patch) {
   if (next === 'authorized' && (text(candidate.statusCode) !== '100' || !text(candidate.protocolNumber) || !candidate.authorizedAt || !/^\d{44}$/.test(text(candidate.accessKey)))) errors.push(error('AV-FISCAL-LIFECYCLE-AUTHORIZATION', 'patch.protocolNumber', 'A autorização exige situação 100, protocolo, data e chave válida.'));
   if (next === 'artifacts_stored' && (!text(candidate.processedStorageReference) || !/^[a-f0-9]{64}$/i.test(text(candidate.processedChecksum)))) errors.push(error('AV-FISCAL-LIFECYCLE-PROCESSED', 'patch.processedStorageReference', 'A guarda exige referência imutável e checksum do procNFe.'));
   if (next === 'danfe_ready' && (!text(candidate.danfeStorageReference) || !/^[a-f0-9]{64}$/i.test(text(candidate.danfeChecksum)))) errors.push(error('AV-FISCAL-LIFECYCLE-DANFE', 'patch.danfeStorageReference', 'O DANFE exige referência persistida e checksum do PDF.'));
-  if (next === 'rejected' && (!/^\d{3}$/.test(text(candidate.statusCode)) || !text(candidate.statusReason))) errors.push(error('AV-FISCAL-LIFECYCLE-REJECTION', 'patch.statusCode', 'A rejeição precisa preservar código e motivo do autorizador.'));
+  if (next === 'rejected' && (!/^\d{3,4}$/.test(text(candidate.statusCode)) || !text(candidate.statusReason))) errors.push(error('AV-FISCAL-LIFECYCLE-REJECTION', 'patch.statusCode', 'A rejeição precisa preservar código e motivo do autorizador.'));
   if (next === 'failed' && (!text(candidate.failureCode) || !text(candidate.failureReason))) errors.push(error('AV-FISCAL-LIFECYCLE-FAILURE', 'patch.failureCode', 'A falha precisa preservar código técnico seguro e motivo operacional.'));
   if (next === 'canceled' && (!text(candidate.cancellationProtocol) || !['135', '155'].includes(text(candidate.cancellationStatusCode)) || !candidate.canceledAt)) errors.push(error('AV-FISCAL-LIFECYCLE-CANCELLATION', 'patch.cancellationProtocol', 'O cancelamento exige protocolo, situação de evento registrada e data.'));
   return { valid: errors.length === 0, next: candidate, errors };
@@ -286,6 +286,26 @@ export function createFiscalEmissionLifecycleService({ repository = createDisabl
         await tx.appendEvent({ companyId, emissionId, sequence: next.version, fromState: current.state, toState: 'signed', eventType: 'emission.not_received_confirmed', actorId: null, publicPayload: { statusCode: '217', authority: 'SEFAZ/SP', environment: 'homologacao', sameNumberPreserved: true, automaticTransmission: false }, occurredAt: at });
         await tx.insertOperation({ companyId, operationKey, ...operation, resultingVersion: next.version, createdAt: at });
         return { ok: true, reused: false, emission: publicEmission(next) };
+      });
+    },
+    /** Edição explícita só após consulta 217 autenticada, com prova imutável da mesma versão. */
+    async reopenUnreceivedForCorrection(input = {}) {
+      const {companyId,emissionId,expectedVersion,operationKey,actorId}=input;
+      const denied=()=>({ok:false,errors:[error('AV-FISCAL-REOPEN-PROOF','state','A edição depende da confirmação de que esta nota não foi recebida pela SEFAZ.')]});
+      if(!companyId||!emissionId||!Number.isSafeInteger(expectedVersion)||expectedVersion<1||!actorId||!/^[A-Za-z0-9:_-]{8,120}$/.test(operationKey||''))return denied();
+      if(!repository?.configured||typeof repository.runInTransaction!=='function')return unavailable();
+      return repository.runInTransaction(async tx=>{
+        const current=await tx.getEmission(emissionId,{forUpdate:true});
+        if(!current||current.companyId!==companyId||current.version!==expectedVersion||current.state!=='signed'||current.statusCode!=='217'||current.environment!=='homologacao'||current.documentType!=='nfe'||current.protocolNumber||current.authorizedAt||current.cancellationProtocol||current.receiptNumber||!current.reservationId||!current.number)return denied();
+        const proof=await tx.findNotReceivedConfirmation?.(companyId,emissionId,current.version);
+        const signed=await tx.findArtifact(companyId,emissionId,'signed_xml');
+        if(!proof||!signed||signed.checksum!==current.signedChecksum)return denied();
+        const at=clock();
+        const next={...current,state:'number_reserved',accessKey:'',signedChecksum:'',batchId:'',submittedAt:'',statusCode:'',statusReason:'',failureCode:'',failureReason:'',version:current.version+1,updatedAt:at};
+        if(await tx.updateEmission(next,{expectedVersion:current.version})===false)throw Object.assign(new Error('A emissão mudou durante a retomada.'),{code:'40001'});
+        await tx.appendEvent({companyId,emissionId,sequence:next.version,fromState:current.state,toState:next.state,eventType:'emission.reopened_after_not_received',actorId,publicPayload:{statusCode:'217',sameNumberPreserved:true,previousAttemptPreserved:true,automaticTransmission:false},occurredAt:at});
+        await tx.insertOperation({companyId,emissionId,operationKey,operationType:'transition',requestHash:requestHash({companyId,emissionId,expectedVersion,action:'reopen_unreceived_for_correction'}),resultingVersion:next.version,createdAt:at});
+        return {ok:true,emission:publicEmission(next)};
       });
     },
     async create(input = {}) {

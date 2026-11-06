@@ -156,7 +156,7 @@ export function parseNfeStatusServiceSoapResponse(value, { issuerUf = 'SP', envi
     if (result.environment !== authority.environmentCode) result.errors.push(error('AV-NFE-STATUS-ENVIRONMENT', 'response.tpAmb', 'A resposta não pertence ao ambiente fiscal esperado.'));
     if (result.stateCode !== authority.issuerCode) result.errors.push(error('AV-NFE-STATUS-UF', 'response.cUF', 'A resposta não pertence ao autorizador da UF do emitente.'));
   }
-  if (!/^\d{3}$/.test(result.cStat)) result.errors.push(error('AV-NFE-STATUS-CSTAT', 'response.cStat', 'A resposta não contém um código de situação válido.'));
+  if (!/^\d{3,4}$/.test(result.cStat)) result.errors.push(error('AV-NFE-STATUS-CSTAT', 'response.cStat', 'A resposta não contém um código de situação válido.'));
   if (!result.xMotivo) result.errors.push(error('AV-NFE-STATUS-REASON', 'response.xMotivo', 'A resposta não descreve o motivo retornado pela SEFAZ.'));
   result.valid = result.errors.length === 0;
   result.serviceOperational = result.valid && result.cStat === '107';

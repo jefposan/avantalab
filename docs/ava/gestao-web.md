@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.370 -->
+<!-- ava-version: 3.2.0.371 -->
+
+> Revisão 3.2.0.371: Retornos SEFAZ de três ou quatro dígitos são preservados e uma rejeição libera a correção na própria nota. Tentativa com ausência confirmada por consulta 217 permite editar e salvar sem mudar o número; envio incerto continua protegido.
 
 > Revisão 3.2.0.370: O leitor da autorização interpreta o XML por estrutura, namespace e entidades XML. Lote 104 exige resultado individual válido. Erros de leitura permanecem visíveis, sem serem substituídos por 217; autorização e rejeição seguem seus resultados reais.
 
