@@ -1,3 +1,9 @@
+## 3.2.0.364 — Vendas: salvar revisão com pendências sem preparar emissão
+- Separa a persistência auditada da revisão de sua validação fiscal; mantém empresa, numeração, histórico e controle de versão.
+- Salvar confirma a gravação e permite retomar; a assinatura bloqueia revisões pendentes até nova validação.
+- Erro de regra identifica o campo incompatível e compara o valor informado ao exigido, reutilizando foco, rolagem e destaque.
+- Base reconciliada 3.2.0.363 preservada; nenhuma migração ou SQL de produção.
+
 ## 3.2.0.363 — Infraestrutura: reconciliar a main com a produção 3.2.0.362
 
 - Incorpora as fontes verificadas da produção, preserva arquivos nativos e as proteções de publicação da main.

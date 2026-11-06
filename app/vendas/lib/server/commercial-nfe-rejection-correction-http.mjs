@@ -62,6 +62,7 @@ export async function handleCommercialNfeRejectionCorrectionRequest({ request, r
       rejectedStatusCode,
       confirmation: body.confirmation,
       changes: body.changes,
+      saveOnly:body.saveOnly===true,
     });
   } catch {
     return reply(503, { ok: false, code: 'AV-NFE-CORRECTION-UNAVAILABLE', message: 'Não foi possível revisar a NF-e neste momento.' });

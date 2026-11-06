@@ -329,7 +329,11 @@ export function createCommercialFiscalRuleResolver({ repository, issuerResolver 
     }
     const resolution = resolveFiscalMatrixRule({ matrix, documentType: 'nfe', ...context });
     if (!resolution.matched || !resolution.reviewed || !resolution.rule) {
-      return { valid: false, errors: [issue('AV-FISCAL-RULES-NO-MATCH', 'fiscal', 'Nenhuma regra fiscal revisada corresponde a esta venda. Revise a matriz da empresa.')] };
+      const dimensions=[['presence','presence','Atendimento'],['issuePurpose','purpose','Finalidade'],['destination','destination','Destino'],['recipientProfile','customerId','Perfil fiscal do destinatário'],['consumerFinal','customerId','Consumidor final'],['operation','operationNature','Operação']];
+      const candidates=matrix.rules.filter(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe').map(rule=>({rule,differences:dimensions.filter(([key])=>rule[key]&&rule[key]!=='Qualquer'&&rule[key]!==context[key])})).sort((a,b)=>a.differences.length-b.differences.length);
+      const closest=candidates[0];const difference=closest?.differences[0];
+      const message=difference?`${difference[2]} informado: ${context[difference[0]]}. A regra ${closest.rule.name||closest.rule.operationNature} exige ${closest.rule[difference[0]]}. Corrija esse campo ou selecione uma natureza compatível.`:'A natureza selecionada não possui regra fiscal revisada. Revise e publique a regra nos ajustes fiscais antes de emitir.';
+      return { valid:false,errors:[issue('AV-FISCAL-RULES-NO-MATCH',difference?.[1]||'operationNature',message)] };
     }
     const customerStateRegistration = clean(customer.stateRegistration, 40);
     if (resolution.rule.requiresStateRegistration && (!customerStateRegistration || customerStateRegistration.toLocaleLowerCase('pt-BR') === 'isento')) {

@@ -1,8 +1,8 @@
 {
   "baseDeploymentId": "dpl_8mj2opjedu3HUfvfSg3RYc1BQ4DB",
-  "version": "3.2.0.363",
-  "scope": "Infraestrutura: reconciliar a main com a produção 3.2.0.362 e preservar trabalhos pendentes",
+  "version": "3.2.0.364",
+  "scope": "Vendas: salvar revisão com pendências e orientar correção antes da emissão",
   "migrations": [],
-  "reconciliationStatus": "blocked-audit",
-  "auditReview": "Reconciliação de fontes; nenhuma publicação de produção autorizada nesta etapa"
+  "reconciliationStatus": "reviewed",
+  "auditReview": "PR #29 integrado na base; escopo fiscal isolado, sem execução de SQL."
 }

@@ -38,8 +38,8 @@ function accessError(context) {
   return null;
 }
 
-function correctedDraftFromChanges(data, statusCode, changes) {
-  if (changes?.note && Object.keys(changes).length === 1) return applyFiscalNoteEdit(data.draft, changes.note, {catalogItems:data.revisionCatalogItems,customer:data.revisionCustomer});
+function correctedDraftFromChanges(data, statusCode, changes,saveOnly=false) {
+  if (changes?.note && Object.keys(changes).length === 1) return applyFiscalNoteEdit(data.draft, changes.note, {catalogItems:data.revisionCatalogItems,customer:data.revisionCustomer,allowPending:saveOnly});
   if (statusCode !== '778') return { error: issue('AV-NFE-CORRECTION-SCOPE', 'statusCode', 'Esta rejeição deve ser revisada no cadastro indicado pela Central Fiscal.') };
   if (!changes || typeof changes !== 'object' || Array.isArray(changes)
     || Object.keys(changes).some((key) => key !== 'items')
@@ -74,7 +74,7 @@ function correctedDraftFromChanges(data, statusCode, changes) {
 }
 
 function normalizedCorrection(data, input, statusCode) {
-  const changed = input?.changes ? correctedDraftFromChanges(data, statusCode, input.changes) : null;
+  const changed = input?.changes ? correctedDraftFromChanges(data, statusCode, input.changes,input.saveOnly===true) : null;
   if (changed?.error) return changed;
   // 588 é falha de serialização: regenera os mesmos dados, sem inventar alterações fiscais.
   const source = changed?.source || input?.correctedDraft || (statusCode === '588' ? data?.draft : null);
@@ -93,6 +93,7 @@ function normalizedCorrection(data, input, statusCode) {
     paymentSnapshot,
   };
   if (clean(issuerSnapshot.establishmentId) !== clean(data.emission.establishmentId) || clean(issuerSnapshot.document).replace(/\D/g, '') !== clean(data.baseIssuerDocument).replace(/\D/g, '')) return { error: issue('AV-NFE-CORRECTION-ISSUER', 'issuer', 'A correção não pode trocar a empresa emissora nem o estabelecimento desta numeração.') };
+  if(input?.saveOnly===true)draft.totalsSnapshot.pendingFiscalRevision=true;else delete draft.totalsSnapshot.pendingFiscalRevision;
   const correctionDigest = sha256({
     companyId: draft.companyId,
     orderId: draft.operationId,
@@ -244,9 +245,9 @@ export function createPostgresCommercialNfeRejectionCorrectionRepository({ pool 
           const revision = Number(next.rows?.[0]?.revision || 1);
           const inserted = await client.query(`insert into fiscal_private.emission_corrections(company_id,emission_id,revision,operation_key,source_status_code,issuer_snapshot,recipient_snapshot,items_snapshot,totals_snapshot,payment_snapshot,correction_digest,preparation_payload,created_by,created_at) values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8::jsonb,$9::jsonb,$10::jsonb,$11,$12::jsonb,$13,$14) returning id`, [companyId, emissionId, revision, operationKey, sourceStatusCode, JSON.stringify(draft.issuerSnapshot), JSON.stringify(draft.customerSnapshot), JSON.stringify(draft.itemsSnapshot), JSON.stringify(draft.totalsSnapshot), JSON.stringify(draft.paymentSnapshot), correctionDigest, JSON.stringify(preparationPayload), actorId, createdAt]);
           // 000 identifica revisão interna anterior ao envio, nunca um retorno da SEFAZ.
-          if(emission.state==='number_reserved') await client.query('update fiscal_private.emissions set version=version+1,updated_at=$3 where company_id=$1 and id=$2', [companyId,emissionId,createdAt]);
+          await client.query('update fiscal_private.emissions set version=version+1,updated_at=$3 where company_id=$1 and id=$2', [companyId,emissionId,createdAt]);
           await client.query('commit');
-          return { id: inserted.rows?.[0]?.id, revision, correctionDigest, preparationPayload, reused: false, version:emission.state==='number_reserved'?expectedVersion+1:expectedVersion };
+          return { id: inserted.rows?.[0]?.id, revision, correctionDigest, preparationPayload, reused: false, version:expectedVersion+1 };
         } catch (error) {
           await client.query('rollback');
           throw error;
@@ -261,7 +262,7 @@ export function createCommercialNfeRejectionCorrectionService({ repository, emis
   if (!emissionLifecycle?.transition) throw new TypeError('Informe o ciclo transacional privado de emissão.');
   if (typeof fiscalRuleResolver !== 'function' || typeof preparationBuilder !== 'function') throw new TypeError('Informe os validadores fiscais da correção.');
   return Object.freeze({
-    async prepare({ context, emissionId, expectedVersion, idempotencyKey, rejectedStatusCode, confirmation, correctedDraft, changes } = {}) {
+    async prepare({ context, emissionId, expectedVersion, idempotencyKey, rejectedStatusCode, confirmation, correctedDraft, changes, saveOnly=false } = {}) {
       const denied = accessError(context);
       if (denied) return { ok: false, errors: [denied] };
       const normalizedEmissionId = clean(emissionId);
@@ -277,13 +278,18 @@ export function createCommercialNfeRejectionCorrectionService({ repository, emis
           if(changes.note.customerDocument!==data.draft.customerSnapshot.document)data.revisionCustomer=resolved.customer;
         }
         const form=changes?.note?.fiscalForm;if(form&&((form.number&&Number(form.number)!==data.emission.number)||(form.series&&Number(form.series)!==Number(data.emission.series))))return{ok:false,errors:[issue('AV-NFE-CORRECTION-NUMBER','numbering','A edição não pode alterar a série ou o número já reservado.')]};
-        const normalized = normalizedCorrection(data, { correctedDraft, changes }, statusCode);
+        const normalized = normalizedCorrection(data, { correctedDraft, changes,saveOnly }, statusCode);
         if (normalized.error) return { ok: false, errors: [normalized.error] };
         const prior = await repository.findByOperation({ companyId: context.companyId, operationKey: normalizedKey });
         if (prior && (prior.emissionId !== normalizedEmissionId || prior.correctionDigest !== normalized.correctionDigest)) return { ok: false, errors: [issue('AV-NFE-CORRECTION-IDEMPOTENCY', 'idempotencyKey', 'Esta solicitação já foi utilizada em outra correção fiscal.')] };
+        if(prior&&saveOnly===true)return {ok:true,result:{...publicResult({id:prior.emissionId,draftId:prior.draftId,originId:prior.orderId,state:prior.state,version:prior.version,series:prior.series,number:prior.number,reservationId:prior.reservationId},prior,true),savedOnly:true,correctionPrepared:false},errors:[]};
         if (prior && !['rejected', 'prepared'].includes(prior.state)) return { ok: true, result: publicResult({ id: prior.emissionId, draftId: prior.draftId, originId: prior.orderId, state: prior.state, version: prior.version, series: prior.series, number: prior.number, reservationId: prior.reservationId }, prior, true), errors: [] };
         const invalid = validateSource(data, expectedVersion, statusCode);
         if (invalid && !prior) return { ok: false, errors: [invalid] };
+        if(saveOnly===true){
+          const correction=prior||await repository.save({companyId:context.companyId,emissionId:normalizedEmissionId,expectedVersion,operationKey:normalizedKey,sourceStatusCode:statusCode,draft:normalized.draft,correctionDigest:normalized.correctionDigest,preparationPayload:{source:'saved_pending_revision',schemaValid:false,signatureAttempted:false,transmissionAttempted:false},actorId:context.actorId,createdAt:clock()});
+          return {ok:true,result:{...publicResult({...data.emission,version:correction.version||data.emission.version},correction,Boolean(prior)),savedOnly:true,correctionPrepared:false},errors:[]};
+        }
         const rules = await fiscalRuleResolver({ companyId: context.companyId, actorId: context.actorId, documentType: 'nfe', issuer: structuredClone(normalized.draft.issuerSnapshot), customer: structuredClone(normalized.draft.customerSnapshot), items: structuredClone(normalized.draft.itemsSnapshot),operationNature:normalized.draft.totalsSnapshot?.fiscalForm?normalized.draft.totalsSnapshot.operationNature:undefined,fiscalForm:normalized.draft.totalsSnapshot?.fiscalForm });
         if (!rules?.valid) return { ok: false, errors: Array.isArray(rules?.errors) && rules.errors.length ? rules.errors : [issue('AV-NFE-CORRECTION-RULES', 'fiscal', 'Conclua a revisão tributária antes de preparar novamente a NF-e.')] };
         const issuedAt = prior?.preparationPayload?.issuedAt || clock();
