@@ -7,3 +7,5 @@ export function repriceNoteLines<T extends {sku:string;unitPrice:number}>(lines:
 export function previewInstallments(total:number,count:string|number,firstDate:string):Array<{number:number;dueDate:string;amount:number}>;
 export function appendNoteMessage(current:string,message:string):string;
 export function validateFiscalNoteFields(fields:ReturnType<typeof newFiscalNoteFields>):string[];
+export function deliveryForecastAllowed(freightMode:string):boolean;
+export function updateFiscalNoteFields(current:ReturnType<typeof newFiscalNoteFields>,patch?:Partial<ReturnType<typeof newFiscalNoteFields>>):ReturnType<typeof newFiscalNoteFields>;

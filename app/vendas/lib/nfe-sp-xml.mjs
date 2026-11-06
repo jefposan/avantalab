@@ -1,4 +1,4 @@
-import {newFiscalNoteFields} from './fiscal-note-editor.mjs';
+import {newFiscalNoteFields,deliveryForecastAllowed} from './fiscal-note-editor.mjs';
 export const NFE_SP_XML_REFERENCE = '2026-09-05';
 export const NFE_SP_SCHEMA_PACKAGE = 'PL_010e_v1.02';
 export const NFE_SP_SCHEMA_VERSION = '4.00';
@@ -236,6 +236,7 @@ export function validateNfeSpXmlInput(inputValue) {
   const requiredText = (value, code, field, message) => { if (!value) errors.push(validationError(code, field, message)); };
   requiredText(input.operationNature, 'NFE-B04', 'operationNature', 'Informe a natureza da operação com até 60 caracteres.');
   if (!validIssuedAt(input.issuedAt)) errors.push(validationError('NFE-B09', 'issuedAt', 'Informe data e hora no formato ISO com fuso horário válido.'));
+  if(input.fiscalForm?.deliveryForecast && !deliveryForecastAllowed(input.fiscalForm.freightMode))errors.push(validationError('NFE-B10A-50','fiscalForm.freightMode','Esta modalidade de frete não permite previsão de entrega. Remova a previsão ou selecione a modalidade correspondente à operação.'));
   const departure=departureTimestamp(input);
   if(input.direction==='1' && validIssuedAt(input.issuedAt) && validIssuedAt(departure) && Date.parse(departure)<Date.parse(input.issuedAt)) {
     const sameDay=departure.slice(0,10)===input.issuedAt.slice(0,10);

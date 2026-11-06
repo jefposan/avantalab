@@ -4,7 +4,7 @@ import {fiscalValidationIssue,fiscalValidationTarget} from '../lib/fiscal-valida
 import dynamic from 'next/dynamic';
 import {requestFiscalEditor} from '../lib/fiscal-editor-bridge.mjs';
 import { NoteOperationFields, NoteTransportFields, NoteDetailsFields, NoteObservationsFields, NoteWithholdingFields, type NoteFields, type FiscalNoteEditorOptions } from '../components/FiscalNoteBlocks';
-import {newFiscalNoteFields,priceFromTable,repriceNoteLines,previewInstallments,validateFiscalNoteFields} from '../lib/fiscal-note-editor.mjs';
+import {newFiscalNoteFields,updateFiscalNoteFields,priceFromTable,repriceNoteLines,previewInstallments,validateFiscalNoteFields} from '../lib/fiscal-note-editor.mjs';
 import { usaFiscalEmpresa } from '../../lib/fiscal-produto.mjs';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import type { ProdutoCustos } from '../../custos/types';
@@ -1253,9 +1253,9 @@ const ProductRegistration = dynamic(()=>import('../../custos/CustosClient'),{ssr
 type NoteCorrection = { draft: FiscalDraftRecord; status: FiscalEmissionStatus; onSave: (note: Record<string, unknown>, issue: boolean) => Promise<ConfirmedSave> };
 
 function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, clientPriceTables, clientRecords, catalogRecords, settings, issuerRegistry, connected, initialClient = '', initialSku = '', initialRecord = null, fiscalOnly = false, onFiscalCreated, onFiscalCorrection, onCancel, onCreated }: { companyId?: string; fiscalEditor?: FiscalNoteEditorOptions; correction?: NoteCorrection; onSaveClient?: (client: ClientRecord) => Promise<ConfirmedSave>; clientPriceTables?: FiscalNoteEditorOptions['priceTables']; clientRecords: ClientRecord[]; catalogRecords: CatalogItem[]; settings: ModuleSettings; issuerRegistry: FiscalIssuerRegistry; connected: boolean; initialClient?: string; initialSku?: string; initialRecord?: CreatedRecord | null; fiscalOnly?: boolean; onFiscalCreated?: (record: CreatedRecord, issue?: boolean) => Promise<ConfirmedSave>; onFiscalCorrection?: (result: ConfirmedSave) => void; onCancel: () => void; onCreated: (record: CreatedRecord) => void }) {
-  const [noteFields,setNoteFields]=useState<NoteFields>(()=>({...newFiscalNoteFields(),series:fiscalEditor?.series??'1',number:fiscalEditor?.number??'',priceTableId:fiscalEditor?.clientPriceTables[clientRecords.find(client=>client.name===(initialRecord?.client||initialClient))?.id||'']||fiscalEditor?.defaultPriceTableId||'standard',...initialRecord?.order?.fiscalForm,...(correction?{series:String(correction.status.series),number:String(correction.status.number)}:{})}));
+  const [noteFields,setNoteFields]=useState<NoteFields>(()=>updateFiscalNoteFields({...newFiscalNoteFields(),series:fiscalEditor?.series??'1',number:fiscalEditor?.number??'',priceTableId:fiscalEditor?.clientPriceTables[clientRecords.find(client=>client.name===(initialRecord?.client||initialClient))?.id||'']||fiscalEditor?.defaultPriceTableId||'standard',...initialRecord?.order?.fiscalForm,...(correction?{series:String(correction.status.series),number:String(correction.status.number)}:{})}));
   const [pendingTable,setPendingTable]=useState<string|null>(null);
-  const patchNoteFields=(patch:Partial<NoteFields>)=>setNoteFields(current=>({...current,...patch}));
+  const patchNoteFields=(patch:Partial<NoteFields>)=>setNoteFields(current=>updateFiscalNoteFields(current,patch));
   const { can } = useContext(PermissionContext);
   const clientRef = useRef<HTMLSelectElement>(null);
   const [editingCustomer, setEditingCustomer] = useState<ClientRecord | null>(null);

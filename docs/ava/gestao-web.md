@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.372 -->
+<!-- ava-version: 3.2.0.373 -->
+
+> Revisão 3.2.0.373: Previsão de entrega fica inativa em frete 1, 4 e 9. Trocar para modalidade incompatível limpa a previsão local; reabrir uma nota remove esse valor incompatível do formulário. Modalidades 0, 2 e 3 mantêm o campo disponível. O servidor impede XML com combinação proibida.
 
 > Revisão 3.2.0.372: Quando a hora de saída fica vazia, o XML conserva o horário completo da emissão, sem zerar segundos. Datas iguais não ficam artificialmente anteriores por esse truncamento; horários manuais permanecem como preenchidos. Se o dia é igual e a hora é anterior, o aviso e o foco apontam Hora da saída; se o dia é anterior, apontam Data de saída.
 

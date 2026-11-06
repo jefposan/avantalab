@@ -1,3 +1,9 @@
+## 3.2.0.373 — Vendas: desativar previsão de entrega incompatível com frete
+
+- Previsão de entrega fica inativa para frete 1, 4 e 9; trocar para uma dessas modalidades limpa a previsão local, inclusive ao reabrir nota antiga, sem alterar demais campos.
+- O servidor recusa a combinação proibida antes de gerar XML, conforme B10a-50 da NT 2025.002-RTC. Campo permanece disponível para modalidades 0, 2 e 3.
+- Sem SQL ou alterações de numeração, notas autorizadas e histórico.
+
 ## 3.2.0.372 — Vendas: preservar segundos na saída automática da NF-e
 
 - Corrige dhSaiEnt quando só a data de saída é preenchida: conserva hora, segundos e fuso da emissão, evitando saída anterior em datas iguais por truncamento dos segundos.

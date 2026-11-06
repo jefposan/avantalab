@@ -48,3 +48,8 @@ test('horário manual anterior aponta a hora; dia anterior aponta a data e não 
  assert.equal(fiscalValidationIssue(original,{issueDate:'2026-11-06',exitDate:'2026-11-05'}),original);
  assert.equal(fiscalValidationIssue({...original,message:'Rejeição de NCM'},{issueDate:'2026-11-06',exitDate:'2026-11-06'}).message,'Rejeição de NCM');
 });
+
+test('servidor recusa previsão de entrega em frete 1, 4 e 9 antes de gerar XML',()=>{
+ for(const freightMode of ['1','4','9']){const built=buildUnsignedNfeSpXml(input({...newFiscalNoteFields(),freightMode,deliveryForecast:'2026-11-10'}));assert.equal(built.valid,false);assert.equal(built.xml,'');assert.ok(built.errors.some(e=>e.code==='NFE-B10A-50'&&e.field==='fiscalForm.freightMode'));assert.equal(buildUnsignedNfeSpXml(input({...newFiscalNoteFields(),freightMode})).valid,true);}
+ for(const freightMode of ['0','2','3']){const built=buildUnsignedNfeSpXml(input({...newFiscalNoteFields(),freightMode,deliveryForecast:'2026-11-10'}));assert.equal(built.valid,true,JSON.stringify(built.errors));assert.match(built.xml,/<dPrevEntrega>2026-11-10<\/dPrevEntrega>/);}
+});
