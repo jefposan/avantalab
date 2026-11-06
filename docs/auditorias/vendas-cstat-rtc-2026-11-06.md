@@ -17,3 +17,7 @@ A migração 20261106180000 amplia somente três CHECKs. Não atualiza registros
 ## Validação
 
 Testes sintéticos sem rede e PostgreSQL local verificam rejeição de quatro dígitos, persistência real, recusa de códigos inválidos e isolamento da prova 217. Testes do editor verificam edição/Salvar em signed/217, rejeição e bloqueio de estados incertos. Segurança, tipagem com next typegen, PADRÃO AVANTA e Ava conferidos. A autorização real da nota permanece dependente do retorno oficial; não foi inventada nem simulada em produção.
+
+## Aplicação autorizada em produção
+
+O titular autorizou expressamente a migração e seu registro em 06/11/2026. A transação aplicou somente os seis ALTERs previstos e incluiu a versão 20261106180000, nome vendas_cstat_rtc, no histórico oficial. Consulta posterior confirmou os três checks com 3–4 dígitos e igualdade integral entre o SQL registrado e a fonte versionada. Não houve alteração de registros fiscais, numeração ou permissões.
