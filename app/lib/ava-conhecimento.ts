@@ -1,3 +1,4 @@
+// Revisão 3.2.0.375: sem alteração no roteiro; preparação da NF-e corrigida por trava privada, sem liberar alteração de retratos fiscais ao runtime.
 // Revisão 3.2.0.358: Marketplaces permite fechar todos os avisos de venda; página inicial compartilha componente com proteção de sessão validada.
 // Revisão 3.2.0.351: CFOP alterado explicitamente na revisão de nota rejeitada vale só para a nota, sem alterar tributos herdados, produto ou empresa. A UF e a estrutura fiscal continuam validadas.
 // Revisão 3.2.0.350: NF-e rejeitada oferece Corrigir nota; edita destinatário, itens, valores, pagamento e observações. Salvar alterações não envia nem altera pedido/estoque/receitas; conserva número e histórico. Selecionar explicitamente PIX por chave/QR estático (20); não presumir tipo de PIX nem substituir cobrança dinâmica sem os dados correspondentes.

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.374 -->
+<!-- ava-version: 3.2.0.375 -->
+
+> Revisão 3.2.0.375: Sem impacto operacional neste ambiente; correção técnica da preparação da NF-e Web.
 
 > Revisão 3.2.0.374: Sem impacto operacional neste ambiente; ajuste da ponte Gestão/editor de NF-e Web.
 

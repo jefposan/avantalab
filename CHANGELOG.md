@@ -1,3 +1,9 @@
+## 3.2.0.375 — Vendas: corrigir trava privada na preparação da NF-e
+
+- Corrige o gatilho de proteção de rascunhos para executar a trava interna sem conceder UPDATE ao serviço de emissão.
+- Função restrita a INSERT na tabela privada, search_path vazio e execução direta revogada. Rascunhos excluídos ou de outra empresa continuam bloqueados. Sem alteração de RLS, numeração, receitas ou estoque.
+- Regressão PostgreSQL reproduz a falha de permissão e valida criação, imutabilidade e rejeição de vínculo indevido.
+
 ## 3.2.0.374 — Vendas: permitir correção de rejeições RTC pela Gestão
 
 - Corrige a validação da ponte Gestão/editor para aceitar códigos fiscais de três ou quatro dígitos, incluindo 1157, em Salvar e Salvar e emitir.

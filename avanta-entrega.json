@@ -1,8 +1,13 @@
 {
-  "baseDeploymentId": "dpl_9UNoahyCob8LU4kZJBhJxP1D96pn",
-  "version": "3.2.0.374",
-  "scope": "Vendas: permitir correção de rejeições RTC pela Gestão",
-  "migrations": [],
+  "baseDeploymentId": "dpl_8YL3jRkm3mXZTHSYZquJkKWy5YmF",
+  "version": "3.2.0.375",
+  "scope": "Vendas: corrigir trava privada na preparação da NF-e",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261106203000_vendas_trava_rascunho.sql",
+      "sha256": "2909b717eca83d7d490b2cb7cf908478a4259a4dea941d4c7b429b30b6165d50"
+    }
+  ],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base main 3.2.0.373 preservada; ajuste pontual da ponte autenticada para códigos de três ou quatro dígitos, com regressão executando o ramo real de correção. Sem SQL."
+  "auditReview": "Base main 3.2.0.374 preservada. Correção do gatilho privado sem conceder UPDATE ou acesso direto ao runtime; mantém exclusão, vínculos e numeração. Teste PostgreSQL com papel restrito."
 }

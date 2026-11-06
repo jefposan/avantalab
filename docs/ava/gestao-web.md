@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.374 -->
+<!-- ava-version: 3.2.0.375 -->
+
+> Revisão 3.2.0.375: A preparação da NF-e usa trava privada do banco sem dar permissão de alteração dos retratos ao serviço. Rascunhos excluídos continuam bloqueados; não solicitar alteração cadastral para a antiga falha técnica de preparação.
 
 > Revisão 3.2.0.374: A ponte da Gestão permite corrigir rejeições de três ou quatro dígitos, incluindo 1157, sem bloquear antes do servidor. Erros de campos preservam a orientação e o foco; falha de identificação pede reabertura da nota.
 
