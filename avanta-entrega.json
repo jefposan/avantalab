@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_CSmCYzMojVuFDLKkgAzWXCcsVJmo",
-  "version": "3.2.0.376",
-  "scope": "Vendas: vincular reservas à nota correta na homologação",
+  "baseDeploymentId": "dpl_E9cdU5uSbwtiBCjA6LTPqVr1nUT9",
+  "version": "3.2.0.377",
+  "scope": "Vendas: corrigir inscrição estadual do destinatário no DANFE",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base main 3.2.0.375 preservada, migração anterior já aplicada e registrada. Correções do vínculo real das reservas e da conferência de rascunho persistido. Sem SQL adicional."
+  "auditReview": "Base main 3.2.0.376 preservada. Homologação 2/1 autorizada e downloads verificados; ajuste pontual do gerador de novos DANFEs, sem alterar arquivos imutáveis, XML, banco ou sequência."
 }

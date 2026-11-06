@@ -1,3 +1,9 @@
+## 3.2.0.377 — Vendas: corrigir inscrição estadual do destinatário no DANFE
+
+- Não usa o indicador de contribuinte (indIEDest 1/2/9) como número de inscrição estadual. DANFE mostra a IE real, ISENTO para isento sem IE, ou traço para destinatário sem IE.
+- Teste gera PDF a partir de procNFe sintético e confere o conteúdo do campo com leitor PDF independente nos três cenários.
+- Não altera XML autorizado, protocolo, numeração, financeiro, estoque ou documentos imutáveis já guardados. Sem SQL adicional.
+
 ## 3.2.0.376 — Vendas: vincular reservas à nota correta na homologação
 
 - A preparação conserva o rascunho e a origem reais de cada reserva, em vez de atribuir reservas de outras notas à nota atual. Uma nova série de homologação não herda o número de uma tentativa antiga.

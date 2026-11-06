@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.376 -->
+<!-- ava-version: 3.2.0.377 -->
+
+> Revisão 3.2.0.377: DANFEs novos exibem a inscrição estadual real do destinatário; isento sem IE recebe ISENTO e não contribuinte sem IE recebe traço. O indicador 1/2/9 não é número de inscrição. XML e documentos já autorizados permanecem preservados.
 
 > Revisão 3.2.0.376: Cada reserva pertence à sua nota. Nova nota usa a sequência ativa; retomada mantém sua própria reserva. Rascunho persistido usa a conferência do servidor, sem solicitar credenciamento demonstrativo após recarregar. As validações reais continuam no envio.
 

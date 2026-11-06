@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.376 -->
+<!-- ava-version: 3.2.0.377 -->
+
+> Revisão 3.2.0.377: Sem impacto operacional neste ambiente; correção de apresentação do DANFE Web.
 
 > Revisão 3.2.0.376: Sem impacto operacional neste ambiente; correção da conferência e vínculo de reservas da NF-e Web.
 
