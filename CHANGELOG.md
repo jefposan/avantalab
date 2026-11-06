@@ -1,3 +1,8 @@
+## 3.2.0.365 — Vendas: editar cliente sem sair do pedido ou da nota
+
+- Lápis externo ao seletor abre o cadastro completo de Clientes, com permissão de edição e persistência existentes.
+- Atualiza a seleção e a conferência fiscal sem perder itens, valores e demais dados em edição; cancelar preserva o cadastro e o formulário.
+
 ## 3.2.0.364 — Vendas: salvar revisão com pendências sem preparar emissão
 - Separa a persistência auditada da revisão de sua validação fiscal; mantém empresa, numeração, histórico e controle de versão.
 - Salvar confirma a gravação e permite retomar; a assinatura bloqueia revisões pendentes até nova validação.

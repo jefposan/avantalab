@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.364 -->
+<!-- ava-version: 3.2.0.365 -->
+
+> Revisão 3.2.0.365: No pedido e na emissão da nota, o lápis à direita do cliente abre o cadastro completo em popup. Salvar atualiza o cliente sem sair do formulário nem perder itens e valores. Requer permissão de editar clientes.
 
 > Revisão 3.2.0.364: Salvar guarda a revisão da nota com pendências e confirma sem preparar XML nem transmitir. Salvar e emitir valida a revisão, informa a condição fiscal incompatível e direciona ao campo com foco, rolagem e destaque. Uma revisão salva com pendências não pode ser assinada sem nova validação.
 

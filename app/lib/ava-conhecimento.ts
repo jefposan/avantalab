@@ -2839,3 +2839,5 @@ GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.361: a emissão Web em blocos usa 
 GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.362: ao salvar/emitir uma nota com pendência identificável, o formulário abre os detalhes necessários, rola ao campo e aplica foco, destaque e mensagem. Corrigir o campo remove o destaque. Falhas sem campo identificado mantêm a mensagem acessível e os dados digitados.";
 
 GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.364: Salvar guarda a revisão da nota com pendências e confirma sem transmitir. Salvar e emitir exige validar os dados fiscais. A inconsistência de regra fiscal identifica o campo e compara valor informado e exigido. Uma revisão pendente exige nova validação antes da assinatura. Não confundir confirmação de salvamento com autorização fiscal.";
+
+GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.365: No pedido e na emissão de nota, o lápis à direita do seletor de cliente abre o mesmo cadastro completo de Clientes em popup. Exige permissão de editar clientes. Salvar atualiza o cliente selecionado e sua conferência fiscal sem perder itens e valores; cancelar fecha sem alterar o cadastro.";

@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_8mj2opjedu3HUfvfSg3RYc1BQ4DB",
-  "version": "3.2.0.364",
-  "scope": "Vendas: salvar revisão com pendências e orientar correção antes da emissão",
+  "baseDeploymentId": "dpl_FgNB9aZ6xCyvYdA4mQ1sEvEe24k7",
+  "version": "3.2.0.365",
+  "scope": "Vendas: editar cliente no pedido e na emissão sem sair do formulário",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "PR #29 integrado na base; escopo fiscal isolado, sem execução de SQL."
+  "auditReview": "Base 3.2.0.364 preservada; cadastro completo e autorização existentes reutilizados, sem SQL."
 }

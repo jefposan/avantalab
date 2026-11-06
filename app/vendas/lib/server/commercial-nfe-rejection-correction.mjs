@@ -275,7 +275,7 @@ export function createCommercialNfeRejectionCorrectionService({ repository, emis
         if(changes?.note && repository.resolveRevision) {
           const resolved=await repository.resolveRevision({companyId:context.companyId,note:changes.note});
           data.revisionCatalogItems=resolved.catalogItems;
-          if(changes.note.customerDocument!==data.draft.customerSnapshot.document)data.revisionCustomer=resolved.customer;
+          data.revisionCustomer=resolved.customer;
         }
         const form=changes?.note?.fiscalForm;if(form&&((form.number&&Number(form.number)!==data.emission.number)||(form.series&&Number(form.series)!==Number(data.emission.series))))return{ok:false,errors:[issue('AV-NFE-CORRECTION-NUMBER','numbering','A edição não pode alterar a série ou o número já reservado.')]};
         const normalized = normalizedCorrection(data, { correctedDraft, changes,saveOnly }, statusCode);

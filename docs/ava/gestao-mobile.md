@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.364 -->
+<!-- ava-version: 3.2.0.365 -->
+
+> Revisão 3.2.0.365: Sem impacto operacional neste ambiente; edição contextual do cliente no emissor e pedido Web.
 
 > Revisão 3.2.0.364: Sem impacto operacional neste ambiente; correção de salvamento de revisão no emissor Web.
 
