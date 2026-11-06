@@ -1,3 +1,4 @@
+import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 export const NFE_AUTHORIZATION_REFERENCE = '2026-09-02';
 export const NFE_AUTHORIZATION_ENDPOINT = 'https://homologacao.nfe.fazenda.sp.gov.br/ws/nfeautorizacao4.asmx';
 export const NFE_AUTHORIZATION_ACTION = 'http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4/nfeAutorizacaoLote';
@@ -131,22 +132,28 @@ export function parseNfeAuthorizationSoapResponse(value, { issuerCode = '35', en
   if (!xml) { result.errors.push(error('AV-NFE-AUTH-RESPONSE-EMPTY', 'response', 'A SEFAZ não devolveu resposta à autorização.')); return result; }
   if (Buffer.byteLength(xml, 'utf8') > NFE_AUTHORIZATION_RESPONSE_LIMIT) { result.errors.push(error('AV-NFE-AUTH-RESPONSE-SIZE', 'response', 'A resposta de autorização excedeu o limite seguro de 512 KB.')); return result; }
   if (/<!DOCTYPE|<!ENTITY/i.test(xml)) { result.errors.push(error('AV-NFE-AUTH-RESPONSE-DOCTYPE', 'response', 'A resposta contém declaração externa proibida.')); return result; }
-  if (!/<(?:(?:[A-Za-z_][\w.-]*):)?Envelope\b/i.test(xml) || !/<(?:(?:[A-Za-z_][\w.-]*):)?Body\b/i.test(xml)) { result.errors.push(error('AV-NFE-AUTH-RESPONSE-SOAP', 'response', 'A resposta não contém um envelope SOAP 1.2 reconhecível.')); return result; }
-  const retBlock = tagBlock(xml, 'retEnviNFe');
-  if (!retBlock) { result.errors.push(error('AV-NFE-AUTH-RESPONSE-ROOT', 'response.retEnviNFe', tagValue(xml, 'Text') || 'A resposta não contém retEnviNFe.')); return result; }
-  result.version = attributeValue(rootAttributes(retBlock, 'retEnviNFe'), 'versao');
-  result.environment = tagValue(retBlock, 'tpAmb');
-  result.stateCode = tagValue(retBlock, 'cUF');
-  result.batchStatus = tagValue(retBlock, 'cStat');
-  result.batchReason = tagValue(retBlock, 'xMotivo');
-  result.receiptNumber = tagValue(retBlock, 'nRec');
-  result.receivedAt = tagValue(retBlock, 'dhRecbto');
-  const protocolBlock = tagBlock(retBlock, 'infProt');
-  result.protocolXml = tagBlock(retBlock, 'protNFe');
-  result.protocolStatus = tagValue(protocolBlock, 'cStat');
-  result.protocolReason = tagValue(protocolBlock, 'xMotivo');
-  result.protocolNumber = tagValue(protocolBlock, 'nProt');
-  result.accessKey = tagValue(protocolBlock, 'chNFe');
+  let doc;
+  try { doc=new DOMParser({onError:()=>{throw new Error('INVALID_XML');}}).parseFromString(xml,'application/xml'); }
+  catch { result.errors.push(error('AV-NFE-AUTH-RESPONSE-XML','response','A resposta de autorização não contém XML bem formado.'));return result; }
+  const envelope=doc.documentElement;
+  const children=(node,name,ns)=>Array.from(node?.childNodes||[]).filter(child=>child.nodeType===1 && child.localName===name && (!ns || child.namespaceURI===ns));
+  const body=children(envelope,'Body',SOAP_NAMESPACE)[0];
+  if(!envelope||envelope.localName!=='Envelope'||envelope.namespaceURI!==SOAP_NAMESPACE||!body){result.errors.push(error('AV-NFE-AUTH-RESPONSE-SOAP','response','A resposta não contém um envelope SOAP 1.2 reconhecível.'));return result;}
+  const returns=Array.from(body.getElementsByTagNameNS(NFE_NAMESPACE,'retEnviNFe'));
+  if(returns.length!==1){result.errors.push(error('AV-NFE-AUTH-RESPONSE-ROOT','response.retEnviNFe','A resposta não contém um único retEnviNFe oficial.'));return result;}
+  const ret=returns[0];
+  const fieldValue=(node,name)=>{const found=children(node,name,NFE_NAMESPACE);return found.length===1?String(found[0].textContent||'').trim():'';};
+  result.version=ret.getAttribute('versao')||'';
+  result.environment=fieldValue(ret,'tpAmb');result.stateCode=fieldValue(ret,'cUF');
+  result.batchStatus=fieldValue(ret,'cStat');result.batchReason=fieldValue(ret,'xMotivo');
+  result.receiptNumber=fieldValue(children(ret,'infRec',NFE_NAMESPACE)[0]||ret,'nRec');result.receivedAt=fieldValue(ret,'dhRecbto');
+  const protocols=children(ret,'protNFe',NFE_NAMESPACE);
+  if(protocols.length>1){result.errors.push(error('AV-NFE-AUTH-RESPONSE-PROTOCOL','response.protNFe','A resposta contém mais de um resultado individual para esta nota.'));return result;}
+  const protocol=protocols[0];const infos=children(protocol,'infProt',NFE_NAMESPACE);
+  const info=infos.length===1?infos[0]:null;
+  result.protocolXml=protocol?new XMLSerializer().serializeToString(protocol):'';
+  result.protocolStatus=fieldValue(info,'cStat');result.protocolReason=fieldValue(info,'xMotivo');
+  result.protocolNumber=fieldValue(info,'nProt');result.accessKey=fieldValue(info,'chNFe');result.receivedAt=result.receivedAt||fieldValue(info,'dhRecbto');
   if (result.version !== '4.00') result.errors.push(error('AV-NFE-AUTH-RESPONSE-VERSION', 'response.versao', 'A resposta não usa o leiaute 4.00.'));
   if (!authority) result.errors.push(error('AV-NFE-AUTH-RESPONSE-UF', 'response.cUF', 'A UF da emissão não possui autorizador NF-e configurado.'));
   else {
@@ -159,7 +166,7 @@ export function parseNfeAuthorizationSoapResponse(value, { issuerCode = '35', en
   result.needsReceiptConsultation = result.batchStatus === '103' && /^\d{15}$/.test(result.receiptNumber);
   result.authorized = result.batchProcessed && result.protocolStatus === '100' && /^\d{44}$/.test(result.accessKey) && Boolean(result.protocolNumber);
   result.needsProtocolConsultation = result.batchProcessed && ['204', '539'].includes(result.protocolStatus);
-  if (result.batchProcessed && !result.protocolStatus) result.errors.push(error('AV-NFE-AUTH-RESPONSE-PROTOCOL', 'response.protNFe', 'O lote foi processado sem resultado individual da NF-e.'));
+  if (result.batchProcessed && !/^\d{3}$/.test(result.protocolStatus)) result.errors.push(error('AV-NFE-AUTH-RESPONSE-PROTOCOL', 'response.protNFe', 'O lote foi processado sem resultado individual da NF-e.'));
   result.valid = result.errors.length === 0 && (result.authorized || result.needsReceiptConsultation || result.batchRejected || Boolean(result.protocolStatus));
   return result;
 }

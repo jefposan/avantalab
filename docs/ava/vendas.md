@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.369 -->
+<!-- ava-version: 3.2.0.370 -->
+
+> Revisão 3.2.0.370: Sem impacto operacional neste ambiente; leitura do XML de autorização no emissor Web.
 
 > Revisão 3.2.0.369: Sem impacto operacional neste ambiente; retorno original do autorizador no emissor Web.
 

@@ -1,0 +1,19 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {parseNfeAuthorizationSoapResponse} from '../../app/vendas/lib/server/nfe-authorization-service.mjs';
+const key='35261112345678000195550010000000011123456789';
+const soap=(status,reason='Autorizado o uso da NF-e')=>`<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"><s:Body><r:retEnviNFe xmlns:r="http://www.portalfiscal.inf.br/nfe" versao="4.00"><r:tpAmb>2</r:tpAmb><r:cUF>35</r:cUF><r:cStat>104</r:cStat><r:xMotivo>Lote processado</r:xMotivo><r:protNFe versao="4.00"><r:infProt><r:tpAmb>2</r:tpAmb><r:chNFe>${key}</r:chNFe><r:dhRecbto>2026-11-06T12:00:00-03:00</r:dhRecbto><r:nProt>135260000000001</r:nProt><r:cStat>${status}</r:cStat><r:xMotivo>${reason}</r:xMotivo></r:infProt></r:protNFe></r:retEnviNFe></s:Body></s:Envelope>`;
+test('resultado individual é decodificado como XML, com namespace, referências numéricas e CDATA',()=>{
+ for(const status of ['100','&#49;&#48;&#48;','&#x31;&#x30;&#x30;','<![CDATA[100]]>']){const parsed=parseNfeAuthorizationSoapResponse(soap(status));assert.equal(parsed.valid,true,JSON.stringify(parsed.errors));assert.equal(parsed.protocolStatus,'100');assert.equal(parsed.authorized,true);assert.equal(parsed.accessKey,key);assert.match(parsed.protocolXml,/protNFe/);}
+ const rejected=parseNfeAuthorizationSoapResponse(soap('&#51;&#57;&#49;','<![CDATA[Dados do cartão não informados]]>'));assert.equal(rejected.protocolStatus,'391');assert.equal(rejected.authorized,false);assert.equal(rejected.protocolReason,'Dados do cartão não informados');
+});
+test('lote processado sem resultado individual válido não pode passar como resposta válida',()=>{
+ for(const status of ['', 'SEM CODIGO','100 texto']){const parsed=parseNfeAuthorizationSoapResponse(soap(status));assert.equal(parsed.valid,false);assert.ok(parsed.errors.length);}
+ for(const xml of [soap('100').replace('</r:infProt>',''),soap('100').replace('<r:cStat>100</r:cStat>','<r:cStat/>'),soap('100').replace('xmlns:r="http://www.portalfiscal.inf.br/nfe"','xmlns:r="https://alheio.test"'),soap('100').replace('<s:Body>','<s:Body><!DOCTYPE x>')])assert.equal(parseNfeAuthorizationSoapResponse(xml).valid,false);
+});
+
+test('fluxo completo lê autorização/rejeição individual codificada sem cair no retorno genérico',async()=>{
+ const {createSyntheticNfeOrchestratorLab}=await import('../../app/vendas/scripts/verificar-orquestrador-nfe-local.mjs');
+ for(const code of ['100','391']){const lab=await createSyntheticNfeOrchestratorLab({authorizationResponder:async({accessKey})=>soap([...code].map(c=>'&#'+c.charCodeAt(0)+';').join(''),code==='100'?'Autorizado o uso da NF-e':'Dados do cartão não informados').replace(key,accessKey)});try{const result=await lab.continueEmission();assert.equal(result.ok,true,JSON.stringify(result.errors));if(code==='100'){assert.equal(result.result.authorized,true);await lab.runRecoveryOnce();await lab.runRecoveryOnce();assert.equal(lab.snapshot().state,'danfe_ready');}else{assert.equal(result.result.statusCode,code);assert.equal(result.result.rejected,true);assert.match(result.result.statusReason,/cartão/);}assert.equal(lab.metrics.externalNetworkCalls,0);}finally{await lab.cleanup();}}
+});
+
+test('retorno assíncrono conserva recibo dentro de infRec e não inventa autorização',()=>{const xml=`<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"><s:Body><retEnviNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><tpAmb>2</tpAmb><cUF>35</cUF><cStat>103</cStat><xMotivo>Lote recebido</xMotivo><infRec><nRec>135260000000001</nRec><tMed>1</tMed></infRec></retEnviNFe></s:Body></s:Envelope>`;const result=parseNfeAuthorizationSoapResponse(xml);assert.equal(result.valid,true);assert.equal(result.receiptNumber,'135260000000001');assert.equal(result.needsReceiptConsultation,true);assert.equal(result.authorized,false);assert.equal(parseNfeAuthorizationSoapResponse(soap('100')).receivedAt,'2026-11-06T12:00:00-03:00');});

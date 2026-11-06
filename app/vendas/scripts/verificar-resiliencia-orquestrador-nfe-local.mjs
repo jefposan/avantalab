@@ -26,8 +26,8 @@ function receiptDuplicateResponse(accessKey) {
   return soap(`<retConsReciNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><tpAmb>2</tpAmb><cUF>35</cUF><cStat>104</cStat><xMotivo>Lote processado</xMotivo><nRec>${RECEIPT}</nRec><protNFe versao="4.00"><infProt><tpAmb>2</tpAmb><chNFe>${accessKey}</chNFe><dhRecbto>2026-09-04T12:00:02-03:00</dhRecbto><nProt>135260000000001</nProt><digVal>SINTETICO</digVal><cStat>204</cStat><xMotivo>Duplicidade de NF-e</xMotivo></infProt></protNFe></retConsReciNFe>`);
 }
 
-function protocolNotFoundResponse(accessKey) {
-  return soap(`<retConsSitNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><tpAmb>2</tpAmb><cUF>35</cUF><cStat>217</cStat><xMotivo>NF-e não consta na base</xMotivo><chNFe>${accessKey}</chNFe></retConsSitNFe>`);
+function protocolUnavailableResponse(accessKey) {
+  return soap(`<retConsSitNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><tpAmb>2</tpAmb><cUF>35</cUF><cStat>108</cStat><xMotivo>Serviço temporariamente indisponível no ensaio</xMotivo><chNFe>${accessKey}</chNFe></retConsSitNFe>`);
 }
 
 function protocolAuthorizedResponse(accessKey) {
@@ -43,7 +43,7 @@ async function runTimeoutRecoveryScenario() {
     authorizationResponder: () => new Error('timeout sintético depois do registro do envio'),
     returnResponder: ({ kind, accessKey, call }) => {
       assert(kind === 'protocol', 'O timeout deve ser reconciliado pela chave, não por recibo.');
-      return call === 1 ? protocolNotFoundResponse(accessKey) : protocolAuthorizedResponse(accessKey);
+      return call === 1 ? protocolUnavailableResponse(accessKey) : protocolAuthorizedResponse(accessKey);
     },
   });
   try {
@@ -164,7 +164,7 @@ async function runRetryExhaustionScenario() {
     authorizationResponder: () => new Error('timeout sintético persistente depois do registro do envio'),
     returnResponder: ({ kind, accessKey }) => {
       assert(kind === 'protocol', 'A emissão sem recibo deve ser consultada somente pela chave.');
-      return protocolNotFoundResponse(accessKey);
+      return protocolUnavailableResponse(accessKey);
     },
   });
   try {

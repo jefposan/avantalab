@@ -1,6 +1,7 @@
 const fields=new Set('operationNature customerId items paymentMethod integrationType institutionDocument authorizationCode installments firstDueDate orderDate deliveryDate freight generalDiscount insurance otherExpenses additionalInfo purpose direction series number issueDate exitDate exitTime purchaseOrder presence destination intermediary intermediaryDocument intermediaryId referenceKey substituteRegistration suframa deliveryForecast freightMode carrierName carrierDocument carrierRegistration carrierAddress carrierCity carrierState vehiclePlate vehicleState rntc volumeCount volumeSpecies volumeBrand volumeNumber grossWeight netWeight fiscalNotes internalNotes priceTableId retainedPis retainedCofins retainedCsll incomeTaxBase incomeTax socialSecurityBase socialSecurityTax'.split(' '));
 /** Caminhos remotos nunca viram seletores: somente nomes desta lista são aceitos. */
 export function fiscalValidationTarget(issue={}){
+ if(/^AV-NFE-AUTH-RESPONSE-/.test(String(issue.code||'')))return '';
  if(/^AV-NFE-(?:NOT-RECEIVED|SUBMISSION-(?:PENDING|DUPLICATE(?:-\d{3})?)|SUBMISSION-UNCONFIRMED)$/.test(String(issue.code||'')))return '';
  if(/^AV-NFE-SIGNING-(?:RULES|RULE-CHANGE|PREPARATION|GENERATOR)$/.test(String(issue.code||'')))return 'operationNature';
  const field=String(issue.field||'').replace(/^(?:note\.|fiscalForm\.|totalsSnapshot\.fiscalForm\.)/,'');

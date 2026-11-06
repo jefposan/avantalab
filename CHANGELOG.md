@@ -1,3 +1,10 @@
+## 3.2.0.370 — Vendas: interpretar XML do resultado individual da autorização
+
+- Substitui a leitura por expressões regulares do retorno de autorização por parser XML com namespaces, referências numéricas e CDATA.
+- Lote processado exige código individual válido; resposta malformada, namespace externo, declaração de entidade e múltiplos resultados são recusados.
+- Falha de leitura do retorno permanece na conferência, sem ser mascarada pela consulta 217 posterior; não altera numeração ou XML assinado.
+- Ensaio de resiliência usa indisponibilidade para testar incerteza; 217 continua coberto como confirmação de não recebimento, com retomada explícita protegida.
+
 ## 3.2.0.369 — Vendas: preservar retorno do autorizador sem falso erro no número
 
 - Retorno 217 e comunicação sem confirmação permanecem no resumo, sem marcar o número preservado como inválido.

@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_DrbBt8v7y41t2cNCx34srK3vHRJT",
-  "version": "3.2.0.369",
-  "scope": "Vendas: preservar retorno do autorizador e remover falso erro de número",
+  "baseDeploymentId": "dpl_6Nnzz6todLKRMq71ZmaQWQSvvwoU",
+  "version": "3.2.0.370",
+  "scope": "Vendas: interpretar XML do resultado individual da autorização",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base 3.2.0.368 preservada; retorno e foco corrigidos, sem alterar numeração, garantias de envio ou banco."
+  "auditReview": "Base 3.2.0.369 preservada; parser XML existente fixado como dependência de execução, sem SQL ou mudança de numeração."
 }

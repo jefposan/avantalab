@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.369 -->
+<!-- ava-version: 3.2.0.370 -->
+
+> Revisão 3.2.0.370: O leitor da autorização interpreta o XML por estrutura, namespace e entidades XML. Lote 104 exige resultado individual válido. Erros de leitura permanecem visíveis, sem serem substituídos por 217; autorização e rejeição seguem seus resultados reais.
 
 > Revisão 3.2.0.369: Retorno 217 ou falha de comunicação não destaca o campo Número como inválido. A conferência preserva o retorno individual da autorização, inclusive 204/539, sem substituí-lo por 217 consultado depois; autorização confirmada continua prevalecendo.
 
