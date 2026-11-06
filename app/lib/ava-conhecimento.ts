@@ -2841,3 +2841,5 @@ GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.362: ao salvar/emitir uma nota com
 GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.364: Salvar guarda a revisão da nota com pendências e confirma sem transmitir. Salvar e emitir exige validar os dados fiscais. A inconsistência de regra fiscal identifica o campo e compara valor informado e exigido. Uma revisão pendente exige nova validação antes da assinatura. Não confundir confirmação de salvamento com autorização fiscal.";
 
 GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.365: No pedido e na emissão de nota, o lápis à direita do seletor de cliente abre o mesmo cadastro completo de Clientes em popup. Exige permissão de editar clientes. Salvar atualiza o cliente selecionado e sua conferência fiscal sem perder itens e valores; cancelar fecha sem alterar o cadastro.";
+
+GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.366: Salvar e emitir mantém a edição aberta durante a revisão. Falhas de emissão ficam na mesma tela com a mensagem e o campo de correção; somente a autorização confirmada abre o resultado da nota. Não solicitar novo envio quando o retorno informar situação incerta.";

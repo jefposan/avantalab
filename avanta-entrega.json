@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_FgNB9aZ6xCyvYdA4mQ1sEvEe24k7",
-  "version": "3.2.0.365",
-  "scope": "Vendas: editar cliente no pedido e na emissão sem sair do formulário",
+  "baseDeploymentId": "dpl_Hskh2SAtJQH5CEXL8uV6HjyRFGnc",
+  "version": "3.2.0.366",
+  "scope": "Vendas: preservar retorno de Salvar e emitir após revisão",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base 3.2.0.364 preservada; cadastro completo e autorização existentes reutilizados, sem SQL."
+  "auditReview": "Base 3.2.0.365 preservada; correção de continuidade e estado de UI, sem SQL nem transmissão real nos testes."
 }

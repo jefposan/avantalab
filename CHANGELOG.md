@@ -1,3 +1,8 @@
+## 3.2.0.366 — Vendas: preservar retorno de emissão após revisão
+
+- Mantém a identidade do editor ao atualizar a versão da nota, sem apagar o progresso ou erro da emissão.
+- Prossegue somente com a emissão e versão confirmadas na revisão, sem cálculo fixo; autorização encerra a edição e abre o resultado.
+
 ## 3.2.0.365 — Vendas: editar cliente sem sair do pedido ou da nota
 
 - Lápis externo ao seletor abre o cadastro completo de Clientes, com permissão de edição e persistência existentes.

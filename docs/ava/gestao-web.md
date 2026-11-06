@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.365 -->
+<!-- ava-version: 3.2.0.366 -->
+
+> Revisão 3.2.0.366: Salvar e emitir mantém o editor aberto durante a revisão e o envio. O resultado utiliza a versão confirmada pelo servidor; falhas permanecem visíveis com foco no campo e autorização abre os documentos.
 
 > Revisão 3.2.0.365: No pedido e na emissão da nota, o lápis à direita do cliente abre o cadastro completo em popup. Salvar atualiza o cliente sem sair do formulário nem perder itens e valores. Requer permissão de editar clientes.
 
