@@ -5,7 +5,7 @@
   "migrations": [
     {
       "path": "supabase/migrations/20261106180000_vendas_cstat_rtc.sql",
-      "sha256": "56f50ccd7c942b94440a26eecfe93e19a9dd902381a095f582721c886cf8fd9d"
+      "sha256": "266beadfc4fbf4509b7af43420cde7a7e61a50a2559f7a1a5b76257729472f17"
     }
   ],
   "reconciliationStatus": "reviewed",
