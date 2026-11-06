@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_Hskh2SAtJQH5CEXL8uV6HjyRFGnc",
-  "version": "3.2.0.366",
-  "scope": "Vendas: preservar retorno de Salvar e emitir após revisão",
+  "baseDeploymentId": "dpl_26vCTw218xxUKmwWmdEPCeyb8CB3",
+  "version": "3.2.0.367",
+  "scope": "Vendas: alinhar preparação revisada e unificar acesso à conferência",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base 3.2.0.365 preservada; correção de continuidade e estado de UI, sem SQL nem transmissão real nos testes."
+  "auditReview": "Base 3.2.0.366 preservada; leitura e UI corrigidas, sem migração ou SQL em produção."
 }

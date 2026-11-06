@@ -140,7 +140,7 @@ export function createPostgresCommercialNfeSigningPreparationRepository({ pool }
           nr.id as numero_reserva_id,nr.company_id as numero_empresa_id,nr.establishment_id as numero_establishment_id,
           nr.emission_id as numero_emissao_id,nr.document_type as numero_documento_tipo,
           nr.series as numero_serie,nr.number as numero_valor,nr.status as numero_situacao,
-          prepared.public_payload as preparacao_publica
+          coalesce(c.preparation_payload,prepared.public_payload) as preparacao_publica
         from fiscal_private.emissions e
         join public.vendas_fiscal_rascunhos r on r.empresa_id=e.company_id and r.id::text=e.draft_id
         left join public.vendas_operacoes o on o.empresa_id=r.empresa_id and o.id=r.operacao_id

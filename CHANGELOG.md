@@ -1,3 +1,8 @@
+## 3.2.0.367 — Vendas: preparação coerente com a revisão e conferência única
+
+- Assinatura usa a preparação da revisão atual, alinhada aos dados fiscais do consumidor final; revisão pendente não herda validação antiga.
+- Emitir nota é a única ação de acesso à conferência; remove Editar nota duplicado. Falhas técnicas de preparação direcionam à conferência, sem indicar produtos.
+
 ## 3.2.0.366 — Vendas: preservar retorno de emissão após revisão
 
 - Mantém a identidade do editor ao atualizar a versão da nota, sem apagar o progresso ou erro da emissão.

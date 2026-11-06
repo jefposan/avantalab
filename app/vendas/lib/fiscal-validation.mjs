@@ -1,6 +1,7 @@
 const fields=new Set('operationNature customerId items paymentMethod integrationType institutionDocument authorizationCode installments firstDueDate orderDate deliveryDate freight generalDiscount insurance otherExpenses additionalInfo purpose direction series number issueDate exitDate exitTime purchaseOrder presence destination intermediary intermediaryDocument intermediaryId referenceKey substituteRegistration suframa deliveryForecast freightMode carrierName carrierDocument carrierRegistration carrierAddress carrierCity carrierState vehiclePlate vehicleState rntc volumeCount volumeSpecies volumeBrand volumeNumber grossWeight netWeight fiscalNotes internalNotes priceTableId retainedPis retainedCofins retainedCsll incomeTaxBase incomeTax socialSecurityBase socialSecurityTax'.split(' '));
 /** Caminhos remotos nunca viram seletores: somente nomes desta lista são aceitos. */
 export function fiscalValidationTarget(issue={}){
+ if(/^AV-NFE-SIGNING-(?:RULES|RULE-CHANGE|PREPARATION|GENERATOR)$/.test(String(issue.code||'')))return 'operationNature';
  const field=String(issue.field||'').replace(/^(?:note\.|fiscalForm\.|totalsSnapshot\.fiscalForm\.)/,'');
  if(fields.has(field))return field;
  const aliases={customer:'customerId',client:'customerId',payment:'paymentMethod','payment.method':'paymentMethod','payment.details.integrationType':'integrationType','payment.details.institutionDocument':'institutionDocument','payment.details.authorizationCode':'authorizationCode','numbering.sequence':'series','numbering':'series',reference:'referenceKey'};

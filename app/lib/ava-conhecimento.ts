@@ -2843,3 +2843,5 @@ GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.364: Salvar guarda a revisão da n
 GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.365: No pedido e na emissão de nota, o lápis à direita do seletor de cliente abre o mesmo cadastro completo de Clientes em popup. Exige permissão de editar clientes. Salvar atualiza o cliente selecionado e sua conferência fiscal sem perder itens e valores; cancelar fecha sem alterar o cadastro.";
 
 GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.366: Salvar e emitir mantém a edição aberta durante a revisão. Falhas de emissão ficam na mesma tela com a mensagem e o campo de correção; somente a autorização confirmada abre o resultado da nota. Não solicitar novo envio quando o retorno informar situação incerta.";
+
+GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.367: Nas ações da nota ainda não emitida, usar Emitir nota para abrir a conferência completa. Editar nota deixou de ser uma ação separada. A conferência mantém Salvar, Salvar e emitir e Cancelar. A assinatura carrega a preparação da mesma revisão dos dados fiscais, inclusive consumidor final. Falha técnica de preparação não é indicação para editar produtos.";

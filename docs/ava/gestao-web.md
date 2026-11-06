@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.366 -->
+<!-- ava-version: 3.2.0.367 -->
+
+> Revisão 3.2.0.367: Emitir nota é a única entrada para a conferência completa, com Salvar, Salvar e emitir e Cancelar. A assinatura usa os dados e a preparação da mesma revisão, incluindo consumidor final, sem reaproveitar validação antiga em revisão pendente.
 
 > Revisão 3.2.0.366: Salvar e emitir mantém o editor aberto durante a revisão e o envio. O resultado utiliza a versão confirmada pelo servidor; falhas permanecem visíveis com foco no campo e autorização abre os documentos.
 

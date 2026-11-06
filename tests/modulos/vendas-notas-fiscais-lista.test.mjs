@@ -53,13 +53,13 @@ test('ações abrem conferência sem botão de consulta técnica e sem transmiti
  for(const state of ['draft','prepared','signed','submitted','processing']){
   let opened=0;const result=sandbox.exports.actions({draft:{...draft,remoteState:state},onReview:()=>opened++,onDetails(){},onCancel(){},onRevalidate(){}});
   assert.ok(!result.actions.some(a=>/Consultar|Verificar envio|Atualizar situação/.test(a.label)));
-  assert.equal(result.actions.length,['submitted','processing'].includes(state)?1:3);assert.equal(result.actions.some(a=>a.label==='Excluir rascunho'),!['submitted','processing'].includes(state));result.actions.find(a=>a.label!=='Editar nota').onSelect();assert.equal(opened,1);
+  assert.equal(result.actions.length,['submitted','processing'].includes(state)?1:2);assert.equal(result.actions.some(a=>a.label==='Excluir rascunho'),!['submitted','processing'].includes(state));result.actions.find(a=>a.label!=='Editar nota').onSelect();assert.equal(opened,['submitted','processing'].includes(state)?0:1);
  }
 });
 
- test('Editar nota é ação própria e abre o formulário, sem emitir ou excluir',()=>{
+ test('Emitir nota é a única entrada da conferência, sem transmitir ou excluir ao abrir',()=>{
  let edits=0,reviews=0;
  const result=sandbox.exports.actions({draft:{...draft,remoteState:'number_reserved'},remoteStatus:{state:'number_reserved',number:1,series:'1',artifacts:[]},onEdit:()=>edits++,onReview:()=>reviews++,onCancel(){},onDetails(){},onRevalidate(){}});
- const edit=result.actions.find(a=>a.label==='Editar nota');assert.ok(edit);assert.ok(!edit.disabled);edit.onSelect();assert.equal(edits,1);assert.equal(reviews,0);
+ assert.ok(!result.actions.some(a=>a.label==='Editar nota'));const edit=result.actions.find(a=>a.label==='Emitir nota');assert.ok(edit);assert.ok(!edit.disabled);edit.onSelect();assert.equal(edits,1);assert.equal(reviews,0);
  for(const state of ['authorized','processing','submitted','canceled'])assert.ok(!sandbox.exports.actions({draft:{...draft,remoteState:state},onEdit(){},onDetails(){},onCancel(){},onRevalidate(){}}).actions.some(a=>a.label==='Editar nota'));
  });
