@@ -62,7 +62,7 @@ export async function runFiscalCheckout({ runtime, context, input }) {
     const sent = await runtime.nfeAutomaticIssuanceService.continue({ context, emissionId: emission.id, expectedVersion: Number(emission.version), idempotencyKey: stageKey('checkout-issue',input.idempotencyKey,emission.statusCode === '217' ? `${draftId}:${emission.version}` : draftId) });
     if (!sent?.ok) {
       const current = (await load())?.emission;
-      if (sent.pendingRecovery === true && current?.state === 'signed' && current.statusCode === '217') return {...fail('AV-NFE-NOT-RECEIVED','A SEFAZ não recebeu esta nota. O mesmo número foi preservado. Tente novamente nesta mesma nota.'),draftId,emission:publicEmission(current)};
+      if (!/^AV-NFE-SUBMISSION-DUPLICATE-(?:204|539)$/.test(sent.errors?.[0]?.code||'') && sent.pendingRecovery === true && current?.state === 'signed' && current.statusCode === '217') return {...fail('AV-NFE-NOT-RECEIVED','A SEFAZ não recebeu esta nota. O mesmo número foi preservado. Tente novamente nesta mesma nota.'),draftId,emission:publicEmission(current)};
       if (['authorized','artifacts_stored','danfe_ready'].includes(current?.state)) return { ok: true, draftId, emission: publicEmission(current), message: 'NF-e autorizada em homologação, sem valor fiscal.' };
       if (current?.state === 'rejected') return {...fail('AV-FISCAL-CHECKOUT-REJECTED',current.statusReason || 'A SEFAZ rejeitou a nota. Revise o retorno fiscal.'),draftId,emission:publicEmission(current)};
       return { ...errorOf(sent), draftId, ...(current ? {emission: publicEmission(current)} : {}) };

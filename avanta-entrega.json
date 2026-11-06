@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_5pEkYPc8zbReBhv4SYSmpxTH9WvZ",
-  "version": "3.2.0.368",
-  "scope": "Vendas: preservar retorno final da emissão na conferência",
+  "baseDeploymentId": "dpl_DrbBt8v7y41t2cNCx34srK3vHRJT",
+  "version": "3.2.0.369",
+  "scope": "Vendas: preservar retorno do autorizador e remover falso erro de número",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base 3.2.0.367 preservada; UI e apresentação corrigidas, sem alterar transmissão ou banco."
+  "auditReview": "Base 3.2.0.368 preservada; retorno e foco corrigidos, sem alterar numeração, garantias de envio ou banco."
 }

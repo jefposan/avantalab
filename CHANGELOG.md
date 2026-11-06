@@ -1,3 +1,9 @@
+## 3.2.0.369 — Vendas: preservar retorno do autorizador sem falso erro no número
+
+- Retorno 217 e comunicação sem confirmação permanecem no resumo, sem marcar o número preservado como inválido.
+- Retorno individual 204/539 mantém código e motivo originais na conferência, sem ser mascarado pela consulta 217 posterior; autorização confirmada prevalece.
+- Diagnóstico técnico registra códigos do lote e protocolo sem XML, certificado ou dados cadastrais.
+
 ## 3.2.0.368 — Vendas: manter retorno final da emissão visível
 
 - Conferência permanece montada nos estados assinado e em processamento, preservando a mensagem de falha ou rejeição.

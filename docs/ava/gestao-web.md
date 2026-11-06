@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.368 -->
+<!-- ava-version: 3.2.0.369 -->
+
+> Revisão 3.2.0.369: Retorno 217 ou falha de comunicação não destaca o campo Número como inválido. A conferência preserva o retorno individual da autorização, inclusive 204/539, sem substituí-lo por 217 consultado depois; autorização confirmada continua prevalecendo.
 
 > Revisão 3.2.0.368: O retorno da emissão permanece na conferência mesmo após assinatura ou processamento. Retorno 217 aparece como Não recebida pela SEFAZ; dados assinados ficam preservados. Salvar e emitir segue a mesma tentativa protegida. Somente autorização abre documentos.
 

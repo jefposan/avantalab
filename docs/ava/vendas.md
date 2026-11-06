@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.368 -->
+<!-- ava-version: 3.2.0.369 -->
+
+> Revisão 3.2.0.369: Sem impacto operacional neste ambiente; retorno original do autorizador no emissor Web.
 
 > Revisão 3.2.0.368: Sem impacto operacional neste ambiente; permanência do retorno na conferência do emissor Web.
 

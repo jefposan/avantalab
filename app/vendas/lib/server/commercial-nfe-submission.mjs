@@ -140,8 +140,13 @@ export function createCommercialNfeSubmissionService({ repository, certificateBi
           if (!rejected?.ok) return rejected;
           return { ok: true, result: { emissionId: rejected.emission.id, state: rejected.emission.state, version: rejected.emission.version, batchId, authorized: false, rejected: true, statusCode: rejected.emission.statusCode, statusReason: rejected.emission.statusReason, externalContentReturned: false, sensitiveMaterialReturned: false }, errors: [] };
         }
+        if(authorization.valid===true && authorization.needsProtocolConsultation===true && ['204','539'].includes(authorization.protocolStatus)){
+          const code=authorization.protocolStatus;
+          console.error('AVANTA_FISCAL_AUTHORIZATION_DUPLICATE',{batchStatus:authorization.batchStatus,protocolStatus:code,transmissionAttempted:true});
+          return {ok:false,pendingRecovery:true,state:begun.emission.state,version:begun.emission.version,errors:[issue(`AV-NFE-SUBMISSION-DUPLICATE-${code}`,'authorization',`SEFAZ ${code}: ${clean(authorization.protocolReason).slice(0,1200)||'Duplicidade informada pelo autorizador.'} A autorização ainda não foi confirmada para esta chave. Os dados e a numeração foram preservados.`)]};
+        }
         const diagnosticCodes = (authorization.errors || []).map(item => /^[A-Z0-9-]{1,80}$/.test(item.code || '') ? item.code : 'AV-NFE-AUTH-RETURN');
-        console.error('AVANTA_FISCAL_AUTHORIZATION_UNCONFIRMED', { codes: diagnosticCodes, batchStatus: /^\d{3}$/.test(authorization.batchStatus || '') ? authorization.batchStatus : '', transmissionAttempted: authorization.transmissionAttempted === true, transportErrorCode:authorization.transportErrorCode || '',httpStatus:authorization.httpStatus || 0 });
+        console.error('AVANTA_FISCAL_AUTHORIZATION_UNCONFIRMED', { codes: diagnosticCodes, batchStatus: /^\d{3}$/.test(authorization.batchStatus || '') ? authorization.batchStatus : '', protocolStatus: /^\d{3}$/.test(authorization.protocolStatus || '') ? authorization.protocolStatus : '', transmissionAttempted: authorization.transmissionAttempted === true, transportErrorCode:authorization.transportErrorCode || '',httpStatus:authorization.httpStatus || 0 });
         return { ok: false, pendingRecovery: true, state: begun.emission.state, version: begun.emission.version, errors: [issue('AV-NFE-SUBMISSION-PENDING', 'authorization', `O retorno da autorização não foi confirmado${diagnosticCodes.length ? ` (${diagnosticCodes.join(', ')})` : ''}. A situação da mesma nota precisa ser consultada antes de reenviar.`)] };
       } catch (cause) {
         const diagnosticCode = /^(?:[0-9A-Z]{5}|AV-[A-Z0-9-]{1,80})$/.test(clean(cause?.code)) ? clean(cause.code) : 'INTERNAL';
