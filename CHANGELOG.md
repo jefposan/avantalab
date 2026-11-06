@@ -1,3 +1,9 @@
+## 3.2.0.372 — Vendas: preservar segundos na saída automática da NF-e
+
+- Corrige dhSaiEnt quando só a data de saída é preenchida: conserva hora, segundos e fuso da emissão, evitando saída anterior em datas iguais por truncamento dos segundos.
+- Identifica hora anterior no mesmo dia e destaca Hora da saída; dia anterior aponta Data de saída. Preserva o retorno original no histórico e bloqueia a inconsistência antes do envio.
+- Mantém a data selecionada, horários informados manualmente e saída opcional. Sem SQL ou alteração de numeração.
+
 ## 3.2.0.371 — Vendas: aceitar retornos RTC e retomar edição após ausência confirmada
 
 - Alinha o retorno, persistência e correção ao TStat oficial de três ou quatro dígitos da NT 2025.002-RTC; rejeições reais deixam de ser tratadas como resultado ausente.

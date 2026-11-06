@@ -14,3 +14,9 @@ export function fiscalValidationTarget(issue={}){
  const direct=m.match(/campo ([a-z]+)/i)?.[1];const key=[...fields].find(key=>key.toLowerCase()===direct);if(key)return key;
  return rules.find(([pattern])=>pattern.test(m))?.[1]||'';
 }
+
+/** Explica o retorno fiscal pelo campo realmente diferente, sem alterar o histórico da SEFAZ. */
+export function fiscalValidationIssue(issue, form={}) {
+ if(/^\d{4}-\d{2}-\d{2}$/.test(form.issueDate||'') && form.issueDate===form.exitDate && /data de sa[ií]da menor que a data de emiss[aã]o/i.test(issue?.message||''))return {...issue,field:'exitTime',message:'A hora de saída está anterior à hora de emissão no mesmo dia. Corrija a hora de saída ou deixe-a em branco para usar o horário da emissão.'};
+ return issue;
+}

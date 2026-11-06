@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.371 -->
+<!-- ava-version: 3.2.0.372 -->
+
+> Revisão 3.2.0.372: Sem impacto operacional neste ambiente; correção dos segundos na saída automática da NF-e Web.
 
 > Revisão 3.2.0.371: Sem impacto operacional neste ambiente; ajuste do retorno fiscal e retomada da edição no emissor Web.
 

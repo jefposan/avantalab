@@ -21,3 +21,30 @@ test('revisão conserva todos os campos aprovados ao reabrir e não modifica o r
 test('natureza selecionada usa regra publicada correspondente e recusa destino incompatível',async()=>{const {createDefaultFiscalMatrix}=await import('../../app/vendas/lib/fiscal-matrix.mjs');const {createCommercialFiscalRuleResolver}=await import('../../app/vendas/lib/server/commercial-fiscal-rules.mjs');const matrix=createDefaultFiscalMatrix();matrix.reviewedBy='Revisor sintético';matrix.reviewedAt='2026-11-05';const rule=matrix.rules.find(r=>r.id==='nfe-venda-consumidor-final');matrix.rules=[{...rule,active:true,reviewed:true,cfopOverride:'5102'}];const resolver=createCommercialFiscalRuleResolver({repository:{getPublished:async()=>({status:'publicada',taxReviewConfirmed:true,taxReformReviewConfirmed:true,matrix})}});const args={companyId:company,documentType:'nfe',issuer:{state:'SP',taxRegime:'simples_nacional',fiscalConfiguration:{originCode:'0',csosn:'102',pisCst:'49',cofinsCst:'49'}},customer:{consumerFinal:true,address:{state:'SP'},stateRegistrationIndicator:'nao_contribuinte'},items:[{sku:'A',name:'Produto',unit:'UN',fiscal:{useCompanyFiscal:true,ncm:'33049990'}}],operationNature:rule.operationNature,fiscalForm:newFiscalNoteFields()};const valid=await resolver(args);assert.equal(valid.valid,true,JSON.stringify(valid.errors));assert.equal(valid.items.A.cfop,'5102');assert.equal((await resolver({...args,operationNature:'Natureza inexistente'})).valid,false);assert.equal((await resolver({...args,fiscalForm:{...args.fiscalForm,destination:'2'}})).valid,false);assert.equal((await resolver({...args,fiscalForm:{...args.fiscalForm,purpose:'4'}})).valid,false);});
 test('MOC YA02-04: ajuste e devolução exigem Sem pagamento; complementar não recebe restrição inventada',()=>{for(const purpose of ['3','4']){const source=input({...newFiscalNoteFields(),purpose,referenceKey:'1'.repeat(44)});assert.ok(buildUnsignedNfeSpXml(source).errors.some(error=>error.code==='NFE-YA02'));source.payment.method='Sem pagamento';assert.equal(buildUnsignedNfeSpXml(source).valid,true);}const complement=input({...newFiscalNoteFields(),purpose:'2',referenceKey:'1'.repeat(44)});assert.equal(buildUnsignedNfeSpXml(complement).valid,true);});
 test('MOC B25c-20: atendimento presencial/não aplicável não informa indicador de intermediador',()=>{for(const presence of ['0','1','5']){const source=input({...newFiscalNoteFields(),presence});const built=buildUnsignedNfeSpXml(source);assert.equal(built.valid,true,JSON.stringify(built.errors));assert.doesNotMatch(built.xml,/<indIntermed>/);const bad=normalizeFiscalNoteFields({...newFiscalNoteFields(),presence,intermediary:'1',intermediaryDocument:'11222333000181',intermediaryId:'Loja'});assert.equal(bad.valid,false);}for(const presence of ['2','3','9']){const built=buildUnsignedNfeSpXml(input({...newFiscalNoteFields(),presence}));assert.equal(built.valid,true);assert.match(built.xml,/<indIntermed>0<\/indIntermed>/);}});
+
+
+test('saída sem hora informada conserva segundos e fuso da emissão, inclusive no mesmo dia',async()=>{
+ for(const time of ['00:00:01-03:00','14:30:45-03:00','23:59:59-03:00']){
+ const data={...input({...newFiscalNoteFields(),exitDate:'2026-11-06'}),issuedAt:`2026-11-06T${time}`};
+ const built=buildUnsignedNfeSpXml(data);assert.equal(built.valid,true,JSON.stringify(built.errors));
+ const emission=built.xml.match(/<dhEmi>([^<]+)<\/dhEmi>/)[1],exit=built.xml.match(/<dhSaiEnt>([^<]+)<\/dhSaiEnt>/)[1];
+ assert.equal(exit,emission);assert.equal(Date.parse(exit),Date.parse(emission));
+ }
+ const data={...input({...newFiscalNoteFields(),exitDate:'2026-11-07'}),issuedAt:'2026-11-06T14:30:45-03:00'};
+ const next=buildUnsignedNfeSpXml(data);assert.match(next.xml,/<dhSaiEnt>2026-11-07T14:30:45-03:00<\/dhSaiEnt>/);
+ const xsd=await validateNfeXmlAgainstXsd(next.xml);assert.equal(xsd.valid,true,JSON.stringify(xsd.errors));
+ assert.doesNotMatch(buildUnsignedNfeSpXml(input(newFiscalNoteFields())).xml,/<dhSaiEnt>/);
+ const manual=buildUnsignedNfeSpXml(input({...newFiscalNoteFields(),exitDate:'2026-11-06',exitTime:'13:05'}));assert.match(manual.xml,/<dhSaiEnt>2026-11-06T13:05:00-03:00<\/dhSaiEnt>/);
+});
+
+
+test('horário manual anterior aponta a hora; dia anterior aponta a data e não transmite',async()=>{
+ const {fiscalValidationTarget,fiscalValidationIssue}=await import('../../app/vendas/lib/fiscal-validation.mjs');
+ for(const [exitDate,exitTime,expected] of [['2026-11-06','11:59','exitTime'],['2026-11-06','12:00','exitTime'],['2026-11-05','13:00','exitDate']]){
+ const data={...input({...newFiscalNoteFields(),exitDate,exitTime}),issuedAt:'2026-11-06T12:00:45-03:00'};const before=structuredClone(data);const built=buildUnsignedNfeSpXml(data);assert.equal(built.valid,false);assert.equal(built.xml,'');const error=built.errors.find(e=>e.code==='NFE-B10');assert.ok(error);assert.equal(fiscalValidationTarget(error),expected);assert.deepEqual(data,before);
+ }
+ const original={ok:false,code:'AV-FISCAL-CHECKOUT-REJECTED',message:'Rejeição: Data de Saída menor que a Data de Emissão'};
+ const explained=fiscalValidationIssue(original,{issueDate:'2026-11-06',exitDate:'2026-11-06'});assert.equal(fiscalValidationTarget(explained),'exitTime');assert.match(explained.message,/hora de saída.*hora de emissão/i);assert.match(original.message,/Data de Saída/);
+ assert.equal(fiscalValidationIssue(original,{issueDate:'2026-11-06',exitDate:'2026-11-05'}),original);
+ assert.equal(fiscalValidationIssue({...original,message:'Rejeição de NCM'},{issueDate:'2026-11-06',exitDate:'2026-11-06'}).message,'Rejeição de NCM');
+});

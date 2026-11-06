@@ -1,6 +1,6 @@
 'use client';
 import {focarCampoComErro} from '@/app/lib/foco-validacao.mjs';
-import {fiscalValidationTarget} from '../lib/fiscal-validation.mjs';
+import {fiscalValidationIssue,fiscalValidationTarget} from '../lib/fiscal-validation.mjs';
 import dynamic from 'next/dynamic';
 import {requestFiscalEditor} from '../lib/fiscal-editor-bridge.mjs';
 import { NoteOperationFields, NoteTransportFields, NoteDetailsFields, NoteObservationsFields, NoteWithholdingFields, type NoteFields, type FiscalNoteEditorOptions } from '../components/FiscalNoteBlocks';
@@ -1366,7 +1366,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   };
   const updateLine = (id: string, patch: Partial<OrderLine>) => setLines((current) => current.map((line) => line.id === id ? { ...line, ...patch } : line));
   const removeLine = (id: string) => setLines((current) => current.filter((line) => line.id !== id));
-  const showIssue=(issue:ConfirmedSave)=>{setFiscalSaveError(issue.message);setFiscalSaveIssue(issue);setValidationFocus(current=>({...issue,attempt:(current?.attempt||0)+1}));};
+  const showIssue=(issue:ConfirmedSave)=>{const explained=fiscalValidationIssue(issue,noteFields);setFiscalSaveError(explained.message);setFiscalSaveIssue(explained);setValidationFocus(current=>({...explained,attempt:(current?.attempt||0)+1}));};
   useEffect(()=>{
     if(!validationFocus||savingFiscal||!formRef.current)return;
     const root=formRef.current,key=fiscalValidationTarget(validationFocus);

@@ -224,6 +224,11 @@ export function buildNfeAccessKey(inputValue) {
   return `${base}${calculateNfeAccessKeyCheckDigit(base)}`;
 }
 
+function departureTimestamp(input) {
+  const form=input.fiscalForm;
+  return form?.exitDate ? `${form.exitDate}T${form.exitTime ? `${form.exitTime}:00-03:00` : input.issuedAt.slice(11)}` : '';
+}
+
 export function validateNfeSpXmlInput(inputValue) {
   const input = normalizeNfeSpXmlInput(inputValue);
   const errors = [];
@@ -231,6 +236,12 @@ export function validateNfeSpXmlInput(inputValue) {
   const requiredText = (value, code, field, message) => { if (!value) errors.push(validationError(code, field, message)); };
   requiredText(input.operationNature, 'NFE-B04', 'operationNature', 'Informe a natureza da operação com até 60 caracteres.');
   if (!validIssuedAt(input.issuedAt)) errors.push(validationError('NFE-B09', 'issuedAt', 'Informe data e hora no formato ISO com fuso horário válido.'));
+  const departure=departureTimestamp(input);
+  if(input.direction==='1' && validIssuedAt(input.issuedAt) && validIssuedAt(departure) && Date.parse(departure)<Date.parse(input.issuedAt)) {
+    const sameDay=departure.slice(0,10)===input.issuedAt.slice(0,10);
+    errors.push(validationError('NFE-B10',sameDay?'fiscalForm.exitTime':'fiscalForm.exitDate',sameDay?`A hora de saída (${departure.slice(11,19)}) está anterior à hora de emissão (${input.issuedAt.slice(11,19)}) no mesmo dia. Corrija a hora de saída ou deixe-a em branco para usar o horário da emissão.`:'A data de saída está anterior à data de emissão. Corrija a data de saída.'));
+  }
+
   if (!input.series || Number(input.series) > 999) errors.push(validationError('NFE-B07', 'series', 'Informe uma série de NF-e entre 0 e 999.'));
   if (!input.number || Number(input.number) < 1) errors.push(validationError('NFE-B08', 'number', 'Informe um número de teste entre 1 e 999999999.'));
   if (input.numericCode.length !== 8) errors.push(validationError('NFE-B03', 'numericCode', 'Informe o código numérico cNF com exatamente oito dígitos.'));
@@ -371,7 +382,7 @@ export function buildUnsignedNfeSpXml(inputValue) {
     xmlTag('serie', String(Number(input.series)), 3),
     xmlTag('nNF', String(Number(input.number)), 3),
     xmlTag('dhEmi', input.issuedAt, 3),
-    xmlTag('dhSaiEnt',input.fiscalForm?.exitDate?`${input.fiscalForm.exitDate}T${input.fiscalForm.exitTime||input.issuedAt.slice(11,16)}:00-03:00`:'',3),
+    xmlTag('dhSaiEnt', departureTimestamp(input), 3),
     xmlTag('dPrevEntrega',input.fiscalForm?.deliveryForecast,3),
     xmlTag('tpNF', input.direction, 3),
     xmlTag('idDest', idDest, 3),

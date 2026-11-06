@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.371 -->
+<!-- ava-version: 3.2.0.372 -->
+
+> Revisão 3.2.0.372: Quando a hora de saída fica vazia, o XML conserva o horário completo da emissão, sem zerar segundos. Datas iguais não ficam artificialmente anteriores por esse truncamento; horários manuais permanecem como preenchidos. Se o dia é igual e a hora é anterior, o aviso e o foco apontam Hora da saída; se o dia é anterior, apontam Data de saída.
 
 > Revisão 3.2.0.371: Retornos SEFAZ de três ou quatro dígitos são preservados e uma rejeição libera a correção na própria nota. Tentativa com ausência confirmada por consulta 217 permite editar e salvar sem mudar o número; envio incerto continua protegido.
 
