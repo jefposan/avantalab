@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.367 -->
+<!-- ava-version: 3.2.0.368 -->
+
+> Revisão 3.2.0.368: Sem impacto operacional neste ambiente; permanência do retorno na conferência do emissor Web.
 
 > Revisão 3.2.0.367: Sem impacto operacional neste ambiente; preparação revisada e ação única no emissor Web.
 

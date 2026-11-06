@@ -1291,6 +1291,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const [fulfillment, setFulfillment] = useState(initialOrder?.fulfillment || 'Entrega');
   const [reserveStock, setReserveStock] = useState(fiscalOnly ? false : initialOrder?.reserveStock ?? settings.commercial.reserveStockDefault);
   const [savingFiscal, setSavingFiscal] = useState(false);
+  const fiscalAttemptLocked=Boolean(correction && ['signed','submitted','processing'].includes(correction.status.state));
   const formRef=useRef<HTMLDivElement>(null);
   const [validationFocus,setValidationFocus]=useState<{message:string;field?:string;code?:string;attempt:number}|null>(null);
   const [fiscalSaveError, setFiscalSaveError] = useState('');
@@ -1384,9 +1385,9 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   },[validationFocus,savingFiscal]);
   const finish = async (status: 'Rascunho' | 'Confirmado', issue = false) => {
     if (savingFiscal) return;
-    if(issue&&fiscalEditor&&(!operationNature.trim()||!settings.fiscal.matrix.rules.some(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe'&&rule.operationNature===operationNature))){setSubmitted(true);showIssue({ok:false,field:'operationNature',message:'Selecione uma natureza com regra fiscal ativa e publicada neste perfil.'});return;}
-    if(issue&&fiscalEditor&&previewIssues.length){setSubmitted(true);showIssue({ok:false,message:previewIssues[0]});return;}
-    if (status === 'Confirmado' && !orderReady && (!fiscalOnly||issue)) {
+    if(issue&&!fiscalAttemptLocked&&fiscalEditor&&(!operationNature.trim()||!settings.fiscal.matrix.rules.some(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe'&&rule.operationNature===operationNature))){setSubmitted(true);showIssue({ok:false,field:'operationNature',message:'Selecione uma natureza com regra fiscal ativa e publicada neste perfil.'});return;}
+    if(issue&&!fiscalAttemptLocked&&fiscalEditor&&previewIssues.length){setSubmitted(true);showIssue({ok:false,message:previewIssues[0]});return;}
+    if (status === 'Confirmado' && !orderReady && !fiscalAttemptLocked && (!fiscalOnly||issue)) {
       setSubmitted(true);
       showIssue({ok:false,message:validation.errors[0]||issuerError||'Revise os dados da nota.'});
       return;
@@ -1460,7 +1461,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
     </div>
     <div className="order-safety"><Icon name={connected ? 'check' : 'warning'} size={18}/><p><strong>{fiscalOnly ? 'Somente emissão fiscal.' : connected ? 'Operação vinculada ao perfil.' : 'Ambiente de demonstração.'}</strong> {fiscalOnly ? 'Preparar ou emitir esta nota não cria pedido, não gera contas a receber, não entra nas receitas e não movimenta estoque.' : connected ? 'Ao confirmar, o pedido será gravado para a empresa ativa. Estoque só será movimentado se o controle estiver ligado neste pedido. A nota fiscal continua sujeita às validações da Central Fiscal.' : 'Confirmar pode reservar o estoque local deste protótipo; nenhuma cobrança ou nota fiscal será transmitida.'}</p></div>
     <div ref={formRef} className="order-layout" aria-busy={savingFiscal} inert={savingFiscal}>
-      <div className="order-main">
+      <div className="order-main" inert={fiscalAttemptLocked}>
         {fiscalEditor&&<NoteOperationFields value={noteFields} onChange={patchNoteFields} nature={operationNature} onNature={value=>{natureEditedRef.current=true;setOperationNature(value);}} natures={[...new Set(settings.fiscal.matrix.rules.filter(rule=>rule.documentType==='nfe'&&rule.active&&rule.reviewed).map(rule=>rule.operationNature))]}/>}
 
         <section className="order-card" aria-labelledby="order-identification-title">
@@ -1537,6 +1538,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
       </div>
 
       <aside className="order-summary" aria-label={fiscalOnly ? 'Resumo da nota' : 'Resumo do pedido'}>
+        {fiscalAttemptLocked && correction && <div className="order-validation" role="status"><strong>Nota ainda não autorizada.</strong><p>{fiscalStatusPresentation(correction.status).detail}</p></div>}
         <section>
           <header><span>{fiscalOnly ? 'Resumo da nota' : 'Resumo do pedido'}</span><Badge tone={orderReady ? 'success' : 'warning'}>{orderReady ? 'Pronto para confirmar' : fiscalOnly ? 'Revisar nota' : 'Revisar pedido'}</Badge></header>
           <dl><div><dt>Itens</dt><dd>{money(fiscalEditor?productsTotal:totals.subtotal)}</dd></div><div><dt>Desconto</dt><dd>− {money(fiscalEditor?lineDiscountTotal+totals.discount:totals.discount)}</dd></div><div><dt>Frete</dt><dd>{money(commercialNumber(freight))}</dd></div>{fiscalEditor&&<><div><dt>Seguro</dt><dd>{money(commercialNumber(insurance))}</dd></div><div><dt>Outras despesas</dt><dd>{money(commercialNumber(otherExpenses))}</dd></div></>}<div className="order-total"><dt>Total</dt><dd>{money(totals.total)}</dd></div></dl>
@@ -1546,7 +1548,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
         {submitted&&previewIssues.length>0&&<section role="alert" className="order-validation">{previewIssues.map(issue=><p className="error" key={issue}>{issue}</p>)}</section>}
         {(submitted || validation.warnings.length > 0) && <section className="order-validation" aria-live="polite"><h3>Validação</h3>{submitted && [...validation.errors, ...(issuerError ? [issuerError] : [])].map((message) => <p className="error" key={message}><Icon name="warning" size={15}/>{message}</p>)}{validation.warnings.map((message) => <p className="warning" key={message}><Icon name="warning" size={15}/>{message}</p>)}</section>}
         {fiscalSaveError && <div role="alert" tabIndex={-1} data-validation-summary><p className="field-error">{fiscalSaveError}</p>{fiscalSaveCorrection&&fiscalSaveIssue&&onFiscalCorrection&&<span data-fiscal-correction-action><BotaoAcaoCompacto disabled={!can(fiscalCorrectionAction(fiscalSaveCorrection).permission)} onClick={()=>onFiscalCorrection(fiscalSaveIssue)}>{fiscalCorrectionAction(fiscalSaveCorrection).label}</BotaoAcaoCompacto></span>}</div>}
-        <div className={`order-actions${fiscalOnly ? ' fiscal-checkout-actions' : ''}`}>{fiscalOnly ? <><BotaoAcaoCompacto variante="secundario" disabled={savingFiscal||!can('fiscal.prepare')||!connected} onClick={()=>void finish('Confirmado',false)}>{savingFiscal?'Salvando…':'Salvar'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" disabled={savingFiscal||!can('fiscal.prepare')||!can('fiscal.issue')||!connected} onClick={()=>void finish('Confirmado',true)}>{savingFiscal?'Aguarde…':'Salvar e emitir'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="secundario" disabled={savingFiscal} onClick={onCancel}>Cancelar</BotaoAcaoCompacto></> : <><button type="button" className="button secondary" onClick={onCancel}>Cancelar</button><button type="button" className="button secondary" onClick={()=>void finish('Rascunho')}>{editing?'Salvar alterações':'Salvar rascunho'}</button><button type="button" className="button primary" disabled={!can('sales.edit')||!can('stock.exit')} onClick={()=>void finish('Confirmado')}><Icon name="check" size={17}/>Confirmar pedido</button></>}</div>
+        <div className={`order-actions${fiscalOnly ? ' fiscal-checkout-actions' : ''}`}>{fiscalOnly ? <><BotaoAcaoCompacto variante="secundario" disabled={savingFiscal||fiscalAttemptLocked||!can('fiscal.prepare')||!connected} onClick={()=>void finish('Confirmado',false)}>{savingFiscal?'Salvando…':'Salvar'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" disabled={savingFiscal||!can('fiscal.prepare')||!can('fiscal.issue')||!connected} onClick={()=>void finish('Confirmado',true)}>{savingFiscal?'Aguarde…':'Salvar e emitir'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="secundario" disabled={savingFiscal} onClick={onCancel}>Cancelar</BotaoAcaoCompacto></> : <><button type="button" className="button secondary" onClick={onCancel}>Cancelar</button><button type="button" className="button secondary" onClick={()=>void finish('Rascunho')}>{editing?'Salvar alterações':'Salvar rascunho'}</button><button type="button" className="button primary" disabled={!can('sales.edit')||!can('stock.exit')} onClick={()=>void finish('Confirmado')}><Icon name="check" size={17}/>Confirmar pedido</button></>}</div>
       </aside>
     </div>
   </>;
@@ -4717,14 +4719,20 @@ function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,comp
 
   const [editingDraft,setEditingDraft]=useState<FiscalDraftRecord|null>(null);
   const editingStatus=editingDraft?.emissionId?remoteStatuses[editingDraft.emissionId]:undefined;
-  const editableDraft=editingDraft && editingStatus && ['prepared','number_reserved','rejected'].includes(editingStatus.state) ? (drafts.find(draft=>draft.id===editingDraft.id)||editingDraft):null;
-  const rejectedDraft = editableDraft || (issueDraft?.emissionId && ['rejected','prepared','number_reserved'].includes(remoteStatuses[issueDraft.emissionId]?.state) ? (drafts.find(draft=>draft.id===issueDraft.id) || issueDraft) : null);
+  const editableDraft=editingDraft && editingStatus && ['prepared','number_reserved','rejected','signed','submitted','processing'].includes(editingStatus.state) ? (drafts.find(draft=>draft.id===editingDraft.id)||editingDraft):null;
+  const rejectedDraft = editableDraft || (issueDraft?.emissionId && ['rejected','prepared','number_reserved','signed','submitted','processing'].includes(remoteStatuses[issueDraft.emissionId]?.state) ? (drafts.find(draft=>draft.id===issueDraft.id) || issueDraft) : null);
   if (rejectedDraft?.emissionId) {
     if(fiscalBridgeOrigin&&!fiscalEditor)return <section role="alert"><p>{editorError||'Carregando dados da emissão…'}</p><BotaoAcaoCompacto onClick={onReloadEditor}>Tentar novamente</BotaoAcaoCompacto></section>;
     const status=remoteStatuses[rejectedDraft.emissionId];
     const original=records.find(record=>record.id===rejectedDraft.originId);
     const initialRecord: CreatedRecord={...original,id:original?.id || rejectedDraft.originId,type:'nfe',client:rejectedDraft.client,status:'Rascunho',createdAt:rejectedDraft.createdAt,total:rejectedDraft.total,order:{...original?.order,lines:rejectedDraft.items.map(item=>({catalogItemId:catalogRecords.find(product=>product.sku===item.sku)?.catalogItemId,sku:item.sku,name:item.name,kind:item.kind,unit:item.unit,quantity:item.quantity,unitPrice:item.unitPrice,unitDiscount:item.unitDiscount,cost:0})),commercialTotals:rejectedDraft.commercialTotals,reserveStock:false,stockState:'Sem movimentação',seller:original?.order?.seller || '',fiscalDocument:'nfe',paymentMethod:rejectedDraft.paymentMethod,installments:rejectedDraft.paymentInstallments || original?.order?.installments || 1,firstDueDate:rejectedDraft.paymentFirstDueDate || original?.order?.firstDueDate || todayIso(),operationNature:rejectedDraft.operationNature || original?.order?.operationNature,notes:rejectedDraft.additionalInfo || '',fiscalForm:rejectedDraft.fiscalForm}};
     return <NewOrderView onSaveClient={onSaveClient} fiscalEditor={fiscalEditor?{...fiscalEditor,series:status.series,number:String(status.number)}:undefined} companyId={companyId} key={`correct-note-${rejectedDraft.id}`} clientRecords={clientRecords} catalogRecords={catalogRecords.filter(item=>item.category!=='Serviço')} settings={settings} issuerRegistry={issuerRegistry} connected={Boolean(fiscalBridgeOrigin)} initialRecord={initialRecord} fiscalOnly correction={{draft:rejectedDraft,status,onSave:async(note,issue)=>{
+      if(['signed','submitted','processing'].includes(status.state)){
+        if(!issue)return {ok:false,message:'Os dados da tentativa assinada estão preservados. Conclua a emissão antes de alterar a nota.'};
+        const response=await checkoutAndShowResult({...rejectedDraft,remoteState:status.state,remoteVersion:status.version},'issue');
+        if(response.ok && response.emission && ['authorized','artifacts_stored','danfe_ready'].includes(response.emission.state)){setIssueDraft(null);setEditingDraft(null);}
+        return response;
+      }
       const saved=await requestFiscalCorrection(rejectedDraft,status,[],note,!issue);
       if(!saved.ok)return saved;
       if(issue){

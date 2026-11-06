@@ -1,3 +1,9 @@
+## 3.2.0.368 — Vendas: manter retorno final da emissão visível
+
+- Conferência permanece montada nos estados assinado e em processamento, preservando a mensagem de falha ou rejeição.
+- Tentativa assinada mantém dados bloqueados e utiliza o checkout protegido existente; somente autorização encerra a conferência e abre os documentos.
+- Retorno 217 aparece como Não recebida pela SEFAZ, sem a situação enganosa Aguardando emissão.
+
 ## 3.2.0.367 — Vendas: preparação coerente com a revisão e conferência única
 
 - Assinatura usa a preparação da revisão atual, alinhada aos dados fiscais do consumidor final; revisão pendente não herda validação antiga.

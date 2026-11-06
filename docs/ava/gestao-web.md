@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.367 -->
+<!-- ava-version: 3.2.0.368 -->
+
+> Revisão 3.2.0.368: O retorno da emissão permanece na conferência mesmo após assinatura ou processamento. Retorno 217 aparece como Não recebida pela SEFAZ; dados assinados ficam preservados. Salvar e emitir segue a mesma tentativa protegida. Somente autorização abre documentos.
 
 > Revisão 3.2.0.367: Emitir nota é a única entrada para a conferência completa, com Salvar, Salvar e emitir e Cancelar. A assinatura usa os dados e a preparação da mesma revisão, incluindo consumidor final, sem reaproveitar validação antiga em revisão pendente.
 

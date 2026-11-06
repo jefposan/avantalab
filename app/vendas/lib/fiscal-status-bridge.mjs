@@ -557,8 +557,9 @@ export function parseFiscalValidateResponse(data) {
 export function fiscalStatusPresentation(status) {
   const state = text(status?.state);
   const labels = {draft:'Rascunho',prepared:'Aguardando emissão',number_reserved:'Aguardando emissão',signed:'Aguardando emissão',submitted:'Emissão não concluída',processing:'Emissão não concluída',authorized:'Autorizada',artifacts_stored:'Autorizada',danfe_ready:'Autorizada',rejected:'Rejeitada',failed:'Falha na emissão',canceled:'Cancelada'};
-  const tone = SUCCESS_STATES.has(state) ? 'success' : DANGER_STATES.has(state) ? 'danger' : PROCESSING_STATES.has(state) ? 'info' : 'warning';
-  const detail = state === 'canceled'
+  const notReceived=state==='signed' && text(status?.statusCode)==='217';
+  const tone = notReceived ? 'warning' : SUCCESS_STATES.has(state) ? 'success' : DANGER_STATES.has(state) ? 'danger' : PROCESSING_STATES.has(state) ? 'info' : 'warning';
+  const detail = notReceived ? 'A SEFAZ não localizou esta nota. Abra a conferência para concluir a mesma tentativa, preservando o número.' : state === 'canceled'
     ? `Cancelamento confirmado${text(status?.cancellationProtocol) ? ` · protocolo ${text(status.cancellationProtocol)}` : ''}`
     : status?.consultationErrorCode
       ? `Falha ao confirmar o retorno · ${text(status.consultationErrorCode)}`
@@ -573,5 +574,5 @@ export function fiscalStatusPresentation(status) {
         : status?.authorized
           ? 'Autorização confirmada'
           : text(status?.statusReason) || 'Aguardando atualização';
-  return Object.freeze({ label: labels[state] || text(status?.stateLabel) || 'Situação fiscal', tone, detail });
+  return Object.freeze({ label: notReceived ? 'Não recebida pela SEFAZ' : labels[state] || text(status?.stateLabel) || 'Situação fiscal', tone, detail });
 }
