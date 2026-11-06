@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.363 -->
+<!-- ava-version: 3.2.0.364 -->
+
+> Revisão 3.2.0.364: Sem impacto operacional neste ambiente; correção de salvamento de revisão no emissor Web.
 
 > Revisão 3.2.0.363: sem impacto operacional; reconciliação das fontes publicadas com a main, sem publicação nem execução de SQL.
 

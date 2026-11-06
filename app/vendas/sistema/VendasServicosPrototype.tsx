@@ -548,7 +548,7 @@ function mapPersistedFiscalDocument(document: PersistedFiscalDocument): FiscalDr
       freight: Number(totals.freight || 0), insurance: Number(totals.insurance || 0),
       other: Number(totals.otherExpenses || 0), invoice: Number(totals.total || document.total || 0),
     },
-    paymentMethod: document.paymentMethod || 'Não informado',
+    paymentMethod: document.paymentMethod ?? '',
     paymentDetails: document.paymentDetails,
     paymentInstallments: document.paymentInstallments,
     paymentFirstDueDate: document.paymentFirstDueDate,
@@ -1383,9 +1383,9 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, clientRecords,
   },[validationFocus,savingFiscal]);
   const finish = async (status: 'Rascunho' | 'Confirmado', issue = false) => {
     if (savingFiscal) return;
-    if(fiscalEditor&&(!operationNature.trim()||!settings.fiscal.matrix.rules.some(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe'&&rule.operationNature===operationNature))){setSubmitted(true);showIssue({ok:false,field:'operationNature',message:'Selecione uma natureza com regra fiscal ativa e publicada neste perfil.'});return;}
-    if(fiscalEditor&&previewIssues.length){setSubmitted(true);showIssue({ok:false,message:previewIssues[0]});return;}
-    if (status === 'Confirmado' && !orderReady) {
+    if(issue&&fiscalEditor&&(!operationNature.trim()||!settings.fiscal.matrix.rules.some(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe'&&rule.operationNature===operationNature))){setSubmitted(true);showIssue({ok:false,field:'operationNature',message:'Selecione uma natureza com regra fiscal ativa e publicada neste perfil.'});return;}
+    if(issue&&fiscalEditor&&previewIssues.length){setSubmitted(true);showIssue({ok:false,message:previewIssues[0]});return;}
+    if (status === 'Confirmado' && !orderReady && (!fiscalOnly||issue)) {
       setSubmitted(true);
       showIssue({ok:false,message:validation.errors[0]||issuerError||'Revise os dados da nota.'});
       return;
@@ -4474,10 +4474,10 @@ function FiscalView({ fiscalEditor,editorError,onReloadEditor,companyId, catalog
     window.parent.postMessage(message, fiscalBridgeOrigin);
   }, [fiscalBridgeOrigin]);
 
-  const requestFiscalCorrection = useCallback((draft: FiscalDraftRecord, remoteStatus: FiscalEmissionStatus, items: Array<{ sku: string; ncm: string }>, note?: Record<string, unknown>) => {
+  const requestFiscalCorrection = useCallback((draft: FiscalDraftRecord, remoteStatus: FiscalEmissionStatus, items: Array<{ sku: string; ncm: string }>, note?: Record<string, unknown>,saveOnly=false) => {
     if (!draft.emissionId) return Promise.resolve({ok:false,message:'Nota não localizada.'});
     const requestId = nextFiscalRequestId('correction');
-    const message = createFiscalCorrectionRequest({ requestId, emissionId: draft.emissionId, expectedVersion: remoteStatus.version, rejectedStatusCode: remoteStatus.state==='rejected'?remoteStatus.statusCode:(note?'000':''), items, note });
+    const message = createFiscalCorrectionRequest({ requestId, emissionId: draft.emissionId, expectedVersion: remoteStatus.version, rejectedStatusCode: remoteStatus.state==='rejected'?remoteStatus.statusCode:(note?'000':''), items, note,saveOnly });
     if (!message) return Promise.resolve({ok:false,message:'Revise os dados da nota e tente novamente.'});
     if (!fiscalBridgeOrigin) {
       if (!draft.demoScenario) return Promise.resolve({ok:false,message:'Abra o módulo pela Gestão para salvar a correção.'});
@@ -4582,7 +4582,13 @@ function FiscalView({ fiscalEditor,editorError,onReloadEditor,companyId, catalog
           return;
         }
         const emission = correctionResponse.emission;
-        complete?.({ok:true,message:"Correção salva."});
+        if(emission.savedOnly){
+          complete?.({ok:true,message:'Nota salva para continuar depois. Nenhuma nota foi enviada.'});
+          setRemoteStatuses(current=>({...current,[emission.emissionId]:{...current[emission.emissionId],version:emission.version}}));
+          setStatusSync(current=>({...current,[emission.emissionId]:{loading:false,message:'Nota salva com pendências. Nenhuma nota foi enviada.'}}));
+          setFiscalBridgeMessage('Nota salva para continuar depois. Nenhuma nota foi enviada.');setIssueDraft(null);return;
+        }
+        complete?.({ok:true,message:correctionResponse.emission.savedOnly?"Nota salva. Você pode continuar depois; nenhuma nota foi enviada.":"Correção salva."});
         setRemoteStatuses((current) => ({ ...current, [emission.emissionId]: { ...current[emission.emissionId], state: 'number_reserved', stateLabel: 'Dados fiscais revisados', version: emission.version, series: emission.series, number: emission.number, statusCode: '', statusReason: '', actionRequired: false, recommendedAction: '', recommendedActionLabel: '', recommendedActionMessage: '' } }));
         setStatusSync((current) => ({ ...current, [emission.emissionId]: { loading: false, message: 'Revisão salva. A nota está pronta para uma nova assinatura.' } }));
         setFiscalBridgeMessage('Dados fiscais revisados. Nenhuma transmissão foi realizada.');
@@ -4714,7 +4720,7 @@ function FiscalView({ fiscalEditor,editorError,onReloadEditor,companyId, catalog
     const original=records.find(record=>record.id===rejectedDraft.originId);
     const initialRecord: CreatedRecord={...original,id:original?.id || rejectedDraft.originId,type:'nfe',client:rejectedDraft.client,status:'Rascunho',createdAt:rejectedDraft.createdAt,total:rejectedDraft.total,order:{...original?.order,lines:rejectedDraft.items.map(item=>({catalogItemId:catalogRecords.find(product=>product.sku===item.sku)?.catalogItemId,sku:item.sku,name:item.name,kind:item.kind,unit:item.unit,quantity:item.quantity,unitPrice:item.unitPrice,unitDiscount:item.unitDiscount,cost:0})),commercialTotals:rejectedDraft.commercialTotals,reserveStock:false,stockState:'Sem movimentação',seller:original?.order?.seller || '',fiscalDocument:'nfe',paymentMethod:rejectedDraft.paymentMethod,installments:rejectedDraft.paymentInstallments || original?.order?.installments || 1,firstDueDate:rejectedDraft.paymentFirstDueDate || original?.order?.firstDueDate || todayIso(),operationNature:rejectedDraft.operationNature || original?.order?.operationNature,notes:rejectedDraft.additionalInfo || '',fiscalForm:rejectedDraft.fiscalForm}};
     return <NewOrderView fiscalEditor={fiscalEditor?{...fiscalEditor,series:status.series,number:String(status.number)}:undefined} companyId={companyId} key={`correct-note-${rejectedDraft.id}-${status.version}`} clientRecords={clientRecords} catalogRecords={catalogRecords.filter(item=>item.category!=='Serviço')} settings={settings} issuerRegistry={issuerRegistry} connected={Boolean(fiscalBridgeOrigin)} initialRecord={initialRecord} fiscalOnly correction={{draft:rejectedDraft,status,onSave:async(note,issue)=>{
-      const saved=await requestFiscalCorrection(rejectedDraft,status,[],note);
+      const saved=await requestFiscalCorrection(rejectedDraft,status,[],note,!issue);
       if(!saved.ok)return saved;
       if(issue){const response=await checkoutAndShowResult({...rejectedDraft,remoteState:'number_reserved',remoteVersion:status.version+2},'issue');if(!response.ok){setIssueDraft({...rejectedDraft,remoteState:'number_reserved'});return response;}return response;}
       setIssueDraft(null);setEditingDraft(null);return saved;

@@ -116,12 +116,12 @@ export function createFiscalIssueRequest({ requestId: id, emissionId, expectedVe
   return Object.freeze({ type: FISCAL_ISSUE_REQUEST_TYPE, requestId: safeRequestId, emissionId: safeEmissionId, expectedVersion: safeExpectedVersion });
 }
 
-export function createFiscalCorrectionRequest({ requestId: id, emissionId, expectedVersion, rejectedStatusCode, items, note } = {}) {
+export function createFiscalCorrectionRequest({ requestId: id, emissionId, expectedVersion, rejectedStatusCode, items, note, saveOnly=false } = {}) {
   const safeRequestId = requestId(id);
   const safeEmissionId = text(emissionId);
   const safeExpectedVersion = Number(expectedVersion);
   const safeStatusCode = text(rejectedStatusCode);
-  if (note && safeRequestId && UUID_PATTERN.test(safeEmissionId) && Number.isSafeInteger(safeExpectedVersion) && safeExpectedVersion > 0 && /^\d{3}$/.test(safeStatusCode) && typeof note === 'object' && !Array.isArray(note) && JSON.stringify(note).length <= 60000) return Object.freeze({type:FISCAL_CORRECTION_REQUEST_TYPE,requestId:safeRequestId,emissionId:safeEmissionId,expectedVersion:safeExpectedVersion,rejectedStatusCode:safeStatusCode,note:structuredClone(note)});
+  if (note && safeRequestId && UUID_PATTERN.test(safeEmissionId) && Number.isSafeInteger(safeExpectedVersion) && safeExpectedVersion > 0 && /^\d{3}$/.test(safeStatusCode) && typeof note === 'object' && !Array.isArray(note) && JSON.stringify(note).length <= 60000) return Object.freeze({type:FISCAL_CORRECTION_REQUEST_TYPE,requestId:safeRequestId,emissionId:safeEmissionId,expectedVersion:safeExpectedVersion,rejectedStatusCode:safeStatusCode,note:structuredClone(note),saveOnly:saveOnly===true});
   if (!safeRequestId || !UUID_PATTERN.test(safeEmissionId)
     || !Number.isSafeInteger(safeExpectedVersion) || safeExpectedVersion < 1
     || !/^\d{3}$/.test(safeStatusCode) || !Array.isArray(items) || !items.length || items.length > 200) return null;
@@ -460,6 +460,7 @@ export function parseFiscalCorrectionResponse(data) {
   const version = Number(data.emission?.version);
   const series = text(data.emission?.series);
   const number = Number(data.emission?.number);
+  if(data.emission?.savedOnly===true&&[emissionId,draftId,orderId].every(value=>UUID_PATTERN.test(value))&&emissionId===draftId&&Number.isSafeInteger(version)&&version>0&&['prepared','number_reserved','rejected'].includes(data.emission.state)&&data.emission.transmitted===false&&data.emission.signed===false)return Object.freeze({requestId:id,ok:true,emission:Object.freeze({...data.emission,emissionId,draftId,orderId,version})});
   if (![emissionId, draftId, orderId].every((value) => UUID_PATTERN.test(value))
     || emissionId !== draftId || text(data.emission?.state) !== 'number_reserved'
     || !Number.isSafeInteger(version) || version < 2 || !series || !Number.isSafeInteger(number) || number < 1

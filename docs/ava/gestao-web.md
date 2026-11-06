@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.363 -->
+<!-- ava-version: 3.2.0.364 -->
+
+> Revisão 3.2.0.364: Salvar guarda a revisão da nota com pendências e confirma sem preparar XML nem transmitir. Salvar e emitir valida a revisão, informa a condição fiscal incompatível e direciona ao campo com foco, rolagem e destaque. Uma revisão salva com pendências não pode ser assinada sem nova validação.
 
 > Revisão 3.2.0.363: sem impacto operacional; reconciliação das fontes publicadas com a main, sem publicação nem execução de SQL.
 

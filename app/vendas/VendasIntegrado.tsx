@@ -997,7 +997,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const response = await fetch(`/api/modulos/vendas/fiscal/documents/${encodeURIComponent(emissionId)}/correction?${params}`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ expectedVersion, rejectedStatusCode, idempotencyKey: `note-correction:${requestId}`, confirmation: 'REVISAR_NFE_REJEITADA', changes: note ? {note} : {items} }),
+              body: JSON.stringify({ expectedVersion, rejectedStatusCode, idempotencyKey: `note-correction:${requestId}`, confirmation: 'REVISAR_NFE_REJEITADA', saveOnly:event.data.saveOnly===true, changes: note ? {note} : {items} }),
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));

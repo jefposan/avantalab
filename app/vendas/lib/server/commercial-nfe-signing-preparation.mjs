@@ -53,6 +53,7 @@ function expectedDraftDigest(draft) {
 
 export function validateCommercialNfeSigningSource(data, expectedVersion) {
   const draft = data?.draft;
+  if(draft?.totalsSnapshot?.pendingFiscalRevision===true)return issue('AV-NFE-SAVED-PENDING','operationNature','A revisão foi salva com pendências. Abra a nota e use Salvar e emitir para validar os dados antes do envio.');
   const emission = data?.emission;
   const reservation = data?.reservation;
   const preparation = data?.preparationPayload;
