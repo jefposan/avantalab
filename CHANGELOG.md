@@ -1,3 +1,9 @@
+## 3.2.0.376 — Vendas: vincular reservas à nota correta na homologação
+
+- A preparação conserva o rascunho e a origem reais de cada reserva, em vez de atribuir reservas de outras notas à nota atual. Uma nova série de homologação não herda o número de uma tentativa antiga.
+- A conferência de rascunhos persistidos mantém as verificações do servidor, sem inserir bloqueio de credenciamento por cadastro local demonstrativo. As validações de emissão no servidor permanecem obrigatórias.
+- Regressão PostgreSQL cobre reserva antiga, série ativa 2/número 1, retomada da reserva própria, reservas liberadas e isolamento por empresa. Sem SQL adicional, mudança de sequência ou efeito financeiro/estoque.
+
 ## 3.2.0.375 — Vendas: corrigir trava privada na preparação da NF-e
 
 - Corrige o gatilho de proteção de rascunhos para executar a trava interna sem conceder UPDATE ao serviço de emissão.

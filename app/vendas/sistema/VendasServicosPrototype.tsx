@@ -6846,8 +6846,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     return draft;
   };
   const previewFiscalDraft = (draft: FiscalDraftRecord): FiscalDraftRecord => {
-    // A rejeição usa os retratos validados no servidor; cadastros locais não os substituem.
-    if (draft.persistenceSource === 'server' && draft.remoteState === 'rejected') return draft;
+    // Retratos persistidos usam a conferência e as validações do servidor, nunca o emissor demonstrativo local.
+    if (draft.persistenceSource === 'server') return draft;
     if (draft.status === 'Cancelado' || ['prepared', 'number_reserved', 'signed', 'submitted', 'processing', 'authorized', 'artifacts_stored', 'danfe_ready', 'canceled'].includes(draft.remoteState || '')) return draft;
     const localRecord = created.find((record) => record.id === draft.originId);
     const origin: FiscalOrigin = { id: draft.originId, client: draft.client, item: draft.items.map((item) => item.name).join(', '), total: draft.total, documentType: draft.documentType, sourceLabel: draft.sourceLabel };

@@ -291,7 +291,9 @@ export function createPostgresCommercialNfePreparationRepository({ pool } = {}) 
         pool.query(`select * from fiscal_private.number_sequences
           where company_id=$1 and establishment_id=$2 and document_type='nfe' order by active desc,series`,
         [companyId, emission.establishmentId]),
-        pool.query(`select r.* from fiscal_private.number_reservations r
+        pool.query(`select r.*,e.draft_id as reservation_draft_id,e.origin_id as reservation_origin_id
+          from fiscal_private.number_reservations r
+          join fiscal_private.emissions e on e.company_id=r.company_id and e.id=r.emission_id
           where r.company_id=$1 and r.establishment_id=$2 and r.document_type='nfe' and r.status<>'released'`,
         [companyId, emission.establishmentId]),
         pool.query(`select * from fiscal_private.number_voids
@@ -309,8 +311,8 @@ export function createPostgresCommercialNfePreparationRepository({ pool } = {}) 
             active: entry.active, updatedAt: entry.updated_at,
           })),
           reservations: reservations.rows.map((entry) => ({
-            id: entry.id, idempotencyKey: entry.idempotency_key, draftId: emission.draftId,
-            originId: draft.operationId, documentType: entry.document_type, series: entry.series,
+            id: entry.id, idempotencyKey: entry.idempotency_key, draftId: entry.reservation_draft_id,
+            originId: entry.reservation_origin_id || '', documentType: entry.document_type, series: entry.series,
             number: Number(entry.number), status: entry.status, reservedAt: entry.reserved_at,
             updatedAt: entry.updated_at,
           })),

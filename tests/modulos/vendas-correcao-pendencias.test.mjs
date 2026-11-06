@@ -113,12 +113,13 @@ test('editor remoto carrega o servidor, exige preenchimento explícito e só fec
 });
 
 
-test('nota rejeitada persistida preserva a conferência do servidor, sem credenciamento local de demonstração',()=>{
+test('nota persistida inicial ou rejeitada preserva a conferência do servidor, sem credenciamento local de demonstração',()=>{
  const start=source.indexOf('  const previewFiscalDraft = '),end=source.indexOf('  const revalidateFiscalDraft = ',start);assert.ok(start>0&&end>start);
  let evaluations=0;const scope={exports:{},created:[],catalogRecords:[],fiscalItemsForReview:items=>items,issuerSelectionForOrigin:()=>({}),evaluateFiscalDraft:()=>{evaluations++;return{items:[],validation:{checks:[{key:'issuer-route',ready:false,detail:'Pendente local'}],warnings:[],transmissionReady:false,draftReady:true},matrixResolution:{context:{},matched:true,reviewed:true,rule:{}}};}};
  vm.runInNewContext(ts.transpileModule(source.slice(start,end)+'\nexports.preview=previewFiscalDraft;', {compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText,scope);
  const draft={persistenceSource:'server',remoteState:'rejected',status:'Bloqueado para transmissão',originId:'2026/1',documentType:'nfe',sourceLabel:'Pedido',items:[product],checks:[{key:'persisted-draft',ready:true},{key:'persisted-emission',ready:true}],series:'1',number:'1'};
  assert.strictEqual(scope.exports.preview(draft),draft);assert.equal(evaluations,0);assert.ok(draft.checks.every(check=>check.ready));
  const local={...draft,persistenceSource:undefined};assert.notStrictEqual(scope.exports.preview(local),local);assert.equal(evaluations,1);
- const initial={...draft,remoteState:'draft'};assert.notStrictEqual(scope.exports.preview(initial),initial);assert.equal(evaluations,2);
+ for(const remoteState of [undefined,'draft','rejected']){const initial={...draft,remoteState};assert.strictEqual(scope.exports.preview(initial),initial);assert.equal(evaluations,1);}
+ const pending={...draft,remoteState:'draft',checks:[{key:'persisted-draft',ready:false,detail:'Cadastro incompleto'}]};assert.strictEqual(scope.exports.preview(pending),pending);assert.equal(scope.exports.preview(pending).checks[0].ready,false);
 });

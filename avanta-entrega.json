@@ -1,13 +1,8 @@
 {
-  "baseDeploymentId": "dpl_8YL3jRkm3mXZTHSYZquJkKWy5YmF",
-  "version": "3.2.0.375",
-  "scope": "Vendas: corrigir trava privada na preparação da NF-e",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261106203000_vendas_trava_rascunho.sql",
-      "sha256": "2909b717eca83d7d490b2cb7cf908478a4259a4dea941d4c7b429b30b6165d50"
-    }
-  ],
+  "baseDeploymentId": "dpl_CSmCYzMojVuFDLKkgAzWXCcsVJmo",
+  "version": "3.2.0.376",
+  "scope": "Vendas: vincular reservas à nota correta na homologação",
+  "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base main 3.2.0.374 preservada. Correção do gatilho privado sem conceder UPDATE ou acesso direto ao runtime; mantém exclusão, vínculos e numeração. Teste PostgreSQL com papel restrito."
+  "auditReview": "Base main 3.2.0.375 preservada, migração anterior já aplicada e registrada. Correções do vínculo real das reservas e da conferência de rascunho persistido. Sem SQL adicional."
 }

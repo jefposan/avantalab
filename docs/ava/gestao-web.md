@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.375 -->
+<!-- ava-version: 3.2.0.376 -->
+
+> Revisão 3.2.0.376: Cada reserva pertence à sua nota. Nova nota usa a sequência ativa; retomada mantém sua própria reserva. Rascunho persistido usa a conferência do servidor, sem solicitar credenciamento demonstrativo após recarregar. As validações reais continuam no envio.
 
 > Revisão 3.2.0.375: A preparação da NF-e usa trava privada do banco sem dar permissão de alteração dos retratos ao serviço. Rascunhos excluídos continuam bloqueados; não solicitar alteração cadastral para a antiga falha técnica de preparação.
 

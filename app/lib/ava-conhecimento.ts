@@ -1,3 +1,4 @@
+// Revisão 3.2.0.376: NF-e Web conserva a origem real das reservas e a conferência persistida do servidor; nova série não herda reserva de outra nota. Não solicitar configuração local demonstrativa para emitir rascunho salvo.
 // Revisão 3.2.0.375: sem alteração no roteiro; preparação da NF-e corrigida por trava privada, sem liberar alteração de retratos fiscais ao runtime.
 // Revisão 3.2.0.358: Marketplaces permite fechar todos os avisos de venda; página inicial compartilha componente com proteção de sessão validada.
 // Revisão 3.2.0.351: CFOP alterado explicitamente na revisão de nota rejeitada vale só para a nota, sem alterar tributos herdados, produto ou empresa. A UF e a estrutura fiscal continuam validadas.

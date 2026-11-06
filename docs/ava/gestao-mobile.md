@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.375 -->
+<!-- ava-version: 3.2.0.376 -->
+
+> Revisão 3.2.0.376: Sem impacto operacional neste ambiente; correção da conferência e vínculo de reservas da NF-e Web.
 
 > Revisão 3.2.0.375: Sem impacto operacional neste ambiente; correção técnica da preparação da NF-e Web.
 
