@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.373 -->
+<!-- ava-version: 3.2.0.374 -->
+
+> Revisão 3.2.0.374: A ponte da Gestão permite corrigir rejeições de três ou quatro dígitos, incluindo 1157, sem bloquear antes do servidor. Erros de campos preservam a orientação e o foco; falha de identificação pede reabertura da nota.
 
 > Revisão 3.2.0.373: Previsão de entrega fica inativa em frete 1, 4 e 9. Trocar para modalidade incompatível limpa a previsão local; reabrir uma nota remove esse valor incompatível do formulário. Modalidades 0, 2 e 3 mantêm o campo disponível. O servidor impede XML com combinação proibida.
 

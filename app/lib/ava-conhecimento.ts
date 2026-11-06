@@ -2857,3 +2857,5 @@ GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.371: Rejeições da SEFAZ admitem 
 GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.372: Com data de saída preenchida e hora de saída vazia, a nota utiliza hora, segundos e fuso completos da emissão, evitando antecipação artificial por truncamento. Horário manual não é alterado e continua sujeito à validação fiscal. No mesmo dia, hora de saída anterior é identificada como erro de hora e leva ao campo Hora da saída; dia anterior leva à Data de saída.";
 
 GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.373: A previsão de entrega da NF-e fica inativa nas modalidades de frete 1, 4 e 9, conforme regra B10a-50 da SEFAZ. Mudar para uma dessas modalidades limpa a previsão local; não é possível inserir data nessa condição. Fretes 0, 2 e 3 permitem preencher. O servidor bloqueia a combinação proibida antes de gerar o XML.";
+
+GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.374: Rejeições RTC com quatro dígitos, como 1157, permitem Salvar e Salvar e emitir pela Gestão. A ponte não deve bloquear essa correção com aviso genérico. Uma falha de identificação pede reabrir a nota; pendências reais preservam mensagem e campo para correção.";

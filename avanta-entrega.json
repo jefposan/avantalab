@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_C2pE5GGEezCQnp81U6gspGh3bQzd",
-  "version": "3.2.0.373",
-  "scope": "Vendas: desativar previsão de entrega incompatível com frete",
+  "baseDeploymentId": "dpl_9UNoahyCob8LU4kZJBhJxP1D96pn",
+  "version": "3.2.0.374",
+  "scope": "Vendas: permitir correção de rejeições RTC pela Gestão",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base main 3.2.0.372 preservada; bloqueio do CampoData oficial e validação de B10a-50 no XML, sem SQL ou alteração de numeração."
+  "auditReview": "Base main 3.2.0.373 preservada; ajuste pontual da ponte autenticada para códigos de três ou quatro dígitos, com regressão executando o ramo real de correção. Sem SQL."
 }

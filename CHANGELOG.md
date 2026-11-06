@@ -1,3 +1,9 @@
+## 3.2.0.374 — Vendas: permitir correção de rejeições RTC pela Gestão
+
+- Corrige a validação da ponte Gestão/editor para aceitar códigos fiscais de três ou quatro dígitos, incluindo 1157, em Salvar e Salvar e emitir.
+- Evita o aviso genérico anterior ao servidor; erros reais continuam preservando mensagem, código e campo para foco. Falha de identificação orienta reabrir a nota, sem apontar campo fiscal incorreto.
+- Preserva o bloqueio da previsão por modalidade de frete entregue em 3.2.0.373. Sem SQL, mudança de numeração ou transmissão automática.
+
 ## 3.2.0.373 — Vendas: desativar previsão de entrega incompatível com frete
 
 - Previsão de entrega fica inativa para frete 1, 4 e 9; trocar para uma dessas modalidades limpa a previsão local, inclusive ao reabrir nota antiga, sem alterar demais campos.

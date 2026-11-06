@@ -989,8 +989,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const items = Array.isArray(event.data.items) ? event.data.items : [];
             const note = event.data.note && typeof event.data.note === 'object' && !Array.isArray(event.data.note) ? event.data.note : null;
             if (!UUID_PATTERN.test(emissionId) || !Number.isSafeInteger(expectedVersion) || expectedVersion < 1
-              || !/^\d{3}$/.test(rejectedStatusCode) || (!note && (!items.length || items.length > 200)) || (note && JSON.stringify(note).length > 60000)) {
-              fail('Revise os dados fiscais indicados e tente novamente.');
+              || !/^\d{3,4}$/.test(rejectedStatusCode) || (!note && (!items.length || items.length > 200)) || (note && JSON.stringify(note).length > 60000)) {
+              fail('Não foi possível validar a identificação desta emissão. Reabra a nota para atualizar o estado.',{code:'AV-NFE-CORRECTION-BRIDGE'});
               return;
             }
             const params = new URLSearchParams({ companyId: empresaId });
