@@ -3,7 +3,10 @@
   "version": "3.2.0.371",
   "scope": "Vendas: aceitar retornos RTC e retomar edição após ausência confirmada",
   "migrations": [
-    "20261106180000_vendas_cstat_rtc.sql"
+    {
+      "path": "supabase/migrations/20261106180000_vendas_cstat_rtc.sql",
+      "sha256": "56f50ccd7c942b94440a26eecfe93e19a9dd902381a095f582721c886cf8fd9d"
+    }
   ],
   "reconciliationStatus": "reviewed",
   "auditReview": "Base main 3.2.0.370 preservada; TStat oficial de três ou quatro dígitos; retomada exige consulta 217 auditada. Migração de três checks aplicada e registrada com autorização específica do titular; fonte registrada conferida integralmente."
