@@ -60,7 +60,7 @@ function withStructuralSignatureEnvelope(xml) {
     '    <ds:KeyInfo><ds:X509Data><ds:X509Certificate>AA==</ds:X509Certificate></ds:X509Data></ds:KeyInfo>',
     '  </ds:Signature>',
   ].join('\n');
-  return xml.replace(/\n<\/NFe>\s*$/, `\n${signature}\n</NFe>`);
+  return xml.replace(/<\/NFe>\s*$/, `${signature}</NFe>`);
 }
 
 export function nfeXsdRuntimeStatus() {

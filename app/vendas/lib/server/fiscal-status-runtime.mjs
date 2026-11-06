@@ -1,7 +1,10 @@
+import {createFiscalEditorSettingsRepository} from './fiscal-editor-settings.mjs';
+import { createFiscalDraftDeleteService } from './fiscal-draft-delete.mjs';
 import { createClient } from '@supabase/supabase-js';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import pg from 'pg';
+import { randomUUID } from 'node:crypto';
 
 import { createAvantaLabAccessResolver, createPostgresAvantaLabModuleAccessRepository } from './avantalab-module-access.mjs';
 import { createCommercialCustomerService } from './commercial-customer-service.mjs';
@@ -40,6 +43,9 @@ import { createNfeStatusServiceAdapter } from './nfe-status-service.mjs';
 import { createFiscalRecoveryQueueService, createFiscalRecoveryWorker } from './fiscal-recovery-queue.mjs';
 import { NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION, NFE_ISSUANCE_ORCHESTRATOR_SCOPE, createNfeIssuanceOrchestrator } from './nfe-issuance-orchestrator.mjs';
 import { createCommercialOperationService } from './commercial-operation-service.mjs';
+import { createStandaloneFiscalService, createPostgresStandaloneFiscalRepository } from './standalone-fiscal.mjs';
+import { createOrderFiscalDraftService, createPostgresOrderFiscalDraftRepository } from './order-fiscal-draft.mjs';
+import { createFiscalNumberingConfigurationService } from './fiscal-numbering-configuration.mjs';
 import { createPostgresCommercialOperationRepository } from './commercial-operation-repository.mjs';
 import { createCommercialOrderWorkflow } from './commercial-order-workflow.mjs';
 import { createPostgresCommercialCatalogResolver, createPostgresCommercialIssuerResolver } from './commercial-runtime-resolvers.mjs';
@@ -292,7 +298,8 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     const fiscalLifecycle = createFiscalEmissionLifecycleService({ repository: fiscalRepository });
     const fiscalRulesRepository = createPostgresCommercialFiscalRulesRepository({ pool });
     const fiscalProfileRepository = createPostgresCommercialFiscalProfileRepository({ pool });
-    const fiscalRuleResolver = createCommercialFiscalRuleResolver({ repository: fiscalRulesRepository });
+    const issuerResolver = createPostgresCommercialIssuerResolver({ pool });
+    const fiscalRuleResolver = createCommercialFiscalRuleResolver({ repository: fiscalRulesRepository, issuerResolver });
     const centerRepository = createPostgresCommercialFiscalCenterRepository({ pool });
     const commercialDraftRepository = createPostgresCommercialFiscalDraftRepository({ pool });
     const customerRepository = createPostgresCommercialCustomerRepository({ pool });
@@ -311,7 +318,6 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     const lifecycleService = createCommercialSalesOrderLifecycleService({
       repository: createPostgresCommercialSalesOrderLifecycleRepository({ pool }),
     });
-    const issuerResolver = createPostgresCommercialIssuerResolver({ pool });
     const certificateRuntime = createCertificateRuntime({ environment, pool, issuerResolver, databaseUrl });
     const artifactStorage = fiscalWorkflowEnabled ? await createArtifactStorageRuntime({ environment, databaseUrl, supabaseUrl }) : null;
     const nfeSigningPreparationService = fiscalWorkflowEnabled ? createCommercialNfeSigningPreparationService({
@@ -325,10 +331,18 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     const nfeCancellationAdapter = fiscalWorkflowEnabled ? createCancellationRuntime({ environment, databaseUrl, certificateRuntime }) : null;
     const nfeIssuanceOrchestrator = fiscalWorkflowEnabled ? createIssuanceOrchestrator({ environment, databaseUrl, pool, certificateRuntime, issuerResolver, fiscalRepository, fiscalLifecycle, artifactStorage, nfeSigningPreparationService, nfeSigningService, nfeAuthorizationAdapter, nfeReturnAdapter }) : null;
     const orchestratorToken = text(environment.FISCAL_NFE_ORCHESTRATOR_TOKEN);
+    const reconcileFiscalEmission = async ({ companyId, emissionId }) => {
+      if (!nfeIssuanceOrchestrator?.configured || companyId !== VENDAS_PILOTO_EMPRESA_ID || !emissionId) return;
+      const workerId = `consulta:${randomUUID()}`;
+      for (let step = 0; step < 3; step += 1) {
+        const recovered = await nfeIssuanceOrchestrator.runRecoveryOnceProtected({ activationToken: orchestratorToken, workerId, companyId, emissionId, limit: 4 });
+        if (!recovered?.ok || !recovered.completed) break;
+      }
+    };
     const nfeAutomaticIssuanceService = nfeIssuanceOrchestrator?.configured === true ? Object.freeze({
       async continue(input) {
         const result = await nfeIssuanceOrchestrator.continueProtected({ ...input, activationToken: orchestratorToken });
-        if (result?.ok) await nfeIssuanceOrchestrator.runRecoveryOnceProtected({ activationToken: orchestratorToken, limit: 4 }).catch(() => null);
+        if (result?.ok || result?.pendingRecovery === true) await reconcileFiscalEmission({ companyId: input.context?.companyId, emissionId: input.emissionId }).catch(() => null);
         return result;
       },
     }) : null;
@@ -338,15 +352,19 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     });
     return Object.freeze({
       configured: true,
+      fiscalEditorRepository:createFiscalEditorSettingsRepository({pool,issuerResolver}),
+      pendingDraftService: createFiscalDraftDeleteService({pool}),
       reason: 'ready',
       accessResolver,
       catalogService: createCommercialCatalogService({ repository: createPostgresCommercialCatalogRepository({ pool }) }),
-      statusService: createFiscalEmissionStatusService({ repository: fiscalRepository }),
+      statusService: createFiscalEmissionStatusService({ repository: fiscalRepository, reconcile: reconcileFiscalEmission }),
       centerService: createCommercialFiscalCenterService({ repository: centerRepository }),
       emissionBridge: createCommercialFiscalEmissionBridge({
         draftRepository: commercialDraftRepository,
         emissionLifecycle: fiscalLifecycle,
       }),
+      fiscalDraftRepository: commercialDraftRepository,
+      fiscalNumberingConfiguration: createFiscalNumberingConfigurationService({ pool, issuerResolver, draftRepository: commercialDraftRepository }),
       fiscalProfileService: createCommercialFiscalProfileService({ repository: fiscalProfileRepository }),
       fiscalRulesQueryService: createCommercialFiscalRulesQueryService({ repository: fiscalRulesRepository }),
       fiscalRulesPublicationService: createCommercialFiscalRulesPublicationService({ repository: fiscalRulesRepository }),
@@ -379,6 +397,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
       // O token de execução fica somente no servidor e nunca atravessa a rota.
       nfeIssuanceOrchestrator,
       nfeAutomaticIssuanceService,
+      reconcileFiscalEmission,
       fiscalExecution: Object.freeze({
         environment: 'homologacao',
         statusOnly,
@@ -401,6 +420,18 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
       }),
       customerService,
       operationService,
+      orderFiscalDraftService: createOrderFiscalDraftService({
+        repository: createPostgresOrderFiscalDraftRepository({ pool }),
+        customerResolver: ({ companyId, customerId }) => customerRepository.get({ companyId, customerId }),
+        catalogResolver: serviceCatalogResolver,
+        issuerResolver,
+      }),
+      standaloneFiscalService: createStandaloneFiscalService({
+        repository: createPostgresStandaloneFiscalRepository({ pool }),
+        customerResolver: ({ companyId, customerId }) => customerRepository.get({ companyId, customerId }),
+        catalogResolver: serviceCatalogResolver,
+        issuerResolver,
+      }),
       serviceOrderService,
       receivableService: createCommercialReceivableService({ repository: createPostgresCommercialReceivableRepository({ pool }) }),
       stockService: createCommercialStockService({ repository: createPostgresCommercialStockRepository({ pool }) }),

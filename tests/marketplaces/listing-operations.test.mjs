@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { SHIPMENT_IN_TRANSIT_SUBSTATUSES } from '../../app/modules/marketplaces/shipment-progress.ts';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { pendingSaleOperation, listingOperations, listingOperationalStatus } from '../../app/modules/marketplaces/listing-operations.ts';
@@ -7,6 +8,12 @@ import { pendingSaleOperation, listingOperations, listingOperationalStatus } fro
 const sale = patch => ({ connection_id: 'account', status: 'paid', shipment_status: 'ready_to_ship', shipment_substatus: null,
   snapshot: { inventoryLines: [{ listingId: 'MLB123456' }] }, ...patch });
 
+test('anunciados usa o mesmo avanço de envio sem encerrar pós-venda pendente', () => {
+  for(const shipment_substatus of SHIPMENT_IN_TRANSIT_SUBSTATUSES) {
+    assert.equal(pendingSaleOperation(sale({shipment_substatus})),'Em trânsito');
+    assert.equal(pendingSaleOperation(sale({shipment_substatus,snapshot:{postSaleProgress:{state:'open'}}})),'Pós-venda em andamento');
+  }
+});
 test('zero com pedido em andamento é ativo local; fim confirmado retoma situação ML sem reativação', () => {
   assert.equal(pendingSaleOperation(sale()), 'Aguardando envio');
   assert.equal(listingOperationalStatus('paused', 0, { count: 1, labels: ['Aguardando envio'] }), 'active');

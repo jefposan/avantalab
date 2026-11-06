@@ -82,8 +82,10 @@ export function evaluateCatalogTaxProfile(item) {
     requiredCheck('ncm', 'NCM', profile.ncm, 'identificacao', 'Classificação fiscal da mercadoria.'),
     requiredCheck('taxable-unit', 'Unidade tributável', profile.taxableUnit, 'identificacao', 'Unidade usada no item do documento fiscal; pode coincidir com a unidade comercial.'),
     requiredCheck('origin', 'Origem da mercadoria', profile.fiscalOriginCode, 'identificacao', 'Código de origem utilizado no grupo do ICMS.'),
-    requiredCheck('cfop-internal', 'CFOP interno padrão', profile.cfopInternal, 'tributacao', 'Padrão para operação dentro da UF.'),
-    requiredCheck('cfop-interstate', 'CFOP interestadual padrão', profile.cfopInterstate, 'tributacao', 'Padrão para operação destinada a outra UF.'),
+    ...(profile.operationCfop === true ? [] : [
+      requiredCheck('cfop-internal', 'CFOP interno padrão', profile.cfopInternal, 'tributacao', 'Padrão para operação dentro da UF.'),
+      requiredCheck('cfop-interstate', 'CFOP interestadual padrão', profile.cfopInterstate, 'tributacao', 'Padrão para operação destinada a outra UF.'),
+    ]),
     requiredCheck('icms', 'CST/CSOSN do ICMS', profile.icmsCode, 'tributacao', 'Código compatível com o regime e a operação.'),
     requiredCheck('pis', 'CST do PIS', profile.pisCst, 'tributacao', 'Situação tributária padrão da mercadoria.'),
     requiredCheck('cofins', 'CST da COFINS', profile.cofinsCst, 'tributacao', 'Situação tributária padrão da mercadoria.'),

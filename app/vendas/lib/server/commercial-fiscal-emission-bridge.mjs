@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { fiscalDraftOriginReady } from './fiscal-draft-origin.mjs';
 
 export const COMMERCIAL_FISCAL_EMISSION_BRIDGE_REFERENCE = '2026-09-03';
 
@@ -36,7 +37,7 @@ function mapDraft(row) {
   return {
     id: row.id,
     companyId: row.empresa_id,
-    operationId: row.operacao_id,
+    operationId: row.origem_tipo === 'avulsa' ? row.id : row.operacao_id,
     originType: row.origem_tipo,
     documentType: row.documento_tipo,
     status: row.situacao,
@@ -58,6 +59,10 @@ function mapDraft(row) {
       model: row.emissao_modelo,
       environment: row.emissao_ambiente,
       state: row.emissao_situacao,
+      statusCode: row.emissao_status_codigo || '',
+      statusReason: row.emissao_status_motivo || '',
+      series: row.emissao_serie || '',
+      number: Number(row.emissao_numero || 0),
       version: Number(row.emissao_versao || 1),
     } : null,
   };
@@ -81,9 +86,8 @@ function validateDraft(draft) {
   if (draft.documentType !== 'nfe') {
     return issue('AV-COMMERCIAL-FISCAL-DOCUMENT-UNSUPPORTED', 'documentType', 'Este piloto prepara somente NF-e. NFC-e e NFS-e permanecem preservadas para os conectores próprios.');
   }
-  if (draft.originType !== 'pedido' || draft.operationStatus !== 'faturado'
-    || draft.operationFiscalStatus !== 'rascunho_criado') {
-    return issue('AV-COMMERCIAL-FISCAL-ORIGIN', 'order', 'O rascunho não pertence a um pedido faturado e pronto para o ciclo fiscal.');
+  if (!fiscalDraftOriginReady(draft)) {
+    return issue('AV-COMMERCIAL-FISCAL-ORIGIN', 'order', 'O vínculo fiscal da nota com sua origem não está pronto para emissão.');
   }
   if (draft.status !== 'pronto') {
     return issue('AV-COMMERCIAL-FISCAL-DRAFT-PENDING', 'draft', 'Conclua as pendências cadastrais e fiscais antes de preparar a emissão.');
@@ -142,9 +146,11 @@ export function createPostgresCommercialFiscalDraftRepository({ pool } = {}) {
           e.id as emissao_id,e.company_id as emissao_empresa_id,e.establishment_id as emissao_estabelecimento_id,
           e.draft_id as emissao_rascunho_id,e.origin_id as emissao_origem_id,
           e.document_type as emissao_documento_tipo,e.model as emissao_modelo,
-          e.environment as emissao_ambiente,e.state as emissao_situacao,e.version as emissao_versao
+          e.environment as emissao_ambiente,e.state as emissao_situacao,e.version as emissao_versao,
+          e.series as emissao_serie,e.number as emissao_numero,
+          e.status_code as emissao_status_codigo,e.status_reason as emissao_status_motivo
         from public.vendas_fiscal_rascunhos r
-        join public.vendas_operacoes o
+        left join public.vendas_operacoes o
           on o.empresa_id=r.empresa_id and o.id=r.operacao_id
         left join fiscal_private.emissions e
           on e.company_id=r.empresa_id and e.id=r.id
@@ -186,7 +192,7 @@ export function createCommercialFiscalEmissionBridge({ draftRepository, emission
           operationKey: clean(idempotencyKey),
           actorId: context.actorId,
           publicPayload: {
-            source: 'commercial_billing',
+            source: draft.originType === 'avulsa' ? 'standalone_fiscal' : 'commercial_billing',
             originType: draft.originType,
             draftDigest: draft.contentDigest,
           },

@@ -61,3 +61,6 @@ backups/
 
 # Recibos e trava locais da fila de publicação (não são artefatos do produto).
 /output/pipeline/
+
+# Artefatos sintéticos gerados pelo verificador fiscal local.
+/output/validacao-fiscal-*/

@@ -1,4 +1,6 @@
 export const FISCAL_NUMBERING_DOCUMENTS = ['nfe', 'nfce', 'nfse'];
+// NF-e de emissão normal por contribuinte CNPJ; faixas especiais ficam fora deste fluxo.
+export const FISCAL_NFE_NORMAL_SERIES = Object.freeze(Array.from({ length: 890 }, (_, index) => String(index)));
 
 const MAX_FISCAL_NUMBER = 999999999;
 

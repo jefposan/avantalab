@@ -1,4 +1,5 @@
 import { request as nodeHttpsRequest } from 'node:https';
+import { NFE_SERVER_CA } from './nfe-server-trust.mjs';
 
 import { prepareNfeA1Pkcs12ForMutualTls } from './nfe-a1-certificate.mjs';
 import { NFE_CANCELLATION_ACTION, NFE_CANCELLATION_CONTENT_TYPE, NFE_CANCELLATION_ENDPOINT, NFE_CANCELLATION_RESPONSE_LIMIT, NFE_CANCELLATION_TIMEOUT_MS } from './nfe-cancellation-service.mjs';
@@ -71,7 +72,8 @@ function postWithMutualTls({ requestImpl, url, request, pkcs12, passphrase }) {
   return new Promise((resolve, reject) => {
     let settled = false;
     const finish = (callback, value) => { if (!settled) { settled = true; callback(value); } };
-    const socketRequest = requestImpl({ protocol: 'https:', hostname: url.hostname, port: 443, path: url.pathname, method: 'POST', servername: url.hostname, agent: false, rejectUnauthorized: true, minVersion: 'TLSv1.2', pfx: pkcs12, passphrase, headers: { Accept: 'application/soap+xml, text/xml', 'Content-Type': request.contentType, 'Content-Length': Buffer.byteLength(request.body, 'utf8'), 'User-Agent': 'AvantaLab-Fiscal-Cancellation/1.0' } }, (response) => readResponse(response, request.maxResponseBytes).then((value) => finish(resolve, value)).catch((error) => finish(reject, error)));
+    const socketRequest = requestImpl({ protocol: 'https:', hostname: url.hostname, port: 443, path: url.pathname, method: 'POST', servername: url.hostname, agent: false, rejectUnauthorized: true,
+      ca: NFE_SERVER_CA, minVersion: 'TLSv1.2', pfx: pkcs12, passphrase, headers: { Accept: 'application/soap+xml, text/xml', 'Content-Type': request.contentType, 'Content-Length': Buffer.byteLength(request.body, 'utf8'), 'User-Agent': 'AvantaLab-Fiscal-Cancellation/1.0' } }, (response) => readResponse(response, request.maxResponseBytes).then((value) => finish(resolve, value)).catch((error) => finish(reject, error)));
     socketRequest.setTimeout(request.timeoutMs, () => socketRequest.destroy(new Error('O cancelamento excedeu o tempo limite.')));
     socketRequest.on('error', () => finish(reject, new Error('A conexão mTLS com o serviço de cancelamento não foi concluída.')));
     socketRequest.end(request.body, 'utf8');

@@ -20,7 +20,7 @@ export type CustosAccess = {
   podeGerenciarModulo: boolean;
 };
 
-export default function CustosClient({ companyId, initialNewType, returnTo, initialContext }: { companyId: string; initialNewType?: 'produto'; returnTo?: 'vendas'; initialContext?: ContextoNavegacaoModulo | null }) {
+export default function CustosClient({ companyId, initialNewType, initialProductId, returnTo, initialContext, embeddedProduct = false, onProductSaved, onProductCancel, onProductDirtyChange, onProductBusyChange }: { companyId: string; initialNewType?: 'produto'; initialProductId?: string; returnTo?: 'vendas'; initialContext?: ContextoNavegacaoModulo | null; embeddedProduct?: boolean; onProductSaved?: (produto: import('./types').ProdutoCustos) => void; onProductCancel?: () => void; onProductDirtyChange?: (dirty:boolean)=>void; onProductBusyChange?: (busy:boolean)=>void }) {
   const router = useRouter();
   const returnHref = returnTo === 'vendas' && companyId ? `/vendas?empresaId=${encodeURIComponent(companyId)}` : companyId ? `/gestao?inicio=1&empresaId=${encodeURIComponent(companyId)}` : '/gestao';
   const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('custos', companyId));
@@ -100,12 +100,16 @@ export default function CustosClient({ companyId, initialNewType, returnTo, init
     router.push(returnTo === 'vendas' ? returnHref : destinoInicioModulo(companyId));
   };
 
+  if (embeddedProduct) return <main className={`${styles.root} ${styles.embeddedProduct} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{'--custos-brand':access.empresa.corPrimaria} as React.CSSProperties}>
+    <CustosWorkspace companyId={companyId} access={access} initialProductId={initialProductId} embeddedProduct onProductSaved={onProductSaved} onProductCancel={onProductCancel} onProductDirtyChange={onProductDirtyChange} onProductBusyChange={onProductBusyChange}/>
+  </main>;
+
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{ '--custos-brand': access.empresa.corPrimaria } as React.CSSProperties}>
     <ModuloHeader empresa={access.empresa} onBack={voltar} returnLabel={returnLabel} returnAriaLabel={returnAriaLabel}>
         {access.podeGerenciarModulo && <button type="button" className={styles.moduleSettingsButton} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Custos e Precificação" title="Ajustes"><Icon name="settings" size={18} /></button>}
         {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
     </ModuloHeader>
-    <CustosWorkspace companyId={companyId} access={access} initialNewType={initialNewType} />
+    <CustosWorkspace initialProductId={initialProductId} companyId={companyId} access={access} initialNewType={initialNewType} />
     <RodapeAvanta darkMode={access.empresa.temaEscuro} />
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes de Custos e Precificação" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
       <section className={styles.settingsSection} aria-label="Ajustes visuais">

@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { authorizeMarketplace, managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
 import { uuidIsValid } from '@/app/modules/marketplaces/services/listing-model';
 import { readInventoryNotices } from '@/app/modules/marketplaces/services/inventory-notices';
+import { acknowledgeAllSaleAlerts } from '@/app/modules/marketplaces/services/sale-alert-reads';
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 const headers = { 'Cache-Control': 'no-store' };
 export async function GET(request: Request) {
   try {
@@ -25,6 +27,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { db, empresaId, usuario } = await authorizeMarketplace(request, body.empresaId);
+    if (body.action === 'acknowledge_all') {
+      return NextResponse.json(await acknowledgeAllSaleAlerts(db, empresaId, usuario.id), { headers });
+    }
     if (!uuidIsValid(body.alertId)) throw new MarketplaceError(400, 'invalid_alert', 'Aviso inválido.');
     const alert = await db.from('marketplace_sale_alerts').select('id,sale_id,connection_id').eq('empresa_id', empresaId).eq('id', body.alertId).maybeSingle();
     if (alert.error) throw new MarketplaceError(503, 'database', 'Não foi possível consultar o aviso.');

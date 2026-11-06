@@ -88,6 +88,7 @@ export function normalizeCommercialCustomerInput(input = {}) {
     state: text(input.state, 2).toUpperCase(),
     sellerId: text(input.sellerId, 36),
     paymentTerms: text(input.paymentTerms, 120),
+    ...(Object.hasOwn(input,'priceTableId')?{priceTableId:text(input.priceTableId,36)}:{}),
     notes: text(input.notes, 2000),
     status: ALLOWED_STATUSES.has(requestedStatus) ? requestedStatus : 'revisar_cadastro',
   };
@@ -116,6 +117,7 @@ export function validateCommercialCustomerInput(input = {}) {
   if (normalized.postalCode && normalized.postalCode.length !== 8) errors.push(error('AV-COMMERCIAL-CEP', 'postalCode', 'Informe o CEP com oito dígitos.'));
   if (normalized.cityCode && normalized.cityCode.length !== 7) errors.push(error('AV-COMMERCIAL-IBGE', 'cityCode', 'O município precisa possuir um código IBGE válido.'));
   if (normalized.state && !/^[A-Z]{2}$/.test(normalized.state)) errors.push(error('AV-COMMERCIAL-UF', 'state', 'Informe a UF com duas letras.'));
+  if (normalized.priceTableId && !UUID.test(normalized.priceTableId)) errors.push(error('AV-COMMERCIAL-PRICE-TABLE','priceTableId','Selecione uma lista de preços válida.'));
   if (normalized.sellerId && !UUID.test(normalized.sellerId)) errors.push(error('AV-COMMERCIAL-SELLER', 'sellerId', 'Selecione um vendedor válido ou deixe o campo vazio.'));
   if (!ALLOWED_STATE_REGISTRATION.has(normalized.stateRegistrationIndicator)) errors.push(error('AV-COMMERCIAL-IE-INDICATOR', 'stateRegistrationIndicator', 'Selecione a situação correta da inscrição estadual.'));
   if (!fiscalReady) warnings.push(error('AV-COMMERCIAL-FISCAL-REVIEW', 'status', 'O cliente será salvo como Revisar cadastro e não poderá emitir nota até completar os dados fiscais.'));

@@ -4,7 +4,7 @@ export const COMMERCIAL_SALES_ORDER_BILLING_REFERENCE = '2026-09-03';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY = /^[A-Za-z0-9:_-]{8,100}$/;
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const RETRYABLE = new Set(['40001', '40P01']);
 const clean = (value, max = 1000) => String(value ?? '').trim().slice(0, max);
 const digits = (value, max) => clean(value).replace(/\D/g, '').slice(0, max);
@@ -56,7 +56,7 @@ function publicError(error) {
     : issue('AV-SALES-BILLING-STORAGE', 'storage', 'Não foi possível faturar o pedido. Tente novamente.');
 }
 
-function normalizeIssuer(input = {}) {
+export function normalizeIssuer(input = {}) {
   const address = input.address && typeof input.address === 'object' ? input.address : input;
   const snapshot = {
     establishmentId: UUID.test(clean(input.establishmentId)) ? clean(input.establishmentId) : '',
@@ -161,7 +161,7 @@ async function activeReservations(client, companyId, orderId) {
 export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {}) {
   if (!pool?.connect) throw new TypeError('Informe o pool PostgreSQL server-side.');
   return Object.freeze({
-    async invoice({ companyId, actorId, orderId, expectedVersion, idempotencyKey, issuerSnapshot }) {
+    async invoice({ companyId, actorId, orderId, expectedVersion, idempotencyKey, issuerSnapshot, moveStock = true }) {
       return transaction(pool, async (client) => {
         const repeated = await alreadyDone(client, companyId, idempotencyKey, orderId);
         if (repeated) return repeated;
@@ -174,13 +174,30 @@ export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {
 
         const items = await loadItems(client, companyId, orderId);
         if (!items.length) throw coded('AV-SALES-BILLING-ITEMS');
-        const controlled = items.filter((item) => item.tipo_item === 'produto' && item.controla_estoque);
+        let controlled = items.filter((item) => item.tipo_item === 'produto' && item.controla_estoque);
         const reservations = await activeReservations(client, companyId, orderId);
         const reservationByItem = new Map(reservations.map((reservation) => [reservation.operacao_item_id, reservation]));
         if (controlled.length !== reservations.length || controlled.some((item) => Number(reservationByItem.get(item.id)?.quantidade) !== Number(item.quantidade))) {
           throw coded('AV-SALES-BILLING-RESERVATION');
         }
 
+        let stockReleased = 0;
+        if (moveStock === false) {
+          for (const reservation of reservations) {
+            const before = Number(reservation.saldo_reservado);
+            const quantity = Number(reservation.quantidade);
+            if (before < quantity) throw coded('AV-SALES-BILLING-RESERVATION');
+            await client.query('update public.vendas_estoque_saldos set saldo_reservado=$3 where empresa_id=$1 and id=$2', [companyId, reservation.saldo_id, before - quantity]);
+            await client.query("update public.vendas_estoque_reservas set situacao='liberada',atualizado_em=now() where empresa_id=$1 and id=$2", [companyId, reservation.id]);
+            await client.query(`insert into public.vendas_estoque_movimentos(
+              empresa_id,saldo_id,reserva_id,operacao_id,tipo,quantidade,saldo_fisico_anterior,saldo_fisico_final,
+              saldo_reservado_anterior,saldo_reservado_final,chave_idempotencia,criado_por
+            ) values($1,$2,$3,$4,'liberacao',$5,$6,$6,$7,$8,$9,$10)`,
+            [companyId, reservation.saldo_id, reservation.id, orderId, -quantity, Number(reservation.saldo_fisico), before, before - quantity, `${idempotencyKey}:${reservation.operacao_item_id}:liberar`, actorId]);
+            stockReleased += quantity;
+          }
+          controlled = [];
+        }
         let stockConsumed = 0;
         for (const item of controlled) {
           const reservation = reservationByItem.get(item.id);
@@ -252,7 +269,17 @@ export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {
         const issuer = normalizeIssuer(issuerSnapshot);
         let fiscalDraftId = '';
         let fiscalDraftStatus = 'nao_aplicavel';
-        if (requestedDocument !== 'nenhum') {
+        const priorFiscalDrafts = requestedDocument === 'nenhum' ? [] : (await client.query(`
+          select r.id,r.situacao from public.vendas_fiscal_rascunhos r
+          where r.empresa_id=$1 and r.operacao_id=$2 and r.documento_tipo=$3
+            and not exists(select 1 from public.vendas_fiscal_rascunho_cancelamentos c where c.empresa_id=r.empresa_id and c.rascunho_id=r.id)
+          and not exists(select 1 from fiscal_private.draft_deletions deleted where deleted.company_id=r.empresa_id and deleted.draft_id=r.id)
+          order by r.criado_em desc limit 2
+        `, [companyId, orderId, requestedDocument])).rows;
+        if (priorFiscalDrafts.length > 1) throw coded('AV-SALES-BILLING-ITEMS');
+        const priorFiscalDraft = priorFiscalDrafts[0];
+        if (priorFiscalDraft) { fiscalDraftId = priorFiscalDraft.id; fiscalDraftStatus = priorFiscalDraft.situacao; }
+        if (requestedDocument !== 'nenhum' && !priorFiscalDraft) {
           fiscalDraftId = randomUUID();
           const fiscalItems = items.map((item) => ({
             position: Number(item.posicao), productId: item.produto_id || '', itemType: item.tipo_item,
@@ -294,9 +321,11 @@ export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {
             faturado_em=now(),atualizado_por=$5
           where empresa_id=$1 and id=$2 returning versao
         `, [companyId, orderId, controlled.length ? 'baixado' : 'sem_movimentacao',
-          fiscalDraftId ? 'rascunho_criado' : 'nao_aplicavel', actorId]);
+          priorFiscalDraft ? order.situacao_fiscal : fiscalDraftId ? 'rascunho_criado' : 'nao_aplicavel', actorId]);
         const metadata = {
           stockConsumed: Number(stockConsumed.toFixed(3)),
+          stockReleased: Number(stockReleased.toFixed(3)),
+          moveStock: moveStock !== false,
           receivableCount: receivableIds.length,
           receivableTotal: money(totalCents),
           fiscalDraftId,
@@ -319,7 +348,7 @@ export function createCommercialSalesOrderBillingService({ repository, issuerRes
   if (!repository?.invoice) throw new TypeError('Informe o repositório de faturamento do pedido.');
   if (typeof issuerResolver !== 'function') throw new TypeError('Informe o resolvedor server-side do emitente.');
   return Object.freeze({
-    async invoice({ context, orderId, expectedVersion, idempotencyKey } = {}) {
+    async invoice({ context, orderId, expectedVersion, idempotencyKey, moveStock = true } = {}) {
       const denied = accessError(context);
       if (denied) return { ok: false, errors: [denied] };
       if (!UUID.test(clean(orderId)) || !Number.isInteger(expectedVersion) || expectedVersion < 1
@@ -335,6 +364,7 @@ export function createCommercialSalesOrderBillingService({ repository, issuerRes
           expectedVersion,
           idempotencyKey: clean(idempotencyKey),
           issuerSnapshot: issuerSnapshot || {},
+          moveStock: moveStock !== false,
         });
         return { ok: true, result, errors: [] };
       } catch (error) {

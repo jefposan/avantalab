@@ -1,0 +1,9 @@
+export const FREIGHT_MODES: ReadonlyArray<readonly [string,string]>;
+export const NOTE_PURPOSES: ReadonlyArray<readonly [string,string]>;
+export const PRESENCE_MODES: ReadonlyArray<readonly [string,string]>;
+export function newFiscalNoteFields(): {purpose:string;direction:string;series:string;number:string;issueDate:string;exitDate:string;exitTime:string;purchaseOrder:string;presence:string;destination:string;intermediary:string;intermediaryDocument:string;intermediaryId:string;referenceKey:string;substituteRegistration:string;suframa:string;deliveryForecast:string;freightMode:string;carrierName:string;carrierDocument:string;carrierRegistration:string;carrierAddress:string;carrierCity:string;carrierState:string;vehiclePlate:string;vehicleState:string;rntc:string;volumeCount:string;volumeSpecies:string;volumeBrand:string;volumeNumber:string;grossWeight:string;netWeight:string;fiscalNotes:string;internalNotes:string;priceTableId:string;retainedPis:string;retainedCofins:string;retainedCsll:string;incomeTaxBase:string;incomeTax:string;socialSecurityBase:string;socialSecurityTax:string};
+export function priceFromTable(item:{sku:string;price:number},table?:{prices:Record<string,number>}):number;
+export function repriceNoteLines<T extends {sku:string;unitPrice:number}>(lines:T[],catalog:Array<{sku:string;price:number}>,table?:{prices:Record<string,number>}):T[];
+export function previewInstallments(total:number,count:string|number,firstDate:string):Array<{number:number;dueDate:string;amount:number}>;
+export function appendNoteMessage(current:string,message:string):string;
+export function validateFiscalNoteFields(fields:ReturnType<typeof newFiscalNoteFields>):string[];

@@ -11,8 +11,9 @@ import { stockModelFromResponse } from './mercadolivre-edit-policy';
 import { salesAccountAvailable } from '../magalu-sales-model';
 import { stockIncreaseBlocker } from './inventory-product-guard';
 import { listingStockSyncTerminated } from '../stock-reconciliation';
+import { stockRetry } from '../stock-retry';
 
-type StockJob = { link_id: string; empresa_id: string; product_id: string; desired_quantity: number; revision: number; generation: string; allow_increase: boolean; attempts: number };
+type StockJob = { link_id: string; empresa_id: string; product_id: string; desired_quantity: number; revision: number; generation: string; allow_increase: boolean; attempts: number; issue?: string | null };
 const failureCode = (error: unknown) => error instanceof MarketplaceError ? error.code : 'processing';
 function assertDatabase(error: unknown) { if (error) throw new MarketplaceError(503, 'inventory_database', 'Não foi possível registrar a sincronização do estoque.'); }
 async function excludeStockJob(db:SupabaseClient,job:StockJob){
@@ -154,8 +155,7 @@ export async function deliverStockJob(db: SupabaseClient, job: StockJob, deadlin
     }
   } catch (error) { issue = failureCode(error); }
   // Uma nova baixa pode ter substituído o job. Não apagar a pendência mais recente.
-  const result = await db.from('marketplace_inventory_outbox').update({ state: outcome, issue, attempts: job.attempts + 1,
-    next_attempt_at: new Date(Date.now() + Math.min(15, 2 ** Math.min(job.attempts, 4)) * 60_000).toISOString(),
+  const result = await db.from('marketplace_inventory_outbox').update({ state: outcome, issue, ...stockRetry(job, outcome, issue),
     synced_at: outcome === 'synced' ? new Date().toISOString() : null,
     protected_at: outcome === 'protected' ? new Date().toISOString() : null,
   }).eq('link_id', job.link_id).eq('empresa_id', job.empresa_id).eq('product_id', job.product_id).eq('revision', job.revision).eq('generation', job.generation);

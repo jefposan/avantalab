@@ -98,6 +98,8 @@ export async function buildNfeIssuancePreparation({ draft, client, config, numbe
     result.numberPreviouslyReserved = Boolean(existingReservation);
   }
 
+  const form=normalizedDraft.fiscalForm;
+  if(form&&((form.series&&Number(form.series)!==Number(result.series))||(form.number&&Number(form.number)!==Number(result.candidateNumber))))result.errors.push(diagnosticError('AV-NFE-ISSUE-NUMBERING','numbering.sequence','A série e o número devem corresponder à sequência ativa do perfil. Revise a numeração antes de emitir.'));
   if (result.errors.length) {
     result.steps = [
       { id: 'preflight', label: 'Conferir rascunho', state: 'blocked' },

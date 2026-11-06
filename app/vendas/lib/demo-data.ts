@@ -46,6 +46,7 @@ export type ClientRecord = {
   city: string;
   seller: string;
   paymentTerms: string;
+  priceTableId?:string;
   orders: number;
   revenue: number;
   lastPurchase: string;

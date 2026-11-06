@@ -1,4 +1,5 @@
 import { buildNfeCancellationArtifact, persistNfeCancellationArtifact } from './nfe-cancellation-artifact.mjs';
+import { nfeStandardCancellationAvailability } from '../fiscal-note-result.mjs';
 
 export const COMMERCIAL_NFE_CANCELLATION_REFERENCE = '2026-09-07';
 export const NFE_CANCELLATION_CONFIRMATION = 'CANCELAR_NFE_AUTORIZADA';
@@ -87,6 +88,8 @@ export function createCommercialNfeCancellationService({ repository, certificate
         const data = await repository.load({ companyId: context.companyId, emissionId: safeEmissionId });
         const invalid = validateLoaded(data, expectedVersion);
         if (invalid) return { ok: false, errors: [invalid] };
+        const cancellation = nfeStandardCancellationAvailability(data.emission, Date.parse(clock()));
+        if (!cancellation.allowed) return { ok: false, errors: [issue('AV-NFE-CANCEL-DEADLINE', 'authorizedAt', cancellation.reason)] };
         if (cancellationAdapter.configured !== true) return { ok: false, errors: [issue('AV-NFE-CANCEL-CONNECTION', 'authority', 'A conexão do cancelamento com o autorizador ainda não está liberada.')] };
         const binding = await certificateBindingResolver({ companyId: context.companyId, establishmentId: data.emission.establishmentId, documentType: 'nfe' });
         if (!binding?.secureReference) return { ok: false, errors: [issue('AV-NFE-CANCEL-CERTIFICATE', 'certificate', 'Ative o certificado digital da empresa antes de solicitar o cancelamento.')] };

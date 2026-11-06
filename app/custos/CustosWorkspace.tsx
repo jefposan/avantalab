@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { resolverFiscalProduto, usaFiscalEmpresa } from '@/app/lib/fiscal-produto.mjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import CampoBusca from '@/app/components/CampoBusca';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
@@ -19,6 +20,7 @@ import {
   type CatalogoEmpresa, type FornecedorCustos, type ItemComposicao, type PrecoTabelaItem, type ProdutoCustos, type RecursoCusto, type TabelaPreco, type TipoItem,
 } from './types';
 import styles from './custos.module.css';
+import { excluirCatalogoEmpresa } from './repository';
 
 type Aba = 'visao' | 'catalogos' | 'produtos' | 'precos' | 'recursos' | 'simulacoes' | 'historico';
 
@@ -42,24 +44,27 @@ const acoesLoteCatalogo: Array<{ valor: AcaoLoteCatalogo; rotulo: string; descri
   { valor: 'inativar', rotulo: 'Inativar cadastro', descricao: 'Torna os cadastros indisponíveis para uso, preservando dados e histórico.', confirmacao: 'Os cadastros selecionados ficarão indisponíveis no Catálogo e em Custos. Preços, imagens, estoque, composições e histórico serão preservados.' },
 ];
 
-export default function CustosWorkspace({ companyId, access, initialNewType }: { companyId: string; access: CustosAccess; initialNewType?: 'produto' }) {
-  const [aba, setAba] = useState<Aba>(initialNewType ? 'produtos' : 'visao');
+export default function CustosWorkspace({ companyId, access, initialNewType, initialProductId, embeddedProduct = false, onProductSaved, onProductCancel, onProductDirtyChange, onProductBusyChange }: { companyId: string; access: CustosAccess; initialNewType?: 'produto'; initialProductId?: string; embeddedProduct?: boolean; onProductSaved?: (produto: ProdutoCustos) => void; onProductCancel?:()=>void; onProductDirtyChange?:(dirty:boolean)=>void; onProductBusyChange?:(busy:boolean)=>void }) {
+  const [aba, setAba] = useState<Aba>(initialNewType || initialProductId ? 'produtos' : 'visao');
   const [catalogoId, setCatalogoId] = useState('');
   const [catalogos, setCatalogos] = useState<CatalogoEmpresa[]>([]);
+  const [perfilFiscal, setPerfilFiscal] = useState<object>({});
   const [produtos, setProdutos] = useState<ProdutoCustos[]>([]);
   const [tabelasPreco, setTabelasPreco] = useState<TabelaPreco[]>([]);
   const [precosTabela, setPrecosTabela] = useState<PrecoTabelaItem[]>([]);
   const [fornecedores, setFornecedores] = useState<FornecedorCustos[]>([]);
   const [documento, setDocumento] = useState<DocumentoCustos>(documentoVazio);
-  const [produtoAtivoId, setProdutoAtivoId] = useState('');
+  const [produtoAtivoId, setProdutoAtivoId] = useState(initialProductId || '');
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [edicaoPendente, setEdicaoPendente] = useState(false);
+  useEffect(()=>onProductDirtyChange?.(edicaoPendente),[edicaoPendente,onProductDirtyChange]);
   const [abaPendente, setAbaPendente] = useState<Aba | null>(null);
   const [solicitacaoInicioProdutos, setSolicitacaoInicioProdutos] = useState(0);
   const carregamentoRef = useRef(0);
   const empresaProntaRef = useRef('');
   const revisaoRef = useRef(0);
+  const catalogoIdsAssinatura = catalogos.map((catalogo) => catalogo.id).sort().join(',');
 
   const recarregar = useCallback(async (silencioso = false) => {
     const chamada = ++carregamentoRef.current;
@@ -71,15 +76,17 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
       setCatalogoId(dados.catalogoId);
       setCatalogos(dados.catalogos);
       setProdutos(dados.produtos);
+      setPerfilFiscal(dados.perfilFiscal);
       setTabelasPreco(dados.tabelasPreco);
       setPrecosTabela(dados.precosTabela);
       setDocumento(dados.documento);
       revisaoRef.current = dados.revisao;
       const disponiveis = dados.produtos.filter((produto) => !produto.excluido_em);
+      if (initialProductId && !disponiveis.some((produto) => produto.id === initialProductId)) setErro('O produto solicitado não está disponível neste perfil.');
       setProdutoAtivoId((atual) => disponiveis.some((produto) => produto.id === atual) ? atual : disponiveis[0]?.id || '');
     } catch (falha) { setErro(erroTexto(falha)); }
     finally { if (chamada === carregamentoRef.current) { empresaProntaRef.current = companyId; setCarregando(false); } }
-  }, [access.podeEditar, companyId]);
+  }, [access.podeEditar, companyId, initialProductId]);
 
   useEffect(() => { const timer = window.setTimeout(() => void recarregar(empresaProntaRef.current === companyId), 0); return () => window.clearTimeout(timer); }, [companyId, recarregar]);
   useEffect(() => {
@@ -88,12 +95,15 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
     return () => { ativo = false; };
   }, [companyId]);
   useEffect(() => {
-    if (!catalogoId) return;
-    const canal = supabase.channel(`custos-produtos-${catalogoId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_catalogo_produtos', filter: `catalogo_id=eq.${catalogoId}` }, () => void recarregar(true))
-      .subscribe();
+    const catalogoIds = catalogoIdsAssinatura.split(',').filter(Boolean);
+    if (!catalogoIds.length) return;
+    let canal = supabase.channel(`custos-produtos-${companyId}`);
+    catalogoIds.forEach((id) => {
+      canal = canal.on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_catalogo_produtos', filter: `catalogo_id=eq.${id}` }, () => void recarregar(true));
+    });
+    canal.subscribe();
     return () => { void supabase.removeChannel(canal); };
-  }, [catalogoId, recarregar]);
+  }, [catalogoIdsAssinatura, companyId, recarregar]);
   useEffect(() => {
     const canal = supabase.channel(`custos-catalogos-${companyId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_catalogos', filter: `empresa_id=eq.${companyId}` }, () => void recarregar(true))
@@ -134,19 +144,20 @@ export default function CustosWorkspace({ companyId, access, initialNewType }: {
     setAbaPendente(null);
   };
 
-  return <div className={styles.workspace}>
+  if (embeddedProduct && !carregando && !produtosDisponiveis.some(produto=>produto.id===initialProductId)) return <div role="alert" className={styles.error}>Produto não localizado neste perfil ou indisponível para edição.</div>;
+  return <div className={`${styles.workspace} ${embeddedProduct ? styles.embeddedWorkspace : ''}`}>
     <div className={styles.workspaceContent} aria-hidden={carregando || undefined} inert={carregando || undefined}>
-    <aside className={styles.sidebar} aria-label="Áreas de Custos e Precificação">
+    {!embeddedProduct && <aside className={styles.sidebar} aria-label="Áreas de Custos e Precificação">
       <nav>{navegacao.map((item) => <button key={item.id} type="button" className={aba === item.id ? styles.navActive : ''} onClick={() => abrirAba(item.id)}><span aria-hidden="true">{item.icone}</span>{item.rotulo}</button>)}</nav>
-      <div className={styles.sharedNote}><strong>Catálogos da empresa</strong><p>Catálogos ativos abastecem o Vendas interno. A publicação no AvantaVendas é escolhida separadamente em cada catálogo.</p></div>
-    </aside>
+      <div className={styles.sharedNote}><strong>Catálogos da empresa</strong><p>Cada catálogo pode abastecer Vendas e Serviços, AvantaVendas, ambos ou nenhum destino. Desativar um destino não apaga pedidos já registrados.</p></div>
+    </aside>}
     <section className={styles.content}>
       <div className={styles.feedbackBar} aria-live="polite">
         {erro && <div className={styles.error}><span>{erro}</span><button type="button" onClick={() => void recarregar()}>Tentar novamente</button></div>}
       </div>
       {aba === 'visao' && <VisaoGeral produtos={produtosDisponiveis} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => abrirAba('produtos')} onAtualizar={() => void recarregar()} />}
       {aba === 'catalogos' && <CatalogosView companyId={companyId} catalogos={catalogos} fornecedores={fornecedores} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onErro={setErro} />}
-      {aba === 'produtos' && <ProdutosView companyId={companyId} catalogoId={catalogoId} catalogos={catalogos} produtos={produtosDisponiveis} fornecedores={fornecedores} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} solicitacaoInicio={solicitacaoInicioProdutos} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onErro={setErro} />}
+      {aba === 'produtos' && <ProdutosView onProductCancel={onProductCancel} onProductBusyChange={onProductBusyChange} embeddedProduct={embeddedProduct} onProductSaved={onProductSaved} initialProductId={initialProductId} perfilFiscal={perfilFiscal} companyId={companyId} catalogoId={catalogoId} catalogos={catalogos} produtos={produtosDisponiveis} fornecedores={fornecedores} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} solicitacaoInicio={solicitacaoInicioProdutos} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onErro={setErro} />}
       {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtosDisponiveis} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onErro={setErro} />}
       {aba === 'recursos' && <RecursosView catalogoId={catalogoId} documento={documento} produtos={produtosDisponiveis} fornecedores={fornecedores} setProdutos={setProdutos} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} podeEditar={access.podeEditar} onErro={setErro} />}
       {aba === 'simulacoes' && <SimulacoesView documento={documento} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onErro={setErro} />}
@@ -221,11 +232,31 @@ const descricaoOrigemCatalogo = (origem: CatalogoEmpresa['origem']) => origem ==
     ? { titulo: 'Fonte externa', texto: 'Catálogo preservado da fonte externa, com seus itens e imagens próprios.' }
     : { titulo: 'Catálogo independente', texto: 'Catálogo criado pela empresa, pronto para receber a sua seleção de itens.' };
 
+const descricaoDestinosCatalogo = (catalogo?: CatalogoEmpresa) => {
+  if (!catalogo) return 'Catálogo não localizado';
+  if (catalogo.ativo && catalogo.publicado_avantavendas) return 'Vendas e Serviços e AvantaVendas';
+  if (catalogo.ativo) return 'Vendas e Serviços';
+  if (catalogo.publicado_avantavendas) return 'AvantaVendas';
+  return 'Sem destino ativo';
+};
+
 function CatalogosView({ companyId, catalogos, fornecedores, podeEditar, onRecarregar, onErro }: {
   companyId: string; catalogos: CatalogoEmpresa[]; fornecedores: FornecedorCustos[]; podeEditar: boolean; onRecarregar: () => Promise<void>;
   onErro: (texto: string) => void;
 }) {
   const [aberto, setAberto] = useState(false);
+  const [catalogoExcluir, setCatalogoExcluir] = useState<CatalogoEmpresa | null>(null);
+  const [erroExcluirCatalogo, setErroExcluirCatalogo] = useState('');
+  const excluirCatalogo = async () => {
+    if (!catalogoExcluir || salvando) return;
+    setSalvando(true); setErroExcluirCatalogo('');
+    try {
+      await excluirCatalogoEmpresa(companyId, catalogoExcluir.id);
+      setCatalogoExcluir(null);
+      await onRecarregar();
+    } catch (falha) { setErroExcluirCatalogo(erroTexto(falha)); }
+    finally { setSalvando(false); }
+  };
   const [rascunho, setRascunho] = useState<Partial<CatalogoEmpresa>>({});
   const [salvando, setSalvando] = useState(false);
   const [importacao, setImportacao] = useState<{ arquivo: string; produtos: ProdutoImportadoCatalogo[]; avisos: string[]; codigosGerar: number } | null>(null);
@@ -262,38 +293,48 @@ function CatalogosView({ companyId, catalogos, fornecedores, podeEditar, onRecar
   const desativarCatalogo = async (catalogo: CatalogoEmpresa) => {
     setSalvando(true);
     try {
-      await alterarStatusCatalogoEmpresa(companyId, catalogo.id, false);
+      const atualizado = await alterarStatusCatalogoEmpresa(companyId, catalogo.id, false);
+      if (atualizado.publicado_avantavendas !== catalogo.publicado_avantavendas) throw new Error('A publicação no AvantaVendas foi preservada, mas a tela recebeu um estado incompatível. Atualize e tente novamente.');
       await onRecarregar();
     } catch (falha) { onErro(erroTexto(falha)); }
     finally { setSalvando(false); }
   };
   const ativarCatalogo = async (catalogo: CatalogoEmpresa) => {
     setSalvando(true);
-    try { await alterarStatusCatalogoEmpresa(companyId, catalogo.id, true); await onRecarregar(); }
+    try {
+      const atualizado = await alterarStatusCatalogoEmpresa(companyId, catalogo.id, true);
+      if (atualizado.publicado_avantavendas !== catalogo.publicado_avantavendas) throw new Error('A publicação no AvantaVendas foi preservada, mas a tela recebeu um estado incompatível. Atualize e tente novamente.');
+      await onRecarregar();
+    }
     catch (falha) { onErro(erroTexto(falha)); }
     finally { setSalvando(false); }
   };
   const alterarPublicacao = async (catalogo: CatalogoEmpresa, publicado: boolean) => {
     setSalvando(true);
-    try { await alterarPublicacaoAvantaVendasCatalogo(companyId, catalogo.id, publicado); await onRecarregar(); }
+    try {
+      const atualizado = await alterarPublicacaoAvantaVendasCatalogo(companyId, catalogo.id, publicado);
+      if (atualizado.ativo !== catalogo.ativo) throw new Error('A ativação em Vendas e Serviços foi preservada, mas a tela recebeu um estado incompatível. Atualize e tente novamente.');
+      await onRecarregar();
+    }
     catch (falha) { onErro(erroTexto(falha)); }
     finally { setSalvando(false); }
   };
   return <>
     <PageHeader title="Catálogos" description="Defina separadamente onde cada catálogo será utilizado. Um destino nunca altera o outro." actions={podeEditar ? <button type="button" className={styles.primaryButton} onClick={abrirNovo}>Novo catálogo</button> : undefined} />
+    <ModalConfirmacao aberto={Boolean(catalogoExcluir)} titulo={`Excluir catálogo ${catalogoExcluir?.nome || ''}?`} mensagem={erroExcluirCatalogo || 'Excluir este catálogo? O histórico será mantido, mas não serão disponibilizados para novas vendas'} textoConfirmar="Excluir catálogo" carregando={salvando} corPrimaria="var(--custos-brand)" variante="destrutiva" aoCancelar={() => { if (!salvando) setCatalogoExcluir(null); }} aoConfirmar={() => void excluirCatalogo()} />
     <section className={styles.catalogCards} aria-label="Catálogos desta empresa">
       {catalogos.map((catalogo) => {
         const origem = descricaoOrigemCatalogo(catalogo.origem);
         const ativoEmAlgumDestino = catalogo.ativo || catalogo.publicado_avantavendas;
         return <article key={catalogo.id} className={`${styles.catalogCard} ${ativoEmAlgumDestino ? styles.catalogCardCurrent : styles.catalogCardInactive}`}>
-          <div className={styles.catalogCardHeading}><div><span className={styles.catalogOrigin}>{origem.titulo}</span><h2>{catalogo.nome}</h2><small>{catalogo.codigo}</small></div>{!ativoEmAlgumDestino && <span className={styles.catalogInactiveBadge}>Inativo</span>}</div>
+          <div className={styles.catalogCardHeading}><div><span className={styles.catalogOrigin}>{origem.titulo}</span><h2>{catalogo.nome}</h2><small>{catalogo.codigo}</small></div>{!ativoEmAlgumDestino && <span className={styles.catalogInactiveBadge}>Sem destino ativo</span>}</div>
           <p>{origem.texto}</p>
           <div className={styles.catalogDestinations} aria-label={`Destinos do catálogo ${catalogo.nome}`}>
-            <div><span><strong>Vendas e Serviços</strong><small>{catalogo.ativo ? 'Ativo' : 'Desativado'}</small></span>{podeEditar && <button type="button" className={catalogo.ativo ? styles.dangerButton : styles.secondaryButton} disabled={salvando} onClick={() => void (catalogo.ativo ? desativarCatalogo(catalogo) : ativarCatalogo(catalogo))}>{catalogo.ativo ? 'Desativar' : 'Ativar'}</button>}</div>
-            <div><span><strong>AvantaVendas</strong><small>{catalogo.publicado_avantavendas ? 'Ativo' : 'Desativado'}</small></span>{podeEditar && <button type="button" className={catalogo.publicado_avantavendas ? styles.dangerButton : styles.secondaryButton} disabled={salvando} onClick={() => void alterarPublicacao(catalogo, !catalogo.publicado_avantavendas)}>{catalogo.publicado_avantavendas ? 'Desativar' : 'Ativar'}</button>}</div>
+            <div><span><strong>Vendas e Serviços</strong><small>{catalogo.ativo ? 'Ativo' : 'Desativado'}</small></span>{podeEditar && <button type="button" data-destino="vendas_servicos" aria-label={`${catalogo.ativo ? 'Desativar' : 'Ativar'} ${catalogo.nome} em Vendas e Serviços`} className={catalogo.ativo ? styles.dangerButton : styles.secondaryButton} disabled={salvando} onClick={() => void (catalogo.ativo ? desativarCatalogo(catalogo) : ativarCatalogo(catalogo))}>{catalogo.ativo ? 'Desativar' : 'Ativar'}</button>}</div>
+            <div><span><strong>AvantaVendas</strong><small>{catalogo.publicado_avantavendas ? 'Ativo' : 'Desativado'}</small></span>{podeEditar && <button type="button" data-destino="avantavendas" aria-label={`${catalogo.publicado_avantavendas ? 'Desativar' : 'Ativar'} ${catalogo.nome} no AvantaVendas`} className={catalogo.publicado_avantavendas ? styles.dangerButton : styles.secondaryButton} disabled={salvando} onClick={() => void alterarPublicacao(catalogo, !catalogo.publicado_avantavendas)}>{catalogo.publicado_avantavendas ? 'Desativar' : 'Ativar'}</button>}</div>
           </div>
           <div className={styles.catalogMeta}><span>Atualizado {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(catalogo.atualizado_em))}</span></div>
-          {podeEditar && <div className={styles.catalogActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => abrirEdicao(catalogo)}>Editar</button></div>}
+          {podeEditar && <div className={styles.catalogActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => abrirEdicao(catalogo)}>Editar</button>{catalogo.origem === 'manual' && !['CUSTOS_LOCAL', 'PRINCIPAL'].includes(catalogo.codigo) && <button type="button" className={styles.dangerButton} disabled={salvando} aria-label={`Excluir catálogo ${catalogo.nome}`} onClick={() => { setErroExcluirCatalogo(''); setCatalogoExcluir(catalogo); }}>Excluir</button>}</div>}
         </article>;
       })}
       {!catalogos.length && <div className={styles.empty}>Nenhum catálogo foi encontrado para esta empresa.</div>}
@@ -318,17 +359,17 @@ function CatalogosView({ companyId, catalogos, fornecedores, podeEditar, onRecar
   </>;
 }
 
-function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, solicitacaoInicio, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onEdicaoPendente, onErro }: {
-  companyId: string; catalogoId: string; catalogos: CatalogoEmpresa[]; produtos: ProdutoCustos[]; fornecedores: FornecedorCustos[]; tabelas: TabelaPreco[]; precos: PrecoTabelaItem[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
-  documento: DocumentoCustos; produtoAtivoId: string; initialNewType?: 'produto'; solicitacaoInicio: number; onSelecionar: (id: string) => void;
+function ProdutosView({ perfilFiscal, companyId, catalogoId, catalogos, produtos, fornecedores, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, initialProductId, solicitacaoInicio, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onEdicaoPendente, onErro, embeddedProduct = false, onProductSaved, onProductCancel, onProductBusyChange }: {
+  embeddedProduct?: boolean; onProductSaved?: (produto: ProdutoCustos) => void; onProductCancel?:()=>void; onProductBusyChange?:(busy:boolean)=>void;
+  perfilFiscal: object; companyId: string; catalogoId: string; catalogos: CatalogoEmpresa[]; produtos: ProdutoCustos[]; fornecedores: FornecedorCustos[]; tabelas: TabelaPreco[]; precos: PrecoTabelaItem[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
+  documento: DocumentoCustos; produtoAtivoId: string; initialNewType?: 'produto'; initialProductId?: string; solicitacaoInicio: number; onSelecionar: (id: string) => void;
   onDocumento: (proximo: DocumentoCustos) => Promise<void>; podeEditar: boolean;
   onSalvarProduto: (produto: ProdutoCustos) => Promise<ProdutoCustos>; onEnviarImagem: (arquivo: File) => Promise<string>;
   onRecarregar: () => Promise<void>; onEdicaoPendente: (pendente: boolean) => void; onErro: (texto: string) => void;
 }) {
   const produtoSelecionado = produtos.find((produto) => produto.id === produtoAtivoId);
-  const [modo, setModo] = useState<'lista' | 'cadastro'>(initialNewType ? 'cadastro' : 'lista');
+  const [modo, setModo] = useState<'lista' | 'cadastro'>(initialNewType || (initialProductId && produtoSelecionado?.id === initialProductId) ? 'cadastro' : 'lista');
   const [tipoLista, setTipoLista] = useState<TipoItem>('produto');
-  const [catalogoFiltroId, setCatalogoFiltroId] = useState('');
   const [buscaLista, setBuscaLista] = useState('');
   const [produtosSelecionados, setProdutosSelecionados] = useState<string[]>([]);
   const [acaoLote, setAcaoLote] = useState<AcaoLoteCatalogo>('publicar_catalogo');
@@ -339,9 +380,12 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
   const [precosDoProduto, setPrecosDoProduto] = useState<ProdutoCustos | null>(null);
   const [valoresTabela, setValoresTabela] = useState<Record<string, number>>({});
   const [rascunho, setRascunho] = useState<ProdutoCustos>(() => produtoSelecionado || novoProduto('produto', catalogoId));
+  const fiscalHerdado = usaFiscalEmpresa(rascunho);
+  const fiscalEfetivo = resolverFiscalProduto(rascunho, perfilFiscal);
   const [composicao, setComposicao] = useState<ComposicaoCusto>(() => produtoSelecionado ? documento.composicoes[produtoSelecionado.id] || composicaoVazia() : composicaoVazia());
   const [referenciaEdicao, setReferenciaEdicao] = useState(() => JSON.stringify({ rascunho, composicao }));
   const [salvando, setSalvando] = useState(false);
+  useEffect(()=>onProductBusyChange?.(salvando),[salvando,onProductBusyChange]);
   const [confirmarInativacao, setConfirmarInativacao] = useState(false);
   const [produtoParaExcluir, setProdutoParaExcluir] = useState<ProdutoCustos | null>(null);
   const [erroExclusao, setErroExclusao] = useState('');
@@ -356,6 +400,7 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
   const menuAcoesRef = useRef<HTMLDivElement>(null);
   const sugestoesCodigoRef = useRef<HTMLDivElement>(null);
   const codigoRef = useRef<HTMLInputElement>(null);
+  const catalogosVendasAssinatura = catalogos.filter((catalogo) => catalogo.ativo).map((catalogo) => catalogo.id).sort().join(',');
 
   const calculo = calcularComposicao(composicao, documento.recursos);
   const codigos = produtos.filter((produto) => produto.id !== rascunho.id && produto.catalogo_id === rascunho.catalogo_id).map((produto) => produto.sku).filter(Boolean);
@@ -378,27 +423,36 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
 
   useEffect(() => {
     const quadro = window.requestAnimationFrame(() => {
-      setCatalogoDestinoLoteId((atual) => catalogos.some((catalogo) => catalogo.id === atual && catalogo.ativo) ? atual : catalogoId);
+      setCatalogoDestinoLoteId((atual) => catalogos.some((catalogo) => catalogo.id === atual) ? atual : catalogoId);
     });
     return () => window.cancelAnimationFrame(quadro);
   }, [catalogoId, catalogos]);
   useEffect(() => {
-    if (!catalogoFiltroId || catalogos.some((catalogo) => catalogo.id === catalogoFiltroId && catalogo.ativo)) return;
     const quadro = window.requestAnimationFrame(() => {
-      setCatalogoFiltroId('');
       setProdutosSelecionados([]);
+      setMenuAcao(null);
     });
     return () => window.cancelAnimationFrame(quadro);
-  }, [catalogoFiltroId, catalogos]);
+  }, [catalogosVendasAssinatura]);
   const iniciar = (tipo: TipoItem) => { const novo = novoProduto(tipo, catalogoId); const novaComposicao = composicaoVazia(); setRascunho(novo); setComposicao(novaComposicao); registrarReferenciaEdicao(novo, novaComposicao); onSelecionar(''); setModo('cadastro'); };
   useEffect(() => {
     if (!initialNewType || !catalogoId || initialNewAppliedRef.current) return;
     initialNewAppliedRef.current = true;
     iniciar(initialNewType);
   }, [catalogoId, initialNewType]);
+  const initialProductAppliedRef = useRef('');
+  useEffect(() => {
+    if (!initialProductId || initialProductAppliedRef.current === initialProductId || produtoSelecionado?.id !== initialProductId) return;
+    initialProductAppliedRef.current = initialProductId;
+    const proximaComposicao = documento.composicoes[produtoSelecionado.id] || composicaoVazia();
+    setRascunho(produtoSelecionado);
+    setComposicao(proximaComposicao);
+    registrarReferenciaEdicao(produtoSelecionado, proximaComposicao);
+    setModo('cadastro');
+  }, [initialProductId, produtoSelecionado?.id]);
   useEffect(() => {
     if (modo !== 'cadastro') return;
-    const quadro = window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
+    const quadro = window.requestAnimationFrame(() => { if (initialProductId === rascunho.id) document.getElementById('cadastro-fiscal-produto')?.scrollIntoView({ block: 'start', behavior: 'auto' }); else window.scrollTo({ top: 0, behavior: 'auto' }); });
     return () => window.cancelAnimationFrame(quadro);
   }, [modo, rascunho.id]);
   useEffect(() => {
@@ -454,10 +508,14 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
   }, [sugestoesCodigoAbertas]);
   const validar = () => {
     if (!rascunho.sku.trim() || !rascunho.nome.trim()) return 'Código e nome são obrigatórios.';
-    if (!catalogos.some((catalogo) => catalogo.id === rascunho.catalogo_id && catalogo.ativo)) return 'Selecione um catálogo ativo para este cadastro.';
+    if (!catalogos.some((catalogo) => catalogo.id === rascunho.catalogo_id)) return 'Selecione um catálogo desta empresa para este cadastro.';
     if (codigos.some((codigo) => codigo.toUpperCase() === rascunho.sku.trim().toUpperCase())) return 'Este código já está sendo usado. Informe outro código interno.';
     if (rascunho.tipo_item === 'produto' && rascunho.ncm.trim() && !/^\d{8}$/.test(rascunho.ncm.trim())) return 'O NCM informado deve ter 8 dígitos.';
-    if (rascunho.habilitado_fiscal && rascunho.tipo_item === 'produto' && (!rascunho.ncm.trim() || !rascunho.unidade_tributavel.trim())) return 'Complete NCM e unidade tributável antes de habilitar o uso fiscal.';
+    if (rascunho.habilitado_fiscal && rascunho.tipo_item === 'produto' && (!rascunho.ncm.trim() || !(rascunho.unidade_tributavel || rascunho.unidade).trim())) return 'Complete NCM e unidade tributável antes de habilitar o uso fiscal.';
+    if (!fiscalHerdado && rascunho.tipo_item === 'produto') {
+      if (rascunho.cfop_padrao && !/^5\d{3}$/.test(rascunho.cfop_padrao)) return 'O CFOP dentro da UF deve ter 4 dígitos e começar com 5.';
+      if (rascunho.cfop_interestadual && !/^6\d{3}$/.test(rascunho.cfop_interestadual)) return 'O CFOP fora da UF deve ter 4 dígitos e começar com 6.';
+    }
     if (rascunho.disponivel_catalogo && rascunho.preco_venda <= 0) return 'Informe um preço de venda positivo antes de disponibilizar o item no catálogo.';
     return '';
   };
@@ -487,6 +545,7 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
       await onDocumento(proximo);
       setComposicao(atualizada);
       registrarReferenciaEdicao(salvo, atualizada);
+      onProductSaved?.(salvo);
       return true;
     } catch (falhaSalvamento) { onErro(erroTexto(falhaSalvamento)); return false; }
     finally { setSalvando(false); }
@@ -526,16 +585,18 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
     catch (falha) { onErro(erroTexto(falha)); } finally { setSalvando(false); }
   };
 
-  const produtosCatalogo = catalogoFiltroId ? produtos.filter((produto) => produto.catalogo_id === catalogoFiltroId) : produtos;
+  const catalogosVendasIds = new Set(catalogos.filter((catalogo) => catalogo.ativo).map((catalogo) => catalogo.id));
+  const produtosCatalogo = produtos.filter((produto) => catalogosVendasIds.has(produto.catalogo_id));
+  const haCatalogoVendasAtivo = catalogosVendasIds.size > 0;
   const listaFiltrada = produtosCatalogo.filter((produto) => produto.tipo_item === tipoLista && normalizarTexto(`${produto.sku} ${produto.nome} ${produto.marca} ${produto.categoria}`).includes(normalizarTexto(buscaLista)));
   const idsListaFiltrada = listaFiltrada.map((produto) => produto.id);
   const todosListadosSelecionados = idsListaFiltrada.length > 0 && idsListaFiltrada.every((id) => produtosSelecionados.includes(id));
-  const quantidadeSelecionada = produtosSelecionados.length;
-  const itensSelecionados = produtos.filter((produto) => produtosSelecionados.includes(produto.id));
+  const itensSelecionados = produtosCatalogo.filter((produto) => produtosSelecionados.includes(produto.id));
+  const quantidadeSelecionada = itensSelecionados.length;
   const catalogoDestinoLote = catalogos.find((catalogo) => catalogo.id === catalogoDestinoLoteId);
   const acaoLoteIndisponivel = (acao: AcaoLoteCatalogo) => {
     if (!itensSelecionados.length) return true;
-    if (acao === 'mover_catalogo') return !catalogoDestinoLote?.ativo || itensSelecionados.every((produto) => produto.catalogo_id === catalogoDestinoLoteId);
+    if (acao === 'mover_catalogo') return !catalogoDestinoLote || itensSelecionados.every((produto) => produto.catalogo_id === catalogoDestinoLoteId);
     if (acao === 'publicar_catalogo') return itensSelecionados.every((produto) => produto.disponivel_catalogo);
     if (acao === 'retirar_catalogo') return itensSelecionados.every((produto) => !produto.disponivel_catalogo);
     if (acao === 'ativar') return itensSelecionados.every((produto) => produto.ativo);
@@ -603,7 +664,7 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
     finally { setSalvando(false); }
   };
   const salvarERetornarInicio = async () => {
-    if (await salvar()) irParaInicioProdutos();
+    if (await salvar()) { if(!embeddedProduct)irParaInicioProdutos(); }
   };
   const descartarERetornarInicio = () => {
     onEdicaoPendente(false);
@@ -611,6 +672,7 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
   };
   const voltarParaLista = () => {
     if (possuiEdicaoPendente) { setConfirmarDescarte(true); return; }
+    if(embeddedProduct){onProductCancel?.();return;}
     setModo('lista');
   };
   const selecionarProdutoNoEditor = (id: string) => {
@@ -628,25 +690,25 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
       setProdutoPendenteId('');
       return;
     }
+    if(embeddedProduct){onProductCancel?.();return;}
     setModo('lista');
   };
 
   if (modo === 'lista') return <>
-    <PageHeader title="Produtos e serviços" description="Consulte, localize e ajuste o cadastro ou as listas comerciais de cada item." actions={<><button className={styles.secondaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('servico')}>Novo serviço</button><button className={styles.primaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('produto')}>Novo produto</button></>} />
+    <PageHeader title="Produtos e serviços" description="Itens de todos os catálogos ativos em Vendas e Serviços. A disponibilidade é definida na área Catálogos." actions={<><button className={styles.secondaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('servico')}>Novo serviço</button><button className={styles.primaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('produto')}>Novo produto</button></>} />
     <section className={styles.panel}>
       <div className={styles.catalogListTools}>
         <div className={styles.listTabs} role="tablist" aria-label="Tipo de cadastro"><button type="button" role="tab" aria-selected={tipoLista === 'produto'} className={tipoLista === 'produto' ? styles.listTabActive : ''} onClick={() => setTipoLista('produto')}>Produtos <b>{produtosCatalogo.filter((produto) => produto.tipo_item === 'produto').length}</b></button><button type="button" role="tab" aria-selected={tipoLista === 'servico'} className={tipoLista === 'servico' ? styles.listTabActive : ''} onClick={() => setTipoLista('servico')}>Serviços <b>{produtosCatalogo.filter((produto) => produto.tipo_item === 'servico').length}</b></button></div>
-        <div className={styles.listCatalogSelector}><select aria-label="Filtrar por catálogo" value={catalogoFiltroId} onChange={(evento) => { setCatalogoFiltroId(evento.target.value); setProdutosSelecionados([]); setMenuAcao(null); }}><option value="">Todos os catálogos</option>{catalogos.filter((catalogo) => catalogo.ativo).map((catalogo) => <option key={catalogo.id} value={catalogo.id}>{catalogo.nome}</option>)}</select></div>
         <label className={styles.search}><span>Localizar</span><CampoBusca value={buscaLista} onChange={setBuscaLista} placeholder="Código, nome, marca…" /></label>
       </div>
       {quantidadeSelecionada > 0 && <div className={`${styles.batchActions} ${acaoLote === 'mover_catalogo' ? styles.batchActionsMove : ''}`} aria-live="polite">
         <strong className={styles.batchSelectionCount}><b>{quantidadeSelecionada}</b><span>{quantidadeSelecionada === 1 ? 'item selecionado' : 'itens selecionados'}</span></strong>
         <label className={styles.batchActionField}>Ação<select value={acaoLote} disabled={!podeEditar || processandoLote} onChange={(evento) => setAcaoLote(evento.target.value as AcaoLoteCatalogo)}>{acoesLoteCatalogo.map((acao) => <option key={acao.valor} value={acao.valor} disabled={acaoLoteIndisponivel(acao.valor)}>{acao.rotulo}</option>)}</select></label>
-        {acaoLote === 'mover_catalogo' && <label className={styles.batchActionField}>Destino<select value={catalogoDestinoLoteId} disabled={!podeEditar || processandoLote} onChange={(evento) => setCatalogoDestinoLoteId(evento.target.value)}>{catalogos.map((catalogo) => <option key={catalogo.id} value={catalogo.id} disabled={!catalogo.ativo}>{catalogo.nome}{catalogo.ativo ? ' — ativo no Vendas' : ''}{!catalogo.ativo ? ' — inativo' : ''}</option>)}</select></label>}
+        {acaoLote === 'mover_catalogo' && <label className={styles.batchActionField}>Destino<select value={catalogoDestinoLoteId} disabled={!podeEditar || processandoLote} onChange={(evento) => setCatalogoDestinoLoteId(evento.target.value)}>{catalogos.map((catalogo) => <option key={catalogo.id} value={catalogo.id}>{catalogo.nome} — {descricaoDestinosCatalogo(catalogo)}</option>)}</select></label>}
         <button type="button" className={`${styles.secondaryButton} ${styles.batchActionButton}`} disabled={!podeEditar || processandoLote} onClick={() => setProdutosSelecionados([])}>Limpar seleção</button>
         <button type="button" className={`${styles.primaryButton} ${styles.batchActionButton}`} disabled={!podeEditar || processandoLote || acaoSelecionadaIndisponivel} onClick={solicitarAcaoLote}>{processandoLote ? (acaoLote === 'mover_catalogo' ? 'Movendo…' : 'Aplicando…') : acaoLote === 'mover_catalogo' ? 'Mover' : 'Confirmar'}</button>
       </div>}
-      <div className={styles.tableWrap}><table className={styles.catalogProductsTable}><colgroup><col /><col /><col /><col /><col /><col /><col /><col /></colgroup><thead><tr><th className={styles.selectionHeader}><button type="button" disabled={!podeEditar || !idsListaFiltrada.length || processandoLote} aria-label={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} title={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} onClick={alternarTodosListados}>{todosListadosSelecionados ? '−' : '✓'}</button></th><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th>Catálogo</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => { const catalogoProduto = catalogos.find((catalogo) => catalogo.id === produto.catalogo_id); return <tr key={produto.id} className={produtosSelecionados.includes(produto.id) ? styles.selectedRow : undefined}><td className={styles.selectionCell}><input type="checkbox" checked={produtosSelecionados.includes(produto.id)} disabled={!podeEditar || processandoLote} onChange={() => alternarSelecaoProduto(produto.id)} aria-label={`Selecionar ${produto.nome}`} /></td><td title={produto.sku}><b>{produto.sku}</b></td><td title={produto.nome}><b>{produto.nome}</b><small>{produto.unidade}</small></td><td title={[produto.marca, produto.categoria].filter(Boolean).join(' · ')}>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${produto.ativo ? styles.statusActive : styles.statusInactive}`}>{produto.ativo ? 'Ativo' : 'Inativo'}</span></td><td title={catalogoProduto?.nome || 'Catálogo não localizado'}><b>{catalogoProduto?.nome || 'Catálogo não localizado'}</b><small>{catalogoProduto?.ativo ? (produto.disponivel_catalogo ? 'No Vendas' : 'Em estudo') : 'Catálogo desativado'}</small></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar || processandoLote} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcao?.produtoId === produto.id} onClick={(evento) => alternarMenuAcoes(produto.id, evento.currentTarget)}>•••</button>{menuAcao?.produtoId === produto.id && <div ref={menuAcoesRef} className={`${styles.contextMenu} ${styles.contextMenuFloating}`} style={{ top: menuAcao.top, left: menuAcao.left }}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button><button type="button" className={styles.dangerMenuAction} onClick={() => solicitarExclusao(produto)}>Excluir cadastro</button></div>}</td></tr>; })}{!listaFiltrada.length && <tr><td colSpan={8} className={styles.empty}>Nenhum {tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.</td></tr>}</tbody></table></div>
+      <div className={styles.tableWrap}><table className={styles.catalogProductsTable}><colgroup><col /><col /><col /><col /><col /><col /><col /><col /></colgroup><thead><tr><th className={styles.selectionHeader}><button type="button" disabled={!podeEditar || !idsListaFiltrada.length || processandoLote} aria-label={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} title={todosListadosSelecionados ? 'Desmarcar todos os itens listados' : 'Selecionar todos os itens listados'} onClick={alternarTodosListados}>{todosListadosSelecionados ? '−' : '✓'}</button></th><th>Código</th><th>{tipoLista === 'produto' ? 'Produto' : 'Serviço'}</th><th>Marca / categoria</th><th className={styles.numeric}>Preço padrão</th><th>Situação</th><th>Catálogo</th><th aria-label="Ações" /></tr></thead><tbody>{listaFiltrada.map((produto) => { const catalogoProduto = catalogos.find((catalogo) => catalogo.id === produto.catalogo_id); return <tr key={produto.id} className={produtosSelecionados.includes(produto.id) ? styles.selectedRow : undefined}><td className={styles.selectionCell}><input type="checkbox" checked={produtosSelecionados.includes(produto.id)} disabled={!podeEditar || processandoLote} onChange={() => alternarSelecaoProduto(produto.id)} aria-label={`Selecionar ${produto.nome}`} /></td><td title={produto.sku}><b>{produto.sku}</b></td><td title={produto.nome}><b>{produto.nome}</b><small>{produto.unidade}</small></td><td title={[produto.marca, produto.categoria].filter(Boolean).join(' · ')}>{produto.marca || '—'}<small>{produto.categoria || 'Sem categoria'}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td><span className={`${styles.status} ${produto.ativo ? styles.statusActive : styles.statusInactive}`}>{produto.ativo ? 'Ativo' : 'Inativo'}</span></td><td title={catalogoProduto?.nome || 'Catálogo não localizado'}><b>{catalogoProduto?.nome || 'Catálogo não localizado'}</b><small>{produto.disponivel_catalogo ? descricaoDestinosCatalogo(catalogoProduto) : 'Em estudo'}</small></td><td className={styles.menuCell}><button type="button" className={styles.moreButton} disabled={!podeEditar || processandoLote} aria-label={`Ações de ${produto.nome}`} aria-expanded={menuAcao?.produtoId === produto.id} onClick={(evento) => alternarMenuAcoes(produto.id, evento.currentTarget)}>•••</button>{menuAcao?.produtoId === produto.id && <div ref={menuAcoesRef} className={`${styles.contextMenu} ${styles.contextMenuFloating}`} style={{ top: menuAcao.top, left: menuAcao.left }}><button type="button" onClick={() => abrirCadastro(produto)}>Editar cadastro</button><button type="button" onClick={() => abrirPrecos(produto)}>Editar listas de preços</button><button type="button" className={styles.dangerMenuAction} onClick={() => solicitarExclusao(produto)}>Excluir cadastro</button></div>}</td></tr>; })}{!listaFiltrada.length && <tr><td colSpan={8} className={styles.empty}>{!haCatalogoVendasAtivo ? 'Nenhum catálogo está ativo em Vendas e Serviços.' : `Nenhum ${tipoLista === 'produto' ? 'produto' : 'serviço'} localizado.`}</td></tr>}</tbody></table></div>
     </section>
     <Modal open={Boolean(precosDoProduto)} onClose={() => !salvando && setPrecosDoProduto(null)} title="Atualizar listas de preços" description={precosDoProduto ? `${precosDoProduto.sku} · ${precosDoProduto.nome}` : ''}>
       {precosDoProduto && <div className={styles.productPriceList}>{tabelas.filter((tabela) => tabela.ativo).map((tabela) => <label key={tabela.id}><span>{tabela.nome}{tabela.padrao && <small>Preço principal</small>}</span><MoneyInput value={valoresTabela[tabela.id] ?? 0} onChange={(valor) => setValoresTabela((atuais) => ({ ...atuais, [tabela.id]: valor }))} label={`Preço ${tabela.nome}`} disabled={salvando || !podeEditar} /></label>)}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => setPrecosDoProduto(null)}>Cancelar</button><button type="button" className={styles.primaryButton} disabled={salvando || !podeEditar} onClick={() => void salvarListasPrecos()}>{salvando ? 'Salvando…' : 'Salvar preços'}</button></div></div>}
@@ -657,13 +719,13 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
 
   return <>
     <PageHeader title={rascunho.id ? 'Editar produto ou serviço' : 'Novo produto ou serviço'} description="Complete o cadastro, os dados fiscais e a composição de custo." />
-    <ProductStrip produtos={produtos} ativoId={rascunho.id} documento={documento} onSelecionar={selecionarProdutoNoEditor} />
+    {!embeddedProduct && <ProductStrip produtos={produtos} ativoId={rascunho.id} documento={documento} onSelecionar={selecionarProdutoNoEditor} />}
     <fieldset className={styles.editor} disabled={!podeEditar || salvando}>
       <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Identificação</h2></div><span className={`${styles.status} ${!rascunho.ativo ? styles.statusInactive : rascunho.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!rascunho.ativo ? 'Inativo' : rascunho.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></div>
         <div className={styles.identification}><div className={styles.imageBox}>{rascunho.imagem_url ? <Image src={rascunho.imagem_url} alt={`Imagem de ${rascunho.nome || 'cadastro'}`} width={135} height={135} unoptimized /> : <span>{rascunho.tipo_item === 'produto' ? 'Produto' : 'Serviço'}<small>Imagem opcional</small></span>}<input ref={arquivoRef} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => void carregarImagem(e.target.files?.[0])} /><button type="button" className={styles.secondaryButton} onClick={() => arquivoRef.current?.click()}>Escolher imagem</button></div>
           <div className={`${styles.formGrid} ${styles.productIdentificationGrid}`}>
             <Field label="Tipo"><select value={rascunho.tipo_item} onChange={(e) => alterar('tipo_item', e.target.value as TipoItem)}><option value="produto">Produto</option><option value="servico">Serviço</option></select></Field>
-            <Field label="Catálogo"><select value={rascunho.catalogo_id} onChange={(e) => alterar('catalogo_id', e.target.value)}>{catalogos.map((catalogo) => <option key={catalogo.id} value={catalogo.id} disabled={!catalogo.ativo}>{catalogo.nome}{catalogo.ativo ? ' — ativo no Vendas' : ''}{!catalogo.ativo ? ' — inativo' : ''}</option>)}</select></Field>
+            <Field label="Catálogo"><select value={rascunho.catalogo_id} onChange={(e) => alterar('catalogo_id', e.target.value)}>{catalogos.map((catalogo) => <option key={catalogo.id} value={catalogo.id}>{catalogo.nome} — {descricaoDestinosCatalogo(catalogo)}</option>)}</select></Field>
             <Field label="Código interno *"><div ref={sugestoesCodigoRef} className={styles.codeField}><input ref={codigoRef} value={rascunho.sku} onChange={(e) => alterar('sku', e.target.value.toUpperCase())} placeholder={sugestoesCodigo[0]?.codigo || 'Digite o primeiro código'} /><button type="button" className={styles.codeSuggestButton} aria-expanded={sugestoesCodigoAbertas} aria-label="Pesquisar sequências de código desta empresa" onClick={() => setSugestoesCodigoAbertas((abertas) => !abertas)}>Sugerir</button>{sugestoesCodigoAbertas && <div className={styles.codeSuggestions} role="dialog" aria-label="Sugestões de sequência"><strong>Sequências desta empresa</strong>{sugestoesCodigo.length ? <div>{sugestoesCodigo.map((sugestao) => <button key={sugestao.familia} type="button" onClick={() => { alterar('sku', sugestao.codigo); setSugestoesCodigoAbertas(false); }}><b>{sugestao.codigo}</b><span>{sugestao.motivo} · {sugestao.ocorrencias} {sugestao.ocorrencias === 1 ? 'uso' : 'usos'}</span></button>)}</div> : <p>Esta empresa ainda não tem uma sequência reconhecida. Informe o primeiro código.</p>}</div>}</div></Field>
             <Field label="Nome *" wide><input value={rascunho.nome} onChange={(e) => alterar('nome', e.target.value)} /></Field>
             <Field label="Categoria"><input value={rascunho.categoria} onChange={(e) => alterar('categoria', e.target.value)} /></Field>
@@ -677,10 +739,23 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
         <div className={styles.switches}><label><input type="checkbox" checked={rascunho.ativo} onChange={(e) => alterar('ativo', e.target.checked)} /> Cadastro ativo</label><label><input type="checkbox" checked={rascunho.disponivel_catalogo} onChange={(e) => alterar('disponivel_catalogo', e.target.checked)} /> Disponível no catálogo</label><small>Marcado: o item pode aparecer no Catálogo. Desmarcado: fica em estudo, disponível somente para organização interna.</small></div>
       </section>
 
-      <section className={styles.panel}><div className={styles.panelTitle}><div><h2>{rascunho.tipo_item === 'produto' ? 'Identificação fiscal do produto' : 'Emissão fiscal do serviço'}</h2><p>{rascunho.tipo_item === 'produto' ? 'NCM e unidade tributável podem ser completados depois; são necessários para habilitar o item na emissão fiscal.' : 'A classificação, incidência e tributação do serviço são definidas na emissão da NFS-e, conforme o município, a operação e a situação tributária da empresa.'}</p></div></div>
-        {rascunho.tipo_item === 'produto' && <div className={styles.formGrid}>
+      <section id="cadastro-fiscal-produto" className={styles.panel}><div className={styles.panelTitle}><div><h2>{rascunho.tipo_item === 'produto' ? 'Identificação fiscal do produto' : 'Emissão fiscal do serviço'}</h2><p>{rascunho.tipo_item === 'produto' ? 'NCM e unidade tributável podem ser completados depois; são necessários para habilitar o item na emissão fiscal.' : 'A classificação, incidência e tributação do serviço são definidas na emissão da NFS-e, conforme o município, a operação e a situação tributária da empresa.'}</p></div></div>
+        {rascunho.tipo_item === 'produto' && <div className={`${styles.formGrid} ${styles.fiscalGrid}`}>
+          <Field label="Configuração tributária" wide><select value={fiscalHerdado ? 'empresa' : 'produto'} onChange={(e) => alterar('usar_fiscal_empresa', e.target.value === 'empresa')}><option value="empresa">Usar dados fiscais da empresa</option><option value="produto">Personalizar neste produto</option></select></Field>
           <Field label="NCM"><input value={rascunho.ncm} onChange={(e) => alterar('ncm', e.target.value.replace(/\D/g, '').slice(0, 8))} inputMode="numeric" placeholder="00000000" maxLength={8} /></Field>
-          <Field label="Unidade tributável"><input value={rascunho.unidade_tributavel} onChange={(e) => alterar('unidade_tributavel', e.target.value)} placeholder="UN" maxLength={20} /></Field>
+          <Field label="CEST"><input value={rascunho.cest} onChange={(e) => alterar('cest', e.target.value.replace(/\D/g, '').slice(0, 7))} inputMode="numeric" maxLength={7} /></Field>
+          <Field label="Unidade tributável"><input value={rascunho.unidade_tributavel} onChange={(e) => alterar('unidade_tributavel', e.target.value)} placeholder={rascunho.unidade || 'UN'} maxLength={20} /></Field>
+          <Field label="CFOP dentro da UF"><input readOnly={fiscalHerdado} value={fiscalHerdado ? 'Conforme regra da operação' : rascunho.cfop_padrao} onChange={(e) => alterar('cfop_padrao', e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="Conforme regra da operação" maxLength={fiscalHerdado ? undefined : 4} /></Field>
+          <Field label="CFOP fora da UF"><input readOnly={fiscalHerdado} value={fiscalHerdado ? 'Conforme regra da operação' : rascunho.cfop_interestadual || ''} onChange={(e) => alterar('cfop_interestadual', e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="Conforme regra da operação" maxLength={fiscalHerdado ? undefined : 4} /></Field>
+          {([
+            ['origem_mercadoria', 'Origem da mercadoria', 'originCode', 1],
+            ['csosn', 'CSOSN do ICMS', 'icmsCode', 3],
+            ['cst', 'CST do ICMS', 'icmsCode', 2],
+            ['cst_pis', 'CST do PIS', 'pisCst', 2],
+            ['cst_cofins', 'CST da COFINS', 'cofinsCst', 2],
+            ['cst_ibs_cbs', 'CST IBS/CBS', 'ibsCbsCst', 3],
+            ['classificacao_ibs_cbs', 'Classificação IBS/CBS', 'ibsCbsClassification', 6],
+          ] as const).filter(([campo]) => campo !== ((perfilFiscal as {regime_tributario?: string}).regime_tributario === 'simples_nacional' || (perfilFiscal as {regime_tributario?: string}).regime_tributario === 'mei_simei' ? 'cst' : 'csosn')).map(([campo, rotulo, efetivo, limite]) => <Field key={campo} label={rotulo}><input readOnly={fiscalHerdado} value={fiscalHerdado ? fiscalEfetivo[efetivo] : rascunho[campo]} onChange={(e) => alterar(campo, e.target.value.replace(/\D/g, '').slice(0, limite))} placeholder={fiscalHerdado ? 'Não informado na empresa' : fiscalEfetivo[efetivo] || 'Usar padrão da empresa'} inputMode="numeric" maxLength={limite} /></Field>)}
         </div>}
       </section>
 
@@ -691,7 +766,7 @@ function ProdutosView({ companyId, catalogoId, catalogos, produtos, fornecedores
       <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Formação do preço</h2><p>Percentuais próprios deste produto ou serviço.</p></div></div><div className={styles.priceParams}><Field label="Custos indiretos"><PercentInput value={composicao.indiretos} onChange={(valor) => setComposicao({ ...composicao, indiretos: valor })} /></Field><Field label="Impostos"><PercentInput value={composicao.impostos} onChange={(valor) => setComposicao({ ...composicao, impostos: valor })} /></Field><Field label="Taxas e comissões"><PercentInput value={composicao.taxas} onChange={(valor) => setComposicao({ ...composicao, taxas: valor })} /></Field><Field label="Margem desejada"><PercentInput value={composicao.margem} onChange={(valor) => setComposicao({ ...composicao, margem: valor })} /></Field></div>
         <div className={styles.priceResults}><div><span>Custo direto</span><b>{formatarMoeda(calculo.direto)}</b></div><div><span>Custo total</span><b>{formatarMoeda(calculo.total)}</b></div><div className={styles.priceHighlight}><span>Venda interna calculada</span><strong>{calculo.valido ? formatarMoeda(calculo.preco) : 'Revisar percentuais'}</strong></div><div><span>Preço de venda da empresa</span><b>{formatarMoeda(rascunho.preco_venda)}</b><button type="button" className={styles.linkButton} disabled={!calculo.valido} onClick={() => alterar('preco_venda', calculo.preco)}>Usar preço calculado</button></div></div>
       </section>
-      <footer className={styles.saveBar}>{rascunho.id ? <div className={styles.saveDangerActions}>{rascunho.ativo && <button type="button" className={styles.dangerLink} onClick={() => setConfirmarInativacao(true)}>Inativar cadastro</button>}<button type="button" className={styles.dangerLink} onClick={() => solicitarExclusao(rascunho)}>Excluir cadastro</button></div> : <span />}
+      <footer className={styles.saveBar}>{rascunho.id && !embeddedProduct ? <div className={styles.saveDangerActions}>{rascunho.ativo && <button type="button" className={styles.dangerLink} onClick={() => setConfirmarInativacao(true)}>Inativar cadastro</button>}<button type="button" className={styles.dangerLink} onClick={() => solicitarExclusao(rascunho)}>Excluir cadastro</button></div> : <span />}
         <div><small>Salvar registra o cadastro e a composição em uma única ação.</small><button type="button" className={styles.secondaryButton} onClick={voltarParaLista}>Cancelar</button><button type="button" className={styles.primaryButton} onClick={() => void salvar()}>Salvar</button></div></footer>
     </fieldset>
     <ModalConfirmacao aberto={confirmarInativacao} titulo={`Inativar ${rascunho.nome || 'cadastro'}?`} mensagem="O item ficará inativo no Catálogo e em Custos. Composição e histórico serão preservados para consulta e eventual reativação." textoCancelar="Manter ativo" textoConfirmar="Inativar" carregando={salvando} corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => setConfirmarInativacao(false)} aoConfirmar={() => void inativar()} />

@@ -165,6 +165,7 @@ function validateTransition(current, toState, patch) {
     if (!ALLOWED_PATCH_FIELDS.has(key) || SENSITIVE_KEY.test(key)) errors.push(error('AV-FISCAL-LIFECYCLE-PATCH', `patch.${key}`, 'O campo não pertence ao contrato seguro de transição fiscal.'));
   }
   if (!FISCAL_EMISSION_STATES.includes(next)) errors.push(error('AV-FISCAL-LIFECYCLE-STATE', 'toState', 'O estado fiscal solicitado não é reconhecido.'));
+  if (current.failureCode === 'AV-DRAFT-DELETED') errors.push(error('AV-FISCAL-DRAFT-DELETED','state','Este rascunho foi excluído. Inicie uma nova nota.'));
   if (!TRANSITIONS[current.state]?.includes(next)) errors.push(error('AV-FISCAL-LIFECYCLE-TRANSITION', 'toState', `A transição de ${current.state} para ${next || 'estado vazio'} não é permitida.`));
   if (current.reservationId || current.number || current.series) {
     for (const field of IMMUTABLE_AFTER_NUMBER) {
@@ -250,6 +251,43 @@ export function createFiscalEmissionLifecycleService({ repository = createDisabl
   }
   return Object.freeze({
     id: 'avantalab-fiscal-emission-lifecycle-v1',
+    /** Somente retorno 217 da consulta autenticada ao autorizador, nunca ausência de resposta. */
+    async resumeUnreceivedSubmission(input = {}) {
+      const { companyId, emissionId, operationKey, expectedVersion, query } = input;
+      const invalid = () => ({ ok: false, errors: [error('AV-FISCAL-RESUME-PROOF', 'query', 'A retomada exige confirmação da SEFAZ de que esta mesma nota não foi recebida.')] });
+      if (!companyId || !emissionId || !Number.isSafeInteger(expectedVersion) || expectedVersion < 1
+        || !/^[A-Za-z0-9:_-]{8,120}$/.test(operationKey || '')
+        || query?.valid !== true || query.networkAttempted !== true || query.responseReceived !== true
+        || query.kind !== 'protocol' || query.status !== '217' || query.environment !== '2' || query.stateCode !== '35'
+        || !/^35\d{42}$/.test(query.queriedAccessKey || '') || (query.requestedAccessKey && query.requestedAccessKey !== query.queriedAccessKey) || query.authorized || query.canceled || query.protocolStatus || query.protocolNumber) return invalid();
+      if (!repository?.configured || typeof repository.runInTransaction !== 'function') return unavailable();
+      const at = clock();
+      const operation = { emissionId, operationType: 'transition', requestHash: requestHash({ companyId, emissionId, expectedVersion, action: 'resume_unreceived', accessKey: query.queriedAccessKey }) };
+      return repository.runInTransaction(async tx => {
+        await tx.lockKey?.('operation', companyId, operationKey);
+        const prior = await tx.getOperation(companyId, operationKey);
+        if (prior) {
+          if (!matchesOperation(prior, operation)) return invalid();
+          const current = await tx.getEmission(emissionId);
+          return current?.companyId === companyId ? { ok: true, reused: true, emission: publicEmission(current) } : invalid();
+        }
+        const current = await tx.getEmission(emissionId, { forUpdate: true });
+        if (!current || current.companyId !== companyId || current.version !== expectedVersion
+          || current.documentType !== 'nfe' || current.environment !== 'homologacao'
+          || current.state !== 'submitted' || current.accessKey !== query.queriedAccessKey
+          || current.protocolNumber || current.authorizedAt || current.cancellationProtocol || current.receiptNumber
+          || !current.reservationId || !current.number || !current.series) return invalid();
+        const signed = await tx.findArtifact(companyId, emissionId, 'signed_xml');
+        if (!signed || signed.checksum !== current.signedChecksum) return invalid();
+        // Preserva XML assinado, chave, reserva e histórico da tentativa. A consulta não transmite.
+        const next = { ...current, state: 'signed', statusCode: '217', statusReason: text(query.reason).slice(0, 1000), version: current.version + 1, updatedAt: at };
+        const updated = await tx.updateEmission(next, { expectedVersion: current.version });
+        if (updated === false) throw Object.assign(new Error('A emissão mudou durante a consulta.'), { code: '40001' });
+        await tx.appendEvent({ companyId, emissionId, sequence: next.version, fromState: current.state, toState: 'signed', eventType: 'emission.not_received_confirmed', actorId: null, publicPayload: { statusCode: '217', authority: 'SEFAZ/SP', environment: 'homologacao', sameNumberPreserved: true, automaticTransmission: false }, occurredAt: at });
+        await tx.insertOperation({ companyId, operationKey, ...operation, resultingVersion: next.version, createdAt: at });
+        return { ok: true, reused: false, emission: publicEmission(next) };
+      });
+    },
     async create(input = {}) {
       const validation = validateCreate(input);
       const payload = safePublicPayload(input.publicPayload);
@@ -409,7 +447,7 @@ export function createFiscalEmissionLifecycleService({ repository = createDisabl
         if (current.state !== 'signed' || current.accessKey !== accessKey || current.signedChecksum !== signedChecksum) return { ok: false, valid: false, persisted: false, reused: false, emission: publicEmission(current), attempt: null, errors: [error('AV-FISCAL-LIFECYCLE-SUBMISSION-STATE', 'state', 'Somente a versão assinada e íntegra da NF-e pode iniciar o envio.')] };
         const signedArtifact = await tx.findArtifact(companyId, emissionId, 'signed_xml');
         if (!signedArtifact || signedArtifact.checksum !== signedChecksum) return { ok: false, valid: false, persisted: false, reused: false, emission: publicEmission(current), attempt: null, errors: [error('AV-FISCAL-LIFECYCLE-SUBMISSION-ARTIFACT', 'artifact', 'O XML assinado imutável não está registrado para esta emissão.')] };
-        const validation = validateTransition(current, 'submitted', { batchId, submittedAt: at });
+        const validation = validateTransition(current, 'submitted', { batchId, submittedAt: at, statusCode: '', statusReason: '' });
         if (!validation.valid) throw Object.assign(new Error('A tentativa não corresponde ao ciclo da emissão.'), { code: 'AV-FISCAL-SUBMISSION-CONTRACT' });
         const attempt = await tx.insertTransmissionAttempt({ companyId, emissionId, operationKey, accessKey, signedChecksum, batchId, startedAt: at });
         if (!attempt) throw Object.assign(new Error('A tentativa de transmissão não foi registrada.'), { code: 'AV-FISCAL-SUBMISSION-ATTEMPT' });

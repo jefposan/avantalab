@@ -6,7 +6,7 @@
     "dev": "next dev",
     "dev:solicitacao-voz": "npm --prefix \"../AvantaLab Projetos/prototipos/solicitacao-voz\" run dev",
     "dev:vendas-fiscal": "node scripts/iniciar-vendas-fiscal-local.mjs",
-    "build": "node scripts/verificar-padrao-avanta.mjs && node scripts/verificar-conhecimento-ava.mjs && node scripts/verificar-revisao-avantavendas.mjs && npm test && node scripts/verificar-acesso-mobile.mjs && node scripts/verificar-acesso-web.mjs && node scripts/verificar-agenda-vendas.mjs && node scripts/verificar-interface-vendas.mjs && node scripts/verificar-notificacoes-perfil.mjs && node scripts/gerar-mobile-otimizado.mjs && node scripts/gerar-vendas-otimizado.mjs && next build --webpack",
+    "build": "node scripts/verificar-padrao-avanta.mjs && node scripts/verificar-conhecimento-ava.mjs && node scripts/verificar-revisao-avantavendas.mjs && npm test && node scripts/verificar-acesso-mobile.mjs && node scripts/verificar-acesso-web.mjs && node scripts/verificar-agenda-vendas.mjs && node scripts/verificar-interface-vendas.mjs && node --conditions=react-server --import ./scripts/carregar-servidor-typescript.mjs scripts/validar-atendimento-jeff.mjs && node scripts/verificar-notificacoes-perfil.mjs && node scripts/gerar-mobile-otimizado.mjs && node scripts/gerar-vendas-otimizado.mjs && next build --webpack",
     "verificar:padrao-avanta": "node scripts/verificar-padrao-avanta.mjs",
     "verificar:ava": "node scripts/verificar-conhecimento-ava.mjs",
     "verificar:ava-chat": "node --no-warnings --experimental-strip-types --test tests/ava/*.test.mjs",
@@ -24,8 +24,8 @@
     "test": "node scripts/executar-testes.mjs",
     "test:seguranca": "node scripts/executar-testes.mjs tests/admin tests/usuarios tests/perfis tests/modulos tests/infra tests/mobile/oauth-nativo-confiavel.test.mjs tests/mobile/sessao-unica-supabase.test.mjs tests/mobile/recuperacao-sessao-perfil.test.mjs tests/mobile/usuarios-acessos.test.mjs tests/avantavendas/login-persistencia-oauth.test.mjs",
     "lint": "eslint",
-    "publicar:vercel": "node scripts/publicar-vercel.mjs",
-    "verificar:historico-migracoes": "node docs/auditorias/reconciliacao-2026-11-04/auditar-registros.mjs"
+    "verificar:historico-migracoes": "node docs/auditorias/reconciliacao-2026-11-04/auditar-registros.mjs",
+    "publicar:vercel": "node scripts/publicar-vercel.mjs"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.15.5",

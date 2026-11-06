@@ -90,6 +90,7 @@ divisor ou agrupamento sem identidade própria.
   `aria-describedby`, para não herdar sua opacidade. Não é clicável nem animado.
 - Tabela fornece cabeçalho, vazio, carregamento e comportamento responsivo.
 - Modal fornece título, fechamento acessível, foco inicial e restauração do foco.
+- `ModalConfirmacao` aceita `acaoAdicional` opcional (`texto` e `aoClicar`) para uma terceira ação abaixo do par principal, com alvo mínimo de 44px, tema e bloqueio durante gravação. Ausente, mantém os dois botões anteriores. Escape/clique externo preservam o cancelamento individual, sem acionar a ação adicional.
 - `ModalConfirmacao` aceita `centralizarTexto` opcional para centralizar cabeçalho e mensagem no consumidor; ausente, mantém alinhamento anterior. Mensagem vazia durante progresso usa o título como nome acessível.
 - `ModalConfirmacao` aceita `mostrarProgresso` para indicador oficial e status acessível durante a operação, e `ocultarCancelar` para resultado com uma ação de fechamento. São opções locais; sem elas os demais fluxos permanecem iguais. Durante o envio, Escape/clique externo continuam bloqueados e o foco permanece no modal.
 - `CardExpandidoModal` aceita `variante="avisos"` para o painel compacto do cabeçalho, com a geometria do painel de avisos da Gestão (fundo translúcido, superfície arredondada, borda e sombra). `darkMode` resolve a superfície dessa variante; a apresentação centralizada anterior permanece padrão. Mantém Escape, clique externo, contenção e restauração de foco. Primeira reutilização: pendências de Marketplaces.

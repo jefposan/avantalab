@@ -54,6 +54,7 @@ function mapCustomer(row) {
     state: row.uf || '',
     sellerId: row.vendedor_id || '',
     paymentTerms: row.condicao_pagamento || '',
+    ...(Object.hasOwn(row,'tabela_preco_id')?{priceTableId:row.tabela_preco_id||''}:{}),
     notes: row.observacoes || '',
     status: row.situacao,
     version: Number(row.versao),
@@ -153,12 +154,12 @@ export function createPostgresCommercialCustomerRepository({ pool } = {}) {
               empresa_id,codigo,tipo_pessoa,documento_tipo,documento,razao_social,nome_fantasia,
               nome_exibicao,inscricao_estadual,inscricao_municipal,indicador_ie,consumidor_final,email,telefone,
               contato_principal,cep,logradouro,numero,complemento,bairro,municipio,municipio_ibge,
-              uf,vendedor_id,condicao_pagamento,observacoes,situacao,criado_por,atualizado_por
+              uf,vendedor_id,condicao_pagamento,observacoes,situacao,criado_por,atualizado_por${Object.hasOwn(customer,'priceTableId')?',tabela_preco_id':''}
             ) values (
               $1,$28,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,
-              $22,$23,$24,$25,$26,$27,$27
+              $22,$23,$24,$25,$26,$27,$27${Object.hasOwn(customer,'priceTableId')?',$29':''}
             ) returning *
-          `, [...values, code]);
+          `, [...values, code,...(Object.hasOwn(customer,'priceTableId')?[customer.priceTableId||null]:[])]);
           const created = mapCustomer(result.rows?.[0]);
           await appendEvent(client, {
             companyId: customer.companyId,
@@ -186,9 +187,9 @@ export function createPostgresCommercialCustomerRepository({ pool } = {}) {
               consumidor_final=$11,email=$12,telefone=$13,contato_principal=$14,cep=$15,
               logradouro=$16,numero=$17,complemento=$18,bairro=$19,municipio=$20,
               municipio_ibge=$21,uf=$22,vendedor_id=$23,condicao_pagamento=$24,
-              observacoes=$25,situacao=$26,atualizado_por=$27
+              observacoes=$25,situacao=$26,atualizado_por=$27${Object.hasOwn(customer,'priceTableId')?',tabela_preco_id=$30':''}
             where empresa_id=$1 and id=$28 and versao=$29 returning *
-          `, [...values, customerId, expectedVersion]);
+          `, [...values, customerId, expectedVersion,...(Object.hasOwn(customer,'priceTableId')?[customer.priceTableId||null]:[])]);
           if (!result.rows?.[0]) {
             const current = await client.query('select versao from public.vendas_clientes where empresa_id=$1 and id=$2', [companyId, customerId]);
             const error = new Error(current.rows?.[0]

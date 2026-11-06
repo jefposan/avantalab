@@ -1,0 +1,66 @@
+import {createFiscalDraftDeleteService} from '../../app/vendas/lib/server/fiscal-draft-delete.mjs';
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
+import { createCommercialOperationService } from '../../app/vendas/lib/server/commercial-operation-service.mjs';
+import { createPostgresCommercialOperationRepository } from '../../app/vendas/lib/server/commercial-operation-repository.mjs';
+import { createPostgresCommercialSalesOrderLifecycleRepository } from '../../app/vendas/lib/server/commercial-sales-order-lifecycle.mjs';
+import { createPostgresCommercialSalesOrderBillingRepository } from '../../app/vendas/lib/server/commercial-sales-order-billing.mjs';
+import { createOrderFiscalDraftService, createPostgresOrderFiscalDraftRepository } from '../../app/vendas/lib/server/order-fiscal-draft.mjs';
+import { fiscalDraftOriginReady } from '../../app/vendas/lib/server/fiscal-draft-origin.mjs';
+
+const companyId='11111111-1111-4111-8111-111111111111', actorId='22222222-2222-4222-8222-222222222222', customerId='33333333-3333-4333-8333-333333333333', productId='55555555-5555-4555-8555-555555555555', catalogId='66666666-6666-4666-8666-666666666666';
+const context={companyId,actorId,moduleId:'vendas',active:true,moduleActive:true,effectivePermissions:{'fiscal.prepare':true,'sales.view':true,'sales.create':true}};
+const customer={id:customerId,status:'ativo',document:'12345678901',legalName:'Cliente teste',displayName:'Cliente teste'};
+const issuer={establishmentId:companyId,document:'12345678000190',legalName:'Empresa teste',state:'SP',cityCode:'3550308'};
+const product={id:productId,sku:'P1',name:'Produto teste',type:'produto',unit:'UN',salePrice:99,active:true,published:true,fiscalReady:true,fiscal:{ncm:'96032900',csosn:'102',taxableUnit:'UN'}};
+
+test('nota do pedido confirmado fica vinculada sem faturar, repor ou baixar estoque; faturamento posterior reutiliza a nota',async()=>{
+ const db=new PGlite();try{
+  await db.exec(`create schema fiscal_private; create table fiscal_private.draft_deletions(company_id uuid,draft_id uuid); create schema auth;create role anon;create role authenticated;create role service_role;
+   create table auth.users(id uuid primary key);create table empresas(id uuid primary key);
+   create table custos_tabelas_preco(id uuid primary key,empresa_id uuid);create table vendas_mobile_catalogos(id uuid primary key,empresa_id uuid);create table vendas_mobile_catalogo_produtos(id uuid primary key,catalogo_id uuid);`);
+  await db.exec(readFileSync('supabase/migrations/20260905152000_vendas_comercial.sql','utf8'));
+  await db.exec(readFileSync('supabase/migrations/20261105150000_vendas_reserva_reabertura.sql','utf8'));
+  await db.exec(`create table vendas_fiscal_rascunho_cancelamentos(empresa_id uuid,rascunho_id uuid);`);
+  await db.query('insert into empresas values($1)',[companyId]);await db.query('insert into auth.users values($1)',[actorId]);
+  await db.query('insert into vendas_mobile_catalogos values($1,$2)',[catalogId,companyId]);await db.query('insert into vendas_mobile_catalogo_produtos values($1,$2)',[productId,catalogId]);
+  await db.query(`insert into vendas_clientes(id,empresa_id,codigo,tipo_pessoa,documento_tipo,documento,razao_social,nome_exibicao) values($1,$2,1,'fisica','cpf','12345678901','Cliente teste','Cliente teste')`,[customerId,companyId]);
+  const pool={query:(...a)=>db.query(...a),connect:async()=>({query:(...a)=>db.query(...a),release(){}})};
+  const resolvers={customerResolver:async()=>customer,catalogResolver:async()=>({items:[product]}),issuerResolver:async()=>issuer};
+  const orders=createCommercialOperationService({repository:createPostgresCommercialOperationRepository({pool}),...resolvers});
+  const created=await orders.create({context,input:{type:'pedido',channel:'vendas',customerId,fiscalDocument:'nfe',reserveStock:false,idempotencyKey:'teste:pedido:independente',items:[{catalogItemId:productId,quantity:2,unitPrice:99,discountUnit:1}],payment:{method:'pix',installments:1,firstDueDate:'2026-11-05'}}});
+  assert.equal(created.ok,true,JSON.stringify(created.errors));
+  const orderId=created.operation.id,load=async()=>(await db.query('select * from vendas_operacoes where id=$1',[orderId])).rows[0];
+  const lifecycle=createPostgresCommercialSalesOrderLifecycleRepository({pool});
+  await lifecycle.confirm({companyId,actorId,orderId,localId:'',expectedVersion:(await load()).versao,idempotencyKey:'teste:confirmar:independente'});
+  const before=await load(),service=createOrderFiscalDraftService({repository:createPostgresOrderFiscalDraftRepository({pool}),...resolvers});
+  const input={originOrderId:orderId,expectedVersion:Number(before.versao),items:[{unitPrice:1}],issuer:{document:'fraude'},moveStock:true};
+  assert.equal((await service.create({context:{...context,effectivePermissions:{}},input})).ok,false);
+  assert.equal((await service.create({context:{...context,companyId:catalogId},input})).ok,false);
+  assert.equal((await service.create({context,input:{...input,expectedVersion:99}})).ok,false);
+  const saved=await service.create({context,input});assert.equal(saved.ok,true,JSON.stringify(saved.errors));
+  const row=(await db.query('select * from vendas_fiscal_rascunhos')).rows[0];
+  assert.equal(row.operacao_id,orderId);assert.equal(row.origem_tipo,'pedido');assert.equal(row.emitente_retrato.document,issuer.document);assert.equal(row.totais_retrato.total,196);assert.equal(row.totais_retrato.independentIssuance,true);
+  assert.deepEqual(await load(),before,'preparação fiscal não altera o pedido nem sua versão');
+  for(const table of ['vendas_contas_receber','vendas_estoque_movimentos','vendas_estoque_reservas'])assert.equal(Number((await db.query('select count(*) n from '+table)).rows[0].n),0,table);
+  assert.equal((await service.create({context,input})).document.draftId,saved.document.draftId);
+  assert.equal(Number((await db.query('select count(*) n from vendas_fiscal_rascunhos')).rows[0].n),1);
+  const origin={id:row.id,operationId:orderId,originType:'pedido',operationStatus:'confirmado',totalsSnapshot:row.totais_retrato};
+  assert.equal(fiscalDraftOriginReady(origin),true);assert.equal(fiscalDraftOriginReady({...origin,totalsSnapshot:{}}),false);assert.equal(fiscalDraftOriginReady({...origin,operationStatus:'cancelado'}),false);
+  await lifecycle.startSeparation({companyId,actorId,orderId,expectedVersion:(await load()).versao,idempotencyKey:'teste:separar:independente'});
+  const billing=createPostgresCommercialSalesOrderBillingRepository({pool});
+  const billed=await billing.invoice({companyId,actorId,orderId,expectedVersion:(await load()).versao,idempotencyKey:'teste:faturar:independente',issuerSnapshot:issuer,moveStock:false});
+  assert.equal(billed.fiscalDraftId,saved.document.draftId);
+  assert.equal(Number((await db.query('select count(*) n from vendas_fiscal_rascunhos')).rows[0].n),1);
+  await db.exec('drop table fiscal_private.draft_deletions;create role avanta_vendas_runtime;');
+  await db.exec(readFileSync('supabase/migrations/20260905153000_vendas_fiscal_privado.sql','utf8'));
+  await db.exec(readFileSync('supabase/migrations/20260905154000_vendas_fiscal_recuperacao.sql','utf8'));
+  await db.exec(readFileSync('supabase/migrations/20261106031000_vendas_exclusao_rascunho.sql','utf8'));
+  const beforeDelete=await load();
+  const deleted=await createFiscalDraftDeleteService({pool}).remove({context:{...context,effectivePermissions:{...context.effectivePermissions,'fiscal.cancel':true}},draftId:saved.document.draftId,expectedVersion:0,confirmation:'EXCLUIR_RASCUNHO_NFE'});assert.equal(deleted.ok,true);
+  const restarted=await service.create({context,input:{originOrderId:orderId,expectedVersion:Number(beforeDelete.versao)}});assert.equal(restarted.ok,true,JSON.stringify(restarted.errors));assert.notEqual(restarted.document.draftId,saved.document.draftId);assert.equal((await service.create({context,input:{originOrderId:orderId,expectedVersion:Number(beforeDelete.versao)}})).document.draftId,restarted.document.draftId);assert.deepEqual(await load(),beforeDelete);
+  assert.equal(Number((await db.query('select count(*) n from vendas_fiscal_rascunhos')).rows[0].n),2,'a tentativa antiga fica somente na auditoria');
+ }finally{await db.close();}
+});

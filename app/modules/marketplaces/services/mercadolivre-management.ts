@@ -351,3 +351,46 @@ export async function manageListing(db: SupabaseClient, connection: SellerConnec
     throw new MarketplaceError(409, 'invalid_state', 'A ação não é permitida para a situação atual.');
   }
 }
+
+/** Transporte isolado do atendimento. Não muda os contratos de anúncios, fiscal ou estoque. */
+export async function mlServiceRequest(db: SupabaseClient, connection: SellerConnection, path: string,
+  options: { method?: 'GET' | 'POST'; body?: unknown; file?: File; binary?: boolean } = {}): Promise<{ status: number; payload: unknown; stream?: ReadableStream<Uint8Array>; mime?: string }> {
+  const url = new URL(path, 'https://api.mercadolibre.com');
+  const allowed = /^\/messages\/(?:packs\/\d{1,24}\/sellers\/\d{1,24}|action_guide\/packs\/\d{1,24}(?:\/(?:option|caps_available))?|attachments(?:\/[A-Za-z0-9_.-]{1,125})?)$/.test(url.pathname)
+    || /^\/post-purchase\/v1\/claims\/(?:search|\d{1,24}(?:\/(?:messages|evidences|attachments(?:\/[A-Za-z0-9_.-]{1,125}(?:\/download)?)?|returns\/attachments|actions\/(?:send-message|open-dispute|evidences)|partial-refund\/available-offers|expected-resolutions\/(?:refund|allow-return|partial-refund)))?)$/.test(url.pathname);
+  const returnResource = /^\/post-purchase\/v2\/claims\/\d{1,24}\/returns$/.test(url.pathname) || /^\/post-purchase\/v1\/returns\/(?:reasons|\d{1,24}\/(?:return-review|reviews|attachments))$/.test(url.pathname);
+  if (!path.startsWith('/') || path.startsWith('//') || url.origin !== 'https://api.mercadolibre.com' || !(allowed || returnResource)) throw new MarketplaceError(400, 'invalid_service_resource', 'Recurso de atendimento inválido.');
+  const method = options.method || 'GET';
+  let token = await accessToken(db, connection);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const form = options.file ? new FormData() : null;
+    if (form && options.file) form.set('file', options.file, options.file.name);
+    let response: Response;
+    try { response = await fetch(url, { method, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(method === 'GET' && !options.binary ? 8_000 : 20_000),
+      headers: { Authorization: `Bearer ${token}`, ...(!form ? { Accept: options.binary ? '*/*' : 'application/json', ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}) } : {}) },
+      ...(method === 'POST' ? { body: form || JSON.stringify(options.body || {}) } : {}) }); }
+    catch { throw new MarketplaceError(503, method === 'POST' ? 'mutation_uncertain' : 'provider_unavailable', method === 'POST' ? 'O retorno do Mercado Livre não chegou. A solicitação permanece registrada; consulte antes de repetir.' : 'Não foi possível atualizar o atendimento no Mercado Livre.'); }
+    if (response.status === 401 && attempt === 0) { token = await accessToken(db, connection, true); continue; }
+    if (options.binary && response.ok) {
+      const mime = (response.headers.get('content-type') || '').split(';')[0].toLowerCase();
+      if (!['image/jpeg','image/png','image/gif','image/heic','image/heif','application/pdf'].includes(mime)) throw new MarketplaceError(409, 'invalid_attachment', 'O Mercado Livre não confirmou um anexo suportado.');
+      if (!response.body || Number(response.headers.get('content-length') || 0) > 25 * 1024 * 1024) throw new MarketplaceError(409, 'invalid_attachment', 'O anexo recebido é inválido ou excede o limite.');
+      let received = 0;
+      const stream = response.body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({ transform(chunk, controller) { received += chunk.byteLength; if (received > 25 * 1024 * 1024) throw new Error('O anexo excede o limite.'); controller.enqueue(chunk); } }));
+      return { status: response.status, payload: null, stream, mime };
+    }
+    const raw = await response.text();
+    let payload: unknown = null;
+    try { if (raw) payload = JSON.parse(raw); }
+    catch { throw new MarketplaceError(503, method === 'POST' ? 'mutation_uncertain' : 'invalid_response', 'O Mercado Livre devolveu um retorno incompleto. Atualize o atendimento antes de repetir.'); }
+    if (!response.ok) {
+      const error = objectValue(payload);
+      const providerCode = [error.cause,error.code,error.error,error.message].find(v => typeof v === 'string' && /^[a-z_]{1,100}$/.test(v)) || '';
+      if (response.status >= 500 && method === 'POST') throw new MarketplaceError(503, 'mutation_uncertain', 'O Mercado Livre não confirmou o resultado. A solicitação permanece registrada; consulte antes de repetir.');
+      throw new MarketplaceError(response.status === 429 ? 429 : response.status === 403 ? 403 : 409, `service_${providerCode || response.status}`,
+        response.status === 403 ? 'O Mercado Livre não liberou esta ação. Atualize o atendimento e confira a autorização desta conta.' : response.status === 429 ? 'O Mercado Livre limitou as consultas. Aguarde antes de tentar novamente.' : 'O Mercado Livre não aceitou a solicitação. Atualize o atendimento e revise os dados.');
+    }
+    return { status: response.status, payload };
+  }
+  throw new MarketplaceError(409, 'reconnect', 'Reconecte esta conta para acessar o atendimento.');
+}

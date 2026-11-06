@@ -23,6 +23,7 @@ type ModalConfirmacaoProps = {
   variante?: 'destrutiva' | 'primaria' | 'alerta';
   aoCancelar: () => void | Promise<void>;
   aoConfirmar: () => void | Promise<void>;
+  acaoAdicional?: { texto: string; aoClicar: () => void | Promise<void> };
 };
 
 export default function ModalConfirmacao({
@@ -43,6 +44,7 @@ export default function ModalConfirmacao({
   variante = 'destrutiva',
   aoCancelar,
   aoConfirmar,
+  acaoAdicional,
 }: ModalConfirmacaoProps) {
   const tituloId = useId();
   const mensagemId = useId();
@@ -187,6 +189,14 @@ export default function ModalConfirmacao({
   {carregando ? "Aguarde..." : textoConfirmar}
 </button>
           </div>
+          {acaoAdicional && <button
+            type="button"
+            onClick={acaoAdicional.aoClicar}
+            disabled={carregando}
+            className={`mt-3 min-h-11 w-full rounded-xl border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${cancelarTema}`}
+          >
+            {acaoAdicional.texto}
+          </button>}
         </div>
       </DraggableModalCard>
     </div>

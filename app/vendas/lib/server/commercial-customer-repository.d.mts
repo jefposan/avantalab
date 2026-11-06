@@ -6,7 +6,7 @@ export type CommercialCustomerRecord = {
   stateRegistrationIndicator: 'contribuinte_icms' | 'contribuinte_isento' | 'nao_contribuinte';
   email: string; phone: string; primaryContact: string; postalCode: string; street: string;
   number: string; complement: string; district: string; city: string; cityCode: string;
-  state: string; sellerId: string; paymentTerms: string; notes: string;
+  priceTableId?:string; state: string; sellerId: string; paymentTerms: string; notes: string;
   status: 'ativo' | 'revisar_cadastro' | 'inativo'; version: number;
   createdBy: string; updatedBy: string; createdAt: string; updatedAt: string;
 };

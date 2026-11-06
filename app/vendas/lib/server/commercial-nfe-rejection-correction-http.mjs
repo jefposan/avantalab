@@ -16,7 +16,7 @@ function publicError(result) {
       : code.includes('STORAGE') || code.includes('LIFECYCLE') ? 503
         : code.includes('STATE') || code.includes('CONFLICT') || code.includes('LINK') || code.includes('NUMBER') ? 409
           : 400;
-  return { status, code, message };
+  return { status, code, message, field:text(error?.field).slice(0,160) };
 }
 
 export async function handleCommercialNfeRejectionCorrectionRequest({ request, runtime, companyId, emissionId } = {}) {
@@ -25,8 +25,9 @@ export async function handleCommercialNfeRejectionCorrectionRequest({ request, r
   if (!request || request.method !== 'POST' || !UUID_PATTERN.test(safeCompanyId) || !UUID_PATTERN.test(safeEmissionId)) {
     return reply(400, { ok: false, code: 'AV-NFE-CORRECTION-REQUEST', message: 'A revisão fiscal solicitada é inválida.' });
   }
+  if (Number(request.headers.get('content-length') || 0) > 65536) return reply(413,{ok:false,code:'AV-NFE-CORRECTION-SIZE',message:'A revisão excede o tamanho permitido.'});
   let body;
-  try { body = await request.json(); }
+  try { const raw = await request.text(); if (new TextEncoder().encode(raw).length > 65536) return reply(413,{ok:false,code:'AV-NFE-CORRECTION-SIZE',message:'A revisão excede o tamanho permitido.'}); body = JSON.parse(raw); }
   catch { return reply(400, { ok: false, code: 'AV-NFE-CORRECTION-BODY', message: 'Atualize a Central Fiscal e tente novamente.' }); }
   const expectedVersion = Number(body?.expectedVersion);
   const idempotencyKey = text(body?.idempotencyKey);
@@ -67,7 +68,7 @@ export async function handleCommercialNfeRejectionCorrectionRequest({ request, r
   }
   if (!result?.ok) {
     const error = publicError(result);
-    return reply(error.status, { ok: false, code: error.code, message: error.message });
+    return reply(error.status, { ok: false, code: error.code, field:error.field, message: error.message });
   }
   return reply(200, { ok: true, emission: result.result });
 }

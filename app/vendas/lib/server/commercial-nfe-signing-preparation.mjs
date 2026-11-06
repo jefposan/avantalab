@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { fiscalDraftOriginReady } from './fiscal-draft-origin.mjs';
 import { buildUnsignedNfeSpXml, NFE_SP_XML_REFERENCE, prototypeDraftToNfeSpXmlInput } from '../nfe-sp-xml.mjs';
 import { buildCommercialNfePreparationInput, commercialNfeFiscalSnapshotDigest } from './commercial-nfe-preparation.mjs';
 import { NFE_ISSUANCE_PREPARATION_REFERENCE } from './nfe-issuance-preparation.mjs';
@@ -59,7 +60,7 @@ export function validateCommercialNfeSigningSource(data, expectedVersion) {
   if (emission.version !== expectedVersion) return issue('AV-NFE-SIGNING-CONFLICT', 'expectedVersion', 'A emissão foi alterada; atualize a Central Fiscal antes de continuar.');
   if (emission.documentType !== 'nfe' || emission.model !== '55' || emission.environment !== 'homologacao') return issue('AV-NFE-SIGNING-DOCUMENT', 'documentType', 'Esta preparação de assinatura aceita somente NF-e modelo 55 em homologação.');
   if (emission.state !== 'number_reserved') return issue('AV-NFE-SIGNING-STATE', 'state', 'A NF-e precisa estar preparada e com a numeração reservada.');
-  if (draft.documentType !== 'nfe' || draft.status !== 'pronto' || draft.originType !== 'pedido' || draft.operationStatus !== 'faturado' || !['rascunho_criado', 'rejeitado'].includes(draft.operationFiscalStatus)) return issue('AV-NFE-SIGNING-ORIGIN', 'draft', 'O pedido faturado precisa manter seu rascunho fiscal pronto.');
+  if (draft.documentType !== 'nfe' || draft.status !== 'pronto' || !fiscalDraftOriginReady(draft, { allowRejected: true })) return issue('AV-NFE-SIGNING-ORIGIN', 'draft', 'A origem precisa manter seu rascunho fiscal pronto.');
   if (emission.id !== draft.id || emission.draftId !== draft.id || emission.originId !== draft.operationId || emission.companyId !== draft.companyId || emission.establishmentId !== draft.issuerSnapshot?.establishmentId) return issue('AV-NFE-SIGNING-LINK', 'draft', 'O vínculo entre pedido, rascunho, emissor e emissão não pôde ser confirmado.');
   if (reservation.id !== emission.reservationId || reservation.emissionId !== emission.id || reservation.companyId !== emission.companyId || reservation.establishmentId !== emission.establishmentId || reservation.documentType !== 'nfe' || reservation.status !== 'reserved' || reservation.series !== emission.series || reservation.number !== emission.number) return issue('AV-NFE-SIGNING-NUMBER', 'numbering', 'A reserva fiscal não corresponde à série e ao número da emissão.');
   if (!DIGEST.test(clean(draft.contentDigest)) || expectedDraftDigest(draft) !== clean(draft.contentDigest).toLowerCase()) return issue('AV-NFE-SIGNING-INTEGRITY', 'draft', 'A integridade dos dados comerciais congelados não pôde ser confirmada.');
@@ -78,6 +79,8 @@ export async function reconstructCommercialNfeSigningDocument({ data, expectedVe
     issuer: structuredClone(data.draft.issuerSnapshot),
     customer: structuredClone(data.draft.customerSnapshot),
     items: structuredClone(data.draft.itemsSnapshot),
+    operationNature:data.draft.totalsSnapshot?.fiscalForm?data.draft.totalsSnapshot.operationNature:undefined,
+    fiscalForm:data.draft.totalsSnapshot?.fiscalForm,
     expectedRuleId: data.preparationPayload.taxRuleId,
     expectedRuleVersion: data.preparationPayload.taxRuleVersion,
   });
@@ -102,7 +105,7 @@ function mapDraft(row) {
   return {
     id: row.id,
     companyId: row.empresa_id,
-    operationId: row.operacao_id,
+    operationId: row.origem_tipo === 'avulsa' ? row.id : row.operacao_id,
     originType: row.origem_tipo,
     documentType: row.documento_tipo,
     status: row.situacao,
@@ -139,7 +142,7 @@ export function createPostgresCommercialNfeSigningPreparationRepository({ pool }
           prepared.public_payload as preparacao_publica
         from fiscal_private.emissions e
         join public.vendas_fiscal_rascunhos r on r.empresa_id=e.company_id and r.id::text=e.draft_id
-        join public.vendas_operacoes o on o.empresa_id=r.empresa_id and o.id=r.operacao_id
+        left join public.vendas_operacoes o on o.empresa_id=r.empresa_id and o.id=r.operacao_id
         join fiscal_private.number_reservations nr on nr.company_id=e.company_id and nr.id=e.reservation_id and nr.emission_id=e.id
         left join lateral (
           select x.* from fiscal_private.emission_corrections x

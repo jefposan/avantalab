@@ -39,6 +39,8 @@ export type ProdutoCustos = {
   cest: string;
   origem_mercadoria: string;
   unidade_tributavel: string;
+  usar_fiscal_empresa?: boolean | null;
+  cfop_interestadual?: string;
   cfop_padrao: string;
   cst: string;
   csosn: string;
@@ -238,7 +240,8 @@ export function novoProduto(tipo: TipoItem, catalogoId: string): ProdutoCustos {
   return {
     id: '', catalogo_id: catalogoId, sku: '', tipo_item: tipo, nome: '', marca: '', categoria: '', descricao: '',
     preco_custo: 0, preco_venda: 0, unidade: tipo === 'produto' ? 'un' : 'serviço', imagem_url: '', codigo_barras: '',
-    ativo: true, disponivel_catalogo: false, habilitado_fiscal: false, fornecedor_id: '', ncm: '', cest: '', origem_mercadoria: '0 - Nacional',
+    ativo: true, disponivel_catalogo: false, habilitado_fiscal: false, fornecedor_id: '', ncm: '', cest: '', origem_mercadoria: '',
+    usar_fiscal_empresa: true, cfop_interestadual: '',
     unidade_tributavel: tipo === 'produto' ? 'un' : 'serviço', cfop_padrao: '', cst: '', csosn: '', cst_pis: '',
     cst_cofins: '', cst_ibs_cbs: '', classificacao_ibs_cbs: '', codigo_tributacao_nacional: '',
     codigo_tributacao_municipal: '', nbs: '', item_lc116: '', municipio_prestacao: '', aliquota_iss: 0,

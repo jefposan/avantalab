@@ -132,7 +132,7 @@ function parseProcessedNfe(value) {
     issuer: { name: tagValue(issuer, 'xNome'), tradeName: tagValue(issuer, 'xFant'), document: issuerDocument, stateRegistration: tagValue(issuer, 'IE'), substituteRegistration: tagValue(issuer, 'IEST'), municipalRegistration: tagValue(issuer, 'IM'), address: address(issuer, 'enderEmit') },
     recipient: { name: tagValue(recipient, 'xNome'), document: recipientDocument, stateRegistration: tagValue(recipient, 'IE') || tagValue(recipient, 'indIEDest'), email: tagValue(recipient, 'email'), address: address(recipient, 'enderDest') },
     totals: Object.fromEntries(['vBC','vICMS','vICMSDeson','vFCP','vBCST','vST','vFCPST','vProd','vFrete','vSeg','vDesc','vII','vIPI','vIPIDevol','vPIS','vCOFINS','vOutro','vNF'].map((name) => [name, tagValue(total, name)])),
-    transport: { freightMode: tagValue(transport, 'modFrete'), carrier: tagValue(tagBlock(transport, 'transporta'), 'xNome'), document: tagValue(tagBlock(transport, 'transporta'), 'CNPJ') || tagValue(tagBlock(transport, 'transporta'), 'CPF'), stateRegistration: tagValue(tagBlock(transport, 'transporta'), 'IE'), address: tagValue(tagBlock(transport, 'transporta'), 'xEnder'), city: tagValue(tagBlock(transport, 'transporta'), 'xMun'), state: tagValue(tagBlock(transport, 'transporta'), 'UF'), vehiclePlate: tagValue(tagBlock(transport, 'veicTransp'), 'placa'), vehicleState: tagValue(tagBlock(transport, 'veicTransp'), 'UF'), volume: tagBlocks(transport, 'vol').map((volume) => ({ quantity: tagValue(volume, 'qVol'), species: tagValue(volume, 'esp'), brand: tagValue(volume, 'marca'), numbering: tagValue(volume, 'nVol'), grossWeight: tagValue(volume, 'pesoB'), netWeight: tagValue(volume, 'pesoL') })) },
+    transport: { freightMode: tagValue(transport, 'modFrete'), carrier: tagValue(tagBlock(transport, 'transporta'), 'xNome'), document: tagValue(tagBlock(transport, 'transporta'), 'CNPJ') || tagValue(tagBlock(transport, 'transporta'), 'CPF'), stateRegistration: tagValue(tagBlock(transport, 'transporta'), 'IE'), address: tagValue(tagBlock(transport, 'transporta'), 'xEnder'), city: tagValue(tagBlock(transport, 'transporta'), 'xMun'), state: tagValue(tagBlock(transport, 'transporta'), 'UF'), vehiclePlate: tagValue(tagBlock(transport, 'veicTransp'), 'placa'), vehicleState: tagValue(tagBlock(transport, 'veicTransp'), 'UF'), rntc:tagValue(tagBlock(transport,'veicTransp'),'RNTC'), volume: tagBlocks(transport, 'vol').map((volume) => ({ quantity: tagValue(volume, 'qVol'), species: tagValue(volume, 'esp'), brand: tagValue(volume, 'marca'), numbering: tagValue(volume, 'nVol'), grossWeight: tagValue(volume, 'pesoB'), netWeight: tagValue(volume, 'pesoL') })) },
     installments: tagBlocks(billing, 'dup').map((entry) => ({ number: tagValue(entry, 'nDup'), dueDate: tagValue(entry, 'dVenc'), value: tagValue(entry, 'vDup') })),
     invoice: { number: tagValue(tagBlock(billing, 'fat'), 'nFat'), originalValue: tagValue(tagBlock(billing, 'fat'), 'vOrig'), discount: tagValue(tagBlock(billing, 'fat'), 'vDesc'), netValue: tagValue(tagBlock(billing, 'fat'), 'vLiq') },
     additional: { taxpayer: tagValue(additional, 'infCpl'), taxAuthority: tagValue(additional, 'infAdFisco') }, items,
@@ -165,7 +165,7 @@ function text(commands, value, x, y, size = 7, bold = false, align = 'left', wid
 }
 
 function wrap(value, maxChars, maxLines = 2) {
-  const words = ascii(value).split(' ').filter(Boolean);
+  const words = ascii(value).split(/\s+/).filter(Boolean).flatMap(word=>word.match(new RegExp(`.{1,${maxChars}}`,'g'))||[]);
   const lines = [];
   for (const word of words) {
     if (!lines.length || `${lines.at(-1)} ${word}`.trim().length > maxChars) lines.push(word);
@@ -341,12 +341,15 @@ function drawFirstPage(commands, data, items, pageNumber, pageCount, sampleMode)
   y -= 4;
   const tableBottom = drawItemTable(commands, items, y, 120);
   text(commands, 'DADOS ADICIONAIS', MARGIN, tableBottom - 10, 6, true);
-  labeledValue(commands, 'Informacoes complementares', data.additional.taxpayer || 'Sem informacoes complementares.', MARGIN, 35, 360, Math.max(54, tableBottom - 49), { maxChars: 92, maxLines: 5, size: 6.2 });
-  labeledValue(commands, 'Reservado ao fisco', data.additional.taxAuthority || '-', MARGIN + 360, 35, CONTENT_WIDTH - 360, Math.max(54, tableBottom - 49), { maxChars: 38, maxLines: 5, size: 6.2 });
+  labeledValue(commands, 'Informacoes complementares', additionalText(data) || 'Sem informacoes complementares.', MARGIN, 35, 360, Math.max(54, tableBottom - 49), { maxChars: 92, maxLines: 5, size: 6.2 });
+  labeledValue(commands, 'Reservado ao fisco', '-', MARGIN + 360, 35, CONTENT_WIDTH - 360, Math.max(54, tableBottom - 49), { maxChars: 38, maxLines: 5, size: 6.2 });
   if (sampleMode) {
     text(commands, 'AMOSTRA CONTROLADA - NAO REPRESENTA NF-e AUTORIZADA', MARGIN, 18, 7, true, 'center', CONTENT_WIDTH);
   }
 }
+
+function additionalText(data){return [data.additional.taxpayer,[data.transport.address,data.transport.city,data.transport.state,data.transport.stateRegistration,data.transport.rntc].some(Boolean)?`Transportador: ${[data.transport.address,data.transport.city,data.transport.state].filter(Boolean).join(', ')}${data.transport.stateRegistration?` - IE ${data.transport.stateRegistration}`:''}${data.transport.rntc?` - ANTT ${data.transport.rntc}`:''}`:'',data.additional.taxAuthority?`Informacoes ao fisco: ${data.additional.taxAuthority}`:''].filter(Boolean).join(' / ');}
+function drawAdditionalPage(commands,data,lines,pageNumber,pageCount,sampleMode){commands.push('0 G 0 g 0.45 w');const bottom=commonHeader(commands,data,pageNumber,pageCount,false);text(commands,'DADOS ADICIONAIS - CONTINUACAO',MARGIN,bottom-14,8,true);let y=bottom-32;for(const line of lines){text(commands,line,MARGIN,y,8);y-=12;}if(sampleMode)text(commands,'AMOSTRA CONTROLADA - NAO REPRESENTA NF-e AUTORIZADA',MARGIN,18,7,true,'center',CONTENT_WIDTH);}
 
 function drawContinuationPage(commands, data, items, pageNumber, pageCount, sampleMode) {
   commands.push('0 G 0 g 0.45 w');
@@ -403,12 +406,15 @@ export function buildNfeDanfe({ processedXml, expectedAccessKey, sampleMode = fa
   const continuationCapacity = 20;
   const chunks = [parsed.data.items.slice(0, firstPageCapacity)];
   for (let index = firstPageCapacity; index < parsed.data.items.length; index += continuationCapacity) chunks.push(parsed.data.items.slice(index, index + continuationCapacity));
-  const pageCount = chunks.length;
+  const extraLines=wrap(additionalText(parsed.data),92,10000);
+  const extraChunks=[];if(extraLines.length>5)for(let i=0;i<extraLines.length;i+=52)extraChunks.push(extraLines.slice(i,i+52));
+  const pageCount = chunks.length+extraChunks.length;
   const pageCommands = chunks.map((items, index) => {
     const commands = [];
     if (index === 0) drawFirstPage(commands, parsed.data, items, index + 1, pageCount, Boolean(sampleMode));
     else drawContinuationPage(commands, parsed.data, items, index + 1, pageCount, Boolean(sampleMode));
     return commands;
   });
+  extraChunks.forEach((lines,index)=>{const commands=[];drawAdditionalPage(commands,parsed.data,lines,chunks.length+index+1,pageCount,Boolean(sampleMode));pageCommands.push(commands);});
   return { valid: true, errors: [], pdf: buildPdf(pageCommands), fileName: nfeDanfeFileName(parsed.data.accessKey), pageCount, accessKey: parsed.data.accessKey, protocolNumber: parsed.data.protocolNumber, sampleMode: Boolean(sampleMode), xmlReturned: false };
 }

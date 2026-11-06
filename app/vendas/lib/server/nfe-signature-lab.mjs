@@ -104,38 +104,39 @@ function createEphemeralCertificate(now = new Date()) {
 
 function buildSignedInfo(referenceId, digestValue) {
   return [
-    `<ds:SignedInfo xmlns:ds="${NFE_XMLDSIG_NAMESPACE}">`,
-    `  <ds:CanonicalizationMethod Algorithm="${NFE_XMLDSIG_CANONICALIZATION}"/>`,
-    `  <ds:SignatureMethod Algorithm="${NFE_XMLDSIG_SIGNATURE_METHOD}"/>`,
-    `  <ds:Reference URI="#${referenceId}">`,
-    '    <ds:Transforms>',
-    `      <ds:Transform Algorithm="${NFE_XMLDSIG_ENVELOPED_TRANSFORM}"/>`,
-    `      <ds:Transform Algorithm="${NFE_XMLDSIG_CANONICALIZATION}"/>`,
-    '    </ds:Transforms>',
-    `    <ds:DigestMethod Algorithm="${NFE_XMLDSIG_DIGEST_METHOD}"/>`,
-    `    <ds:DigestValue>${digestValue}</ds:DigestValue>`,
-    '  </ds:Reference>',
-    '</ds:SignedInfo>',
-  ].join('\n');
+    `<SignedInfo xmlns="${NFE_XMLDSIG_NAMESPACE}">`,
+    `  <CanonicalizationMethod Algorithm="${NFE_XMLDSIG_CANONICALIZATION}"/>`,
+    `  <SignatureMethod Algorithm="${NFE_XMLDSIG_SIGNATURE_METHOD}"/>`,
+    `  <Reference URI="#${referenceId}">`,
+    '    <Transforms>',
+    `      <Transform Algorithm="${NFE_XMLDSIG_ENVELOPED_TRANSFORM}"/>`,
+    `      <Transform Algorithm="${NFE_XMLDSIG_CANONICALIZATION}"/>`,
+    '    </Transforms>',
+    `    <DigestMethod Algorithm="${NFE_XMLDSIG_DIGEST_METHOD}"/>`,
+    `    <DigestValue>${digestValue}</DigestValue>`,
+    '  </Reference>',
+    '</SignedInfo>',
+  ].map(part => part.trim()).join('');
 }
 
 function appendSignature(xml, signedInfo, signatureValue, certificateBase64) {
   const signature = [
-    `  <ds:Signature xmlns:ds="${NFE_XMLDSIG_NAMESPACE}">`,
+    `  <Signature xmlns="${NFE_XMLDSIG_NAMESPACE}">`,
     signedInfo,
-    `    <ds:SignatureValue>${signatureValue}</ds:SignatureValue>`,
-    '    <ds:KeyInfo>',
-    '      <ds:X509Data>',
-    `        <ds:X509Certificate>${certificateBase64}</ds:X509Certificate>`,
-    '      </ds:X509Data>',
-    '    </ds:KeyInfo>',
-    '  </ds:Signature>',
-  ].join('\n');
-  return xml.replace(/\n<\/NFe>\s*$/, `\n${signature}\n</NFe>`);
+    `    <SignatureValue>${signatureValue}</SignatureValue>`,
+    '    <KeyInfo>',
+    '      <X509Data>',
+    `        <X509Certificate>${certificateBase64}</X509Certificate>`,
+    '      </X509Data>',
+    '    </KeyInfo>',
+    '  </Signature>',
+  ].map(part => part.trim()).join('');
+  return xml.replace(/<\/NFe>\s*$/, `${signature}</NFe>`);
 }
 
 export async function createProtectedSignedNfeXml({ unsignedXml, certificatePem, signCanonicalized } = {}) {
-  const source = typeof unsignedXml === 'string' ? unsignedXml : '';
+  const source = typeof unsignedXml === 'string' ? unsignedXml.trim().replace(/>[ \r\n\t]+</g, '><') : '';
+  if (/[\r\n\t]/.test(source)) throw new Error('O XML não pode conter caracteres de edição antes da assinatura.');
   if (!source || /<(?:\w+:)?Signature\b/.test(source)) throw new Error('A assinatura aceita somente uma NF-e ainda não assinada.');
   if (typeof certificatePem !== 'string' || !certificatePem.includes('BEGIN CERTIFICATE')) throw new Error('O certificado público do assinante não está disponível.');
   if (typeof signCanonicalized !== 'function') throw new Error('O assinador protegido não está disponível.');

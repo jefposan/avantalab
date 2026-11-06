@@ -1,0 +1,38 @@
+{
+  "version": "3.2.0.363",
+  "productionBaseVersion": "3.2.0.362",
+  "productionDeploymentId": "dpl_8mj2opjedu3HUfvfSg3RYc1BQ4DB",
+  "tests": {
+    "total": 2725,
+    "pass": 2719,
+    "fail": 0,
+    "skip": 6
+  },
+  "infra": {
+    "pass": 49,
+    "fail": 0
+  },
+  "padraoAvanta": "1.23.1",
+  "ava": "approved",
+  "historicalAudit": "19 verified offline; no remote writes",
+  "compile": "approved with network access for Google Fonts after sandbox DNS failure",
+  "typeScript": "approved",
+  "appDifferencesFromProduction": [
+    "app/lib/version.ts",
+    "app/modules/marketplaces/dev/direct-sales-fixture.ts"
+  ],
+  "publicationPerformed": false,
+  "databaseWrites": false,
+  "preservation": {
+    "branch": "codex/pendencias-pre-main-20261106",
+    "snapshot": "2f0500961a4399b7484ef3b5bc07817d5d90e257",
+    "sourceFilesVerified": 2661,
+    "worktree": "/Users/JEFF/AvantaLab Projetos/espelhos/pendencias-raiz-20261106",
+    "backup": "/Users/JEFF/AvantaLab Projetos/espelhos/preservacao-raiz-20261106"
+  },
+  "security": {
+    "pass": 656,
+    "fail": 0
+  },
+  "staticPages": 236
+}

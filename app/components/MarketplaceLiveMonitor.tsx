@@ -17,6 +17,8 @@ export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = fa
   const alerts = useRef<SaleAlert[]>([]);
   const currentRef = useRef<SaleAlert | null>(null);
   const reloadRef = useRef<() => void>(() => {});
+  const acknowledging = useRef(false);
+  const alertEpoch = useRef(0);
   useEffect(() => { currentRef.current = current; }, [current]);
   useEffect(() => {
     let stopped = false, running = false, denied = false, requested = false, subscribing = false, inventoryLoaded = false;
@@ -24,7 +26,7 @@ export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = fa
     const controller = new AbortController();
     let channel: ReturnType<typeof supabase.channel> | null = null;
     const showNext = () => {
-      if (stopped || currentRef.current || document.visibilityState !== 'visible') return;
+      if (stopped || acknowledging.current || currentRef.current || document.visibilityState !== 'visible') return;
       // Não disputar foco com uma edição ou confirmação já aberta no próprio módulo.
       if ([...document.querySelectorAll('[aria-modal="true"]')].some(element => {
         const bounds = element.getBoundingClientRect(); return bounds.width > 0 && bounds.height > 0 && getComputedStyle(element).visibility !== 'hidden';
@@ -34,15 +36,16 @@ export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = fa
     };
     const refreshState = (loading: boolean, error = '') => window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state', { detail: { companyId, loading, error } }));
     const poll = async (manual = false) => {
-      if (stopped || denied || document.visibilityState === 'hidden') { if (manual) refreshState(false, 'Abra novamente o módulo para atualizar os avisos.'); return; }
+      if (stopped || denied || acknowledging.current || document.visibilityState === 'hidden') { if (manual) refreshState(false, 'Abra novamente o módulo para atualizar os avisos.'); return; }
       if (manual) refreshState(true);
       if (running) { requested = requested || manual; return; }
       running = true;
+      const epoch = alertEpoch.current;
       let refreshError = '';
       try {
         const refreshInventory = manual || !inventoryLoaded || Date.now() - lastInventoryRead >= 60_000;
         const feed = await marketplaceClientRequest(`avisos?empresaId=${encodeURIComponent(companyId)}${refreshInventory ? '' : '&scope=sales'}`, undefined, AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)])) as MarketplaceLiveFeed;
-        if (stopped) return;
+        if (stopped || epoch !== alertEpoch.current) return;
         if (refreshInventory) { inventoryLoaded = true; lastInventoryRead = Date.now(); }
         alerts.current = feed.alerts;
         window.dispatchEvent(new CustomEvent('avanta:marketplace-live-feed', { detail: { companyId, feed, refreshInventory } }));
@@ -98,38 +101,42 @@ export function MarketplaceLiveMonitor({ companyId, brand = '#003E73', dark = fa
       auth.data.subscription.unsubscribe(); if (channel) void supabase.removeChannel(channel);
     };
   }, [companyId]);
-  async function acknowledge() {
-    if (!current || busy) return;
+  async function acknowledge(all = false) {
+    if (!current || acknowledging.current) return;
+    acknowledging.current = true; alertEpoch.current++;
     setBusy(true); setMessage('');
     try {
-      await marketplaceClientRequest('avisos', { empresaId: companyId, alertId: current.id, action: 'acknowledge' });
-      alerts.current = alerts.current.filter(alert => alert.id !== current.id);
-      currentRef.current = null; setCurrent(null); reloadRef.current();
-    } catch { setMessage('Não foi possível confirmar a leitura. Tente novamente.'); }
-    finally { setBusy(false); }
+      await marketplaceClientRequest('avisos', { empresaId: companyId, ...(all ? { action: 'acknowledge_all' } : { alertId: current.id, action: 'acknowledge' }) });
+      alerts.current = all ? [] : alerts.current.filter(alert => alert.id !== current.id);
+      currentRef.current = null; setCurrent(null); setRemaining(0);
+    } catch { setMessage(all ? 'Não foi possível fechar todos os avisos. Tente novamente.' : 'Não foi possível confirmar a leitura. Tente novamente.'); }
+    finally { acknowledging.current = false; setBusy(false); reloadRef.current(); }
   }
   async function openSale() {
-    if (!current || busy) return;
+    if (!current || acknowledging.current) return;
+    acknowledging.current = true; alertEpoch.current++;
     setBusy(true); setMessage('');
     try {
       await marketplaceClientRequest('avisos', { empresaId: companyId, alertId: current.id, action: 'acknowledge' });
       alerts.current = alerts.current.filter(alert => alert.id !== current.id);
       const alert = current;
-      currentRef.current = null; setCurrent(null); onOpenSale(alert); reloadRef.current();
+      currentRef.current = null; setCurrent(null); onOpenSale(alert);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível abrir a venda. Tente novamente.');
-    } finally { setBusy(false); }
+    } finally { acknowledging.current = false; setBusy(false); reloadRef.current(); }
   }
   if (!current) return null;
-  return createPortal(<MarketplaceSaleAlertView alert={current} remaining={remaining} message={message} busy={busy} brand={brand} dark={dark} onAcknowledge={acknowledge} onOpen={openSale} />, document.body);
+  return createPortal(<MarketplaceSaleAlertView alert={current} remaining={remaining} message={message} busy={busy} brand={brand} dark={dark} onAcknowledge={() => acknowledge()} onCloseAll={() => acknowledge(true)} onOpen={openSale} />, document.body);
 }
 
-export function MarketplaceSaleAlertView({ alert, remaining = 0, message = '', busy = false, brand = '#003E73', dark = false, onAcknowledge, onOpen }: {
+export function MarketplaceSaleAlertView({ alert, remaining = 0, message = '', busy = false, brand = '#003E73', dark = false, onAcknowledge, onCloseAll, onOpen }: {
   alert: SaleAlert; remaining?: number; message?: string; busy?: boolean; brand?: string; dark?: boolean; onAcknowledge: () => void | Promise<void>; onOpen: () => void | Promise<void>;
+  onCloseAll?: () => void | Promise<void>;
 }) {
   const date = new Date(alert.sold_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
   const text = `${alert.account_name || 'Conta conectada'} · ${providerName(alert.provider)}\nPedido #${alert.order_id} · ${date}\n\n${alert.quantity} × ${alert.title}\n\n${alert.kind === 'pending_dispatch' ? 'Esta venda ainda aguarda envio. Confira o pedido e a etiqueta.' : 'Confira o pedido e a liberação do envio na plataforma.'}${remaining ? `\nMais ${remaining} aviso(s) aguardando.` : ''}${message ? `\n\n${message}` : ''}`;
   return <ModalConfirmacao aberto titulo={alert.kind === 'pending_dispatch' ? 'Venda pendente' : 'Nova venda'} rotuloCabecalho="Marketplaces" mensagem={text} variante="primaria"
     textoCancelar="Entendi" textoConfirmar="Ver venda no AvantaLab" carregando={busy}
-    corPrimaria={brand} darkMode={dark} aoCancelar={onAcknowledge} aoConfirmar={onOpen} />;
+    corPrimaria={brand} darkMode={dark} aoCancelar={onAcknowledge} aoConfirmar={onOpen}
+    acaoAdicional={onCloseAll ? { texto: 'Fechar todos', aoClicar: onCloseAll } : undefined} />;
 }

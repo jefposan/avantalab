@@ -6,6 +6,7 @@ export const NFE_AUTHORIZATION_TIMEOUT_MS = 30_000;
 export const NFE_AUTHORIZATION_RESPONSE_LIMIT = 512 * 1024;
 
 import { isOfficialNfeEndpoint, resolveNationalNfeAuthorityByCode } from './nfe-national-authorities.mjs';
+import { nfeTransportDiagnostic } from './nfe-transport-diagnostic.mjs';
 
 const SOAP_NAMESPACE = 'http://www.w3.org/2003/05/soap-envelope';
 const NFE_NAMESPACE = 'http://www.portalfiscal.inf.br/nfe';
@@ -95,6 +96,7 @@ export function validateSignedNfeForAuthorization(value) {
   if (!xml) errors.push(error('AV-NFE-AUTH-XML-EMPTY', 'signedXml', 'O XML assinado não foi fornecido pelo serviço interno de assinatura.'));
   if (xml && Buffer.byteLength(xml, 'utf8') > MAX_SIGNED_XML_BYTES) errors.push(error('AV-NFE-AUTH-XML-SIZE', 'signedXml', 'O XML assinado excede o limite de 1 MB desta etapa.'));
   if (/<!DOCTYPE|<!ENTITY/i.test(xml)) errors.push(error('AV-NFE-AUTH-XML-DOCTYPE', 'signedXml', 'O XML contém declaração externa proibida.'));
+  if (/[\r\n\t]/.test(xml) || />[ \r\n\t]+</.test(xml)) errors.push(error('AV-NFE-AUTH-XML-FORMAT', 'signedXml', 'O XML assinado contém formatação incompatível com o padrão da NF-e e precisa ser gerado novamente.'));
   const nfeBlock = tagBlock(xml, 'NFe');
   const infAttributes = rootAttributes(nfeBlock, 'infNFe');
   const accessKey = attributeValue(infAttributes, 'Id').replace(/^NFe/i, '');
@@ -113,6 +115,8 @@ export function buildNfeAuthorizationSoapRequest({ signedXml, lotId, synchronous
   const authority = authorizationAuthority({ issuerCode: validation.issuerCode });
   const normalizedLotId = String(lotId || '').replace(/\D/g, '').slice(0, 15);
   const errors = [...validation.errors];
+  // NT 2025.001 v1.03, GAP03a-3: este emissor envia exatamente uma NF-e por lote.
+  if (synchronous !== true) errors.push(error('AV-NFE-AUTH-SYNCHRONOUS-REQUIRED','indSinc','O envio de uma NF-e exige resposta síncrona (indSinc=1).'));
   if (!normalizedLotId || BigInt(normalizedLotId) < 1n) errors.push(error('AV-NFE-AUTH-LOT', 'lotId', 'Informe um identificador numérico de lote entre 1 e 15 dígitos.'));
   if (errors.length) return { valid: false, errors, endpoint: authority?.endpoints.authorization || '', action: NFE_AUTHORIZATION_ACTION, contentType: NFE_AUTHORIZATION_CONTENT_TYPE, envelope: '', accessKey: validation.accessKey, issuerCode: validation.issuerCode, lotId: normalizedLotId };
   const payload = `<enviNFe xmlns="${NFE_NAMESPACE}" versao="4.00"><idLote>${normalizedLotId}</idLote><indSinc>${synchronous ? '1' : '0'}</indSinc>${validation.nfeBlock}</enviNFe>`;
@@ -151,11 +155,12 @@ export function parseNfeAuthorizationSoapResponse(value, { issuerCode = '35', en
   }
   if (!/^\d{3}$/.test(result.batchStatus) || !result.batchReason) result.errors.push(error('AV-NFE-AUTH-RESPONSE-STATUS', 'response.cStat', 'A resposta do lote não contém situação e motivo válidos.'));
   result.batchProcessed = result.batchStatus === '104';
+  result.batchRejected = /^\d{3}$/.test(result.batchStatus) && Number(result.batchStatus) >= 200 && !['204', '539'].includes(result.batchStatus) && !result.protocolStatus;
   result.needsReceiptConsultation = result.batchStatus === '103' && /^\d{15}$/.test(result.receiptNumber);
   result.authorized = result.batchProcessed && result.protocolStatus === '100' && /^\d{44}$/.test(result.accessKey) && Boolean(result.protocolNumber);
   result.needsProtocolConsultation = result.batchProcessed && ['204', '539'].includes(result.protocolStatus);
   if (result.batchProcessed && !result.protocolStatus) result.errors.push(error('AV-NFE-AUTH-RESPONSE-PROTOCOL', 'response.protNFe', 'O lote foi processado sem resultado individual da NF-e.'));
-  result.valid = result.errors.length === 0 && (result.authorized || result.needsReceiptConsultation || Boolean(result.protocolStatus));
+  result.valid = result.errors.length === 0 && (result.authorized || result.needsReceiptConsultation || result.batchRejected || Boolean(result.protocolStatus));
   return result;
 }
 
@@ -192,15 +197,19 @@ export function createNfeAuthorizationAdapter({ certificateAdapter, statusAdapte
     } catch { diagnostic.errors.push(error('AV-NFE-AUTH-STATUS', 'statusService', 'A disponibilidade da SEFAZ não pôde ser confirmada.')); }
     if (!diagnostic.transportConfigured) diagnostic.errors.push(error('AV-NFE-AUTH-TRANSPORT', 'transport', 'O transporte SOAP 1.2 com mTLS ainda não está instalado.'));
     if (diagnostic.errors.length) { diagnostic.warnings = ['Nenhuma conexão de autorização foi aberta e nenhuma NF-e foi transmitida.']; return diagnostic; }
+    if (typeof options.beforeTransmission === 'function') {
+      const boundary = await options.beforeTransmission();
+      if (boundary?.ok !== true) { diagnostic.errors.push(...(boundary?.errors || [error('AV-NFE-AUTH-REGISTRATION', 'submission', 'A tentativa não pôde ser registrada antes do envio.')])); return diagnostic; }
+    }
     diagnostic.networkAttempted = true;
     diagnostic.transmissionAttempted = true;
     let response;
     try {
       response = await transport.postSoap({ endpoint: resolvedEndpoint, action: request.action, contentType: request.contentType, body: request.envelope, secureCertificateReference: String(secureReference || ''), timeoutMs: NFE_AUTHORIZATION_TIMEOUT_MS, maxResponseBytes: NFE_AUTHORIZATION_RESPONSE_LIMIT, followRedirects: false, issuerUf: request.issuerUf, environment: 'homologacao' });
-    } catch { diagnostic.errors.push(error('AV-NFE-AUTH-NETWORK', 'transport', 'A conexão segura de autorização não foi concluída.')); return diagnostic; }
+    } catch (cause) { Object.assign(diagnostic,nfeTransportDiagnostic(cause)); diagnostic.errors.push(error('AV-NFE-AUTH-NETWORK', 'transport', `A conexão segura de autorização não foi concluída${diagnostic.httpStatus ? ` (HTTP ${diagnostic.httpStatus})` : ''}.`)); return diagnostic; }
     diagnostic.responseReceived = true;
     const parsed = parseNfeAuthorizationSoapResponse(response?.body, { issuerCode: request.issuerCode });
-    Object.assign(diagnostic, { valid: parsed.valid, batchProcessed: parsed.batchProcessed, authorized: parsed.authorized, needsReceiptConsultation: parsed.needsReceiptConsultation, needsProtocolConsultation: parsed.needsProtocolConsultation, batchStatus: parsed.batchStatus, batchReason: parsed.batchReason, receiptNumber: parsed.receiptNumber, protocolStatus: parsed.protocolStatus, protocolReason: parsed.protocolReason, protocolNumber: parsed.protocolNumber, accessKey: parsed.accessKey || request.accessKey, receivedAt: parsed.receivedAt });
+    Object.assign(diagnostic, { valid: parsed.valid, batchProcessed: parsed.batchProcessed, batchRejected: parsed.batchRejected, authorized: parsed.authorized, needsReceiptConsultation: parsed.needsReceiptConsultation, needsProtocolConsultation: parsed.needsProtocolConsultation, batchStatus: parsed.batchStatus, batchReason: parsed.batchReason, receiptNumber: parsed.receiptNumber, protocolStatus: parsed.protocolStatus, protocolReason: parsed.protocolReason, protocolNumber: parsed.protocolNumber, accessKey: parsed.accessKey || request.accessKey, receivedAt: parsed.receivedAt });
     if (includeProtocol) diagnostic.protocolXml = parsed.protocolXml;
     diagnostic.errors.push(...parsed.errors);
     if (parsed.accessKey && parsed.accessKey !== request.accessKey) { diagnostic.authorized = false; diagnostic.valid = false; diagnostic.errors.push(error('AV-NFE-AUTH-RESPONSE-KEY', 'response.chNFe', 'A resposta pertence a outra chave de acesso.')); }

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { AvantaLandingPage } from '../page';
+import { AvantaLandingPage } from '../components/AvantaLandingPage';
 
 export const metadata: Metadata = {
   title: 'Gestão financeira',

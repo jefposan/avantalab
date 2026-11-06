@@ -4,10 +4,7 @@ import {readFile} from 'node:fs/promises';
 export const DIRECT_DEMO={company:'10000000-0000-4000-8000-000000000001',other:'10000000-0000-4000-8000-000000000002',actor:'20000000-0000-4000-8000-000000000001',editor:'20000000-0000-4000-8000-000000000002'};
 export async function createDirectSalesFixture(){
  const db=new PGlite(),{company,other,actor,editor}=DIRECT_DEMO;
- const migration=async(name:string)=>{
-  const directory=name==='20261011200000_marketplace_local_products.sql'?'supabase/historico-sem-registro':'supabase/migrations';
-  return db.exec(await readFile(`${process.cwd()}/${directory}/${name}`,'utf8'));
- };
+ const migration=async(name:string)=>db.exec(await readFile(`${process.cwd()}/supabase/${name === '20261011200000_marketplace_local_products.sql' ? 'historico-sem-registro' : 'migrations'}/${name}`,'utf8'));
  try{
   await db.exec(`create schema auth;create role anon;create role authenticated;create role service_role;create table auth.users(id uuid primary key);create table empresas(id uuid primary key);create table usuarios_empresa(user_id uuid,empresa_id uuid,status text,perfil text);create table empresa_modulos(empresa_id uuid,modulo_id text,ativo boolean,expira_em timestamptz);create table marketplace_connections(id uuid primary key,empresa_id uuid,provider text);`);
   await migration('20261006090000_avantaprecos_users.sql');

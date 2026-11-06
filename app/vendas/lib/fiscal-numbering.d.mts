@@ -8,6 +8,7 @@ export type FiscalNumberingLedger = { version: 1; sequences: FiscalNumberingSequ
 export type FiscalNumberingResult = { ok: boolean; error?: string; ledger: FiscalNumberingLedger; reused?: boolean; reservation?: FiscalNumberReservation; request?: FiscalNumberVoidRequest };
 
 export const FISCAL_NUMBERING_DOCUMENTS: FiscalDocumentType[];
+export const FISCAL_NFE_NORMAL_SERIES: readonly string[];
 export function createFiscalNumberingLedger(seriesByDocument?: Partial<Record<FiscalDocumentType, string>>): FiscalNumberingLedger;
 export function normalizeFiscalNumberingLedger(input: unknown, seriesByDocument?: Partial<Record<FiscalDocumentType, string>>): FiscalNumberingLedger;
 export function validateFiscalNumberingLedger(input: unknown): { valid: boolean; errors: string[] };

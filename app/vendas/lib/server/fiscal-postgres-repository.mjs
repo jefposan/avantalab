@@ -230,6 +230,7 @@ function createTransaction(client, schema) {
         if (existingRows.length !== 1 || !existing) {
           throw Object.assign(new Error('A chave ou a emissão já possui outra reserva fiscal.'), { code: 'AV-FISCAL-NUMBER-IDEMPOTENCY' });
         }
+        if(existing.status==='released')throw Object.assign(new Error('A reserva pertence a um rascunho excluído.'),{code:'AV-FISCAL-DRAFT-DELETED'});
         return { reused: true, reservation: mapNumberReservation(existing) };
       }
       const sequenceResult = await client.query(`
@@ -239,7 +240,8 @@ function createTransaction(client, schema) {
       `, [companyId, establishmentId, documentType]);
       const sequence = sequenceResult.rows?.[0];
       if (!sequence) throw Object.assign(new Error('A série fiscal ativa não foi configurada.'), { code: 'AV-FISCAL-NUMBER-SEQUENCE' });
-      let candidate = Math.max(Number(sequence.next_number), Number(sequence.last_reserved_number) + 1);
+      const free=(await client.query(`select min(r.number)::int as number from ${numberReservations} r where r.company_id=$1 and r.establishment_id=$2 and r.document_type=$3 and r.series=$4 and r.status='released' and not exists(select 1 from ${numberReservations} occupied where occupied.company_id=r.company_id and occupied.establishment_id=r.establishment_id and occupied.document_type=r.document_type and occupied.series=r.series and occupied.number=r.number and occupied.status<>'released') and not exists(select 1 from ${numberVoids} v where v.company_id=r.company_id and v.establishment_id=r.establishment_id and v.document_type=r.document_type and v.series=r.series and v.status<>'rejected' and r.number between v.start_number and v.end_number)`,[companyId,establishmentId,documentType,sequence.series])).rows[0];
+      let candidate = Number(free?.number) || Math.max(Number(sequence.next_number), Number(sequence.last_reserved_number) + 1);
       let available = false;
       for (let attempt = 0; attempt < 1000; attempt += 1) {
         if (!Number.isInteger(candidate) || candidate < 1 || candidate >= 999999999) {
@@ -251,7 +253,7 @@ function createTransaction(client, schema) {
               where company_id=$1 and establishment_id=$2 and document_type=$3 and series=$4
                 and status<>'rejected' and $5 between start_number and end_number) as void_end,
             exists(select 1 from ${numberReservations}
-              where company_id=$1 and establishment_id=$2 and document_type=$3 and series=$4 and number=$5) as reserved
+              where company_id=$1 and establishment_id=$2 and document_type=$3 and series=$4 and number=$5 and status<>'released') as reserved
         `, [companyId, establishmentId, documentType, sequence.series, candidate]);
         const conflict = unavailable.rows?.[0] || {};
         if (conflict.void_end) {
@@ -274,7 +276,7 @@ function createTransaction(client, schema) {
       `, [companyId, establishmentId, emissionId, documentType, sequence.series, candidate, idempotencyKey, at]);
       await client.query(`
         update ${numberSequences}
-        set next_number=$2,last_reserved_number=$3,version=version+1,updated_at=$4
+        set next_number=greatest(next_number,$2),last_reserved_number=greatest(last_reserved_number,$3),version=version+1,updated_at=$4
         where id=$1
       `, [sequence.id, candidate + 1, candidate, at]);
       return { reused: false, reservation: mapNumberReservation(inserted.rows?.[0]) };
@@ -300,11 +302,14 @@ function createTransaction(client, schema) {
       return mapTransmissionAttempt(result.rows?.[0]);
     },
     async enqueueRecoveryJob(job) {
-      const result = await client.query(`insert into ${jobs} (company_id,emission_id,job_type,idempotency_key,max_attempts,available_at,created_at,updated_at) values ($1,$2,$3,$4,$5,$6,$7,$7) on conflict (company_id,idempotency_key) do update set idempotency_key = excluded.idempotency_key returning *`, [job.companyId, job.emissionId, job.jobType, job.idempotencyKey, job.maxAttempts, job.availableAt, job.createdAt]);
-      return mapRecoveryJob(result.rows?.[0]);
+      const result = await client.query(`insert into ${jobs} (company_id,emission_id,job_type,idempotency_key,max_attempts,available_at,created_at,updated_at) values ($1,$2,$3,$4,$5,$6,$7,$7) on conflict (company_id,idempotency_key) do nothing returning *`, [job.companyId, job.emissionId, job.jobType, job.idempotencyKey, job.maxAttempts, job.availableAt, job.createdAt]);
+      const row = result.rows?.[0] || (await client.query(`select * from ${jobs} where company_id=$1 and idempotency_key=$2`, [job.companyId, job.idempotencyKey])).rows?.[0];
+      if (!row || text(row.emission_id).toLowerCase() !== text(job.emissionId).toLowerCase() || row.job_type !== job.jobType) throw Object.assign(new Error('A chave da fila pertence a outra operação fiscal.'), { code: 'AV-FISCAL-RECOVERY-IDEMPOTENCY' });
+      return mapRecoveryJob(row);
     },
-    async claimRecoveryJobs({ workerId, limit, leaseSeconds, now }) {
-      const result = await client.query(`with candidates as (select id from ${jobs} where state = 'pending' and available_at <= $1 order by available_at,id for update skip locked limit $2) update ${jobs} as job set state='leased',attempt_count=job.attempt_count+1,leased_at=$1,lease_expires_at=$1::timestamptz + make_interval(secs => $3),worker_id=$4,updated_at=$1 from candidates where job.id=candidates.id returning job.*`, [now, limit, leaseSeconds, workerId]);
+    async claimRecoveryJobs({ workerId, limit, leaseSeconds, now, companyId, emissionId }) {
+      const scope = companyId && emissionId ? ' and company_id=$5 and emission_id=$6' : '';
+      const result = await client.query(`with candidates as (select id from ${jobs} where state = 'pending' and available_at <= $1${scope} order by available_at,id for update skip locked limit $2) update ${jobs} as job set state='leased',attempt_count=job.attempt_count+1,leased_at=$1,lease_expires_at=$1::timestamptz + make_interval(secs => $3),worker_id=$4,updated_at=$1 from candidates where job.id=candidates.id returning job.*`, [now, limit, leaseSeconds, workerId, ...(scope ? [companyId, emissionId] : [])]);
       return (result.rows || []).map(mapRecoveryJob);
     },
     async completeRecoveryJob({ jobId, workerId, now }) {
@@ -315,8 +320,9 @@ function createTransaction(client, schema) {
       const result = await client.query(`update ${jobs} set state=case when attempt_count>=max_attempts then 'dead_letter' else 'pending' end,available_at=case when attempt_count>=max_attempts then available_at else $5::timestamptz + make_interval(secs => least($7::integer,($6::integer * power(2,greatest(attempt_count-1,0)))::integer)) end,last_error_code=$3,last_error_reason=$4,worker_id=null,leased_at=null,lease_expires_at=null,updated_at=$5 where id=$1 and state='leased' and worker_id=$2 returning *`, [jobId, workerId, failureCode, failureReason, now, baseDelaySeconds, maxDelaySeconds]);
       return mapRecoveryJob(result.rows?.[0]);
     },
-    async recoverExpiredRecoveryJobs({ now }) {
-      const result = await client.query(`update ${jobs} set state=case when attempt_count>=max_attempts then 'dead_letter' else 'pending' end,worker_id=null,leased_at=null,lease_expires_at=null,updated_at=$1,last_error_code='AV-FISCAL-RECOVERY-LEASE-EXPIRED',last_error_reason='A execução anterior perdeu o prazo de confirmação.' where state='leased' and lease_expires_at <= $1 returning *`, [now]);
+    async recoverExpiredRecoveryJobs({ now, companyId, emissionId }) {
+      const scope = companyId && emissionId ? ' and company_id=$2 and emission_id=$3' : '';
+      const result = await client.query(`update ${jobs} set state=case when attempt_count>=max_attempts then 'dead_letter' else 'pending' end,worker_id=null,leased_at=null,lease_expires_at=null,updated_at=$1,last_error_code='AV-FISCAL-RECOVERY-LEASE-EXPIRED',last_error_reason='A execução anterior perdeu o prazo de confirmação.' where state='leased' and lease_expires_at <= $1${scope} returning *`, [now, ...(scope ? [companyId, emissionId] : [])]);
       return (result.rows || []).map(mapRecoveryJob);
     },
   });
@@ -349,7 +355,7 @@ export function createPostgresFiscalRepository({ pool, schema = 'fiscal_private'
             coalesce((select jsonb_agg(jsonb_build_object('id',a.id,'artifactType',a.artifact_type) order by case a.artifact_type when 'processed_xml' then 1 else 2 end,a.created_at)
               from ${artifacts} a where a.company_id=e.company_id and a.emission_id=e.id
                 and a.artifact_type in ('processed_xml','danfe_pdf')), '[]'::jsonb) as public_artifacts,
-            coalesce((select jsonb_agg(jsonb_build_object('jobType',j.job_type,'state',j.state,'attemptCount',j.attempt_count,'maxAttempts',j.max_attempts) order by j.created_at)
+            coalesce((select jsonb_agg(jsonb_build_object('jobType',j.job_type,'state',j.state,'attemptCount',j.attempt_count,'maxAttempts',j.max_attempts,'lastErrorCode',j.last_error_code) order by j.created_at)
               from ${jobs} j where j.company_id=e.company_id and j.emission_id=e.id and j.state<>'completed'), '[]'::jsonb) as active_recovery_jobs
           from ${emissions} e where e.company_id=$1 and e.id=$2 limit 1
         `, [text(companyId), text(emissionId)]);

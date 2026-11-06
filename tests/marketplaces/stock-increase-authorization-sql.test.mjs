@@ -1,8 +1,9 @@
+import { sqlDeTesteURL } from '../helpers/sql-historico.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
-const read=name=>readFileSync(`supabase/migrations/${name}`,'utf8');
+const read=name=>readFileSync(sqlDeTesteURL(name),'utf8');
 test('reposição em quatro contas conserva autorização pendente durante releituras, sem herdar autorização após venda ou conclusão',async()=>{
  const db=new PGlite();try{
   await db.exec(`create table marketplace_products(id uuid primary key,empresa_id uuid,stock_quantity int,revision bigint,archived_at timestamptz);

@@ -3,7 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { montarCatalogoVendasDTO } from '../catalog';
 
-const CAMPOS_ITEM = 'id,sku,tipo_item,nome,categoria,descricao,preco_venda,unidade,imagem_url,codigo_barras,ncm,cest,origem_mercadoria,unidade_tributavel,cfop_padrao,cst,csosn,cst_pis,cst_cofins,cst_ibs_cbs,classificacao_ibs_cbs,codigo_tributacao_nacional,codigo_tributacao_municipal,nbs,item_lc116,municipio_prestacao,aliquota_iss,habilitado_fiscal,atualizado_em';
+const CAMPOS_ITEM = 'id,sku,tipo_item,nome,categoria,descricao,preco_venda,unidade,imagem_url,codigo_barras,ncm,cest,origem_mercadoria,unidade_tributavel,cfop_padrao,usar_fiscal_empresa,cfop_interestadual,cst,csosn,cst_pis,cst_cofins,cst_ibs_cbs,classificacao_ibs_cbs,codigo_tributacao_nacional,codigo_tributacao_municipal,nbs,item_lc116,municipio_prestacao,aliquota_iss,habilitado_fiscal,atualizado_em';
 
 export class ErroCatalogoVendas extends Error {
   constructor(message: string, readonly status: number) {
@@ -48,20 +48,28 @@ export async function carregarCatalogoCustosParaVendas({
   const produtos: Record<string, unknown>[] = [];
   const tamanhoPagina = 1000;
   for (let inicio = 0; ; inicio += tamanhoPagina) {
-    let consultaProdutos = db
-      .from('vendas_mobile_catalogo_produtos')
-      .select(CAMPOS_ITEM)
-      .in('catalogo_id', catalogoIds)
-      .eq('ativo', true)
-      .order('nome')
-      .order('id')
-      .range(inicio, inicio + tamanhoPagina - 1);
-    consultaProdutos = incluirItensFiscais
-      ? consultaProdutos.or('disponivel_catalogo.eq.true,habilitado_fiscal.eq.true')
-      : consultaProdutos.eq('disponivel_catalogo', true);
-    const { data: paginaProdutos, error: erroProdutos } = await consultaProdutos;
+    const consultarPagina = (campos: string) => {
+      let consultaProdutos = db
+        .from('vendas_mobile_catalogo_produtos')
+        .select(campos)
+        .in('catalogo_id', catalogoIds)
+        .eq('ativo', true)
+        .is('excluido_em', null)
+        .order('nome')
+        .order('id')
+        .range(inicio, inicio + tamanhoPagina - 1);
+      consultaProdutos = incluirItensFiscais
+        ? consultaProdutos.or('disponivel_catalogo.eq.true,habilitado_fiscal.eq.true')
+        : consultaProdutos.eq('disponivel_catalogo', true);
+      return consultaProdutos;
+    };
+    let resultadoProdutos = await consultarPagina(CAMPOS_ITEM);
+    if (resultadoProdutos.error && /usar_fiscal_empresa|cfop_interestadual/i.test(resultadoProdutos.error.message)) {
+      resultadoProdutos = await consultarPagina(CAMPOS_ITEM.replace(',usar_fiscal_empresa,cfop_interestadual', ''));
+    }
+    const { data: paginaProdutos, error: erroProdutos } = resultadoProdutos;
     if (erroProdutos) throw new ErroCatalogoVendas('Não foi possível carregar os produtos e serviços publicados.', 500);
-    produtos.push(...(paginaProdutos || []));
+    produtos.push(...((paginaProdutos || []) as unknown as Record<string, unknown>[]));
     if (!paginaProdutos || paginaProdutos.length < tamanhoPagina) break;
   }
 

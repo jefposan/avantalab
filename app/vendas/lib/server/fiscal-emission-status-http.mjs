@@ -12,13 +12,13 @@ function reply(status, body) { return Response.json(body, { status, headers: res
 export async function handleFiscalEmissionStatusRequest({ request, emissionId, runtime } = {}) {
   let companyId = '';
   try { companyId = text(new URL(request.url).searchParams.get('companyId')); } catch {}
-  if (!request || request.method !== 'GET' || !UUID_PATTERN.test(text(emissionId)) || !UUID_PATTERN.test(companyId)) return reply(400, { ok: false, code: 'AV-FISCAL-STATUS-REQUEST', message: 'A consulta da emissão fiscal é inválida.' });
+  if (!request || !['GET', 'POST'].includes(request.method) || !UUID_PATTERN.test(text(emissionId)) || !UUID_PATTERN.test(companyId)) return reply(400, { ok: false, code: 'AV-FISCAL-STATUS-REQUEST', message: 'A consulta da emissão fiscal é inválida.' });
   if (runtime?.configured !== true || !runtime.accessResolver || !runtime.statusService) return reply(503, { ok: false, code: 'AV-FISCAL-STATUS-INTEGRATION-PENDING', message: 'A consulta fiscal ainda não está disponível.' });
   let access;
   try { access = await runtime.accessResolver.resolve(request, { companyId }); } catch { return reply(503, { ok: false, code: 'AV-FISCAL-STATUS-ACCESS-UNAVAILABLE', message: 'Não foi possível confirmar o acesso neste momento.' }); }
   if (!access?.authenticated) return reply(401, { ok: false, code: 'AV-FISCAL-STATUS-SESSION', message: 'Sua sessão precisa ser confirmada novamente.' });
   let result;
-  try { result = await runtime.statusService.get({ boundary: access.boundary, effectivePermissions: access.effectivePermissions, emissionId: text(emissionId) }); }
+  try { result = await runtime.statusService[request.method === 'POST' ? 'consult' : 'get']({ boundary: access.boundary, effectivePermissions: access.effectivePermissions, emissionId: text(emissionId) }); }
   catch { return reply(503, { ok: false, code: 'AV-FISCAL-STATUS-UNAVAILABLE', message: 'Não foi possível consultar a emissão neste momento.' }); }
   if (!result?.ok) {
     if (result?.reason === 'emission_not_found') return reply(404, { ok: false, code: 'AV-FISCAL-STATUS-NOT-FOUND', message: 'A emissão fiscal não foi encontrada.' });

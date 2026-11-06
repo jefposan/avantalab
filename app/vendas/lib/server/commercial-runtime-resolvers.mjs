@@ -1,3 +1,4 @@
+import { usaFiscalEmpresa } from '../../../lib/fiscal-produto.mjs';
 import { resolveMunicipalityCode } from '../municipality.mjs';
 
 const clean = (value) => String(value ?? '').trim();
@@ -6,7 +7,7 @@ const number = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
 function fiscalConfiguration(value) {
   const source = value && typeof value === 'object' ? value : {};
   return {
-    originCode: /^[0-8]$/.test(clean(source.origem_mercadoria_padrao)) ? clean(source.origem_mercadoria_padrao) : '0',
+    originCode: /^[0-8]$/.test(clean(source.origem_mercadoria_padrao)) ? clean(source.origem_mercadoria_padrao) : '',
     cstIcms: clean(source.cst_icms), csosn: clean(source.csosn),
     pisCst: clean(source.cst_pis), cofinsCst: clean(source.cst_cofins),
     ibsCbsCst: clean(source.cst_ibs_cbs), ibsCbsClassification: clean(source.classificacao_ibs_cbs),
@@ -15,7 +16,7 @@ function fiscalConfiguration(value) {
 
 function fiscalReady(row) {
   if (row.tipo_item === 'servico') return true;
-  return Boolean(clean(row.ncm) && clean(row.unidade_tributavel));
+  return Boolean(/^\d{8}$/.test(clean(row.ncm)) && clean(row.unidade_tributavel || row.unidade));
 }
 
 export function createPostgresCommercialCatalogResolver({ pool } = {}) {
@@ -57,6 +58,9 @@ export function createPostgresCommercialCatalogResolver({ pool } = {}) {
         salePrice: prices.has(row.id) ? prices.get(row.id) : number(row.preco_venda),
         costPrice: number(row.preco_custo), active: true, published: true, controlsStock: row.tipo_item !== 'servico' && row.controla_estoque === true, fiscalReady: fiscalReady(row),
         fiscal: {
+          useCompanyFiscal: usaFiscalEmpresa(row), cfopInternal: clean(row.cfop_padrao), cfopInterstate: clean(row.cfop_interestadual),
+          cst: clean(row.cst), csosn: clean(row.csosn), pisCst: clean(row.cst_pis), cofinsCst: clean(row.cst_cofins),
+          ibsCbsCst: clean(row.cst_ibs_cbs), ibsCbsClassification: clean(row.classificacao_ibs_cbs),
           ncm: clean(row.ncm), cest: clean(row.cest), originCode: clean(row.origem_mercadoria),
           taxableUnit: clean(row.unidade_tributavel),
           nationalServiceCode: clean(row.codigo_tributacao_nacional), municipalServiceCode: clean(row.codigo_tributacao_municipal),

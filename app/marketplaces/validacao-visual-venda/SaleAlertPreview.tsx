@@ -11,6 +11,7 @@ export default function SaleAlertPreview() {
     <p className="mt-4">Dados fictícios. Nenhuma venda, leitura ou quantidade é gravada.</p>
     {!open && <p className="mt-6" role="status">Aviso fechado nesta simulação.</p>}
     {open && <MarketplaceSaleAlertView alert={alert} remaining={1} message={message} onAcknowledge={() => setOpen(false)}
+      onCloseAll={() => setOpen(false)}
       onOpen={() => setMessage('Botão acionado. Neste teste não abrimos a plataforma nem alteramos dados.')} />}
   </main>;
 }

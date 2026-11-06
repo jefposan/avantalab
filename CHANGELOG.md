@@ -1,14 +1,313 @@
-## 3.2.0.310 - 2026-11-04
+## 3.2.0.363 — Infraestrutura: reconciliar a main com a produção 3.2.0.362
 
-- Candidato isolado de reconciliação da main com a produção 3.2.0.309, preservando arquivos nativos e histórico da main.
-- Deployments automáticos por Git desativados em `vercel.json` (`git.deploymentEnabled: false`); entregas permanecem no pipeline CLI com fila e revisão da base.
-- Publicação de produção exige SHA exato da main remota, identidade oficial e plano de migrações versionado no mesmo commit.
-- Identificadores ausentes no registro remoto são tratados como lacuna de rastreabilidade, sem inferir ausência de estrutura ou funcionalidade.
-- Auditoria dos 15 SQLs confirma recursos presentes e usados; fontes históricas do produto preservadas em supabase/historico-sem-registro, com bytes e proveniência mantidos. Removida a classificação provisória de material exclusivo de testes.
-- Auditoria das 19 divergências históricas: seis fontes SQL reconciliadas ao registro aplicado, cinco perdas de dólares reproduzidas, duas equivalências de formatação e seis registros sem SQL recuperados/corroborados por evidências externas.
-- Verificador offline e testes impedem mudanças silenciosas nas fontes históricas auditadas; nenhuma execução de SQL remoto pelo verificador.
-- Sem publicação, promoção ou aplicação de banco nesta preparação.
+- Incorpora as fontes verificadas da produção, preserva arquivos nativos e as proteções de publicação da main.
+- Preserva as 15 fontes SQL históricas e a concessão operacional do runtime fora da fila automática; nenhuma execução ou reparo no banco.
+- Trabalhos paralelos preservados separadamente antes da sincronização da pasta local; sem publicação de produção nesta entrega.
 
+## 3.2.0.362 — Vendas: direcionar pendências da emissão ao campo
+- Foco, rolagem e destaque persistente até a correção; abertura de detalhes recolhidos e mensagem acessível junto ao campo.
+- Preserva campo/código retornados pelo servidor e identifica natureza inválida antes do envio.
+
+## 3.2.0.361 — Vendas: emissão em blocos integrada ao perfil e ao XML
+- Página aprovada habilitada para NF-e avulsa e edição das notas pendentes com reserva válida, preservando os campos salvos.
+- Lista de preços real, preferência por cliente e mensagens padrão persistidas por empresa com isolamento e permissões no servidor.
+- Finalidade, entrada/saída, datas, referência, transporte, volumes, pesos, ordem de compra, intermediador, informações ao fisco e retenções mapeados para o XML, com validação de leiaute e assinatura.
+- DANFE conserva observações extensas em continuação. Mensagem interna não compõe XML/DANFE; a nota continua independente de financeiro e estoque.
+- Validações oficiais YA02-04 e B25c-20: Sem pagamento em ajuste/devolução e indicador de intermediador compatível com o atendimento.
+- Migração aditiva 20261106123000 aplicada e registrada; homologação e bloqueios fiscais existentes preservados.
+
+## 3.2.0.360 — Vendas: prévia local da emissão em blocos
+- Comparação com a tela de emissão do VHSYS e documentação do inventário de campos.
+- Página de avaliação local reutiliza o formulário/itens existentes e adiciona identificação, preços vinculados ao cliente, transporte, detalhes, retenções e observações com criação de mensagens por destino.
+- Rateio de parcelas em centavos, troca de lista com opção de recálculo e campos monetários padronizados.
+- Somente desenvolvimento, com dados demonstrativos. Novos campos ainda sem persistência de empresa ou transmissão fiscal; sem publicação nesta etapa.
+
+## 3.2.0.359 — Vendas: editar nota pendente pelo formulário completo
+- Ação Editar nota explícita, separada da conferência para emissão.
+- Reutiliza a página completa para documentos ainda não enviados com reserva válida, além das notas rejeitadas. Salvar registra revisão com controle de versão, sem transmitir nem alterar pedido, estoque ou financeiro.
+- Preserva série, número, emitente e histórico; bloqueia edição de assinatura existente, envio em andamento ou autorização.
+
+
+## 3.2.0.358 — Marketplaces: fechar todos os avisos de venda
+- Opção Fechar todos no aviso de venda, preservando Entendi e Ver venda no AvantaLab.
+- Leitura persistida para o usuário autenticado na empresa aberta, com paginação além dos vinte avisos do feed. Avisos gerados após o início da operação continuam disponíveis; pedidos e estoque não são alterados.
+- Cliques concorrentes e respostas antigas da consulta não reabrem a fila fechada; falhas permitem nova tentativa.
+- Correção técnica da página inicial: componente compartilhado movido para arquivo próprio, preservando conteúdo, aparência e metadados das páginas públicas. O verificador acompanha as duas rotas e exige proteção de sessão incondicional antes do conteúdo.
+- Entrega aprovada para publicação sobre a produção 3.2.0.357, mantendo os ajustes recentes.
+
+## 3.2.0.357 — Vendas: itens compactos e cadastro do produto no popup
+- Pedido e nota compartilham duas linhas compactas: identificação e valores; dados fiscais sutis, distribuídos e centralizados.
+- Valores comportam 999.999,00; ações oficiais de editar e remover próximas à borda.
+- Lápis abre o cadastro completo do produto no perfil, com proteção de alterações não salvas. Salvar atualiza identificação e classificação sem reprecificar, faturar ou movimentar estoque.
+
+## 3.2.0.355 — Marketplaces: mensagens e soluções de pós-venda pelo pedido
+
+- Área Mensagens e atendimento dentro da venda, com conta/pedido identificados, histórico, resposta, anexos e atualização automática enquanto aberta.
+- Conversa comercial separada da reclamação e da mediação; respeita bloqueios, motivos, cotas, templates e destinatário agente MLB da arquitetura 2026.
+- Soluções relidas do Mercado Livre: devolução, reembolso integral/parcial, mediação, prova/previsão de postagem e revisão física da devolução com evidências. Confirmação explícita para cada solução; nenhuma reposição automática de estoque físico.
+- Trilha privada de solicitações e anexos, idempotência, reconciliação por recibo/observação e bloqueio de reenvio quando o resultado está incerto ou em revisão. Texto integral e tokens não são gravados nessa trilha.
+- Migração aditiva privada, sem alterar saldos, pedidos ou fiscal. Preserva Resolver, sincronização, classificação e os ajustes fiscais publicados na base 3.2.0.354; manuais da Ava revisados.
+- Teste controlado JEFF no build de produção consulta identidade, pedidos, mensagens e permissões atuais usando o serviço real; falha bloqueia a promoção. Nenhuma mensagem ou solução financeira é enviada pelo teste.
+
+
+## 3.2.0.354 — Vendas: corrigir na página de emissão e excluir rascunhos
+- Corrigir nota reutiliza a página real de emissão de NF-e, preenchida com a nota rejeitada; removido o editor paralelo em popup.
+- A página permite revisar cliente, itens, quantidades, preços, descontos, NCM/CFOP, natureza, pagamento e informações complementares; erros preservam a edição.
+- Exclusão operacional de rascunho com confirmação, controle de acesso e versão, auditoria privada e liberação de reserva não utilizada. Protege notas autorizadas e envios sem resultado confirmado.
+- Reservas liberadas podem ser reutilizadas sob o lock da sequência; índice único continua protegendo números ocupados. Sem alterar pedido, receitas ou estoque.
+- Migração aditiva de auditoria e estado de liberação; manuais da Ava revisados.
+
+## 3.2.0.353 — Marketplaces: classificar envios e acompanhar divergências sem repetição de falhas
+
+- Preparação local para validação e apresentação, sem publicação. Preserva a base 3.2.0.351 e o fluxo atual de Resolver/Conferir saldos.
+- Postagem, coleta e centro de distribuição passam a orientar filtros, anúncios vinculados, avisos e ações de etiqueta; consulta periódica dos pedidos continua até concluir.
+- Divergência de saldo repetida mantém consulta automática a cada 30 minutos sem inflar o contador; falhas técnicas conservam retry normal. Correção externa é reconhecida por releitura, sem reposição indevida.
+- Observação validada do ML que alcança/ultrapassa o alvo antecipa a rodada; não altera saldo local, geração ou autorização de aumento. Nova confirmação no Resolver mantém processamento imediato conforme o fluxo existente.
+- Sem suspensão definitiva de consultas, sem novo aviso genérico de conferência, sem alteração no tratamento fiscal ou nas permissões.
+
+## 3.2.0.351 — Vendas: respeitar CFOP alterado na revisão da nota
+
+- CFOP informado manualmente na revisão prevalece somente na nota, sem alterar a herança tributária do produto nem os padrões da empresa. Continua validado conforme a UF de destino e o XSD.
+- Teste usa o resolvedor real da matriz publicada para verificar a exceção manual e a preservação de ICMS/PIS herdados.
+
+## 3.2.0.350 — Vendas: corrigir dados da própria nota rejeitada
+
+- Corrigir nota abre edição de destinatário, itens, quantidades, preços, descontos, pagamento, despesas e informações adicionais. Rejeições de pagamento deixam de direcionar ao catálogo de produtos.
+- Revisão protegida conserva empresa emissora, endereço original, origem, série, número e histórico; recalcula totais e não altera pedido, estoque ou receitas. A lista/conferência passa a ler os últimos retratos revisados.
+- PIX por chave/QR estático gera código 20 somente após seleção explícita. PIX genérico não é convertido automaticamente; cobrança dinâmica exige tipo de integração, instituição e identificador da transação.
+- Ponte envia confirmação e chave de operação ao endpoint de revisão; limite de corpo e validação de campos permanecem no servidor.
+
+## 3.2.0.349 — Vendas: validar o XML compacto antes da assinatura
+
+- Corrige a preparação estrutural do pré-XML compacto: a inclusão interna do envelope de validação não exige quebra de linha antes do fechamento NFe. XSD, rejeição de estrutura inválida e assinatura real permanecem obrigatórios.
+- Testes reproduzem o erro anterior, validam XML compacto e formatado sem alterar a fonte e exercitam a correção 588 com o preparador real, sem substituir essa etapa por uma resposta simulada.
+
+## 3.2.0.348 — Vendas: preservar conferência e retorno fiscal no reenvio
+
+- A conferência de nota rejeitada persistida conserva os retratos validados no servidor. Não recalcula credenciamento usando o estabelecimento local de demonstração. A correção e a emissão continuam exigindo validação protegida no servidor.
+
+- A leitura do rascunho inclui o código e o motivo oficiais da emissão, necessários para corrigir 588 e reconhecer retomada 217. Teste com SQL PostgreSQL real verifica a leitura e o checkout integrado.
+
+## 3.2.0.347 — Vendas: corrigir formatação XML e reenvio da rejeição 588
+
+- Gerador produz XML compacto, sem quebras de linha, tabulação ou indentação entre tags, conforme MOC 7.0 §4.2.1.3. Textos livres são normalizados antes da assinatura.
+- Assinatura XMLDSig usa namespace padrão, sem prefixo, e SignedInfo compacto. Nada é reformatado depois de calcular digest/assinatura; transporte rejeita arquivos assinados com formatação proibida antes da rede.
+- Rejeição 588 abre conferência com correção técnica automática no próximo Salvar e emitir. Usa o serviço existente de revisão, conserva dados fiscais/comerciais, série e número, e mantém XML anterior e histórico em versões imutáveis.
+- Verificação independente dos namespaces herdados no documento completo confirma digest e assinatura; XSD e regras lexicais são conferidos juntos. Outras rejeições não são corrigidas por inferência.
+
+## 3.2.0.346 — Vendas: alinhar emissão ao fluxo observado no vhsys
+
+- Notas não autorizadas abrem a conferência com Salvar, Salvar e emitir e Cancelar. Removidas as ações de consultar/verificar envio; recuperação técnica ocorre internamente ao confirmar o envio da mesma nota.
+- Autorização abre resultado salvo com DANFE/XML e compartilhamento. Rejeição ou falha permanece na conferência com o motivo, sem abrir um card intermediário de consulta.
+- Situação da nota abre a consulta pública oficial no ambiente correspondente; chave fica disponível para copiar. Endereços conferidos no Portal Nacional, inclusive homologação. Nenhum CAPTCHA é contornado.
+- Retorno 217 confirmado antes de um novo Salvar e emitir permite seguir no mesmo clique com XML, chave, série e número preservados. Resposta incerta continua bloqueando retransmissão.
+- Auditoria registra o formulário e o resultado observados na sessão aberta do vhsys. Nenhuma nota foi salva, emitida ou cancelada no sistema de referência.
+
+## 3.2.0.345 — Vendas: apresentar retorno da SEFAZ e retomar envio não recebido
+
+- Retorno 217 da consulta oficial ao autorizador permite retomar somente NF-e ainda sem recibo/protocolo/autorização, com o mesmo XML assinado, chave, série e número; não há envio automático.
+- Resposta incerta, ambiente/chave/perfil/versão diferentes ou presença de autorização não liberam retomada. Transição genérica de enviada para assinada permanece bloqueada.
+- Card informa “Envio não recebido pela SEFAZ” e oferece Retomar emissão; uma nova confirmação Salvar e emitir usa nova tentativa idempotente e preserva o histórico da anterior.
+- Demais retornos da SEFAZ conservam código e motivo no registro da consulta, sem aparentar que o clique não executou nada. Nenhuma nota foi transmitida ou cancelada pelo agente.
+
+## 3.2.0.344 — Vendas: resultado fiscal salvo e confiança TLS da SEFAZ
+
+- Abertura da nota lê o resultado e os documentos já salvos, sem consultar a SEFAZ ou trocar sua situação por “Atualizando”. NF-e autorizada mantém download e compartilhamento disponíveis.
+- Consulta externa explícita apenas para envio sem confirmação ou recuperação de documentos. Retorno da emissão inclui o resultado salvo, mantendo acesso por perfil e sem retransmissão.
+- Transportes fiscais preservam as raízes padrão do Node e incluem a raiz SSL v10 pública oficial do ITI; verificação TLS, hostname e limites de endpoints permanecem obrigatórios.
+- Validação offline da cadeia pública da SEFAZ/SP e teste real de handshake TLS, sem certificado privado ou envio de nota. Autorização desta nota depende do retorno oficial, sem inferir sucesso.
+
+## 3.2.0.343 — Vendas: conferir contrato oficial e concluir os documentos
+
+- Recuperação da autorização registra a versão imutável devolvida pela guarda do protocolo, permitindo gerar o XML final e o DANFE na mesma operação.
+- Protocolo legado sem metadado de versão pode ser lido pelo checksum já protegido, com validação da versão física e da integridade preservada. Nenhum documento é sobrescrito.
+- Ensaio sintético passa a exigir versão imutável também em leituras por referência, como a guarda de produção; cenários de consulta e metadado legado geram os dois documentos sem retransmitir.
+
+- Resposta síncrona obrigatória para uma NF-e por lote, conforme NT 2025.001 v1.03. Auditoria registra fontes oficiais e limites da validação. Diagnóstico preserva códigos HTTP/TLS seguros sem expor conteúdo protegido.
+
+## 3.2.0.342 — Vendas: concluir o retorno da emissão e abrir documentos da nota
+
+- A conferência técnica ocorre antes do registro de envio. Rejeições de lote e de item retornam com o motivo na mesma operação; falha de comunicação é erro explícito, sem confirmar emissão nem autorizar repetição cega.
+- Recuperação de retorno e geração de XML/DANFE executam na solicitação, com executor identificado e escopo da empresa/nota. Consultar situação reconcilia a nota existente sem retransmitir nem capturar tarefas de outra nota.
+- Card único de resultado abre após a tentativa e pelo ícone fiscal do pedido. Mostra autorização confirmada, chave/protocolo, rejeição ou falha; oferece download e compartilhamento dos documentos disponíveis conforme permissão. Arquivos compartilhados são preparados por acesso protegido, sem divulgar links temporários.
+- Cancelamento ordinário paulista valida autorização e prazo de 24 horas na interface e no servidor. Procedimentos fora do prazo são indicados separadamente; cancelamento comercial continua independente.
+- Nenhuma emissão de produção foi liberada; permanecem homologação, isolamento do perfil e proteção do certificado.
+
+## 3.2.0.341 — Vendas: corrigir o registro do envio e explicar a etapa da falha
+
+- Corrigida a gravação idempotente da fila: inserir ou localizar a mesma tarefa não tenta alterar sua identidade. O erro de permissão que desfazia o registro antes da transmissão deixa de ocorrer.
+- Papel técnico recebe UPDATE somente nas colunas operacionais da fila de recuperação. Identidade, perfil, emissão, tipo, chave e limite da tarefa seguem protegidos; RLS e isolamento do piloto são preservados.
+- Falhas inesperadas do envio identificam etapa e código seguro, distinguem ausência de chamada à SEFAZ de resultado ainda incerto e oferecem Consultar situação da nota. Logs não incluem XML, certificado, credenciais ou mensagem bruta da exceção.
+- A nota assinada e sua numeração são reutilizadas. Entrega também reúne o ajuste local 3.2.0.340 dos dois campos numéricos centralizados.
+
+## 3.2.0.340 — Vendas: campos numéricos centralizados na numeração fiscal
+
+- Série deixa de ser uma lista e volta à digitação somente de números, com até três dígitos. Série e Próximo número têm conteúdo centralizado, preservando a disposição do formulário.
+- Mantidas a validação da faixa permitida no servidor, a proteção da sequência e a limpeza do próximo número ao alterar a série.
+
+## 3.2.0.339 — Vendas: corrigir a numeração diretamente pela pendência
+
+- A mensagem de série ausente mantém o código/campo do servidor e oferece Configurar série e numeração no próprio card de conferência.
+- Ajustes → Dados para emissão passa a abrir o mesmo editor de numeração usado na Central Fiscal. No acesso integrado, os valores são lidos e salvos no servidor pelo perfil/estabelecimento; deixam de ser confirmados apenas no navegador.
+- Série passa a ser um seletor numérico da faixa de emissão normal (0 a 889), sem oferecer faixas especiais. Trocar a série limpa o próximo número para preenchimento explícito.
+- Configuração exige série e próximo número explícitos, permissão fiscal e versão atual. Preserva reservas/inutilizações, impede regressão da sequência e mantém somente uma série ativa. Salvar não reserva, assina ou transmite nenhuma nota.
+
+## 3.2.0.338 — Web: travar o fundo dos popups em módulos integrados
+
+- Bloqueio compartilhado reconhece modais e confirmações sem depender das classes do layout, acompanha abertura/visibilidade e se propaga entre os iframes internos de Vendas e Gestão.
+- Rolar fora do popup mantém todas as páginas de fundo paradas; o conteúdo interno continua rolável. Popups sobrepostos só liberam o fundo após fechar o último; fechamento/desmontagem restaura estilos e a posição anterior sem rolagem suave.
+- Dialog de Vendas deixa de manter um bloqueio de overflow paralelo. Menus sobrepostos Novo e navegação lateral também sinalizam seu bloqueio ao controlador oficial. O comportamento próprio do Mobile é preservado.
+
+## 3.2.0.337 — Vendas: conferência única e emissão em uma ação
+
+- Emitir nota abre uma conferência com Salvar, Salvar e emitir e Cancelar. Salvar preserva o rascunho; Salvar e emitir executa no servidor a validação, numeração, assinatura e envio, mantendo as proteções de acesso e homologação.
+- Cancelar fecha a tentativa sem cancelar a NF-e. Preparações canceladas apenas no navegador voltam a permitir retomada; cancelamentos fiscais reais permanecem terminais.
+- Notas já enviadas ou autorizadas não são retransmitidas. Falhas e rejeições são mostradas sem anunciar emissão concluída; o número e a identidade existentes são reutilizados na retomada.
+- Nota avulsa usa as mesmas ações. A emissão permanece independente de receitas, recebimentos e estoque. Município passa a usar o endereço do destinatário persistido.
+
+## 3.2.0.336 — Vendas: exibir o conteúdo fiscal expandido
+
+- Expandir Dados fiscais dos itens ou Histórico fiscal posiciona o bloco na área visível do popup, após abrir o conteúdo. A rolagem é interna, preserva cabeçalho/rodapé e não move a página de fundo.
+- Recolher não desloca a tela; movimento reduzido usa rolagem imediata.
+
+## 3.2.0.335 — Vendas: emissão da nota vinculada ao pedido e pendências específicas
+
+- Ação Emitir nota abre a conferência fiscal; preparação e validação ficam disponíveis antes da confirmação de série e número. Canceladas, autorizadas e notas em processamento mantêm suas proteções.
+- Cadastro/credenciamento do emissor, certificado e serviço de emissão têm mensagens e destinos próprios. A causa da rota deixa de ser ocultada pelo aviso genérico do executor.
+- Pedido confirmado ou em separação pode ganhar retrato fiscal persistido sem faturamento, receita, contas ou movimentação de estoque. O servidor lê os dados do próprio pedido/perfil, verifica versão, acesso e totais, e reutiliza o vínculo para impedir duplicações.
+- Faturamento posterior reutiliza a nota já vinculada. A indicação explícita de emissão independente é guardada no retrato com integridade; pedidos antigos sem essa indicação conservam a validação de origem anterior. Nenhuma transmissão é automática ao abrir ou preparar a conferência.
+
+## 3.2.0.334 — Vendas: texto acompanha a cor primária do perfil
+
+- Cabeçalhos, ícones destacados e ações primárias dos popups reutilizam a mesma escolha de texto da Gestão: branco em tons fortes/escuros e tinta escura em fundos claros.
+- Verde do perfil deixa de receber texto preto; títulos e descrições mantêm a cor escolhida sem redução de opacidade. Cor primária cadastrada e selos de situação são preservados.
+- Publicação reúne os popups compactos e os tooltips individuais dos indicadores, antes mantidos localmente.
+
+## 3.2.0.333 — Vendas: padrão compacto dos popups
+
+- Todos os popups da estrutura de Vendas e Serviços usam cabeçalho na cor do perfil, conteúdo com rolagem independente quando necessário e rodapé acessível.
+- Menus de ações de pedidos, notas, clientes, estoque e recebimentos agrupam ações disponíveis, condições e opções previstas; cancelamentos e estornos ficam separados no rodapé.
+- Botões de rodapé reutilizam o componente compacto oficial. Formulários mantêm campos, validações, salvamento e permissões; reorganização preserva os dados e os efeitos operacionais.
+
+## 3.2.0.332 — Vendas: tooltips independentes dos indicadores
+
+- Faturamento, estoque e nota fiscal exibem individualmente seu estado atual ao apontar ou focar o respectivo SVG. Removida a ajuda conjunta; mantidas as regras dos estados, as cores e os desenhos.
+- Cada indicador tem foco visível e área própria de 44 × 44px, sem sobreposição.
+
+## 3.2.0.331 — Vendas: corrigir pendências nos cadastros de origem
+
+- Conferência mostra somente problemas reais e oferece Editar produto, Revisar regras ou Verificar serviço no próprio problema; verificações prontas deixam de ocupar a lista.
+- Corrigida a divergência entre indicador legado do certificado e estado atual do executor. Regras, catálogo e credenciais são conferidos sem alterar valores ou identidade da nota.
+- Cadastro de produto pode abrir diretamente pelo identificador do item no perfil autorizado, com retorno à nota. Catálogo ambíguo ou produto de outro perfil não abre um cadastro arbitrário.
+- Emissões numeradas/em andamento/autorizadas preservam seus dados; nenhuma abertura ou revisão emite nota, gera faturamento ou movimenta estoque.
+- Teste antigo de parâmetros da empresa atualizado para conferir a herança efetiva e as exceções, substituindo a exigência do nome de uma função removida. Gate completo preservado.
+
+## 3.2.0.330 — Vendas e Serviços: simplificação fiscal e herança integral da Tridium
+
+- Consulta da nota prioriza cliente, itens, valores e pendências reais. Retiradas as linhas tributárias amontoadas da tabela; ficha fiscal e histórico ficam em blocos recolhidos com o controle oficial.
+- Códigos guardados continuam disponíveis com rótulos legíveis; complementos vazios não geram avisos genéricos. Homologação, rejeições e pendências bloqueantes permanecem visíveis.
+- Subtotal líquido por item e despesas não zeradas preservam a conferência dos valores. Validação exige CFOP da operação/UF, preserva exceções e não força um segundo CFOP sem uso.
+- Pré-conferência considera a aplicabilidade de IBS/CBS para NF-e do Simples em 2026 conforme cronograma da Receita; outros contextos e validações do servidor permanecem protegidos.
+- Migrações aplicadas e conferidas nos 343 produtos atuais dos catálogos da Tridium: usa padrões da empresa, guarda a opção anterior e preserva códigos, NCM/CEST, serviços, outras empresas, estoque, receitas e retratos fiscais. Aplicação única não desfaz personalizações futuras.
+- Auditoria de simplificação documenta achados, prioridades, fluxo proposto e itens ainda pendentes. Entrega autorizada para publicação; atualização de banco aplicada com dois backups de catálogo e preservação do cadastro excluído.
+
+## 3.2.0.329 — Custos e Vendas: herança fiscal da empresa com exceções por produto
+
+- Cadastro inicia em Usar dados fiscais da empresa e exibe origem, CST/CSOSN, PIS, COFINS e IBS/CBS do perfil selecionado. NCM, CEST e unidade continuam específicos do produto.
+- Personalizar neste produto permite exceções por campo, incluindo CFOP interno e interestadual. Campos vazios usam os padrões atuais. Alternar a herança preserva valores manuais guardados.
+- Catálogo, retratos comerciais e resolvedor fiscal conservam a escolha; NF-e consulta a empresa autenticada e a regra publicada da operação/UF, sem aceitar códigos arbitrários do navegador. CFOP incompatível bloqueia a preparação.
+- Migração aditiva local preserva códigos legados/importados e RLS, sem alterar notas, estoque ou receitas. Não aplicada ao banco publicado nesta entrega local.
+- Validação compartilhada elimina exigência de CFOP duplicado no catálogo; unidade tributável pode usar a unidade comercial.
+
+## 3.2.0.328 — Gestão Web: editar cadastro pelo destaque do perfil ativo
+
+- Adicionado botão compacto oficial Editar ao destaque Perfil ativo em Gerenciar perfil financeiro, abrindo o cadastro completo sem localizar novamente o perfil na lista.
+- Atalho e lista reutilizam a mesma ação, com conferência do perfil e das permissões de administrador ou gestor master. Nenhuma alteração em dados, banco ou acesso.
+
+## 3.2.0.327 — Vendas e Serviços: localizar campos pendentes na publicação fiscal
+
+- Corrigida a exigência de CFOP em regras desativadas ou de tipos de nota fora do escopo. Regras ativas continuam exigindo CFOP, revisão, responsável e data.
+- Reativação ou inclusão do tipo no escopo restaura a obrigatoriedade. Regras inativas permanecem preservadas e não participam do enquadramento.
+- Publicar regras fiscais leva ao primeiro campo pendente, seleciona a regra correspondente e posiciona o foco. A lista exibe todos os bloqueios e permite acessar cada campo.
+- Validação compartilhada entre tela e servidor inclui responsável, data, confirmações e revisão de cada regra ativa. Regressões cobrem o bloqueio antes de qualquer escrita.
+- Certificado, regras da empresa e documentos não são alterados durante os testes locais; nenhuma nota foi transmitida.
+
+## 3.2.0.326 — Vendas e Serviços: menu de ações compacto aprovado
+
+- Aplicado o menu aprovado de pedidos: cabeçalho na cor do perfil, ações disponíveis em três colunas com ícones coloridos e opções previstas em grade compacta sem selos repetidos.
+- Contas a receber aguardando faturamento, documento fiscal indefinido e restrições de acesso ficam separados dos recursos previstos. Nenhuma permissão é ampliada.
+- Cancelar pedido permanece separado no rodapé com o botão compacto oficial; sua confirmação continua obrigatória. Foco, Escape, fechamento e adaptação a telas estreitas são preservados.
+- Organização preparada para mostrar todas as ações sem rolagem no desktop habitual; telas pequenas preservam rolagem acessível quando necessária.
+- Publicação inclui a correção 3.2.0.325 da edição direta e integrada de pedidos.
+
+## 3.2.0.325 — Vendas e Serviços: abertura direta da edição de pedidos
+
+- Corrigida a rejeição do retorno a rascunho na integração com a Gestão: o hospedeiro reutiliza o mesmo contrato validado do módulo, inclusive o estado salvo.
+- Editar pedido solicita a reabertura diretamente e abre o formulário completo após confirmação do servidor, sem a confirmação intermediária. Identidade, itens, valores, cliente, pagamento e observações são preservados.
+- Falha de sessão ou permissão não altera o registro nem abre o editor. Erros comerciais usam alerta vermelho com ícone de atenção; mensagens informativas não usam mais confirmação visual de sucesso.
+- Testes executam o trecho real da integração com o endpoint e o fluxo do servidor, até a recuperação do registro no editor. Cancelamento e faturamento continuam com suas confirmações.
+
+## 3.2.0.324 — Vendas e Serviços: indicadores compactos aprovados
+
+- Aplicado o visual aprovado: três SVGs de 18 px junto à seta de ações, sem coluna própria, fundos ou símbolos sobrepostos. Preenchimento identifica conclusão; contorno, espera; retorno e alerta são integrados ao desenho.
+- Um único foco com ajuda compartilhada apresenta os estados independentes de faturamento, estoque e nota fiscal. A área acessível permanece com 44 px de altura; nenhuma ação é executada ao consultar os indicadores.
+- Lista mantém número, data, cliente, situação, total e ações; tipo abaixo do número, vendedor nos detalhes e layout adaptado a telas estreitas.
+- Faturamento não indica recebimento; autorização fiscal independe da venda cancelada. Recarga preserva estoque liberado ou devolvido. Sem alterações em banco, permissões ou lançamentos.
+
+## 3.2.0.322 — Vendas e Serviços: lista e ações de Notas Fiscais
+
+- Menu esquerdo oferece Notas Fiscais com a lista de notas e rascunhos do perfil, busca por número, série, cliente, documento ou chave e filtros por tipo e situação fiscal.
+- Configurações de cadastro, certificado e numeração ficam no botão Configurações fiscais; Nova nota fiscal mantém o fluxo avulso independente.
+- Ações por documento respeitam a situação e as permissões: detalhes, preparação, revisão de rejeição, continuação da emissão, consulta, XML, DANFE e cancelamento fiscal quando disponíveis. Nota autorizada ou em processamento não oferece cancelamento de rascunho nem nova emissão.
+- Filtros e contadores priorizam a situação fiscal atual, preservando os documentos cancelados e seus arquivos. Nenhum lançamento financeiro ou movimento de estoque é disparado pela navegação ou emissão fiscal.
+
+## 3.2.0.321 — Vendas e Serviços: NF-e avulsa independente do pedido
+
+- Novo → Nota fiscal (NF-e) e Nova nota fiscal na Central Fiscal abrem o formulário compartilhado com destinatário, produtos, preços, descontos, frete, pagamento fiscal e informações complementares.
+- Gravação avulsa restrita ao perfil e à permissão fiscal.prepare, com emissor e catálogo resolvidos no servidor, conferência de conteúdo e repetição idempotente. Nenhum pedido auxiliar, parcela, receita ou movimento de estoque é criado.
+- Migração aditiva permite origem avulsa no retrato fiscal imutável, preservando vínculos e dados existentes. Central Fiscal, preparação, assinatura e revisão de rejeição reconhecem a origem independente; homologação mantida.
+- Testes PostgreSQL verificam nota avulsa, isolamento empresarial, permissão sem vendas, integridade, repetição, conflito e ausência de efeitos comerciais/financeiros/estoque. A emissão a partir de pedido mantém a origem e não refatura.
+
+## 3.2.0.320 — Vendas e Serviços: edição, faturamento e cancelamento de pedidos
+
+- Ações explícitas Editar pedido, Faturar pedido e Cancelar pedido. A edição de confirmados retorna o mesmo registro a rascunho, libera reservas e preserva os retratos anteriores no histórico.
+- Faturamento permite desmarcar a baixa de estoque, liberando reservas sem saída física e gerando as contas a receber na mesma transação.
+- Cancelamento comercial também disponível para faturados com nota autorizada: cancela parcelas e estorna somente saídas efetivas, preservando nota, situação fiscal, arquivos e histórico. A regularização fiscal é independente; recebimentos já realizados seguem estorno financeiro explícito.
+- Migração aditiva preserva o item de origem de reservas liberadas ao substituir itens na edição. Pedidos faturados continuam protegidos contra edição direta.
+- Testes PostgreSQL de reabertura, alteração de quantidade, reconfirmação, faturamento sem baixa, rollback, cancelamento com/sem saída física, preservação de nota autorizada, pendência financeira e repetição idempotente.
+
+## 3.2.0.319 — Vendas e Serviços: continuar pedido recuperado do servidor
+
+- Pedidos no estado salvo do servidor são apresentados como Rascunho após a recarga, habilitando Continuar pedido e o filtro correspondente.
+- Teste de recarga executa a conversão real dos dados e verifica identidade, itens, versão e preservação dos estados posteriores.
+
+## 3.2.0.318 — Vendas e Serviços: retomada de pedidos em rascunho
+
+- Pedidos em rascunho passam a oferecer **Continuar pedido** no menu de ações, reabrindo o formulário com cliente, itens, preços, descontos, entrega, pagamento, estoque e configuração fiscal preservados.
+- Salvar alterações atualiza o mesmo pedido e mantém número, vínculo empresarial e histórico, sem criar duplicidade.
+- No perfil empresarial, o conteúdo editado é atualizado com controle de versão antes de salvar ou confirmar; falhas e conflitos restauram o retrato anterior com segurança.
+- A confirmação de um rascunho editado atualiza primeiro seus dados persistidos e somente depois avança a situação e os efeitos de estoque.
+
+## 3.2.0.317 — Vendas e Serviços: modal de ações responsivo
+
+- O modal de ações de pedidos passa a ocupar a largura disponível sem cortar títulos, descrições ou botões nas laterais.
+- Cabeçalho e rodapé permanecem acessíveis; quando necessário, somente a lista de ações rola verticalmente.
+- Cards de ação respeitam a largura do modal, quebram textos longos e passam para uma coluna em telas estreitas, sem alterar o comportamento das ações.
+
+## 3.2.0.316 — Vendas e Serviços: itens compactos e pedidos com estoque opcional
+
+- Itens do pedido compactos, nome completo com quebra de linha e subtotal destacado; adaptação para telas estreitas sem cortar os campos.
+- Controle de estoque por pedido, inicialmente desligado no acesso integrado: permite confirmar e faturar com saldo zero sem reservar nem baixar estoque no AvantaLab. Quando ligado, mantém a validação de saldo.
+- Correção da validação de datas de vencimento no faturamento; preservadas as exigências fiscais e o ambiente exclusivo de homologação da NF-e.
+- Teste integrado PostgreSQL em memória: confirmação, separação, faturamento, parcela e preparação do rascunho fiscal com saldo zero, sem movimentos de estoque nem transmissão à SEFAZ.
+
+## 3.2.0.315 — Custos e Precificação: catálogos independentes e exclusão com histórico
+
+- Destinos Vendas e Serviços e AvantaVendas independentes, com vários catálogos simultâneos e compatibilidade durante recarga do cache SQL.
+- Produtos e serviços reúne automaticamente catálogos ativos em Vendas e Serviços, sem seletor manual; nenhum ativo deixa a lista vazia.
+- Exclusão explícita de catálogo manual retira seus itens de novas operações sem transferência ao catálogo local nem remoção de históricos, preços e lançamentos anteriores.
+- Catálogos de sistema protegidos; excluídos não podem ser reativados nem receber novos itens. Desativar destinos continua reversível e não exclui produtos.
+- Migrações 20261104220000 a 20261105130000 já aplicadas isoladamente no Supabase; 243 produtos do catálogo local restaurados mediante autorização.
 
 ## 3.2.0.309 — Despesas: modelo Excel com cadastro atual do perfil
 

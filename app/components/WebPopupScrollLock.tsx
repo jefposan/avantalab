@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 type EstilosAnteriores = {
   htmlOverflow: string;
   htmlOverscrollBehavior: string;
+  htmlScrollBehavior: string;
   bodyPosition: string;
   bodyTop: string;
   bodyLeft: string;
@@ -21,14 +22,23 @@ export default function WebPopupScrollLock() {
     const body = document.body;
     let bloqueado = false;
     let scrollYTravado = 0;
+    let scrollXTravado = 0;
     let estilosAnteriores: EstilosAnteriores | null = null;
+    // Cada documento informa somente seu próprio iframe. Assim o bloqueio
+    // acompanha também os módulos internos aninhados, sem mensagens externas.
+    const frame = window.frameElement;
+    const atributoFrame = 'data-av-popup-scroll-lock';
 
     const popupVisivel = () => {
       if (document.getElementById('mobile-root')) return false;
 
-      return Array.from(document.querySelectorAll<HTMLElement>('.fixed.inset-0:not([data-av-navigation-loading])')).some((elemento) => {
+      return Array.from(document.querySelectorAll<HTMLElement>(
+        '.fixed.inset-0:not([data-av-navigation-loading]), [role="dialog"][aria-modal="true"], [role="alertdialog"][aria-modal="true"], dialog[open], [data-av-popup-open="true"], iframe[data-av-popup-scroll-lock="true"]',
+      )).some((elemento) => {
         const estilo = window.getComputedStyle(elemento);
-        return estilo.display !== 'none' && estilo.visibility !== 'hidden';
+        return !elemento.closest('[hidden], [aria-hidden="true"]')
+          && elemento.getClientRects().length > 0
+          && estilo.display !== 'none' && estilo.visibility !== 'hidden';
       });
     };
 
@@ -36,9 +46,11 @@ export default function WebPopupScrollLock() {
       if (bloqueado) return;
       bloqueado = true;
       scrollYTravado = window.scrollY;
+      scrollXTravado = window.scrollX;
       estilosAnteriores = {
         htmlOverflow: html.style.overflow,
         htmlOverscrollBehavior: html.style.overscrollBehavior,
+        htmlScrollBehavior: html.style.scrollBehavior,
         bodyPosition: body.style.position,
         bodyTop: body.style.top,
         bodyLeft: body.style.left,
@@ -55,6 +67,7 @@ export default function WebPopupScrollLock() {
       html.classList.add('av-popup-scroll-lock');
       html.style.overflow = 'hidden';
       html.style.overscrollBehavior = 'none';
+      html.style.scrollBehavior = 'auto';
       body.style.position = 'fixed';
       body.style.top = `-${scrollYTravado}px`;
       body.style.left = '0';
@@ -79,23 +92,33 @@ export default function WebPopupScrollLock() {
       body.style.overflow = estilosAnteriores.bodyOverflow;
       body.style.overscrollBehavior = estilosAnteriores.bodyOverscrollBehavior;
       body.style.paddingRight = estilosAnteriores.bodyPaddingRight;
-      window.scrollTo(0, scrollYTravado);
+      window.scrollTo(scrollXTravado, scrollYTravado);
+      html.style.scrollBehavior = estilosAnteriores.htmlScrollBehavior;
       estilosAnteriores = null;
     };
 
     const atualizar = () => {
-      if (popupVisivel()) bloquear();
+      const aberto = popupVisivel();
+      if (aberto) bloquear();
       else desbloquear();
+      if (frame) {
+        if (aberto && frame.getAttribute(atributoFrame) !== 'true') frame.setAttribute(atributoFrame, 'true');
+        else if (!aberto && frame.hasAttribute(atributoFrame)) frame.removeAttribute(atributoFrame);
+      }
     };
 
     const observer = new MutationObserver(atualizar);
-    observer.observe(body, { childList: true, subtree: true });
+    observer.observe(body, {
+      childList: true, subtree: true, attributes: true,
+      attributeFilter: ['class', 'style', 'hidden', 'open', 'role', 'aria-hidden', 'aria-modal', 'data-av-popup-open', atributoFrame],
+    });
     window.addEventListener('resize', atualizar);
     atualizar();
 
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', atualizar);
+      frame?.removeAttribute(atributoFrame);
       desbloquear();
     };
   }, []);

@@ -199,7 +199,13 @@ export async function createSyntheticNfeOrchestratorLab({ authorizationResponder
     if (!signedArtifact.valid) throw new Error('O XML sintético não passou na validação criptográfica.');
 
     const clock = () => currentTime;
-    const storage = createLocalFiscalArtifactStorage({ rootDirectory, clock });
+    const localStorage = createLocalFiscalArtifactStorage({ rootDirectory, clock });
+    // O contrato de produção exige versão imutável também na leitura por referência.
+    const storage = Object.freeze({ ...localStorage, async readByReference(input) {
+      const loaded = await localStorage.readByReference(input);
+      if (!input.storageVersion || input.storageVersion !== loaded.versionId) throw new Error('A versão imutável não corresponde ao documento sintético.');
+      return loaded;
+    } });
     const storedSigned = await persistSignedNfeArtifact({ artifact: signedArtifact, provider: storage });
     if (!storedSigned.valid) throw new Error('O XML assinado sintético não foi guardado.');
 

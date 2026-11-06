@@ -1,4 +1,5 @@
 import { request as nodeHttpsRequest } from 'node:https';
+import { NFE_SERVER_CA } from './nfe-server-trust.mjs';
 
 import { prepareNfeA1Pkcs12ForMutualTls } from './nfe-a1-certificate.mjs';
 import {
@@ -98,7 +99,7 @@ function readResponse(response, maxResponseBytes) {
     const declaredLength = Number(response?.headers?.['content-length'] || 0);
     if (status !== 200) {
       response?.resume?.();
-      reject(new Error('O serviço de consulta devolveu um código HTTP inesperado.'));
+      reject(Object.assign(new Error('O serviço de consulta devolveu um código HTTP inesperado.'),{code:'HTTP_STATUS',httpStatus:status}));
       return;
     }
     if (Number.isFinite(declaredLength) && declaredLength > maxResponseBytes) {
@@ -151,6 +152,7 @@ function postWithMutualTls({ requestImpl, url, request, pkcs12, passphrase }) {
       servername: url.hostname,
       agent: false,
       rejectUnauthorized: true,
+      ca: NFE_SERVER_CA,
       minVersion: 'TLSv1.2',
       pfx: pkcs12,
       passphrase,
@@ -165,8 +167,8 @@ function postWithMutualTls({ requestImpl, url, request, pkcs12, passphrase }) {
         .then((value) => finish(resolve, value))
         .catch((error) => finish(reject, error));
     });
-    socketRequest.setTimeout(request.timeoutMs, () => socketRequest.destroy(new Error('A consulta fiscal excedeu o tempo limite.')));
-    socketRequest.on('error', () => finish(reject, new Error('A conexão mTLS de consulta fiscal não foi concluída.')));
+    socketRequest.setTimeout(request.timeoutMs, () => socketRequest.destroy(Object.assign(new Error('A consulta fiscal excedeu o tempo limite.'),{code:'ETIMEDOUT'})));
+    socketRequest.on('error', cause => finish(reject, Object.assign(new Error('A conexão mTLS de consulta fiscal não foi concluída.'),{code:cause?.code})));
     socketRequest.end(request.body, 'utf8');
   });
 }
