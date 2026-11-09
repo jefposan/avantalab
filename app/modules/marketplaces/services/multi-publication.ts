@@ -106,9 +106,10 @@ export async function updateExistingDestination(db:SupabaseClient,company:string
   if(fields.includes('description')){sent=true;await mlRequest(db,connection,`/items/${link.listingId}/description?api_version=2`,'PUT',{plain_text:form.description});}
   const fresh=objectValue(await mlRequest(db,connection,`/items/${link.listingId}`));normalizeListing(fresh,connection.seller_reference);
   if(fields.includes('price')&&fresh.price!==form.price)throw Error('Preço não confirmado');
-  await recordPublishedListing(db,connection,link.listingId);
+  const listing=await recordPublishedListing(db,connection,link.listingId);
   const recorded=await db.from('marketplace_listing_actions').update({status:'succeeded',error_code:null}).eq('empresa_id',company).eq('id',inserted.data.id);if(recorded.error)throw recorded.error;
-  return{status:'updated',listing:{id:link.listingId}};
+  const availabilityChanged = item.status === 'active' && listing?.status !== undefined && listing.status !== 'active';
+  return{status:'updated',listing,...(availabilityChanged ? {availabilityChanged} : {})};
  }catch(error){
   const rejected=error instanceof MarketplaceError&&['provider_400','provider_403'].includes(error.code);
   await db.from('marketplace_listing_actions').update({status:sent&&!rejected?'uncertain':'failed',error_code:rejected?(error as MarketplaceError).code:'multi_update_pending'}).eq('empresa_id',company).eq('id',inserted.data.id);

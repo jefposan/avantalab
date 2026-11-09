@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import ts from 'typescript';
+import {listingSaleState} from '../../app/modules/marketplaces/listing-sale-state.ts';
 import {readFileSync,existsSync} from 'node:fs';
 import {createRequire,registerHooks} from 'node:module';
 import {resolve,dirname} from 'node:path';
@@ -20,6 +21,7 @@ function harness({defer=false}={}){
  const exported={};vm.runInNewContext(ts.transpileModule(readFileSync(resolve(root,'app/marketplaces/MultiAccountPublication.tsx'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{exports:exported,crypto,AbortController,AbortSignal,Error,Object,JSON,requestAnimationFrame:fn=>fn(),setTimeout(fn){const id=++tid;timers.set(id,fn);return id},clearTimeout:id=>timers.delete(id),require(name){
   if(name==='react')return {forwardRef:fn=>p=>fn(p,{}),useImperativeHandle(_ref,create){handle=create()},useRef(value){const i=cursor++;return states[i]??={current:value}},useState(initial){const i=cursor++;if(!(i in states))states[i]=typeof initial==='function'?initial():initial;return [states[i],v=>states[i]=typeof v==='function'?v(states[i]):v]},useEffect(fn,deps){const i=ec++,old=effects[i];if(!old||deps.some((d,n)=>!Object.is(d,old.deps[n])))pending.push(()=>{old?.cleanup?.();effects[i]={deps,cleanup:fn()}})}};
   if(name.endsWith('multi-publication-validation'))return helpers;if(name.endsWith('/catalog-publication'))return catalog;if(name.endsWith('/multi-publication'))return multi;
+  if(name.endsWith('/listing-sale-state'))return {listingSaleState};
   if(name==='./PublicationShipping')return {default:'shipping'};
   if(name.includes('BotaoAcaoCompacto'))return {default:'button'};if(name.includes('CampoMoeda'))return {default:'money'};if(name.includes('formatters'))return {moedaDigitadaParaNumero:s=>Number(s.replace(',','.'))};
   if(name==='./account-identification')return {accountDisplayName:a=>a?.seller_name||'Conta'};if(name.endsWith('.module.css'))return {default:{}};if(name==='./Anunciados')return {};return require(name);
@@ -67,14 +69,14 @@ test('concorrência de leitura limitada a duas, falha isolada e aborto não entr
 });
 
 for(const partial of [false,true])test(`publicações iguais ${partial?'expõem criação parcial sem confirmar sucesso':'concluem e notificam o formulário pai após todas as contas'}`,async()=>{
- const h=harness(),read=h.props.request;let completed=0;
- h.props.onCompleted=()=>completed++;
- h.props.request=async(path,body,signal)=>{if(body.action==='publish'){if(partial)throw Object.assign(Error('O anúncio foi criado, mas a sincronização não foi confirmada.'),{code:'publication_partial'});return{status:'published',listing:{id:'MLB123'}};}return read(path,body,signal);};
+ const h=harness(),read=h.props.request;const completed=[];
+ h.props.onCompleted=summary=>completed.push(summary);
+ h.props.request=async(path,body,signal)=>{if(body.action==='publish'){if(partial)throw Object.assign(Error('O anúncio foi criado, mas a sincronização não foi confirmada.'),{code:'publication_partial'});return{status:'published',listing:{id:'MLB123',status:'paused',substatus:['paused_by_seller']}};}return read(path,body,signal);};
  await h.mount();await h.select(0);await h.select(1);await h.run();
  h.nodes().filter(node=>node.type==='input'&&node.props.type==='radio')[0].props.onChange();h.render();h.render();await h.run();
  h.nodes().filter(node=>node.type==='shipping').forEach(node=>node.props.onReview({shippingQuoteToken:'proof'},false));h.render();
  await h.publish();h.render();
- assert.equal(completed,partial?0:1);assert.deepEqual(h.busy,[true,false]);
+ assert.equal(completed.length,partial?0:1);if(!partial)assert.match(completed[0],/JEFF.*Anúncio pausado pelo vendedor\.\nCIDY.*Anúncio pausado pelo vendedor/);assert.deepEqual(h.busy,[true,false]);
  if(partial){assert.equal(h.nodes().filter(node=>node.type==='input'&&node.props.type==='radio')[1].props.checked,true);assert.ok(h.nodes().some(node=>node.type==='p'&&String(node.props.children).includes('O anúncio foi criado')));}
  h.unmount();
 });

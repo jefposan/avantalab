@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire, stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { listingSaleState } from '../../app/modules/marketplaces/listing-sale-state.ts';
 import { publicationErrors } from '../../app/modules/marketplaces/services/catalog-publication.ts';
 import * as publicationPrefill from '../../app/modules/marketplaces/publication-prefill.ts';
 const require=createRequire(import.meta.url);
@@ -27,6 +28,7 @@ for (const simulated of [false, true]) test(`formulário ${simulated ? 'simulado
     document:{getElementById(id){if(!all(tree).some(node=>node.props?.id===id))return null;return{tagName:id==='new-attributes'?'DETAILS':'INPUT',focus:()=>focused.push(id),scrollIntoView:()=>scrolled.push(id),closest:()=>null};}},
     require(name){
       if(name==='react')return{useCallback:fn=>fn,useState(initial){const i=cursor++;if(!(i in states))states[i]=typeof initial==='function'?initial():initial;return[states[i],value=>states[i]=typeof value==='function'?value(states[i]):value];},useRef(initial){return refs[refCursor++] ||= {current:initial};},useEffect(fn){if(first)effects.push(fn);}};
+      if(name.endsWith('/listing-sale-state'))return {listingSaleState};
       if(name==='./PublicationOptionalAttributes')return {default:'optional-attributes'};
       if(name==='./ProductPhotoInput')return {default:'photo-input'};
       if(name==='./usePreparationSummary')return {default:()=>({current:null})};

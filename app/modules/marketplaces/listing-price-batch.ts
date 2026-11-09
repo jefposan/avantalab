@@ -1,10 +1,11 @@
+import {listingSaleState} from './listing-sale-state.ts';
 import {validateChanges,type ListingEditor} from './listing-editor.ts';
 import type {LocalProductLink} from './services/local-product-model';
 import type {ListingSnapshot} from './services/listing-model';
 
 export type PriceTarget=Pick<LocalProductLink,'connection_id'|'provider_listing_id'|'provider'|'accountName'>;
 export type PriceReview={target:PriceTarget;editor:ListingEditor|null;error:string};
-export type PriceOutcome={target:PriceTarget;status:'confirmed'|'unchanged'|'pending'|'failed'|'not_sent';message:string;listing?:ListingSnapshot};
+export type PriceOutcome={target:PriceTarget;status:'confirmed'|'unchanged'|'pending'|'failed'|'not_sent';message:string;listing?:ListingSnapshot;availabilityChanged?:boolean};
 export type PriceRequester=(path:string,body?:unknown,signal?:AbortSignal,method?:string)=>Promise<unknown>;
 const key=(target:PriceTarget)=>`${target.connection_id}:${target.provider_listing_id}`;
 
@@ -44,13 +45,20 @@ export async function saveProductPrices(request:PriceRequester,companyId:string,
   const {target,editor}=fresh[index];
   if(editor!.values.price===price){outcomes[index]={target,status:'unchanged',message:'Já estava neste preço.'};changed([...outcomes]);continue;}
   try{
-   const result=await request('anunciados/editar',{empresaId:companyId,connectionId:target.connection_id,id:target.provider_listing_id,revision:editor!.revision,requestKey:crypto.randomUUID(),changes:{price}},undefined,'PATCH') as {listing:ListingSnapshot;pending?:boolean;message?:string};
+   const result=await request('anunciados/editar',{empresaId:companyId,connectionId:target.connection_id,id:target.provider_listing_id,revision:editor!.revision,requestKey:crypto.randomUUID(),changes:{price}},undefined,'PATCH') as {listing:ListingSnapshot;pending?:boolean;message?:string;availabilityChanged?:boolean};
    if(result.listing?.id!==target.provider_listing_id)throw new Error('Não foi possível confirmar o anúncio atualizado. Confira no marketplace antes de repetir.');
    if(!result.pending&&(result.listing.currency!=='BRL'||result.listing.price!==price))throw new Error('O preço enviado não foi confirmado. Confira no marketplace antes de repetir.');
-   outcomes[index]={target,status:result.pending?'pending':'confirmed',listing:result.listing,message:result.pending?(result.message||'Enviado; confirmação pendente. Não repita o envio.'):'Preço confirmado pelo marketplace.'};
+   const availabilityChanged = result.availabilityChanged === true;
+   outcomes[index] = {
+    target, status: result.pending ? 'pending' : 'confirmed', listing: result.listing,
+    ...(availabilityChanged ? { availabilityChanged } : {}),
+    message: result.pending
+     ? result.message || 'Enviado; confirmação pendente. Não repita o envio.'
+     : `Preço confirmado. ${listingSaleState(result.listing)}.${availabilityChanged ? ' A situação mudou após a edição. O lote foi interrompido para conferência.' : ''}`,
+   };
   }catch(failure){outcomes[index]={target,status:'failed',message:failure instanceof Error?failure.message:'Não foi possível confirmar a atualização.'};}
   changed([...outcomes]);
-  if(['pending','failed'].includes(outcomes[index].status))break;
+  if(outcomes[index].availabilityChanged || ['pending','failed'].includes(outcomes[index].status))break;
  }
  return outcomes;
 }

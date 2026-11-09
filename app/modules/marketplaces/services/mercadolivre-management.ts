@@ -297,7 +297,7 @@ export async function synchronizeListings(db: SupabaseClient, connection: Seller
   }
 }
 
-export async function manageListing(db: SupabaseClient, connection: SellerConnection, actor: string, input: { id: unknown; action: unknown; requestKey: unknown; confirmation: unknown }) {
+export async function manageListing(db: SupabaseClient, connection: SellerConnection, actor: string, input: { id: unknown; action: unknown; requestKey: unknown; confirmation: unknown; source?: unknown }) {
   if (!listingIdIsValid(input.id) || !uuidIsValid(input.requestKey) || !['pause', 'resume', 'close', 'delete'].includes(String(input.action)) || input.confirmation !== input.id)
     throw new MarketplaceError(400, 'invalid_action', 'Confirmação ou ação inválida.');
   const item = objectValue(await mlRequest(db, connection, `/items/${input.id}`));
@@ -321,7 +321,12 @@ export async function manageListing(db: SupabaseClient, connection: SellerConnec
     }
   }
   const { data: event, error } = await db.from('marketplace_listing_actions').insert({ empresa_id: connection.empresa_id,
-    connection_id: connection.id, provider_listing_id: input.id, action: input.action, request_key: input.requestKey, actor_id: actor }).select('id').single();
+    connection_id: connection.id, provider_listing_id: input.id, action: input.action, request_key: input.requestKey, actor_id: actor,
+    request_payload: {
+      source: ['anunciados', 'produto_individual', 'produto_lote'].includes(String(input.source)) ? input.source : 'integracao',
+      previous_status: current.status,
+      requested_status: 'status' in body ? body.status : 'deleted',
+    } }).select('id').single();
   if (error) throw new MarketplaceError(error.code === '23505' ? 409 : 503, error.code === '23505' ? 'duplicate_action' : 'database', 'A ação não foi reenviada. Atualize a lista antes de tentar novamente.');
   let providerSucceeded = false;
   try {

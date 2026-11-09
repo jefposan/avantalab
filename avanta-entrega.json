@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_E9cdU5uSbwtiBCjA6LTPqVr1nUT9",
-  "version": "3.2.0.377",
-  "scope": "Vendas: corrigir inscrição estadual do destinatário no DANFE",
+  "baseDeploymentId": "dpl_BjwBTpfChqwSqsNxkLtCJYhpZVDq",
+  "version": "3.2.0.378",
+  "scope": "Marketplaces: ações em lote e confirmação da situação de venda",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base main 3.2.0.376 preservada. Homologação 2/1 autorizada e downloads verificados; ajuste pontual do gerador de novos DANFEs, sem alterar arquivos imutáveis, XML, banco ou sequência."
+  "auditReview": "Base main e produção 3.2.0.377 preservadas. Ações em lote limitadas aos vínculos elegíveis do produto. Confirmação de preço e situação separadas. Entrega sem migração."
 }

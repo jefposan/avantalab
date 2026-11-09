@@ -1,5 +1,6 @@
 'use client';
 import {forwardRef,useEffect,useImperativeHandle,useRef,useState} from 'react';
+import {listingSaleState} from '@/app/modules/marketplaces/listing-sale-state';
 import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
 import CampoMoeda from '@/app/components/CampoMoeda';
 import PublicationShipping from './PublicationShipping';
@@ -13,7 +14,7 @@ import styles from './marketplaces.module.css';
 
 export type MultiAccountPublicationHandle={publish:()=>Promise<void>};
 type Review=DestinationReview;
-type Props={companyId:string;form:PublicationForm;productRevision?:number;accounts:MarketplaceAccount[];confirmed:boolean;disabled:boolean;onBusyChange:(busy:boolean)=>void;onCompleted:()=>void;sourceConnectionId?:string;sourceListingId?:string;request?:typeof marketplaceClientRequest};
+type Props={companyId:string;form:PublicationForm;productRevision?:number;accounts:MarketplaceAccount[];confirmed:boolean;disabled:boolean;onBusyChange:(busy:boolean)=>void;onCompleted:(summary:string)=>void;sourceConnectionId?:string;sourceListingId?:string;request?:typeof marketplaceClientRequest};
 export default forwardRef<MultiAccountPublicationHandle,Props>(function MultiAccountPublication({companyId,form,productRevision,accounts,confirmed,disabled,onBusyChange,onCompleted,sourceConnectionId,sourceListingId,request=marketplaceClientRequest},ref){
  const [links,setLinks]=useState<PublicationDestination[]>([]),[loaded,setLoaded]=useState(false),[error,setError]=useState(''),[selected,setSelected]=useState<string[]>([]),[reviews,setReviews]=useState<Record<string,Review>>({}),[publicationMode,setPublicationMode]=useState<'same'|'different'|''>(''),[updateChoice,setUpdateChoice]=useState(''),[busy,setBusy]=useState(false),[results,setResults]=useState<Record<string,string>>({}),[refresh,setRefresh]=useState(0);
  const batch=useRef(crypto.randomUUID()),lock=useRef(false),signature=JSON.stringify([form,productRevision]),baseline=useRef(commercialPublicationKey(form));
@@ -71,13 +72,29 @@ export default forwardRef<MultiAccountPublicationHandle,Props>(function MultiAcc
   for(const id of targets){const row=reviews[id],name=accountDisplayName(eligible.find(account=>account.id===id));if(!row||row.sourceKey!==signature){if(publicationMode==='same')setPublicationMode('different');setError(`${name}: ${results[id]||'a validação ainda não foi concluída. Clique em Revalidar contas.'}`);focusField(id,'form');return;}const pending=destinationErrors(row),first=Object.keys(pending)[0];if(first){if(publicationMode==='same')setPublicationMode('different');setError(`${name}: ${pending[first]}`);focusField(id,first);return;}}
   if(lockedLinks.length&&!updateChoice){setError('Informe se os anúncios existentes devem receber o novo preço.');return;}
   lock.current=true;setBusy(true);onBusyChange(true);setError('');let failed=false,failedField:{id:string;field:string}|undefined;
+  const accountName = (id: string) => accountDisplayName(eligible.find(account=>account.id===id));
+  const completed = selected.filter(id=>reviews[id]?.status==='published'&&results[id])
+   .map(id=>`${accountName(id)} · ${results[id]}.`);
   try{
-   for(const id of targets){try{const row=reviews[id];const response=await request('publicacao-multiconta',{action:'publish',empresaId:companyId,connectionId:id,batchKey:batch.current,form:row.form});if(response.status!=='published')throw Error('A publicação não foi confirmada.');setReviews(current=>({...current,[id]:{...current[id],status:'published',message:`Publicado · ${response.listing.id}`}}));setResults(current=>({...current,[id]:`Publicado · ${response.listing.id}`}));}
+   for(const id of targets){try{const row=reviews[id];const response=await request('publicacao-multiconta',{action:'publish',empresaId:companyId,connectionId:id,batchKey:batch.current,form:row.form});if(response.status!=='published')throw Error('A publicação não foi confirmada.');const message = `${response.listing.id} · ${listingSaleState(response.listing)}`;
+    completed.push(`${accountName(id)} · ${message}.`);
+    setReviews(current=>({...current,[id]:{...current[id],status:'published',message}}));
+    setResults(current=>({...current,[id]:message}));}
     catch(reason){failed=true;const detail=reason as Error&{code?:string;fields?:Record<string,string>;details?:string};setTechnical(current=>({...current,[id]:detail.details||''}));const uncertain=['publication_uncertain','publication_partial','duplicate_publish'].includes(detail.code||'');const fields=Object.fromEntries(Object.entries(detail.fields||{}).filter(([,value])=>typeof value==='string'&&value));if(!failedField)failedField={id,field:uncertain?'form':Object.keys(fields)[0]||'form'};setReviews(current=>({...current,[id]:{...current[id],status:uncertain?'pending':'failed',message:detail.message,errors:{...current[id].errors,...fields}}}));setResults(current=>({...current,[id]:detail.message||'Falha nesta conta; as outras continuam.'}));}}
-   if(updateChoice==='yes')for(const link of lockedLinks){const key=`${link.connectionId}:${link.listingId}`;if(results[key]?.startsWith('Atualizado'))continue;
-    try{const response=await request('publicacao-multiconta',{action:'update',empresaId:companyId,connectionId:link.connectionId,listingId:link.listingId,form,fields:['price'],confirmUpdate:true,batchKey:batch.current});if(response.status!=='updated')throw Error('Atualização pendente de confirmação.');setResults(current=>({...current,[key]:'Preço atualizado e conferido no marketplace'}));}
+   if(updateChoice==='yes')for(const link of lockedLinks){const key=`${link.connectionId}:${link.listingId}`;if(results[key]?.startsWith('Atualizado')){
+    completed.push(`${accountName(link.connectionId)} · ${link.listingId} · ${results[key]}`);
+    continue;
+   }
+    try{const response=await request('publicacao-multiconta',{action:'update',empresaId:companyId,connectionId:link.connectionId,listingId:link.listingId,form,fields:['price'],confirmUpdate:true,batchKey:batch.current});if(response.status!=='updated')throw Error('Atualização pendente de confirmação.');const message = `Atualizado. ${listingSaleState(response.listing)}.`;
+    completed.push(`${accountName(link.connectionId)} · ${link.listingId} · ${message}`);
+    setResults(current=>({...current,[key]:message}));
+    if(response.availabilityChanged === true){
+     failed=true;
+     setError(`O preço foi confirmado, mas a situação de venda mudou em ${accountName(link.connectionId)}. Confira o resultado antes de continuar.`);
+     break;
+    }}
     catch(reason){failed=true;setResults(current=>({...current,[key]:reason instanceof Error?reason.message:'Atualização não confirmada.'}));}}
-   if(!failed&&!selected.some(id=>reviews[id]?.status==='pending'))onCompleted();
+   if(!failed&&!selected.some(id=>reviews[id]?.status==='pending'))onCompleted(completed.join('\n'));
   }finally{lock.current=false;setBusy(false);onBusyChange(false);if(failedField){const target=failedField;setPublicationMode('different');requestAnimationFrame(()=>focusField(target.id,target.field));}}
  }
  useImperativeHandle(ref,()=>({publish}));

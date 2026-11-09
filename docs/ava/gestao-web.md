@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.377 -->
+<!-- ava-version: 3.2.0.378 -->
+
+> Revisão 3.2.0.378. Em Marketplaces → Produtos cadastrados, abra o produto e vá a Publicação → Anúncios vinculados, use Ativar todos ou Pausar todos para os vínculos elegíveis do mesmo produto. A confirmação lista contas e anúncios, a ativação exige saldo Online conferido e o resultado aparece por conta. A edição de preço não muda a situação por comando. Se o Mercado Livre devolver um anúncio anteriormente ativo fora de venda, o lote de preço para e identifica o que foi confirmado.
 
 > Revisão 3.2.0.377: DANFEs novos exibem a inscrição estadual real do destinatário; isento sem IE recebe ISENTO e não contribuinte sem IE recebe traço. O indicador 1/2/9 não é número de inscrição. XML e documentos já autorizados permanecem preservados.
 

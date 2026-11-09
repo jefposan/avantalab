@@ -174,7 +174,7 @@ export function ProductDetail({ product, props, busy, onCommand, onStockBusy, on
       if (!controller.signal.aborted) { setMovements(data.movements);setWarehouseMovements(data.warehouseMovements ?? null);if(data.product?.id===product.id)setLinkedProduct(data.product); setHistoryLoaded(true); }
     }).catch(error => { if (!controller.signal.aborted) setDetailError(error.message); });
     return () => controller.abort();
-  }, [companyId, product.id, product.revision, product.allocations, request]);
+  }, [companyId, product.id, product.revision, product.allocations, product.links, request]);
   useEffect(() => {
     if (!canManage || product.stock_quantity != null) return;
     const controller = new AbortController();

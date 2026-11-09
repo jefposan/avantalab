@@ -1,4 +1,5 @@
 import 'server-only';
+import {listingSaleState} from '../listing-sale-state';
 import {createHash} from 'node:crypto';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {MarketplaceError} from './management-access';
@@ -118,7 +119,9 @@ export async function applyCommonProductEdit(db:SupabaseClient,company:string,ac
  if(values==null)return {success:true,unchanged:true};
  if(kind==='details'){
   const connection=await loadConnection(db,company,target.connectionId);
-  await saveCommonMercadoLivreEditor(db,connection,actor,{id:target.id,revision:target.revision,requestKey:input.requestKey,changes:values});
- }else await saveListingContent(db,company,target.connectionId,actor,{id:target.id,kind,revision:target.revision,affectedIds:target.affectedIds,confirmation:target.id,requestKey:input.requestKey,values});
- return {success:true,unchanged:false};
+  const {listing}=await saveCommonMercadoLivreEditor(db,connection,actor,{id:target.id,revision:target.revision,requestKey:input.requestKey,changes:values});
+  return {success:true,unchanged:false,message:`Alteração confirmada. ${listingSaleState(listing ?? {})}.`};
+ }
+ const result=await saveListingContent(db,company,target.connectionId,actor,{id:target.id,kind,revision:target.revision,affectedIds:target.affectedIds,confirmation:target.id,requestKey:input.requestKey,values});
+ return {success:true,unchanged:false,message:result?.message};
 }

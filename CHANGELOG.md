@@ -1,3 +1,9 @@
+## 3.2.0.378 — Marketplaces: ativar e pausar anúncios vinculados em lote
+
+- Os controles de lote ficam no produto e listam as contas e os anúncios elegíveis antes de executar. A ativação usa o saldo Online conferido e cada conta tem retorno próprio.
+- Edição e publicação exibem a situação observada no marketplace, separada da confirmação de preço ou conteúdo. O lote de preços para se um anúncio ativo perder a disponibilidade após a edição.
+- A auditoria de ações registra a origem do comando e as situações anterior e solicitada.
+
 ## 3.2.0.377 — Vendas: corrigir inscrição estadual do destinatário no DANFE
 
 - Não usa o indicador de contribuinte (indIEDest 1/2/9) como número de inscrição estadual. DANFE mostra a IE real, ISENTO para isento sem IE, ou traço para destinatário sem IE.

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { listingSaleState } from '../../app/modules/marketplaces/listing-sale-state.ts';
 import { publicationErrors } from '../../app/modules/marketplaces/services/catalog-publication.ts';
 import * as publicationPrefill from '../../app/modules/marketplaces/publication-prefill.ts';
 const require = createRequire(import.meta.url);
@@ -90,6 +91,7 @@ test('formulário real abre cadastro mínimo na conta escolhida e preserva ediç
     exports: exported, crypto, Object, Number, Error, requestAnimationFrame(fn) { fn(); }, document: { getElementById() { return { focus() {} }; } },
     require(name) {
       if (name === 'react') return hooks;
+      if(name.endsWith('/listing-sale-state'))return {listingSaleState};
       if(name==='./PublicationOptionalAttributes')return {default:'optional-attributes'};
       if(name==='./ProductPhotoInput')return {default:'photo-input'};
       if(name==='./usePreparationSummary')return {default:()=>({current:null})};

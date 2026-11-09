@@ -1,6 +1,7 @@
 'use client';
 import usePreparationSummary from './usePreparationSummary';
 
+import {listingSaleState} from '@/app/modules/marketplaces/listing-sale-state';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ProductPhotoInput from './ProductPhotoInput';
 import {publicationContentReadiness} from '@/app/modules/marketplaces/publication-content-readiness';
@@ -49,11 +50,12 @@ export default function NewListing({ multiAccountEnabled=false, companyId, brand
   const [searchingBy, setSearchingBy] = useState<'ean' | 'description' | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publicationSucceeded, setPublicationSucceeded] = useState(false);
+  const [publicationSummary, setPublicationSummary] = useState('');
   useEffect(() => {
-    if (!publicationSucceeded) return;
+    if (!publicationSucceeded || publicationSummary) return;
     const timer = setTimeout(() => setPublicationSucceeded(false), 2500);
     return () => clearTimeout(timer);
-  }, [publicationSucceeded]);
+  }, [publicationSucceeded, publicationSummary]);
   const [matched, setMatched] = useState(false);
   const [message, setMessage] = useState('');
   const [publishedId, setPublishedId] = useState('');
@@ -187,10 +189,10 @@ export default function NewListing({ multiAccountEnabled=false, companyId, brand
     if (Object.keys(validation).length) { focusFirstError(validation); return; }
     setPublishing(true);
     try {
-      const result = await publicationRequest(signal => request('publicar', { empresaId: companyId, connectionId: accountId, requestKey, form: current }, signal), 'publish') as { status: string; listing: { id: string; title: string }; localProductId: string };
+      const result = await publicationRequest(signal => request('publicar', { empresaId: companyId, connectionId: accountId, requestKey, form: current }, signal), 'publish') as { status: string; listing: { id: string; title: string; status?: string; substatus?: string[]; stock?: number | null }; localProductId: string };
       if (result.status !== 'published' || !/^MLB\d+$/.test(result.listing?.id || '')) throw Object.assign(new Error('A publicação não foi confirmada. Seus dados foram mantidos; confira Anunciados e o Mercado Livre antes de repetir.'), { code: 'publication_uncertain' });
       clearPreparation();
-      setPublishedId(result.listing.id); setPublicationSucceeded(true); onPublished();
+      setPublishedId(result.listing.id); setPublicationSummary(`Anúncio criado · ${result.listing.id}. ${listingSaleState(result.listing)}.`); setPublicationSucceeded(true); onPublished();
     } catch (failure) {
       const detail = failure as Error & { code?: string; fields?: Record<string, string>; details?: string };
       setTechnicalDetails(detail.details || '');
@@ -325,7 +327,7 @@ export default function NewListing({ multiAccountEnabled=false, companyId, brand
   }
 
   return <>
-    <ModalConfirmacao aberto={publishing || publicationSucceeded} titulo={publishing ? (simulation ? 'Simulando publicação…' : 'Publicando…') : (simulation ? 'Simulação concluída' : 'Publicação concluída')} rotuloCabecalho="Publicação" centralizarTexto={!publishing} mensagem={publishing ? '' : simulation ? 'Nenhum anúncio foi enviado ao marketplace.' : 'Anúncio publicado com sucesso.'} carregando={publishing} mostrarProgresso ocultarCancelar textoConfirmar="Fechar" variante="primaria" corPrimaria={brand} darkMode={dark} aoCancelar={() => { if (!publishing) setPublicationSucceeded(false); }} aoConfirmar={() => { if (!publishing) setPublicationSucceeded(false); }} />
+    <ModalConfirmacao aberto={publishing || publicationSucceeded} titulo={publishing ? (simulation ? 'Simulando publicação…' : 'Publicando…') : (simulation ? 'Simulação concluída' : 'Publicação concluída')} rotuloCabecalho="Publicação" centralizarTexto={!publishing} mensagem={publishing ? '' : simulation ? 'Nenhum anúncio foi enviado ao marketplace.' : (publicationSummary || 'Publicação confirmada pelo marketplace.')} carregando={publishing} mostrarProgresso ocultarCancelar textoConfirmar="Fechar" variante="primaria" corPrimaria={brand} darkMode={dark} aoCancelar={() => { if (!publishing) { setPublicationSummary(''); setPublicationSucceeded(false); } }} aoConfirmar={() => { if (!publishing) { setPublicationSummary(''); setPublicationSucceeded(false); } }} />
     <CarregamentoDadosModulo ativo={preparing&&!photoUploading} titulo="Preparando anúncio…" mensagem="Carregando os dados do produto e as opções da conta. Aguarde um instante." corPrimaria={brand} temaEscuro={dark} />
     <div className={styles.newListing} inert={preparing&&!photoUploading || publishing} aria-busy={preparing&&!photoUploading || publishing}>
     <div className={`${styles.form} ${styles.preparationSearch}`} data-preparation-search data-multi-account={multiAccount || undefined}>
@@ -397,7 +399,7 @@ export default function NewListing({ multiAccountEnabled=false, companyId, brand
       <div className={styles.catalogMatchArea} data-invalid={!!errors.match || undefined}><label className={styles.catalogMatch}><input id="catalog-match" type="checkbox" checked={matched} aria-invalid={!!errors.match} aria-describedby={errors.match ? 'catalog-match-error' : undefined} onChange={(event) => { setMatched(event.target.checked); setErrors((current) => ({ ...current, match: '' })); }} />{form.localProductId ? 'Confirmo o produto e os dados desta publicação.' : 'Confirmo o produto e a quantidade física informada. Este será o estoque inicial do cadastro local.'}</label>{errors.match && <p id="catalog-match-error" className={styles.catalogMatchError} role="alert">{errors.match}</p>}</div>
       <p className={styles.help}>Somente o estoque Online alimenta os anúncios. Publicar em outra conta não acrescenta unidades ao estoque.</p>
       {!publishedId && <p className={styles.help} id="new-publication-readiness" role="status">{publicationGuidance}</p>}
-      {multiAccount&&<MultiAccountPublication ref={multiRef} companyId={companyId} form={form} productRevision={prepared.localProductRevision} accounts={accounts} confirmed={matched} disabled={preparing} onBusyChange={setPublishing} onCompleted={()=>{clearPreparation();setPublicationSucceeded(true);onPublished();}} sourceConnectionId={form.copySource?.connectionId} sourceListingId={form.copySource?.listingId} request={request}/>}
+      {multiAccount&&<MultiAccountPublication ref={multiRef} companyId={companyId} form={form} productRevision={prepared.localProductRevision} accounts={accounts} confirmed={matched} disabled={preparing} onBusyChange={setPublishing} onCompleted={summary=>{clearPreparation();setPublicationSummary(summary);setPublicationSucceeded(true);onPublished();}} sourceConnectionId={form.copySource?.connectionId} sourceListingId={form.copySource?.listingId} request={request}/>}
       <div className={styles.preparationActions} role="group" aria-label="Ações do anúncio">
       <BotaoAcaoCompacto className={styles.preparationCancel} disabled={!hasCancellableDraft || publishing || preparing} onClick={clearPreparation}>Cancelar anúncio</BotaoAcaoCompacto>
       <BotaoAcaoCompacto id="new-preparation" className={styles.preparationReview} disabled={!canManage || !selectedAccount || preparing || publishing || !!publishedId} onClick={() => void prepare(form.ean, product.id, form.categoryId)}>Revalidar dados</BotaoAcaoCompacto>

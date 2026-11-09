@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.377 -->
+<!-- ava-version: 3.2.0.378 -->
+
+> Revisão 3.2.0.378. Sem impacto operacional neste ambiente. O ajuste é de Marketplaces na Gestão Web.
 
 > Revisão 3.2.0.377: Sem impacto operacional neste ambiente; correção de apresentação do DANFE Web.
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { listingSaleState } from '@/app/modules/marketplaces/listing-sale-state';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import Tooltip from '@/app/components/Tooltip';
 import { formatarMoedaDigitada, moedaDigitadaParaNumero } from '@/app/lib/formatters';
@@ -26,7 +27,7 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
   snapshot: ListingSnapshot; permalink: string | null; children: ReactNode; additionalAction?: ReactNode;
   suggestedChanges?:ListingChanges;
   initialFocus?:EditField;
-  onClose: () => void; onSaved: (listing: ListingSnapshot,pending?:boolean) => void; onBusy: (busy: boolean) => void; onListingAction?: (action: ListingAction) => void;
+  onClose: () => void; onSaved: (listing: ListingSnapshot,pending?:boolean, message?:string) => void; onBusy: (busy: boolean) => void; onListingAction?: (action: ListingAction) => void;
 }) {
   const prefix = useId();
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -107,10 +108,10 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
     if (Object.keys(validation.errors).length) { if (firstError) document.getElementById(`${prefix}-${firstError}`)?.focus(); return; }
     setSaving(true); onBusy(true);
     try {
-      const result = await request('anunciados/editar', { empresaId: companyId, connectionId: accountId, id: itemId, revision: editor.revision, requestKey: requestKey.current, changes: validation.changes }, undefined, 'PATCH') as { listing: ListingSnapshot;pending?:boolean;message?:string };
+      const result = await request('anunciados/editar', { empresaId: companyId, connectionId: accountId, id: itemId, revision: editor.revision, requestKey: requestKey.current, changes: validation.changes }, undefined, 'PATCH') as { listing: ListingSnapshot;pending?:boolean;message?:string;availabilityChanged?:boolean };
       if(result.listing?.id!==itemId)throw new Error('A atualização não foi confirmada para este anúncio. Recarregue a edição antes de tentar novamente.');
       if(result.pending){setMessage(result.message||'Envio aceito, aguardando confirmação do marketplace. Recarregue a edição para conferir.');setStale(true);}
-      onSaved(result.listing,!!result.pending);
+      onSaved(result.listing, !!result.pending, result.pending ? result.message : `Alterações confirmadas. ${listingSaleState(result.listing)}.${result.availabilityChanged ? ' A situação mudou após a edição. Confira antes de reativar.' : ''}`);
     } catch (failure) {
       const detail = failure as Error & { code?: string; fields?: Partial<Record<EditField, string>> };
       setMessage(detail.message || 'Não foi possível salvar. Confira o anúncio antes de tentar novamente.');
@@ -127,7 +128,6 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
       <div className={styles.actionBar}>
         <button type="button" disabled={saving} onClick={cancel}>Cancelar</button>
         <button type="button" disabled={loading || saving} onClick={refresh}>Recarregar edição</button>
-        {onListingAction && availableLifecycleActions.map((action) => <button key={action} type="button" className={action === 'close' || action === 'delete' ? styles.destructiveAction : undefined} disabled={lifecycleDisabled} title={dirty ? 'Salve ou cancele as alterações antes de mudar a situação do anúncio.' : undefined} onClick={() => onListingAction(action)}>{lifecycleLabels[action]}</button>)}
         <button type="submit" className={styles.primary} disabled={loading || saving || stale || !dirty}>{saving ? 'Salvando…' : 'Salvar alterações'}</button>
         {permalink && <a href={permalink} target="_blank" rel="noopener noreferrer">Abrir no {editor?.provider === 'magalu' ? 'Magalu' : 'Mercado Livre'} ↗</a>}
         {additionalAction}
@@ -158,6 +158,12 @@ export default function ListingEditor({ companyId, accountId, itemId, snapshot, 
         {children}
       </dl>
     </form>
+    {onListingAction && availableLifecycleActions.length > 0 && <section className={styles.inlineEditorForm} aria-label="Situação do anúncio">
+      <p className={styles.help}>Situação do anúncio</p>
+      <div className={styles.actionBar}>
+        {availableLifecycleActions.map((action) => <button key={action} type="button" className={action === 'close' || action === 'delete' ? styles.destructiveAction : undefined} disabled={lifecycleDisabled} title={dirty ? 'Salve ou cancele as alterações antes de mudar a situação do anúncio.' : undefined} onClick={() => onListingAction(action)}>{lifecycleLabels[action]}</button>)}
+      </div>
+    </section>}
     <ModalConfirmacao aberto={!!discard} titulo="Descartar alterações?" mensagem="As alterações não salvas serão descartadas. O anúncio no marketplace não será alterado." textoCancelar="Continuar editando" textoConfirmar="Descartar" darkMode={dark} corPrimaria={brand} variante="alerta" aoCancelar={() => setDiscard(null)} aoConfirmar={() => { const next = discard; setDiscard(null); if (next === 'reload') reload(); else onClose(); }} />
   </>;
 }

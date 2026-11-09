@@ -187,7 +187,8 @@ export async function saveMercadoLivreEditor(db: SupabaseClient, connection: Sel
     await reconcileListingEdits(db,connection.empresa_id,connection.id,editor.id,confirmed.editor.values);
     const recorded = await db.from('marketplace_listing_actions').update({ status: 'succeeded',error_code:null }).eq('empresa_id',connection.empresa_id).eq('connection_id',connection.id).eq('id', audit.id);
     if (recorded.error) throw new MarketplaceError(503, 'audit_update_failed', 'Não foi possível registrar a confirmação.');
-    return { listing };
+    const availabilityChanged = locked.item?.status === 'active' && listing.status !== 'active';
+    return { listing, ...(availabilityChanged ? { availabilityChanged } : {}) };
   } catch (failure) {
     const uncertain = applied || (failure instanceof MarketplaceError && failure.code === 'mutation_uncertain');
     await db.from('marketplace_listing_actions').update({ status: uncertain ? 'uncertain' : 'failed', error_code: failure instanceof MarketplaceError ? failure.code : 'integration' }).eq('id', audit.id);

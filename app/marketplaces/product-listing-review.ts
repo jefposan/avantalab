@@ -136,7 +136,7 @@ export async function publishListingReview(source:ReviewSource,editors:ReviewEdi
    onProgress([...results,...prices]);
   });
   results.push(...outcomes.map((row):ReviewResult=>({kind:'price',connectionId:row.target.connection_id,id:row.target.provider_listing_id,status:row.status==='confirmed'||row.status==='unchanged'?'confirmed':row.status==='not_sent'?'not_sent':'failed',message:row.message})));
-  if(outcomes.some(row=>!['confirmed','unchanged'].includes(row.status))){for(const change of changes)for(const target of prepared.get(change.kind)!.parts)results.push({kind:change.kind,connectionId:target.connectionId,id:target.id,status:'not_sent',message:'Não enviado após preço sem confirmação.'});onProgress([...results]);throw Error('O envio foi interrompido. Confira os preços confirmados e os campos ainda não enviados; nenhum envio será repetido automaticamente.');}
+  if(outcomes.some(row=>row.availabilityChanged||!['confirmed','unchanged'].includes(row.status))){for(const change of changes)for(const target of prepared.get(change.kind)!.parts)results.push({kind:change.kind,connectionId:target.connectionId,id:target.id,status:'not_sent',message:'Não enviado após a interrupção da edição de preço.'});onProgress([...results]);throw Error('O envio foi interrompido. Confira os preços confirmados e os campos ainda não enviados; nenhum envio será repetido automaticamente.');}
   sent=true;
  }
  for(const change of changes){
@@ -147,7 +147,7 @@ export async function publishListingReview(source:ReviewSource,editors:ReviewEdi
   const pending=[...checked.parts];
   while(pending.length){
    const part=pending.shift()!;
-   try{const response=await request('produtos/qualidade',{...common,...change,scopeHash:checked.scopeHash,confirmation:source.productId,target:part,requestKey:crypto.randomUUID()},AbortSignal.timeout(60_000),'PATCH');if(response.success!==true)throw Error('A plataforma não confirmou o envio.');sent=true;results.push({kind:change.kind,connectionId:part.connectionId,id:part.id,status:'confirmed',message:response.unchanged?'Já estava atualizado.':'Alteração confirmada.'});onProgress([...results]);}
+   try{const response=await request('produtos/qualidade',{...common,...change,scopeHash:checked.scopeHash,confirmation:source.productId,target:part,requestKey:crypto.randomUUID()},AbortSignal.timeout(60_000),'PATCH');if(response.success!==true)throw Error('A plataforma não confirmou o envio.');sent=true;results.push({kind:change.kind,connectionId:part.connectionId,id:part.id,status:'confirmed',message:response.unchanged?'Já estava atualizado.':response.message||'Alteração confirmada.'});onProgress([...results]);}
    catch(e){results.push({kind:change.kind,connectionId:part.connectionId,id:part.id,status:'failed',message:e instanceof Error?e.message:'Confirmação indisponível. Confira antes de reenviar.'});for(const next of pending)results.push({kind:change.kind,connectionId:next.connectionId,id:next.id,status:'not_sent',message:'Não enviado após falha anterior.'});onProgress([...results]);throw Error('Publicação interrompida. Pode haver alterações já recebidas. Confira os resultados e recarregue; nenhum envio será repetido automaticamente.');}
   }
  }

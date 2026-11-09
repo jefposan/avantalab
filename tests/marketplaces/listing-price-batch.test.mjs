@@ -4,13 +4,13 @@ import {productPriceTargets,reviewProductPrices,saveProductPrices} from '../../a
 const target=n=>({connection_id:`account-${n}`,provider_listing_id:`MLB${n}`,provider:'mercado_livre'});
 const editor=(n,price=100)=>({provider:'mercado_livre',id:`MLB${n}`,revision:`revision-${n}`,currency:'BRL',values:{price},fields:{price:{editable:true,min:.01,max:1000}}});
 const reviews=[1,2,3].map(n=>({target:target(n),editor:editor(n),error:''}));
-function requester({blocked=0,changed=0,wrong=0,pending=0,fail=0,price=120}={}){
+function requester({blocked=0,changed=0,wrong=0,pending=0,fail=0,paused=0,price=120}={}){
  const calls=[];return {calls,request:async(path,body,signal,method)=>{
   calls.push({path,body,method});
   const n=Number((body?.id||new URLSearchParams(path.split('?')[1]).get('id')).slice(3));
   if(method!=='PATCH'){const result=editor(n);if(n===blocked)result.fields.price={editable:false,reason:'Automatização ativa'};if(n===changed)result.revision='externally-changed';return result;}
   if(n===fail)throw new Error('Sem confirmação da operação.');
-  return {listing:{id:n===wrong?'MLB999':`MLB${n}`,price,currency:'BRL'},pending:n===pending};
+  return {listing:{id:n===wrong?'MLB999':`MLB${n}`,price,currency:'BRL',status:n===paused?'paused':'active'},pending:n===pending,availabilityChanged:n===paused};
  }};
 }
 test('destinos vêm dos vínculos oficiais: todas as contas do provedor, sem agrupar por EAN nem incluir encerrados',()=>{
@@ -40,4 +40,15 @@ test('falha, resposta divergente ou confirmação pendente interrompem sem repet
 });
 test('anúncios que já têm o preço desejado não recebem escrita redundante',async()=>{
  const stub=requester(),outcomes=await saveProductPrices(stub.request,'company',reviews,100);assert.deepEqual(outcomes.map(r=>r.status),['unchanged','unchanged','unchanged']);assert.equal(stub.calls.filter(c=>c.method==='PATCH').length,0);
+});
+
+test('preço confirmado com mudança de disponibilidade interrompe as escritas restantes',async()=>{
+ const stub=requester({paused:2});
+ const outcomes=await saveProductPrices(stub.request,'company',reviews,120);
+ assert.deepEqual(outcomes.map(row=>row.status),['confirmed','confirmed','not_sent']);
+ assert.equal(outcomes[1].availabilityChanged,true);
+ assert.match(outcomes[1].message,/Preço confirmado.*Anúncio pausado/);
+ const writes=stub.calls.filter(call=>call.method==='PATCH');
+ assert.equal(writes.length,2);
+ for(const call of writes)assert.deepEqual(call.body.changes,{price:120});
 });

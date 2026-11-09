@@ -1,4 +1,5 @@
 import 'server-only';
+import {listingSaleState} from '../listing-sale-state';
 import {createHash,randomUUID} from 'node:crypto';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {loadConnection,mlRequest,saveListing,type SellerConnection} from './mercadolivre-management';
@@ -105,7 +106,7 @@ export async function saveListingContent(db:SupabaseClient,company:string,connec
   if(JSON.stringify(confirmed.protectedItems.map(a=>a.id).sort())!==JSON.stringify(current.protectedItems.map(a=>a.id).sort())||confirmed.protectedItems.some(item=>{const before=current.protectedItems.find(a=>a.id===item.id)!;return JSON.stringify(contentBaseline(before))!==JSON.stringify(contentBaseline(item));}))throw new MarketplaceError(409,'edit_not_confirmed','Não foi possível confirmar a preservação das fotos e da ficha dos anúncios de catálogo relacionados.');
   if(JSON.stringify(confirmed.editor.affectedIds)!==JSON.stringify(editor.affectedIds)||confirmed.items.some(item=>!contentMatches(item,editor.kind,desired)||!contentPreserved(current.items.find(a=>a.id===item.id)!,item,editor.kind,desired)))throw new MarketplaceError(409,'edit_not_confirmed','O ML ainda não confirmou todos os valores e a preservação dos dados nos anúncios afetados.');
   for(const item of confirmed.items)await saveListing(db,connection,item,false);
-  await finish('succeeded',null);return {success:true,pending:false,editor:confirmed.editor,message:'Alteração confirmada pelo Mercado Livre em todos os anúncios afetados. Atualize os objetivos para acompanhar o recálculo da nota.'};
+  await finish('succeeded',null);return {success:true,pending:false,editor:confirmed.editor,message:['Alteração confirmada pelo Mercado Livre.', ...confirmed.items.map(item => `${item.id} · ${listingSaleState({status:item.status,substatus:item.sub_status,stock:item.available_quantity})}.`)].join(' ')};
  }catch(error){
   const uncertain=sent||(error instanceof MarketplaceError&&(error.code==='mutation_uncertain'||/^provider_5\d\d$/.test(error.code)));
   await finish(uncertain?'uncertain':'failed',error instanceof MarketplaceError?error.code:'integration');

@@ -67,6 +67,7 @@ test('editor carrega os tipos autorizados e recalcula a taxa no preço seleciona
   assert.match(feeRoute, /readMercadoLivreListingTypeFee/);
 });
 test('ações de publicação ficam disponíveis na própria edição e preservam alterações não salvas', () => {
+  assert.match(form, /<\/form>\s*\{onListingAction[\s\S]*?aria-label="Situação do anúncio"[\s\S]*?availableLifecycleActions\.map/);
   assert.match(form, /const lifecycleActions: Record<string, ListingAction\[]> = \{ active: \['pause', 'close'\], paused: \['resume', 'close'\], closed: \['delete'\] \}/);
   assert.match(form, /'Excluir definitivamente'/);
   assert.match(form, /const lifecycleDisabled = loading \|\| saving \|\| stale \|\| dirty;/);
