@@ -7,7 +7,9 @@ const mock=source=>({url:'data:text/javascript,'+encodeURIComponent(source),shor
 const hook=registerHooks({resolve(s,c,next){
  if(s==='server-only')return mock('');
  if(s==='next/server')return mock('export const NextResponse={json:(v,o)=>Response.json(v,o)}');
- if(s.endsWith('/management-access'))return mock(`export class MarketplaceError extends Error{constructor(status,code,message){super(message);this.status=status;this.code=code;}};export function managementFailure(e){return Response.json({code:e.code,message:e.message},{status:e.status||503});};export async function authorizeMarketplace(request,company){return globalThis.alertTestAuthorize(company);}`);
+ if(s.endsWith('/live-feed'))return next(new URL('../../app/modules/marketplaces/live-feed.ts',import.meta.url).href,c);
+ if(s.endsWith('/inventory-notice-dismissals'))return next(new URL('../../app/modules/marketplaces/services/inventory-notice-dismissals.ts',import.meta.url).href,c);
+ if(s.endsWith('/management-access')||s==='./management-access')return mock(`export class MarketplaceError extends Error{constructor(status,code,message){super(message);this.status=status;this.code=code;}};export function managementFailure(e){return Response.json({code:e.code,message:e.message},{status:e.status||503});};export async function authorizeMarketplace(request,company){return globalThis.alertTestAuthorize(company);}`);
  if(s.endsWith('/sale-alert-reads'))return next(new URL('../../app/modules/marketplaces/services/sale-alert-reads.ts',import.meta.url).href,c);
  if(s.endsWith('/listing-model'))return mock('export const uuidIsValid=v=>typeof v===\'string\'&&v.length===36;');
  if(s.endsWith('/inventory-notices'))return mock('export async function readInventoryNotices(){return [];}');

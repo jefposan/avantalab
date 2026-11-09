@@ -1,6 +1,21 @@
 export type SaleAlert = { id: string; sale_id?: string; kind?: 'new_sale' | 'pending_dispatch'; connection_id: string; provider: string; listing_id: string; title: string; quantity: number; sold_at: string; order_id: string; account_name: string; permalink: string | null };
 export type InventoryNotice = { id: string; source: 'sale' | 'stock' | 'account'; code: string; productId: string | null; productName: string | null; ean: string | null; listingId: string | null; accountName: string | null; connectionId?: string | null; orderId: string | null; provider: string; nextAttemptAt?: string | null; candidateProducts?:Array<{id:string;name:string;ean:string|null;sku?:string|null}> };
-export type MarketplaceLiveFeed = { alerts: SaleAlert[]; pendingStock: number; pendingSales: number; issues: Array<{ issue: string; total: number }>; notices?: InventoryNotice[]; noticesUnavailable?: boolean; checkedAt?: string; updatedAt: string | null; workerFinishedAt: string | null; workerHealthy: boolean; enabled: boolean };
+export type MarketplaceLiveFeed = { alerts: SaleAlert[]; pendingStock: number; pendingSales: number; issues: Array<{ issue: string; total: number }>; notices?: InventoryNotice[]; noticesUnavailable?: boolean; noticeDismissalsUnavailable?: boolean; checkedAt?: string; updatedAt: string | null; workerFinishedAt: string | null; workerHealthy: boolean; enabled: boolean };
+const informationalInventoryIssues = new Set([
+  'out_of_stock', 'fulfillment', 'virtual_kit', 'variations', 'warehouse',
+  'magalu_stock_origin', 'magalu_listing_blocked', 'provider_not_supported', 'sales_history_setup',
+]);
+
+/** A dispensa é uma confirmação de leitura, não encerra uma pendência operacional. */
+export function inventoryNoticeDismissAction(notice: InventoryNotice): 'OK' | 'Dispensar aviso' | null {
+  if (notice.source === 'sale' && ['cancelled_requires_manual_return', 'cancelled_stock_review'].includes(notice.code)) return 'OK';
+  return informationalInventoryIssues.has(notice.code) ? 'Dispensar aviso' : null;
+}
+
+export function inventoryNoticeDismissKey(notice: Pick<InventoryNotice, 'id' | 'code'>) {
+  return JSON.stringify([notice.id, notice.code]);
+}
+
 /** Conta os avisos da lista, sem somar novamente o estoque já detalhado em notices. */
 export function inventoryNoticeCount(feed: MarketplaceLiveFeed | null, unavailable: boolean) {
   let count = unavailable ? 1 : 0;

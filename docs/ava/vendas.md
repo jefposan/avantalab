@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.382 -->
+<!-- ava-version: 3.2.0.383 -->
+
+> Revisão 3.2.0.383. Sem impacto operacional. A dispensa de avisos pertence ao painel Marketplaces da Gestão Web.
 
 > Revisão 3.2.0.382. Sem impacto operacional. O ajuste pertence às despesas pendentes da Gestão Web e Mobile.
 

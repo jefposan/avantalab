@@ -7,13 +7,13 @@ import ts from 'typescript';
 import * as feedHelpers from '../../app/modules/marketplaces/live-feed.ts';
 import {inventoryNoticeTarget} from '../../app/modules/marketplaces/notice-navigation.ts';
 const require=createRequire(import.meta.url);
-test('alerta abre somente por clique, fecha durante atualização e renova contador sem abrir ou reconhecer avisos',()=>{
+test('alerta abre somente por clique, fecha durante atualização e renova contador sem abrir ou reconhecer avisos',async()=>{
   const values=[],effects=[];let index=0,first=true;
   const window=new EventTarget();
   class CustomEvent extends Event{constructor(name,options){super(name);this.detail=options.detail;}}
-  const hooks={useCallback:fn=>fn,useState(initial){const key=index++;if(!(key in values))values[key]=initial;return[values[key],next=>{values[key]=typeof next==='function'?next(values[key]):next;}];},useEffect(effect){if(first)effects.push(effect);}};
+  const hooks={useCallback:fn=>fn,useState(initial){const key=index++;if(!(key in values))values[key]=typeof initial==='function'?initial():initial;return[values[key],next=>{values[key]=typeof next==='function'?next(values[key]):next;}];},useEffect(effect){if(first)effects.push(effect);}};
   const exports={};const source=ts.transpileModule(readFileSync('app/marketplaces/InventoryNotices.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText;
-  runInNewContext(source,{exports,window,CustomEvent,requestAnimationFrame:fn=>fn(),require(name){
+  runInNewContext(source,{exports,window,Error,document:{body:{}},CustomEvent,requestAnimationFrame:fn=>fn(),require(name){
     if(name==='react')return hooks;
     if(name==='./StockSync')return{StockSyncDialog:'sync-dialog'};
     if(name==='./ImportStockChoice')return{default:'import-stock-choice'};
@@ -29,8 +29,8 @@ test('alerta abre somente por clique, fecha durante atualização e renova conta
     return require(name);
   }});
   let feed={enabled:true,workerHealthy:true,notices:[{id:'1',code:'queued'}],pendingStock:1,pendingSales:0};let tree;
-  const adjusted=[];
-  function render(){index=0;tree=exports.default({companyId:'company',feed,unavailable:false,brand:'#003E73',onAdjust:notice=>adjusted.push(notice)});first=false;}
+  const adjusted=[],dismissed=[]; let rejectDismissal=true;
+  function render(){index=0;tree=exports.default({companyId:'company',feed,unavailable:false,brand:'#003E73',onAdjust:notice=>adjusted.push(notice),onDismiss:async notice=>{if(rejectDismissal)throw Error('Falha ao salvar');dismissed.push(notice);}});first=false;}
   function all(n){return Array.isArray(n)?n.flatMap(all):n&&typeof n==='object'?[n,...all(n.props?.children)]:[];}
   const find=fn=>{const node=all(tree).find(fn);assert.ok(node);return node;};
   const trigger=()=>find(n=>n.props?.className==='inventoryAlertButton');
@@ -58,4 +58,26 @@ test('alerta abre somente por clique, fecha durante atualização e renova conta
   assert.equal(panel().props.aberto,false);assert.deepEqual(adjusted,[notice]);
   assert.equal(feed.notices.length,1,'abrir não resolve/apaga a pendência');
   assert.equal(reads,1,'conferir não dispara atualização ou sincronização');
+  window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state',{detail:{companyId:'company',loading:false,error:''}}));
+  const cancelled={...notice,id:'sale:1',source:'sale',code:'cancelled_requires_manual_return'};
+  feed={...feed,notices:[notice,cancelled]};
+  open();render();
+  const inventoryList=()=>find(n=>n.type===exports.InventoryNoticeList).props;
+  const clickOK=async()=>{
+    const props=inventoryList();
+    tree=exports.InventoryNoticeList(props);
+    find(n=>n.props?.children==='OK').props.onClick({currentTarget:{closest:()=>null}});
+    await new Promise(setImmediate);
+    render();
+  };
+  await clickOK();
+  assert.equal(inventoryList().error,'Falha ao salvar');
+  assert.equal(inventoryList().feed.notices.length,2,'erro mantém o aviso disponível');
+  rejectDismissal=false;
+  await clickOK();
+  assert.deepEqual(dismissed,[cancelled]);
+  assert.equal(inventoryList().feed.notices.length,1);
+  assert.match(trigger().props['aria-label'],/^1 aviso/,'contador muda sem aguardar nova consulta');
+  assert.equal(feed.notices.length,2,'a resposta anterior não restaura o aviso já dispensado');
+
 });

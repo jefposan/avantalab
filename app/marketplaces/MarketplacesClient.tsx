@@ -705,7 +705,12 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     <ModuloHeader empresa={{ ...empresa, temaEscuro: effectiveDark }} onBack={voltar} productFocusNavigation className={styles.salesHeader} returnTooltip="Voltar à Gestão" returnTooltipPosition="bottom">
       <div className={styles.headerToolbar}>
       <SalesFilters period={salesPeriod} onPeriodChange={period => selectSalesFromHeader({ period })} group={salesGroup} onGroupChange={group => selectSalesFromHeader({ group })} counts={summary.byGroup} total={summary.total} dark={effectiveDark} brand={empresa.corPrimaria}
-        notices={<InventoryNotices key={companyId} companyId={companyId} canManage={canManage} feed={inventorySnapshot?.companyId===companyId ? inventorySnapshot.feed : null} unavailable={liveUnavailable} dark={effectiveDark} brand={empresa.corPrimaria} onAdjust={notice=>void adjustNotice(notice)} />} />
+        notices={<InventoryNotices key={companyId} companyId={companyId} canManage={canManage} feed={inventorySnapshot?.companyId===companyId ? inventorySnapshot.feed : null} unavailable={liveUnavailable} dark={effectiveDark} brand={empresa.corPrimaria} onAdjust={notice=>void adjustNotice(notice)} onDismiss={async notice=>{
+          const result = await marketplaceClientRequest('avisos', {
+            empresaId: companyId, action: 'dismiss_inventory_notice', noticeId: notice.id, code: notice.code,
+          }, AbortSignal.timeout(20_000));
+          if (result.ok !== true) throw new Error('Não foi possível confirmar a dispensa do aviso. Atualize a lista.');
+        }} />} />
       {noticeNavigationError&&<div role="alert"><p className={styles.connectionMessage}>{noticeNavigationError}</p>{!noticeOpening&&(lastAdjustedNotice.current||lastViewedStockProduct.current)&&<BotaoAcaoCompacto onClick={()=>{if(lastAdjustedNotice.current)void adjustNotice(lastAdjustedNotice.current);else if(lastViewedStockProduct.current)viewProductInStock(lastViewedStockProduct.current);}}>Tentar novamente</BotaoAcaoCompacto>}</div>}
       <div className={styles.headerActionGroup} role="group" aria-labelledby="header-actions-heading">
         <span id="header-actions-heading" className={styles.headerGroupLabel}>Atualização e avisos</span>

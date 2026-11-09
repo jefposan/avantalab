@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.382 -->
+<!-- ava-version: 3.2.0.383 -->
+
+> Revisão 3.2.0.383. Sem impacto operacional. A dispensa de avisos pertence ao painel Marketplaces da Gestão Web.
 
 > Revisão 3.2.0.382. Ao abrir uma despesa pendente, use **Confirmar na data** para registrar o pagamento no dia e mês já lançados. **Aceitar hoje** usa a data atual. **Salvar previsto** mantém a pendência.
 

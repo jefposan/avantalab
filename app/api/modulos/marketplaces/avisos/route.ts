@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { authorizeMarketplace, managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
 import { uuidIsValid } from '@/app/modules/marketplaces/services/listing-model';
 import { readInventoryNotices } from '@/app/modules/marketplaces/services/inventory-notices';
+import { inventoryNoticeDismissAction } from '@/app/modules/marketplaces/live-feed';
+import { saveInventoryNoticeDismissal, visibleInventoryNotices } from '@/app/modules/marketplaces/services/inventory-notice-dismissals';
 import { acknowledgeAllSaleAlerts } from '@/app/modules/marketplaces/services/sale-alert-reads';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -15,9 +17,10 @@ export async function GET(request: Request) {
     if (url.searchParams.get('scope') === 'sales') return NextResponse.json({ ...result.data, checkedAt: new Date().toISOString() }, { headers });
     let details;
     try {
-      const notices = await readInventoryNotices(db, empresaId);
+      const raw = await readInventoryNotices(db, empresaId);
+      const visible = await visibleInventoryNotices(db, empresaId, usuario.id, raw);
       // Total público acompanha os avisos aplicáveis, não itens de fila ignorados por estado.
-      details = { notices, noticesUnavailable: false, pendingStock: notices.filter(notice=>notice.source==='stock').length };
+      details = { ...visible, noticesUnavailable: false, pendingStock: visible.notices.filter(notice=>notice.source==='stock').length };
     }
     catch { details = { notices: [], noticesUnavailable: true }; }
     return NextResponse.json({ ...result.data, ...details, checkedAt: new Date().toISOString() }, { headers });
@@ -29,6 +32,19 @@ export async function POST(request: Request) {
     const { db, empresaId, usuario } = await authorizeMarketplace(request, body.empresaId);
     if (body.action === 'acknowledge_all') {
       return NextResponse.json(await acknowledgeAllSaleAlerts(db, empresaId, usuario.id), { headers });
+    }
+    if (body.action === 'dismiss_inventory_notice') {
+      const { noticeId, code } = body;
+      if (typeof noticeId !== 'string' || noticeId.length < 1 || noticeId.length > 600 ||
+          typeof code !== 'string' || !/^[a-z_0-9]{1,80}$/.test(code)) {
+        throw new MarketplaceError(400, 'invalid_notice', 'Aviso inválido.');
+      }
+      const notice = (await readInventoryNotices(db, empresaId)).find(row => row.id === noticeId && row.code === code);
+      if (!notice || !inventoryNoticeDismissAction(notice)) {
+        throw new MarketplaceError(409, 'notice_changed', 'Este aviso não pode mais ser dispensado. Atualize a lista de pendências.');
+      }
+      await saveInventoryNoticeDismissal(db, empresaId, usuario.id, notice);
+      return NextResponse.json({ ok: true }, { headers });
     }
     if (!uuidIsValid(body.alertId)) throw new MarketplaceError(400, 'invalid_alert', 'Aviso inválido.');
     const alert = await db.from('marketplace_sale_alerts').select('id,sale_id,connection_id').eq('empresa_id', empresaId).eq('id', body.alertId).maybeSingle();

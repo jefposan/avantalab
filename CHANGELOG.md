@@ -1,3 +1,8 @@
+## 3.2.0.383 — Marketplaces: dispensar avisos de cancelamento e limitações operacionais
+
+- **OK** nos avisos de pedido cancelado e **Dispensar aviso** em limitações sem correção direta. O aviso sai da lista e do contador; a dispensa é registrada por usuário e empresa.
+- A migração é aditiva. Pedido, estoque, histórico e filas ficam preservados. Divergências e sincronizações que ainda exigem conferência mantêm seus avisos e ações.
+
 ## 3.2.0.382 — Gestão: confirmar despesa pendente na data lançada
 
 - A Gestão Web e Mobile oferecem **Confirmar na data**, que efetiva a despesa no dia e no mês registrados. **Aceitar hoje** usa a data atual.

@@ -13,7 +13,7 @@ const hook=registerHooks({resolve(s,c,next){
   if(s==='./Anunciados')return{url:'data:text/javascript,export async function marketplaceClientRequest(){return {}}',shortCircuit:true};
   if(s==='server-only')return {url:'data:text/javascript,export {}',shortCircuit:true};
   if(s==='next/server')return {url:'data:text/javascript,export const NextResponse={json:(value,options)=>Response.json(value,options)}',shortCircuit:true};
-  if(s==='./management-access'||s.endsWith('/services/management-access'))return {url:'data:text/javascript,'+encodeURIComponent(`export class MarketplaceError extends Error{constructor(status,code,message){super(message);this.code=code;this.status=status;}};export async function authorizeMarketplace(req,id){if(req.headers.get('authorization')!=='Bearer manager')throw new MarketplaceError(401,'auth','Negado');if(id!=='empresa-a')throw new MarketplaceError(403,'scope','Negado');return{db:globalThis.noticeDb,empresaId:id,usuario:{id:'actor'}}};export function managementFailure(e){return Response.json({message:e.message},{status:e.status||503})}`),shortCircuit:true};
+  if(s==='./management-access'||s.endsWith('/services/management-access'))return {url:'data:text/javascript,'+encodeURIComponent(`export class MarketplaceError extends Error{constructor(status,code,message){super(message);this.code=code;this.status=status;}};export async function authorizeMarketplace(req,id){if(!['Bearer manager','Bearer colleague'].includes(req.headers.get('authorization')))throw new MarketplaceError(401,'auth','Negado');if(id!=='empresa-a')throw new MarketplaceError(403,'scope','Negado');return{db:globalThis.noticeDb,empresaId:id,usuario:{id:req.headers.get('authorization')==='Bearer manager'?'actor':'colleague'}}};export function managementFailure(e){return Response.json({message:e.message},{status:e.status||503})}`),shortCircuit:true};
   if(s.endsWith('.module.css'))return {url:'data:text/javascript,export default new Proxy({}, {get:(_,k)=>k})',shortCircuit:true};
   const f=s.startsWith('@/')?resolve(root,s.slice(2)):s.startsWith('.')&&c.parentURL?.startsWith('file:')?resolve(dirname(new URL(c.parentURL).pathname),s):null;
   if(f)for(const ext of ['.tsx','.ts'])if(existsSync(f+ext))return next(pathToFileURL(f+ext).href,c);
@@ -23,7 +23,7 @@ const {readInventoryNotices}=await import('../../app/modules/marketplaces/servic
 const {inventoryRows}=await import('../../app/modules/marketplaces/services/inventory-read.ts');
 const {default:Notices,InventoryNoticeList}=await import('../../app/marketplaces/InventoryNotices.tsx');
 const {inventoryNoticeCount}=await import('../../app/modules/marketplaces/live-feed.ts');
-const {GET:getNotices}=await import('../../app/api/modulos/marketplaces/avisos/route.ts');
+const {GET:getNotices,POST:dismissNotice}=await import('../../app/api/modulos/marketplaces/avisos/route.ts');
 hook.deregister();
 const company='empresa-a';
 class Query {
@@ -33,13 +33,22 @@ class Query {
   is(k,v){return this.eq(k,v);}
   in(k,v){this.includes=[k,v];return this;}
   not(k,op,v){assert.equal(op,'is');assert.equal(v,null);this.exclude=k;return this;}
+  upsert(row,options){this.write={row,options};return this;}
   order(){return this;}
   range(from,to){this.from=from;this.to=to;return this;}
   abortSignal(signal){assert.ok(signal instanceof AbortSignal);return this;}
   then(ok,bad){return Promise.resolve().then(()=>{
+    if(this.write){
+      assert.equal(this.table,'marketplace_inventory_notice_dismissals');
+      const {row,options}=this.write;
+      assert.equal(row.empresa_id,company);
+      const entries=this.db.tables[this.table]??=[];
+      if(!entries.some(entry=>options.onConflict.split(',').every(key=>entry[key]===row[key])))entries.push(row);
+      return {error:null};
+    }
     assert.ok(this.conditions.some(([k,v])=>k==='empresa_id'&&v===company),'toda leitura restringe a empresa');
     if(this.db.failure===this.table)return {error:Error('falha'),data:null};
-    const data=(this.db.tables[this.table]||[]).filter(row=>this.conditions.every(([k,v])=>row[k]===v)&&(!this.exclude||row[this.exclude]!=null)&&(!this.includes||this.includes[1].includes(row[this.includes[0]]))).slice(this.from,this.to+1);
+    const data=(this.db.tables[this.table]||[]).filter(row=>this.conditions.every(([k,v])=>row[k]===v)&&(!this.exclude||row[this.exclude]!=null)&&(!this.includes||this.includes[1].includes(row[this.includes[0]]))).slice(this.from,this.to===undefined?undefined:this.to+1);
     return {data,error:null};
   }).then(ok,bad);}
 }
@@ -202,4 +211,42 @@ test('área usa todo retorno novo, monitor agrupa refresh e GET não modifica es
   assert.match(read('app/marketplaces/MarketplacesClient.tsx'),/setInventorySnapshot\(\{companyId, feed: detail.feed\}\)/);
   const monitor=read('app/components/MarketplaceLiveMonitor.tsx');assert.match(monitor,/requested = requested \|\| manual/);assert.match(monitor,/PRODUCT_STOCK_CHANGED, refresh/);assert.match(monitor,/AbortSignal.timeout\(15_000\)/);
   const route=read('app/api/modulos/marketplaces/avisos/route.ts').split('export async function POST')[0];assert.match(route,/await authorizeMarketplace/);assert.match(route,/readInventoryNotices\(db, empresaId\)/);assert.doesNotMatch(route,/runMarketplaceWorker|apply_inventory|\.update\(|\.insert\(/);
+});
+
+test('dispensa persiste por usuário, preserva eventos e mantém correções abertas', async()=>{
+  const db=fixture(), original=db.tables.marketplace_inventory_events[0];
+  original.issue='cancelled_requires_manual_return';
+  db.tables.marketplace_inventory_events.push({...original,id:'foreign',empresa_id:'empresa-b'});
+  db.tables.marketplace_sale_notifications=[{empresa_id:company,id:'unsupported',connection_id:'conta',topic:'items',resource:'/items/MLB456',processed_at:null,error_code:'provider_not_supported'}];
+  db.rpc=async()=>({data:feed([])});
+  const originalEvents=structuredClone(db.tables.marketplace_inventory_events);
+  const url='http://localhost/api/modulos/marketplaces/avisos';
+  const get=async(actor='manager')=>(await getNotices(new Request(url+'?empresaId='+company,{headers:{authorization:'Bearer '+actor}}))).json();
+  const post=(noticeId,code)=>dismissNotice(new Request(url,{method:'POST',headers:{authorization:'Bearer manager','content-type':'application/json'},body:JSON.stringify({empresaId:company,action:'dismiss_inventory_notice',noticeId,code})}));
+  globalThis.noticeDb=db;
+  try{
+    const before=await get();
+    const html=render(before,{onDismiss(){},onAdjust(){}});
+    assert.match(html,/>OK<\/span>/);
+    assert.match(html,/>Dispensar aviso<\/span>/);
+    assert.match(html,/>Conferir e ajustar<\/span>/);
+    assert.equal(inventoryNoticeCount(before,false),3);
+    assert.equal((await post('stock:link-a','pending_product_sales')).status,409);
+    assert.equal((await post('sale:foreign',original.issue)).status,409);
+    assert.equal((await post('sale:evento-f',original.issue)).status,200);
+    assert.equal((await post('sale:evento-f',original.issue)).status,200);
+    const after=await get();
+    assert.equal(after.pendingStock,1);
+    assert.equal(inventoryNoticeCount(after,false),2);
+    assert.deepEqual(after.notices.map(n=>n.code),['pending_product_sales','provider_not_supported']);
+    assert.equal(inventoryNoticeCount(await get('colleague'),false),3);
+    assert.equal(db.tables.marketplace_inventory_notice_dismissals.length,1);
+    assert.deepEqual(db.tables.marketplace_inventory_events,originalEvents);
+    original.issue='cancelled_stock_review';
+    assert.ok((await get()).notices.some(n=>n.code==='cancelled_stock_review'));
+    db.failure='marketplace_inventory_notice_dismissals';
+    const degraded=await get();
+    assert.equal(degraded.noticeDismissalsUnavailable,true);
+    assert.equal(inventoryNoticeCount(degraded,false),3);
+  }finally{delete globalThis.noticeDb;}
 });

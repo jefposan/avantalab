@@ -1,6 +1,6 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { InventoryNotice } from '../live-feed';
+import { inventoryNoticeDismissAction, type InventoryNotice } from '../live-feed';
 import { inventoryRows, type InventoryRow } from './inventory-read';
 import { objectValue } from './listing-model';
 import { saleItemEan } from '../sale-items';
@@ -89,7 +89,7 @@ export async function readInventoryNotices(db: SupabaseClient, company: string):
   for(const product of products){
     // Esgotamento não é pendência. Falhas reais da fila/pausa continuam acima.
     if(product.stock_quantity===0&&!product.listing_stock_review_at)continue;
-    if(notices.some(n=>n.productId===product.id))continue;
+    if(notices.some(n=>n.productId===product.id && !inventoryNoticeDismissAction(n)))continue;
     const linked=links.filter(l=>l.product_id===product.id && listingStockAlertsEnabled(l.status));
     const hint=stockDivergence(product.stock_quantity as number|null,linked as unknown as Array<{provider:string;reported_stock:number|null;status:string}>);
     if(hint)notices.push({id:`divergence:${product.id}`,source:'stock',code:product.stock_quantity==null?'local_stock_unset':hint==='Pausa pendente'?'pause_unconfirmed':'stock_divergence',...identity({product_id:product.id},linked.find(l=>['mercado_livre','magalu'].includes(String(l.provider))))});

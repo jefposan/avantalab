@@ -1034,6 +1034,10 @@
 .warehouseList button[data-av-action="compact"], .warehouseNameForm button[data-av-action="compact"] { min-height:44px;border:0;padding:6px 0;background:transparent;color:inherit; }
 .inventoryNotice { display:grid;gap:3px;padding:8px 0; }
 .inventoryNotice small { opacity:.85; }
+.inventoryNoticeActions { display:flex; flex-wrap:wrap; gap:8px; }
+.inventoryNoticeActions:empty { display:none; }
+.inventoryNoticeActions > div { flex:1 1 100%; }
+.inventoryNoticeActions > button:first-child { flex:1 1 auto; }
 .page .headerToolbar .inventoryAlertButton { position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;min-width:44px;min-height:var(--header-control-height,44px);height:var(--header-control-height,44px);border:1px solid var(--header-filter-border);border-radius:12px;padding:0;color:var(--brand);background:var(--header-filter-surface);cursor:pointer; }
 .page .headerToolbar .inventoryAlertButton::after { content:'';position:absolute;inset-inline:0;top:50%;height:var(--header-touch-height,44px);transform:translateY(-50%); }
 .page .headerToolbar .inventoryAlertButton[data-has-notices="true"] { color:#92400e;border-color:#d97706;background:#fffbeb; }
