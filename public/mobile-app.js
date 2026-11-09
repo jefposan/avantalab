@@ -11974,7 +11974,7 @@
     return { ano: hoje.getFullYear(), mes: meses[hoje.getMonth()], dia: hoje.getDate() };
   }
 
-  async function aceitarPrevistaHojeMobile(tipo, id) {
+  async function aceitarPrevistaMobile(tipo, id, manterData) {
     if (edicaoPendenteBloqueiaAcaoMobile(tipo, id)) return;
     if (!state.empresa) return;
     var receita = tipo === 'receita';
@@ -11983,16 +11983,34 @@
     if (!item || item.status !== 'prevista') return;
     if (receita && ehReceitaSincronizada(item)) return;
 
-    var hoje = periodoFinanceiroHojeMobile();
+    var periodo = manterData
+      ? { ano: Number(state.ano), mes: item.mes || state.mes, dia: Number(item.dia) }
+      : periodoFinanceiroHojeMobile();
+    if (manterData) {
+      var mesIndice = indiceMes(periodo.mes);
+      if (!Number.isInteger(periodo.ano) || periodo.ano < 1 || mesIndice < 0 ||
+          !Number.isInteger(periodo.dia) || periodo.dia < 1 || periodo.dia > maxDias(periodo.mes, periodo.ano)) {
+        setErro('Confira a data lançada antes de confirmar a despesa.');
+        return;
+      }
+      if (dataFutura(periodo.ano, mesIndice, periodo.dia)) {
+        setErro('Confirme na data lançada quando ela chegar ou use Aceitar hoje.');
+        return;
+      }
+    }
     var tipoConfirmado = receita || item.tipo === 'previsto' ? null : (item.tipo || null);
     var dados = {
-      ano: hoje.ano, mes: hoje.mes, dia: hoje.dia, status: 'confirmada',
+      ano: periodo.ano, mes: periodo.mes, dia: periodo.dia, status: 'confirmada',
       valor: Number(item.valor), tipo_obs: tipoConfirmado,
     };
     if (receita) dados.origem = item.origem;
     else { dados.despesa_nome = item.despesa; dados.descricao = item.descricao || ''; }
-    var projecao = Object.assign({}, item, { mes: hoje.mes, dia: hoje.dia, status: 'confirmada', tipo: tipoConfirmado });
+    var projecao = Object.assign({}, item, { mes: periodo.mes, dia: periodo.dia, status: 'confirmada', tipo: tipoConfirmado });
     await enfileirarEdicaoFinanceiraMobile(tipo, item, dados, projecao);
+  }
+
+  async function aceitarPrevistaHojeMobile(tipo, id) {
+    return aceitarPrevistaMobile(tipo, id, false);
   }
 
   async function confirmarDespesaPrevista(id) {
@@ -14392,7 +14410,8 @@
       '<div class="grid gap-2">' +
         '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">' + resumoData + '</p><strong class="mt-1 block text-lg font-black">' + dinheiro(acao.item.valor) + '</strong></div>' +
         (temNota ? '<button id="ver-nota-lancamento" type="button" class="h-11 rounded-xl bg-cyan-600 px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Ver nota</button>' : '') +
-        '<div class="grid ' + (prevista ? 'grid-cols-3' : 'grid-cols-2') + ' gap-2">' +
+        '<div class="grid ' + (prevista && receita ? 'grid-cols-3' : 'grid-cols-2') + ' gap-2">' +
+        (prevista && !receita ? '<button id="confirmar-prevista-na-data" type="button" class="min-h-11 rounded-xl bg-emerald-700 px-2 text-xs font-semibold text-white">Confirmar na data</button>' : '') +
         (prevista ? '<button id="aceitar-prevista-hoje" type="button" class="h-11 min-w-0 whitespace-nowrap rounded-xl bg-emerald-600 px-1 text-[10px] font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Aceitar hoje</button>' : '') +
         '<button id="editar-lancamento" type="button" class="h-11 min-w-0 whitespace-nowrap rounded-xl bg-[#003E73] px-1 text-[10px] font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Editar</button>' +
         '<button id="excluir-lancamento" type="button" class="h-11 min-w-0 whitespace-nowrap rounded-xl border border-red-200 bg-red-50 px-1 text-[10px] font-black uppercase text-red-700 shadow-sm transition active:scale-[0.98]">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
@@ -14528,7 +14547,7 @@
         blocoParcelamento +
         '<p id="editar-despesa-aviso-futura" role="status" hidden class="rounded-xl border p-3 text-xs font-semibold ' + (escuro ? 'border-amber-400/30 bg-amber-400/10 text-amber-100' : 'border-amber-200 bg-amber-50 text-amber-900') + '">Este pagamento ficará como previsto ao salvar. Valor e parcelamento serão preservados.</p>' +
         (item.status === 'prevista'
-          ? '<p class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[11px] font-semibold leading-relaxed text-emerald-800">Ao confirmar, esta despesa será registrada automaticamente na data de hoje.</p><div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-300 bg-white px-2 text-[11px] font-black uppercase tracking-wide text-slate-700 disabled:opacity-60">Salvar previsto</button><button id="confirmar-edicao-prevista" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-emerald-600 px-2 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60">Confirmar hoje</button></div>'
+          ? '<p class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[11px] font-semibold leading-relaxed text-emerald-800">Confirmar na data mantém o dia já lançado. Aceitar hoje usa a data atual.</p><button id="confirmar-prevista-na-data" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="min-h-11 rounded-xl bg-emerald-700 px-2 text-xs font-semibold text-white disabled:opacity-60">Confirmar na data</button><div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-300 bg-white px-2 text-[11px] font-black uppercase tracking-wide text-slate-700 disabled:opacity-60">Salvar previsto</button><button id="confirmar-edicao-prevista" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-emerald-600 px-2 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60">Aceitar hoje</button></div>'
           : '<div class="grid grid-cols-2 gap-2"><button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-2 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.carregando ? 'Salvando...' : 'Salvar') + '</button><button id="excluir-lancamento-edicao" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-red-200 bg-red-50 px-2 text-xs font-black uppercase tracking-wide text-red-700 disabled:opacity-60">Excluir</button></div>') +
       '</div>'
     );
@@ -18215,7 +18234,11 @@
 	      if (!state.modalAcao || !state.modalAcao.item) return;
 	      aceitarPrevistaHojeMobile(state.modalAcao.tipo, state.modalAcao.item.id);
 	    });
-	    bind('salvar-edicao-lancamento', function () { salvarEdicaoLancamentoSelecionado(false); });
+	    bind('confirmar-prevista-na-data', function () {
+      if (!state.modalAcao || state.modalAcao.tipo !== 'despesa' || !state.modalAcao.item) return;
+      aceitarPrevistaMobile('despesa', state.modalAcao.item.id, true);
+    });
+    bind('salvar-edicao-lancamento', function () { salvarEdicaoLancamentoSelecionado(false); });
 	    bind('confirmar-edicao-prevista', function () { salvarEdicaoLancamentoSelecionado(true); });
     bindInput('editar-dia', atualizarAvisoDataFuturaDespesaMobile);
     atualizarAvisoDataFuturaDespesaMobile();

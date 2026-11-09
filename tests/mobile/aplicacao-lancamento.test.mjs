@@ -130,13 +130,14 @@ test('linhas de despesas e receitas abrem a ação sem erro de contexto', async 
   assert.equal(renderizacoes, 3);
 });
 
-test('ações de lançamento previsto cabem em uma única linha no modal móvel', async () => {
+test('ações de despesa prevista cabem em duas colunas no modal móvel', async () => {
   const mobile = await readFile(new URL('public/mobile-app.js', raiz), 'utf8');
   const inicio = mobile.indexOf('function modalOpcoesLancamentoHtml(acao)');
   const fim = mobile.indexOf('function modalConfirmarExclusaoLancamentoHtml(acao)', inicio);
   const opcoes = mobile.slice(inicio, fim);
 
-  assert.match(opcoes, /prevista \? 'grid-cols-3' : 'grid-cols-2'/);
+  assert.match(opcoes, /prevista && receita \? 'grid-cols-3' : 'grid-cols-2'/);
+  assert.match(opcoes, /prevista && !receita[\s\S]*?id="confirmar-prevista-na-data"[\s\S]*?Confirmar na data/);
   assert.match(opcoes, /id="aceitar-prevista-hoje"[\s\S]*?text-\[10px\]/);
   assert.match(opcoes, /id="editar-lancamento"[\s\S]*?text-\[10px\]/);
   assert.match(opcoes, /id="excluir-lancamento"[\s\S]*?text-\[10px\]/);

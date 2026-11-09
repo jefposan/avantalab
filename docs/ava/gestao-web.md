@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.381 -->
+<!-- ava-version: 3.2.0.381.01 -->
+
+> Revisão 3.2.0.381.01. Ao abrir uma despesa pendente, use **Confirmar na data** para registrar o pagamento no dia e mês já lançados. **Aceitar hoje** usa a data atual. O visto salva a edição como prevista.
 
 > Revisão 3.2.0.381: O menu lateral lista os módulos em ordem alfabética. Gerenciar módulos fica após o último módulo. Visual e Configurações expandem na coluna, que rola para mostrar as subopções. Ao expandir, os demais botões ficam inativos até recolher.
 

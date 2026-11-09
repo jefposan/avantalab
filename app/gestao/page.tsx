@@ -6268,7 +6268,7 @@ const dataFinanceiraDeHoje = () => {
   };
 };
 
-const aceitarDespesaPrevistaHoje = async (lancamento: TabelaLancamentoDespesa) => {
+const confirmarPagamentoDespesaPrevista = async (lancamento: TabelaLancamentoDespesa, manterData: boolean) => {
   if (lancamento.status !== 'prevista') {
     iniciarEdicaoLancamento(lancamento);
     return;
@@ -6277,19 +6277,33 @@ const aceitarDespesaPrevistaHoje = async (lancamento: TabelaLancamentoDespesa) =
     abrirAviso('Acesso não permitido', 'Você não tem permissão para editar lançamentos.');
     return;
   }
+  const periodo = manterData
+    ? { ano: Number(anoSelecionado), mes: lancamento.mes || mesAtivo || '', dia: Number(lancamento.dia) }
+    : dataFinanceiraDeHoje();
+  if (manterData) {
+    const mesIndice = meses.indexOf(periodo.mes);
+    if (!Number.isInteger(periodo.ano) || periodo.ano < 1 || mesIndice < 0 ||
+        !Number.isInteger(periodo.dia) || periodo.dia < 1 || periodo.dia > getMaxDias(periodo.mes, periodo.ano)) {
+      abrirAviso('Data inválida', 'Confira a data lançada antes de confirmar a despesa.');
+      return;
+    }
+    if (dataFutura(periodo.ano, mesIndice, periodo.dia)) {
+      abrirAviso('Data ainda futura', 'Confirme na data lançada quando ela chegar ou use Aceitar hoje.');
+      return;
+    }
+  }
   if (!iniciarProcessamentoLancamento('Confirmando despesa')) return;
 
-  const hoje = dataFinanceiraDeHoje();
   const revisaoEsperada = lancamentos.find((item) => String(item.id) === String(lancamento.id))?.revisao;
   try {
     const resultado = await atualizarLancamento({
       id: lancamento.id,
       empresaId,
-      ano: hoje.ano,
-      mes: hoje.mes,
-      dia: hoje.dia,
+      ano: periodo.ano,
+      mes: periodo.mes,
+      dia: periodo.dia,
       despesaNome: lancamento.despesa,
-      descricao: formatarDescricao(lancamento.descricao || ''),
+      descricao: manterData ? lancamento.descricao || '' : formatarDescricao(lancamento.descricao || ''),
       valor: Number(lancamento.valor || 0),
       status: 'confirmada',
       tipoObs: lancamento.tipo === 'previsto' ? null : lancamento.tipo || null,
@@ -6301,9 +6315,12 @@ const aceitarDespesaPrevistaHoje = async (lancamento: TabelaLancamentoDespesa) =
       return;
     }
 
-    setLancamentos((prev) => Number(anoSelecionado) === hoje.ano
+    const revisaoConfirmada = resultado.data.revisao;
+    setLancamentos((prev) => Number(anoSelecionado) === periodo.ano
       ? prev.map((item) => (item.id === lancamento.id
-        ? { ...item, mes: hoje.mes, dia: hoje.dia, status: 'confirmada', tipo: lancamento.tipo === 'previsto' ? null : lancamento.tipo || null }
+        ? { ...item, mes: periodo.mes, dia: periodo.dia, status: 'confirmada',
+            tipo: lancamento.tipo === 'previsto' ? null : lancamento.tipo || null,
+            revisao: Number(revisaoConfirmada || item.revisao || 1) }
         : item))
       : prev.filter((item) => item.id !== lancamento.id));
     cancelarEdicaoLancamento();
@@ -6312,6 +6329,9 @@ const aceitarDespesaPrevistaHoje = async (lancamento: TabelaLancamentoDespesa) =
     finalizarProcessamentoLancamento();
   }
 };
+
+const aceitarDespesaPrevistaHoje = async (lancamento: TabelaLancamentoDespesa) =>
+  confirmarPagamentoDespesaPrevista(lancamento, false);
 
 const aceitarReceitaPrevistaHoje = async (entrada: TabelaEntradaFaturamento) => {
   if (entrada.status !== 'prevista') {
@@ -12167,6 +12187,7 @@ if (validacaoTelefoneObrigatoria) {
               cancelarEdicaoLancamento={cancelarEdicaoLancamento}
               iniciarEdicaoLancamento={iniciarEdicaoLancamento}
               onAceitarPrevistaHoje={aceitarDespesaPrevistaHoje}
+              onConfirmarPrevistaNaData={(lancamento) => confirmarPagamentoDespesaPrevista(lancamento, true)}
               onDefinirDespesaFixaSempre={definirDespesaFixaSempre}
               onSolicitarExclusaoLancamento={solicitarExclusaoLancamento}
               alturaFinalTabelaLancamentos={alturaFinalTabelaLancamentos}

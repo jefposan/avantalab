@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.381 -->
+<!-- ava-version: 3.2.0.381.01 -->
+
+> Revisão 3.2.0.381.01. Ao abrir uma despesa pendente, use **Confirmar na data** para registrar o pagamento no dia e mês já lançados. **Aceitar hoje** usa a data atual. **Salvar previsto** mantém a pendência.
 
 > Revisão 3.2.0.381: Sem impacto operacional. Ajuste no menu da Gestão Web.
 

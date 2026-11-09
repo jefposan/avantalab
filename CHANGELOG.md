@@ -1,3 +1,7 @@
+## 3.2.0.381.01 — Gestão: confirmar despesa pendente na data lançada
+
+- A Gestão Web e Mobile oferecem **Confirmar na data**, que efetiva a despesa no dia e no mês registrados. **Aceitar hoje** usa a data atual.
+
 ## 3.2.0.381 — Gestão: refinar espaçamento e expansão do menu lateral
 
 - Remove a busca de módulos, aproxima os botões e restaura o movimento ao passar o mouse.

@@ -1,3 +1,4 @@
+// Revisão 3.2.0.381.01: confirmação de despesa na data lançada na Gestão Web e Mobile.
 // Revisão 3.2.0.379: faturamento mensal de Marketplaces nas Receitas da Gestão.
 // Revisão 3.2.0.378: ações em lote e confirmação da situação de venda em Marketplaces na Gestão Web.
 // Revisão 3.2.0.377: DANFE mostra IE real, ISENTO ou traço; indicador de contribuinte não é inscrição estadual. Nenhuma mudança de XML ou procedimento de emissão.
@@ -2643,7 +2644,7 @@ export function guiaOperacionalAva(valor: string | null | undefined) {
     'gestao-web': `FLUXOS ESSENCIAIS — GESTÃO WEB (prioridade para perguntas básicas)
 - Lançar uma despesa: na tela inicial, clique no mês desejado → Despesas → preencha dia, tipo de despesa, descrição e valor → OK. Exemplo de resposta curta: "Selecione o mês, vá a Despesas, preencha dia, tipo, descrição e valor e clique em OK."
 - Cadastrar Despesas em Ajustes cadastra tipos e categorias; não é o caminho para lançar um pagamento.
-- Editar uma despesa: abra o mês e clique na linha da despesa para abrir o editor. Para uma recorrência inteira, use Menu → Despesas fixas.
+- Editar uma despesa: abra o mês e clique na linha da despesa. Se ela já foi paga na data lançada, escolha **Confirmar na data**. **Aceitar hoje** usa a data atual; o visto salva a edição como prevista. Para uma recorrência inteira, use Menu → Despesas fixas.
 - Exportar relatório: Menu → Exportar relatório → escolha ano/mês com dados, conteúdo e PDF ou Excel.
 - Projetos: Reorganizar ou trocar direção pede confirmação antes de substituir as posições manuais. Cancelar preserva o mapa; Desfazer recupera as posições na sessão.
 - Para recursos de um módulo, consulte o trecho correspondente abaixo; não presuma instalação ou acesso.
@@ -2654,7 +2655,7 @@ export function guiaOperacionalAva(valor: string | null | undefined) {
     'gestao-mobile': `FLUXOS ESSENCIAIS — GESTÃO MOBILE (não usar os botões da Web)
 - Lançar uma despesa: use Lançar na barra inferior → Despesa → confira o período e preencha dia, despesa, descrição e valor → Salvar despesa.
 - Menu → Cadastrar despesas administra tipos e categorias, não registra o pagamento nem edita lançamentos mensais.
-- Editar/excluir: toque o lançamento em Despesas do mês ou Receitas do mês. Previsto tem opções próprias para editar, excluir ou confirmar.
+- Editar/excluir: toque o lançamento em Despesas do mês ou Receitas do mês. Para despesa pendente já paga no dia lançado, use **Confirmar na data**. **Aceitar hoje** usa a data atual; **Salvar previsto** mantém a pendência.
 - Exportar relatório: Menu → Exportar relatório → escolha ano/mês com dados, conteúdo e PDF ou Excel.
 - Projetos, Custos e Vendas e Serviços são módulos Web; não invente seus menus dentro deste aplicativo.`,
     vendas: `FLUXOS ESSENCIAIS — AVANTAVENDAS (não confundir com Gestão ou ERP)

@@ -8,6 +8,7 @@ import CardLancamentoDespesa, {
   type DespesaCadastrada,
 } from './CardLancamentoDespesa';
 import BotaoExpandirCard from './BotaoExpandirCard';
+import BotaoAcaoCompacto from './BotaoAcaoCompacto';
 
 export type LancamentoDespesa = {
   id: string | number;
@@ -126,6 +127,7 @@ type TabelaLancamentosDespesaProps = {
   cancelarEdicaoLancamento: () => void;
   iniciarEdicaoLancamento: (lancamento: LancamentoDespesa) => void;
   onAceitarPrevistaHoje: (lancamento: LancamentoDespesa) => void | Promise<void>;
+  onConfirmarPrevistaNaData: (lancamento: LancamentoDespesa) => void | Promise<void>;
   onDefinirDespesaFixaSempre: (lancamento: LancamentoDespesa) => void | Promise<void>;
   onSolicitarExclusaoLancamento: (lancamento: LancamentoDespesa) => void;
   alturaFinalTabelaLancamentos: number;
@@ -195,6 +197,7 @@ export default function TabelaLancamentosDespesa({
   cancelarEdicaoLancamento,
   iniciarEdicaoLancamento,
   onAceitarPrevistaHoje,
+  onConfirmarPrevistaNaData,
   onDefinirDespesaFixaSempre,
   onSolicitarExclusaoLancamento,
   alturaFinalTabelaLancamentos,
@@ -562,17 +565,25 @@ export default function TabelaLancamentosDespesa({
                         <td className={`sticky right-0 z-10 w-36 border-l py-1.5 px-1.5 text-center ${
                           darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-200 bg-white'
                         }`}>
-                          <div className="flex items-center justify-center gap-1">
-                            {lanc.status === 'prevista' && (
-                              <button
-                                type="button"
+                          {lanc.status === 'prevista' && (
+                            <div className={`grid ${darkMode ? 'text-emerald-200' : 'text-emerald-800'}`} aria-label="Confirmar pagamento"
+                              role="group" style={{ '--brand': '#047857' } as CSSProperties}>
+                              <BotaoAcaoCompacto
+                                variante="primario"
+                                onClick={() => onConfirmarPrevistaNaData(lanc)}
+                                title={`Confirmar pagamento no dia ${lanc.dia}, como lançado`}
+                              >
+                                Confirmar na data
+                              </BotaoAcaoCompacto>
+                              <BotaoAcaoCompacto
                                 onClick={() => onAceitarPrevistaHoje(lanc)}
-                                className="rounded-md bg-emerald-600 px-2 py-1.5 text-[10px] font-black text-white transition hover:bg-emerald-700"
-                                title="Aceitar esta despesa com a data de hoje"
+                                title="Confirmar pagamento com a data de hoje"
                               >
                                 Aceitar hoje
-                              </button>
-                            )}
+                              </BotaoAcaoCompacto>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-center gap-1">
                             {lanc.notaArquivoPath && (
                               <button
                                 onClick={() => onVerNota(lanc)}
@@ -585,7 +596,7 @@ export default function TabelaLancamentosDespesa({
                             <button
                               onClick={() => salvarEdicaoLancamento()}
                               className="text-green-500 hover:bg-green-500/10 p-1.5 rounded transition-all cursor-pointer"
-                              title="Salvar edição"
+                              title={lanc.status === 'prevista' ? 'Salvar edição como prevista' : 'Salvar edição'}
                             >
                               ✓
                             </button>
@@ -619,7 +630,7 @@ export default function TabelaLancamentosDespesa({
                           -{formatarMoeda(lanc.valor)}
                         </td>
 
-                        <td className={`sticky right-0 z-10 w-28 border-l py-1.5 px-1 text-center ${
+                        <td className={`sticky right-0 z-10 w-36 border-l py-1.5 px-1 text-center ${
                           buscaLancamento.trim()
                             ? 'border-sky-200 bg-sky-50'
                             : 'border-slate-200 bg-white'

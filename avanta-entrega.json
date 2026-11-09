@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_5PMZPxYWoLob4L5rXES2UAyKcuGC",
-  "version": "3.2.0.381",
-  "scope": "Gestão: refinar espaçamento e expansão do menu lateral",
+  "baseDeploymentId": "dpl_FpHWqjcsZe5zvupKiqeDFrntvz7T",
+  "version": "3.2.0.381.01",
+  "scope": "Gestão: confirmar despesa pendente na data lançada",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Alteração isolada sobre a main oficial. Sem migrações."
+  "auditReview": "O pacote integra a confirmação na data lançada sobre a main com os refinamentos do menu lateral 3.2.0.381. Sem migrações."
 }

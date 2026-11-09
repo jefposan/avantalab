@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import vm from 'node:vm';
+import ts from 'typescript';
 
 const gestao = readFileSync('app/gestao/page.tsx', 'utf8');
 const despesas = readFileSync('app/components/TabelaLancamentosDespesa.tsx', 'utf8');
@@ -36,7 +38,7 @@ test('atualização de receita permite mover a previsão para o mês e ano efeti
 test('Gestão Mobile oferece aceitar hoje para previsão e abre confirmados em edição', () => {
   assert.match(mobile, /function periodoFinanceiroHojeMobile\(\)/);
   assert.match(mobile, /async function aceitarPrevistaHojeMobile\(tipo, id\)/);
-  assert.match(mobile, /ano: hoje\.ano,[\s\S]*mes: hoje\.mes,[\s\S]*dia: hoje\.dia,[\s\S]*status: 'confirmada'/);
+  assert.match(mobile, /ano: periodo\.ano, mes: periodo\.mes, dia: periodo\.dia, status: 'confirmada'/);
   assert.match(mobile, /modo: !caixinha && item\.status !== 'prevista' \? 'editar' : 'opcoes'/);
   assert.match(mobile, /id="aceitar-prevista-hoje"/);
   assert.match(mobile, /bind\('aceitar-prevista-hoje'/);
@@ -45,5 +47,53 @@ test('Gestão Mobile oferece aceitar hoje para previsão e abre confirmados em e
   assert.match(mobile, /var mesDestino = confirmarAgora \? periodoConfirmacao\.mes : mesItem;/);
   assert.match(mobile, /var dia = confirmarAgora \? periodoConfirmacao\.dia : diaInformado;/);
   assert.match(mobile, /id="confirmar-edicao-prevista"[\s\S]*?Confirmar hoje/);
-  assert.doesNotMatch(mobile, /Confirmar nesta data/);
+  assert.match(mobile, /id="confirmar-prevista-na-data"[\s\S]*?Confirmar na data/);
+});
+
+
+test('confirmar despesa na data preserva a competência, o dia e a recorrência na Web e no Mobile', async () => {
+  const item = { id: 'f', mes: 'OUTUBRO', dia: 5, despesa: 'Contabilidade', descricao: 'Mensalidade', valor: 200, tipo: 'fixa', status: 'prevista', revisao: 4 };
+  const hoje = { ano: 2026, mes: 'NOVEMBRO', dia: 9 };
+  const webHandler = gestao.slice(gestao.indexOf('const confirmarPagamentoDespesaPrevista ='), gestao.indexOf('const aceitarDespesaPrevistaHoje ='));
+  const mobileHandler = mobile.slice(mobile.indexOf('async function aceitarPrevistaMobile('), mobile.indexOf('async function aceitarPrevistaHojeMobile('));
+
+  for (const manterData of [true, false]) {
+    const webWrites = [], mobileWrites = [];
+    const lancamento = { ...item };
+    const webContext = {
+      empresaId: 'empresa', podeEditarLancamentos: true, anoSelecionado: '2026', mesAtivo: 'OUTUBRO',
+      meses: ['OUTUBRO', 'NOVEMBRO'], lancamentos: [lancamento], dataFinanceiraDeHoje: () => hoje,
+      getMaxDias: () => 31, dataFutura: (_ano, _mes, dia) => dia > 9,
+      abrirAviso: () => {}, iniciarProcessamentoLancamento: () => true, finalizarProcessamentoLancamento: () => {},
+      atualizarLancamento: async (payload) => { webWrites.push(payload); return { data: { revisao: 5 } }; },
+      setLancamentos: (atualizar) => atualizar([lancamento]), formatarDescricao: (value) => value,
+      cancelarEdicaoLancamento: () => {}, notificarFinanceiroAtualizado: () => {},
+    };
+    vm.runInNewContext(ts.transpile(`${webHandler}
+this.confirmar = confirmarPagamentoDespesaPrevista;`), webContext);
+    await webContext.confirmar(lancamento, manterData);
+
+    const mobileContext = {
+      state: { empresa: { id: 'empresa' }, ano: '2026', mes: 'OUTUBRO', lancamentos: [lancamento] },
+      edicaoPendenteBloqueiaAcaoMobile: () => false, periodoFinanceiroHojeMobile: () => hoje,
+      indiceMes: () => 0, maxDias: () => 31, dataFutura: (_ano, _mes, dia) => dia > 9, setErro: () => {},
+      enfileirarEdicaoFinanceiraMobile: async (_tipo, _item, payload) => mobileWrites.push(payload),
+    };
+    vm.runInNewContext(`${mobileHandler}
+this.confirmar = aceitarPrevistaMobile;`, mobileContext);
+    await mobileContext.confirmar('despesa', lancamento.id, manterData);
+    for (const payload of [webWrites[0], mobileWrites[0]]) {
+      assert.equal(payload.ano, 2026);
+      assert.equal(payload.mes, manterData ? 'OUTUBRO' : 'NOVEMBRO');
+      assert.equal(payload.dia, manterData ? 5 : 9);
+      assert.equal(payload.status, 'confirmada');
+      assert.equal(payload.valor, 200);
+      assert.equal(payload.tipoObs ?? payload.tipo_obs, 'fixa');
+    }
+    lancamento.dia = 12;
+    await webContext.confirmar(lancamento, true);
+    await mobileContext.confirmar('despesa', lancamento.id, true);
+    assert.equal(webWrites.length, 1, 'a data futura não gera gravação Web');
+    assert.equal(mobileWrites.length, 1, 'a data futura não gera gravação Mobile');
+  }
 });
