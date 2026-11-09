@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.379 -->
+<!-- ava-version: 3.2.0.380 -->
+
+> Revisão 3.2.0.380: Sem impacto operacional. Ajuste do menu lateral da Gestão Web.
 
 > Revisão 3.2.0.379. Sem impacto operacional neste ambiente. O faturamento de Marketplaces tem linha própria nas receitas da Gestão.
 

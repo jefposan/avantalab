@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_zr4QrExPM8nfUVpeV3ptf3CwBhP5",
-  "version": "3.2.0.379",
-  "scope": "Marketplaces: republicar faturamento mensal pela main",
+  "baseDeploymentId": "dpl_4mwRRpDkXYJi5igCZ3TvVk17KjEA",
+  "version": "3.2.0.380",
+  "scope": "Gestão: menu lateral compacto e módulos em ordem alfabética",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Republicação da versão 3.2.0.379 já em produção. O código da aplicação e a migração já aplicada foram preservados. O pipeline exige a main no checkout e confere a branch na Vercel."
+  "auditReview": "Alteração isolada sobre a main oficial. Sem migrações."
 }

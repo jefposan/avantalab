@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.379 -->
+<!-- ava-version: 3.2.0.380 -->
+
+> Revisão 3.2.0.380: No menu lateral, use Buscar módulo para filtrar a lista em ordem alfabética. Assinatura fica no topo, Visual e Configurações abrem subopções e Tutorial fica no final.
 
 > Revisão 3.2.0.379. Em Marketplaces → Configurações → Faturamento, Enviar faturamento para as receitas do mês começa ligado. A Gestão mostra Vendas Mkt Places em Receitas do mês, como uma linha automática separada do AvantaVendas. O total bruto soma pedidos confirmados em reais e vendas diretas confirmadas do módulo na competência de São Paulo. Desligar congela o valor já lançado. Religar atualiza o mês corrente. A integração começa no mês da instalação.
 

@@ -1,4 +1,6 @@
 'use client';
+
+import CampoBusca from '@/app/components/CampoBusca';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Calculadora from '@/app/components/Calculadora';
@@ -995,6 +997,7 @@ const [acessosVendasAprovados, setAcessosVendasAprovados] = useState<AcessoVenda
 const [aprovacoesCarregando, setAprovacoesCarregando] = useState(false);
 const [aprovacaoProcessandoId, setAprovacaoProcessandoId] = useState<string | null>(null);
 const ajustesAutoFecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const [buscaMenuGestao, setBuscaMenuGestao] = useState('');
 const painelAjustesRef = useRef<HTMLDivElement | null>(null);
 const financeiroRealtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
@@ -2762,6 +2765,7 @@ const reiniciarTimerAjustes = () => {
       };
     }
 
+    setBuscaMenuGestao('');
     reiniciarTimerAjustes();
 
     return limparTimerAjustes;
@@ -11501,28 +11505,26 @@ if (validacaoTelefoneObrigatoria) {
 
     <div
       id="menu-gestao-web"
-      className="av-menu-gestao-entrada print-ocultar fixed bottom-0 left-0 top-[92px] z-[1200] flex w-[296px] max-w-[calc(100vw-18px)] flex-col gap-2 overflow-hidden rounded-r-2xl border border-l-0 border-slate-700 bg-slate-900 p-3 text-white shadow-2xl"
+      className="av-menu-gestao-entrada print-ocultar fixed bottom-0 left-0 top-[92px] z-[1200] flex w-[296px] max-w-[calc(100vw-18px)] flex-col gap-1 overflow-y-auto overscroll-contain rounded-r-2xl border border-l-0 border-slate-700 bg-slate-900 p-3 text-white shadow-2xl"
     style={{ top: alturaHeaderGestao ? `${alturaHeaderGestao}px` : undefined, borderTopColor: corPrimaria, borderTopWidth: '3px', borderRightColor: corPrimaria }}
     onMouseMove={reiniciarTimerAjustes}
     onMouseDown={reiniciarTimerAjustes}
     onKeyDown={reiniciarTimerAjustes}
     onFocus={reiniciarTimerAjustes}
   >
-    <div className="mb-2 flex shrink-0 items-center justify-between border-b border-slate-700 pb-3">
+    <div className="mb-1 flex shrink-0 items-center justify-between border-b border-slate-700 pb-1">
       <div><h2 className="text-base font-black">Menu</h2></div>
-      <button type="button" onClick={() => { setAjustesAberto(false); setMenuAjuste(null); }} className="grid h-9 w-9 place-items-center rounded-xl border border-slate-700 text-lg text-slate-300 transition hover:bg-slate-800 hover:text-white" aria-label="Fechar menu">×</button>
+      <button type="button" onClick={() => { setAjustesAberto(false); setMenuAjuste(null); }} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-700 text-lg text-slate-300 transition hover:bg-slate-800 hover:text-white" aria-label="Fechar menu">×</button>
     </div>
-    <div ref={painelAjustesRef} className="av-menu-gestao-acoes custom-scroll flex min-h-0 w-full flex-1 flex-col gap-2 overflow-y-auto pr-1">
 
-        {/* 1. Cadastrar Despesas + 2. Instrucoes (icone ?) */}
-        <div className="order-10 flex w-full items-center gap-1.5">
+        <div className="flex shrink-0 w-full items-center gap-1.5">
           <Tooltip texto="Cadastre e edite as despesas base (modelos) usadas nos lançamentos." posicao="right" wrapperClassName="flex-1">
             <button
               onClick={() => { setAjustesAberto(false); setModalDespesasBase(true); }}
-              className="flex min-h-10 flex-1 items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
-              style={{ borderColor: corPrimaria }}
+              className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border px-3 py-1 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+              style={{ backgroundColor: corPrimaria, borderColor: corPrimaria, color: corEhClara(corPrimaria) ? '#0f172a' : '#ffffff' }}
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
               </svg>
               Cadastrar Despesas
@@ -11535,7 +11537,7 @@ if (validacaoTelefoneObrigatoria) {
               aria-label="Instruções sobre categoria"
               onClick={() => { setAjustesAberto(false); setModalInstrucoes(true); }}
               className="flex h-6 w-6 items-center justify-center rounded-full border bg-slate-800 hover:bg-slate-700 transition-colors"
-              style={{ borderColor: corPrimaria }}
+              style={{ borderColor: '#64748b' }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -11543,12 +11545,131 @@ if (validacaoTelefoneObrigatoria) {
             </button>
           </Tooltip>
         </div>
-
-        {/* 3. Modulos */}
-        {podeGerenciarModulos && <Tooltip texto="Compre, instale ou remova módulos deste perfil." posicao="right" wrapperClassName="av-menu-gestao-atalho order-20 w-full">
+        {COBRANCA_ATIVA && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador') && (
+          <Tooltip texto="Veja a situação da sua assinatura e do plano." posicao="right" wrapperClassName="w-full">
+            <button
+              onClick={() => { setAjustesAberto(false); setModalAssinatura(true); }}
+              className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border border-amber-400 bg-amber-600 px-3 py-1 text-left text-xs font-black text-white shadow-md transition-colors hover:bg-amber-500"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              Assinatura
+            </button>
+          </Tooltip>
+        )}
+        <CampoBusca
+          value={buscaMenuGestao}
+          onChange={setBuscaMenuGestao}
+          placeholder="Buscar módulo"
+          aria-label="Buscar módulo"
+          className="min-h-9 w-full rounded-lg border border-slate-500 bg-slate-950 px-3 text-sm text-white placeholder:text-slate-400"
+        />
+        {(() => {
+          const modulos = [
+          ...modulosPaginaTotalAtivos(modulosAtivos).filter((modulo) => modulo.id !== 'recebimentos_presencial' && modulosLiberados.includes(modulo.id)).map((modulo) => ({ id: modulo.id, nome: modulo.navegacao.rotuloMenu || modulo.nome, botao: (
+          <Tooltip key={modulo.id} texto={modulo.id === 'projetos' ? 'Crie e gerencie seus projetos, etapas, tarefas e responsáveis.' : `Abrir ${modulo.nome} em tela total.`} posicao="right" wrapperClassName="w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setAjustesAberto(false);
+                setMenuAjuste(null);
+                navegarParaModulo(modulo.id, modulo.navegacao.rota!, empresaId || '');
+              }}
+              className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+              style={{ borderColor: '#64748b' }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5h7v6H4V5Zm9 0h7v10h-7V5ZM4 13h7v6H4v-6Zm9 4h7v2h-7v-2Z" />
+              </svg>
+              {modulo.navegacao.rotuloMenu}
+              {modulo.id === 'projetos' && projetosCompartilhados > 0 && <span className="ml-auto rounded-full bg-cyan-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-900">{projetosCompartilhados} compartilhado{projetosCompartilhados === 1 ? '' : 's'}</span>}
+            </button>
+          </Tooltip>
+        )})),
+          ...(!modulosAtivos.includes('projetos') && modulosLiberados.includes('projetos') && projetosCompartilhados > 0 ? [{ id: 'projetos', nome: 'Projetos', botao: (
+          <Tooltip texto={`${projetosCompartilhados} projeto${projetosCompartilhados === 1 ? '' : 's'} compartilhado${projetosCompartilhados === 1 ? '' : 's'} com você.`} posicao="right" wrapperClassName="w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setAjustesAberto(false);
+                setMenuAjuste(null);
+                navegarParaModulo('projetos', '/projetos', empresaId || '');
+              }}
+              className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+              style={{ borderColor: '#64748b' }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5h7v6H4V5Zm9 0h7v10h-7V5ZM4 13h7v6H4v-6Zm9 4h7v2h-7v-2Z" />
+              </svg>
+              Projetos
+              <span className="ml-auto rounded-full bg-cyan-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-900">Compartilhado</span>
+            </button>
+          </Tooltip>
+          ) }] : []),
+          ...(modulosAtivos.includes('ponto') && modulosLiberados.includes('ponto') && podeGerenciarPonto ? [{ id: 'ponto', nome: 'Ponto', botao: (
+          <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="right" wrapperClassName="w-full">
+            <button
+              onClick={abrirPontoIntegrado}
+              className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+              style={{ borderColor: '#64748b' }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Ponto
+            </button>
+          </Tooltip>
+          ) }] : []),
+          ...(modulosAtivos.includes('recebimentos_presencial') && modulosLiberados.includes('recebimentos_presencial') && podeGerenciarRecebimentos ? [{ id: 'recebimentos_presencial', nome: 'Operações de Campo', botao: (
+          <Tooltip texto="Gerencie recebimentos, serviços, empresas e colaboradores em campo." posicao="right" wrapperClassName="w-full">
+            <button
+              onClick={() => {
+                setAjustesAberto(false);
+                navegarParaModulo('recebimentos_presencial', '/recebimentos', empresaId || '');
+              }}
+              className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+              style={{ borderColor: '#64748b' }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 3h12v18l-2.5-1.7L13 21l-2.5-1.7L8 21l-2-1.4V3Zm3 5h6M9 12h6M9 16h3" />
+              </svg>
+              Operações de Campo
+            </button>
+          </Tooltip>
+          ) }] : []),
+          ...(modulosAtivos.includes('vendas_mobile') && modulosLiberados.includes('vendas_mobile') && podeAcessarVendasMobileWeb ? [{ id: 'vendas_mobile', nome: 'Conteúdo AvantaVendas', botao: (
+          <Tooltip texto="Publique novidades, catálogo, fotos, vídeos e PDFs para a equipe do AvantaVendas." posicao="right" wrapperClassName="w-full">
+            <button
+              onClick={abrirConteudoVendasIntegrado}
+              className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+              style={{ borderColor: '#64748b' }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m3 11 18-5v12L3 14zM11.6 16.4 13 21H8l-1.5-6" /></svg>
+              Conteúdo AvantaVendas
+            </button>
+          </Tooltip>
+          ) }] : []),
+          ].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+          const termo = normalizarTexto(buscaMenuGestao);
+          const visiveis = modulos.filter(({ nome }) => normalizarTexto(nome).includes(termo));
+          return (
+            <section className="flex min-h-24 flex-1 flex-col gap-1" aria-labelledby="menu-modulos-titulo">
+              <h3 id="menu-modulos-titulo" className="flex shrink-0 items-center justify-between py-1 text-sm font-semibold">
+                Módulos instalados
+                <span className="rounded-full bg-slate-700 px-2 text-xs">{modulos.length}</span>
+              </h3>
+              <div className="custom-scroll flex min-h-0 flex-col gap-1 overflow-y-auto overscroll-contain pr-1" tabIndex={0} role="region" aria-label="Lista de módulos">
+                {visiveis.map(({ id, botao }) => <div key={id} className="shrink-0">{botao}</div>)}
+                {!visiveis.length && <p className="px-2 py-1 text-xs text-slate-300">{termo ? 'Nenhum módulo encontrado.' : 'Nenhum módulo disponível.'}</p>}
+              </div>
+            </section>
+          );
+        })()}
+        {podeGerenciarModulos && <Tooltip texto="Compre, instale ou remova módulos deste perfil." posicao="right" wrapperClassName="w-full">
           <button
             onClick={() => { setAjustesAberto(false); setModalModulos(true); }}
-            className="flex min-h-10 w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-black shadow-md transition-all hover:brightness-110 hover:shadow-lg"
+            className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border px-3 py-1 text-left text-xs font-black shadow-md transition-all hover:brightness-110 hover:shadow-lg"
             style={{
               color: corEhClara(corPrimaria) ? '#0f172a' : '#ffffff',
               background: `linear-gradient(90deg, ${corPrimaria} 0%, color-mix(in srgb, ${corPrimaria} 72%, #0f172a) 100%)`,
@@ -11559,118 +11680,12 @@ if (validacaoTelefoneObrigatoria) {
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
             </svg>
-            Módulos
+            Gerenciar módulos
           </button>
         </Tooltip>}
-
-        {/* 3b. Assinatura (só com cobrança ativa, para gestor master / administrador) */}
-        {COBRANCA_ATIVA && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador') && (
-          <Tooltip texto="Veja a situação da sua assinatura e do plano." posicao="right" wrapperClassName="av-menu-gestao-atalho order-15 w-full">
-            <button
-              onClick={() => { setAjustesAberto(false); setModalAssinatura(true); }}
-              className="flex min-h-10 w-full items-center gap-2 rounded-xl border border-amber-400 bg-amber-600 px-3 py-2 text-left text-xs font-black text-white shadow-md transition-colors hover:bg-amber-500"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-              Assinatura
-            </button>
-          </Tooltip>
-        )}
-
-        {modulosPaginaTotalAtivos(modulosAtivos).filter((modulo) => modulo.id !== 'recebimentos_presencial' && modulosLiberados.includes(modulo.id)).map((modulo) => (
-          <Tooltip key={modulo.id} texto={modulo.id === 'projetos' ? 'Crie e gerencie seus projetos, etapas, tarefas e responsáveis.' : `Abrir ${modulo.nome} em tela total.`} posicao="right" wrapperClassName="av-menu-gestao-atalho order-28 w-full">
-            <button
-              type="button"
-              onClick={() => {
-                setAjustesAberto(false);
-                setMenuAjuste(null);
-                navegarParaModulo(modulo.id, modulo.navegacao.rota!, empresaId || '');
-              }}
-              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
-              style={{ borderColor: corPrimaria }}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5h7v6H4V5Zm9 0h7v10h-7V5ZM4 13h7v6H4v-6Zm9 4h7v2h-7v-2Z" />
-              </svg>
-              {modulo.navegacao.rotuloMenu}
-              {modulo.id === 'projetos' && projetosCompartilhados > 0 && <span className="ml-auto rounded-full bg-cyan-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-900">{projetosCompartilhados} compartilhado{projetosCompartilhados === 1 ? '' : 's'}</span>}
-            </button>
-          </Tooltip>
-        ))}
-
-        {!modulosAtivos.includes('projetos') && modulosLiberados.includes('projetos') && projetosCompartilhados > 0 && (
-          <Tooltip texto={`${projetosCompartilhados} projeto${projetosCompartilhados === 1 ? '' : 's'} compartilhado${projetosCompartilhados === 1 ? '' : 's'} com você.`} posicao="right" wrapperClassName="av-menu-gestao-atalho order-28 w-full">
-            <button
-              type="button"
-              onClick={() => {
-                setAjustesAberto(false);
-                setMenuAjuste(null);
-                navegarParaModulo('projetos', '/projetos', empresaId || '');
-              }}
-              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
-              style={{ borderColor: corPrimaria }}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5h7v6H4V5Zm9 0h7v10h-7V5ZM4 13h7v6H4v-6Zm9 4h7v2h-7v-2Z" />
-              </svg>
-              Projetos
-              <span className="ml-auto rounded-full bg-cyan-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-900">Compartilhado</span>
-            </button>
-          </Tooltip>
-        )}
-
-        {/* 4. Ponto */}
-        {modulosAtivos.includes('ponto') && modulosLiberados.includes('ponto') && podeGerenciarPonto && (
-          <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="right" wrapperClassName="av-menu-gestao-atalho order-30 w-full">
-            <button
-              onClick={abrirPontoIntegrado}
-              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
-              style={{ borderColor: corPrimaria }}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Ponto
-            </button>
-          </Tooltip>
-        )}
-
-        {/* Operações de Campo usa um acesso dedicado para manter seu ícone e descrição. */}
-        {modulosAtivos.includes('recebimentos_presencial') && modulosLiberados.includes('recebimentos_presencial') && podeGerenciarRecebimentos && (
-          <Tooltip texto="Gerencie recebimentos, serviços, empresas e colaboradores em campo." posicao="right" wrapperClassName="av-menu-gestao-atalho order-40 w-full">
-            <button
-              onClick={() => {
-                setAjustesAberto(false);
-                navegarParaModulo('recebimentos_presencial', '/recebimentos', empresaId || '');
-              }}
-              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
-              style={{ borderColor: corPrimaria }}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 3h12v18l-2.5-1.7L13 21l-2.5-1.7L8 21l-2-1.4V3Zm3 5h6M9 12h6M9 16h3" />
-              </svg>
-              Operações de Campo
-            </button>
-          </Tooltip>
-        )}
-
-        {/* 4b. Conteúdo AvantaVendas */}
-        {modulosAtivos.includes('vendas_mobile') && modulosLiberados.includes('vendas_mobile') && podeAcessarVendasMobileWeb && (
-          <Tooltip texto="Publique novidades, catálogo, fotos, vídeos e PDFs para a equipe do AvantaVendas." posicao="right" wrapperClassName="av-menu-gestao-atalho order-50 w-full">
-            <button
-              onClick={abrirConteudoVendasIntegrado}
-              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
-              style={{ borderColor: corPrimaria }}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m3 11 18-5v12L3 14zM11.6 16.4 13 21H8l-1.5-6" /></svg>
-              Conteúdo AvantaVendas
-            </button>
-          </Tooltip>
-        )}
-
+        <div ref={painelAjustesRef} className="custom-scroll flex max-h-[45%] shrink-0 flex-col gap-1 overflow-y-auto overscroll-contain border-t border-slate-700 pt-2">
         {centrosCustoAtivo && podeAcessarAjustes && (
-          <Tooltip texto="Cadastre, renomeie ou pause os centros de custo deste perfil." posicao="right" wrapperClassName="av-menu-gestao-atalho order-[55] w-full">
+          <Tooltip texto="Cadastre, renomeie ou pause os centros de custo deste perfil." posicao="right" wrapperClassName="w-full">
             <button
               type="button"
               onClick={() => {
@@ -11679,8 +11694,8 @@ if (validacaoTelefoneObrigatoria) {
                 setMenuAjuste(null);
                 setModalCentrosCusto(true);
               }}
-              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
-              style={{ borderColor: corPrimaria }}
+              className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+              style={{ borderColor: '#64748b' }}
             >
               <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16M7 3v18M17 3v18" /></svg>
               Centros de custo
@@ -11689,65 +11704,23 @@ if (validacaoTelefoneObrigatoria) {
         )}
 
         {/* 5. Visual (dropdown) */}
-        <Tooltip texto="Personalize a aparência: logo, cor do tema e modo escuro." posicao="right" wrapperClassName="av-menu-gestao-atalho order-60 w-full">
+        <Tooltip texto="Personalize a aparência: logo, cor do tema e modo escuro." posicao="right" wrapperClassName="w-full order-60">
           <button
             type="button"
             onClick={(e) => alternarMenuAjuste('visual', e)}
             aria-expanded={menuAjuste === 'visual'}
-            className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
-            style={{ borderColor: corPrimaria }}
+            className="group flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
+            style={{ borderColor: '#64748b' }}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3l1.45 4.55L18 9l-4.55 1.45L12 15l-1.45-4.55L6 9l4.55-1.45L12 3z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 16l.75 2.25L8 19l-2.25.75L5 22l-.75-2.25L2 19l2.25-.75L5 16zM19 14l.65 1.85L21.5 16.5l-1.85.65L19 19l-.65-1.85-1.85-.65 1.85-.65L19 14z" />
             </svg>
             Visual
-            <svg className="w-3 h-3" fill="none" stroke="#ffffff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
+            <svg className="ml-auto w-3 h-3 group-aria-expanded:rotate-180" aria-hidden="true" fill="none" stroke="#ffffff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
           </button>
         </Tooltip>
 
-        {/* 7. Configuracoes (dropdown) */}
-        <Tooltip texto="Configurações: duplicados, usuários, perfil, backup e restauração." posicao="right" wrapperClassName="av-menu-gestao-atalho order-80 w-full">
-          <button
-            type="button"
-            onClick={(e) => alternarMenuAjuste('config', e)}
-            aria-expanded={menuAjuste === 'config'}
-            className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold text-white shadow transition-colors hover:bg-slate-700 cursor-pointer"
-            style={{ borderColor: corPrimaria }}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Configurações
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
-          </button>
-        </Tooltip>
-
-        {/* 8. Sobre + Tutorial (colados à direita) */}
-        <div className="order-100 flex w-full flex-col gap-2 border-t border-slate-700 pt-2">
-          <Tooltip texto="Sobre o AvantaLab e novidades das versões." posicao="right" wrapperClassName="av-menu-gestao-atalho w-full">
-            <button
-              type="button"
-              onClick={() => { setAjustesAberto(false); setModalSobre(true); }}
-              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold text-white shadow transition-colors hover:bg-slate-700 cursor-pointer"
-              style={{ borderColor: corPrimaria }}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Sobre
-            </button>
-          </Tooltip>
-          <Tooltip texto="Reveja o tour guiado de uso do sistema." posicao="right" wrapperClassName="av-menu-gestao-atalho w-full">
-            <button
-              type="button"
-              onClick={() => { setAjustesAberto(false); setTourAberto(true); }}
-              className="flex min-h-10 w-full items-center gap-2 rounded-xl border border-indigo-400/50 bg-gradient-to-r from-indigo-700 to-indigo-500 px-3 py-2 text-left text-xs font-bold text-white shadow transition-all hover:brightness-110 cursor-pointer"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Tutorial
-            </button>
-          </Tooltip>
-        </div>
     {/* ===== DROPDOWN: VISUAL ===== */}
     {menuAjuste === 'visual' && menuAjusteRect && (
         <div data-ajustes-submenu="visual" className="relative z-[1210] order-70 w-full rounded-xl border border-slate-700 bg-slate-950/80 p-2 shadow-xl">
@@ -11789,6 +11762,24 @@ if (validacaoTelefoneObrigatoria) {
           </button>
         </div>
     )}
+
+        {/* 7. Configuracoes (dropdown) */}
+        <Tooltip texto="Configurações: duplicados, usuários, perfil, backup e restauração." posicao="right" wrapperClassName="w-full order-80">
+          <button
+            type="button"
+            onClick={(e) => alternarMenuAjuste('config', e)}
+            aria-expanded={menuAjuste === 'config'}
+            className="group flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold text-white shadow transition-colors hover:bg-slate-700 cursor-pointer"
+            style={{ borderColor: '#64748b' }}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Configurações
+            <svg className="ml-auto w-3 h-3 group-aria-expanded:rotate-180" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
+          </button>
+        </Tooltip>
 
     {/* ===== DROPDOWN: CONFIGURACOES ===== */}
     {menuAjuste === 'config' && menuAjusteRect && (
@@ -11893,6 +11884,31 @@ if (validacaoTelefoneObrigatoria) {
           </Tooltip>
         </div>
     )}
+        {/* 8. Sobre + Tutorial (colados à direita) */}
+        <div className="order-100 flex w-full shrink-0 flex-col gap-1">
+          <Tooltip texto="Sobre o AvantaLab e novidades das versões." posicao="right" wrapperClassName="w-full">
+            <button
+              type="button"
+              onClick={() => { setAjustesAberto(false); setModalSobre(true); }}
+              className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold text-white shadow transition-colors hover:bg-slate-700 cursor-pointer"
+              style={{ borderColor: '#64748b' }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Sobre
+            </button>
+          </Tooltip>
+          <Tooltip texto="Reveja o tour guiado de uso do sistema." posicao="right" wrapperClassName="w-full">
+            <button
+              type="button"
+              onClick={() => { setAjustesAberto(false); setTourAberto(true); }}
+              className="flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border border-indigo-400/50 bg-gradient-to-r from-indigo-700 to-indigo-500 px-3 py-1 text-left text-xs font-bold text-white shadow transition-all hover:brightness-110 cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Tutorial
+            </button>
+          </Tooltip>
+        </div>
+
 
           {statusConfig === 'error' && (
             <div

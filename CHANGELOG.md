@@ -1,3 +1,7 @@
+## 3.2.0.380 — Gestão: menu lateral compacto e módulos em ordem alfabética
+
+- Organiza os módulos em lista pesquisável com rolagem própria. Mantém Assinatura no topo e Tutorial no final com suas cores. Visual e Configurações mantêm as setas de expansão.
+
 ## 3.2.0.379 — Marketplaces: enviar faturamento às receitas do mês
 
 - Configuração por empresa com envio ativado por padrão. Ao desligar, o valor já lançado é preservado. Ao religar, o mês corrente é atualizado.
