@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.380 -->
+<!-- ava-version: 3.2.0.381 -->
+
+> Revisão 3.2.0.381: Sem impacto operacional. Ajuste no menu da Gestão Web.
 
 > Revisão 3.2.0.380: Sem impacto operacional. Ajuste do menu lateral da Gestão Web.
 

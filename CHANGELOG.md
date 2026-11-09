@@ -1,3 +1,8 @@
+## 3.2.0.381 — Gestão: refinar espaçamento e expansão do menu lateral
+
+- Remove a busca de módulos, aproxima os botões e restaura o movimento ao passar o mouse.
+- Visual e Configurações expandem na coluna, com rolagem automática e foco no grupo aberto.
+
 ## 3.2.0.380 — Gestão: menu lateral compacto e módulos em ordem alfabética
 
 - Organiza os módulos em lista pesquisável com rolagem própria. Mantém Assinatura no topo e Tutorial no final com suas cores. Visual e Configurações mantêm as setas de expansão.

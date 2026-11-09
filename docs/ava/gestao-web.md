@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.380 -->
+<!-- ava-version: 3.2.0.381 -->
+
+> Revisão 3.2.0.381: O menu lateral lista os módulos em ordem alfabética. Gerenciar módulos fica após o último módulo. Visual e Configurações expandem na coluna, que rola para mostrar as subopções. Ao expandir, os demais botões ficam inativos até recolher.
 
 > Revisão 3.2.0.380: No menu lateral, use Buscar módulo para filtrar a lista em ordem alfabética. Assinatura fica no topo, Visual e Configurações abrem subopções e Tutorial fica no final.
 

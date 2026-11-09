@@ -1,7 +1,7 @@
 {
-  "baseDeploymentId": "dpl_4mwRRpDkXYJi5igCZ3TvVk17KjEA",
-  "version": "3.2.0.380",
-  "scope": "Gestão: menu lateral compacto e módulos em ordem alfabética",
+  "baseDeploymentId": "dpl_5PMZPxYWoLob4L5rXES2UAyKcuGC",
+  "version": "3.2.0.381",
+  "scope": "Gestão: refinar espaçamento e expansão do menu lateral",
   "migrations": [],
   "reconciliationStatus": "reviewed",
   "auditReview": "Alteração isolada sobre a main oficial. Sem migrações."
