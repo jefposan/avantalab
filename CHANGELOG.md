@@ -1,4 +1,4 @@
-## 3.2.0.381.01 — Gestão: confirmar despesa pendente na data lançada
+## 3.2.0.382 — Gestão: confirmar despesa pendente na data lançada
 
 - A Gestão Web e Mobile oferecem **Confirmar na data**, que efetiva a despesa no dia e no mês registrados. **Aceitar hoje** usa a data atual.
 

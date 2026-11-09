@@ -1,6 +1,6 @@
 {
   "baseDeploymentId": "dpl_FpHWqjcsZe5zvupKiqeDFrntvz7T",
-  "version": "3.2.0.381.01",
+  "version": "3.2.0.382",
   "scope": "Gestão: confirmar despesa pendente na data lançada",
   "migrations": [],
   "reconciliationStatus": "reviewed",

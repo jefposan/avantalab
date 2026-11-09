@@ -1,4 +1,4 @@
-// Revisão 3.2.0.381.01: confirmação de despesa na data lançada na Gestão Web e Mobile.
+// Revisão 3.2.0.382: confirmação de despesa na data lançada na Gestão Web e Mobile.
 // Revisão 3.2.0.379: faturamento mensal de Marketplaces nas Receitas da Gestão.
 // Revisão 3.2.0.378: ações em lote e confirmação da situação de venda em Marketplaces na Gestão Web.
 // Revisão 3.2.0.377: DANFE mostra IE real, ISENTO ou traço; indicador de contribuinte não é inscrição estadual. Nenhuma mudança de XML ou procedimento de emissão.

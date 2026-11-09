@@ -1,6 +1,6 @@
-<!-- ava-version: 3.2.0.381.01 -->
+<!-- ava-version: 3.2.0.382 -->
 
-> Revisão 3.2.0.381.01. Sem impacto operacional. O ajuste pertence às despesas pendentes da Gestão Web e Mobile.
+> Revisão 3.2.0.382. Sem impacto operacional. O ajuste pertence às despesas pendentes da Gestão Web e Mobile.
 
 > Revisão 3.2.0.381: Sem impacto operacional. Ajuste no menu da Gestão Web.
 
