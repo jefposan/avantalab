@@ -1,8 +1,13 @@
 {
-  "baseDeploymentId": "dpl_BjwBTpfChqwSqsNxkLtCJYhpZVDq",
-  "version": "3.2.0.378",
-  "scope": "Marketplaces: ações em lote e confirmação da situação de venda",
-  "migrations": [],
+  "baseDeploymentId": "dpl_Brf6UcSFGQJBQ3TuSFFUfugKz4CR",
+  "version": "3.2.0.379",
+  "scope": "Marketplaces: enviar faturamento às receitas do mês",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261109163000_marketplace_receitas_gestao.sql",
+      "sha256": "af37f648c0161926f41506c0c7f2d7e35fc5b50f4ecaef42f68891cdfb8bdd6c"
+    }
+  ],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base main e produção 3.2.0.377 preservadas. Ações em lote limitadas aos vínculos elegíveis do produto. Confirmação de preço e situação separadas. Entrega sem migração."
+  "auditReview": "Base main e produção 3.2.0.378 preservadas. Migração única para preferência, fila e receita consolidada de Marketplaces. SQL validado em PostgreSQL local."
 }

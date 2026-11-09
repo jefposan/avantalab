@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.378 -->
+<!-- ava-version: 3.2.0.379 -->
+
+> Revisão 3.2.0.379. Em Marketplaces → Configurações → Faturamento, Enviar faturamento para as receitas do mês começa ligado. A Gestão mostra Vendas Mkt Places em Receitas do mês, como uma linha automática separada do AvantaVendas. O total bruto soma pedidos confirmados em reais e vendas diretas confirmadas do módulo na competência de São Paulo. Desligar congela o valor já lançado. Religar atualiza o mês corrente. A integração começa no mês da instalação.
 
 > Revisão 3.2.0.378. Em Marketplaces → Produtos cadastrados, abra o produto e vá a Publicação → Anúncios vinculados, use Ativar todos ou Pausar todos para os vínculos elegíveis do mesmo produto. A confirmação lista contas e anúncios, a ativação exige saldo Online conferido e o resultado aparece por conta. A edição de preço não muda a situação por comando. Se o Mercado Livre devolver um anúncio anteriormente ativo fora de venda, o lote de preço para e identifica o que foi confirmado.
 

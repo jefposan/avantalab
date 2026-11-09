@@ -15,5 +15,11 @@ export async function POST(request: Request) {
   if (!authorized.data) return NextResponse.json({ ok: false }, { status: 401 });
   after(async () => { try { await runMarketplaceWorker(db); } catch { console.error('marketplace_worker_failed'); } });
   after(async () => { try { const {resumeCatalogCompletion}=await import('@/app/modules/marketplaces/services/catalog-completion');await resumeCatalogCompletion(db); } catch { console.error('marketplace_catalog_completion_pending'); } });
+  after(async () => {
+    try {
+      const { error } = await db.rpc('marketplace_processar_receitas').abortSignal(AbortSignal.timeout(12_000));
+      if (error && error.code !== 'PGRST202') console.error('marketplace_revenue_pending', error.code);
+    } catch { console.error('marketplace_revenue_pending'); }
+  });
   return NextResponse.json({ accepted: true }, { status: 202, headers: { 'Cache-Control': 'no-store' } });
 }

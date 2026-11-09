@@ -19,15 +19,24 @@ const hook=registerHooks({resolve(s,c,next){
 const {default:Settings}=await import('../../app/marketplaces/PriceCalculationSettings.tsx');
 const {default:Users}=await import('../../app/marketplaces/PriceUsersPanel.tsx');
 hook.deregister();
-const settings={percentages:{minimum:50,medium:70,ideal:90},theme:'profile',revision:1,storageReady:true};
+const settings={percentages:{minimum:50,medium:70,ideal:90},theme:'profile',revision:1,storageReady:true,financeRevenueEnabled:true};
 const request=async()=>{throw Error('SSR não deve solicitar dados')};
-test('configurações separam preços e aparência, sem o texto explicativo removido',()=>{
+test('configurações separam preços, aparência e faturamento',()=>{
   const html=renderToStaticMarkup(React.createElement(Settings,{companyId:'company',settings,request,onSaved(){}}));
-  assert.equal((html.match(/<fieldset /g)||[]).length,2);
+  assert.equal((html.match(/<fieldset /g)||[]).length,3);
   assert.match(html,/<legend>Preços de venda<\/legend>/);assert.match(html,/<legend>Aparência<\/legend>/);
-  assert.equal((html.match(/<input /g)||[]).length,3);assert.equal((html.match(/aria-pressed=/g)||[]).length,4);
+  assert.equal((html.match(/<input /g)||[]).length,4);assert.equal((html.match(/aria-pressed=/g)||[]).length,4);
   assert.doesNotMatch(html,/margem de lucro|Exemplo:|Percentuais sobre a referência/);
   assert.match(html,/Salvar configurações/);
+  assert.match(html,/<legend>Faturamento<\/legend>/);
+  assert.match(html,/<input type="checkbox" aria-describedby="[^"]+" checked=""\/>/);
+  assert.match(html,/Enviar faturamento para as receitas do mês/);
+  for (const financeRevenueEnabled of [false, undefined]) {
+    const output=renderToStaticMarkup(React.createElement(Settings,{companyId:'company',settings:{...settings,financeRevenueEnabled},request,onSaved(){}}));
+    const checkbox=output.match(/<input type="checkbox"[^>]*>/)[0];
+    assert.equal(checkbox.includes('checked=""'),financeRevenueEnabled===undefined);
+    assert.equal(checkbox.includes('disabled=""'),financeRevenueEnabled===undefined);
+  }
 });
 test('cabeçalho tem somente Configurações e cadastro reúne os três campos e Salvar no mesmo formulário',()=>{
   const html=renderToStaticMarkup(React.createElement(Users,{companyId:'company',settings,settingsError:'',request,onClose(){},onSettingsSaved(){},onReloadSettings(){}}));

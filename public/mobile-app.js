@@ -4644,7 +4644,7 @@
   function ehReceitaSincronizada(item) {
     if (!item) return false;
     var tipo = String(item.tipo || '').toLowerCase();
-    return tipo === 'vendas_mobile_sistema' || tipo === 'recebimentos_sistema';
+    return tipo === 'vendas_mobile_sistema' || tipo === 'recebimentos_sistema' || tipo === 'marketplace_sistema';
   }
 
   // O tipo (fixa/parcela) e a situacao temporal sao informacoes independentes.

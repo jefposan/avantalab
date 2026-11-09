@@ -19,6 +19,8 @@ const MESES = [
   'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
 ];
 
+const TIPO_RECEITA_MARKETPLACE = 'marketplace_sistema';
+
 const MAPA_MESES: Record<string, string> = {
   JANEIRO: 'JANEIRO',
   FEVEREIRO: 'FEVEREIRO',
@@ -363,6 +365,12 @@ export async function gerarBackupExcel({
     }))
   );
 
+  const marketplacePorMes = new Map<string, number>();
+  for (const entrada of faturamentosEntradasBackup) {
+    if (entrada.tipo_obs !== TIPO_RECEITA_MARKETPLACE) continue;
+    const mes = `${entrada.ano}|${normalizarMes(entrada.mes)}`;
+    marketplacePorMes.set(mes, (marketplacePorMes.get(mes) ?? 0) + Number(entrada.valor || 0));
+  }
   adicionarPlanilha(
     wb,
     'Receitas Entradas',
@@ -373,6 +381,7 @@ export async function gerarBackupExcel({
       Dia: entrada.dia,
       Origem: entrada.origem || '',
       Valor: Number(entrada.valor || 0),
+      'Tipo de origem': entrada.tipo_obs === TIPO_RECEITA_MARKETPLACE ? TIPO_RECEITA_MARKETPLACE : '',
     }))
   );
 
@@ -384,6 +393,7 @@ export async function gerarBackupExcel({
       Ano: f.ano,
       Mes: normalizarMes(f.mes),
       Valor: Number(f.valor || 0),
+      'Valor Marketplaces': marketplacePorMes.get(`${f.ano}|${normalizarMes(f.mes)}`) ?? 0,
     }))
   );
 
@@ -531,6 +541,38 @@ export async function analisarBackupExcel(arquivo: File): Promise<AnaliseBackupI
   };
 }
 
+function valorTotalImportavel(row: any) {
+  const total = Math.round(valorNumero(row, ['Valor', 'Valor (R$)']) * 100);
+  const marketplace = Math.round(valorNumero(row, ['Valor Marketplaces']) * 100);
+  return Math.max(0, total - marketplace) / 100;
+}
+
+function entradaMarketplaceNoBackup(row: any) {
+  return valorTexto(row, ['Tipo de origem']) === TIPO_RECEITA_MARKETPLACE;
+}
+
+// Valores de Marketplaces são mantidos na origem, inclusive se o backup for mais antigo.
+async function reconciliarReceitasMarketplace(empresaId: string) {
+  const { data: meses, error } = await supabase.from('faturamentos_entradas')
+    .select('ano,mes').eq('empresa_id', empresaId).eq('tipo_obs', TIPO_RECEITA_MARKETPLACE);
+  if (error) throw new Error(`Erro ao consultar receitas automáticas: ${error.message}`);
+  for (const { ano, mes } of meses || []) {
+    let valor = 0;
+    for (let offset = 0; ; offset += 500) {
+      const { data, error } = await supabase.from('faturamentos_entradas').select('valor')
+        .eq('empresa_id', empresaId).eq('ano', ano).eq('mes', mes)
+        .or('status.is.null,status.neq.prevista').order('id').range(offset, offset + 499);
+      if (error) throw new Error(`Erro ao conferir o total de receitas: ${error.message}`);
+      for (const entrada of data || []) valor += Math.round(Number(entrada.valor) * 100);
+      if (!data || data.length < 500) break;
+    }
+    const { error: erroTotal } = await supabase.from('faturamentos')
+      .upsert({ empresa_id: empresaId, ano, mes, valor: valor / 100, referencia_total_mensal: false },
+        { onConflict: 'empresa_id,ano,mes' });
+    if (erroTotal) throw new Error(`Erro ao atualizar o total mensal: ${erroTotal.message}`);
+  }
+}
+
 export async function importarBackupExcelAdicionar({
   arquivo,
   empresaId,
@@ -647,6 +689,11 @@ export async function importarBackupExcelAdicionar({
   const chavesEntradas = new Set((entradasExistentesRes.data || []).map((e: any) => chaveEntrada(e)));
 
   const novasEntradas = receitasEntradas
+    .filter(row => {
+      if (!entradaMarketplaceNoBackup(row)) return true;
+      resultado.receitasEntradasIgnoradas += 1;
+      return false;
+    })
     .map((row) => ({
       empresa_id: empresaId,
       ano: Math.trunc(valorNumero(row, ['Ano'])),
@@ -681,7 +728,7 @@ export async function importarBackupExcelAdicionar({
       empresa_id: empresaId,
       ano: Math.trunc(valorNumero(row, ['Ano'])),
       mes: normalizarMes(valorTexto(row, ['Mes', 'Mês'])),
-      valor: valorNumero(row, ['Valor', 'Valor (R$)']),
+      valor: valorTotalImportavel(row),
     }))
     .filter((row) => {
       const valido = row.ano > 0 && MESES.includes(row.mes) && row.valor > 0;
@@ -738,6 +785,7 @@ export async function importarBackupExcelAdicionar({
     }
   }
 
+  await reconciliarReceitasMarketplace(empresaId);
   return resultado;
 }
 
@@ -812,7 +860,7 @@ function parseReceitasEntradas(rows: any[], empresaId: string, usuarioId: string
     return {
       idOriginal: idOriginal(row),
       dados,
-      valido: dados.ano > 0 && MESES.includes(dados.mes) && dados.dia > 0 && Boolean(dados.origem) && dados.valor > 0,
+      valido: !entradaMarketplaceNoBackup(row) && dados.ano > 0 && MESES.includes(dados.mes) && dados.dia > 0 && Boolean(dados.origem) && dados.valor > 0,
     };
   });
 }
@@ -828,7 +876,7 @@ function parseReceitasTotais(rows: any[], empresaId: string): LinhaImportacao<{
       empresa_id: empresaId,
       ano: Math.trunc(valorNumero(row, ['Ano'])),
       mes: normalizarMes(valorTexto(row, ['Mes', 'Mês'])),
-      valor: valorNumero(row, ['Valor', 'Valor (R$)']),
+      valor: valorTotalImportavel(row),
     };
 
     return {
@@ -1131,15 +1179,16 @@ async function importarLinhasBackup({
     resultado.recorrenciasIgnoradas += recorrencias.length;
   }
 
+  await reconciliarReceitasMarketplace(empresaId);
   return resultado;
 }
 
 async function apagarDadosFinanceirosAtuais(empresaId: string): Promise<Partial<ResultadoImportacaoBackup>> {
   const remover = async (tabela: string, opcional = false) => {
-    const { count, error } = await supabase
-      .from(tabela)
-      .delete({ count: 'exact' })
-      .eq('empresa_id', empresaId);
+    const query = supabase.from(tabela).delete({ count: 'exact' }).eq('empresa_id', empresaId);
+    const { count, error } = await (tabela === 'faturamentos_entradas'
+      ? query.or(`tipo_obs.is.null,tipo_obs.neq.${TIPO_RECEITA_MARKETPLACE}`)
+      : query);
 
     if (error) {
       if (opcional) return 0;

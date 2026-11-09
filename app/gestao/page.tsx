@@ -5592,7 +5592,7 @@ Deseja excluir TODAS as parcelas ou apenas esta?`,
 };
 
 const excluirEntradaFaturamento = async (entrada: TabelaEntradaFaturamento) => {
-  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema') {
+  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema' || entrada.tipo === 'marketplace_sistema') {
     abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser excluída no Gestão.');
     return;
   }
@@ -5788,7 +5788,7 @@ const handleEntradaFaturamentoValorChange = (
 };
 
 const iniciarEdicaoEntradaFaturamento = (entrada: TabelaEntradaFaturamento) => {
-  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema') {
+  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema' || entrada.tipo === 'marketplace_sistema') {
     abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser editada no Gestão.');
     return;
   }
@@ -6315,7 +6315,7 @@ const aceitarReceitaPrevistaHoje = async (entrada: TabelaEntradaFaturamento) => 
     abrirAviso('Acesso não permitido', 'Você não tem permissão para editar lançamentos.');
     return;
   }
-  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema') {
+  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema' || entrada.tipo === 'marketplace_sistema') {
     abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser alterada no Gestão.');
     return;
   }

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.378 -->
+<!-- ava-version: 3.2.0.379 -->
+
+> Revisão 3.2.0.379. Sem impacto operacional neste ambiente. O faturamento de Marketplaces tem linha própria nas receitas da Gestão.
 
 > Revisão 3.2.0.378. Sem impacto operacional neste ambiente. O ajuste é de Marketplaces na Gestão Web.
 

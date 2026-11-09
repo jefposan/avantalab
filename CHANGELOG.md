@@ -1,3 +1,9 @@
+## 3.2.0.379 — Marketplaces: enviar faturamento às receitas do mês
+
+- Configuração por empresa com envio ativado por padrão. Ao desligar, o valor já lançado é preservado. Ao religar, o mês corrente é atualizado.
+- A Gestão recebe uma única linha mensal **Vendas Mkt Places**, com o bruto das vendas confirmadas e separada do AvantaVendas. Reprocessamentos mantêm o lançamento único.
+- A integração começa no mês da instalação. O lançamento é protegido contra edição manual e preservado ao restaurar um ponto financeiro ou importar um backup.
+
 ## 3.2.0.378 — Marketplaces: ativar e pausar anúncios vinculados em lote
 
 - Os controles de lote ficam no produto e listam as contas e os anúncios elegíveis antes de executar. A ativação usa o saldo Online conferido e cada conta tem retorno próprio.

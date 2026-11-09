@@ -92,7 +92,7 @@ export default function TabelaEntradasFaturamento({
           <tbody>
             {entradas.map((entrada) => {
             const ehRecebimentos = entrada.tipo === 'recebimentos_sistema';
-            const ehProtegida = ehRecebimentos || entrada.tipo === 'vendas_mobile_sistema';
+            const ehProtegida = ehRecebimentos || entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'marketplace_sistema';
 
             return (
             <tr

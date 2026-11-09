@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.378 -->
+<!-- ava-version: 3.2.0.379 -->
+
+> Revisão 3.2.0.379. Nas Receitas do mês, Vendas Mkt Places é o faturamento bruto automático de Marketplaces. A linha é somente leitura e a opção de envio fica nas Configurações de Marketplaces na Gestão Web.
 
 > Revisão 3.2.0.378. Sem impacto operacional neste ambiente. O ajuste é de Marketplaces na Gestão Web.
 

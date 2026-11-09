@@ -38,8 +38,9 @@ const hooks=registerHooks({resolve(specifier,context,next){
 const service=await import('../../app/modules/marketplaces/services/price-settings.ts');
 const route=await import('../../app/api/modulos/marketplaces/precos/configuracoes/route.ts');hooks.deregister();
 function database(){
-  const rows=new Map();const db={rows,fail:null,from(table){let company,revision,values,mode='read';const query={select(){return query},eq(key,value){if(key==='empresa_id')company=value;if(key==='revision')revision=value;return query},insert(value){mode='insert';values=value;company=value.empresa_id;return query},update(value){mode='update';values=value;return query},async maybeSingle(){
+  const rows=new Map();const db={rows,fail:null,from(table){let company,revision,values,mode='read';const query={select(columns){query.columns=columns;return query},eq(key,value){if(key==='empresa_id')company=value;if(key==='revision')revision=value;return query},insert(value){mode='insert';values=value;company=value.empresa_id;return query},update(value){mode='update';values=value;return query},async maybeSingle(){
     if(db.fail)return {data:null,error:db.fail};
+    if(db.oldSchema&&query.columns.includes('finance_revenue_enabled'))return {data:null,error:{code:'42703'}};
     if(table==='configuracoes')return {data:{dark_mode:true,cor_primaria:'#de2244'},error:null};
     assert.equal(table,'marketplace_price_settings');assert.ok(company,'empresa obrigatória');const current=rows.get(company);
     if(mode==='insert'&&current)return {data:null,error:{code:'23505'}};
@@ -52,6 +53,14 @@ test('serviço isola empresas, valida entradas, sinaliza migração/falha e prot
   const input={percentages:{minimum:60,medium:80,ideal:100},theme:'system',revision:0};
   const saved=await service.savePriceSettings(db,'a','actor',input);assert.equal(saved.revision,1);
   assert.equal((await service.readPriceSettings(db,'a')).theme,'system');assert.equal((await service.readPriceSettings(db,'b')).revision,0);
+  assert.equal((await service.readPriceSettings(db,'b')).financeRevenueEnabled,true);
+  const disabled=await service.savePriceSettings(db,'a','actor',{...input,revision:1,financeRevenueEnabled:false});
+  assert.equal(disabled.financeRevenueEnabled,false);
+  await service.savePriceSettings(db,'a','actor',{...input,revision:2});
+  assert.equal((await service.readPriceSettings(db,'a')).financeRevenueEnabled,false,'um cliente antigo não religa a opção');
+  await assert.rejects(service.savePriceSettings(db,'a','actor',{...input,revision:3,financeRevenueEnabled:'false'}),{code:'invalid_finance_revenue'});
+  db.oldSchema=true;assert.equal((await service.readPriceSettings(db,'a')).storageReady,true);
+  db.oldSchema=false;
   await assert.rejects(service.savePriceSettings(db,'a','actor',input),{code:'price_settings_conflict'});
   await assert.rejects(service.savePriceSettings(db,'a','actor',{...input,revision:5}),{code:'price_settings_conflict'});
   for(const patch of [{theme:'javascript'}, {percentages:{minimum:-10,medium:70,ideal:90}}, {revision:'1'}])await assert.rejects(service.savePriceSettings(db,'a','actor',{...input,...patch}));
