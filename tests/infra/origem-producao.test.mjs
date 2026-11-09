@@ -45,6 +45,12 @@ test('SHA fora da main, ancestral antigo e referência ilegível bloqueiam', () 
     await assert.rejects(conferirOrigemProducao({ rodar: f.rodar, manifesto: { migrations: [] } }), /main/);
   }
 }));
+test('checkout de outra branch ou destacado é recusado mesmo com o SHA exato da main', () => fixture(async f => {
+  for (const args of [['switch', '-c', 'codex/exemplo'], ['switch', '--detach', f.hash]]) {
+    await f.git(args);
+    await assert.rejects(conferirOrigemProducao({ rodar: f.rodar, manifesto: { migrations: [] } }), /branch main no pacote/);
+  }
+}));
 test('falha na rede não usa origin/main local como autorização', () => fixture(async f => {
   await assert.rejects(conferirOrigemProducao({ manifesto: { migrations: [] }, rodar: (bin,args) => {
     if(args[0] === 'ls-remote') throw Error('rede indisponível');

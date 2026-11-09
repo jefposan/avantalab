@@ -60,7 +60,9 @@ leitura, identidade ou estado bloqueia o envio. A fila continua obrigatória.
    local e remotamente por rotina; a completa remota permanece obrigatória.
 4. Criar snapshot Git **no pacote**, sem alterar Git da raiz, com mensagem
    `VERSÃO — Módulo: resumo`. Não rastrear `.env`, backups ou certificados.
-   `.vercel/project.json` deve apontar para o projeto/equipe AvantaLab.
+   `.vercel/project.json` deve apontar para o projeto/equipe AvantaLab. Para
+   produção, use a branch local `main` no pacote isolado, com o SHA exato da
+   `main` oficial. Isso mantém a indicação `main` no painel da Vercel.
 5. A partir da raiz compartilhada:
    `npm run publicar:vercel -- --diretorio /pacote/absoluto --producao`.
    Sem `--producao`, o destino é preview, não produção.
@@ -71,7 +73,7 @@ leitura, identidade ou estado bloqueia o envio. A fila continua obrigatória.
    Falha de leitura bloqueia envio. Não remove trava existente, não cancela
    outra publicação e não usa `--force`, `--prebuilt` ou máquina maior.
 7. Depois do upload devolve URL/id/estado e confere a descrição Git reconhecida
-   pela Vercel. Recibo em `output/pipeline/`, ignorado pelo Git e pelo upload.
+   pela Vercel. Em produção, também confere `main` e o SHA exibidos. Recibo em `output/pipeline/`, ignorado pelo Git e pelo upload.
    Avisar imediatamente **enviado/em build**. `--producao` promove automaticamente
    após build aprovado; preview não recebe autorização de promoção implícita.
 8. Conferir READY, descrição no provedor e domínios antes de dizer publicado.

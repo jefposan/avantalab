@@ -13,6 +13,9 @@ export async function conferirOrigemProducao({ rodar, manifesto }) {
   if (identidade !== 'Jeff <jefposan@hotmail.com>\nJeff <jefposan@hotmail.com>') {
     throw new Error('Autor e committer devem ser Jeff <jefposan@hotmail.com>.');
   }
+  if (await rodar('git', ['branch', '--show-current']) !== 'main') {
+    throw new Error('Produção exige a branch main no pacote isolado para identificar a publicação na Vercel.');
+  }
   const resposta = await rodar('git', ['ls-remote', '--exit-code', 'origin', 'refs/heads/main']);
   const correspondencia = resposta.match(/^([a-f0-9]{40})\s+refs\/heads\/main$/);
   if (!correspondencia) throw new Error('Não foi possível confirmar a main remota; produção bloqueada.');

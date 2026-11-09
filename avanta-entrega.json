@@ -1,13 +1,8 @@
 {
-  "baseDeploymentId": "dpl_Brf6UcSFGQJBQ3TuSFFUfugKz4CR",
+  "baseDeploymentId": "dpl_zr4QrExPM8nfUVpeV3ptf3CwBhP5",
   "version": "3.2.0.379",
-  "scope": "Marketplaces: enviar faturamento às receitas do mês",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261109163000_marketplace_receitas_gestao.sql",
-      "sha256": "af37f648c0161926f41506c0c7f2d7e35fc5b50f4ecaef42f68891cdfb8bdd6c"
-    }
-  ],
+  "scope": "Marketplaces: republicar faturamento mensal pela main",
+  "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Base main e produção 3.2.0.378 preservadas. Migração única para preferência, fila e receita consolidada de Marketplaces. SQL validado em PostgreSQL local."
+  "auditReview": "Republicação da versão 3.2.0.379 já em produção. O código da aplicação e a migração já aplicada foram preservados. O pipeline exige a main no checkout e confere a branch na Vercel."
 }

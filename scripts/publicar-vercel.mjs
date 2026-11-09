@@ -124,13 +124,15 @@ export async function publicar({ pasta, producao = false, cli = process.env.AVAN
     const args = ['deploy', '--yes', '--no-wait', '--scope', scope,
       '--meta', `githubCommitMessage=${mensagem}`, '--meta', `githubCommitSha=${hash}`,
       '--meta', `avantaVersion=${versao}`, '--meta', `avantaSummary=${mensagem}`];
-    if (producao) args.push('--prod');
+    if (producao) args.push('--prod', '--meta', 'githubCommitRef=main');
     const saida = await vc(args);
     const url = saida.match(/https:\/\/[^\s]+\.vercel\.app\b/)?.[0];
     if (!url) throw new Error('Vercel não devolveu URL; confira o histórico antes de repetir o envio.');
     const detalhe = JSON.parse(await vc(['api', `/v13/deployments/${new URL(url).hostname}`, '--scope', scope]));
     const recibo = { versao, resumo: mensagem, hash, url, id: detalhe.id, destino: producao ? 'production' : 'preview',
-      estado: detalhe.readyState, identificacaoConferida: detalhe.meta?.githubCommitMessage === mensagem,
+      estado: detalhe.readyState, branch: detalhe.meta?.githubCommitRef ?? null,
+      identificacaoConferida: detalhe.meta?.githubCommitMessage === mensagem &&
+        (!producao || (detalhe.meta?.githubCommitRef === 'main' && detalhe.meta?.githubCommitSha === hash)),
       inicio, enviadoEm: Date.now(), promocao: producao ? 'automatica-apos-build-aprovado' : 'nao-autorizada-por-este-comando' };
     await writeFile(resolve(estado, `publicacao-${hash.slice(0, 12)}.json`), JSON.stringify(recibo, null, 2) + '\n');
     if (!recibo.identificacaoConferida) throw new Error(`Envio recebido (${url}), mas identificação não confirmada. Não repetir; confira a Vercel.`);
