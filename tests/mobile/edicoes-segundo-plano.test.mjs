@@ -114,6 +114,9 @@ test('Realtime financeiro não reinicia preparação nem lê todos os perfis ao 
   const corpo=funcoes.get('configurarRealtimeFinanceiroMobile');assert.match(corpo,/agendarAtualizacaoFinanceiraMobile/);
   const salvar=funcoes.get('salvarEdicaoLancamentoSelecionado');assert.match(salvar,/enfileirarEdicaoFinanceiraMobile/);
   assert.doesNotMatch(salvar,/iniciarAplicacaoLancamentoMobile|await carregarDados|db\.from|db\.rpc/);
-  assert.match(funcoes.get('aceitarPrevistaHojeMobile'),/await enfileirarEdicaoFinanceiraMobile/);
-  assert.doesNotMatch(funcoes.get('aceitarPrevistaHojeMobile'),/await carregarDados|db\.from/);
+  const aceitar = funcoes.get('aceitarPrevistaMobile');
+  assert.match(aceitar,/await enfileirarEdicaoFinanceiraMobile/);
+  assert.doesNotMatch(aceitar,/await carregarDados|db\.from/);
+  assert.match(funcoes.get('aceitarPrevistaHojeMobile'),/return aceitarPrevistaMobile\(tipo, id, false\)/);
+  assert.match(fonte,/aceitarPrevistaMobile\('despesa', state\.modalAcao\.item\.id, true\)/);
 });
