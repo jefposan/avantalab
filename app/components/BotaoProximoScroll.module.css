@@ -71,14 +71,14 @@
   height: 20px;
 }
 
-:global(.dark) .circulo {
+:global(.dark) .circulo, .escuro .circulo {
   border-color: rgba(125, 211, 252, .32);
   background: rgba(15, 23, 42, .74);
   color: #e0f2fe;
   box-shadow: 0 12px 30px rgba(2, 6, 23, .36), inset 0 1px 0 rgba(255, 255, 255, .14);
 }
 
-:global(.dark) .botao:hover .circulo {
+:global(.dark) .botao:hover .circulo, .escuro .botao:hover .circulo {
   background: rgba(30, 41, 59, .92);
 }
 

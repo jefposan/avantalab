@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.385 -->
+<!-- ava-version: 3.2.0.386 -->
+
+> Revisão 3.2.0.386: Sem impacto operacional. O ajuste de rolagem pertence ao módulo Marketplaces da Gestão Web.
 
 > Revisão 3.2.0.385: Sem impacto operacional. Ajuste na Gestão Web.
 

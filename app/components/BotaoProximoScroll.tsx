@@ -15,6 +15,9 @@ type BotaoProximoScrollProps = {
   scrollContainerRef?: RefObject<HTMLElement | null>;
   modo?: 'pagina' | 'container';
   destinos?: readonly string[];
+  trechoPaginaId?: string;
+  topoFixo?: (trecho: HTMLElement) => number;
+  temaEscuro?: boolean;
   distanciaInferior?: number;
   className?: string;
   ariaLabel?: string;
@@ -37,10 +40,31 @@ function movimentoReduzido() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 }
 
+// O bloco delimita a rolagem, mas quem rola é o documento.
+function avancoNoTrecho(trecho: HTMLElement, distanciaInferior: number, topoFixo = 0) {
+  if (trecho.closest('[hidden],[inert]') || document.body.style.overflowY === 'hidden'
+      || document.documentElement.style.overflowY === 'hidden') return 0;
+
+  const pagina = elementoRolagemPagina();
+  const viewport = window.visualViewport;
+  const altura = viewport?.height ?? window.innerHeight;
+  const retangulo = trecho.getBoundingClientRect();
+  const baseUtil = (viewport?.offsetTop ?? 0) + altura - distanciaInferior;
+  const topoUtil = Math.max(viewport?.offsetTop ?? 0, topoFixo, retangulo.top);
+  return Math.min(
+    Math.round(Math.max(0, baseUtil - topoUtil) * 0.84),
+    retangulo.bottom - baseUtil,
+    pagina.scrollHeight - pagina.clientHeight - pagina.scrollTop,
+  );
+}
+
 export default function BotaoProximoScroll({
   scrollContainerRef,
   modo = 'pagina',
   destinos = [],
+  trechoPaginaId,
+  topoFixo,
+  temaEscuro = false,
   distanciaInferior: distanciaInferiorInformada,
   className = '',
   ariaLabel = 'Avançar para a próxima parte',
@@ -57,11 +81,12 @@ export default function BotaoProximoScroll({
     () => false
   );
   const emContainer = modo === 'container';
+  const acompanhaArea = emContainer || Boolean(trechoPaginaId);
   const distanciaInferior = distanciaInferiorInformada ?? (emContainer ? 28 : 20);
 
   const atualizarVisibilidade = useCallback(() => {
-    const container = scrollContainerRef?.current;
-    if (emContainer) {
+    const container = trechoPaginaId ? document.getElementById(trechoPaginaId) : scrollContainerRef?.current;
+    if (acompanhaArea) {
       if (!container) {
         setVisivel(false);
         return;
@@ -71,11 +96,13 @@ export default function BotaoProximoScroll({
       const topoJanela = window.visualViewport?.offsetTop ?? 0;
       const alturaJanela = window.visualViewport?.height ?? window.innerHeight;
       const baseJanela = topoJanela + alturaJanela;
-      const topoVisivel = Math.max(retangulo.top, topoJanela);
+      const topoDoBloco = trechoPaginaId ? topoFixo?.(container) ?? 0 : 0;
+      const topoVisivel = Math.max(retangulo.top, topoJanela, topoDoBloco);
       const baseVisivel = Math.min(retangulo.bottom, baseJanela);
       const alturaVisivel = Math.max(0, baseVisivel - topoVisivel);
-      const temConteudoAbaixo =
-        container.scrollHeight - container.scrollTop - container.clientHeight > LIMIAR_FIM_PX;
+      const temConteudoAbaixo = trechoPaginaId
+        ? avancoNoTrecho(container, distanciaInferior, topoDoBloco) > LIMIAR_FIM_PX
+        : container.scrollHeight - container.scrollTop - container.clientHeight > LIMIAR_FIM_PX;
       const cabeBotao = alturaVisivel >= TAMANHO_AREA_BOTAO_PX + distanciaInferior;
 
       setPosicaoContainer((atual) => {
@@ -98,7 +125,7 @@ export default function BotaoProximoScroll({
 
     const pagina = elementoRolagemPagina();
     setVisivel(pagina.scrollHeight - pagina.scrollTop - pagina.clientHeight > LIMIAR_FIM_PX);
-  }, [distanciaInferior, emContainer, scrollContainerRef]);
+  }, [acompanhaArea, distanciaInferior, scrollContainerRef, topoFixo, trechoPaginaId]);
 
   useEffect(() => {
     const container = scrollContainerRef?.current;
@@ -122,11 +149,24 @@ export default function BotaoProximoScroll({
       ? new ResizeObserver(agendarAtualizacao)
       : null;
     tamanho?.observe(container ?? document.documentElement);
+    if (trechoPaginaId) {
+      const trecho = document.getElementById(trechoPaginaId);
+      if (trecho) tamanho?.observe(trecho);
+      tamanho?.observe(document.body);
+    }
 
     const mutacoes = typeof MutationObserver !== 'undefined'
       ? new MutationObserver(agendarAtualizacao)
       : null;
-    mutacoes?.observe(container ?? document.body, { childList: true, subtree: true });
+    mutacoes?.observe(container ?? document.body, {
+      childList: true, subtree: true,
+      ...(trechoPaginaId && { attributes: true, attributeFilter: ['hidden', 'inert'] }),
+    });
+    const bloqueio = trechoPaginaId && typeof MutationObserver !== 'undefined'
+      ? new MutationObserver(agendarAtualizacao)
+      : null;
+    bloqueio?.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+    bloqueio?.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
 
     return () => {
       window.cancelAnimationFrame(quadro);
@@ -139,11 +179,20 @@ export default function BotaoProximoScroll({
       window.visualViewport?.removeEventListener('scroll', agendarAtualizacao);
       tamanho?.disconnect();
       mutacoes?.disconnect();
+      bloqueio?.disconnect();
     };
-  }, [atualizarVisibilidade, scrollContainerRef]);
+  }, [atualizarVisibilidade, scrollContainerRef, trechoPaginaId]);
 
   const avancar = () => {
     const behavior: ScrollBehavior = movimentoReduzido() ? 'auto' : 'smooth';
+    if (trechoPaginaId) {
+      const trecho = document.getElementById(trechoPaginaId);
+      const avanco = trecho ? avancoNoTrecho(trecho, distanciaInferior, topoFixo?.(trecho)) : 0;
+      if (avanco > LIMIAR_FIM_PX) {
+        window.scrollBy({ top: avanco, behavior: movimentoReduzido() ? 'instant' : behavior });
+      }
+      return;
+    }
     const container = scrollContainerRef?.current;
     if (container) {
       const fim = Math.max(0, container.scrollHeight - container.clientHeight);
@@ -192,7 +241,7 @@ export default function BotaoProximoScroll({
 
   const conteudo = (
     <div
-      className={`${styles.root} ${emContainer ? styles.container : styles.pagina} ${visivel ? styles.visivel : ''} ${className}`}
+      className={`${styles.root} ${acompanhaArea ? styles.container : styles.pagina} ${visivel ? styles.visivel : ''} ${temaEscuro ? styles.escuro : ''} ${className}`}
       style={{
         '--av-scroll-next-bottom': `${distanciaInferior}px`,
         '--av-scroll-next-left': `${posicaoContainer.left}px`,
@@ -205,6 +254,7 @@ export default function BotaoProximoScroll({
         className={styles.botao}
         onClick={avancar}
         aria-label={ariaLabel}
+        aria-controls={trechoPaginaId}
         title={title}
         tabIndex={visivel ? 0 : -1}
       >

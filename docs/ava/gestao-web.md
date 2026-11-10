@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.385 -->
+<!-- ava-version: 3.2.0.386 -->
+
+> Revisão 3.2.0.386: Em **Anúncios em marketplaces**, expanda Vendas, Anunciados, Estoques ou Produtos cadastrados. Quando o bloco tiver conteúdo abaixo da tela, use o círculo com seta para avançar na página até o fim do bloco.
 
 > Revisão 3.2.0.385: Na faixa do mês selecionado, Previsto mostra o saldo do mês mais as receitas pendentes e menos as despesas pendentes da mesma competência.
 

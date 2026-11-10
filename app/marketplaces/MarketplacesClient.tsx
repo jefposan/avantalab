@@ -31,7 +31,8 @@ import {PreparationPriceReference} from './LocalProductPricing';
 import ProductsStock from './ProductsStock';
 import SalesReport from './SalesReport';
 import { captureMarketplaceDetailNavigation, MARKETPLACE_DETAIL_NAVIGATION, notifyProductStockChanged } from './product-stock-events';
-import {useMarketplacePanelGroup} from './panel-expansion';
+import {useMarketplacePanelGroup, type MarketplacePanel} from './panel-expansion';
+import BotaoProximoScroll from '@/app/components/BotaoProximoScroll';
 import ProductSearchShortcut, { type ProductSearchHandle } from './ProductSearchShortcut';
 import PriceUsersPanel from './PriceUsersPanel';
 import PriceToolsActions from './PriceToolsActions';
@@ -60,9 +61,16 @@ import { connectionTarget, validateConnectionAuthorization } from './connection-
 import { accountsForMarketplace, publicationAccount, publicationAccountAvailable } from './marketplace-scope';
 import { accountDisplayName, connectedAccountForIdentification, preserveNewerAccountLabel } from './account-identification';
 import AccountIdentification, { type AccountLabelResult } from './AccountIdentification';
-import { scrollMarketplaceRow, scrollMarketplacePreparation, captureMarketplacePanelExpansion } from './scroll-panel-row';
+import { scrollMarketplaceRow, scrollMarketplacePreparation, captureMarketplacePanelExpansion, marketplaceNavigationBottom } from './scroll-panel-row';
 import { MAGALU_CATALOG_MESSAGES, magaluCatalogOutcome, type MagaluCatalogCheck } from './magalu-catalog-state';
 import { accountReadMessage, createAccountReader, type MarketplaceAccountsResult } from './account-reader';
+
+const rolagemDosBlocos: Partial<Record<MarketplacePanel | '', { id: string; rotulo: string }>> = {
+  sales: { id: 'sales-content', rotulo: 'Vendas' },
+  announced: { id: 'announced-content', rotulo: 'Anunciados' },
+  warehouses: { id: 'warehouses-content', rotulo: 'Estoques' },
+  products: { id: 'products-content', rotulo: 'Produtos cadastrados' },
+};
 
 const providers: Array<{ id: MarketplaceId; name: string; logo: string; width: number; height: number; available: boolean; selectable?: boolean }> = [
   { id: 'mercado_livre', name: 'Mercado Livre', logo: 'mercado-livre.png', width: 224, height: 58, available: true },
@@ -201,6 +209,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   useEffect(() => { salesViewRef.current = salesView; }, [salesView]);
   const {activePanel,changePanel}=useMarketplacePanelGroup(companyId);
   const salesExpanded=activePanel==='sales';
+  const blocoRolavel = rolagemDosBlocos[activePanel];
   const setSalesExpanded=useCallback((expanded:boolean)=>changePanel('sales',expanded),[changePanel]);
   const [salesGroup, setSalesGroup] = useState<SaleGroup | ''>('');
   const [salesPeriod, setSalesPeriod] = useState<SalePeriod>({ start: '', end: '' });
@@ -820,6 +829,15 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       setCopyRequest({ id: crypto.randomUUID(), sourceConnectionId, listingId, targetConnectionId });
     }} refreshKey={refreshKey} reorderHandle={handle} /> },
     ]} />
+    {blocoRolavel && <BotaoProximoScroll
+      key={blocoRolavel.id}
+      trechoPaginaId={blocoRolavel.id}
+      topoFixo={marketplaceNavigationBottom}
+      distanciaInferior={80}
+      temaEscuro={effectiveDark}
+      ariaLabel={`Rolar para baixo em ${blocoRolavel.rotulo}`}
+      title={`Continuar em ${blocoRolavel.rotulo}`}
+    />}
     <SalesReport panelExpanded={activePanel==='results'} onPanelExpandedChange={expanded=>changePanel('results',expanded)} key={`sales-report:${companyId}`} companyId={companyId} brand={empresa.corPrimaria} dark={effectiveDark} refreshKey={refreshKey} />
     {panelOrder.notice && <p className={styles.connectionMessage} role="status">{panelOrder.notice}</p>}
     <ProductSearchShortcut onClick={() => productSearchRef.current?.focusSearch()} />

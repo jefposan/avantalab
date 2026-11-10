@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_9XgGqqQ6FcsT3kwutHWKJPTYhy5A",
-  "version": "3.2.0.385",
-  "scope": "Gestão: exibir saldo previsto na faixa do mês",
+  "baseDeploymentId": "dpl_HaXS6cTBfBkoA1QdnKyR8tWeKuCk",
+  "version": "3.2.0.386",
+  "scope": "Marketplaces: adicionar o círculo de rolagem aos blocos expandidos",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Alteração isolada sobre a main e a produção 3.2.0.384. Sem migrações."
+  "auditReview": "Entrega isolada sobre a main e a produção 3.2.0.385. O componente oficial de rolagem foi validado no navegador nos quatro blocos. Sem migrações."
 }

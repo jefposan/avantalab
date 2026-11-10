@@ -1,3 +1,7 @@
+## 3.2.0.386 — Marketplaces: adicionar o círculo de rolagem aos blocos expandidos
+
+- O botão oficial de próxima rolagem aparece em Vendas, Anunciados, Estoques e Produtos cadastrados enquanto houver conteúdo abaixo da tela. A rolagem termina no fim do bloco expandido.
+
 ## 3.2.0.385 — Gestão: exibir saldo previsto na faixa do mês
 
 - Na faixa do mês selecionado, Previsto mostra o saldo do mês mais as receitas pendentes e menos as despesas pendentes da mesma competência.
