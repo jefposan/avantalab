@@ -1,8 +1,8 @@
 {
-  "baseDeploymentId": "dpl_9bQxLof52z5QEWYNSNmqfV9VKg68",
-  "version": "3.2.0.384",
-  "scope": "AvantaVendas: rodapé somente para erros; validação no formulário e pendências na sincronização",
+  "baseDeploymentId": "dpl_9XgGqqQ6FcsT3kwutHWKJPTYhy5A",
+  "version": "3.2.0.385",
+  "scope": "Gestão: exibir saldo previsto na faixa do mês",
   "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Entrega isolada sobre a produção 3.2.0.383; sem migração ou alteração na Gestão Mobile."
+  "auditReview": "Alteração isolada sobre a main e a produção 3.2.0.384. Sem migrações."
 }

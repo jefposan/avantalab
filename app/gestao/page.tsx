@@ -4079,6 +4079,15 @@ const mostrarBarraComparativoDespesas =
 
 const faturamentoDoMesAtual = faturamentos[mesParaAnalise] || 0;
 const lucroOperacional = faturamentoDoMesAtual - totalDespesasMes;
+// A faixa do mês usa o mesmo recorte dos outros totais do cabeçalho.
+const receitasPendentesDoMes = faturamentosEntradas
+  .filter((entrada) => entrada.mes === mesParaAnalise && entrada.status === 'prevista')
+  .reduce((total, entrada) => total + entrada.valor, 0);
+const despesasPendentesDoMes = lancamentosDoMes
+  .filter((lancamento) => despesaProjetada(lancamento, Number(anoSelecionado), indiceMesParaAnalise))
+  .reduce((total, lancamento) => total + lancamento.valor, 0);
+const previstoDoMes = lucroOperacional + receitasPendentesDoMes - despesasPendentesDoMes;
+
 
 const caixinhaSaldo = caixinhaMovimentos.reduce((acc, mov) => {
   const valor = Number(mov.valor || 0);
@@ -12052,8 +12061,8 @@ if (validacaoTelefoneObrigatoria) {
 
     {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
     <div className="flex min-w-0 max-w-full flex-1 flex-col items-end gap-1.5 overflow-visible">
-      <div className="grid w-full max-w-[520px] grid-cols-2 items-stretch justify-end gap-1.5 min-[1180px]:grid-cols-4">
-  <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1 text-left shadow-sm border border-white/20">
+      <div className="grid w-full max-w-[650px] grid-cols-2 items-stretch justify-end gap-1.5 min-[1180px]:grid-cols-5">
+  <div className="col-span-2 h-10 min-w-0 rounded-md bg-white px-2 py-1 text-left min-[1180px]:col-span-1 shadow-sm border border-white/20">
   <div className="mb-1 flex items-center justify-between gap-2">
     <span className="min-w-0 truncate text-[9px] font-bold uppercase text-slate-500">
   {mostrarBarraComparativoDespesas
@@ -12120,6 +12129,14 @@ if (validacaoTelefoneObrigatoria) {
       }`}
     >
       {formatarMoeda(lucroOperacional)}
+    </span>
+  </div>
+  <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1.5 text-right shadow-sm border border-white/20">
+    <span className="block truncate text-[9px] font-bold uppercase text-slate-500">
+      Previsto
+    </span>
+    <span className={`block truncate text-[10px] font-black ${previstoDoMes >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+      {formatarMoeda(previstoDoMes)}
     </span>
   </div>
 </div>

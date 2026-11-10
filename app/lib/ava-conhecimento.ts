@@ -2874,3 +2874,5 @@ GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.373: A previsão de entrega da NF-
 GUIAS['gestao-web'] += "\nATUALIZAÇÃO 3.2.0.374: Rejeições RTC com quatro dígitos, como 1157, permitem Salvar e Salvar e emitir pela Gestão. A ponte não deve bloquear essa correção com aviso genérico. Uma falha de identificação pede reabrir a nota; pendências reais preservam mensagem e campo para correção.";
 
 GUIAS['gestao-web'] += '\nO menu lateral lista os módulos em ordem alfabética. Gerenciar módulos fica após o último módulo. Visual e Configurações expandem na coluna, que rola para mostrar as subopções. Ao expandir, os demais botões ficam inativos até recolher. Assinatura fica no topo, Visual e Configurações expandem subopções e Tutorial fica no final.\n';
+
+GUIAS['gestao-web'] += '\nNa faixa do mês selecionado, Previsto mostra o saldo do mês mais as receitas pendentes e menos as despesas pendentes da mesma competência.\n';

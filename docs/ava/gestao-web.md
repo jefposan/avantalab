@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.384 -->
+<!-- ava-version: 3.2.0.385 -->
+
+> Revisão 3.2.0.385: Na faixa do mês selecionado, Previsto mostra o saldo do mês mais as receitas pendentes e menos as despesas pendentes da mesma competência.
 
 > Revisão 3.2.0.384: sem impacto operacional; ajuste exclusivo do AvantaVendas.
 

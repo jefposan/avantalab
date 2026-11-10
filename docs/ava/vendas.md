@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.384 -->
+<!-- ava-version: 3.2.0.385 -->
+
+> Revisão 3.2.0.385: Sem impacto operacional. Ajuste na Gestão Web.
 
 > Revisão 3.2.0.384-av198: rodapé somente para erros. Validações no formulário e pendências no status de sincronização.
 

@@ -1,3 +1,7 @@
+## 3.2.0.385 — Gestão: exibir saldo previsto na faixa do mês
+
+- Na faixa do mês selecionado, Previsto mostra o saldo do mês mais as receitas pendentes e menos as despesas pendentes da mesma competência.
+
 ## 3.2.0.383 — Marketplaces: dispensar avisos de cancelamento e limitações operacionais
 
 - **OK** nos avisos de pedido cancelado e **Dispensar aviso** em limitações sem correção direta. O aviso sai da lista e do contador; a dispensa é registrada por usuário e empresa.
