@@ -1108,6 +1108,10 @@
 
 # Changelog
 
+## 3.2.0.384-av198 - AvantaVendas: somente falhas no rodapé
+
+- Falhas em vermelho; validações no formulário e pendências no status de sincronização. Sem alteração na Gestão Mobile ou migração.
+
 ## 3.2.0.299 — 2026-11-03 — Gestão Mobile: ordem de inclusão no mesmo dia
 
 - Despesas e receitas da mesma data mostram a última inclusão acima, independentemente da direção escolhida entre os dias. Leitura, cache e projeções locais preservam created_at; edição/confirmacão não vira nova inclusão.

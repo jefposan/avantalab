@@ -975,6 +975,11 @@ body.sheet-open {
 .toast-erro { border-color: #f0c1c5; }
 .toast-erro .toast-icon { color: #c83a43; background: #ffe8e9; }
 .toast-erro .toast-progress { background: #d44850; }
+.vendas-aviso-contextual { display: flex; align-items: center; gap: 8px; margin: 8px 12px; padding: 4px 10px; border: 1px solid #e6c78f; border-radius: 12px; background: #fff8e8; color: #694209; font-size: .875rem; }
+.vendas-aviso-contextual > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.vendas-aviso-contextual [data-fechar-aviso] { flex: 0 0 44px; min-height: 44px; color: inherit; }
+.vendas-aviso-contextual .toast-action { position: static; color: inherit; }
+.dark-theme .vendas-aviso-contextual { background: #382a18; border-color: #826233; color: #ffe2ae; }
 
 .dark-theme .toast { border-color: #334155; color: #f8fafc; background: rgba(17, 32, 51, .98); box-shadow: 0 20px 52px rgba(2,8,23,.58), 0 4px 14px rgba(2,8,23,.35); }
 .dark-theme .toast-copy strong { color: #f8fafc; }

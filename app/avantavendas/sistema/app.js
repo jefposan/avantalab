@@ -1390,7 +1390,8 @@ function dadosToast(msg, opcoes = {}) {
   let tipo = configuracao.tipo;
 
   if (!['sucesso', 'informacao', 'atencao', 'erro'].includes(tipo)) {
-    if (/nao foi possivel|erro|falha|indisponivel|expirou|nao responde|nao encontrado|nao localizada|nao localizado|incorret|invalido|record "|column |relation |violat|duplicat|network|fetch|timeout|unauthor|permission|jwt|token/.test(texto)) tipo = 'erro';
+    if (/^(informe|selecione|digite|confirme|escreva|insira|cole)\b|nao pode (ter data futura|estar no futuro)/.test(texto)) tipo = 'atencao';
+    else if (/nao foi possivel|erro|falha|indisponivel|expirou|nao responde|nao encontrado|nao localizada|nao localizado|incorret|invalido|record "|column |relation |violat|duplicat|network|fetch|timeout|unauthor|permission|jwt|token/.test(texto)) tipo = 'erro';
     else if (/informe|selecione|digite|confirme|conecte-se|permita|cadastre|adicione|somente|nao ha|nao possui|nenhum|ja e|no maximo|nao pode|deve ter|deixe o campo|use uma|use a opcao/.test(texto)) tipo = 'atencao';
     else if (/salv|atualiz|adicion|registr|confirm|enviad|gerad|criad|restaur|exclu|removid|ativad|desativad|carregad|aplicad|preenchid|importad|baixad|aprovad|reagendad|agendad|resetad|concedid|inserid/.test(texto)) tipo = 'sucesso';
     else tipo = 'informacao';
@@ -1424,25 +1425,35 @@ function dadosToast(msg, opcoes = {}) {
 }
 
 function toast(msg, opcoes = {}) {
-  const atual = document.querySelector('.toast');
-  if (atual) atual.remove();
-
   const configuracao = typeof opcoes === 'string' ? { tipo: opcoes } : (opcoes || {});
   const acao = configuracao.acao && typeof configuracao.acao.executar === 'function'
     && String(configuracao.acao.rotulo || '').trim()
     ? { rotulo: String(configuracao.acao.rotulo).trim(), executar: configuracao.acao.executar }
     : null;
   const dados = dadosToast(msg, opcoes);
+  if (!dados.mensagem || /^(sem confirmacao do servidor\. a alteracao ficou protegida|(?:pedido|pagamento|venda) salv[oa] neste aparelho)/.test(normalizar(dados.mensagem))) return;
+  const falha = dados.tipo === 'erro';
+  const contexto = falha ? document.body : document.querySelector('.access-validation-dialog')
+    || document.querySelector('#sheetBackdrop .sheet')
+    || document.activeElement?.closest('form')
+    || document.querySelector('#app .login-screen, #app main')
+    || document.getElementById('app');
+  if (!contexto || (!falha && dados.tipo !== 'atencao' && !acao)) return;
+  const atual = contexto.querySelector(falha ? '.toast' : '.vendas-aviso-contextual');
+  if (atual) atual.remove();
   const el = document.createElement('section');
-  el.className = `toast toast-${dados.tipo}`;
+  el.className = falha ? 'toast toast-erro' : 'vendas-aviso-contextual';
   if (acao) el.classList.add('toast-com-acao');
   el.setAttribute('role', dados.tipo === 'erro' ? 'alert' : 'status');
   el.setAttribute('aria-live', dados.tipo === 'erro' ? 'assertive' : 'polite');
   el.setAttribute('aria-atomic', 'true');
   el.style.setProperty('--toast-duration', `${dados.duracao}ms`);
-  el.innerHTML = `<span class="toast-icon" aria-hidden="true">${svgIconEstavel(dados.icone)}</span><span class="toast-copy"><strong>${escapeHtml(dados.titulo)}</strong><span>${escapeHtml(dados.mensagem)}</span></span><button class="toast-close" type="button" aria-label="Fechar aviso">${svgIcon('x')}</button><i class="toast-progress" aria-hidden="true"></i>`;
+  el.innerHTML = falha
+    ? `<span class="toast-icon" aria-hidden="true">${svgIconEstavel(dados.icone)}</span><span class="toast-copy"><strong>${escapeHtml(dados.titulo)}</strong><span>${escapeHtml(dados.mensagem)}</span></span><button class="toast-close" type="button" aria-label="Fechar aviso">${svgIcon('x')}</button><i class="toast-progress" aria-hidden="true"></i>`
+    : `<span>${escapeHtml(dados.mensagem)}</span><button class="ghost" data-fechar-aviso type="button" aria-label="Fechar orientação">${svgIcon('x')}</button>`;
   let encerrar = () => el.remove();
-  el.querySelector('.toast-close')?.addEventListener('click', () => encerrar());
+  const fechar = el.querySelector('.toast-close, [data-fechar-aviso]');
+  fechar?.addEventListener('click', () => encerrar());
   if (acao) {
     const acaoBotao = document.createElement('button');
     acaoBotao.type = 'button';
@@ -1459,9 +1470,16 @@ function toast(msg, opcoes = {}) {
         toast(traduzErro(error), { tipo: 'erro' });
       }
     });
-    el.querySelector('.toast-close')?.before(acaoBotao);
+    fechar?.before(acaoBotao);
   }
-  document.body.appendChild(el);
+  if (!falha) {
+    const cabecalho = contexto.querySelector(':scope > .sheet-header');
+    if (cabecalho) cabecalho.after(el);
+    else contexto.prepend(el);
+    el.scrollIntoView({ block: 'nearest' });
+    return;
+  }
+  contexto.appendChild(el);
   const temporizador = window.setTimeout(() => el.remove(), dados.duracao);
   encerrar = () => { window.clearTimeout(temporizador); el.remove(); };
 }
@@ -3192,7 +3210,7 @@ async function abrirSolicitacaoVozVendas(acionador = null, pendenciaId = '') {
       },
     });
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     if (acionador?.isConnected) acionador.disabled = false;
   }
@@ -3836,7 +3854,7 @@ async function redefinirSenhaVendas() {
     recuperacaoSenhaVendas = null;
     fecharSheet();
     toast('Senha redefinida. Você já pode entrar com e-mail e senha.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function abrirCadastroConta() {
@@ -4470,7 +4488,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
     else sincronizacaoRetomadaAguardandoTela = true;
     if (!manterPreparacaoAteRecursos) liberarAlturaPreparacao();
     if (state.erroBackend) {
-      if (!retomada) toast(state.erroBackend);
+      if (!retomada) toast(state.erroBackend, { tipo: 'erro' });
       state.erroBackend = '';
     }
   }
@@ -5407,18 +5425,18 @@ async function salvarItemAgendaVendas() {
     state.agendaAno = ano; state.agendaMes = mes - 1; state.agendaDiaSelecionado = dia;
     state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = '';
     salvarEstado(); render(); toast('Cliente agendado.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 async function excluirItemAgendaVendas(itemId) {
   try {
     if (backendAtivo && window.VendasDb?.deleteAgendaItem) await window.VendasDb.deleteAgendaItem(itemId);
     state.agendaItens = itensAgendaVendas().filter((item) => String(item.id) !== String(itemId)); salvarEstado(); render(); toast('Lembrete excluído.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 function abrirMoverAgendaVendas(itemId) { state.agendaItemMovendo = itensAgendaVendas().find((item) => String(item.id) === String(itemId)) || null; render(); }
 function cancelarMoverAgendaVendas() { state.agendaItemMovendo = null; render(); }
 function renderMoverAgendaVendas() { const item = state.agendaItemMovendo; if (!item) return ''; const data = `${String(item.ano).padStart(4, '0')}-${String(Number(item.mes) + 1).padStart(2, '0')}-${String(item.dia).padStart(2, '0')}`; return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarMoverAgendaVendas()"><section class="agenda-form-card"><header><div><small>Reagendar cliente</small><h3>${escapeHtml(item.titulo)}</h3></div><button type="button" class="close" onclick="cancelarMoverAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaNovaDataVendas" type="date" value="${data}"><div><button type="button" class="ghost" onclick="cancelarMoverAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarNovaDataAgendaVendas()">Reagendar</button></div></div></section></div>`; }
-async function salvarNovaDataAgendaVendas() { const data = valor('agendaNovaDataVendas'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { toast('Informe uma data válida.'); return; } const [ano, mes, dia] = data.split('-').map(Number); const idItem = state.agendaItemMovendo?.id; const atualizado = itensAgendaVendas().find((item) => String(item.id) === String(idItem)); if (!atualizado) return; try { const proximo = { ...atualizado, ano, mes: mes - 1, dia }; if (backendAtivo && window.VendasDb?.saveAgendaItem) { const salvo = await window.VendasDb.saveAgendaItem(dadosAgendaParaServidor(proximo)); const normalizado = normalizarItemAgendaServidor(salvo); state.agendaItens = state.agendaItens.map((item) => String(item.id) === String(idItem) ? normalizado : item); } else state.agendaItens = itensAgendaVendas().map((item) => String(item.id) === String(idItem) ? proximo : item); state.agendaAno = ano; state.agendaMes = mes - 1; state.agendaDiaSelecionado = dia; state.agendaItemMovendo = null; salvarEstado(); render(); toast('Agendamento reagendado.'); } catch (error) { toast(traduzErro(error)); } }
+async function salvarNovaDataAgendaVendas() { const data = valor('agendaNovaDataVendas'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { toast('Informe uma data válida.'); return; } const [ano, mes, dia] = data.split('-').map(Number); const idItem = state.agendaItemMovendo?.id; const atualizado = itensAgendaVendas().find((item) => String(item.id) === String(idItem)); if (!atualizado) return; try { const proximo = { ...atualizado, ano, mes: mes - 1, dia }; if (backendAtivo && window.VendasDb?.saveAgendaItem) { const salvo = await window.VendasDb.saveAgendaItem(dadosAgendaParaServidor(proximo)); const normalizado = normalizarItemAgendaServidor(salvo); state.agendaItens = state.agendaItens.map((item) => String(item.id) === String(idItem) ? normalizado : item); } else state.agendaItens = itensAgendaVendas().map((item) => String(item.id) === String(idItem) ? proximo : item); state.agendaAno = ano; state.agendaMes = mes - 1; state.agendaDiaSelecionado = dia; state.agendaItemMovendo = null; salvarEstado(); render(); toast('Agendamento reagendado.'); } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); } }
 
 const CONTEUDOS_INICIAIS_VENDAS = [
   { id: 'local-i1', pagina: 'informacoes', tipo: 'versao', titulo: 'Vendas AvantaLab', descricao: 'Aplicativo web progressivo com atualização contínua. As novas versões são disponibilizadas sem necessidade de reinstalar o aplicativo.', criado_em: '2026-07-13T17:00:00-03:00' },
@@ -5480,7 +5498,7 @@ async function enviarSugestaoVendas(event) {
     abrirSugestoesVendas();
     toast('Sugestão enviada com sucesso.');
   } catch (error) {
-    toast(traduzErro(error) || 'Não foi possível registrar sua mensagem neste momento.');
+    toast(traduzErro(error) || 'Não foi possível registrar sua mensagem neste momento.', { tipo: 'erro' });
     if (botao) { botao.disabled = false; botao.innerHTML = `${svgIconEstavel('message-circle')} Enviar sugestão`; }
   } finally {
     feedbackVendasEnviando = false;
@@ -6522,7 +6540,7 @@ async function compartilharMateriaisSelecionadosDivulgacao() {
           await navigator.share({ url: material.arquivo_url });
         } else {
           baixarArquivoGeradoVendas(arquivos[0], arquivos[0].name);
-          toast('Seu navegador não abriu o compartilhamento. O arquivo foi salvo para envio manual.', { tipo: 'atencao' });
+          toast('Seu navegador não abriu o compartilhamento. O arquivo foi salvo para envio manual.', { tipo: "erro" });
         }
       } else if (!compartilhadoPeloNavegador) {
         atualizarStatusCompartilhamentoMultiploDivulgacao('Organizando arquivos para download...');
@@ -6582,7 +6600,7 @@ async function compartilharMaterialDivulgacao(materialId) {
       return;
     }
     baixarArquivoGeradoVendas(arquivo, arquivo.name);
-    toast('Seu navegador não abriu o compartilhamento. O material foi salvo para envio manual.', { tipo: 'atencao' });
+    toast('Seu navegador não abriu o compartilhamento. O material foi salvo para envio manual.', { tipo: "erro" });
   } catch (error) {
     const mensagem = traduzErroCompartilhamento(error);
     if (mensagem) toast(mensagem, { tipo: 'erro', titulo: 'Não foi possível enviar o arquivo' });
@@ -7004,7 +7022,7 @@ async function alternarNotificacoesVendas(ativar, campo) {
   } catch (error) {
     state.notificacoesAtivas = !ativar;
     if (campo) campo.checked = state.notificacoesAtivas;
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     if (campo) campo.disabled = false;
   }
@@ -7075,7 +7093,7 @@ async function confirmarNotificacoesPrimeiroAcessoVendas(botao) {
     toast('Notificações ativadas neste aparelho.');
   } catch (error) {
     if (/permiss[aã]o|permission/i.test(String(error?.message || ''))) marcarPromptNotificacoesVendas('negado');
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     if (botao && document.body.contains(botao)) botao.disabled = false;
   }
@@ -7150,7 +7168,7 @@ async function trocarContaVendas(contaId) {
     await carregarDadosBackend(true, false, true);
     toast(`Conta ${state.contaVendasAtiva?.nome || 'de vendas'} carregada.`);
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   }
 }
 
@@ -7241,7 +7259,7 @@ async function salvarIntegracaoGestao(base) {
     state.integracaoGestao = { ...state.integracaoGestao, ...(resposta || {}), base_receita: base };
     render();
     toast(`Integração atualizada para ${base === 'vendidos' ? 'valores vendidos' : 'valores recebidos'}.`);
-  } catch (error) { state.integracaoGestao = { ...state.integracaoGestao, base_receita: anterior }; render(); toast(traduzErro(error)); }
+  } catch (error) { state.integracaoGestao = { ...state.integracaoGestao, base_receita: anterior }; render(); toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function abrirPerfilFinanceiroVendas() {
@@ -7328,7 +7346,7 @@ async function salvarPerfilFinanceiroVendas(empresaId, periodo, historicoAnterio
   } catch (error) {
     const mensagemErro = traduzErro(error);
     abrirDestinoHistoricoAnteriorVendas(empresaId, periodo, base, origemFluxo);
-    toast(mensagemErro);
+    toast(mensagemErro, { tipo: 'erro' });
   } finally {
     alterandoPerfilFinanceiroVendas = false;
   }
@@ -7361,7 +7379,7 @@ async function desvincularPerfilFinanceiroVendas(historicoAnterior) {
   } catch (error) {
     const mensagemErro = traduzErro(error);
     abrirDesvincularPerfilFinanceiroVendas();
-    toast(mensagemErro);
+    toast(mensagemErro, { tipo: 'erro' });
   } finally {
     alterandoPerfilFinanceiroVendas = false;
   }
@@ -7385,7 +7403,7 @@ async function confirmarRecursoVinculoComercial(empresaId, recurso, ativar, remo
     fecharSheet();
     render();
     toast(`${recurso === 'novidades' ? 'Notícias' : recurso === 'divulgacao' ? 'Divulgação' : 'Catálogo'} ${ativar ? 'mantido' : 'desligado'}.`);
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function abrirNovoVinculoComercial() {
@@ -7434,7 +7452,7 @@ async function solicitarNovoVinculoComercial() {
     } else {
       toast('Solicitação enviada. Após a aprovação, os conteúdos da empresa ficarão disponíveis.');
     }
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 let backupContaVendasPendente = null;
@@ -7702,7 +7720,7 @@ async function confirmarResetSistemaVendas() {
     toast('Sistema resetado. O backup foi gerado antes da limpeza.');
   } catch (error) {
     if (sincronizacaoPreferenciasSuspensa) preferenciasServidorCarregadas = true;
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   }
 }
 
@@ -7776,7 +7794,7 @@ async function alternarSolicitacaoVozVendas(ativo, campo) {
     state.solicitacaoVozAtiva = valorAnterior;
     salvarEstado();
     render();
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   }
 }
 
@@ -7792,7 +7810,7 @@ async function alterarSenha() {
     document.getElementById('senhaNova').value = '';
     document.getElementById('senhaConfirma').value = '';
     toast('Senha da conta atualizada para o Gestão e o Vendas.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function abrirAtualizarTelefone() {
@@ -7821,7 +7839,7 @@ async function enviarCodigoAtualizarTelefone() {
     await enviarSmsCadastro(telefonePerfilPendente);
     renderAtualizarTelefone();
     toast('Código enviado por SMS.');
-  } catch (error) { telefonePerfilPendente = null; toast(traduzErro(error)); }
+  } catch (error) { telefonePerfilPendente = null; toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 async function confirmarAtualizarTelefone() {
@@ -7849,7 +7867,7 @@ async function confirmarAtualizarTelefone() {
   } catch (error) {
     telefonePerfilSalvando = false;
     renderAtualizarTelefone();
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   }
 }
 
@@ -8877,7 +8895,7 @@ async function finalizarPedidoCliente() {
     if (mutacaoPendenteOfflineVendas(salvo)) toast('Pedido salvo neste aparelho. Ele será enviado automaticamente quando a conexão voltar.');
     else if (rascunho.editandoId) toast('Pedido atualizado.');
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     pedidoClienteSalvando = false;
     const botaoAtual = document.getElementById('finalizarPedidoClienteBotao');
@@ -9079,7 +9097,7 @@ async function confirmarPagamentoCliente() {
     abrirPagamentoClienteDetalhe(salvo.id);
     if (mutacaoPendenteOfflineVendas(salvo)) toast('Pagamento salvo neste aparelho. Ele será enviado automaticamente quando a conexão voltar.');
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     pagamentoClienteSalvando = false;
     const botaoAtual = document.getElementById('confirmarPagamentoClienteBotao');
@@ -9196,7 +9214,7 @@ async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0, retornoClie
     voltarEdicaoPagamento(pagamentoAtual.cliente_id, pagina, retornoClienteId, retornoAba);
     toast('Pagamento atualizado e saldos recalculados.');
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     finalizarMutacaoDadosVendas();
   }
@@ -9227,7 +9245,7 @@ async function excluirPagamentoCliente(pagamentoId, retornoClienteId = '', retor
     if (retornoClienteId && retornoAba) abrirDetalhesCliente(retornoClienteId, retornoAba, Number(retornoPagina) || 0);
     toast('Pagamento excluído e saldos recalculados.');
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     finalizarMutacaoDadosVendas();
   }
@@ -9302,7 +9320,7 @@ async function alterarStatusCliente(clienteId, ativar) {
     await confirmarMutacaoDadosVendas();
     fecharSheet(); render(); toast(ativar ? 'Cliente ativado.' : 'Cliente desativado.');
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     finalizarMutacaoDadosVendas();
   }
@@ -9499,7 +9517,7 @@ async function excluirPedido(pedidoId, retornoClienteId = '', retornoAba = '', r
     await confirmarMutacaoDadosVendas();
     render(); voltarParaDetalhesCliente(retornoClienteId, retornoAba, retornoPagina); toast('Pedido excluído.');
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     finalizarMutacaoDadosVendas();
   }
@@ -9593,7 +9611,7 @@ async function gerarPedidoDoConsignado(pedidoId) {
       botaoConfirmar.disabled = false;
       botaoConfirmar.textContent = 'Confirmar pedido';
     }
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     finalizarMutacaoDadosVendas();
   }
@@ -10266,7 +10284,7 @@ async function sincronizarCatalogoAgora() {
     await sincronizarCatalogoAutomaticamente(true);
     toast('Catálogo atualizado.');
     mostrarSincronizacaoCatalogo();
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function abrirImportacaoPacoteZip() {
@@ -10302,7 +10320,7 @@ async function importarArquivoPacoteZip(input) {
     }
     if (!produtos.length) throw new Error('Nenhum produto válido foi encontrado no pacote.');
     await salvarPacoteImportado({ nome, numero, origem: 'zip', produtos });
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 async function baixarModeloProdutosExcel() {
@@ -10312,7 +10330,7 @@ async function baixarModeloProdutosExcel() {
     if (!resposta.ok) throw new Error('Modelo Excel indisponível.');
     const livro = window.XLSX.read(await resposta.arrayBuffer(), { type: 'array' });
     window.XLSX.writeFile(livro, 'modelo-importacao-produtos-avantalab.xlsx');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function abrirImportacaoPacote() {
@@ -10381,7 +10399,7 @@ async function importarArquivoPacote(input) {
     await carregarBibliotecaExcel();
     const resultado = produtosDaPlanilha(await arquivo.arrayBuffer());
     await salvarPacoteImportado({ ...dados, origem: 'excel', ...resultado });
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 async function importarLinkPacote(nomeCodificado, numeroCodificado) {
@@ -10428,7 +10446,7 @@ async function importarCatalogoTridiumPersistente() {
     const catalogo = await resposta.json();
     const produtos = (catalogo.produtos || []).map((produto) => ({ ...produto, imagem_url: String(produto.imagem_url || '').replace(/^\.\//, '/avantavendas/recursos/'), preco: Number(produto.preco || 0), preco_custo: Number(produto.preco_custo || 0), ativo: produto.status !== 'inativo' }));
     await salvarPacoteImportado({ nome: dados.nome || catalogo.nome, numero: dados.numero, origem: 'catalogo', produtos });
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function carregarPacoteTridium() { abrirImportacaoPacote(); }
@@ -10474,7 +10492,7 @@ async function confirmarExclusaoPacoteProdutos(pacoteId) {
     state.produtos = state.produtos.filter((produto) => produto.pacote_origem_id !== pacoteId);
     state.pacotesProdutos = state.pacotesProdutos.filter((item) => item.id !== pacoteId);
     fecharSheet(); salvarEstado(); render(); toast('Pacote e produtos excluídos.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 async function exportarProdutosExcel() {
@@ -10488,7 +10506,7 @@ async function exportarProdutosExcel() {
     aba['!cols'] = [18, 18, 16, 28, 36, 16, 16, 12, 12, 42].map((wch) => ({ wch }));
     const livro = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(livro, aba, 'Produtos');
     window.XLSX.writeFile(livro, `produtos-avantalab-${isoData(new Date())}.xlsx`);
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function dataBackup(valorData) {
@@ -10555,7 +10573,7 @@ async function exportarBackupVendasExcel() {
     adicionarAba('Agenda', agenda, [12, 28, 18, 40]);
     window.XLSX.writeFile(livro, `backup-vendas-mobile-${isoData(new Date())}.xlsx`);
     toast('Backup gerado com sucesso.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function abrirProduto(produtoId = '') {
@@ -10649,7 +10667,7 @@ async function prepararImagemProduto(input) {
     const preview = document.getElementById('prodImagemPreview');
     if (nome) nome.textContent = `${arquivo.name} · imagem ajustada para 720 × 405 px`;
     if (preview) { preview.src = previewUrl; preview.hidden = false; }
-  } catch (error) { input.value = ''; toast(traduzErro(error)); }
+  } catch (error) { input.value = ''; toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function blobParaDataUrl(blob) {
@@ -10694,7 +10712,7 @@ async function salvarProduto(produtoId) {
     if (produtoImagemUploadPendente?.previewUrl) URL.revokeObjectURL(produtoImagemUploadPendente.previewUrl);
     produtoImagemUploadPendente = null;
     fecharSheet(); toast('Produto salvo.'); render();
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function removerProduto(produtoId) {
@@ -10715,7 +10733,7 @@ async function confirmarRemocaoProduto(produtoId) {
     if (backendAtivo) await window.VendasDb.deleteProduct(produtoId);
     state.produtos = state.produtos.filter((p) => p.id !== produtoId);
     fecharSheet(); toast('Produto removido.'); render();
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function abrirCliente(clienteId = '') {
@@ -10812,7 +10830,7 @@ async function salvarCliente(clienteId, ignorarAviso = false) {
     await confirmarMutacaoDadosVendas();
     fecharSheet(); toast('Cliente salvo.'); render();
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     finalizarMutacaoDadosVendas();
   }
@@ -10841,7 +10859,7 @@ async function confirmarRemocaoCliente(clienteId) {
     await confirmarMutacaoDadosVendas();
     fecharSheet(); toast('Cliente removido.'); render();
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     finalizarMutacaoDadosVendas();
   }
@@ -10967,7 +10985,7 @@ async function finalizarVenda() {
     await confirmarMutacaoDadosVendas();
     fecharSheet(); state.aba = 'vendas'; toast(mutacaoPendenteOfflineVendas(salva) ? 'Venda salva neste aparelho. Ela será enviada automaticamente quando a conexão voltar.' : 'Venda registrada com sucesso.'); render();
   } catch (error) {
-    toast(traduzErro(error));
+    toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" });
   } finally {
     finalizarMutacaoDadosVendas();
   }
@@ -11086,7 +11104,7 @@ async function ativarControleEstoque(produtoId) {
     const salvo = backendAtivo ? await window.VendasDb.saveProduct({ ...produto, estoque_controlado: true, estoque: produto.estoque ?? 0 }) : { ...produto, estoque_controlado: true, estoque: produto.estoque ?? 0 };
     state.produtos = state.produtos.map((item) => item.id === produtoId ? { ...item, ...salvo, estoque_controlado: true } : item);
     salvarEstado(); renderAtualizarEstoque(); toast('Controle de estoque ativado.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 async function salvarMovimentacaoEstoque() {
@@ -11107,7 +11125,7 @@ async function salvarMovimentacaoEstoque() {
     estoqueMovimentosAtuais = [];
     renderAtualizarEstoque();
     void carregarMovimentosEstoque();
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function abrirConfiguracoes() {

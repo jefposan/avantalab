@@ -1,13 +1,8 @@
 {
-  "baseDeploymentId": "dpl_7cNKfLTgZSPFQjUvxfmGB1a1DSV1",
-  "version": "3.2.0.383",
-  "scope": "Marketplaces: dispensar avisos de cancelamento e limitações operacionais",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261109230000_marketplace_inventory_notice_dismissals.sql",
-      "sha256": "27850746b06ed755f98cc123cd796e94c65ddb8a3dc3cb2e5d336a9ef50a5605"
-    }
-  ],
+  "baseDeploymentId": "dpl_9bQxLof52z5QEWYNSNmqfV9VKg68",
+  "version": "3.2.0.384",
+  "scope": "AvantaVendas: rodapé somente para erros; validação no formulário e pendências na sincronização",
+  "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Entrega isolada sobre a main e produção 3.2.0.382. Uma migração aditiva registra dispensas de avisos por usuário e empresa."
+  "auditReview": "Entrega isolada sobre a produção 3.2.0.383; sem migração ou alteração na Gestão Mobile."
 }

@@ -1,3 +1,4 @@
+// Revisão 3.2.0.384-av198: no AvantaVendas, rodapé só para falhas, validações no formulário e pendências na sincronização.
 // Revisão 3.2.0.383: dispensa de avisos informativos no Marketplaces da Gestão Web.
 // Revisão 3.2.0.382: confirmação de despesa na data lançada na Gestão Web e Mobile.
 // Revisão 3.2.0.379: faturamento mensal de Marketplaces nas Receitas da Gestão.

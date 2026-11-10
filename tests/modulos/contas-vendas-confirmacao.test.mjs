@@ -35,8 +35,9 @@ test('novo pedido e novo pagamento abrem o comprovante sem aviso redundante', ()
   assert.match(fluxoPagamento, /abrirPagamentoClienteDetalhe\(salvo\.id\);/);
   assert.doesNotMatch(fluxoPedido, /Pedido registrado\. O comprovante está pronto para compartilhar\./);
   assert.doesNotMatch(fluxoPagamento, /Recebimento confirmado\. Saldo conferido com o servidor\./);
-  assert.match(fluxoPedido, /toast\(traduzErro\(error\)\)/);
-  assert.match(fluxoPagamento, /toast\(traduzErro\(error\)\)/);
+  const avisoDeFalha = /toast\(traduzErro\(error\), \{ tipo: error\?\.persistenciaPendente \? "informacao" : "erro" \}\)/;
+  assert.match(fluxoPedido, avisoDeFalha);
+  assert.match(fluxoPagamento, avisoDeFalha);
 });
 
 test('pedido e pagamento exibem confirmação antes da sincronização financeira', () => {

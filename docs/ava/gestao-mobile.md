@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.383 -->
+<!-- ava-version: 3.2.0.384 -->
+
+> Revisão 3.2.0.384: sem impacto operacional; ajuste exclusivo do AvantaVendas.
 
 > Revisão 3.2.0.383. Sem impacto operacional. A dispensa de avisos pertence ao painel Marketplaces da Gestão Web.
 

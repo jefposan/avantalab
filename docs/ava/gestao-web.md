@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.383 -->
+<!-- ava-version: 3.2.0.384 -->
+
+> Revisão 3.2.0.384: sem impacto operacional; ajuste exclusivo do AvantaVendas.
 
 > Revisão 3.2.0.383. Em **Anúncios em marketplaces → Pendências**, clique em **OK** no aviso de cancelamento ou **Dispensar aviso** nas limitações sem correção direta no painel. O aviso sai da lista e do contador para seu usuário nessa empresa, inclusive após recarregar. A ação preserva o pedido, o estoque e o histórico. Confira a unidade física antes de qualquer retorno manual ao estoque. Pendências operacionais continuam com suas ações de conferência.
 
