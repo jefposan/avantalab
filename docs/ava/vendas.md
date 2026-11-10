@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.390 -->
+<!-- ava-version: 3.2.0.391 -->
+
+> Revisão 3.2.0.391: A NF-e de produção da Tridium usa a série 2 e depende da liberação do servidor. Em retorno incerto, consulte a mesma nota e preserve sua numeração.
 
 > Revisão 3.2.0.390: Em Ajustes, Certificado digital, a Tridium pode testar a conexão com a SEFAZ-SP de produção sem emitir ou consumir número.
 

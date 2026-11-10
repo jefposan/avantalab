@@ -59,7 +59,7 @@ test('resultado parcial, de outra emissão ou sem confirmação de transmissão 
 test('perfil, permissões, tipo da nota e bloqueio de produção permanecem obrigatórios',async()=>{
  for(const changed of [{active:false},{moduleActive:false},{moduleId:'outro'},{effectivePermissions:{'fiscal.prepare':true}},{companyId:'invalid'}]){const f=fixture();assert.equal((await runFiscalCheckout({runtime:f.runtime,context:{...context,...changed},input})).ok,false);assert.deepEqual(f.calls,[]);}
  const foreign=fixture();foreign.runtime.fiscalDraftRepository.get=async()=>({companyId:actorId,documentType:'nfe'});assert.equal((await foreign.run()).ok,false);assert.deepEqual(foreign.calls,[]);
- for(const execution of [{environment:'producao',transmissionAllowed:true,productionTransmissionAllowed:true},{environment:'homologacao',transmissionAllowed:false,productionTransmissionAllowed:false}]){const f=fixture();f.runtime.fiscalExecution=execution;assert.equal((await f.run()).ok,false);assert.deepEqual(f.calls,[]);}
+ for(const execution of [{environment:'producao',transmissionAllowed:true,productionTransmissionAllowed:false},{environment:'homologacao',transmissionAllowed:false,productionTransmissionAllowed:false}]){const f=fixture();f.runtime.fiscalExecution=execution;assert.equal((await f.run()).ok,false);assert.deepEqual(f.calls,[]);}
 });
 
 test('cancelar preparação local permite retomar; cancelamento fiscal real nunca permite',()=>{
@@ -102,4 +102,38 @@ test('rejeição técnica 588 é corrigida ao confirmar emissão, sem pedir dado
  assert.equal((await f.run()).ok,true);assert.deepEqual(f.calls,['repair-format','sign-send']);assert.equal(f.getEmission().number,10);
  const saved=fixture('rejected');Object.assign(saved.getEmission(),{statusCode:'588'});saved.runtime.nfeRejectionCorrectionService={prepare:async()=>{throw Error('Salvar não deve corrigir ou enviar');}};assert.equal((await saved.run({action:'save'})).ok,true);assert.deepEqual(saved.calls,[]);
  const other=fixture('rejected');Object.assign(other.getEmission(),{statusCode:'778'});other.runtime.nfeRejectionCorrectionService={prepare:async()=>{throw Error('Não corrigir outra rejeição automaticamente');}};assert.equal((await other.run()).ok,false);assert.deepEqual(other.calls,[]);
+});
+
+
+test('checkout de produção preserva emissão e bloqueia rascunho de outro ambiente', async () => {
+ const f=fixture();
+ f.runtime.fiscalExecution={environment:'producao',transmissionAllowed:true,productionTransmissionAllowed:true};
+ assert.equal((await f.run()).message,'NF-e autorizada pela SEFAZ.');
+ assert.equal((await f.run()).ok,true);
+ assert.deepEqual(f.calls,['open','validate','number','sign-send']);
+ const legacy=fixture('prepared');
+ Object.assign(legacy.getEmission(),{environment:'homologacao'});
+ legacy.runtime.fiscalExecution=f.runtime.fiscalExecution;
+ assert.equal((await legacy.run()).code,'AV-FISCAL-CHECKOUT-ENVIRONMENT');
+ assert.equal((await legacy.run({action:'save'})).ok,true);
+ assert.deepEqual(legacy.calls,[]);
+});
+
+test('produção não retransmite depois de retorno incerto ou consulta 217', async () => {
+ const f=fixture('submitted');
+ Object.assign(f.getEmission(),{environment:'producao',series:'2',number:1});
+ f.runtime.fiscalExecution={environment:'producao',transmissionAllowed:true,productionTransmissionAllowed:true};
+ f.runtime.reconcileFiscalEmission=async()=>f.calls.push('consulta');
+ const uncertain=await f.run();
+ assert.equal(uncertain.code,'AV-NFE-SUBMISSION-UNCONFIRMED');
+ assert.equal(uncertain.emission.number,1);
+ f.runtime.reconcileFiscalEmission=async()=>{
+  f.calls.push('consulta');
+  Object.assign(f.getEmission(),{state:'signed',statusCode:'217',version:3});
+ };
+ const retried=await f.run();
+ assert.equal(retried.code,'AV-NFE-SUBMISSION-UNCONFIRMED');
+ assert.equal(retried.emission.number,1);
+ assert.equal((await f.run()).code,'AV-NFE-SUBMISSION-UNCONFIRMED');
+ assert.deepEqual(f.calls,['consulta','consulta']);
 });

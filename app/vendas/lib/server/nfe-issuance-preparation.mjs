@@ -60,8 +60,8 @@ function baseResult() {
   };
 }
 
-export async function buildNfeIssuancePreparation({ draft, client, config, numberingLedger, attemptKey, issuedAt } = {}) {
-  const result = baseResult();
+export async function buildNfeIssuancePreparation({ draft, client, config, numberingLedger, attemptKey, issuedAt, environment = 'homologacao' } = {}) {
+  const result = { ...baseResult(), environment };
   const normalizedDraft = draft && typeof draft === 'object' ? draft : {};
   const normalizedClient = client && typeof client === 'object' ? client : {};
   const normalizedConfig = config && typeof config === 'object' ? config : {};
@@ -75,7 +75,10 @@ export async function buildNfeIssuancePreparation({ draft, client, config, numbe
   if (!draftId) result.errors.push(diagnosticError('AV-NFE-ISSUE-DRAFT', 'draft.id', 'O rascunho fiscal não foi identificado.'));
   if (normalizedDraft.documentType !== 'nfe') result.errors.push(diagnosticError('AV-NFE-ISSUE-DOCUMENT', 'draft.documentType', 'Esta primeira preparação aceita somente NF-e modelo 55.'));
   if (normalizedDraft.status === 'Cancelado') result.errors.push(diagnosticError('AV-NFE-ISSUE-CANCELLED', 'draft.status', 'Um rascunho cancelado não pode iniciar uma tentativa de emissão.'));
-  if (text(normalizedDraft.environment) && !/homologa/i.test(text(normalizedDraft.environment))) result.errors.push(diagnosticError('AV-NFE-ISSUE-ENVIRONMENT', 'draft.environment', 'A preparação está travada no ambiente de homologação.'));
+  const draftEnvironment = text(normalizedDraft.environment);
+  const matchesEnvironment = environment === 'homologacao' ? !draftEnvironment || /homologa/i.test(draftEnvironment)
+    : environment === 'producao' && /^(produção|producao)$/i.test(draftEnvironment);
+  if (!matchesEnvironment) result.errors.push(diagnosticError('AV-NFE-ISSUE-ENVIRONMENT', 'draft.environment', 'O rascunho precisa pertencer ao ambiente fiscal configurado.'));
   if (!/^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/.test(text(normalizedDraft.issuer?.uf).toUpperCase())) result.errors.push(diagnosticError('AV-NFE-ISSUE-UF', 'draft.issuer.uf', 'Informe uma UF brasileira atendida pela NF-e.'));
   if (issuerDocument.length !== 14) result.errors.push(diagnosticError('AV-NFE-ISSUE-ISSUER', 'draft.issuer.document', 'Conclua o cadastro do perfil empresarial com o CNPJ antes de emitir a nota.'));
 
@@ -129,7 +132,7 @@ export async function buildNfeIssuancePreparation({ draft, client, config, numbe
     },
     issuedAt,
   });
-  const generated = buildUnsignedNfeSpXml(input);
+  const generated = buildUnsignedNfeSpXml(input, { environment });
   result.preXmlBuilt = generated.valid && Boolean(generated.xml);
   result.accessKeyPreview = generated.accessKey || '';
   result.errors.push(...generated.errors);

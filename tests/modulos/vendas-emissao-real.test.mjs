@@ -71,3 +71,43 @@ test('servidor recusa previsão de entrega em frete 1, 4 e 9 antes de gerar XML'
  for(const freightMode of ['1','4','9']){const built=buildUnsignedNfeSpXml(input({...newFiscalNoteFields(),freightMode,deliveryForecast:'2026-11-10'}));assert.equal(built.valid,false);assert.equal(built.xml,'');assert.ok(built.errors.some(e=>e.code==='NFE-B10A-50'&&e.field==='fiscalForm.freightMode'));assert.equal(buildUnsignedNfeSpXml(input({...newFiscalNoteFields(),freightMode})).valid,true);}
  for(const freightMode of ['0','2','3']){const built=buildUnsignedNfeSpXml(input({...newFiscalNoteFields(),freightMode,deliveryForecast:'2026-11-10'}));assert.equal(built.valid,true,JSON.stringify(built.errors));assert.match(built.xml,/<dPrevEntrega>2026-11-10<\/dPrevEntrega>/);}
 });
+
+test('protocolo simulado de produção gera procNFe e DANFE e recusa cruzamento de ambientes', async () => {
+  const { createEphemeralLabSignedNfeXml } = await import('../../app/vendas/lib/server/nfe-signature-lab.mjs');
+  const { buildProcessedNfeArtifact } = await import('../../app/vendas/lib/server/nfe-processed-artifact.mjs');
+  const { buildNfeDanfe } = await import('../../app/vendas/lib/server/nfe-danfe.mjs');
+  const built = buildUnsignedNfeSpXml({ ...input(newFiscalNoteFields()), series: '2', number: '1' }, { environment: 'producao' });
+  assert.equal(built.valid, true, JSON.stringify(built.errors));
+  const { signedXml } = await createEphemeralLabSignedNfeXml(built.xml);
+  const protocolXml = `<protNFe versao="4.00"><infProt><tpAmb>1</tpAmb><chNFe>${built.accessKey}</chNFe><dhRecbto>2026-11-06T12:00:01-03:00</dhRecbto><nProt>135260000000001</nProt><cStat>100</cStat></infProt></protNFe>`;
+  const { createNfeAuthorizationAdapter } = await import('../../app/vendas/lib/server/nfe-authorization-service.mjs');
+  let response = `<retEnviNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><tpAmb>1</tpAmb><cUF>35</cUF><cStat>104</cStat>${protocolXml}</retEnviNFe>`;
+  const adapter = createNfeAuthorizationAdapter({
+    environment: 'producao',
+    certificateAdapter: { inspectBinding: async () => ({ valid: true, readyForMutualTls: true, readyForXmlSignature: true }) },
+    statusAdapter: { checkAvailability: async ({ environment }) => ({ valid: environment === 'producao', serviceOperational: true }) },
+    transport: { configured: true, async postSoap(request) {
+      assert.equal(request.environment, 'producao');
+      assert.match(request.body, /<tpAmb>1<\/tpAmb>/);
+      if (!response) throw new Error('simulated timeout');
+      return { body: `<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"><soap:Body>${response}</soap:Body></soap:Envelope>` };
+    } },
+  });
+  const send = () => adapter.authorizeProtected({ signedXml, lotId: '1', expectedAccessKey: built.accessKey, beforeTransmission: async () => ({ ok: true }) });
+  const authorization = await send();
+  assert.equal(authorization.authorized, true, JSON.stringify(authorization.errors));
+  response = response.replace('<cStat>100</cStat>', '<cStat>225</cStat>');
+  assert.equal((await send()).protocolStatus, '225');
+  response = '';
+  assert.equal((await send()).errors[0].code, 'AV-NFE-AUTH-NETWORK');
+  const source = { signedXml, protocolXml: authorization.protocolXml, expectedEnvironment: 'producao' };
+  const processed = buildProcessedNfeArtifact(source);
+  assert.equal(processed.valid, true, JSON.stringify(processed.errors));
+  assert.equal(processed.environment, 'producao');
+  assert.equal(buildProcessedNfeArtifact({ ...source, expectedEnvironment: 'homologacao' }).valid, false);
+  assert.equal(buildProcessedNfeArtifact({ ...source, protocolXml: protocolXml.replace('<tpAmb>1', '<tpAmb>2') }).valid, false);
+  const danfe = buildNfeDanfe({ processedXml: processed.processedXml, expectedEnvironment: 'producao' });
+  assert.equal(danfe.valid, true, JSON.stringify(danfe.errors));
+  assert.equal(danfe.environment, 'producao');
+  assert.equal(buildNfeDanfe({ processedXml: processed.processedXml, expectedEnvironment: 'homologacao' }).valid, false);
+});

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
 import {createFiscalNumberingConfigurationService} from '../../app/vendas/lib/server/fiscal-numbering-configuration.mjs';
 import {fiscalCheckoutCorrection,fiscalCorrectionAction} from '../../app/vendas/lib/fiscal-correction.mjs';
@@ -8,7 +9,7 @@ import {FISCAL_NFE_NORMAL_SERIES} from '../../app/vendas/lib/fiscal-numbering.mj
 
 const company='10000000-0000-4000-8000-000000000001',other='20000000-0000-4000-8000-000000000001',draftId='30000000-0000-4000-8000-000000000001';
 const context={companyId:company,actorId:other,moduleId:'vendas',active:true,moduleActive:true,effectivePermissions:{'fiscal.view':true,'fiscal.configure':true}};
-async function fixture(){
+async function fixture(environment){
  const db=new PGlite();await db.exec(`create schema fiscal_private;
  create table fiscal_private.number_sequences(id uuid default gen_random_uuid() primary key,company_id uuid,establishment_id uuid,document_type text,series text,next_number int,last_reserved_number int default 0,active bool default true,version int default 1,updated_at timestamptz default now(),unique(company_id,establishment_id,document_type,environment,series),environment text default 'homologacao');
  create unique index only_active on fiscal_private.number_sequences(company_id,establishment_id,document_type,environment) where active;
@@ -16,7 +17,7 @@ async function fixture(){
  create table fiscal_private.number_voids(company_id uuid,establishment_id uuid,document_type text,series text,start_number int,end_number int,status text,environment text default 'homologacao');`);
  const client={query:async(sql,args)=>sql.includes('pg_advisory_xact_lock')?{rows:[]}:db.query(sql,args),release(){}};
  const repository={get:async({companyId})=>({companyId,documentType:'nfe',issuerSnapshot:{establishmentId:companyId}})};
- const service=createFiscalNumberingConfigurationService({pool:{connect:async()=>client},issuerResolver:async({companyId})=>({establishmentId:companyId}),draftRepository:repository});
+ const service=createFiscalNumberingConfigurationService({pool:{connect:async()=>client},issuerResolver:async({companyId})=>({establishmentId:companyId}),draftRepository:repository,environment});
  const run=(input,ctx=context)=>service.run({context:ctx,input});
  return {db,run,service,repository};
 }
@@ -67,4 +68,35 @@ test('permissões e vínculo do rascunho são conferidos no servidor, nunca no u
 test('rota autoriza configurar por fiscal.configure, sem exigir permissão de emitir',async()=>{
  let called=0;const runtime={configured:true,fiscalDraftRepository:{},accessResolver:{resolve:async()=>({authenticated:true,boundary:{source:'authenticated',authenticated:true,userId:other,companyId:company,moduleId:'vendas',userActive:true,membershipActive:true,companyActive:true,moduleActive:true},effectivePermissions:{'fiscal.configure':true}})},fiscalNumberingConfiguration:{run:async({input})=>{called++;assert.equal(input.action,'save-numbering');return{ok:true};}}};
  const request=new Request(`https://avantalab.com.br/api/modulos/vendas/fiscal/checkout?companyId=${company}`,{method:'POST',body:JSON.stringify({action:'save-numbering',series:'1',nextNumber:1,expectedVersion:0})});assert.equal((await handleFiscalCheckoutRequest({request,runtime})).status,200);assert.equal(called,1);
+});
+
+test('configuração de produção grava a própria série sem avançar homologação',async()=>{
+ const f=await fixture('producao');
+ try{
+  await f.db.query("insert into fiscal_private.number_sequences(company_id,establishment_id,document_type,series,next_number) values($1,$1,'nfe','1',3)",[company]);
+  assert.equal((await f.run({action:'numbering'})).numbering.exists,false);
+  assert.equal((await f.run({action:'save-numbering',series:'1',nextNumber:800,expectedVersion:0})).ok,true);
+  assert.deepEqual((await f.db.query('select environment,next_number from fiscal_private.number_sequences order by environment')).rows,[{environment:'homologacao',next_number:3},{environment:'producao',next_number:800}]);
+  assert.equal((await f.db.query('select count(*)::int n from fiscal_private.number_reservations')).rows[0].n,0);
+ }finally{await f.db.close();}
+});
+
+test('migração da Tridium inicia série 2 em produção e reaplicação preserva o próximo número', async () => {
+ const {db}=await fixture();
+ const tridium='ec9604fd-38f2-429b-9c00-c4bc6c642b0e';
+ try {
+  await db.exec('create table public.empresas(id uuid primary key)');
+  await db.query('insert into public.empresas values($1),($2)',[tridium,other]);
+  await db.query("insert into fiscal_private.number_sequences(company_id,establishment_id,document_type,environment,series,next_number) values($1,$1,'nfe','homologacao','2',40)",[tridium]);
+  const migration=readFileSync('supabase/migrations/20261110180300_vendas_tridium_nfe_producao_serie.sql','utf8');
+  await db.exec(migration);
+  const state=async()=>(await db.query('select company_id,environment,series,next_number from fiscal_private.number_sequences order by environment')).rows;
+  assert.deepEqual(await state(),[
+   {company_id:tridium,environment:'homologacao',series:'2',next_number:40},
+   {company_id:tridium,environment:'producao',series:'2',next_number:1}
+  ]);
+  await db.exec("update fiscal_private.number_sequences set next_number=2 where environment='producao'");
+  await db.exec(migration);
+  assert.deepEqual((await state()).map(row=>row.next_number),[40,2]);
+ } finally { await db.close(); }
 });

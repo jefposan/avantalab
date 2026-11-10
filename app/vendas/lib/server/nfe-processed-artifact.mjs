@@ -39,9 +39,8 @@ export function nfeProcessedStorageKey(accessKey) {
   return `fiscal/nfe/${issuerDocument}/${year}/${month}/${normalized}-procNFe.xml`;
 }
 
-export function buildProcessedNfeArtifact({ signedXml, protocolXml, expectedAccessKey } = {}) {
-  const signed = validateSignedNfeForAuthorization(signedXml);
-  const errors = [...signed.errors];
+export function buildProcessedNfeArtifact({ signedXml, protocolXml, expectedAccessKey, expectedEnvironment } = {}) {
+  const errors = [];
   const source = typeof protocolXml === 'string' ? protocolXml.trim() : '';
   if (!source) errors.push(error('AV-NFE-PROC-PROTOCOL-EMPTY', 'protocolXml', 'O protocolo de autorização não foi fornecido.'));
   if (source && Buffer.byteLength(source, 'utf8') > MAX_PROTOCOL_XML_BYTES) errors.push(error('AV-NFE-PROC-PROTOCOL-SIZE', 'protocolXml', 'O protocolo excedeu o limite seguro de 512 KB.'));
@@ -49,7 +48,10 @@ export function buildProcessedNfeArtifact({ signedXml, protocolXml, expectedAcce
   const protocolBlock = tagBlock(source, 'protNFe');
   const infoBlock = tagBlock(protocolBlock, 'infProt');
   const protocolVersion = attributeValue(rootAttributes(protocolBlock, 'protNFe'), 'versao');
-  const environment = tagValue(infoBlock, 'tpAmb');
+  const environmentCode = tagValue(infoBlock, 'tpAmb');
+  const environment = environmentCode === '1' ? 'producao' : 'homologacao';
+  const signed = validateSignedNfeForAuthorization(signedXml, { environment });
+  errors.push(...signed.errors);
   const accessKey = tagValue(infoBlock, 'chNFe');
   const receivedAt = tagValue(infoBlock, 'dhRecbto');
   const protocolNumber = tagValue(infoBlock, 'nProt');
@@ -57,8 +59,8 @@ export function buildProcessedNfeArtifact({ signedXml, protocolXml, expectedAcce
   const reason = tagValue(infoBlock, 'xMotivo');
   if (!protocolBlock || !infoBlock) errors.push(error('AV-NFE-PROC-PROTOCOL', 'protocolXml.protNFe', 'O conteúdo não possui um protocolo NF-e reconhecível.'));
   if (protocolVersion && protocolVersion !== '4.00') errors.push(error('AV-NFE-PROC-VERSION', 'protocolXml.versao', 'O protocolo não usa o leiaute 4.00.'));
-  if (environment && environment !== '2') errors.push(error('AV-NFE-PROC-ENVIRONMENT', 'protocolXml.tpAmb', 'Somente protocolo de homologação pode ser processado nesta etapa.'));
-  if (status && status !== '100') errors.push(error('AV-NFE-PROC-STATUS', 'protocolXml.cStat', 'Somente uma NF-e autorizada com situação 100 pode gerar procNFe.'));
+  if (!['1', '2'].includes(environmentCode) || (expectedEnvironment && expectedEnvironment !== environment)) errors.push(error('AV-NFE-PROC-ENVIRONMENT', 'protocolXml.tpAmb', 'O protocolo não corresponde ao ambiente fiscal esperado.'));
+  if (status !== '100') errors.push(error('AV-NFE-PROC-STATUS', 'protocolXml.cStat', 'Somente uma NF-e autorizada com situação 100 pode gerar procNFe.'));
   if (!/^\d{44}$/.test(accessKey)) errors.push(error('AV-NFE-PROC-KEY', 'protocolXml.chNFe', 'O protocolo não contém uma chave de acesso válida.'));
   if (!protocolNumber) errors.push(error('AV-NFE-PROC-NUMBER', 'protocolXml.nProt', 'O protocolo de autorização não contém número.'));
   if (!receivedAt) errors.push(error('AV-NFE-PROC-DATE', 'protocolXml.dhRecbto', 'O protocolo de autorização não contém data de recebimento.'));
@@ -72,7 +74,7 @@ export function buildProcessedNfeArtifact({ signedXml, protocolXml, expectedAcce
     valid: true,
     errors: [],
     authorized: true,
-    environment: 'homologacao',
+    environment,
     accessKey,
     protocolNumber,
     receivedAt,
@@ -105,7 +107,7 @@ export async function persistProcessedNfeArtifact({ artifact, provider = createD
   }
   let stored;
   try {
-    stored = await provider.putImmutable({ storageKey: artifact.storageKey, accessKey: artifact.accessKey, contentType: 'application/xml', content: artifact.processedXml, checksum: artifact.checksum, byteLength: artifact.byteLength, metadata: { documentType: 'nfe', environment: 'homologacao', protocolNumber: artifact.protocolNumber, receivedAt: artifact.receivedAt } });
+    stored = await provider.putImmutable({ storageKey: artifact.storageKey, accessKey: artifact.accessKey, contentType: 'application/xml', content: artifact.processedXml, checksum: artifact.checksum, byteLength: artifact.byteLength, metadata: { documentType: 'nfe', environment: artifact.environment, protocolNumber: artifact.protocolNumber, receivedAt: artifact.receivedAt } });
   } catch {
     result.errors.push(error('AV-NFE-STORE-WRITE', 'provider', 'O XML autorizado não pôde ser gravado no armazenamento fiscal.'));
     return result;

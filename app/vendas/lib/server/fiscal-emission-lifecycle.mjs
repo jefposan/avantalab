@@ -133,7 +133,7 @@ function sameArtifact(left, right) {
     && left?.contentType === right.contentType;
 }
 
-function validateCreate(input) {
+function validateCreate(input, environment) {
   const errors = [];
   const normalized = {
     id: text(input?.id),
@@ -152,7 +152,7 @@ function validateCreate(input) {
   if (!normalized.establishmentId) errors.push(error('AV-FISCAL-LIFECYCLE-ESTABLISHMENT', 'establishmentId', 'O emissor fiscal interno não foi identificado.'));
   if (!normalized.draftId) errors.push(error('AV-FISCAL-LIFECYCLE-DRAFT', 'draftId', 'A emissão precisa manter vínculo com o rascunho.'));
   if (normalized.documentType !== 'nfe' || normalized.model !== '55') errors.push(error('AV-FISCAL-LIFECYCLE-DOCUMENT', 'documentType', 'Este ciclo aceita somente NF-e modelo 55.'));
-  if (normalized.environment !== 'homologacao') errors.push(error('AV-FISCAL-LIFECYCLE-ENVIRONMENT', 'environment', 'O piloto aceita somente o ambiente de homologação.'));
+  if (!['homologacao', 'producao'].includes(environment) || normalized.environment !== environment) errors.push(error('AV-FISCAL-LIFECYCLE-ENVIRONMENT', 'environment', 'A emissão deve pertencer ao ambiente fiscal configurado.'));
   if (normalized.operationKey.length < 8 || normalized.operationKey.length > 120) errors.push(error('AV-FISCAL-LIFECYCLE-OPERATION', 'operationKey', 'A chave idempotente deve possuir de 8 a 120 caracteres.'));
   return { valid: errors.length === 0, normalized, errors };
 }
@@ -199,7 +199,7 @@ export function createDisabledFiscalLifecycleRepository() {
   return Object.freeze({ id: 'repositorio-fiscal-nao-configurado', configured: false, async runInTransaction() { throw new Error('O repositório fiscal transacional ainda não foi instalado.'); } });
 }
 
-export function createFiscalEmissionLifecycleService({ repository = createDisabledFiscalLifecycleRepository(), clock = () => new Date().toISOString() } = {}) {
+export function createFiscalEmissionLifecycleService({ repository = createDisabledFiscalLifecycleRepository(), clock = () => new Date().toISOString(), environment = 'homologacao' } = {}) {
   async function unavailable() {
     return { ok: false, valid: false, persisted: false, reused: false, emission: null, errors: [error('AV-FISCAL-LIFECYCLE-REPOSITORY', 'repository', 'O repositório fiscal transacional ainda não está configurado.')], warnings: ['Nenhuma emissão fiscal foi alterada.'] };
   }
@@ -309,7 +309,7 @@ export function createFiscalEmissionLifecycleService({ repository = createDisabl
       });
     },
     async create(input = {}) {
-      const validation = validateCreate(input);
+      const validation = validateCreate(input, environment);
       const payload = safePublicPayload(input.publicPayload);
       const errors = [...validation.errors, ...payload.errors];
       if (errors.length) return { ok: false, valid: false, persisted: false, reused: false, emission: null, errors };
@@ -613,6 +613,7 @@ export function createFiscalEmissionLifecycleService({ repository = createDisabl
           establishmentId: current.establishmentId,
           emissionId,
           documentType: current.documentType,
+          environment: current.environment,
           idempotencyKey: operationKey,
           at,
         });

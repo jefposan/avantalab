@@ -39,7 +39,7 @@ function available(repository, storageProvider) {
     && typeof storageProvider.readVerified === 'function';
 }
 
-export function createFiscalArtifactRecoveryHandlers({ repository, storageProvider, returnAdapter, certificateBindingResolver, issuerDocumentResolver, internalErrorReporter, clock = () => new Date().toISOString() } = {}) {
+export function createFiscalArtifactRecoveryHandlers({ repository, storageProvider, returnAdapter, certificateBindingResolver, issuerDocumentResolver, internalErrorReporter, environment = 'homologacao', clock = () => new Date().toISOString() } = {}) {
   const lifecycle = createFiscalEmissionLifecycleService({ repository, clock });
 
   async function reconcileAuthorization(job = {}) {
@@ -48,6 +48,7 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
     const current = await snapshot(repository, job);
     const emission = current.emission;
     if (!emission || emission.companyId !== job.companyId || !/^\d{44}$/.test(emission.accessKey || '')) return failure('AV-FISCAL-RECOVERY-EMISSION', 'A emissão fiscal da tarefa não foi encontrada ou está incompleta.');
+    if (emission.environment !== environment) return failure('AV-FISCAL-RECOVERY-ENVIRONMENT', 'A consulta fiscal exige uma emissão no ambiente configurado.');
     if (['authorized', 'artifacts_stored', 'danfe_ready', 'rejected', 'failed', 'canceled'].includes(emission.state)) return { ok: true, reconciled: true, stale: true, state: emission.state, contentReturned: false };
     if (!['submitted', 'processing'].includes(emission.state)) return failure('AV-FISCAL-RECOVERY-STATE', 'A emissão não está aguardando consulta de autorização.');
     if (!returnAdapter?.queryReceiptProtected || !returnAdapter?.queryProtocolProtected || typeof certificateBindingResolver !== 'function' || typeof issuerDocumentResolver !== 'function') return failure('AV-FISCAL-RECOVERY-RETURN-ADAPTER', 'A consulta segura de retorno fiscal ainda não está configurada.');
@@ -95,18 +96,18 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
         return failure('AV-FISCAL-RECOVERY-SIGNED-MISSING', 'O XML assinado não está disponível ou não passou na verificação de integridade.');
       }
       const signedXml = new TextDecoder().decode(signedLoaded.content);
-      const protocol = buildNfeProtocolArtifact({ signedXml, protocolXml: result.protocolXml, expectedAccessKey: emission.accessKey });
+      const protocol = buildNfeProtocolArtifact({ signedXml, protocolXml: result.protocolXml, expectedAccessKey: emission.accessKey, expectedEnvironment: emission.environment });
       if (!protocol.valid) return failure('AV-FISCAL-RECOVERY-PROTOCOL', 'O protocolo consultado não corresponde ao XML assinado.');
       const stored = await persistNfeProtocolArtifact({ artifact: protocol, provider: storageProvider });
       if (!stored.valid) return failure('AV-FISCAL-RECOVERY-PROTOCOL-STORE', 'O protocolo autorizado não pôde ser gravado na guarda fiscal.');
-      const committed = await lifecycle.commitAuthorization({ companyId: job.companyId, emissionId: job.emissionId, expectedVersion: emission.version, operationKey: operationKey('recover-authorize', job), accessKey: emission.accessKey, protocolNumber: protocol.protocolNumber, authorizedAt: protocol.receivedAt, statusReason: protocol.reason, artifact: { artifactType: 'protocol_xml', storageReference: stored.storageReference, storageVersion: stored.storageVersion, checksum: protocol.checksum, byteLength: protocol.byteLength, contentType: 'application/xml', createdAt: stored.storedAt }, publicPayload: { recoveryJobId: job.id, authority: 'SEFAZ/SP', environment: 'homologacao', queryKind: emission.state === 'processing' ? 'receipt' : 'protocol' } });
+      const committed = await lifecycle.commitAuthorization({ companyId: job.companyId, emissionId: job.emissionId, expectedVersion: emission.version, operationKey: operationKey('recover-authorize', job), accessKey: emission.accessKey, protocolNumber: protocol.protocolNumber, authorizedAt: protocol.receivedAt, statusReason: protocol.reason, artifact: { artifactType: 'protocol_xml', storageReference: stored.storageReference, storageVersion: stored.storageVersion, checksum: protocol.checksum, byteLength: protocol.byteLength, contentType: 'application/xml', createdAt: stored.storedAt }, publicPayload: { recoveryJobId: job.id, authority: 'SEFAZ/SP', environment, queryKind: emission.state === 'processing' ? 'receipt' : 'protocol' } });
       if (!committed.ok) return failure('AV-FISCAL-RECOVERY-AUTHORIZATION-COMMIT', 'O protocolo foi conferido, mas o estado fiscal precisa ser reconciliado novamente.');
       return { ok: true, reconciled: true, authorized: true, state: committed.emission.state, protocolStored: true, contentReturned: false };
     }
     if (result.canceled === true) return failure('AV-FISCAL-RECOVERY-CANCELED', 'A consulta encontrou cancelamento e exige reconciliação fiscal específica antes de alterar o estado.');
     const rejectionCode = String(result.protocolStatus || '');
     if (/^\d{3,4}$/.test(rejectionCode) && rejectionCode !== '100') {
-      const rejected = await lifecycle.transition({ companyId: job.companyId, emissionId: job.emissionId, expectedVersion: emission.version, operationKey: operationKey('recover-reject', job), toState: 'rejected', patch: { statusCode: rejectionCode, statusReason: result.protocolReason || result.reason }, eventType: 'emission.rejected.after_query', publicPayload: { recoveryJobId: job.id, authority: 'SEFAZ/SP', environment: 'homologacao', statusCode: rejectionCode } });
+      const rejected = await lifecycle.transition({ companyId: job.companyId, emissionId: job.emissionId, expectedVersion: emission.version, operationKey: operationKey('recover-reject', job), toState: 'rejected', patch: { statusCode: rejectionCode, statusReason: result.protocolReason || result.reason }, eventType: 'emission.rejected.after_query', publicPayload: { recoveryJobId: job.id, authority: 'SEFAZ/SP', environment, statusCode: rejectionCode } });
       if (!rejected.ok) return failure('AV-FISCAL-RECOVERY-REJECTION-COMMIT', 'A rejeição foi consultada, mas o estado fiscal precisa ser reconciliado novamente.');
       return { ok: true, reconciled: true, rejected: true, state: rejected.emission.state, contentReturned: false };
     }
@@ -134,7 +135,7 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
       } catch {
         return failure('AV-FISCAL-RECOVERY-PROCESSED-SOURCE', 'O XML assinado ou o protocolo não passou na verificação de integridade.');
       }
-      const artifact = buildProcessedNfeArtifact({ signedXml: new TextDecoder().decode(signed.content), protocolXml: new TextDecoder().decode(protocol.content), expectedAccessKey: emission.accessKey });
+      const artifact = buildProcessedNfeArtifact({ signedXml: new TextDecoder().decode(signed.content), protocolXml: new TextDecoder().decode(protocol.content), expectedAccessKey: emission.accessKey, expectedEnvironment: emission.environment });
       if (!artifact.valid) return failure('AV-FISCAL-RECOVERY-PROCESSED-BUILD', 'O XML autorizado não pôde ser formado a partir dos documentos conferidos.');
       const stored = await persistProcessedNfeArtifact({ artifact, provider: storageProvider });
       if (!stored.valid) return failure('AV-FISCAL-RECOVERY-PROCESSED-STORE', 'O XML autorizado não pôde ser gravado na guarda fiscal.');
@@ -149,7 +150,7 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
       return failure('AV-FISCAL-RECOVERY-PROCESSED-MISSING', 'O XML autorizado não está disponível ou não passou na verificação de integridade.');
     }
     const processedXml = new TextDecoder().decode(loaded.content);
-    const validated = buildProcessedNfeArtifact({ signedXml: xmlBlock(processedXml, 'NFe'), protocolXml: xmlBlock(processedXml, 'protNFe'), expectedAccessKey: emission.accessKey });
+    const validated = buildProcessedNfeArtifact({ signedXml: xmlBlock(processedXml, 'NFe'), protocolXml: xmlBlock(processedXml, 'protNFe'), expectedAccessKey: emission.accessKey, expectedEnvironment: emission.environment });
     if (!validated.valid || validated.checksum !== loaded.checksum) return failure('AV-FISCAL-RECOVERY-PROCESSED-INTEGRITY', 'O XML autorizado não corresponde à emissão fiscal registrada.');
     if (emission.state === 'authorized') {
       const transitioned = await lifecycle.commitProcessedArtifact({ companyId: job.companyId, emissionId: job.emissionId, expectedVersion: emission.version, operationKey: operationKey('recover-processed', job), artifact: { artifactType: 'processed_xml', storageReference: loaded.storageReference, storageVersion: loaded.versionId, checksum: loaded.checksum, byteLength: loaded.byteLength, contentType: 'application/xml', createdAt: loaded.storedAt }, publicPayload: { recoveryJobId: job.id, artifactType: 'processed_xml' } });
@@ -173,7 +174,7 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
       return failure('AV-FISCAL-RECOVERY-PROCESSED-MISSING', 'O XML autorizado não está disponível ou não passou na verificação de integridade.');
     }
     if (emission.processedStorageReference !== loadedXml.storageReference || emission.processedChecksum !== loadedXml.checksum) return failure('AV-FISCAL-RECOVERY-PROCESSED-CONFLICT', 'A referência do XML autorizado diverge do estado fiscal imutável.');
-    const danfe = buildNfeDanfe({ processedXml: new TextDecoder().decode(loadedXml.content), expectedAccessKey: emission.accessKey });
+    const danfe = buildNfeDanfe({ processedXml: new TextDecoder().decode(loadedXml.content), expectedAccessKey: emission.accessKey, expectedEnvironment: emission.environment });
     const artifact = buildNfeDanfeArtifact({ danfe });
     if (!artifact.valid || artifact.storageKey !== nfeDanfeStorageKey(emission.accessKey)) return failure('AV-FISCAL-RECOVERY-DANFE-BUILD', 'O DANFE não pôde ser reconstruído a partir do XML autorizado.');
     const stored = await persistNfeDanfeArtifact({ artifact, provider: storageProvider });

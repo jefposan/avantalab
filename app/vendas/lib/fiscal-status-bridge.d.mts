@@ -60,7 +60,7 @@ export type FiscalCertificateStatus = Readonly<{
   originalPasswordStored?: false;
 }>;
 export type FiscalExecutionReadiness = Readonly<{
-  environment: 'homologacao';
+  environment: 'homologacao' | 'producao';
   statusOnly: boolean;
   workflowEnabled: boolean;
   durableStorageReady: boolean;
@@ -70,7 +70,7 @@ export type FiscalExecutionReadiness = Readonly<{
   returnServiceReady: boolean;
   orchestratorReady: boolean;
   transmissionAllowed: boolean;
-  productionTransmissionAllowed: false;
+  productionTransmissionAllowed: boolean;
 }>;
 
 export const FISCAL_STATUS_REQUEST_TYPE: 'AVANTALAB_VENDAS_FISCAL_STATUS_REQUEST_V1';

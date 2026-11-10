@@ -1,3 +1,5 @@
+export const NFE_PRODUCTION_SCOPE: string;
+export const NFE_PRODUCTION_CONFIRMATION: string;
 export const NFE_ISSUANCE_ORCHESTRATOR_REFERENCE: string;
 export const NFE_ISSUANCE_ORCHESTRATOR_SCOPE: string;
 export const NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION: string;

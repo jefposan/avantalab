@@ -1,3 +1,8 @@
+## 3.2.0.391 — Vendas: preparar NF-e de produção da Tridium na série 2
+
+- Conecta o fluxo da NF-e modelo 55 ao ambiente definido no servidor, da reserva ao protocolo, XML processado e DANFE.
+- Inicializa a série 2 de produção a partir do nº 1 sem redefinir sequências existentes. A emissão depende da guarda fiscal validada.
+
 ## 3.2.0.390 — Vendas: acionar diagnóstico da SEFAZ-SP no certificado
 
 - O perfil Tridium pode consultar a conexão de produção no painel do certificado e ver o resultado.

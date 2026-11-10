@@ -205,9 +205,11 @@ function normalizeFiscalCertificate(value) {
 }
 
 function normalizeFiscalExecution(value) {
-  if (!value || text(value.environment) !== 'homologacao' || value.productionTransmissionAllowed !== false) return null;
+  const environment = text(value?.environment);
+  if (!['homologacao', 'producao'].includes(environment)
+    || value.productionTransmissionAllowed !== (environment === 'producao' && value.transmissionAllowed === true)) return null;
   return Object.freeze({
-    environment: 'homologacao',
+    environment,
     statusOnly: value.statusOnly === true,
     workflowEnabled: value.workflowEnabled === true,
     durableStorageReady: value.durableStorageReady === true,
@@ -217,7 +219,7 @@ function normalizeFiscalExecution(value) {
     returnServiceReady: value.returnServiceReady === true,
     orchestratorReady: value.orchestratorReady === true,
     transmissionAllowed: value.transmissionAllowed === true,
-    productionTransmissionAllowed: false,
+    productionTransmissionAllowed: value.productionTransmissionAllowed,
   });
 }
 

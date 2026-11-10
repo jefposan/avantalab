@@ -12,13 +12,14 @@ export function nfeProtocolStorageKey(accessKey) {
   return `fiscal/nfe/${normalized.slice(6, 20)}/20${normalized.slice(2, 4)}/${normalized.slice(4, 6)}/${normalized}-protocolNFe.xml`;
 }
 
-export function buildNfeProtocolArtifact({ signedXml, protocolXml, expectedAccessKey } = {}) {
-  const validated = buildProcessedNfeArtifact({ signedXml, protocolXml, expectedAccessKey });
+export function buildNfeProtocolArtifact({ signedXml, protocolXml, expectedAccessKey, expectedEnvironment } = {}) {
+  const validated = buildProcessedNfeArtifact({ signedXml, protocolXml, expectedAccessKey, expectedEnvironment });
   if (!validated.valid || !validated.authorized) return { valid: false, errors: validated.errors, accessKey: validated.accessKey || '', protocolXml: '', checksum: '', byteLength: 0, storageKey: '' };
   const source = typeof protocolXml === 'string' ? protocolXml.trim() : '';
   if (!source) return { valid: false, errors: [issue('AV-NFE-PROTOCOL-EMPTY', 'protocol', 'O protocolo autorizado não foi fornecido.')], accessKey: validated.accessKey, protocolXml: '', checksum: '', byteLength: 0, storageKey: '' };
   return {
     valid: true,
+    environment: validated.environment,
     errors: [],
     accessKey: validated.accessKey,
     protocolNumber: validated.protocolNumber,
@@ -44,7 +45,7 @@ export async function persistNfeProtocolArtifact({ artifact, provider = createDi
     return { ...result, valid: true, persisted: true, reused: true, storageReference: String(existing.storageReference || ''), storageVersion: String(existing.versionId || ''), storedAt: String(existing.storedAt || '') };
   }
   try {
-    const stored = await provider.putImmutable({ accessKey: artifact.accessKey, storageKey: artifact.storageKey, contentType: 'application/xml', content: artifact.protocolXml, checksum: artifact.checksum, byteLength: artifact.byteLength, metadata: { documentType: 'nfe', artifactType: 'protocol_xml', environment: 'homologacao', protocolNumber: artifact.protocolNumber } });
+    const stored = await provider.putImmutable({ accessKey: artifact.accessKey, storageKey: artifact.storageKey, contentType: 'application/xml', content: artifact.protocolXml, checksum: artifact.checksum, byteLength: artifact.byteLength, metadata: { documentType: 'nfe', artifactType: 'protocol_xml', environment: artifact.environment, protocolNumber: artifact.protocolNumber } });
     if (!stored?.storageReference || !stored?.storedAt) return { ...result, errors: [issue('AV-NFE-PROTOCOL-RECEIPT', 'provider', 'O armazenamento não devolveu uma referência persistente válida.')] };
     return { ...result, valid: true, persisted: true, reused: Boolean(stored.reused), storageReference: String(stored.storageReference), storageVersion: String(stored.versionId || ''), storedAt: String(stored.storedAt) };
   } catch {

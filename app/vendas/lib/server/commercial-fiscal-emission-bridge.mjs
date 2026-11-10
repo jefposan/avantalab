@@ -133,7 +133,7 @@ function existingEmissionError(draft) {
     && emission.originId === draft.operationId
     && emission.documentType === 'nfe'
     && emission.model === '55'
-    && emission.environment === 'homologacao';
+    && ['homologacao', 'producao'].includes(emission.environment);
   return valid ? null : issue('AV-COMMERCIAL-FISCAL-LINK-INTEGRITY', 'fiscal', 'O vínculo persistido entre o pedido e a emissão fiscal precisa de revisão técnica.');
 }
 
@@ -161,7 +161,7 @@ export function createPostgresCommercialFiscalDraftRepository({ pool } = {}) {
   });
 }
 
-export function createCommercialFiscalEmissionBridge({ draftRepository, emissionLifecycle } = {}) {
+export function createCommercialFiscalEmissionBridge({ draftRepository, emissionLifecycle, environment = 'homologacao' } = {}) {
   if (!draftRepository?.get) throw new TypeError('Informe o repositório server-side de rascunhos fiscais.');
   if (!emissionLifecycle?.create) throw new TypeError('Informe o ciclo transacional privado de emissão.');
   return Object.freeze({
@@ -188,7 +188,7 @@ export function createCommercialFiscalEmissionBridge({ draftRepository, emission
           originId: draft.operationId,
           documentType: 'nfe',
           model: '55',
-          environment: 'homologacao',
+          environment,
           operationKey: clean(idempotencyKey),
           actorId: context.actorId,
           publicPayload: {

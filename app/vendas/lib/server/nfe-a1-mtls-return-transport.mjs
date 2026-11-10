@@ -1,12 +1,11 @@
+import { resolveNationalNfeAuthority } from './nfe-national-authorities.mjs';
 import { request as nodeHttpsRequest } from 'node:https';
 import { NFE_SERVER_CA } from './nfe-server-trust.mjs';
 
 import { prepareNfeA1Pkcs12ForMutualTls } from './nfe-a1-certificate.mjs';
 import {
   NFE_PROTOCOL_ACTION,
-  NFE_PROTOCOL_ENDPOINT,
   NFE_RECEIPT_ACTION,
-  NFE_RECEIPT_ENDPOINT,
   NFE_RETURN_RESPONSE_LIMIT,
   NFE_RETURN_TIMEOUT_MS,
 } from './nfe-return-service.mjs';
@@ -45,11 +44,11 @@ function commonRequestIsSafe(request) {
     && !/<!DOCTYPE|<!ENTITY|<!\[CDATA\[|<!--/i.test(source);
 }
 
-function receiptRequestIsSafe(request) {
+function receiptRequestIsSafe(request, authority) {
   const source = typeof request.body === 'string' ? request.body.trim() : '';
   const receiptNumber = /<(?:[A-Za-z_][\w.-]*:)?nRec>(\d{15})<\/(?:[A-Za-z_][\w.-]*:)?nRec>/i.exec(source)?.[1] || '';
   return commonRequestIsSafe(request)
-    && request.endpoint === NFE_RECEIPT_ENDPOINT
+    && request.endpoint === authority.endpoints.receipt
     && request.action === NFE_RECEIPT_ACTION
     && request.contentType === expectedContentType(NFE_RECEIPT_ACTION)
     && receiptNumber.startsWith('35')
@@ -59,14 +58,14 @@ function receiptRequestIsSafe(request) {
     && openingTagCount(source, 'consSitNFe') === 0
     && openingTagCount(source, 'chNFe') === 0
     && /<(?:[A-Za-z_][\w.-]*:)?consReciNFe\b[^>]*\bversao=["']4\.00["']/i.test(source)
-    && /<(?:[A-Za-z_][\w.-]*:)?tpAmb>2<\/(?:[A-Za-z_][\w.-]*:)?tpAmb>/i.test(source);
+    && /<(?:[A-Za-z_][\w.-]*:)?tpAmb>[12]<\/(?:[A-Za-z_][\w.-]*:)?tpAmb>/i.test(source);
 }
 
-function protocolRequestIsSafe(request) {
+function protocolRequestIsSafe(request, authority) {
   const source = typeof request.body === 'string' ? request.body.trim() : '';
   const accessKey = /<(?:[A-Za-z_][\w.-]*:)?chNFe>(\d{44})<\/(?:[A-Za-z_][\w.-]*:)?chNFe>/i.exec(source)?.[1] || '';
   return commonRequestIsSafe(request)
-    && request.endpoint === NFE_PROTOCOL_ENDPOINT
+    && request.endpoint === authority.endpoints.protocol
     && request.action === NFE_PROTOCOL_ACTION
     && request.contentType === expectedContentType(NFE_PROTOCOL_ACTION)
     && accessKey.startsWith('35')
@@ -77,13 +76,17 @@ function protocolRequestIsSafe(request) {
     && openingTagCount(source, 'consReciNFe') === 0
     && openingTagCount(source, 'nRec') === 0
     && /<(?:[A-Za-z_][\w.-]*:)?consSitNFe\b[^>]*\bversao=["']4\.00["']/i.test(source)
-    && /<(?:[A-Za-z_][\w.-]*:)?tpAmb>2<\/(?:[A-Za-z_][\w.-]*:)?tpAmb>/i.test(source)
+    && /<(?:[A-Za-z_][\w.-]*:)?tpAmb>[12]<\/(?:[A-Za-z_][\w.-]*:)?tpAmb>/i.test(source)
     && /<(?:[A-Za-z_][\w.-]*:)?xServ>CONSULTAR<\/(?:[A-Za-z_][\w.-]*:)?xServ>/i.test(source);
 }
 
-function returnRequestIsSafe(request) {
-  if (request?.endpoint === NFE_RECEIPT_ENDPOINT) return receiptRequestIsSafe(request);
-  if (request?.endpoint === NFE_PROTOCOL_ENDPOINT) return protocolRequestIsSafe(request);
+function returnRequestIsSafe(request, environment) {
+  const authority = resolveNationalNfeAuthority({ uf: 'SP', environment });
+  if (!authority || (request.environment ?? 'homologacao') !== environment) return false;
+  const code = /<(?:[A-Za-z_][\w.-]*:)?tpAmb>([12])<\//i.exec(request.body)?.[1];
+  if (code !== authority.environmentCode) return false;
+  if (request.endpoint === authority.endpoints.receipt) return receiptRequestIsSafe(request, authority);
+  if (request.endpoint === authority.endpoints.protocol) return protocolRequestIsSafe(request, authority);
   return false;
 }
 
@@ -176,6 +179,7 @@ function postWithMutualTls({ requestImpl, url, request, pkcs12, passphrase }) {
 export function createNfeA1MtlsReturnTransport({
   secretLoader,
   chainResolver,
+  environment = 'homologacao',
   requestImpl = nodeHttpsRequest,
   identityPreparer = prepareNfeA1Pkcs12ForMutualTls,
 } = {}) {
@@ -191,7 +195,7 @@ export function createNfeA1MtlsReturnTransport({
     id: 'avantalab-nfe-a1-mtls-return-v1',
     configured,
     async postSoap(request = {}) {
-      if (!configured || !returnRequestIsSafe(request)) throw new Error('A consulta mTLS de retorno não atende ao contrato seguro.');
+      if (!configured || !returnRequestIsSafe(request, environment)) throw new Error('A consulta mTLS de retorno não atende ao contrato seguro.');
       const secret = await secretLoader.load(request.secureCertificateReference);
       const sourcePkcs12 = normalizePkcs12(secret?.pkcs12);
       let connectionPkcs12 = null;

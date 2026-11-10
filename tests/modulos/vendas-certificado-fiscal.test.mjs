@@ -206,7 +206,7 @@ test('runtime fiscal usa as âncoras ICP-Brasil oficiais sem expor configuraçã
   assert.match(runtime, /nfeRejectionCorrectionService/);
   assert.match(runtime, /availabilityService: nfeStatusServiceAdapter/);
   assert.match(runtime, /nfeAutomaticIssuanceService/);
-  assert.match(runtime, /productionTransmissionAllowed: false/);
+  assert.match(runtime, /productionTransmissionAllowed: production && nfeAutomaticIssuanceService !== null/);
   assert.match(crlChecker, /fromBER\(der,\s*\{/);
   assert.match(crlChecker, /maxNodes: MAX_ASN1_NODES/);
   assert.match(crlChecker, /asn1\.offset !== der\.byteLength/);

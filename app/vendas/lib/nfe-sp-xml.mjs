@@ -124,7 +124,8 @@ function normalizeItem(value = {}, index = 0) {
 function retentionXml(form){if(!form)return '';const fields=[['vRetPIS','retainedPis'],['vRetCOFINS','retainedCofins'],['vRetCSLL','retainedCsll'],['vBCIRRF','incomeTaxBase'],['vIRRF','incomeTax'],['vBCRetPrev','socialSecurityBase'],['vRetPrev','socialSecurityTax']];const values=fields.map(([tag,key])=>[tag,Number(String(form[key]||'0').replace(/\./g,'').replace(',','.'))]);return values.some(([,value])=>value>0)?'<retTrib>'+values.filter(([,value])=>value>0).map(([tag,value])=>xmlTag(tag,formatDecimal(value,2))).join('')+'</retTrib>':'';}
 function transportXml(form){if(!form)return '<transp><modFrete>9</modFrete></transp>';const out=['<transp>',xmlTag('modFrete',form.freightMode)];if(form.freightMode!=='9'&&[form.carrierName,form.carrierDocument,form.carrierRegistration,form.carrierAddress,form.carrierCity,form.carrierState].some(Boolean))out.push('<transporta>',xmlTag(form.carrierDocument?.length===11?'CPF':'CNPJ',form.carrierDocument),xmlTag('xNome',form.carrierName),xmlTag('IE',form.carrierRegistration),xmlTag('xEnder',form.carrierAddress),xmlTag('xMun',form.carrierCity),xmlTag('UF',form.carrierState),'</transporta>');if(form.freightMode!=='9'&&form.vehiclePlate)out.push('<veicTransp>',xmlTag('placa',form.vehiclePlate.replace('-','')),xmlTag('UF',form.vehicleState),xmlTag('RNTC',form.rntc),'</veicTransp>');if([form.volumeCount,form.volumeSpecies,form.volumeBrand,form.volumeNumber,form.netWeight,form.grossWeight].some(Boolean))out.push('<vol>',xmlTag('qVol',form.volumeCount),xmlTag('esp',form.volumeSpecies),xmlTag('marca',form.volumeBrand),xmlTag('nVol',form.volumeNumber),xmlTag('pesoL',form.netWeight?formatDecimal(Number(form.netWeight.replace(',','.')),3):''),xmlTag('pesoB',form.grossWeight?formatDecimal(Number(form.grossWeight.replace(',','.')),3):''),'</vol>');out.push('</transp>');return out.join('');}
 
-export function normalizeNfeSpXmlInput(value) {
+export function normalizeNfeSpXmlInput(value, { environment = 'homologacao' } = {}) {
+  if (!['homologacao', 'producao'].includes(environment)) throw new TypeError('Ambiente fiscal inválido.');
   const source = value && typeof value === 'object' ? value : {};
   const issuer = source.issuer && typeof source.issuer === 'object' ? source.issuer : {};
   const recipient = source.recipient && typeof source.recipient === 'object' ? source.recipient : {};
@@ -134,7 +135,7 @@ export function normalizeNfeSpXmlInput(value) {
     reference: NFE_SP_XML_REFERENCE,
     schemaPackage: NFE_SP_SCHEMA_PACKAGE,
     schemaVersion: NFE_SP_SCHEMA_VERSION,
-    environment: 'homologacao',
+    environment,
     documentStage: source.documentStage === 'signature' ? 'signature' : 'preparation',
     issuedAt: text(source.issuedAt),
     operationNature: text(source.operationNature, 60),
@@ -229,11 +230,12 @@ function departureTimestamp(input) {
   return form?.exitDate ? `${form.exitDate}T${form.exitTime ? `${form.exitTime}:00-03:00` : input.issuedAt.slice(11)}` : '';
 }
 
-export function validateNfeSpXmlInput(inputValue) {
-  const input = normalizeNfeSpXmlInput(inputValue);
+export function validateNfeSpXmlInput(inputValue, options) {
+  const input = normalizeNfeSpXmlInput(inputValue, options);
   const errors = [];
   const warnings = [];
   const requiredText = (value, code, field, message) => { if (!value) errors.push(validationError(code, field, message)); };
+  if (input.environment === 'producao') requiredText(input.recipient.originalName, 'NFE-E04', 'recipient.name', 'Informe o nome do destinatário.');
   requiredText(input.operationNature, 'NFE-B04', 'operationNature', 'Informe a natureza da operação com até 60 caracteres.');
   if (!validIssuedAt(input.issuedAt)) errors.push(validationError('NFE-B09', 'issuedAt', 'Informe data e hora no formato ISO com fuso horário válido.'));
   if(input.fiscalForm?.deliveryForecast && !deliveryForecastAllowed(input.fiscalForm.freightMode))errors.push(validationError('NFE-B10A-50','fiscalForm.freightMode','Esta modalidade de frete não permite previsão de entrega. Remova a previsão ou selecione a modalidade correspondente à operação.'));
@@ -365,8 +367,8 @@ function addressXml(tagName, address, level) {
   ].filter(Boolean).join('\n');
 }
 
-export function buildUnsignedNfeSpXml(inputValue) {
-  const validation = validateNfeSpXmlInput(inputValue);
+export function buildUnsignedNfeSpXml(inputValue, options) {
+  const validation = validateNfeSpXmlInput(inputValue, options);
   if (!validation.valid) return { ...validation, xml: '' };
   const { input, accessKey } = validation;
   const crt = taxRegimeCode(input.issuer.taxRegime);
@@ -391,7 +393,7 @@ export function buildUnsignedNfeSpXml(inputValue) {
     xmlTag('tpImp', '1', 3),
     xmlTag('tpEmis', input.emissionType, 3),
     xmlTag('cDV', accessKey.slice(-1), 3),
-    xmlTag('tpAmb', '2', 3),
+    xmlTag('tpAmb', input.environment === 'producao' ? '1' : '2', 3),
     xmlTag('finNFe', input.purpose, 3),
     xmlTag('indFinal', input.consumerFinal ? '1' : '0', 3),
     xmlTag('indPres', input.fiscalForm?.presence || presenceCode(input.presence), 3),
@@ -411,7 +413,7 @@ export function buildUnsignedNfeSpXml(inputValue) {
     '    </emit>',
     '    <dest>',
     xmlTag(input.recipient.document.length === 14 ? 'CNPJ' : 'CPF', input.recipient.document, 3),
-    xmlTag('xNome', HOMOLOGATION_RECIPIENT_NAME, 3),
+    xmlTag('xNome', input.environment === 'producao' ? input.recipient.originalName : HOMOLOGATION_RECIPIENT_NAME, 3),
     addressXml('enderDest', input.recipient.address, 3),
     xmlTag('indIEDest', input.recipient.stateRegistrationIndicator, 3),
     xmlTag('IE', input.recipient.stateRegistrationIndicator === '1' ? input.recipient.stateRegistration : '', 3),
@@ -455,7 +457,7 @@ export function buildUnsignedNfeSpXml(inputValue) {
     ...(input.fiscalForm?.intermediary==='1'?['<infIntermed>',xmlTag('CNPJ',input.fiscalForm.intermediaryDocument),xmlTag('idCadIntTran',input.fiscalForm.intermediaryId),'</infIntermed>']:[]),
     '    <infAdic>',
     xmlTag('infAdFisco',input.fiscalForm?.fiscalNotes,3),
-    xmlTag('infCpl', input.documentStage === 'signature'
+    xmlTag('infCpl', input.environment === 'producao' || input.documentStage === 'signature'
       ? input.additionalInfo
       : `${input.additionalInfo ? `${input.additionalInfo} · ` : ''}PRE-XML DE HOMOLOGACAO SEM ASSINATURA E SEM VALOR FISCAL`, 3),
     '    </infAdic>',

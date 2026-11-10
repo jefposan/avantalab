@@ -11,3 +11,20 @@ test('checkout não substitui duplicidade do envio por 217 da consulta; autoriza
  runtime.nfeAutomaticIssuanceService.continue=async()=>({ok:false,pendingRecovery:true,errors:[{code:'AV-NFE-AUTH-RESPONSE-PROTOCOL',field:'response.protNFe',message:'Lote processado sem resultado individual válido'}]});result=await runFiscalCheckout({runtime,context,input:{action:'issue',draftId,idempotencyKey:'test:original:xml-response'}});assert.equal(result.code,'AV-NFE-AUTH-RESPONSE-PROTOCOL');assert.match(result.message,/resultado individual/);assert.equal(fiscalValidationTarget(result),'');
  runtime.nfeAutomaticIssuanceService.continue=async()=>{emission={...emission,state:'authorized',version:9};return {ok:false,pendingRecovery:true,errors:[{code:'AV-NFE-SUBMISSION-DUPLICATE-204'}]};};result=await runFiscalCheckout({runtime,context,input:{action:'issue',draftId,idempotencyKey:'test:duplicate:authorized'}});assert.equal(result.ok,true);assert.equal(result.emission.authorized,true);
 });
+
+test('checkout de produção envia NF-e assinada pelo transporte simulado e recupera XML e DANFE', async () => {
+ const lab=await createSyntheticNfeOrchestratorLab({environment:'producao',startPrepared:true});
+ try {
+  const result=await lab.checkout();
+  assert.equal(result.ok,true,JSON.stringify(result));
+  assert.equal(result.emission.series,'2');
+  assert.equal(result.emission.number,1);
+  for (let step=0;step<3;step++) await lab.runRecoveryOnce();
+  assert.equal(lab.snapshot().state,'danfe_ready',JSON.stringify(lab.snapshot()));
+  assert.equal((await lab.checkout()).ok,true);
+  assert.equal(lab.reservations,1);
+  assert.equal(lab.snapshot().attempts,1);
+  assert.equal(lab.metrics.syntheticAuthorizationCalls,1);
+  assert.equal(lab.metrics.externalNetworkCalls,0);
+ } finally { await lab.cleanup(); }
+});

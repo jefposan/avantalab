@@ -1,3 +1,4 @@
+import { runFiscalCheckout } from '../lib/server/fiscal-checkout.mjs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -17,6 +18,8 @@ import {
   createNfeIssuanceOrchestrator,
   NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION,
   NFE_ISSUANCE_ORCHESTRATOR_SCOPE,
+  NFE_PRODUCTION_SCOPE,
+  NFE_PRODUCTION_CONFIRMATION,
 } from '../lib/server/nfe-issuance-orchestrator.mjs';
 import { nfeDanfeStorageKey } from '../lib/server/nfe-danfe-artifact.mjs';
 import { nfeProcessedStorageKey } from '../lib/server/nfe-processed-artifact.mjs';
@@ -33,12 +36,12 @@ const ISSUER = '48210380000142';
 const TOKEN = 'ensaio-sintetico-local-sem-rede-1234567890';
 const NOW = '2026-09-04T15:00:00.000Z';
 
-function syntheticUnsignedDocument() {
+function syntheticUnsignedDocument(environment, series, number) {
   return buildUnsignedNfeSpXml({
     issuedAt: '2026-09-04T12:00:00-03:00',
     operationNature: 'Venda de mercadoria',
-    series: '1',
-    number: '7',
+    series,
+    number: String(number),
     numericCode: '12345678',
     consumerFinal: false,
     presence: 'Não presencial',
@@ -63,7 +66,7 @@ function syntheticUnsignedDocument() {
     matrixReviewConfirmed: true,
     fiscalReviewConfirmed: true,
     taxReformReviewConfirmed: true,
-  });
+  }, { environment });
 }
 
 function cloneMap(source) {
@@ -177,8 +180,8 @@ function createTransactionalMemoryRepository() {
   };
 }
 
-function authorizedResponse(accessKey) {
-  return `<?xml version="1.0"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"><soap:Body><retEnviNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><tpAmb>2</tpAmb><cStat>104</cStat><xMotivo>Lote processado</xMotivo><cUF>35</cUF><protNFe versao="4.00"><infProt><tpAmb>2</tpAmb><chNFe>${accessKey}</chNFe><dhRecbto>2026-09-04T12:00:01-03:00</dhRecbto><nProt>135260000000001</nProt><digVal>SINTETICO</digVal><cStat>100</cStat><xMotivo>Autorizado o uso da NF-e</xMotivo></infProt></protNFe></retEnviNFe></soap:Body></soap:Envelope>`;
+function authorizedResponse(accessKey, environment) {
+  return `<?xml version="1.0"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"><soap:Body><retEnviNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><tpAmb>${environment === 'producao' ? 1 : 2}</tpAmb><cStat>104</cStat><xMotivo>Lote processado</xMotivo><cUF>35</cUF><protNFe versao="4.00"><infProt><tpAmb>${environment === 'producao' ? 1 : 2}</tpAmb><chNFe>${accessKey}</chNFe><dhRecbto>2026-09-04T12:00:01-03:00</dhRecbto><nProt>135260000000001</nProt><digVal>SINTETICO</digVal><cStat>100</cStat><xMotivo>Autorizado o uso da NF-e</xMotivo></infProt></protNFe></retEnviNFe></soap:Body></soap:Envelope>`;
 }
 
 function transportResult(answer) {
@@ -188,12 +191,15 @@ function transportResult(answer) {
   throw new Error('A resposta sintética do transporte não foi configurada.');
 }
 
-export async function createSyntheticNfeOrchestratorLab({ authorizationResponder, returnResponder } = {}) {
+export async function createSyntheticNfeOrchestratorLab({ authorizationResponder, returnResponder, startPrepared = false, environment = 'homologacao' } = {}) {
   const rootDirectory = await mkdtemp(join(tmpdir(), 'avantalab-nfe-orchestrator-lab-'));
   let cleaned = false;
   let currentTime = NOW;
   try {
-    const generated = syntheticUnsignedDocument();
+    const production = environment === 'producao';
+    const series = production ? '2' : '1';
+    const number = production ? 1 : 7;
+    const generated = syntheticUnsignedDocument(environment, series, number);
     if (!generated.valid) throw new Error('O pré-XML sintético não passou na validação local.');
     const signed = await createEphemeralLabSignedNfeXml(generated.xml, new Date(NOW));
     const signedArtifact = await buildSignedNfeArtifact({ signedXml: signed.signedXml, expectedAccessKey: generated.accessKey, expectedIssuerDocument: ISSUER });
@@ -207,25 +213,37 @@ export async function createSyntheticNfeOrchestratorLab({ authorizationResponder
       if (!input.storageVersion || input.storageVersion !== loaded.versionId) throw new Error('A versão imutável não corresponde ao documento sintético.');
       return loaded;
     } });
-    const storedSigned = await persistSignedNfeArtifact({ artifact: signedArtifact, provider: storage });
-    if (!storedSigned.valid) throw new Error('O XML assinado sintético não foi guardado.');
+    const storedSigned = startPrepared ? null : await persistSignedNfeArtifact({ artifact: signedArtifact, provider: storage });
+    if (!startPrepared && !storedSigned.valid) throw new Error('O XML assinado sintético não foi guardado.');
 
     const repository = createTransactionalMemoryRepository();
+    const transact = repository.runInTransaction.bind(repository);
+    let reservations = 0;
+    const reservationId = '60000000-0000-4000-8000-000000000001';
+    const lifecycleRepository = { ...repository, runInTransaction: (callback) => transact((tx) => callback({
+      ...tx,
+      async reserveNextFiscalNumber(input) {
+        if (input.environment !== environment || reservations !== 0) throw new Error('Reserva sintética fora da sequência.');
+        reservations += 1;
+        return { reservation: { id: reservationId, series, number } };
+      },
+    })) };
     const initialEmission = {
-      id: EMISSION, companyId: COMPANY, establishmentId: ESTABLISHMENT, draftId: EMISSION, originId: 'PED-LAB-001', documentType: 'nfe', model: '55', environment: 'homologacao', state: 'signed', version: 4,
-      series: '1', number: 7, reservationId: '60000000-0000-4000-8000-000000000001', accessKey: generated.accessKey, signedChecksum: signedArtifact.checksum,
+      id: EMISSION, companyId: COMPANY, establishmentId: ESTABLISHMENT, draftId: EMISSION, originId: 'PED-LAB-001', documentType: 'nfe', model: '55', environment, state: 'signed', version: 4,
+      series, number, reservationId: '60000000-0000-4000-8000-000000000001', accessKey: generated.accessKey, signedChecksum: signedArtifact.checksum,
       batchId: '', receiptNumber: '', statusCode: '', statusReason: '', protocolNumber: '', submittedAt: '', authorizedAt: '', processedStorageReference: '', processedChecksum: '', danfeStorageReference: '', danfeChecksum: '', createdAt: NOW, updatedAt: NOW,
     };
-    repository.state.emissions.set(EMISSION, initialEmission);
-    repository.state.artifacts.set(`${COMPANY}:${EMISSION}:signed_xml`, {
+    repository.state.emissions.set(EMISSION, startPrepared ? { ...initialEmission, state: 'prepared', series: '', number: 0, reservationId: '', accessKey: '', signedChecksum: '' } : initialEmission);
+    if (storedSigned) repository.state.artifacts.set(`${COMPANY}:${EMISSION}:signed_xml`, {
       id: 'artifact-1', companyId: COMPANY, emissionId: EMISSION, artifactType: 'signed_xml', storageReference: storedSigned.storageReference,
       storageVersion: storedSigned.storageVersion, checksum: signedArtifact.checksum, byteLength: signedArtifact.byteLength, contentType: 'application/xml', createdAt: storedSigned.storedAt,
     });
 
-    const lifecycle = createFiscalEmissionLifecycleService({ repository, clock });
+    const lifecycle = createFiscalEmissionLifecycleService({ repository: lifecycleRepository, clock });
     const metrics = { syntheticAuthorizationCalls: 0, receiptQueries: 0, protocolQueries: 0, externalNetworkCalls: 0 };
     const certificateAdapter = { async inspectBinding() { return { valid: true, readyForMutualTls: true, readyForXmlSignature: true, errors: [] }; } };
     const authorizationAdapter = createNfeAuthorizationAdapter({
+      environment,
       certificateAdapter,
       statusAdapter: { async checkAvailability() { return { valid: true, serviceOperational: true, errors: [] }; } },
       transport: {
@@ -234,13 +252,14 @@ export async function createSyntheticNfeOrchestratorLab({ authorizationResponder
           metrics.syntheticAuthorizationCalls += 1;
           const answer = typeof authorizationResponder === 'function'
             ? await authorizationResponder({ ...input, accessKey: generated.accessKey, call: metrics.syntheticAuthorizationCalls })
-            : authorizedResponse(generated.accessKey);
+            : authorizedResponse(generated.accessKey, environment);
           return transportResult(answer);
         },
       },
     });
     const draft = { id: EMISSION, companyId: COMPANY, issuerSnapshot: { establishmentId: ESTABLISHMENT, document: ISSUER } };
     const submissionService = createCommercialNfeSubmissionService({
+      environment,
       repository: {
         async load({ companyId, emissionId }) {
           const emission = repository.state.emissions.get(emissionId);
@@ -254,12 +273,25 @@ export async function createSyntheticNfeOrchestratorLab({ authorizationResponder
       lifecycle,
     });
     const automaticIssuanceService = createCommercialNfeAutomaticIssuanceService({
-      signingPreparationService: { async prepare() { throw new Error('A emissão já começa assinada neste ensaio.'); } },
-      signingService: { async sign() { throw new Error('A emissão já começa assinada neste ensaio.'); } },
+      signingPreparationService: { async prepare({ expectedVersion }) {
+        return { ok: true, result: { version: expectedVersion } };
+      } },
+      signingService: { async sign({ context, emissionId, expectedVersion, idempotencyKey }) {
+        const current = repository.state.emissions.get(emissionId);
+        const xml = syntheticUnsignedDocument(environment, current.series, current.number);
+        const freshSignature = await createEphemeralLabSignedNfeXml(xml.xml, new Date(NOW));
+        const artifact = await buildSignedNfeArtifact({ signedXml: freshSignature.signedXml, expectedAccessKey: xml.accessKey, expectedIssuerDocument: ISSUER });
+        const stored = await persistSignedNfeArtifact({ artifact, provider: storage });
+        if (!stored.valid) return { ok: false, errors: stored.errors };
+        const committed = await lifecycle.commitSignature({ companyId: context.companyId, emissionId, expectedVersion, operationKey: idempotencyKey, accessKey: xml.accessKey,
+          artifact: { artifactType: 'signed_xml', storageReference: stored.storageReference, storageVersion: stored.storageVersion, checksum: artifact.checksum, byteLength: artifact.byteLength, contentType: 'application/xml' } });
+        return { ...committed, result: { ...committed.emission, signed: committed.ok, persisted: committed.persisted } };
+      } },
       submissionService,
       emissionStateResolver: ({ context, emissionId }) => repository.findEmissionStatus({ companyId: context.companyId, emissionId }),
     });
     const returnAdapter = createNfeReturnAdapter({
+      environment,
       certificateAdapter,
       transport: {
         configured: true,
@@ -276,6 +308,7 @@ export async function createSyntheticNfeOrchestratorLab({ authorizationResponder
       },
     });
     const handlers = createFiscalArtifactRecoveryHandlers({
+      environment,
       repository,
       storageProvider: storage,
       returnAdapter,
@@ -287,17 +320,28 @@ export async function createSyntheticNfeOrchestratorLab({ authorizationResponder
     const recoveryWorker = createFiscalRecoveryWorker({ queueService, handlers });
     const orchestrator = createNfeIssuanceOrchestrator({
       enabled: true,
-      environment: 'homologacao',
-      scope: NFE_ISSUANCE_ORCHESTRATOR_SCOPE,
-      confirmation: NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION,
+      environment,
+      scope: production ? NFE_PRODUCTION_SCOPE : NFE_ISSUANCE_ORCHESTRATOR_SCOPE,
+      confirmation: production ? NFE_PRODUCTION_CONFIRMATION : NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION,
       activationToken: TOKEN,
       automaticIssuanceService,
       recoveryWorker,
     });
-    const context = { companyId: COMPANY, actorId: ACTOR, moduleId: 'vendas', active: true, moduleActive: true, effectivePermissions: { 'fiscal.issue': true } };
+    const context = { companyId: COMPANY, actorId: ACTOR, moduleId: 'vendas', active: true, moduleActive: true, effectivePermissions: { 'fiscal.issue': true, 'fiscal.prepare': true } };
     const statusService = createFiscalEmissionStatusService({ repository });
     const statusBoundary = { source: 'authenticated', authenticated: true, userId: ACTOR, companyId: COMPANY, moduleId: 'vendas', userActive: true, membershipActive: true, companyActive: true, moduleActive: true };
     return Object.freeze({
+      get reservations() { return reservations; },
+      checkout() {
+        const runtime = {
+          fiscalExecution: { environment, transmissionAllowed: true, productionTransmissionAllowed: production },
+          fiscalDraftRepository: { get: async () => ({ ...draft, documentType: 'nfe', emission: repository.state.emissions.get(EMISSION) }) },
+          nfeNumberReservationService: { reserve: ({ context, emissionId, expectedVersion, idempotencyKey }) => lifecycle.reserveNumber({ companyId: context.companyId, actorId: context.actorId, emissionId, expectedVersion, operationKey: idempotencyKey }) },
+          nfeAutomaticIssuanceService: { continue: (input) => orchestrator.continueProtected({ ...input, activationToken: TOKEN }) },
+          reconcileFiscalEmission: (input) => orchestrator.runRecoveryOnceProtected({ ...input, activationToken: TOKEN, workerId: 'checkout-lab' }),
+        };
+        return runFiscalCheckout({ runtime, context, input: { action: 'issue', draftId: EMISSION, idempotencyKey: 'checkout-lab-production' } });
+      },
       accessKey: generated.accessKey,
       repository,
       storage,

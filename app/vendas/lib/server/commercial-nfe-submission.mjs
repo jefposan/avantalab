@@ -31,13 +31,13 @@ function followupKey(prefix, operationKey, emissionId) {
   return `${prefix}:${createHash('sha256').update(`${clean(operationKey)}:${clean(emissionId)}`).digest('hex').slice(0, 48)}`;
 }
 
-function validateLoaded(data, expectedVersion) {
+function validateLoaded(data, expectedVersion, environment) {
   const emission = data?.emission;
   const draft = data?.draft;
   const artifact = data?.signedArtifact;
   if (!emission || !draft || !artifact) return issue('AV-NFE-SUBMISSION-NOT-FOUND', 'emission', 'A NF-e assinada não foi localizada nesta empresa.');
   if (emission.version !== expectedVersion) return issue('AV-NFE-SUBMISSION-CONFLICT', 'expectedVersion', 'A emissão foi alterada; atualize a Central Fiscal antes de enviar.');
-  if (emission.state !== 'signed' || emission.documentType !== 'nfe' || emission.model !== '55' || emission.environment !== 'homologacao') return issue('AV-NFE-SUBMISSION-STATE', 'state', 'Somente uma NF-e assinada em homologação pode iniciar o envio.');
+  if (emission.state !== 'signed' || emission.documentType !== 'nfe' || emission.model !== '55' || emission.environment !== environment) return issue('AV-NFE-SUBMISSION-STATE', 'state', 'O envio exige uma NF-e assinada no ambiente configurado.');
   if (!/^\d{44}$/.test(emission.accessKey) || !/^[a-f0-9]{64}$/.test(emission.signedChecksum)) return issue('AV-NFE-SUBMISSION-INTEGRITY', 'signature', 'A identificação do XML assinado está incompleta.');
   if (artifact.artifactType !== 'signed_xml' || artifact.checksum !== emission.signedChecksum || artifact.contentType !== 'application/xml') return issue('AV-NFE-SUBMISSION-ARTIFACT', 'artifact', 'O artefato assinado não corresponde à emissão preparada.');
   if (draft.companyId !== emission.companyId || draft.id !== emission.draftId || draft.issuerSnapshot?.establishmentId !== emission.establishmentId) return issue('AV-NFE-SUBMISSION-LINK', 'draft', 'O vínculo entre emissão, rascunho e empresa não pôde ser confirmado.');
@@ -79,7 +79,7 @@ export function createPostgresCommercialNfeSubmissionRepository({ pool } = {}) {
   });
 }
 
-export function createCommercialNfeSubmissionService({ repository, certificateBindingResolver, artifactStorage, authorizationAdapter, lifecycle, internalErrorReporter } = {}) {
+export function createCommercialNfeSubmissionService({ repository, certificateBindingResolver, artifactStorage, authorizationAdapter, lifecycle, internalErrorReporter, environment = 'homologacao' } = {}) {
   if (!repository?.load || typeof certificateBindingResolver !== 'function') throw new TypeError('Informe o repositório e o resolvedor interno do envio.');
   if (!artifactStorage?.readByReference || !artifactStorage?.putImmutable) throw new TypeError('Informe o armazenamento fiscal imutável com leitura protegida.');
   if (!authorizationAdapter?.authorizeProtected || !lifecycle?.beginSubmission || !lifecycle?.commitAuthorization || !lifecycle?.transition) throw new TypeError('Informe o autorizador protegido e o ciclo fiscal transacional.');
@@ -95,7 +95,7 @@ export function createCommercialNfeSubmissionService({ repository, certificateBi
       let transmissionAttempted = false;
       try {
         const data = await repository.load({ companyId: context.companyId, emissionId: normalizedEmissionId });
-        const invalid = validateLoaded(data, expectedVersion);
+        const invalid = validateLoaded(data, expectedVersion, environment);
         if (invalid) return { ok: false, errors: [invalid] };
         stage = 'artifact';
         const loaded = await artifactStorage.readByReference({ accessKey: data.emission.accessKey, storageReference: data.signedArtifact.storageReference, storageVersion: data.signedArtifact.storageVersion, contentType: 'application/xml', expectedChecksum: data.signedArtifact.checksum });
@@ -111,32 +111,32 @@ export function createCommercialNfeSubmissionService({ repository, certificateBi
         let begun;
         const authorization = await authorizationAdapter.authorizeProtected({ signedXml, lotId: batchId, secureReference: binding.secureReference, expectedDocument: data.draft.issuerSnapshot.document, expectedMode: binding.expectedMode || 'Certificado A1', expectedAccessKey: data.emission.accessKey, beforeTransmission: async () => {
           stage = 'registration';
-          begun = await lifecycle.beginSubmission({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion, operationKey: normalizedKey, actorId: context.actorId, accessKey: data.emission.accessKey, signedChecksum: data.emission.signedChecksum, batchId, publicPayload: { authority: 'SEFAZ/SP', environment: 'homologacao', synchronous: true } });
+          begun = await lifecycle.beginSubmission({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion, operationKey: normalizedKey, actorId: context.actorId, accessKey: data.emission.accessKey, signedChecksum: data.emission.signedChecksum, batchId, publicPayload: { authority: 'SEFAZ/SP', environment, synchronous: true } });
           if (begun?.ok) { stage = 'authority'; transmissionAttempted = true; }
           return begun;
         } });
         if (!begun?.ok) return { ok: false, pendingRecovery: false, errors: authorization.errors?.length ? authorization.errors : [issue('AV-NFE-SUBMISSION-PREFLIGHT', 'submission', 'A conferência anterior ao envio não foi concluída. Nenhuma nota foi transmitida.')] };
         if (authorization.authorized === true && authorization.valid === true && authorization.protocolXml) {
           stage = 'protocol';
-          const protocol = buildNfeProtocolArtifact({ signedXml, protocolXml: authorization.protocolXml, expectedAccessKey: data.emission.accessKey });
+          const protocol = buildNfeProtocolArtifact({ signedXml, protocolXml: authorization.protocolXml, expectedAccessKey: data.emission.accessKey, expectedEnvironment: environment });
           if (!protocol.valid) return { ok: false, pendingRecovery: true, state: begun.emission.state, errors: [issue('AV-NFE-SUBMISSION-PROTOCOL', 'protocol', 'A autorização foi recebida, mas o protocolo aguarda reconciliação segura.')] };
           const stored = await persistNfeProtocolArtifact({ artifact: protocol, provider: artifactStorage });
           if (!stored.valid) return { ok: false, pendingRecovery: true, state: begun.emission.state, errors: stored.errors };
           stage = 'result';
-          const committed = await lifecycle.commitAuthorization({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion: begun.emission.version, operationKey: followupKey('authorize', normalizedKey, normalizedEmissionId), actorId: context.actorId, accessKey: data.emission.accessKey, protocolNumber: protocol.protocolNumber, authorizedAt: protocol.receivedAt, statusReason: protocol.reason, artifact: { artifactType: 'protocol_xml', storageReference: stored.storageReference, storageVersion: stored.storageVersion, checksum: protocol.checksum, byteLength: protocol.byteLength, contentType: 'application/xml', createdAt: stored.storedAt }, publicPayload: { batchStatus: authorization.batchStatus, statusCode: protocol.status, authority: 'SEFAZ/SP', environment: 'homologacao' } });
+          const committed = await lifecycle.commitAuthorization({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion: begun.emission.version, operationKey: followupKey('authorize', normalizedKey, normalizedEmissionId), actorId: context.actorId, accessKey: data.emission.accessKey, protocolNumber: protocol.protocolNumber, authorizedAt: protocol.receivedAt, statusReason: protocol.reason, artifact: { artifactType: 'protocol_xml', storageReference: stored.storageReference, storageVersion: stored.storageVersion, checksum: protocol.checksum, byteLength: protocol.byteLength, contentType: 'application/xml', createdAt: stored.storedAt }, publicPayload: { batchStatus: authorization.batchStatus, statusCode: protocol.status, authority: 'SEFAZ/SP', environment } });
           if (!committed?.ok) return committed;
           return { ok: true, result: { emissionId: committed.emission.id, state: committed.emission.state, version: committed.emission.version, batchId, accessKey: committed.emission.accessKey, authorized: true, protocolNumber: committed.emission.protocolNumber, protocolStored: true, processedDocumentPending: true, externalContentReturned: false, sensitiveMaterialReturned: false }, errors: [] };
         }
         if (authorization.valid === true && authorization.needsReceiptConsultation === true) {
           stage = 'result';
-          const processing = await lifecycle.transition({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion: begun.emission.version, operationKey: followupKey('receipt', normalizedKey, normalizedEmissionId), actorId: context.actorId, toState: 'processing', patch: { receiptNumber: authorization.receiptNumber }, eventType: 'emission.processing', publicPayload: { batchStatus: authorization.batchStatus, authority: 'SEFAZ/SP', environment: 'homologacao' } });
+          const processing = await lifecycle.transition({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion: begun.emission.version, operationKey: followupKey('receipt', normalizedKey, normalizedEmissionId), actorId: context.actorId, toState: 'processing', patch: { receiptNumber: authorization.receiptNumber }, eventType: 'emission.processing', publicPayload: { batchStatus: authorization.batchStatus, authority: 'SEFAZ/SP', environment } });
           if (!processing?.ok) return processing;
           return { ok: true, result: { emissionId: processing.emission.id, state: processing.emission.state, version: processing.emission.version, batchId, receiptNumber: processing.emission.receiptNumber, authorized: false, receiptConsultationPending: true, externalContentReturned: false, sensitiveMaterialReturned: false }, errors: [] };
         }
         if (authorization.valid === true && (authorization.batchRejected === true || (authorization.batchProcessed === true && /^\d{3,4}$/.test(clean(authorization.protocolStatus)) && authorization.protocolStatus !== '100' && !['204','539'].includes(authorization.protocolStatus)))) {
           stage = 'result';
           const rejectedCode = authorization.batchRejected ? authorization.batchStatus : authorization.protocolStatus;
-          const rejected = await lifecycle.transition({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion: begun.emission.version, operationKey: followupKey('reject', normalizedKey, normalizedEmissionId), actorId: context.actorId, toState: 'rejected', patch: { statusCode: rejectedCode, statusReason: authorization.protocolReason || authorization.batchReason }, eventType: 'emission.rejected', publicPayload: { batchStatus: authorization.batchStatus, statusCode: rejectedCode, authority: 'SEFAZ/SP', environment: 'homologacao' } });
+          const rejected = await lifecycle.transition({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion: begun.emission.version, operationKey: followupKey('reject', normalizedKey, normalizedEmissionId), actorId: context.actorId, toState: 'rejected', patch: { statusCode: rejectedCode, statusReason: authorization.protocolReason || authorization.batchReason }, eventType: 'emission.rejected', publicPayload: { batchStatus: authorization.batchStatus, statusCode: rejectedCode, authority: 'SEFAZ/SP', environment } });
           if (!rejected?.ok) return rejected;
           return { ok: true, result: { emissionId: rejected.emission.id, state: rejected.emission.state, version: rejected.emission.version, batchId, authorized: false, rejected: true, statusCode: rejected.emission.statusCode, statusReason: rejected.emission.statusReason, externalContentReturned: false, sensitiveMaterialReturned: false }, errors: [] };
         }

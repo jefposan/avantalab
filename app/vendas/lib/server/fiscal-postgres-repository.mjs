@@ -222,12 +222,12 @@ function createTransaction(client, schema) {
     async insertOperation(operation) {
       await client.query(`insert into ${operations} (company_id,operation_key,emission_id,operation_type,request_hash,resulting_version,created_at) values ($1,$2,$3,$4,$5,$6,$7)`, [operation.companyId, operation.operationKey, operation.emissionId, operation.operationType, operation.requestHash, operation.resultingVersion, operation.createdAt]);
     },
-    async reserveNextFiscalNumber({ companyId, establishmentId, emissionId, documentType, idempotencyKey, at }) {
+    async reserveNextFiscalNumber({ companyId, establishmentId, emissionId, documentType, idempotencyKey, at, environment = 'homologacao' }) {
       const existingResult = await client.query(`
         select * from ${numberReservations}
-        where company_id=$1 and environment='homologacao' and (emission_id=$2 or idempotency_key=$3)
+        where company_id=$1 and environment=$4 and (emission_id=$2 or idempotency_key=$3)
         order by (emission_id=$2) desc for update
-      `, [companyId, emissionId, idempotencyKey]);
+      `, [companyId, emissionId, idempotencyKey, environment]);
       const existingRows = existingResult.rows || [];
       if (existingRows.length) {
         const existing = existingRows.find((row) => row.emission_id === emissionId && row.idempotency_key === idempotencyKey);
@@ -239,12 +239,12 @@ function createTransaction(client, schema) {
       }
       const sequenceResult = await client.query(`
         select * from ${numberSequences}
-        where company_id=$1 and establishment_id=$2 and document_type=$3 and environment='homologacao' and active
+        where company_id=$1 and establishment_id=$2 and document_type=$3 and environment=$4 and active
         for update
-      `, [companyId, establishmentId, documentType]);
+      `, [companyId, establishmentId, documentType, environment]);
       const sequence = sequenceResult.rows?.[0];
       if (!sequence) throw Object.assign(new Error('A série fiscal ativa não foi configurada.'), { code: 'AV-FISCAL-NUMBER-SEQUENCE' });
-      const free=(await client.query(`select min(r.number)::int as number from ${numberReservations} r where r.company_id=$1 and r.establishment_id=$2 and r.document_type=$3 and r.environment='homologacao' and r.series=$4 and r.status='released' and not exists(select 1 from ${numberReservations} occupied where occupied.company_id=r.company_id and occupied.establishment_id=r.establishment_id and occupied.document_type=r.document_type and occupied.environment=r.environment and occupied.series=r.series and occupied.number=r.number and occupied.status<>'released') and not exists(select 1 from ${numberVoids} v where v.company_id=r.company_id and v.establishment_id=r.establishment_id and v.document_type=r.document_type and v.environment=r.environment and v.series=r.series and v.status<>'rejected' and r.number between v.start_number and v.end_number)`,[companyId,establishmentId,documentType,sequence.series])).rows[0];
+      const free=(await client.query(`select min(r.number)::int as number from ${numberReservations} r where r.company_id=$1 and r.establishment_id=$2 and r.document_type=$3 and r.environment=$5 and r.series=$4 and r.status='released' and not exists(select 1 from ${numberReservations} occupied where occupied.company_id=r.company_id and occupied.establishment_id=r.establishment_id and occupied.document_type=r.document_type and occupied.environment=r.environment and occupied.series=r.series and occupied.number=r.number and occupied.status<>'released') and not exists(select 1 from ${numberVoids} v where v.company_id=r.company_id and v.establishment_id=r.establishment_id and v.document_type=r.document_type and v.environment=r.environment and v.series=r.series and v.status<>'rejected' and r.number between v.start_number and v.end_number)`,[companyId,establishmentId,documentType,sequence.series,environment])).rows[0];
       let candidate = Number(free?.number) || Math.max(Number(sequence.next_number), Number(sequence.last_reserved_number) + 1);
       let available = false;
       for (let attempt = 0; attempt < 1000; attempt += 1) {
@@ -254,11 +254,11 @@ function createTransaction(client, schema) {
         const unavailable = await client.query(`
           select
             (select max(end_number)::int from ${numberVoids}
-              where company_id=$1 and establishment_id=$2 and document_type=$3 and environment='homologacao' and series=$4
+              where company_id=$1 and establishment_id=$2 and document_type=$3 and environment=$6 and series=$4
                 and status<>'rejected' and $5 between start_number and end_number) as void_end,
             exists(select 1 from ${numberReservations}
-              where company_id=$1 and establishment_id=$2 and document_type=$3 and environment='homologacao' and series=$4 and number=$5 and status<>'released') as reserved
-        `, [companyId, establishmentId, documentType, sequence.series, candidate]);
+              where company_id=$1 and establishment_id=$2 and document_type=$3 and environment=$6 and series=$4 and number=$5 and status<>'released') as reserved
+        `, [companyId, establishmentId, documentType, sequence.series, candidate, environment]);
         const conflict = unavailable.rows?.[0] || {};
         if (conflict.void_end) {
           candidate = Number(conflict.void_end) + 1;
@@ -275,9 +275,9 @@ function createTransaction(client, schema) {
       const inserted = await client.query(`
         insert into ${numberReservations}(
           company_id,establishment_id,emission_id,document_type,series,number,
-          idempotency_key,status,reserved_at,updated_at
-        ) values ($1,$2,$3,$4,$5,$6,$7,'reserved',$8,$8) returning *
-      `, [companyId, establishmentId, emissionId, documentType, sequence.series, candidate, idempotencyKey, at]);
+          idempotency_key,status,reserved_at,updated_at,environment
+        ) values ($1,$2,$3,$4,$5,$6,$7,'reserved',$8,$8,$9) returning *
+      `, [companyId, establishmentId, emissionId, documentType, sequence.series, candidate, idempotencyKey, at, environment]);
       await client.query(`
         update ${numberSequences}
         set next_number=greatest(next_number,$2),last_reserved_number=greatest(last_reserved_number,$3),version=version+1,updated_at=$4

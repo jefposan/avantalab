@@ -85,7 +85,7 @@ function expectedDraftDigest(draft) {
   });
 }
 
-function validateContext(data) {
+function validateContext(data, environment) {
   const draft = data?.draft;
   const emission = data?.emission;
   if (!draft || !emission) return issue('AV-NFE-PREPARE-NOT-FOUND', 'draft', 'A emissão fiscal não foi localizada nesta empresa.');
@@ -95,8 +95,8 @@ function validateContext(data) {
   if (draft.status !== 'pronto' || !fiscalDraftOriginReady(draft)) {
     return issue('AV-NFE-PREPARE-ORIGIN', 'draft', 'O rascunho fiscal e sua origem precisam estar prontos para emissão.');
   }
-  if (emission.state !== 'draft' || emission.environment !== 'homologacao') {
-    return issue('AV-NFE-PREPARE-STATE', 'fiscal', 'A emissão não está no estado inicial de homologação.');
+  if (emission.state !== 'draft' || emission.environment !== environment) {
+    return issue('AV-NFE-PREPARE-STATE', 'fiscal', 'A emissão precisa estar no estado inicial do ambiente configurado.');
   }
   if (emission.id !== draft.id || emission.draftId !== draft.id || emission.originId !== draft.operationId
     || emission.companyId !== draft.companyId || emission.establishmentId !== draft.issuerSnapshot?.establishmentId) {
@@ -157,7 +157,7 @@ export function buildCommercialNfePreparationInput(data, rules, idempotencyKey, 
       id: draft.id,
       originId: draft.operationId,
       documentType: 'nfe',
-      environment: 'Homologação',
+      environment: data.emission?.environment === 'producao' ? 'Produção' : 'Homologação',
       status: 'Pronto para homologação',
       total: Number(totals.total),
       paymentMethod: draft.paymentSnapshot?.method || 'Outros',
@@ -236,7 +236,7 @@ function publicResult(emission, preparation, reused = false, publicPayload = {})
     orderId: emission.originId,
     documentType: 'nfe',
     model: '55',
-    environment: 'homologacao',
+    environment: emission.environment || 'homologacao',
     state: 'prepared',
     version: Number(emission.version),
     reused,
@@ -289,16 +289,16 @@ export function createPostgresCommercialNfePreparationRepository({ pool } = {}) 
       const emission = mapEmission(row);
       const [sequences, reservations, voids] = await Promise.all([
         pool.query(`select * from fiscal_private.number_sequences
-          where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment='homologacao' order by active desc,series`,
-        [companyId, emission.establishmentId]),
+          where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment=$3 order by active desc,series`,
+        [companyId, emission.establishmentId, emission.environment]),
         pool.query(`select r.*,e.draft_id as reservation_draft_id,e.origin_id as reservation_origin_id
           from fiscal_private.number_reservations r
           join fiscal_private.emissions e on e.company_id=r.company_id and e.id=r.emission_id
-          where r.company_id=$1 and r.establishment_id=$2 and r.document_type='nfe' and r.environment='homologacao' and r.status<>'released'`,
-        [companyId, emission.establishmentId]),
+          where r.company_id=$1 and r.establishment_id=$2 and r.document_type='nfe' and r.environment=$3 and r.status<>'released'`,
+        [companyId, emission.establishmentId, emission.environment]),
         pool.query(`select * from fiscal_private.number_voids
-          where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment='homologacao'`,
-        [companyId, emission.establishmentId]),
+          where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment=$3`,
+        [companyId, emission.establishmentId, emission.environment]),
       ]);
       return {
         draft,
@@ -334,6 +334,7 @@ export function createCommercialNfePreparationService({
   emissionLifecycle,
   fiscalRuleResolver,
   preparationBuilder = buildNfeIssuancePreparation,
+  environment = 'homologacao',
   clock = () => saoPauloFiscalTimestamp(),
 } = {}) {
   if (!repository?.load || !repository?.findPreparedOperation) throw new TypeError('Informe o repositório server-side da preparação de NF-e.');
@@ -358,7 +359,7 @@ export function createCommercialNfePreparationService({
           return { ok: true, result: publicResult(prior.emission, null, true, prior.publicPayload), errors: [] };
         }
         const data = await repository.load({ companyId: context.companyId, draftId: normalizedDraftId });
-        const invalid = validateContext(data);
+        const invalid = validateContext(data, environment);
         if (invalid) return { ok: false, errors: [invalid] };
         const rules = await fiscalRuleResolver({
           companyId: context.companyId,
@@ -379,7 +380,7 @@ export function createCommercialNfePreparationService({
           };
         }
         const issuedAt = clock();
-        const preparation = await preparationBuilder(buildCommercialNfePreparationInput(data, rules, normalizedKey, issuedAt));
+        const preparation = await preparationBuilder({ ...buildCommercialNfePreparationInput(data, rules, normalizedKey, issuedAt), environment });
         if (!preparation?.valid || !preparation?.schemaValid) {
           return {
             ok: false,

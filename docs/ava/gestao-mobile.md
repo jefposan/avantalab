@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.390 -->
+<!-- ava-version: 3.2.0.391 -->
+
+> Revisão 3.2.0.391: sem impacto operacional.
 
 > Revisão 3.2.0.390: sem impacto operacional. Diagnóstico técnico da SEFAZ-SP sem emissão.
 

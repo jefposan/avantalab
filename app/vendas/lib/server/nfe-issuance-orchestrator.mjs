@@ -4,6 +4,9 @@ export const NFE_ISSUANCE_ORCHESTRATOR_REFERENCE = '2026-09-04';
 export const NFE_ISSUANCE_ORCHESTRATOR_SCOPE = 'nfe-sp-homologacao-controlada';
 export const NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION = 'AUTORIZO_HOMOLOGACAO_SEM_VALOR_FISCAL';
 
+export const NFE_PRODUCTION_SCOPE = 'nfe-sp-producao-tridium';
+export const NFE_PRODUCTION_CONFIRMATION = 'AUTORIZO_NFE_SP_PRODUCAO_TRIDIUM';
+
 const MIN_TOKEN_BYTES = 32;
 
 function text(value) {
@@ -71,10 +74,11 @@ export function createNfeIssuanceOrchestrator({
   recoveryWorker,
 } = {}) {
   const token = text(activationToken);
+  const production = environment === 'producao';
   const gateReady = enabled === true
-    && text(environment) === 'homologacao'
-    && text(scope) === NFE_ISSUANCE_ORCHESTRATOR_SCOPE
-    && text(confirmation) === NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION
+    && ['homologacao', 'producao'].includes(environment)
+    && text(scope) === (production ? NFE_PRODUCTION_SCOPE : NFE_ISSUANCE_ORCHESTRATOR_SCOPE)
+    && text(confirmation) === (production ? NFE_PRODUCTION_CONFIRMATION : NFE_ISSUANCE_ORCHESTRATOR_CONFIRMATION)
     && Buffer.byteLength(token, 'utf8') >= MIN_TOKEN_BYTES;
   if (!gateReady) return blocked('activation_locked');
   if (!automaticIssuanceService?.continue || !recoveryWorker?.runOnce) return blocked('dependencies_incomplete');
@@ -86,8 +90,8 @@ export function createNfeIssuanceOrchestrator({
   return Object.freeze({
     id: 'avantalab-nfe-issuance-orchestrator-v1',
     configured: true,
-    environment: 'homologacao',
-    scope: NFE_ISSUANCE_ORCHESTRATOR_SCOPE,
+    environment,
+    scope,
     reason: 'ready',
     transmissionAllowed: true,
     async continueProtected({ activationToken: candidate, ...input } = {}) {

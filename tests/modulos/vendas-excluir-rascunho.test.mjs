@@ -17,6 +17,8 @@ async function fixture({legacySequence=false}={}){
  if(legacySequence) await db.query("insert into fiscal_private.number_sequences(company_id,establishment_id,document_type,series,next_number) values($1,$1,'nfe','1',1)",[companyId]);
  await db.exec(readFileSync('supabase/migrations/20261110180000_vendas_numeracao_ambiente.sql','utf8'));
  await db.exec(readFileSync('supabase/migrations/20261110180100_vendas_numeracao_remover_chave_legada.sql','utf8'));
+ await db.exec(readFileSync('supabase/migrations/20261110180200_vendas_emissao_ambiente.sql','utf8'));
+
  const pool={query:(...args)=>db.query(...args)};return {db,pool,service:createFiscalDraftDeleteService({pool})};
 }
 test('rascunho sem emissão sai da operação sem consumir número; confirmação e acesso são obrigatórios',async()=>{
@@ -53,4 +55,31 @@ test('envio sem resultado e autorização nunca são apagados; falha HTTP não d
   assert.equal((await f.db.query('select count(*)::int n from fiscal_private.draft_deletions')).rows[0].n,0);
   const request=new Request('https://example.test',{method:'POST',body:'{}'});const response=await handleFiscalDraftDelete({request,companyId,draftId,runtime:{configured:true,pendingDraftService:f.service,accessResolver:{resolve:async()=>({authenticated:false})}}});assert.equal(response.status,401);
  }finally{await f.db.close();}
+});
+
+test('série 2 tem reservas independentes em produção e homologação', async () => {
+  const { db, pool } = await fixture();
+  try {
+    await db.query(`insert into fiscal_private.number_sequences
+      (company_id,establishment_id,document_type,environment,series,next_number)
+      values ($1,$1,'nfe','producao','2',1),($1,$1,'nfe','homologacao','2',7)`, [companyId]);
+    await db.query(`insert into fiscal_private.emissions
+      (id,company_id,establishment_id,draft_id,document_type,model,environment,state)
+      values ($1::uuid,$3::uuid,$3::uuid,$1::text,'nfe','55','producao','draft'),
+             ($2::uuid,$3::uuid,$3::uuid,$2::text,'nfe','55','homologacao','draft')`, [draftId, otherId, companyId]);
+    const repository = createPostgresFiscalRepository({ pool });
+    const reserve = (emissionId, environment) => repository.runInTransaction((tx) => tx.reserveNextFiscalNumber({
+      companyId, establishmentId: companyId, emissionId, documentType: 'nfe',
+      environment, idempotencyKey: `reserve:${emissionId}`, at: new Date().toISOString(),
+    }));
+    assert.equal((await reserve(draftId, 'producao')).reservation.number, 1);
+    assert.equal((await reserve(draftId, 'producao')).reused, true);
+    assert.equal((await reserve(otherId, 'homologacao')).reservation.number, 7);
+    assert.deepEqual((await db.query('select environment,next_number from fiscal_private.number_sequences order by environment')).rows, [
+      { environment: 'homologacao', next_number: 8 },
+      { environment: 'producao', next_number: 2 },
+    ]);
+  } finally {
+    await db.close();
+  }
 });

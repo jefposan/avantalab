@@ -28,6 +28,7 @@ export function buildNfeDanfeArtifact({ danfe } = {}) {
     valid: true,
     errors: [],
     accessKey,
+    environment: danfe.environment,
     content: pdf,
     checksum: createHash('sha256').update(pdf).digest('hex'),
     byteLength: pdf.length,
@@ -52,7 +53,7 @@ export async function persistNfeDanfeArtifact({ artifact, provider = createDisab
   }
   let stored;
   try {
-    stored = await provider.putImmutable({ storageKey: artifact.storageKey, accessKey: artifact.accessKey, contentType: artifact.contentType, content: artifact.content, checksum: artifact.checksum, byteLength: artifact.byteLength, metadata: { documentType: 'nfe', environment: 'homologacao', artifactType: 'danfe_pdf' } });
+    stored = await provider.putImmutable({ storageKey: artifact.storageKey, accessKey: artifact.accessKey, contentType: artifact.contentType, content: artifact.content, checksum: artifact.checksum, byteLength: artifact.byteLength, metadata: { documentType: 'nfe', environment: artifact.environment, artifactType: 'danfe_pdf' } });
   } catch {
     result.errors.push(error('AV-NFE-DANFE-STORE-WRITE', 'provider', 'O DANFE não pôde ser gravado no armazenamento fiscal.'));
     return result;

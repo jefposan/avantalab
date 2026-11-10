@@ -24,6 +24,7 @@ export function createCommercialNfeSigningService({
   signingProvider,
   artifactStorage,
   lifecycle,
+  environment = 'homologacao',
 } = {}) {
   if (!repository?.load) throw new TypeError('Informe o repositório server-side da assinatura comercial.');
   if (typeof fiscalRuleResolver !== 'function' || typeof certificateBindingResolver !== 'function') throw new TypeError('Informe os resolvedores internos da assinatura comercial.');
@@ -39,7 +40,7 @@ export function createCommercialNfeSigningService({
       if (!UUID.test(normalizedEmissionId) || !Number.isInteger(expectedVersion) || expectedVersion < 1 || !KEY.test(normalizedKey)) return { ok: false, errors: [issue('AV-NFE-SIGN-INPUT', 'emission', 'Atualize a Central Fiscal e tente novamente.')] };
       try {
         const data = await repository.load({ companyId: context.companyId, emissionId: normalizedEmissionId });
-        const reconstructed = await reconstructCommercialNfeSigningDocument({ data, expectedVersion, context, idempotencyKey: normalizedKey, fiscalRuleResolver, schemaValidator });
+        const reconstructed = await reconstructCommercialNfeSigningDocument({ data, expectedVersion, context, idempotencyKey: normalizedKey, fiscalRuleResolver, schemaValidator, environment });
         if (!reconstructed.ok) return reconstructed;
         const binding = await certificateBindingResolver({ companyId: context.companyId, establishmentId: data.emission.establishmentId, documentType: 'nfe' });
         if (!binding?.secureReference) return { ok: false, errors: [issue('AV-NFE-SIGN-CERTIFICATE', 'certificate', 'Adicione e ative o certificado digital da empresa antes de assinar a NF-e.')] };

@@ -23,13 +23,14 @@ function openingTagCount(xml, localName) {
   return (xml.match(new RegExp(`<(?:[A-Za-z_][\\w.-]*:)?${localName}\\b`, 'gi')) || []).length;
 }
 
-function authorizationRequestIsSafe({ endpoint, action, contentType, body, secureCertificateReference, timeoutMs, maxResponseBytes, followRedirects, issuerUf, environment }) {
+function authorizationRequestIsSafe({ endpoint, action, contentType, body, secureCertificateReference, timeoutMs, maxResponseBytes, followRedirects, issuerUf, environment }, configuredEnvironment) {
   const reference = validateSecureCertificateReference(secureCertificateReference);
   const source = typeof body === 'string' ? body.trim() : '';
   const accessKey = /<(?:[A-Za-z_][\w.-]*:)?infNFe\b[^>]*\bId=["']NFe(\d{44})["']/i.exec(source)?.[1] || '';
   const authority = resolveNationalNfeAuthority({ uf: issuerUf, environment });
   return authority
-    && environment === 'homologacao'
+    && environment === configuredEnvironment
+    && (environment === 'homologacao' || (environment === 'producao' && authority.issuerUf === 'SP'))
     && accessKey.startsWith(authority.issuerCode)
     && isOfficialNfeEndpoint({ uf: authority.issuerUf, environment, service: 'authorization', endpoint })
     && action === NFE_AUTHORIZATION_ACTION
@@ -150,6 +151,7 @@ function postWithMutualTls({ requestImpl, url, request, pkcs12, passphrase }) {
 export function createNfeA1MtlsAuthorizationTransport({
   secretLoader,
   chainResolver,
+  environment = 'homologacao',
   requestImpl = nodeHttpsRequest,
   identityPreparer = prepareNfeA1Pkcs12ForMutualTls,
 } = {}) {
@@ -165,7 +167,7 @@ export function createNfeA1MtlsAuthorizationTransport({
     id: 'avantalab-nfe-a1-mtls-authorization-v1',
     configured,
     async postSoap(request = {}) {
-      if (!configured || !authorizationRequestIsSafe(request)) throw new Error('A autorização mTLS não atende ao contrato seguro.');
+      if (!configured || !authorizationRequestIsSafe(request, environment)) throw new Error('A autorização mTLS não atende ao contrato seguro.');
       const secret = await secretLoader.load(request.secureCertificateReference);
       const sourcePkcs12 = normalizePkcs12(secret?.pkcs12);
       let connectionPkcs12 = null;

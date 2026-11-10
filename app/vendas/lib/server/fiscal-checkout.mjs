@@ -15,7 +15,10 @@ export async function runFiscalCheckout({ runtime, context, input }) {
   if (!['save','issue'].includes(input?.action) || !KEY.test(input?.idempotencyKey || '') || (input.draftId ? !UUID.test(input.draftId) : !UUID.test(input.originOrderId || ''))) return fail('AV-FISCAL-CHECKOUT-INPUT','Atualize a nota antes de continuar.');
   const permissions = context?.effectivePermissions || {};
   if (!context?.active || !context.moduleActive || context.moduleId !== 'vendas' || !UUID.test(context.companyId || '') || !UUID.test(context.actorId || '') || permissions['fiscal.prepare'] !== true || (issue && permissions['fiscal.issue'] !== true)) return fail('AV-FISCAL-CHECKOUT-PERMISSION','Seu acesso não permite esta ação na nota fiscal.');
-  if (issue && (runtime.fiscalExecution?.environment !== 'homologacao' || runtime.fiscalExecution?.transmissionAllowed !== true || runtime.fiscalExecution?.productionTransmissionAllowed !== false)) return fail('AV-FISCAL-CHECKOUT-SERVICE','O serviço de emissão em homologação não está disponível. Consulte Ver serviço.');
+  const execution = runtime.fiscalExecution;
+  const production = execution?.environment === 'producao';
+  if (issue && (!['homologacao', 'producao'].includes(execution?.environment) || execution.transmissionAllowed !== true || execution.productionTransmissionAllowed !== production)) return fail('AV-FISCAL-CHECKOUT-SERVICE','O serviço de emissão não está disponível. Consulte Ver serviço.');
+  const authorizationMessage = production ? 'NF-e autorizada pela SEFAZ.' : 'NF-e autorizada em homologação, sem valor fiscal.';
   try {
     let draftId = input.draftId;
     if (!draftId) {
@@ -30,12 +33,14 @@ export async function runFiscalCheckout({ runtime, context, input }) {
     let emission = draft.emission;
     if (emission?.state === 'canceled') return fail('AV-FISCAL-CHECKOUT-CANCELED','Esta NF-e foi cancelada fiscalmente e permanece somente para consulta.');
     if (!issue) return { ok: true, draftId, message: 'Rascunho salvo. Nenhuma nota foi enviada.', ...(emission ? { emission: publicEmission(emission) } : {}) };
+    if (emission?.environment && emission.environment !== execution.environment && !['authorized','artifacts_stored','danfe_ready'].includes(emission.state)) return fail('AV-FISCAL-CHECKOUT-ENVIRONMENT','A nota pertence a outro ambiente fiscal.');
     if (['submitted','processing'].includes(emission?.state)) {
       await runtime.reconcileFiscalEmission?.({companyId:context.companyId,emissionId:emission.id});
       emission = (await load())?.emission || emission;
       if (!['authorized','artifacts_stored','danfe_ready','rejected'].includes(emission.state) && !(emission.state === 'signed' && emission.statusCode === '217')) return {...fail('AV-NFE-SUBMISSION-UNCONFIRMED','A comunicação não confirmou o resultado da nota. A tentativa foi preservada. Tente novamente nesta mesma nota.'),draftId,emission:publicEmission(emission)};
     }
     if (['authorized','artifacts_stored','danfe_ready'].includes(emission?.state)) return { ok: true, draftId, emission: publicEmission(emission), message: 'Nota já autorizada. Nenhum novo envio foi feito.' };
+    if (production && emission?.state === 'signed' && emission.statusCode === '217') return {...fail('AV-NFE-SUBMISSION-UNCONFIRMED','A tentativa de produção foi preservada. Consulte a situação fiscal da nota antes de qualquer reenvio.'),draftId,emission:publicEmission(emission)};
     if (emission?.state === 'rejected' && emission.statusCode === '588') {
       const repaired = await runtime.nfeRejectionCorrectionService?.prepare({ context, emissionId: emission.id, expectedVersion: emission.version, idempotencyKey: stageKey('repair-format', input.idempotencyKey, `${draftId}:${emission.version}`), rejectedStatusCode: '588', confirmation: NFE_REJECTION_CORRECTION_CONFIRMATION });
       if (!repaired?.ok) return {...errorOf(repaired),draftId};
@@ -63,7 +68,7 @@ export async function runFiscalCheckout({ runtime, context, input }) {
     if (!sent?.ok) {
       const current = (await load())?.emission;
       if (!/^AV-NFE-(?:SUBMISSION-DUPLICATE-(?:204|539)$|AUTH-RESPONSE-)/.test(sent.errors?.[0]?.code||'') && sent.pendingRecovery === true && current?.state === 'signed' && current.statusCode === '217') return {...fail('AV-NFE-NOT-RECEIVED','A SEFAZ não recebeu esta nota. O mesmo número foi preservado. Tente novamente nesta mesma nota.'),draftId,emission:publicEmission(current)};
-      if (['authorized','artifacts_stored','danfe_ready'].includes(current?.state)) return { ok: true, draftId, emission: publicEmission(current), message: 'NF-e autorizada em homologação, sem valor fiscal.' };
+      if (['authorized','artifacts_stored','danfe_ready'].includes(current?.state)) return { ok: true, draftId, emission: publicEmission(current), message: authorizationMessage };
       if (current?.state === 'rejected') return {...fail('AV-FISCAL-CHECKOUT-REJECTED',current.statusReason || 'A SEFAZ rejeitou a nota. Revise o retorno fiscal.'),draftId,emission:publicEmission(current)};
       return { ...errorOf(sent), draftId, ...(current ? {emission: publicEmission(current)} : {}) };
     }
@@ -73,7 +78,7 @@ export async function runFiscalCheckout({ runtime, context, input }) {
     const final = refreshed && Number(refreshed.version) >= result.version ? refreshed : result;
     if (final.state === 'rejected') return { ...fail('AV-FISCAL-CHECKOUT-REJECTED',final.statusReason || 'A SEFAZ rejeitou a nota. Revise os dados indicados.'), draftId, emission: publicEmission(final) };
     if (!['authorized','artifacts_stored','danfe_ready'].includes(final.state)) return {...fail('AV-NFE-SUBMISSION-UNCONFIRMED','A comunicação não confirmou a autorização. A tentativa foi preservada. Tente novamente nesta mesma nota.'),draftId,emission:publicEmission(final)};
-    return { ok: true, draftId, emission: publicEmission(final), message: 'NF-e autorizada em homologação, sem valor fiscal.' };
+    return { ok: true, draftId, emission: publicEmission(final), message: authorizationMessage };
   } catch { return fail('AV-FISCAL-CHECKOUT-UNAVAILABLE','Não foi possível confirmar a operação. Tente novamente nesta mesma nota.'); }
 }
 

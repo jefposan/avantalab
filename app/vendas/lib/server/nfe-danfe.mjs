@@ -93,7 +93,7 @@ function address(block, prefix) {
   };
 }
 
-function parseProcessedNfe(value) {
+function parseProcessedNfe(value, expectedEnvironment) {
   const xml = typeof value === 'string' ? value.trim() : '';
   const errors = [];
   if (!xml) errors.push(error('AV-NFE-DANFE-XML-EMPTY', 'processedXml', 'O procNFe não foi fornecido.'));
@@ -103,7 +103,7 @@ function parseProcessedNfe(value) {
   const nfeBlock = tagBlock(processBlock, 'NFe');
   const protocolBlock = tagBlock(processBlock, 'protNFe');
   if (!processBlock || !nfeBlock || !protocolBlock) errors.push(error('AV-NFE-DANFE-PROCESS', 'processedXml.nfeProc', 'O documento não contém NF-e e protocolo processados.'));
-  const validated = nfeBlock && protocolBlock ? buildProcessedNfeArtifact({ signedXml: nfeBlock, protocolXml: protocolBlock }) : { valid: false, errors: [] };
+  const validated = nfeBlock && protocolBlock ? buildProcessedNfeArtifact({ signedXml: nfeBlock, protocolXml: protocolBlock, expectedEnvironment }) : { valid: false, errors: [] };
   if (!validated.valid) errors.push(...(validated.errors || []).map((entry) => ({ ...entry, code: `AV-NFE-DANFE-${entry.code}` })));
   const info = tagBlock(nfeBlock, 'infNFe');
   const ide = tagBlock(info, 'ide');
@@ -138,7 +138,6 @@ function parseProcessedNfe(value) {
     additional: { taxpayer: tagValue(additional, 'infCpl'), taxAuthority: tagValue(additional, 'infAdFisco') }, items,
   };
   if (data.model && data.model !== '55') errors.push(error('AV-NFE-DANFE-MODEL', 'processedXml.mod', 'Este gerador aceita somente NF-e modelo 55.'));
-  if (data.environment && data.environment !== '2') errors.push(error('AV-NFE-DANFE-ENVIRONMENT', 'processedXml.tpAmb', 'O piloto gera DANFE somente para homologação.'));
   if (!data.number || !data.series || !data.nature || !data.issueDate) errors.push(error('AV-NFE-DANFE-IDENTIFICATION', 'processedXml.ide', 'Número, série, natureza e emissão são obrigatórios no DANFE.'));
   if (!data.issuer.name || digits(data.issuer.document).length !== 14 || !data.issuer.address.street || !data.issuer.address.city || !data.issuer.address.state) errors.push(error('AV-NFE-DANFE-ISSUER', 'processedXml.emit', 'A identificação e o endereço do emitente estão incompletos.'));
   if (!data.recipient.name || !data.recipient.document || !data.recipient.address.street || !data.recipient.address.city || !data.recipient.address.state) errors.push(error('AV-NFE-DANFE-RECIPIENT', 'processedXml.dest', 'A identificação e o endereço do destinatário estão incompletos.'));
@@ -397,8 +396,8 @@ export function nfeDanfeFileName(accessKey) {
   return /^\d{44}$/.test(normalized) ? `danfe-nfe-${normalized}.pdf` : 'danfe-nfe.pdf';
 }
 
-export function buildNfeDanfe({ processedXml, expectedAccessKey, sampleMode = false } = {}) {
-  const parsed = parseProcessedNfe(processedXml);
+export function buildNfeDanfe({ processedXml, expectedAccessKey, expectedEnvironment, sampleMode = false } = {}) {
+  const parsed = parseProcessedNfe(processedXml, expectedEnvironment);
   const errors = [...parsed.errors];
   if (expectedAccessKey && parsed.data.accessKey && digits(expectedAccessKey) !== parsed.data.accessKey) errors.push(error('AV-NFE-DANFE-EXPECTED-KEY', 'expectedAccessKey', 'O procNFe não corresponde à chave esperada.'));
   if (errors.length) return { valid: false, errors, pdf: new Uint8Array(), fileName: '', pageCount: 0, accessKey: parsed.data.accessKey || '', sampleMode: Boolean(sampleMode), xmlReturned: false };
@@ -416,5 +415,5 @@ export function buildNfeDanfe({ processedXml, expectedAccessKey, sampleMode = fa
     return commands;
   });
   extraChunks.forEach((lines,index)=>{const commands=[];drawAdditionalPage(commands,parsed.data,lines,chunks.length+index+1,pageCount,Boolean(sampleMode));pageCommands.push(commands);});
-  return { valid: true, errors: [], pdf: buildPdf(pageCommands), fileName: nfeDanfeFileName(parsed.data.accessKey), pageCount, accessKey: parsed.data.accessKey, protocolNumber: parsed.data.protocolNumber, sampleMode: Boolean(sampleMode), xmlReturned: false };
+  return { valid: true, errors: [], pdf: buildPdf(pageCommands), fileName: nfeDanfeFileName(parsed.data.accessKey), pageCount, accessKey: parsed.data.accessKey, protocolNumber: parsed.data.protocolNumber, environment: parsed.data.environment === '1' ? 'producao' : 'homologacao', sampleMode: Boolean(sampleMode), xmlReturned: false };
 }

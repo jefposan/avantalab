@@ -51,7 +51,7 @@ function expectedDraftDigest(draft) {
   });
 }
 
-export function validateCommercialNfeSigningSource(data, expectedVersion) {
+export function validateCommercialNfeSigningSource(data, expectedVersion, environment = 'homologacao') {
   const draft = data?.draft;
   if(draft?.totalsSnapshot?.pendingFiscalRevision===true)return issue('AV-NFE-SAVED-PENDING','operationNature','A revisão foi salva com pendências. Abra a nota e use Salvar e emitir para validar os dados antes do envio.');
   const emission = data?.emission;
@@ -59,7 +59,7 @@ export function validateCommercialNfeSigningSource(data, expectedVersion) {
   const preparation = data?.preparationPayload;
   if (!draft || !emission || !reservation || !preparation) return issue('AV-NFE-SIGNING-NOT-FOUND', 'emission', 'A preparação fiscal numerada não foi localizada nesta empresa.');
   if (emission.version !== expectedVersion) return issue('AV-NFE-SIGNING-CONFLICT', 'expectedVersion', 'A emissão foi alterada; atualize a Central Fiscal antes de continuar.');
-  if (emission.documentType !== 'nfe' || emission.model !== '55' || emission.environment !== 'homologacao') return issue('AV-NFE-SIGNING-DOCUMENT', 'documentType', 'Esta preparação de assinatura aceita somente NF-e modelo 55 em homologação.');
+  if (emission.documentType !== 'nfe' || emission.model !== '55' || !['homologacao', 'producao'].includes(environment) || emission.environment !== environment) return issue('AV-NFE-SIGNING-DOCUMENT', 'documentType', 'A preparação de assinatura exige NF-e modelo 55 no ambiente configurado.');
   if (emission.state !== 'number_reserved') return issue('AV-NFE-SIGNING-STATE', 'state', 'A NF-e precisa estar preparada e com a numeração reservada.');
   if (draft.documentType !== 'nfe' || draft.status !== 'pronto' || !fiscalDraftOriginReady(draft, { allowRejected: true })) return issue('AV-NFE-SIGNING-ORIGIN', 'draft', 'A origem precisa manter seu rascunho fiscal pronto.');
   if (emission.id !== draft.id || emission.draftId !== draft.id || emission.originId !== draft.operationId || emission.companyId !== draft.companyId || emission.establishmentId !== draft.issuerSnapshot?.establishmentId) return issue('AV-NFE-SIGNING-LINK', 'draft', 'O vínculo entre pedido, rascunho, emissor e emissão não pôde ser confirmado.');
@@ -70,8 +70,8 @@ export function validateCommercialNfeSigningSource(data, expectedVersion) {
   return null;
 }
 
-export async function reconstructCommercialNfeSigningDocument({ data, expectedVersion, context, idempotencyKey, fiscalRuleResolver, schemaValidator = validateNfeXmlAgainstXsd } = {}) {
-  const invalid = validateCommercialNfeSigningSource(data, expectedVersion);
+export async function reconstructCommercialNfeSigningDocument({ data, expectedVersion, context, idempotencyKey, fiscalRuleResolver, schemaValidator = validateNfeXmlAgainstXsd, environment = 'homologacao' } = {}) {
+  const invalid = validateCommercialNfeSigningSource(data, expectedVersion, environment);
   if (invalid) return { ok: false, errors: [invalid] };
   const rules = await fiscalRuleResolver({
     companyId: context.companyId,
@@ -95,7 +95,7 @@ export async function reconstructCommercialNfeSigningDocument({ data, expectedVe
     config: { ...mapped.config, documentStage: 'signature', testDocumentNumber: String(data.emission.number), testNumericCode: clean(data.preparationPayload.technicalNumericCode) },
     issuedAt,
   });
-  const generated = buildUnsignedNfeSpXml(input);
+  const generated = buildUnsignedNfeSpXml(input, { environment });
   if (!generated.valid || !generated.xml || !/^\d{44}$/.test(generated.accessKey)) return { ok: false, errors: generated.errors?.length ? generated.errors : [issue('AV-NFE-SIGNING-DOCUMENT', 'fiscal', 'O documento definitivo não pôde ser montado com a numeração reservada.')] };
   const schema = await schemaValidator(generated.xml);
   if (!schema?.executed || !schema?.valid) return { ok: false, errors: [issue('AV-NFE-SIGNING-XSD', 'fiscal', 'O documento definitivo não passou pela validação fiscal antes da assinatura.')] };
