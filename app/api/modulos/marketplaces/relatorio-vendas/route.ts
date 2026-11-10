@@ -21,7 +21,7 @@ export async function GET(request:Request){
   }catch(error){return managementFailure(error);}
 }
 
-/** Read-only provider consultation in small batches, separate from the report's first paint. */
+/** Reuses saved costs and fills unresolved orders without modifying the marketplace. */
 export async function POST(request:Request){
   try{
     const body=await request.json();

@@ -19,18 +19,20 @@ const hook=registerHooks({resolve(s,c,next){
 const {default:Settings}=await import('../../app/marketplaces/PriceCalculationSettings.tsx');
 const {default:Users}=await import('../../app/marketplaces/PriceUsersPanel.tsx');
 hook.deregister();
-const settings={percentages:{minimum:50,medium:70,ideal:90},theme:'profile',revision:1,storageReady:true,financeRevenueEnabled:true};
+const settings={percentages:{minimum:50,medium:70,ideal:90},theme:'profile',revision:1,storageReady:true,financeRevenueEnabled:true,financeRevenueBasis:'gross'};
 const request=async()=>{throw Error('SSR não deve solicitar dados')};
 test('configurações separam preços, aparência e faturamento',()=>{
   const html=renderToStaticMarkup(React.createElement(Settings,{companyId:'company',settings,request,onSaved(){}}));
-  assert.equal((html.match(/<fieldset /g)||[]).length,3);
+  assert.equal((html.match(/<fieldset /g)||[]).length,2);
   assert.match(html,/<legend>Preços de venda<\/legend>/);assert.match(html,/<legend>Aparência<\/legend>/);
-  assert.equal((html.match(/<input /g)||[]).length,4);assert.equal((html.match(/aria-pressed=/g)||[]).length,4);
+  assert.equal((html.match(/<input /g)||[]).length,4);assert.equal((html.match(/aria-pressed=/g)||[]).length,6);
   assert.doesNotMatch(html,/margem de lucro|Exemplo:|Percentuais sobre a referência/);
-  assert.match(html,/Salvar configurações/);
-  assert.match(html,/<legend>Faturamento<\/legend>/);
-  assert.match(html,/<input type="checkbox" aria-describedby="[^"]+" checked=""\/>/);
-  assert.match(html,/Enviar faturamento para as receitas do mês/);
+  assert.doesNotMatch(html,/Salvar configurações/);
+  assert.match(html,/<h3[^>]*>Faturamento<\/h3>/);
+  assert.match(html,/<input type="checkbox" role="switch" checked=""\/>/);
+  assert.match(html,/Enviar para receitas/);
+  assert.match(html,/<button[^>]*aria-pressed="true"[^>]*><span[^>]*>Bruto<\/span>/);
+  assert.match(html,/<button[^>]*aria-pressed="false"[^>]*><span[^>]*>Líquido<\/span>/);
   for (const financeRevenueEnabled of [false, undefined]) {
     const output=renderToStaticMarkup(React.createElement(Settings,{companyId:'company',settings:{...settings,financeRevenueEnabled},request,onSaved(){}}));
     const checkbox=output.match(/<input type="checkbox"[^>]*>/)[0];

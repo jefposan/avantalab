@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.397 -->
+<!-- ava-version: 3.2.0.398 -->
+
+> Revisão 3.2.0.398: sem impacto operacional no AvantaVendas. A revisão altera as configurações e as receitas do módulo Marketplaces.
 
 > Revisão 3.2.0.397: sem impacto operacional. Guarda fiscal com gravadores dedicados no Supabase.
 

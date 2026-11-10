@@ -185,14 +185,20 @@
 .priceSettingsSector:first-child { border-right:1px solid color-mix(in srgb,currentColor 18%,transparent);padding-right:16px; }
 .priceSettingsSector legend { margin-bottom:8px;padding:0;font-size:13px;font-weight:600; }
 .priceSettingsSector .help { margin:0;font-size:12px;line-height:1.35; }
-.priceSettingsRevenue { min-width:0;margin:0;padding:0;border:0; }
-.priceSettingsRevenue legend { padding:0;font-size:13px;font-weight:600; }
-.priceSettingsForm .priceSettingsRevenue label { display:flex;align-items:center;gap:8px;min-height:44px;font-size:13px; }
-.settingsModalScope .priceSettingsForm .priceSettingsRevenue input { width:16px;height:16px;min-height:0;padding:0;accent-color:var(--brand);flex:none; }
-.priceSettingsRevenue .help { margin:0;font-size:12px; }
-.priceSettingsFooter { display:flex;align-items:center;justify-content:space-between;gap:12px; }
-.priceSettingsFooter .help { margin:0;font-size:12px; }
-.priceSettingsFooter button { flex:0 0 auto; }
+.settingsTitle { display:flex;align-items:center;gap:12px; }
+.settingsTitle span { font-size:12px;font-weight:500; }
+.priceSettingsRevenue { display:flex;align-items:center;gap:12px;min-width:0;border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);padding-top:10px; }
+.priceSettingsRevenue h3 { font-size:13px;font-weight:600; }
+.priceSettingsForm .priceRevenueSwitch { position:relative;display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer; }
+.priceSettingsForm .priceRevenueSwitch input { position:absolute;opacity:0;inset:0;height:100%;margin:0;cursor:inherit; }
+.priceRevenueSwitch span { width:32px;height:18px;flex:none;border-radius:999px;background:#64748b;display:flex;align-items:center;padding:2px;box-sizing:border-box; }
+.priceRevenueSwitch span::before { content:'';width:14px;height:14px;border-radius:50%;background:white; }
+.priceRevenueSwitch input:checked + span { background:var(--brand); }
+.priceRevenueSwitch input:checked + span::before { margin-left:auto; }
+.priceRevenueSwitch input:focus-visible + span { outline:2px solid currentColor;outline-offset:3px; }
+.priceRevenueSwitch:has(input:disabled) { opacity:.55;cursor:default; }
+.priceRevenueChoices { margin-left:auto;display:flex;gap:6px; }
+@media(max-width:480px) { .priceSettingsRevenue { flex-wrap:wrap;gap:4px 10px; }.priceSettingsRevenue h3 { width:100%; } }
 .priceSettingsForm h3 { margin:0; }
 .priceSettingsForm label { display:grid;gap:6px;font-size:12px; }
 .priceSettingsForm :is(input,select) { width:100%;min-width:0;min-height:44px;border:1px solid #cbd5e1;border-radius:12px;padding:8px 12px;font:inherit;font-size:14px;background:#fff;color:#0f172a; }
@@ -214,7 +220,6 @@
   .settingsModalScope .priceSettingsSector:first-child { border:0;padding:0; }
   .settingsModalScope .userForm { grid-template-columns:1fr; }
   .settingsModalScope .userFormActions { justify-content:flex-end; }
-  .settingsModalScope .priceSettingsFooter { align-items:stretch;flex-direction:column; }
   .settingsModalScope .userList article > div:first-child { align-items:flex-start;flex-direction:column;gap:2px; }
 }
 .page .marketplaceShortcuts { position:fixed;left:max(24px,env(safe-area-inset-left));right:max(24px,env(safe-area-inset-right));bottom:calc(max(24px,env(safe-area-inset-bottom)) + var(--marketplace-footer-visible,0px));z-index:4100;display:flex;align-items:center;justify-content:space-between;gap:16px;pointer-events:none; }

@@ -8,13 +8,32 @@ import {objectValue,uuidIsValid} from './listing-model';
 import {reportPeriod,type ReportFilters} from '../sales-report';
 import {allocateFreight,emptyFinancialMonths,magaluFinancial,mlFees,mlSellerFreight,toCents,type FinancialValue,type FinancialEntry} from '../sales-financial';
 
-// Read-through optimization only: response carries the totals, so serverless instance changes cannot lose the result.
-// Cache is bounded, company/account/order/revision-scoped; no provider tokens, raw orders or buyer details.
-const cache=new Map<string,{expires:number;value:FinancialValue}>();
-const financialKey=(companyId:string,row:Record<string,unknown>)=>{const snapshot=objectValue(row.snapshot);return JSON.stringify([companyId,row.connection_id,row.id,snapshot.providerUpdatedAt||row.updated_at,snapshot.total,row.status,snapshot.shipmentId]);};
-export function cachedReportFinancial(companyId:string,row:Record<string,unknown>):FinancialValue|null{const saved=cache.get(financialKey(companyId,row));return saved&&saved.expires>Date.now()?saved.value:null;}
-const ongoing=new Map<string,Promise<FinancialValue>>();
-function remember(key:string,value:FinancialValue){if(cache.size>=2000)cache.delete(cache.keys().next().value!);cache.set(key,{expires:Date.now()+(value.net===null?60_000:60*60_000),value});return value;}
+type FinancialRow = Record<string, unknown>;
+type StoredFinancial = { revision: string; value: FinancialValue; nextAttemptAt: number };
+const selection = 'id,provider,connection_id,provider_order_id,status,updated_at,snapshot';
+const ongoing = new Map<string, Promise<FinancialValue>>();
+const unavailableRpc = (code?: string) => code === 'PGRST202' || code === '42883';
+
+export async function readStoredFinancial(db: SupabaseClient, companyId: string, ids: string[]) {
+  const bySale = new Map<string, StoredFinancial>();
+  if (!ids.length) return bySale;
+  const { data, error } = await db.rpc('marketplace_read_sale_financial', { p_empresa: companyId, p_sales: ids })
+    .abortSignal(AbortSignal.timeout(5_000));
+  if (error && !unavailableRpc(error.code)) console.error('marketplace_financial_read', error.code);
+  for (const row of data || []) {
+    bySale.set(row.sale_id, {
+      revision: row.revision,
+      nextAttemptAt: Date.parse(row.next_attempt_at ?? ''),
+      value: { fees: row.fees, freight: row.freight, adjustments: row.adjustments, net: row.net, ...(row.issue ? { issue: row.issue } : {}) },
+    });
+  }
+  return bySale;
+}
+
+export function sameFinancialRevision(saved: StoredFinancial | undefined, revision: unknown) {
+  return saved && saved.revision === revision ? saved : undefined;
+}
+
 const pending=(issue:string):FinancialValue=>({fees:null,freight:null,adjustments:0,net:null,issue});
 function safeIssue(error:unknown):string{
   if(!process.env.MARKETPLACE_SECRETS_KEY)return 'A chave de integração não está configurada neste ambiente.';
@@ -62,33 +81,72 @@ async function readFinancial(db:SupabaseClient,companyId:string,row:Record<strin
   }
   throw Error('financial_limit');
 }
-export async function loadFinancialBatch(db:SupabaseClient,companyId:string,year:number,filters:ReportFilters,cursor:string){
-  if(cursor&&!uuidIsValid(cursor))throw new MarketplaceError(400,'invalid_cursor','Consulta financeira inválida.');
-  const months=emptyFinancialMonths(),entries:FinancialEntry[]=[];
-  if(filters.provider==='direct'||filters.warehouseId&&filters.warehouseId!=='unassigned')return{months,entries,cursor:null,issues:[]};
-  const query=db.from('marketplace_sales').select('id,provider,connection_id,provider_order_id,status,updated_at,snapshot').eq('empresa_id',companyId).in('provider',filters.provider?[filters.provider]:['mercado_livre','magalu']).in('status',['paid','confirmed']).gte('snapshot->>soldAt',`${year-1}-12-31`).lt('snapshot->>soldAt',`${year+1}-01-02`).order('id').limit(4);
-  if(filters.accountId)query.eq('connection_id',filters.accountId);
-  if(cursor)query.gt('id',cursor);
-  const {data,error}=await query.abortSignal(AbortSignal.timeout(8000));
-  if(error)throw new MarketplaceError(503,'financial_unavailable','Não foi possível consultar os custos das vendas.');
-  const rows=(data||[]).slice(0,3),deadline=Date.now()+23_000,issues=new Set<string>();
-  await Promise.all(rows.map(async raw=>{
-    const row=raw as Record<string,unknown>,snapshot=objectValue(row.snapshot),period=reportPeriod(String(snapshot.soldAt||''));
-    if(!period||period.year!==year||snapshot.currency!=='BRL'||row.provider==='mercado_livre'&&row.status!=='paid')return;
-    const key=financialKey(companyId,row);
-    const saved=cache.get(key);
-    let value=saved&&saved.expires>Date.now()?saved.value:undefined;
-    if(!value){
-      let promise=ongoing.get(key);
-      if(!promise){promise=readFinancial(db,companyId,row,deadline).catch(error=>pending(safeIssue(error))).then(value=>remember(key,value));ongoing.set(key,promise);promise.finally(()=>ongoing.delete(key));}
-      value=await promise;
+async function refreshFinancial(db: SupabaseClient, companyId: string, row: FinancialRow, deadline: number) {
+  const key = JSON.stringify([companyId, row.id, row.updated_at]);
+  const running = ongoing.get(key);
+  if (running) return running;
+  const work = (async () => {
+    const value = await readFinancial(db, companyId, row, deadline).catch(error => pending(safeIssue(error)));
+    const { error, data } = await db.rpc('marketplace_save_sale_financial', {
+      p_empresa: companyId, p_sale: row.id, p_revision: row.updated_at,
+      p_fees: value.fees, p_freight: value.freight, p_adjustments: value.adjustments, p_net: value.net, p_issue: value.issue ?? null,
+    }).abortSignal(AbortSignal.timeout(5_000));
+    if (error && !unavailableRpc(error.code)) console.error('marketplace_financial_save', error.code);
+    return data === false ? pending('O pedido mudou durante a consulta. Os custos serão consultados novamente.') : value;
+  })();
+  ongoing.set(key, work);
+  try { return await work; }
+  finally { ongoing.delete(key); }
+}
+
+export async function processPendingRevenueFinancial(db: SupabaseClient) {
+  const { data, error } = await db.rpc('marketplace_claim_sale_financial').abortSignal(AbortSignal.timeout(8_000));
+  if (error) {
+    if (!unavailableRpc(error.code)) console.error('marketplace_financial_claim', error.code);
+    return;
+  }
+  const deadline = Date.now() + 28_000;
+  await Promise.all((data ?? []).map((row: FinancialRow) => refreshFinancial(db, String(row.empresa_id), row, deadline)));
+}
+
+export async function loadFinancialBatch(db: SupabaseClient, companyId: string, year: number, filters: ReportFilters, cursor: string) {
+  if (cursor && !uuidIsValid(cursor)) throw new MarketplaceError(400, 'invalid_cursor', 'Consulta financeira inválida.');
+  const months = emptyFinancialMonths(), entries: FinancialEntry[] = [];
+  if (filters.provider === 'direct' || filters.warehouseId && filters.warehouseId !== 'unassigned') return { months, entries, cursor: null, issues: [] };
+  const pageSize = 25, deadline = Date.now() + 21_000;
+  const query = db.from('marketplace_sales').select(selection).eq('empresa_id', companyId)
+    .in('provider', filters.provider ? [filters.provider] : ['mercado_livre', 'magalu']).in('status', ['paid', 'confirmed'])
+    .gte('snapshot->>soldAt', `${year - 1}-12-31`).lt('snapshot->>soldAt', `${year + 1}-01-02`).order('id').limit(pageSize + 1);
+  if (filters.accountId) query.eq('connection_id', filters.accountId);
+  if (cursor) query.gt('id', cursor);
+  const { data, error } = await query.abortSignal(AbortSignal.timeout(8_000));
+  if (error) throw new MarketplaceError(503, 'financial_unavailable', 'Não foi possível consultar os custos das vendas.');
+  const rows = (data || []).slice(0, pageSize);
+  const saved = await readStoredFinancial(db, companyId, rows.map(row => row.id));
+  const issues = new Set<string>();
+  const tasks: { row: FinancialRow; month: number; stored?: FinancialValue }[] = [];
+  let consumed = 0, fetches = 0;
+  for (const row of rows) {
+    const snapshot = objectValue(row.snapshot), period = reportPeriod(String(snapshot.soldAt || ''));
+    if (!period || period.year !== year || snapshot.currency !== 'BRL' || !(toCents(snapshot.total) ?? 0) || (row.provider === 'mercado_livre' && row.status !== 'paid')) {
+      consumed++;
+      continue;
     }
-    entries.push({id:String(row.id),revision:String(row.updated_at),value});
-    const month=months[period.month-1];
-    if(value.fees!==null){month.fees+=value.fees;month.feeOrders++;}
-    if(value.freight!==null){month.freight+=value.freight;month.freightOrders++;}
-    if(value.net!==null){month.net+=value.net;month.adjustments+=value.adjustments;month.netOrders++;}
-    if(value.issue)issues.add(value.issue);
-  }));
-  return{months,entries,cursor:data&&data.length>3?String(rows.at(-1)!.id):null,issues:[...issues].slice(0,3)};
+    const stored = sameFinancialRevision(saved.get(row.id), row.updated_at);
+    const reusable = stored && (stored.value.net !== null || stored.nextAttemptAt > Date.now()) ? stored.value : undefined;
+    if (!reusable && fetches >= 3) break;
+    if (!reusable) fetches++;
+    tasks.push({ row, month: period.month, stored: reusable });
+    consumed++;
+  }
+  const values = await Promise.all(tasks.map(async task => task.stored ?? refreshFinancial(db, companyId, task.row, deadline)));
+  for (const [index, task] of tasks.entries()) {
+    const value = values[index], month = months[task.month - 1];
+    entries.push({ id: String(task.row.id), revision: String(task.row.updated_at), value });
+    if (value.fees !== null) { month.fees += value.fees; month.feeOrders++; }
+    if (value.freight !== null) { month.freight += value.freight; month.freightOrders++; }
+    if (value.net !== null) { month.net += value.net; month.adjustments += value.adjustments; month.netOrders++; }
+    if (value.issue) issues.add(value.issue);
+  }
+  return { months, entries, cursor: data && consumed < data.length ? String(rows[consumed - 1].id) : null, issues: [...issues].slice(0, 3) };
 }

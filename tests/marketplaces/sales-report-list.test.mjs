@@ -12,7 +12,7 @@ new Function('require','module','exports',source)(name=>{
  if(name==='server-only')return{};
  if(name==='../sales-report')return model;
  if(name==='../sales-financial')return{toCents};
- if(name==='./sales-financial')return{cachedReportFinancial:()=>({fees:100,freight:200,net:700,adjustments:0})};
+ if(name==='./sales-financial')return{readStoredFinancial:async(_db,_company,ids)=>new Map(ids.map(id=>[id,{revision:'revision',value:{fees:100,freight:200,net:700,adjustments:0}}])),sameFinancialRevision:(stored,revision)=>stored?.revision===revision?stored:undefined};
  if(name==='./management-access')return{MarketplaceError};
  if(name==='./listing-model')return{objectValue:v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{}};
  if(name==='./sales-report')return{loadReportOptions:async(_db,company,filters)=>{assert.equal(company,'company');if(filters.accountId==='foreign')throw new MarketplaceError(400,'invalid_filter','Inválido');return{accounts:[{value:'account',label:'Adriano',provider:'mercado_livre'}],warehouses:[{value:'stock',label:'Saldão'}]};}};
@@ -30,7 +30,7 @@ test('lista inclui canceladas/estornadas, totaliza só confirmadas e não revela
  const db=database([online('1'),online('2','cancelled'),online('3','partially_refunded')],[direct]);
  const data=await loadMonthlySales(db,'company',2026,10,filters,1);
  assert.equal(data.total,4);assert.equal(data.confirmedOrders,2);assert.equal(data.confirmedGross,6000);
- assert.equal(data.rows.find(r=>r.id==='2').included,false);assert.equal(data.rows.find(r=>r.id==='direct').warehouse,'Saldão');
+ assert.equal(data.rows.find(r=>r.id==='2').included,false);assert.equal(data.rows.find(r=>r.id==='2').financial,null);assert.equal(data.rows.find(r=>r.id==='1').financial.net,700);assert.equal(data.rows.find(r=>r.id==='direct').warehouse,'Saldão');
  assert.ok(!JSON.stringify(data).includes('Never expose'));assert.ok(!JSON.stringify(data).includes('snapshot'));
  assert.equal(monthlySaleStatus('cancelled'),'Cancelada');assert.equal(monthlySaleStatus('partially_refunded'),'Estorno parcial');
 });

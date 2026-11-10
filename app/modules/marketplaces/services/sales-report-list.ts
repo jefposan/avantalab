@@ -1,7 +1,7 @@
 import 'server-only';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {loadReportOptions} from './sales-report';
-import {cachedReportFinancial} from './sales-financial';
+import {readStoredFinancial,sameFinancialRevision} from './sales-financial';
 import {aggregateSalesReport,reportPeriod,type ReportFilters,type ReportLine} from '../sales-report';
 import type {MonthlySaleRow,MonthlySalesPage} from '../sales-report-list';
 import {MarketplaceError} from './management-access';
@@ -34,7 +34,7 @@ export async function loadMonthlySales(db:SupabaseClient,companyId:string,year:n
         const line={date,provider,accountId,warehouseId,gross,units:items.reduce((n,item)=>n+item.quantity,0),status:String(row.status),currency:'BRL'};
         lines.push(line);
         const included=line.status==='paid'||line.status==='confirmed'&&['magalu','direct'].includes(provider);
-        rows.push({id:String(row.id),revision:String(row.updated_at),orderId:kind==='online'?String(row.provider_order_id):String(row.id),date,provider,account:kind==='online'?options.accounts.find(a=>a.value===accountId)?.label||'Conta indisponível':'Venda direta',warehouse:kind==='online'?'Origem não identificada':String(row.warehouse_name||options.warehouses.find(w=>w.value===warehouseId)?.label||'Estoque'),status:line.status,included,gross,units:line.units,items,financial:kind==='online'?cachedReportFinancial(companyId,row):null});
+        rows.push({id:String(row.id),revision:String(row.updated_at),orderId:kind==='online'?String(row.provider_order_id):String(row.id),date,provider,account:kind==='online'?options.accounts.find(a=>a.value===accountId)?.label||'Conta indisponível':'Venda direta',warehouse:kind==='online'?'Origem não identificada':String(row.warehouse_name||options.warehouses.find(w=>w.value===warehouseId)?.label||'Estoque'),status:line.status,included,gross,units:line.units,items,financial:null});
       }
       if(!data||data.length<500)return;
     }
@@ -45,5 +45,8 @@ export async function loadMonthlySales(db:SupabaseClient,companyId:string,year:n
   rows.sort((a,b)=>Date.parse(b.date)-Date.parse(a.date)||a.id.localeCompare(b.id));
   const pageSize=25,total=rows.length,summary=aggregateSalesReport(lines,year,filters)[month-1];
   const actualPage=Math.min(page,Math.max(1,Math.ceil(total/pageSize)));
-  return{rows:rows.slice((actualPage-1)*pageSize,actualPage*pageSize),total,page:actualPage,pageSize,confirmedGross:summary.gross,confirmedOrders:summary.orders,missingGross:summary.missingGross};
+  const visible = rows.slice((actualPage - 1) * pageSize, actualPage * pageSize);
+  const costs = await readStoredFinancial(db, companyId, visible.filter(row => row.provider !== 'direct' && row.included).map(row => row.id));
+  for (const row of visible) row.financial = sameFinancialRevision(costs.get(row.id), row.revision)?.value ?? null;
+  return { rows: visible, total, page: actualPage, pageSize, confirmedGross: summary.gross, confirmedOrders: summary.orders, missingGross: summary.missingGross };
 }

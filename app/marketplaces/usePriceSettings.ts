@@ -16,6 +16,6 @@ export default function usePriceSettings(companyId: string, request: PriceSettin
     }).catch(error => { if (!controller.signal.aborted) setState({ companyId, settings: null, error: error instanceof Error ? error.message : 'Não foi possível carregar os percentuais.' }); });
     return () => controller.abort();
   }, [companyId, request, reload]);
-  const accept = useCallback((settings: PriceSettings) => setState(current => current.companyId === companyId ? { companyId, settings, error: '' } : current), [companyId]);
+  const accept = useCallback((settings: PriceSettings) => setState(current => current.companyId === companyId ? { companyId, settings: { ...settings, profileDark: current.settings?.profileDark, profileColor: current.settings?.profileColor }, error: '' } : current), [companyId]);
   return { settings: state.companyId === companyId ? state.settings : null, error: state.companyId === companyId ? state.error : '', refresh: () => { setState({ companyId, settings: null, error: '' }); setReload(value => value + 1); }, accept };
 }

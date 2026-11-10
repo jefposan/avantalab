@@ -1,3 +1,8 @@
+## 3.2.0.398 — Marketplaces: salvar configurações automaticamente e integrar receitas históricas
+
+- Salva preços, aparência e faturamento automaticamente. A linha de faturamento reúne a chave de envio e a escolha entre Bruto e Líquido.
+- Integra vendas confirmadas em todas as competências disponíveis, preserva lançamentos ao desligar e reaproveita os custos já confirmados por pedido. No modo Líquido, o mês aguarda a confirmação de todos os custos.
+
 ## 3.2.0.397 — Vendas: mostrar o ambiente real no painel fiscal
 
 - Exibir o ambiente e a prontidão informados pelo servidor no painel do certificado.

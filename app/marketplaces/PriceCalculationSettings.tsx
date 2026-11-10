@@ -1,51 +1,127 @@
 'use client';
-import { useId, useState, type FormEvent } from 'react';
-import { validPricePercentages, validPriceSettings, type PriceSettings, type PriceTheme } from '@/app/modules/marketplaces/price-settings';
+
+import { useEffect, useId, useRef, useState } from 'react';
+import { validPricePercentages, validPriceSettings, type FinanceRevenueBasis, type PriceSettings, type PriceTheme } from '@/app/modules/marketplaces/price-settings';
+import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
 import { priceSettingsPath, type PriceSettingsRequest } from './usePriceSettings';
 import styles from './marketplaces.module.css';
-import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
-export default function PriceCalculationSettings({ companyId, settings, request, onSaved, onReload }: { companyId: string; settings: PriceSettings; request: PriceSettingsRequest; onSaved: (settings: PriceSettings) => void; onReload?: () => void }) {
-  const [values, setValues] = useState(Object.fromEntries(Object.entries(settings.percentages).map(([key, value]) => [key, String(value).replace('.', ',')])));
+
+export type SettingsSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+const percentageFields = [['minimum', 'Mínimo (%)'], ['medium', 'Médio (%)'], ['ideal', 'Ideal (%)']] as const;
+const themeChoices = [['profile', 'Padrão do perfil'], ['light', 'Claro'], ['dark', 'Noturno'], ['system', 'Automático']] as const;
+const revenueChoices = [['gross', 'Bruto'], ['net', 'Líquido']] as const;
+
+export default function PriceCalculationSettings({ companyId, settings, request, onSaved, onReload, onStatus }: {
+  companyId: string;
+  settings: PriceSettings;
+  request: PriceSettingsRequest;
+  onSaved: (settings: PriceSettings) => void;
+  onReload: () => void;
+  onStatus: (status: SettingsSaveStatus) => void;
+}) {
+  const [values, setValues] = useState(() => ({
+    minimum: String(settings.percentages.minimum).replace('.', ','),
+    medium: String(settings.percentages.medium).replace('.', ','),
+    ideal: String(settings.percentages.ideal).replace('.', ','),
+  }));
   const [theme, setTheme] = useState<PriceTheme>(settings.theme);
-  const [financeRevenueEnabled, setFinanceRevenueEnabled] = useState(settings.financeRevenueEnabled ?? true);
-  const revenueHelpId = useId();
-  const [saving, setSaving] = useState(false), [error, setError] = useState('');
+  const [financeRevenueEnabled, setRevenueEnabled] = useState(settings.financeRevenueEnabled);
+  const [financeRevenueBasis, setRevenueBasis] = useState<FinanceRevenueBasis | undefined>(settings.financeRevenueBasis);
+  const [error, setError] = useState<{ message: string; conflict: boolean } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const mounted = useRef(false);
   const errorId = useId();
-  const [invalidPercentages, setInvalidPercentages] = useState(false);
-  async function save(event: FormEvent) {
-    event.preventDefault(); if (saving || !settings.storageReady) return;
-    const percentages = { minimum: Number(values.minimum.replace(',', '.')), medium: Number(values.medium.replace(',', '.')), ideal: Number(values.ideal.replace(',', '.')) };
-    if (!validPricePercentages(percentages)) { setInvalidPercentages(true); setError('Informe percentuais de 0,01% a 1.000%, com até duas casas decimais, em ordem: mínimo ≤ médio ≤ ideal.'); event.currentTarget.querySelector<HTMLInputElement>('input')?.focus(); return; }
-    setSaving(true); setError(''); setInvalidPercentages(false);
-    try {
-      const body = await request(priceSettingsPath, { method: 'PUT', body: JSON.stringify({ empresaId: companyId, percentages, theme, revision: settings.revision, ...(settings.financeRevenueEnabled === undefined ? {} : { financeRevenueEnabled }) }), signal: AbortSignal.timeout(20_000) });
-      const saved = body && typeof body === 'object' && 'settings' in body ? body.settings : null;
-      if (!validPriceSettings(saved)) throw new Error('A resposta das configurações é inválida. Recarregue para conferir os valores salvos.');
-      onSaved(saved);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível salvar as configurações.'); }
-    finally { setSaving(false); }
-  }
-  return <form onSubmit={save} className={styles.priceSettingsForm} aria-label="Preços, aparência e faturamento">
+  const minimum = Number(values.minimum.replace(',', '.'));
+  const medium = Number(values.medium.replace(',', '.'));
+  const ideal = Number(values.ideal.replace(',', '.'));
+  const invalid = !validPricePercentages({ minimum, medium, ideal });
+  const { revision, storageReady, percentages } = settings;
+  const changed = (!invalid && (minimum !== percentages.minimum || medium !== percentages.medium || ideal !== percentages.ideal))
+    || theme !== settings.theme || financeRevenueEnabled !== settings.financeRevenueEnabled
+    || financeRevenueBasis !== settings.financeRevenueBasis;
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+
+  useEffect(() => {
+    onStatus(error ? 'error' : (saving || changed) ? 'saving' : saved && !invalid ? 'saved' : 'idle');
+  }, [changed, error, invalid, onStatus, saved, saving]);
+
+  useEffect(() => {
+    if (!changed || saving || error || !storageReady) return;
+    const timer = window.setTimeout(async () => {
+      setSaving(true);
+      try {
+        const body = await request(priceSettingsPath, {
+          method: 'PUT',
+          body: JSON.stringify({
+            empresaId: companyId, revision, theme, financeRevenueEnabled, financeRevenueBasis,
+            percentages: invalid ? percentages : { minimum, medium, ideal },
+          }),
+          signal: AbortSignal.timeout(20_000),
+        });
+        const next = (body as { settings?: unknown })?.settings;
+        if (!validPriceSettings(next)) throw new Error('A resposta das configurações é inválida. Recarregue para conferir.');
+        if (!mounted.current) return;
+        onSaved(next);
+        setSaved(true);
+      } catch (reason) {
+        if (mounted.current) setError({
+          message: reason instanceof Error ? reason.message : 'Não foi possível salvar as configurações.',
+          conflict: typeof reason === 'object' && reason !== null && 'status' in reason && reason.status === 409,
+        });
+      } finally {
+        if (mounted.current) setSaving(false);
+      }
+    }, 450);
+    return () => window.clearTimeout(timer);
+  }, [changed, companyId, error, financeRevenueBasis, financeRevenueEnabled, ideal, invalid, medium, minimum, onSaved, percentages, request, revision, saving, storageReady, theme]);
+
+  return <form onSubmit={event => event.preventDefault()} className={styles.priceSettingsForm} aria-label="Preços, aparência e faturamento">
     <div className={styles.priceSettingsSectors}>
-    <fieldset className={styles.priceSettingsSector}><legend>Preços de venda</legend>
-    <div className={styles.pricePercentages}>{(['minimum', 'medium', 'ideal'] as const).map((key, index) => <label key={key}>{['Mínimo (%)', 'Médio (%)', 'Ideal (%)'][index]}<input aria-label={['Percentual mínimo', 'Percentual médio', 'Percentual ideal'][index]} aria-invalid={invalidPercentages || undefined} aria-describedby={invalidPercentages ? errorId : undefined} inputMode="decimal" value={values[key]} onChange={event => setValues(current => ({ ...current, [key]: event.target.value }))} disabled={saving || !settings.storageReady} required maxLength={8} /></label>)}</div>
-    </fieldset>
-    <fieldset className={styles.priceSettingsSector}><legend>Aparência</legend><div className={styles.priceThemeChoices}>{([['profile', 'Padrão do perfil'], ['light', 'Claro'], ['dark', 'Noturno'], ['system', 'Automático']] as const).map(([mode, label]) => <BotaoAcaoCompacto key={mode} aria-pressed={theme === mode} disabled={saving || !settings.storageReady} onClick={() => setTheme(mode as PriceTheme)}>{label}</BotaoAcaoCompacto>)}</div><p className={styles.help}>Automático segue o tema do aparelho, sem horário fixo.</p></fieldset>
+      <fieldset className={styles.priceSettingsSector} disabled={!storageReady}>
+        <legend>Preços de venda</legend>
+        <div className={styles.pricePercentages}>
+          {percentageFields.map(([key, label]) => <label key={key}>{label}
+            <input aria-invalid={invalid || undefined} aria-describedby={invalid ? errorId : undefined}
+              inputMode="decimal" value={values[key]} maxLength={8} onChange={event => {
+                const value = event.target.value;
+                setValues(current => ({ ...current, [key]: value }));
+              }} />
+          </label>)}
+        </div>
+        {invalid && <p id={errorId} className={styles.help}>Use de 0,01% a 1.000%, com até duas casas decimais, em ordem crescente.</p>}
+      </fieldset>
+      <fieldset className={styles.priceSettingsSector} disabled={!storageReady}>
+        <legend>Aparência</legend>
+        <div className={styles.priceThemeChoices}>
+          {themeChoices.map(([mode, label]) => <BotaoAcaoCompacto key={mode} aria-pressed={theme === mode} onClick={() => setTheme(mode)}>{label}</BotaoAcaoCompacto>)}
+        </div>
+        <p className={styles.help}>Automático segue o tema do aparelho, sem horário fixo.</p>
+      </fieldset>
     </div>
-    <fieldset className={styles.priceSettingsRevenue}>
-      <legend>Faturamento</legend>
-      <label><input type="checkbox" checked={financeRevenueEnabled}
-        disabled={saving || settings.financeRevenueEnabled === undefined}
-        aria-describedby={revenueHelpId}
-        onChange={event => setFinanceRevenueEnabled(event.target.checked)} />
-        Enviar faturamento para as receitas do mês
+    <section className={styles.priceSettingsRevenue} aria-labelledby="marketplace-revenue-title">
+      <h3 id="marketplace-revenue-title">Faturamento</h3>
+      <label className={styles.priceRevenueSwitch}>
+        <input type="checkbox" role="switch" checked={financeRevenueEnabled ?? true} disabled={financeRevenueEnabled === undefined}
+          onChange={event => setRevenueEnabled(event.target.checked)} />
+        <span aria-hidden="true" />
+        Enviar para receitas
       </label>
-      <p className={styles.help} id={revenueHelpId}>{settings.financeRevenueEnabled === undefined
-        ? 'O envio estará disponível após a atualização do banco.'
-        : 'O total bruto aparece na Gestão como “Vendas Mkt Places”. Desligar o envio preserva os valores já lançados.'}</p>
-    </fieldset>
-    {!settings.storageReady && <p role="alert">A instalação das configurações no banco está pendente. Os percentuais padrão 50%, 70% e 90% continuam ativos; salvar só será liberado após instalar a migração.</p>}
-    {error && <div role="alert"><p id={errorId}>{error}</p>{onReload && <><BotaoAcaoCompacto disabled={saving} onClick={onReload}>Recarregar configurações</BotaoAcaoCompacto><p className={styles.help}>Recarregar descarta os campos não salvos e busca os valores atuais.</p></>}</div>}
-    <div className={styles.priceSettingsFooter}><p className={styles.help}>Web e AvantaPreços · lotes salvos preservados.</p><BotaoAcaoCompacto variante="primario" type="submit" disabled={saving || !settings.storageReady}>{saving ? 'Salvando…' : 'Salvar configurações'}</BotaoAcaoCompacto></div>
+      <div className={styles.priceRevenueChoices} role="group" aria-label="Valor enviado para as receitas">
+        {revenueChoices.map(([basis, label]) => <BotaoAcaoCompacto key={basis}
+          aria-pressed={(financeRevenueBasis ?? 'gross') === basis}
+          disabled={!financeRevenueEnabled || financeRevenueBasis === undefined}
+          onClick={() => setRevenueBasis(basis)}>{label}</BotaoAcaoCompacto>)}
+      </div>
+    </section>
+    {!storageReady && <p role="alert">As configurações poderão ser salvas após a atualização do banco.</p>}
+    {error && <div role="alert"><p>{error.message}</p>
+      {error.conflict ? <BotaoAcaoCompacto onClick={onReload}>Recarregar configurações</BotaoAcaoCompacto>
+        : <BotaoAcaoCompacto onClick={() => setError(null)}>Tentar novamente</BotaoAcaoCompacto>}
+    </div>}
   </form>;
 }

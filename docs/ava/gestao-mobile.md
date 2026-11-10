@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.397 -->
+<!-- ava-version: 3.2.0.398 -->
+
+> Revisão 3.2.0.398: Em Receitas do mês, Vendas Mkt Places é a receita automática de cada competência com vendas disponíveis. O valor pode ser bruto ou líquido, conforme a escolha nas configurações de Marketplaces na Gestão Web. Quando faltam custos no modo Líquido, o mês aguarda a confirmação.
 
 > Revisão 3.2.0.397: sem impacto operacional. Guarda fiscal com gravadores dedicados no Supabase.
 

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.397 -->
+<!-- ava-version: 3.2.0.398 -->
+
+> Revisão 3.2.0.398: Em Marketplaces → Configurações, preços, aparência e faturamento são salvos automaticamente. Em Faturamento, a chave Enviar para receitas começa ligada, com Bruto selecionado. Líquido usa custos confirmados; enquanto faltarem taxas ou frete, o valor já lançado é preservado. Todas as competências com vendas confirmadas disponíveis entram como Vendas Mkt Places em Receitas do mês. Desligar o envio preserva o que foi lançado; religar atualiza as competências disponíveis. O Resultado de Vendas reaproveita custos confirmados e consulta os pedidos novos ou pendentes.
 
 > Revisão 3.2.0.397: sem impacto operacional. Guarda fiscal com gravadores dedicados no Supabase.
 

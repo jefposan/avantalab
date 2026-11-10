@@ -1,5 +1,6 @@
 import { after, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { processPendingRevenueFinancial } from '@/app/modules/marketplaces/services/sales-financial';
 import { runMarketplaceWorker } from '@/app/modules/marketplaces/services/inventory-worker';
 
 export const runtime = 'nodejs';
@@ -20,6 +21,10 @@ export async function POST(request: Request) {
       const { error } = await db.rpc('marketplace_processar_receitas').abortSignal(AbortSignal.timeout(12_000));
       if (error && error.code !== 'PGRST202') console.error('marketplace_revenue_pending', error.code);
     } catch { console.error('marketplace_revenue_pending'); }
+  });
+  after(async () => {
+    try { await processPendingRevenueFinancial(db); }
+    catch { console.error('marketplace_financial_pending'); }
   });
   return NextResponse.json({ accepted: true }, { status: 202, headers: { 'Cache-Control': 'no-store' } });
 }

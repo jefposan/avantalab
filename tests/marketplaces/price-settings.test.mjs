@@ -54,11 +54,14 @@ test('serviço isola empresas, valida entradas, sinaliza migração/falha e prot
   const saved=await service.savePriceSettings(db,'a','actor',input);assert.equal(saved.revision,1);
   assert.equal((await service.readPriceSettings(db,'a')).theme,'system');assert.equal((await service.readPriceSettings(db,'b')).revision,0);
   assert.equal((await service.readPriceSettings(db,'b')).financeRevenueEnabled,true);
-  const disabled=await service.savePriceSettings(db,'a','actor',{...input,revision:1,financeRevenueEnabled:false});
+  const disabled=await service.savePriceSettings(db,'a','actor',{...input,revision:1,financeRevenueEnabled:false,financeRevenueBasis:'net'});
   assert.equal(disabled.financeRevenueEnabled,false);
+  assert.equal(disabled.financeRevenueBasis,'net');
   await service.savePriceSettings(db,'a','actor',{...input,revision:2});
   assert.equal((await service.readPriceSettings(db,'a')).financeRevenueEnabled,false,'um cliente antigo não religa a opção');
   await assert.rejects(service.savePriceSettings(db,'a','actor',{...input,revision:3,financeRevenueEnabled:'false'}),{code:'invalid_finance_revenue'});
+  assert.equal((await service.readPriceSettings(db,'a')).financeRevenueBasis,'net');
+  await assert.rejects(service.savePriceSettings(db,'a','actor',{...input,revision:3,financeRevenueBasis:'total'}),{code:'invalid_finance_revenue_basis'});
   db.oldSchema=true;assert.equal((await service.readPriceSettings(db,'a')).storageReady,true);
   db.oldSchema=false;
   await assert.rejects(service.savePriceSettings(db,'a','actor',input),{code:'price_settings_conflict'});

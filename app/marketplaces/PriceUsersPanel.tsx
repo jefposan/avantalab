@@ -5,7 +5,7 @@ import { supabase } from '@/app/lib/supabase';
 import CardExpandidoModal from '@/app/components/CardExpandidoModal';
 import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
 import { corTextoSobreFundo } from '@/app/lib/cores-avanta';
-import PriceCalculationSettings from './PriceCalculationSettings';
+import PriceCalculationSettings, { type SettingsSaveStatus } from './PriceCalculationSettings';
 import type { PriceSettings } from '@/app/modules/marketplaces/price-settings';
 import type { PriceSettingsRequest } from './usePriceSettings';
 import styles from './marketplaces.module.css';
@@ -15,6 +15,7 @@ type Draft = { nome: string; login: string; senha: string; can_edit_stock: boole
 const emptyDraft: Draft = { nome: '', login: '', senha: '', can_edit_stock: false, can_register_sales: false };
 
 export default function PriceUsersPanel({ companyId, onClose, settings, settingsError, onSettingsSaved, onReloadSettings, dark = false, brand = '#003E73', request }: { companyId: string; onClose: () => void; settings: PriceSettings | null; settingsError: string; onSettingsSaved: (settings: PriceSettings) => void; onReloadSettings: () => void; dark?: boolean; brand?: string; request?: PriceSettingsRequest }) {
+  const [settingsStatus, setSettingsStatus] = useState<SettingsSaveStatus>('idle');
   const [users, setUsers] = useState<PriceUser[]>([]);
   const [userPage, setUserPage] = useState(1);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
@@ -31,7 +32,7 @@ export default function PriceUsersPanel({ companyId, onClose, settings, settings
     if (!token) throw new Error('Sua sessão expirou. Entre novamente.');
     const response = await fetch(path, { ...options, cache: 'no-store', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.message || 'Não foi possível salvar as configurações.');
+    if (!response.ok) throw Object.assign(new Error(body.message || 'Não foi possível salvar as configurações.'), { status: response.status });
     return body;
   }, [request]);
 
@@ -100,10 +101,11 @@ export default function PriceUsersPanel({ companyId, onClose, settings, settings
     cancelEdit(); setUserPage(page => page + delta);
   }
 
-  return <CardExpandidoModal aberto rotulo="Configurações do AvantaPreços" onFechar={onClose}><div className={`${styles.settingsModalScope} ${dark ? styles.dark : ''}`} style={{ '--brand': brand, '--av-action-on-brand': corTextoSobreFundo(brand) } as CSSProperties}>
+  const close = () => { if (settingsStatus !== 'saving') onClose(); };
+  return <CardExpandidoModal aberto rotulo="Configurações do AvantaPreços" onFechar={close}><div className={`${styles.settingsModalScope} ${dark ? styles.dark : ''}`} style={{ '--brand': brand, '--av-action-on-brand': corTextoSobreFundo(brand) } as CSSProperties}>
     <section className={styles.userModal}>
-      <header className={styles.userModalHeader}><h2 id="price-users-title">Configurações</h2><BotaoAcaoCompacto variante="discreto" somenteIcone onClick={onClose} aria-label="Fechar configurações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></BotaoAcaoCompacto></header>
-      {settings ? <PriceCalculationSettings key={`${companyId}:${settings.revision}`} companyId={companyId} settings={settings} request={settingsRequest} onReload={onReloadSettings} onSaved={value => { onSettingsSaved(value); setMessage('Configurações salvas.'); }} /> : <div role={settingsError ? 'alert' : 'status'}>{settingsError || 'Carregando configurações…'}{settingsError && <BotaoAcaoCompacto onClick={onReloadSettings}>Tentar novamente</BotaoAcaoCompacto>}</div>}
+      <header className={styles.userModalHeader}><div className={styles.settingsTitle}><h2 id="price-users-title">Configurações</h2><span role="status">{settingsStatus === 'saving' ? 'Salvando…' : settingsStatus === 'saved' ? '✓ Salvo' : ''}</span></div><BotaoAcaoCompacto variante="discreto" somenteIcone disabled={settingsStatus === 'saving'} onClick={close} aria-label="Fechar configurações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></BotaoAcaoCompacto></header>
+      {settings ? <PriceCalculationSettings key={companyId} companyId={companyId} settings={settings} request={settingsRequest} onReload={onReloadSettings} onSaved={onSettingsSaved} onStatus={setSettingsStatus} /> : <div role={settingsError ? 'alert' : 'status'}>{settingsError || 'Carregando configurações…'}{settingsError && <BotaoAcaoCompacto onClick={onReloadSettings}>Tentar novamente</BotaoAcaoCompacto>}</div>}
       <section className={styles.priceUsersSector} aria-labelledby="price-users-section-title">
       <div className={styles.priceUsersHeading}><h3 id="price-users-section-title">Usuários da consulta <span>{users.length}</span></h3>{users.length > 1 && <nav aria-label="Páginas dos usuários" className={styles.priceUsersPagination}><BotaoAcaoCompacto somenteIcone aria-label="Usuário anterior" disabled={saving || loading || userEditDirty || userPage <= 1} onClick={() => changeUserPage(-1)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m15 6-6 6 6 6" /></svg></BotaoAcaoCompacto><span role="status">{userPage} de {users.length}</span><BotaoAcaoCompacto somenteIcone aria-label="Próximo usuário" disabled={saving || loading || userEditDirty || userPage >= users.length} onClick={() => changeUserPage(1)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg></BotaoAcaoCompacto></nav>}</div>
       <p id="price-user-edit-scope" className={styles.help}>{editing ? `Editando somente: ${editing.nome} (${editing.login})` : 'Novo usuário — as opções abaixo pertencem somente ao novo acesso.'}</p>
