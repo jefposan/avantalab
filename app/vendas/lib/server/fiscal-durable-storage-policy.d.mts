@@ -7,7 +7,7 @@ export type FiscalDurableStorageConfiguration = {
   privateAccess?: boolean;
   directBrowserAccess?: boolean;
   encryption?: { atRest?: boolean; inTransit?: boolean; mode?: 'provider_managed' | 'customer_managed' | string };
-  immutability?: { versioning?: boolean; writeOnce?: boolean; checksumAlgorithm?: string };
+  immutability?: { mode?: "independent_copy"; versioning?: boolean; writeOnce?: boolean; checksumAlgorithm?: string };
   signedRead?: { enabled?: boolean; serverSideOnly?: boolean; maxTtlSeconds?: number };
   backup?: { enabled?: boolean; encrypted?: boolean; immutable?: boolean; separateFailureDomain?: boolean; restoreTestedAt?: string; maxRestoreTestAgeDays?: number };
   retention?: { enforced?: boolean; legalHoldSupported?: boolean };

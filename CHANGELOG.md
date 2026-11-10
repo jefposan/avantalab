@@ -1,3 +1,8 @@
+## 3.2.0.393 — Vendas: restringir a gravação fiscal nos dois projetos Supabase
+
+- Usar identidades dedicadas na guarda e na cópia independente de XML e DANFE.
+- Aceitar versionamento por SHA-256 com cópia independente e política explícita.
+
 ## 3.2.0.392 — Vendas: integrar cópia fiscal em projeto Supabase independente
 
 - A guarda de produção confirma o armazenamento em dois projetos e permite restaurar os documentos com verificação de integridade.

@@ -102,3 +102,21 @@ test('restaura XML e DANFE a partir de outro projeto e rejeita cópia corrompida
     await assert.rejects(storage.restore(query));
   }
 });
+
+test('guarda de produção com versão lógica exige cópia independente e os dois gravadores dedicados', async () => {
+  const { createSupabaseFiscalBackup } = await import('../../app/vendas/lib/server/supabase-fiscal-backup.mjs');
+  const source = storageFixture();
+  const copy = storageFixture();
+  const primary = {
+    client: source.client, writer: { ...source.client }, bucket: 'avantalab-fiscal-private',
+    environment: 'production',
+    productionReadiness: { productionReady: true, configuration: { independentCopy: true } },
+  };
+  const options = {
+    primary, primaryUrl: 'https://primary.supabase.co', backupUrl: 'https://backup.supabase.co',
+    backupClient: copy.client, backupWriter: { ...copy.client }, backupBucket: 'avantalab-fiscal-private',
+  };
+  assert.equal((await createSupabaseFiscalBackup(options).inspectReadiness()).productionReady, true);
+  assert.equal((await createSupabaseFiscalBackup({ ...options, backupWriter: undefined }).inspectReadiness()).productionReady, false);
+  assert.equal((await createSupabaseFiscalBackup({ ...options, primary: { ...primary, writer: undefined } }).inspectReadiness()).productionReady, false);
+});

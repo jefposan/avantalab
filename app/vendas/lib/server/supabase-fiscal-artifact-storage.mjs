@@ -103,13 +103,13 @@ function receipt(bucket, key, stored, clock, reused) {
   };
 }
 
-export function createSupabaseFiscalArtifactStorage({ client, bucket: bucketInput, environment = 'local-lab', productionReadiness, clock = () => new Date().toISOString() } = {}) {
+export function createSupabaseFiscalArtifactStorage({ client, writer = client, bucket: bucketInput, environment = 'local-lab', productionReadiness, independentCopy = false, clock = () => new Date().toISOString() } = {}) {
   assertClient(client);
   const bucket = validateBucketName(bucketInput);
   const normalizedEnvironment = text(environment);
   if (!['local-lab', 'homologacao', 'production'].includes(normalizedEnvironment)) throw new TypeError('O ambiente do Storage fiscal não é permitido.');
   const productionReady = normalizedEnvironment === 'production' && productionReadiness?.productionReady === true;
-  const bucketApi = client.storage.from(bucket);
+  const bucketApi = writer.storage.from(bucket);
   let homologationReady = false;
   return Object.freeze({
     id: 'avantalab-supabase-fiscal-artifact-storage-v1',
@@ -128,7 +128,8 @@ export function createSupabaseFiscalArtifactStorage({ client, bucket: bucketInpu
       const warnings = [];
       const nativeVersioning = details.versioning_status === 'ENABLED';
       if (details.public !== false) errors.push({ code: 'AV-FISCAL-SUPABASE-BUCKET-PUBLIC', field: 'bucket.public', message: 'O bucket fiscal não pode ser público.' });
-      if (!nativeVersioning) {
+      const logicalVersioning = independentCopy && writer !== client;
+      if (!nativeVersioning && !logicalVersioning) {
         const issue = { code: 'AV-FISCAL-SUPABASE-BUCKET-VERSIONING', field: 'bucket.versioning', message: 'O versionamento nativo do bucket fiscal precisa estar ativo em produção.' };
         if (normalizedEnvironment === 'production') errors.push(issue);
         else warnings.push({ ...issue, code: 'AV-FISCAL-SUPABASE-BUCKET-VERSIONING-LAB', message: 'O Storage local não oferece versionamento nativo; o laboratório usa rota imutável e versão lógica SHA-256.' });
@@ -139,7 +140,7 @@ export function createSupabaseFiscalArtifactStorage({ client, bucket: bucketInpu
         && Number.isFinite(fileSizeLimit) && fileSizeLimit > 0 && fileSizeLimit <= MAX_ARTIFACT_BYTES
         && [...ALLOWED_CONTENT_TYPES].every((required) => mimeTypes.includes(required));
       homologationReady = secureForHomologation;
-      return { valid: errors.length === 0, homologationReady: secureForHomologation, productionReady: errors.length === 0 && nativeVersioning && productionReady, bucket: { id: bucket, public: false, versioning: nativeVersioning ? 'ENABLED' : 'LOGICAL_SHA256', nativeVersioning, fileSizeLimit, allowedMimeTypes: [...mimeTypes] }, warnings, errors };
+      return { valid: errors.length === 0, homologationReady: secureForHomologation, productionReady: errors.length === 0 && (nativeVersioning || logicalVersioning) && productionReady, bucket: { id: bucket, public: false, versioning: nativeVersioning ? 'ENABLED' : 'LOGICAL_SHA256', nativeVersioning, fileSizeLimit, allowedMimeTypes: [...mimeTypes] }, warnings, errors };
     },
     async putImmutable({ accessKey, storageKey, contentType, content, checksum: expectedChecksum, byteLength } = {}) {
       const validated = validateStorageKey(storageKey, accessKey, contentType);

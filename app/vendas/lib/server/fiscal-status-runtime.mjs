@@ -216,6 +216,13 @@ function createCancellationRuntime({ environment, databaseUrl, certificateRuntim
   } catch { return null; }
 }
 
+async function createFiscalWriter({ url, key, email, password }) {
+  if (!url || !key || !email || !password) return null;
+  const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await client.auth.signInWithPassword({ email, password });
+  return !error && data.session?.access_token ? client : null;
+}
+
 async function createArtifactStorageRuntime({ environment, databaseUrl, supabaseUrl }) {
   if (!isLocalDatabase(databaseUrl)) {
     const production = productionEnabled(environment);
@@ -232,12 +239,22 @@ async function createArtifactStorageRuntime({ environment, databaseUrl, supabase
       const backupKey = text(environment.FISCAL_BACKUP_SUPABASE_SERVICE_ROLE_KEY);
       const backupBucket = text(environment.FISCAL_BACKUP_STORAGE_BUCKET);
       if (production && (!backupUrl || !backupKey || !backupBucket)) return null;
+      if (production) {
+        const [writer, backupWriter] = await Promise.all([
+          createFiscalWriter({ url: supabaseUrl, key: text(environment.NEXT_PUBLIC_SUPABASE_ANON_KEY), email: text(environment.FISCAL_STORAGE_WRITER_EMAIL), password: text(environment.FISCAL_STORAGE_WRITER_PASSWORD) }),
+          createFiscalWriter({ url: backupUrl, key: text(environment.FISCAL_BACKUP_SUPABASE_ANON_KEY), email: text(environment.FISCAL_BACKUP_WRITER_EMAIL), password: text(environment.FISCAL_BACKUP_WRITER_PASSWORD) }),
+        ]);
+        if (!writer || !backupWriter) return null;
+        primary.writer = writer;
+        primary.backupWriter = backupWriter;
+      }
       const storage = production ? createSupabaseFiscalBackup({
         primary,
         primaryUrl: supabaseUrl,
         backupUrl,
         backupClient: createClient(backupUrl, backupKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }),
         backupBucket,
+        backupWriter: primary.backupWriter,
       }) : createSupabaseFiscalArtifactStorage(primary);
       const readiness = await storage.inspectReadiness();
       return (production ? readiness.productionReady : readiness.homologationReady) === true ? storage : null;

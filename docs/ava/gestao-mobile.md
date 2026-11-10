@@ -1,6 +1,6 @@
-<!-- ava-version: 3.2.0.392 -->
+<!-- ava-version: 3.2.0.393 -->
 
-> Revisão 3.2.0.392: sem impacto operacional. Preparação da cópia fiscal no Supabase.
+> Revisão 3.2.0.393: sem impacto operacional. Guarda fiscal com gravadores dedicados no Supabase.
 
 > Revisão 3.2.0.391: sem impacto operacional.
 

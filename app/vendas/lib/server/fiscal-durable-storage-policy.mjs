@@ -51,6 +51,7 @@ export function validateFiscalDurableStorageConfiguration(input = {}, options = 
     encryptionInTransit: input.encryption?.inTransit === true,
     encryptionMode: text(input.encryption?.mode),
     versioning: input.immutability?.versioning === true,
+    independentCopy: input.provider === 'supabase' && input.immutability?.mode === 'independent_copy',
     writeOnce: input.immutability?.writeOnce === true,
     checksumAlgorithm: text(input.immutability?.checksumAlgorithm).toLowerCase(),
     signedReadEnabled: input.signedRead?.enabled === true,
@@ -70,7 +71,7 @@ export function validateFiscalDurableStorageConfiguration(input = {}, options = 
   if (!normalized.id || !normalized.provider || normalized.environment !== 'production' || !normalized.configured) errors.push(error('AV-FISCAL-STORAGE-CONFIG-PROVIDER', 'provider', 'O provedor durável de produção precisa estar identificado e configurado.'));
   if (!normalized.privateAccess || normalized.directBrowserAccess) errors.push(error('AV-FISCAL-STORAGE-CONFIG-PRIVATE', 'privateAccess', 'O armazenamento fiscal precisa ser privado e sem acesso direto do navegador.'));
   if (!normalized.encryptionAtRest || !normalized.encryptionInTransit || !['provider_managed', 'customer_managed'].includes(normalized.encryptionMode)) errors.push(error('AV-FISCAL-STORAGE-CONFIG-ENCRYPTION', 'encryption', 'Criptografia em repouso e em trânsito precisa estar ativa.'));
-  if (!normalized.versioning || !normalized.writeOnce || normalized.checksumAlgorithm !== 'sha256') errors.push(error('AV-FISCAL-STORAGE-CONFIG-IMMUTABLE', 'immutability', 'Versionamento, gravação imutável e SHA-256 são obrigatórios.'));
+  if ((!normalized.versioning && !normalized.independentCopy) || !normalized.writeOnce || normalized.checksumAlgorithm !== 'sha256') errors.push(error('AV-FISCAL-STORAGE-CONFIG-IMMUTABLE', 'immutability', 'Versionamento, gravação imutável e SHA-256 são obrigatórios.'));
   if (!normalized.signedReadEnabled || !normalized.signedReadServerSideOnly || !Number.isInteger(maxTtlSeconds) || maxTtlSeconds < 30 || maxTtlSeconds > MAX_SIGNED_READ_TTL_SECONDS) errors.push(error('AV-FISCAL-STORAGE-CONFIG-READ', 'signedRead', 'A leitura deve ser autorizada no servidor por no máximo 300 segundos.'));
   if (!normalized.backupEnabled || !normalized.backupEncrypted || !normalized.backupImmutable || !normalized.backupSeparateFailureDomain) errors.push(error('AV-FISCAL-STORAGE-CONFIG-BACKUP', 'backup', 'O backup precisa ser criptografado, imutável e separado do domínio de falha principal.'));
   if (!Number.isInteger(maxRestoreTestAgeDays) || maxRestoreTestAgeDays < 1 || maxRestoreTestAgeDays > MAX_RESTORE_TEST_AGE_DAYS || !restoreTestedAt || restoreTestedAt > now || daysBetween(now, restoreTestedAt) > maxRestoreTestAgeDays) errors.push(error('AV-FISCAL-STORAGE-CONFIG-RESTORE', 'backup.restoreTestedAt', 'A restauração precisa ter sido aprovada dentro da janela operacional configurada, limitada a 93 dias.'));
