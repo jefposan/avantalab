@@ -44,19 +44,21 @@ const acaoPedido = '<button class="primary quick-action-button quick-action-orde
 exigir(
   aplicacao.includes('function dadosToast(msg, opcoes = {})')
     && aplicacao.includes("['sucesso', 'informacao', 'atencao', 'erro']")
-    && aplicacao.includes("el.className = `toast toast-${dados.tipo}`")
+    && aplicacao.includes("const falha = dados.tipo === 'erro'")
+    && aplicacao.includes("el.className = falha ? 'toast toast-erro' : 'vendas-aviso-contextual'")
+    && /if \(!falha\) \{[\s\S]*?contexto\.prepend\(el\);[\s\S]*?return;\s*\}\s*contexto\.appendChild\(el\)/.test(aplicacao)
     && aplicacao.includes("el.setAttribute('role', dados.tipo === 'erro' ? 'alert' : 'status')")
     && aplicacao.includes('aria-atomic')
     && aplicacao.includes('aria-label="Fechar aviso"')
     && estilos.includes('.toast-icon')
     && estilos.includes('.toast-copy')
     && estilos.includes('.toast-progress')
-    && estilos.includes('.toast-sucesso')
-    && estilos.includes('.toast-atencao')
+    && estilos.includes('.vendas-aviso-contextual')
+    && estilos.includes('.dark-theme .vendas-aviso-contextual')
     && estilos.includes('.toast-erro')
     && estilos.includes('.dark-theme .toast')
     && estilos.includes('.toast, .toast-progress { animation: none !important; }'),
-  'Avisos rápidos devem usar o cartão semântico acessível, ficar acima dos modais e respeitar tema escuro e movimento reduzido.',
+  'Somente erros devem usar o aviso inferior acessível; validações ficam no contexto. Preservar camadas, tema escuro e movimento reduzido.',
 );
 exigir(
   aplicacao.includes('function traduzErroCompartilhamento(error)')
