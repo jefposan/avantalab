@@ -1,6 +1,6 @@
-<!-- ava-version: 3.2.0.395 -->
+<!-- ava-version: 3.2.0.396 -->
 
-> Revisão 3.2.0.395: sem impacto operacional. Guarda fiscal com gravadores dedicados no Supabase.
+> Revisão 3.2.0.396: sem impacto operacional. Guarda fiscal com gravadores dedicados no Supabase.
 
 > Revisão 3.2.0.391: sem impacto operacional.
 

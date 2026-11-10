@@ -1,3 +1,7 @@
+## 3.2.0.396 — Vendas: disponibilizar XML e DANFE com guarda fiscal independente
+
+- Validar a privacidade do bucket para download sob a política de cópia independente.
+
 ## 3.2.0.395 — Vendas: aceitar a guarda fiscal com cópia independente no Supabase
 
 - Permitir a política de cópia independente mediante aceitação explícita do risco de exclusão administrativa.

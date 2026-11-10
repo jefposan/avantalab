@@ -59,7 +59,10 @@ export async function createFiscalDownloadRuntimeFromEnvironment(environment = p
     const fiscalRepository = createPostgresFiscalRepository({ pool });
     const storageProvider = createSupabaseFiscalArtifactStorage({ client: storageClient, bucket, environment: homologation ? 'homologacao' : 'production', productionReadiness: policy });
     const actualStorage = await storageProvider.inspectReadiness();
-    if (homologation ? !actualStorage.homologationReady : !actualStorage.productionReady) { await pool.end(); return disabled('storage_not_ready'); }
+    const storageReady = homologation || policy.configuration.independentCopy
+      ? actualStorage.homologationReady
+      : actualStorage.productionReady;
+    if (!storageReady) { await pool.end(); return disabled('storage_not_ready'); }
     return Object.freeze({
       configured: true,
       reason: 'ready',
