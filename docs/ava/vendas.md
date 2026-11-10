@@ -1,6 +1,6 @@
-<!-- ava-version: 3.2.0.388 -->
+<!-- ava-version: 3.2.0.389 -->
 
-> Revisão 3.2.0.388: sem impacto operacional. Separação técnica da numeração de NF-e por ambiente.
+> Revisão 3.2.0.389: sem impacto operacional. Diagnóstico técnico da SEFAZ-SP sem emissão.
 
 > Revisão 3.2.0.387: Sem impacto operacional. O ajuste pertence aos avisos de Marketplaces da Gestão Web.
 

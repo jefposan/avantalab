@@ -1,13 +1,8 @@
 {
-  "baseDeploymentId": "dpl_93zUELqq3VruM2me7eXiQ52rL7Q4",
-  "version": "3.2.0.388",
-  "scope": "Vendas: separar numeração fiscal por ambiente",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261110180000_vendas_numeracao_ambiente.sql",
-      "sha256": "234db14adb33f36d7f5a78797df5d52570dc3c003bea1fbaf504d09483a68603"
-    }
-  ],
+  "baseDeploymentId": "dpl_F1jYmvGjXY4WVu6xCssi3qqwEBKg",
+  "version": "3.2.0.389",
+  "scope": "Vendas: consultar status da SEFAZ-SP de produção",
+  "migrations": [],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Primeira migração compatível com a versão anterior. A remoção da chave legada fica para após a promoção. Emissão permanece em homologação."
+  "auditReview": "Diagnóstico restrito ao perfil Tridium, com permissão fiscal, sem emissão e sem movimentação da sequência."
 }

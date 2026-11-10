@@ -19,12 +19,12 @@ const MAX_PASSPHRASE_BYTES = 512;
 const MAX_REQUEST_BYTES = 16 * 1024;
 const FORBIDDEN_FISCAL_OPERATION = /<(?:[A-Za-z_][\w.-]*:)?(?:NFe|enviNFe|inutNFe|evento|consSitNFe|consReciNFe)\b|<(?:[A-Za-z_][\w.-]*:)?(?:CNPJ|CPF|chNFe)\b/i;
 
-function statusRequestIsSafe({ endpoint, action, contentType, body, secureCertificateReference, timeoutMs, maxResponseBytes, followRedirects, issuerUf, environment }) {
+function statusRequestIsSafe({ endpoint, action, contentType, body, secureCertificateReference, timeoutMs, maxResponseBytes, followRedirects, issuerUf, environment }, allowProductionSpStatus) {
   const reference = validateSecureCertificateReference(secureCertificateReference);
   const source = typeof body === 'string' ? body.trim() : '';
   const authority = resolveNationalNfeAuthority({ uf: issuerUf, environment });
   return authority
-    && environment === 'homologacao'
+    && (environment === 'homologacao' || (allowProductionSpStatus && environment === 'producao' && authority.issuerUf === 'SP'))
     && isOfficialNfeEndpoint({ uf: authority.issuerUf, environment, service: 'status', endpoint })
     && action === NFE_STATUS_SERVICE_ACTION
     && contentType === NFE_STATUS_SERVICE_CONTENT_TYPE
@@ -130,6 +130,7 @@ function postWithMutualTls({ requestImpl, url, request, pkcs12, passphrase }) {
 export function createNfeA1MtlsStatusTransport({
   secretLoader,
   chainResolver,
+  allowProductionSpStatus = false,
   requestImpl = nodeHttpsRequest,
   identityPreparer = prepareNfeA1Pkcs12ForMutualTls,
 } = {}) {
@@ -145,7 +146,7 @@ export function createNfeA1MtlsStatusTransport({
     id: 'avantalab-nfe-a1-mtls-status-v1',
     configured,
     async postSoap(request = {}) {
-      if (!configured || !statusRequestIsSafe(request)) throw new Error('A consulta mTLS de status não atende ao contrato seguro.');
+      if (!configured || !statusRequestIsSafe(request, allowProductionSpStatus)) throw new Error('A consulta mTLS de status não atende ao contrato seguro.');
       const secret = await secretLoader.load(request.secureCertificateReference);
       const sourcePkcs12 = normalizePkcs12(secret?.pkcs12);
       let connectionPkcs12 = null;

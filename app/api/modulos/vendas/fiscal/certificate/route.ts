@@ -3,6 +3,7 @@ import {
   handleNfeCertificateActivationRequest,
   handleNfeCertificateInstallationRequest,
   handleNfeCertificateStatusRequest,
+  handleNfeProductionStatusRequest,
 } from '@/app/vendas/lib/server/nfe-certificate-installation-http.mjs';
 
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const company = companyId(request);
+  if (new URL(request.url).searchParams.get('action') === 'production-status') {
+    return handleNfeProductionStatusRequest({ request, runtime: await getFiscalStatusRuntime(), companyId: company });
+  }
   return handleNfeCertificateInstallationRequest({ request, runtime: await getFiscalStatusRuntime(), companyId: company });
 }
 

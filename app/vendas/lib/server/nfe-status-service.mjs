@@ -178,6 +178,7 @@ export function createNfeStatusServiceAdapter({
   transport = createDisabledNfeStatusServiceTransport(),
   endpoint = NFE_STATUS_SERVICE_ENDPOINT,
   now = () => Date.now(),
+  allowProductionSpStatus = false,
 } = {}) {
   return Object.freeze({
     id: 'avantalab-nfe-status-service-v1',
@@ -188,7 +189,7 @@ export function createNfeStatusServiceAdapter({
       diagnostic.authority = authority?.authority || '';
       const resolvedEndpoint = endpoint === NFE_STATUS_SERVICE_ENDPOINT ? authority?.endpoints.status : endpoint;
       diagnostic.endpoint = resolvedEndpoint || '';
-      if (environment !== 'homologacao') diagnostic.errors.push(error('AV-NFE-STATUS-ENVIRONMENT-LOCK', 'environment', 'A consulta nacional está liberada somente para homologação até a validação fiscal de produção.'));
+      if (environment !== 'homologacao' && !(allowProductionSpStatus && environment === 'producao' && authority?.issuerUf === 'SP')) diagnostic.errors.push(error('AV-NFE-STATUS-ENVIRONMENT-LOCK', 'environment', 'A consulta nacional está liberada somente para homologação até a validação fiscal de produção.'));
       if (!authority) diagnostic.errors.push(error('AV-NFE-STATUS-AUTHORITY', 'issuer.uf', 'A UF do emitente não possui autorizador NF-e configurado.'));
       const endpointResult = validateNfeStatusServiceEndpoint(resolvedEndpoint, { issuerUf, environment });
       diagnostic.endpointValidated = endpointResult.valid;

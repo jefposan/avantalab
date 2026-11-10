@@ -1,4 +1,4 @@
-// Revisão 3.2.0.388: numeração da NF-e separada por ambiente, sem mudança no roteiro de emissão em homologação.
+// Revisão 3.2.0.389: diagnóstico técnico da SEFAZ-SP sem alteração no roteiro de emissão.
 // Revisão 3.2.0.387: aviso de cancelamento dispensado permanece oculto em Marketplaces.
 // Revisão 3.2.0.386: próxima rolagem nos blocos de Marketplaces da Gestão Web.
 // Revisão 3.2.0.384-av198: no AvantaVendas, rodapé só para falhas, validações no formulário e pendências na sincronização.

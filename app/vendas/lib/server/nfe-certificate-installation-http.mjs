@@ -86,3 +86,28 @@ export async function handleNfeCertificateActivationRequest({ request, runtime, 
       : 'A validação foi concluída, mas ainda existem verificações pendentes.',
   });
 }
+
+export async function handleNfeProductionStatusRequest({ request, runtime, companyId } = {}) {
+  const company = clean(companyId);
+  if (!request || request.method !== 'POST' || !UUID.test(company)) return reply(400, { ok: false, code: 'AV-NFE-STATUS-REQUEST' });
+  if (!secureTransport(request)) return reply(403, { ok: false, code: 'AV-NFE-STATUS-TRANSPORT' });
+  const access = await accessContext(request, runtime, company);
+  if (access.error) return access.error;
+  const { context } = access;
+  if (context.companyId !== company || !context.active || !context.moduleActive || context.effectivePermissions['fiscal.configure'] !== true) {
+    return reply(403, { ok: false, code: 'AV-NFE-STATUS-PERMISSION' });
+  }
+  try {
+    const result = await runtime.checkProductionStatus?.({ companyId: company });
+    if (!result) return reply(503, { ok: false, code: 'AV-NFE-STATUS-NOT-READY' });
+    return reply(200, {
+      ok: result.serviceOperational === true,
+      environment: 'producao',
+      responseReceived: result.responseReceived === true,
+      cStat: result.cStat,
+      errors: result.errors.map(({ code }) => code),
+    });
+  } catch {
+    return reply(503, { ok: false, code: 'AV-NFE-STATUS-UNAVAILABLE' });
+  }
+}

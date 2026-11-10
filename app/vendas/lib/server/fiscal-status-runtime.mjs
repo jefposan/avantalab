@@ -99,6 +99,20 @@ function createCertificateRuntime({ environment, pool, issuerResolver, databaseU
       databaseUrl,
       certificateRuntime: { activeLoader, chainResolver, signingAdapter },
     });
+    const productionStatus = createNfeStatusServiceAdapter({
+      certificateAdapter: signingAdapter,
+      transport: createNfeA1MtlsStatusTransport({ secretLoader: activeLoader, chainResolver, allowProductionSpStatus: true }),
+      allowProductionSpStatus: true,
+    });
+    const checkProductionStatus = async ({ companyId }) => {
+      if (companyId !== VENDAS_PILOTO_EMPRESA_ID) return null;
+      const issuer = await issuerResolver({ companyId });
+      const binding = await repository.getActiveBinding({ companyId });
+      if (issuer?.state !== 'SP' || !issuer.document || !binding) return null;
+      return productionStatus.checkAvailability({
+        ...binding, expectedDocument: issuer.document, issuerUf: 'SP', environment: 'producao',
+      });
+    };
     const activationService = createNfeCertificateActivationService({
       repository,
       issuerResolver,
@@ -112,6 +126,7 @@ function createCertificateRuntime({ environment, pool, issuerResolver, databaseU
       activeLoader,
       chainResolver,
       nfeStatusServiceAdapter,
+      checkProductionStatus,
       installationService: createNfeCertificateInstallationService({ repository, issuerResolver, activationService }),
     });
   } catch {
@@ -369,6 +384,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
       fiscalRulesQueryService: createCommercialFiscalRulesQueryService({ repository: fiscalRulesRepository }),
       fiscalRulesPublicationService: createCommercialFiscalRulesPublicationService({ repository: fiscalRulesRepository }),
       certificateInstallationService: certificateRuntime?.installationService || null,
+      checkProductionStatus: certificateRuntime?.checkProductionStatus || null,
       nfePreparationService: fiscalWorkflowEnabled ? createCommercialNfePreparationService({
         repository: createPostgresCommercialNfePreparationRepository({ pool }),
         emissionLifecycle: fiscalLifecycle,

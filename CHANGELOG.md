@@ -1,3 +1,7 @@
+## 3.2.0.389 — Vendas: consultar status da SEFAZ-SP de produção
+
+- Consulta autenticada para o perfil Tridium, usando o certificado ativo do cofre e sem movimentar a numeração.
+
 ## 3.2.0.388 — Vendas: separar a numeração da NF-e por ambiente
 
 - A migração identifica as sequências, reservas e inutilizações existentes como homologação e separa as chaves por ambiente.
