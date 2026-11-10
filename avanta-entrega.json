@@ -1,8 +1,13 @@
 {
-  "baseDeploymentId": "dpl_AyAumRm6U9M6bAKj5eDS3etAMsaa",
-  "version": "3.2.0.387",
-  "scope": "Marketplaces: corrigir dispensas e contador de pendências",
-  "migrations": [],
+  "baseDeploymentId": "dpl_93zUELqq3VruM2me7eXiQ52rL7Q4",
+  "version": "3.2.0.388",
+  "scope": "Vendas: separar numeração fiscal por ambiente",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261110180000_vendas_numeracao_ambiente.sql",
+      "sha256": "234db14adb33f36d7f5a78797df5d52570dc3c003bea1fbaf504d09483a68603"
+    }
+  ],
   "reconciliationStatus": "reviewed",
-  "auditReview": "Correção isolada sobre a main e a produção 3.2.0.386. Validação de dispensas antigas, novas ocorrências e falha temporária de consulta e separação entre contador e alertas de sincronização. Sem migrações."
+  "auditReview": "Primeira migração compatível com a versão anterior. A remoção da chave legada fica para após a promoção. Emissão permanece em homologação."
 }

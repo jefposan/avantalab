@@ -22,7 +22,7 @@ export function createFiscalDraftDeleteService({pool}={}) {
     const jobs=(await c.query("select id,state from fiscal_private.recovery_jobs where company_id=$1 and emission_id=$2 and state in ('pending','leased') for update",[context.companyId,e.id])).rows;
     if(jobs.some(job=>job.state==='leased')){await c.query('rollback');return failure('AV-DRAFT-DELETE-BUSY','Há uma operação fiscal em andamento. Aguarde a conclusão.');}
     if(e.reservation_id){
-     await c.query("select id from fiscal_private.number_sequences where company_id=$1 and establishment_id=$2 and document_type='nfe' and series=$3 for update",[context.companyId,e.establishment_id,e.series]);
+     await c.query("select id from fiscal_private.number_sequences where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment='homologacao' and series=$3 for update",[context.companyId,e.establishment_id,e.series]);
      const r=(await c.query("select * from fiscal_private.number_reservations where company_id=$1 and id=$2 and emission_id=$3 for update",[context.companyId,e.reservation_id,e.id])).rows[0];
      if(!r || r.status!=='reserved'){await c.query('rollback');return failure('AV-DRAFT-DELETE-NUMBER','A reserva não está livre para exclusão.');}
      await c.query("update fiscal_private.number_reservations set status='released',updated_at=now() where company_id=$1 and id=$2",[context.companyId,r.id]);

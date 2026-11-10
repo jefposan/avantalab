@@ -1,3 +1,8 @@
+## 3.2.0.388 — Vendas: separar a numeração da NF-e por ambiente
+
+- A migração identifica as sequências, reservas e inutilizações existentes como homologação e separa as chaves por ambiente.
+- O emissor atual consulta e movimenta somente a numeração de homologação. A liberação produtiva permanece pendente.
+
 ## 3.2.0.387 — Marketplaces: corrigir dispensas e contador de pendências
 
 - O mesmo evento de cancelamento continua oculto após clicar em **OK**, inclusive se o motivo for atualizado. Falhas na leitura de dispensas mostram a lista parcial e preservam as pendências que exigem ação.

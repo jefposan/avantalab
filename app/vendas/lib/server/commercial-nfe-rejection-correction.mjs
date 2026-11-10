@@ -212,9 +212,9 @@ export function createPostgresCommercialNfeRejectionCorrectionRepository({ pool 
         if (!row) return null;
         const emission = mapEmission(row);
         const [sequences, reservations, voids] = await Promise.all([
-          client.query(`select * from fiscal_private.number_sequences where company_id=$1 and establishment_id=$2 and document_type='nfe' order by active desc,series`, [companyId, emission.establishmentId]),
-          client.query(`select * from fiscal_private.number_reservations where company_id=$1 and establishment_id=$2 and document_type='nfe' and status<>'released'`, [companyId, emission.establishmentId]),
-          client.query(`select * from fiscal_private.number_voids where company_id=$1 and establishment_id=$2 and document_type='nfe'`, [companyId, emission.establishmentId]),
+          client.query(`select * from fiscal_private.number_sequences where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment='homologacao' order by active desc,series`, [companyId, emission.establishmentId]),
+          client.query(`select * from fiscal_private.number_reservations where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment='homologacao' and status<>'released'`, [companyId, emission.establishmentId]),
+          client.query(`select * from fiscal_private.number_voids where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment='homologacao'`, [companyId, emission.establishmentId]),
         ]);
         return {
           baseIssuerDocument: row.base_issuer?.document || '',

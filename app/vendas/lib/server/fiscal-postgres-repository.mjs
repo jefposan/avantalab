@@ -225,7 +225,7 @@ function createTransaction(client, schema) {
     async reserveNextFiscalNumber({ companyId, establishmentId, emissionId, documentType, idempotencyKey, at }) {
       const existingResult = await client.query(`
         select * from ${numberReservations}
-        where company_id=$1 and (emission_id=$2 or idempotency_key=$3)
+        where company_id=$1 and environment='homologacao' and (emission_id=$2 or idempotency_key=$3)
         order by (emission_id=$2) desc for update
       `, [companyId, emissionId, idempotencyKey]);
       const existingRows = existingResult.rows || [];
@@ -239,12 +239,12 @@ function createTransaction(client, schema) {
       }
       const sequenceResult = await client.query(`
         select * from ${numberSequences}
-        where company_id=$1 and establishment_id=$2 and document_type=$3 and active
+        where company_id=$1 and establishment_id=$2 and document_type=$3 and environment='homologacao' and active
         for update
       `, [companyId, establishmentId, documentType]);
       const sequence = sequenceResult.rows?.[0];
       if (!sequence) throw Object.assign(new Error('A série fiscal ativa não foi configurada.'), { code: 'AV-FISCAL-NUMBER-SEQUENCE' });
-      const free=(await client.query(`select min(r.number)::int as number from ${numberReservations} r where r.company_id=$1 and r.establishment_id=$2 and r.document_type=$3 and r.series=$4 and r.status='released' and not exists(select 1 from ${numberReservations} occupied where occupied.company_id=r.company_id and occupied.establishment_id=r.establishment_id and occupied.document_type=r.document_type and occupied.series=r.series and occupied.number=r.number and occupied.status<>'released') and not exists(select 1 from ${numberVoids} v where v.company_id=r.company_id and v.establishment_id=r.establishment_id and v.document_type=r.document_type and v.series=r.series and v.status<>'rejected' and r.number between v.start_number and v.end_number)`,[companyId,establishmentId,documentType,sequence.series])).rows[0];
+      const free=(await client.query(`select min(r.number)::int as number from ${numberReservations} r where r.company_id=$1 and r.establishment_id=$2 and r.document_type=$3 and r.environment='homologacao' and r.series=$4 and r.status='released' and not exists(select 1 from ${numberReservations} occupied where occupied.company_id=r.company_id and occupied.establishment_id=r.establishment_id and occupied.document_type=r.document_type and occupied.environment=r.environment and occupied.series=r.series and occupied.number=r.number and occupied.status<>'released') and not exists(select 1 from ${numberVoids} v where v.company_id=r.company_id and v.establishment_id=r.establishment_id and v.document_type=r.document_type and v.environment=r.environment and v.series=r.series and v.status<>'rejected' and r.number between v.start_number and v.end_number)`,[companyId,establishmentId,documentType,sequence.series])).rows[0];
       let candidate = Number(free?.number) || Math.max(Number(sequence.next_number), Number(sequence.last_reserved_number) + 1);
       let available = false;
       for (let attempt = 0; attempt < 1000; attempt += 1) {
@@ -254,10 +254,10 @@ function createTransaction(client, schema) {
         const unavailable = await client.query(`
           select
             (select max(end_number)::int from ${numberVoids}
-              where company_id=$1 and establishment_id=$2 and document_type=$3 and series=$4
+              where company_id=$1 and establishment_id=$2 and document_type=$3 and environment='homologacao' and series=$4
                 and status<>'rejected' and $5 between start_number and end_number) as void_end,
             exists(select 1 from ${numberReservations}
-              where company_id=$1 and establishment_id=$2 and document_type=$3 and series=$4 and number=$5 and status<>'released') as reserved
+              where company_id=$1 and establishment_id=$2 and document_type=$3 and environment='homologacao' and series=$4 and number=$5 and status<>'released') as reserved
         `, [companyId, establishmentId, documentType, sequence.series, candidate]);
         const conflict = unavailable.rows?.[0] || {};
         if (conflict.void_end) {

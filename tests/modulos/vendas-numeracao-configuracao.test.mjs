@@ -10,10 +10,10 @@ const company='10000000-0000-4000-8000-000000000001',other='20000000-0000-4000-8
 const context={companyId:company,actorId:other,moduleId:'vendas',active:true,moduleActive:true,effectivePermissions:{'fiscal.view':true,'fiscal.configure':true}};
 async function fixture(){
  const db=new PGlite();await db.exec(`create schema fiscal_private;
- create table fiscal_private.number_sequences(id uuid default gen_random_uuid() primary key,company_id uuid,establishment_id uuid,document_type text,series text,next_number int,last_reserved_number int default 0,active bool default true,version int default 1,updated_at timestamptz default now(),unique(company_id,establishment_id,document_type,series));
- create unique index only_active on fiscal_private.number_sequences(company_id,establishment_id,document_type) where active;
- create table fiscal_private.number_reservations(company_id uuid,establishment_id uuid,document_type text,series text,number int,status text default 'reserved');
- create table fiscal_private.number_voids(company_id uuid,establishment_id uuid,document_type text,series text,start_number int,end_number int,status text);`);
+ create table fiscal_private.number_sequences(id uuid default gen_random_uuid() primary key,company_id uuid,establishment_id uuid,document_type text,series text,next_number int,last_reserved_number int default 0,active bool default true,version int default 1,updated_at timestamptz default now(),unique(company_id,establishment_id,document_type,environment,series),environment text default 'homologacao');
+ create unique index only_active on fiscal_private.number_sequences(company_id,establishment_id,document_type,environment) where active;
+ create table fiscal_private.number_reservations(company_id uuid,establishment_id uuid,document_type text,series text,number int,status text default 'reserved',environment text default 'homologacao');
+ create table fiscal_private.number_voids(company_id uuid,establishment_id uuid,document_type text,series text,start_number int,end_number int,status text,environment text default 'homologacao');`);
  const client={query:async(sql,args)=>sql.includes('pg_advisory_xact_lock')?{rows:[]}:db.query(sql,args),release(){}};
  const repository={get:async({companyId})=>({companyId,documentType:'nfe',issuerSnapshot:{establishmentId:companyId}})};
  const service=createFiscalNumberingConfigurationService({pool:{connect:async()=>client},issuerResolver:async({companyId})=>({establishmentId:companyId}),draftRepository:repository});
@@ -28,12 +28,14 @@ test('erro de numeração conserva o campo e abre um destino conhecido, sem conf
 
 test('sem série, retorna campos vazios; salvar persiste por perfil sem reservar nem transmitir',async()=>{
  const f=await fixture();try{
+ await f.db.query("insert into fiscal_private.number_sequences(company_id,establishment_id,document_type,environment,series,next_number) values($1,$1,'nfe','producao','1',800)",[company]);
  const initial=await f.run({action:'numbering'});assert.equal(initial.ok,true);assert.equal(initial.numbering.exists,false);assert.equal(initial.numbering.nextNumber,null);
  const invalid=await f.run({action:'save-numbering',series:'1',nextNumber:1.5,expectedVersion:0});assert.equal(invalid.ok,false);
  assert.equal(FISCAL_NFE_NORMAL_SERIES.length,890);assert.equal(FISCAL_NFE_NORMAL_SERIES[0],'0');assert.equal(FISCAL_NFE_NORMAL_SERIES.at(-1),'889');
  for(const series of ['890','900','999'])assert.equal((await f.run({action:'save-numbering',series,nextNumber:1,expectedVersion:0})).code,'AV-NUMBERING-SERIES');
  const saved=await f.run({action:'save-numbering',series:'1',nextNumber:17,expectedVersion:0});assert.equal(saved.ok,true);assert.equal(saved.numbering.nextNumber,17);
  assert.deepEqual((await f.run({action:'numbering'})).numbering,saved.numbering);assert.equal((await f.run({action:'numbering'},{...context,companyId:other})).numbering.exists,false);
+ assert.deepEqual((await f.db.query("select next_number,active,version from fiscal_private.number_sequences where environment='producao'")).rows,[{next_number:800,active:true,version:1}]);
  assert.equal((await f.db.query('select count(*)::int n from fiscal_private.number_reservations')).rows[0].n,0);
  }finally{await f.db.close();}
 });
