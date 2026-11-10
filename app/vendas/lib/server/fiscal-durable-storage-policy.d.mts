@@ -10,7 +10,7 @@ export type FiscalDurableStorageConfiguration = {
   immutability?: { mode?: "independent_copy"; versioning?: boolean; writeOnce?: boolean; checksumAlgorithm?: string };
   signedRead?: { enabled?: boolean; serverSideOnly?: boolean; maxTtlSeconds?: number };
   backup?: { enabled?: boolean; encrypted?: boolean; immutable?: boolean; separateFailureDomain?: boolean; restoreTestedAt?: string; maxRestoreTestAgeDays?: number };
-  retention?: { enforced?: boolean; legalHoldSupported?: boolean };
+  retention?: { administrativeDeletionRiskAccepted?: boolean; enforced?: boolean; legalHoldSupported?: boolean };
 };
 export const FISCAL_DURABLE_STORAGE_POLICY_REFERENCE: '2026-09-03';
 export const FISCAL_DOCUMENT_DOWNLOAD_PERMISSIONS: Readonly<{ processed_xml: 'fiscal.documents.xml.download'; danfe_pdf: 'fiscal.documents.danfe.download' }>;

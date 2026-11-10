@@ -1,3 +1,7 @@
+## 3.2.0.395 — Vendas: aceitar a guarda fiscal com cópia independente no Supabase
+
+- Permitir a política de cópia independente mediante aceitação explícita do risco de exclusão administrativa.
+
 ## 3.2.0.394 — Vendas: consultar o backup fiscal com identidade dedicada
 
 - Consultar metadados do bucket de backup com a mesma identidade restrita que grava os documentos.

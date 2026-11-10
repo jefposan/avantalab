@@ -63,6 +63,7 @@ export function validateFiscalDurableStorageConfiguration(input = {}, options = 
     backupSeparateFailureDomain: input.backup?.separateFailureDomain === true,
     restoreTestedAt: restoreTestedAt?.toISOString() || '',
     maxRestoreTestAgeDays,
+    administrativeDeletionRiskAccepted: input.retention?.administrativeDeletionRiskAccepted === true,
     retentionEnforced: input.retention?.enforced === true,
     legalHoldSupported: input.retention?.legalHoldSupported === true,
   };
@@ -75,7 +76,8 @@ export function validateFiscalDurableStorageConfiguration(input = {}, options = 
   if (!normalized.signedReadEnabled || !normalized.signedReadServerSideOnly || !Number.isInteger(maxTtlSeconds) || maxTtlSeconds < 30 || maxTtlSeconds > MAX_SIGNED_READ_TTL_SECONDS) errors.push(error('AV-FISCAL-STORAGE-CONFIG-READ', 'signedRead', 'A leitura deve ser autorizada no servidor por no máximo 300 segundos.'));
   if (!normalized.backupEnabled || !normalized.backupEncrypted || !normalized.backupImmutable || !normalized.backupSeparateFailureDomain) errors.push(error('AV-FISCAL-STORAGE-CONFIG-BACKUP', 'backup', 'O backup precisa ser criptografado, imutável e separado do domínio de falha principal.'));
   if (!Number.isInteger(maxRestoreTestAgeDays) || maxRestoreTestAgeDays < 1 || maxRestoreTestAgeDays > MAX_RESTORE_TEST_AGE_DAYS || !restoreTestedAt || restoreTestedAt > now || daysBetween(now, restoreTestedAt) > maxRestoreTestAgeDays) errors.push(error('AV-FISCAL-STORAGE-CONFIG-RESTORE', 'backup.restoreTestedAt', 'A restauração precisa ter sido aprovada dentro da janela operacional configurada, limitada a 93 dias.'));
-  if (!normalized.retentionEnforced || !normalized.legalHoldSupported) errors.push(error('AV-FISCAL-STORAGE-CONFIG-RETENTION', 'retention', 'A retenção e o bloqueio jurídico de descarte precisam ser suportados.'));
+  const acceptedSupabaseRetention = normalized.independentCopy && normalized.administrativeDeletionRiskAccepted;
+  if (!acceptedSupabaseRetention && (!normalized.retentionEnforced || !normalized.legalHoldSupported)) errors.push(error('AV-FISCAL-STORAGE-CONFIG-RETENTION', 'retention', 'A retenção e o bloqueio jurídico de descarte precisam ser suportados.'));
   return Object.freeze({
     valid: errors.length === 0,
     productionReady: errors.length === 0,
