@@ -1,6 +1,6 @@
-<!-- ava-version: 3.2.0.396 -->
+<!-- ava-version: 3.2.0.397 -->
 
-> Revisão 3.2.0.396: sem impacto operacional. Guarda fiscal com gravadores dedicados no Supabase.
+> Revisão 3.2.0.397: sem impacto operacional. Guarda fiscal com gravadores dedicados no Supabase.
 
 > Revisão 3.2.0.391: A NF-e de produção da Tridium usa a série 2 e depende da liberação do servidor. Em retorno incerto, consulte a mesma nota e preserve sua numeração.
 

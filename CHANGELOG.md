@@ -1,3 +1,7 @@
+## 3.2.0.397 — Vendas: mostrar o ambiente real no painel fiscal
+
+- Exibir o ambiente e a prontidão informados pelo servidor no painel do certificado.
+
 ## 3.2.0.396 — Vendas: disponibilizar XML e DANFE com guarda fiscal independente
 
 - Validar a privacidade do bucket para download sob a política de cópia independente.
