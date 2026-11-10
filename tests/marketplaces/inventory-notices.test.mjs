@@ -22,7 +22,7 @@ const hook=registerHooks({resolve(s,c,next){
 const {readInventoryNotices}=await import('../../app/modules/marketplaces/services/inventory-notices.ts');
 const {inventoryRows}=await import('../../app/modules/marketplaces/services/inventory-read.ts');
 const {default:Notices,InventoryNoticeList}=await import('../../app/marketplaces/InventoryNotices.tsx');
-const {inventoryNoticeCount}=await import('../../app/modules/marketplaces/live-feed.ts');
+const {inventoryNoticeCount,inventoryNoticeNeedsAttention}=await import('../../app/modules/marketplaces/live-feed.ts');
 const {GET:getNotices,POST:dismissNotice}=await import('../../app/api/modulos/marketplaces/avisos/route.ts');
 hook.deregister();
 const company='empresa-a';
@@ -75,7 +75,7 @@ test('pontuação baixa não gera avisos nem consultas extras; pendências reais
  assert.deepEqual(db.tables.marketplace_listing_quality,cached,'nota permanece disponível para visualização manual');
  db.tables.marketplace_inventory_events=[];db.tables.marketplace_inventory_outbox=[];
  const onlyQuality=await readInventoryNotices(db,company);assert.deepEqual(onlyQuality,[]);
- assert.equal(inventoryNoticeCount({notices:onlyQuality,pendingSales:0,pendingStock:0,enabled:true,workerHealthy:true},false),0,'nota baixa isolada não mantém badge no cabeçalho');
+ assert.equal(inventoryNoticeCount({notices:onlyQuality,pendingSales:0,pendingStock:0,enabled:true,workerHealthy:true}),0,'nota baixa isolada não mantém badge no cabeçalho');
 });
 test('avisos identificam os dois produtos, EAN, conta, anúncio e pedido sem confundir causas',async()=>{
   const f=fixture();const notices=await readInventoryNotices(f,company);
@@ -146,10 +146,10 @@ test('API e contador não recriam falta ignorada a partir da fila bruta; falha p
  globalThis.noticeDb=f;
  const request=(id=company,token='Bearer manager')=>new Request(`http://localhost/api/modulos/marketplaces/avisos?empresaId=${id}`,{headers:{authorization:token}});
  try{
-  const response=await getNotices(request());assert.equal(response.status,200);const data=await response.json();assert.deepEqual(data.notices,[]);assert.equal(data.pendingStock,0);assert.equal(inventoryNoticeCount(data,false),0);assert.match(render(data),/Sem pendências/);
+  const response=await getNotices(request());assert.equal(response.status,200);const data=await response.json();assert.deepEqual(data.notices,[]);assert.equal(data.pendingStock,0);assert.equal(inventoryNoticeCount(data),0);assert.match(render(data),/Sem pendências/);
   assert.equal(f.tables.marketplace_inventory_outbox[0].state,'pending','ignorar aviso não apaga nem conclui a fila');
-  f.tables.marketplace_product_links[1].status='active';const resumed=await(await getNotices(request())).json();assert.equal(resumed.pendingStock,1);assert.equal(resumed.notices[0].code,'remote_stock_unconfirmed');assert.equal(inventoryNoticeCount(resumed,false),1,'reativar volta a conferir o saldo');
-  f.failure='marketplace_product_links';const unavailable=await(await getNotices(request())).json();assert.equal(unavailable.noticesUnavailable,true);assert.equal(unavailable.pendingStock,7);assert.ok(inventoryNoticeCount(unavailable,false)>0);
+  f.tables.marketplace_product_links[1].status='active';const resumed=await(await getNotices(request())).json();assert.equal(resumed.pendingStock,1);assert.equal(resumed.notices[0].code,'remote_stock_unconfirmed');assert.equal(inventoryNoticeCount(resumed),1,'reativar volta a conferir o saldo');
+  f.failure='marketplace_product_links';const unavailable=await(await getNotices(request())).json();assert.equal(unavailable.noticesUnavailable,true);assert.equal(unavailable.pendingStock,7);assert.equal(inventoryNoticeCount(unavailable),0);assert.equal(inventoryNoticeNeedsAttention(unavailable,false),true);
   assert.equal((await getNotices(request('outra-empresa'))).status,403);assert.equal((await getNotices(request(company,''))).status,401);
  }finally{delete globalThis.noticeDb;}
 });
@@ -186,13 +186,19 @@ test('alerta no header inicia fechado e mostra somente quantidade real, sem card
   const header=renderToStaticMarkup(React.createElement(Notices,{companyId:company,feed:data,unavailable:false}));
   assert.match(header,/aria-haspopup="dialog" aria-expanded="false"/);assert.match(header,/2 aviso\(s\) de pendências/);assert.match(header,/inventoryAlertBadge[^>]*>2<\/b>/);
   assert.match(header,/<svg/);assert.doesNotMatch(header,/Ventilador Arno|Atualizar avisos|inventoryStatus/);
-  assert.equal(inventoryNoticeCount(data,false),2,'estoque agregado não duplica aviso já detalhado');
+  assert.equal(inventoryNoticeCount(data),2,'estoque agregado não duplica aviso já detalhado');
   const empty=renderToStaticMarkup(React.createElement(Notices,{companyId:company,feed:feed([]),unavailable:false}));
-  assert.doesNotMatch(empty,/inventoryAlertBadge|>0</);assert.equal(inventoryNoticeCount(feed([]),false),0);
-  assert.equal(inventoryNoticeCount(null,false),0);assert.equal(inventoryNoticeCount(null,true),1);
-  assert.equal(inventoryNoticeCount({...feed([]),pendingSales:3},false),3);
-  assert.equal(inventoryNoticeCount({...feed([]),pendingStock:4},false),1);
-  assert.equal(inventoryNoticeCount({...feed([]),noticesUnavailable:true},false),1);
+  assert.doesNotMatch(empty,/inventoryAlertBadge|>0</);assert.equal(inventoryNoticeCount(feed([])),0);
+  assert.equal(inventoryNoticeCount(null),0);assert.equal(inventoryNoticeNeedsAttention(null,true),true);
+  const stockWorkerAlert={...feed([]),workerHealthy:false};
+  const workerHeader=renderToStaticMarkup(React.createElement(Notices,{companyId:company,feed:stockWorkerAlert,unavailable:false}));
+  assert.match(workerHeader,/data-has-notices="false" data-needs-attention="true"/);
+  assert.match(workerHeader,/Sincronização requer atenção/);
+  assert.doesNotMatch(workerHeader,/inventoryAlertBadge/);
+  assert.match(render(stockWorkerAlert),/A rotina de estoque precisa de atenção/);
+  assert.equal(inventoryNoticeCount({...feed([]),pendingSales:3}),3);
+  assert.equal(inventoryNoticeCount({...feed([]),pendingStock:4}),0);
+  assert.equal(inventoryNoticeCount({...feed([]),noticesUnavailable:true}),0);
   assert.match(render({...feed([]),pendingStock:4}),/aguardando detalhamento/);
   const client=readFileSync(resolve(root,'app/marketplaces/MarketplacesClient.tsx'),'utf8');
   assert.equal((client.match(/<InventoryNotices /g)||[]).length,1);assert.match(client,/notices=\{<InventoryNotices/);
@@ -230,23 +236,37 @@ test('dispensa persiste por usuário, preserva eventos e mantém correções abe
     assert.match(html,/>OK<\/span>/);
     assert.match(html,/>Dispensar aviso<\/span>/);
     assert.match(html,/>Conferir e ajustar<\/span>/);
-    assert.equal(inventoryNoticeCount(before,false),3);
+    assert.equal(inventoryNoticeCount(before),3);
     assert.equal((await post('stock:link-a','pending_product_sales')).status,409);
     assert.equal((await post('sale:foreign',original.issue)).status,409);
     assert.equal((await post('sale:evento-f',original.issue)).status,200);
     assert.equal((await post('sale:evento-f',original.issue)).status,200);
     const after=await get();
     assert.equal(after.pendingStock,1);
-    assert.equal(inventoryNoticeCount(after,false),2);
+    assert.equal(inventoryNoticeCount(after),2);
     assert.deepEqual(after.notices.map(n=>n.code),['pending_product_sales','provider_not_supported']);
-    assert.equal(inventoryNoticeCount(await get('colleague'),false),3);
+    assert.equal(inventoryNoticeCount(await get('colleague')),3);
     assert.equal(db.tables.marketplace_inventory_notice_dismissals.length,1);
     assert.deepEqual(db.tables.marketplace_inventory_events,originalEvents);
     original.issue='cancelled_stock_review';
-    assert.ok((await get()).notices.some(n=>n.code==='cancelled_stock_review'));
+    db.tables.marketplace_inventory_events.push({...original,id:'novo-evento',order_id:'novo-pedido'});
+    const revised=await get();
+    assert.deepEqual(revised.notices.filter(n=>n.source==='sale').map(n=>n.id),['sale:novo-evento']);
+    assert.equal((await post('sale:evento-f','cancelled_requires_manual_return')).status,200,'um botão antigo confirma o mesmo cancelamento');
+    assert.equal(db.tables.marketplace_inventory_notice_dismissals.length,1);
+    db.tables.marketplace_inventory_notice_dismissals[0].issue_code='cancelled_stock_review';
+    original.issue='cancelled_requires_manual_return';
+    assert.deepEqual((await get()).notices.filter(n=>n.source==='sale').map(n=>n.id),['sale:novo-evento'],'dispensa antiga vale para os dois motivos');
+
     db.failure='marketplace_inventory_notice_dismissals';
     const degraded=await get();
     assert.equal(degraded.noticeDismissalsUnavailable,true);
-    assert.equal(inventoryNoticeCount(degraded,false),3);
+    assert.deepEqual(degraded.notices.map(n=>n.code),['pending_product_sales']);
+    assert.equal(inventoryNoticeCount(degraded),1,'conta somente a pendência de estoque');
+    assert.equal(inventoryNoticeNeedsAttention(degraded,false),true);
+    assert.match(render(degraded),/Não foi possível verificar quais avisos já foram dispensados/);
+    assert.doesNotMatch(render({...degraded,notices:[],pendingStock:0}),/Sem pendências/);
+    db.failure=null;
+    assert.deepEqual((await get()).notices.filter(n=>n.source==='sale').map(n=>n.id),['sale:novo-evento']);
   }finally{delete globalThis.noticeDb;}
 });

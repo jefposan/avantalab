@@ -48,7 +48,7 @@ test('alerta abre somente por clique, fecha durante atualização e renova conta
   window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state',{detail:{companyId:'company',loading:false,error:''}}));render();assert.equal(panel().props.aberto,false);
   assert.equal(trigger().props['data-has-notices'],false);
   window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state',{detail:{companyId:'foreign',loading:false,error:'Falha externa'}}));render();assert.equal(trigger().props['data-has-notices'],false);
-  window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state',{detail:{companyId:'company',loading:false,error:'Falha de consulta'}}));render();assert.equal(trigger().props['data-has-notices'],true);assert.equal(panel().props.aberto,false);
+  window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state',{detail:{companyId:'company',loading:false,error:'Falha de consulta'}}));render();assert.equal(trigger().props['data-has-notices'],false);assert.equal(trigger().props['data-needs-attention'],true);assert.equal(panel().props.aberto,false);
   open();render();panel().props.onFechar();render();assert.equal(panel().props.aberto,false);
   const notice={id:'stock:1',source:'stock',code:'stock_divergence',productId:'product-1',connectionId:'account',provider:'mercado_livre'};
   feed={...feed,notices:[notice],pendingStock:1};open();render();
@@ -79,5 +79,8 @@ test('alerta abre somente por clique, fecha durante atualização e renova conta
   assert.equal(inventoryList().feed.notices.length,1);
   assert.match(trigger().props['aria-label'],/^1 aviso/,'contador muda sem aguardar nova consulta');
   assert.equal(feed.notices.length,2,'a resposta anterior não restaura o aviso já dispensado');
+  feed={...feed,notices:[notice,{...cancelled,code:'cancelled_stock_review'},{...cancelled,id:'sale:2'}]};
+  render();
+  assert.deepEqual(Array.from(inventoryList().feed.notices,n=>n.id),['stock:1','sale:2'],'motivo revisado não reabre a dispensa, mas outro evento aparece');
 
 });

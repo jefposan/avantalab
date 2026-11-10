@@ -7,7 +7,7 @@ import CardExpandidoModal from '@/app/components/CardExpandidoModal';
 import Tooltip from '@/app/components/Tooltip';
 import { Icon } from '@/app/projetos/components/Icon';
 import { corTextoSobreFundo } from '@/app/lib/cores-avanta';
-import { inventoryIssueMessage, inventoryNoticeCount, inventoryNoticeDismissAction, inventoryNoticeDismissKey, providerName, type MarketplaceLiveFeed } from '@/app/modules/marketplaces/live-feed';
+import { inventoryIssueMessage, inventoryNoticeCount, inventoryNoticeDismissAction, inventoryNoticeDismissKey, inventoryNoticeNeedsAttention, providerName, type MarketplaceLiveFeed } from '@/app/modules/marketplaces/live-feed';
 import styles from './marketplaces.module.css';
 import ImportStockChoice from './ImportStockChoice';
 
@@ -22,9 +22,9 @@ export function InventoryNoticeList({feed, unavailable, error = '', onAdjust, co
       {(error || unavailable) && <p role="alert">{error || 'Não foi possível consultar os avisos. A lista anterior pode estar desatualizada.'}</p>}
       {!feed && !unavailable && !error && <p>Consultando pendências…</p>}
       {feed && !feed.enabled && <p>A sincronização de estoque não está habilitada nesta empresa. Solicite a verificação ao administrador.</p>}
-      {feed?.enabled && !feed.workerHealthy && <p>A rotina de estoque não confirmou atividade recente. A última consulta não garante a conclusão das atualizações.</p>}
+      {feed?.enabled && !feed.workerHealthy && <p>A rotina de estoque precisa de atenção. A conclusão das atualizações ainda não foi confirmada.</p>}
       {feed?.noticesUnavailable && <p>Não foi possível identificar os detalhes das pendências. Atualize os avisos; nenhuma pendência foi considerada resolvida por essa falha.</p>}
-      {feed?.noticeDismissalsUnavailable && <p role="alert">Não foi possível consultar os avisos dispensados. Atualize os avisos para tentar novamente.</p>}
+      {feed?.noticeDismissalsUnavailable && <p role="alert">Não foi possível verificar quais avisos já foram dispensados. Atualize os avisos para consultar a lista completa.</p>}
       {!!feed?.pendingSales && <p>{feed.pendingSales} notificação(ões) de venda aguardando leitura. Os produtos ainda serão identificados.</p>}
       {feed?.notices?.map(notice=>{
         const dismissLabel = onDismiss && inventoryNoticeDismissAction(notice);
@@ -44,7 +44,7 @@ export function InventoryNoticeList({feed, unavailable, error = '', onAdjust, co
       })}
       {feed && !feed.notices && !feed.noticesUnavailable && <p>Os detalhes dos avisos não estão disponíveis nesta resposta. Atualize os avisos.</p>}
       {feed?.notices && !feed.noticesUnavailable && !feed.notices.length && feed.pendingStock > 0 && <p>Há atualização de estoque aguardando detalhamento. Atualize os avisos para conferir o motivo.</p>}
-      {feed?.enabled && feed.workerHealthy && feed.notices && !feed.noticesUnavailable && !unavailable && !error && !feed.notices.length && !feed.pendingSales && !feed.pendingStock && <small>Sem pendências na última consulta.</small>}
+      {feed?.enabled && feed.workerHealthy && feed.notices && !feed.noticesUnavailable && !feed.noticeDismissalsUnavailable && !unavailable && !error && !feed.notices.length && !feed.pendingSales && !feed.pendingStock && <small>Sem pendências na última consulta.</small>}
     </div>;
 }
 
@@ -58,7 +58,10 @@ export default function InventoryNotices({companyId, feed, unavailable, dark = f
   const visibleFeed = feed && visibleNotices && visibleNotices.length !== feed.notices?.length
     ? {...feed, notices:visibleNotices, pendingStock:visibleNotices.filter(notice=>notice.source==='stock').length}
     : feed;
-  const count = inventoryNoticeCount(visibleFeed, unavailable || Boolean(refresh.error));
+  const count = inventoryNoticeCount(visibleFeed);
+  const attention = inventoryNoticeNeedsAttention(visibleFeed, unavailable || Boolean(refresh.error));
+  const label = count ? `${count} aviso(s) de pendências` : 'Consultar pendências';
+  const triggerLabel = attention ? `${label}. Sincronização requer atenção.` : label;
   async function dismiss(notice: InventoryNotice, event: MouseEvent<HTMLButtonElement>) {
     if (!onDismiss || dismissing) return;
     const article = event.currentTarget.closest('article');
@@ -88,14 +91,14 @@ export default function InventoryNotices({companyId, feed, unavailable, dark = f
     return ()=>window.removeEventListener('avanta:marketplace-notices-refresh-state',listener);
   },[companyId]);
   return <>
-    <Tooltip texto={count ? `${count} aviso(s) de pendências` : 'Consultar pendências'} posicao="bottom"><button type="button" className={styles.inventoryAlertButton} data-has-notices={count > 0} aria-label={count ? `${count} aviso(s) de pendências. Abrir lista.` : 'Consultar pendências'} aria-haspopup="dialog" aria-expanded={open} aria-controls="inventory-notices-dialog" onClick={event=>{ event.currentTarget.focus(); setOpen(true); }}>
+    <Tooltip texto={triggerLabel} posicao="bottom"><button type="button" className={styles.inventoryAlertButton} data-has-notices={count > 0} data-needs-attention={attention} aria-label={triggerLabel} aria-haspopup="dialog" aria-expanded={open} aria-controls="inventory-notices-dialog" onClick={event=>{ event.currentTarget.focus(); setOpen(true); }}>
       <Icon name="alert" size={22} />{count > 0 && <b className={styles.inventoryAlertBadge} aria-hidden="true">{count}</b>}
     </button></Tooltip>
     <CardExpandidoModal aberto={open} variante="avisos" darkMode={dark} rotulo="Pendências de estoque e vendas" onFechar={()=>setOpen(false)}>
       <div className={`${styles.settingsModalScope} ${dark ? styles.dark : ''}`} style={{'--brand':brand,'--av-action-on-brand':corTextoSobreFundo(brand)} as CSSProperties}>
         <section id="inventory-notices-dialog" className={`${styles.userModal} ${styles.inventoryDialog}`} aria-busy={refresh.loading}>
           <header className={styles.userModalHeader}><h2>Pendências</h2><BotaoAcaoCompacto variante="discreto" somenteIcone aria-label="Fechar pendências" onClick={()=>setOpen(false)}><Icon name="close" /></BotaoAcaoCompacto></header>
-          <div className={styles.inventoryStatus}><div className={styles.inventoryNoticeHeading}><strong data-inventory-notice-heading tabIndex={-1}>{count ? `${count} aviso(s)` : 'Última consulta'}</strong><BotaoAcaoCompacto disabled={refresh.loading} onClick={()=>window.dispatchEvent(new CustomEvent('avanta:marketplace-refresh-notices',{detail:{companyId}}))}>{refresh.loading?'Atualizando…':'Atualizar avisos'}</BotaoAcaoCompacto></div>
+          <div className={styles.inventoryStatus}><div className={styles.inventoryNoticeHeading}><strong data-inventory-notice-heading tabIndex={-1}>{count ? `${count} aviso(s)` : attention ? 'Estado da sincronização' : 'Última consulta'}</strong><BotaoAcaoCompacto disabled={refresh.loading} onClick={()=>window.dispatchEvent(new CustomEvent('avanta:marketplace-refresh-notices',{detail:{companyId}}))}>{refresh.loading?'Atualizando…':'Atualizar avisos'}</BotaoAcaoCompacto></div>
             <InventoryNoticeList companyId={companyId} canManage={canManage} feed={visibleFeed} unavailable={unavailable} error={dismissError || refresh.error} onDismiss={onDismiss ? dismiss : undefined} dismissing={dismissing} onAdjust={onAdjust ? notice=>{setOpen(false);requestAnimationFrame(()=>onAdjust(notice));} : undefined} />
           </div>
         </section>

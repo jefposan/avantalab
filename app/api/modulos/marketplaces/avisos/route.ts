@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorizeMarketplace, managementFailure, MarketplaceError } from '@/app/modules/marketplaces/services/management-access';
 import { uuidIsValid } from '@/app/modules/marketplaces/services/listing-model';
 import { readInventoryNotices } from '@/app/modules/marketplaces/services/inventory-notices';
-import { inventoryNoticeDismissAction } from '@/app/modules/marketplaces/live-feed';
+import { inventoryNoticeDismissAction, inventoryNoticeDismissKey } from '@/app/modules/marketplaces/live-feed';
 import { saveInventoryNoticeDismissal, visibleInventoryNotices } from '@/app/modules/marketplaces/services/inventory-notice-dismissals';
 import { acknowledgeAllSaleAlerts } from '@/app/modules/marketplaces/services/sale-alert-reads';
 export const runtime = 'nodejs';
@@ -39,7 +39,8 @@ export async function POST(request: Request) {
           typeof code !== 'string' || !/^[a-z_0-9]{1,80}$/.test(code)) {
         throw new MarketplaceError(400, 'invalid_notice', 'Aviso inválido.');
       }
-      const notice = (await readInventoryNotices(db, empresaId)).find(row => row.id === noticeId && row.code === code);
+      const key = inventoryNoticeDismissKey({ id: noticeId, code });
+      const notice = (await readInventoryNotices(db, empresaId)).find(row => inventoryNoticeDismissKey(row) === key);
       if (!notice || !inventoryNoticeDismissAction(notice)) {
         throw new MarketplaceError(409, 'notice_changed', 'Este aviso não pode mais ser dispensado. Atualize a lista de pendências.');
       }

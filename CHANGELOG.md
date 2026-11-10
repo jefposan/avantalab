@@ -1,3 +1,8 @@
+## 3.2.0.387 — Marketplaces: corrigir dispensas e contador de pendências
+
+- O mesmo evento de cancelamento continua oculto após clicar em **OK**, inclusive se o motivo for atualizado. Falhas na leitura de dispensas mostram a lista parcial e preservam as pendências que exigem ação.
+- O contador mostra apenas pendências e notificações de venda aguardando leitura. Alertas da sincronização continuam disponíveis no ícone de atenção.
+
 ## 3.2.0.386 — Marketplaces: adicionar o círculo de rolagem aos blocos expandidos
 
 - O botão oficial de próxima rolagem aparece em Vendas, Anunciados, Estoques e Produtos cadastrados enquanto houver conteúdo abaixo da tela. A rolagem termina no fim do bloco expandido.

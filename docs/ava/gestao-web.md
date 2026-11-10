@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.386 -->
+<!-- ava-version: 3.2.0.387 -->
+
+> Revisão 3.2.0.387: Em **Anúncios em marketplaces → Pendências**, o **OK** mantém oculto o cancelamento já dispensado mesmo se o marketplace atualizar o motivo. Novos cancelamentos continuam aparecendo. Em uma falha de leitura das dispensas, a lista avisa que a consulta está parcial. O número no ícone conta apenas pendências e notificações de venda aguardando leitura. Se houver somente um alerta da sincronização, o ícone chama atenção sem mostrar um número.
 
 > Revisão 3.2.0.386: Em **Anúncios em marketplaces**, expanda Vendas, Anunciados, Estoques ou Produtos cadastrados. Quando o bloco tiver conteúdo abaixo da tela, use o círculo com seta para avançar na página até o fim do bloco.
 
