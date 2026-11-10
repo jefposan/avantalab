@@ -236,9 +236,8 @@ async function createArtifactStorageRuntime({ environment, databaseUrl, supabase
       const policy = production ? validateFiscalDurableStorageConfiguration(JSON.parse(text(environment.FISCAL_STORAGE_POLICY_JSON))) : null;
       const primary = { client, bucket, environment: production ? 'production' : 'homologacao', productionReadiness: policy };
       const backupUrl = text(environment.FISCAL_BACKUP_SUPABASE_URL);
-      const backupKey = text(environment.FISCAL_BACKUP_SUPABASE_SERVICE_ROLE_KEY);
       const backupBucket = text(environment.FISCAL_BACKUP_STORAGE_BUCKET);
-      if (production && (!backupUrl || !backupKey || !backupBucket)) return null;
+      if (production && (!backupUrl || !backupBucket)) return null;
       if (production) {
         const [writer, backupWriter] = await Promise.all([
           createFiscalWriter({ url: supabaseUrl, key: text(environment.NEXT_PUBLIC_SUPABASE_ANON_KEY), email: text(environment.FISCAL_STORAGE_WRITER_EMAIL), password: text(environment.FISCAL_STORAGE_WRITER_PASSWORD) }),
@@ -252,7 +251,7 @@ async function createArtifactStorageRuntime({ environment, databaseUrl, supabase
         primary,
         primaryUrl: supabaseUrl,
         backupUrl,
-        backupClient: createClient(backupUrl, backupKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }),
+        backupClient: primary.backupWriter,
         backupBucket,
         backupWriter: primary.backupWriter,
       }) : createSupabaseFiscalArtifactStorage(primary);

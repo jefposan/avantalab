@@ -114,7 +114,7 @@ test('guarda de produção com versão lógica exige cópia independente e os do
   };
   const options = {
     primary, primaryUrl: 'https://primary.supabase.co', backupUrl: 'https://backup.supabase.co',
-    backupClient: copy.client, backupWriter: { ...copy.client }, backupBucket: 'avantalab-fiscal-private',
+    backupClient: copy.client, backupWriter: copy.client, backupBucket: 'avantalab-fiscal-private',
   };
   assert.equal((await createSupabaseFiscalBackup(options).inspectReadiness()).productionReady, true);
   assert.equal((await createSupabaseFiscalBackup({ ...options, backupWriter: undefined }).inspectReadiness()).productionReady, false);

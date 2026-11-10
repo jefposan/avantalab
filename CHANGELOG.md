@@ -1,3 +1,7 @@
+## 3.2.0.394 — Vendas: consultar o backup fiscal com identidade dedicada
+
+- Consultar metadados do bucket de backup com a mesma identidade restrita que grava os documentos.
+
 ## 3.2.0.393 — Vendas: restringir a gravação fiscal nos dois projetos Supabase
 
 - Usar identidades dedicadas na guarda e na cópia independente de XML e DANFE.

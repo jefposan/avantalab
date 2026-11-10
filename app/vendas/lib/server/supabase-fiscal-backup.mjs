@@ -7,16 +7,16 @@ function projectRef(url) {
   return match[1];
 }
 
-export function createSupabaseFiscalBackup({ primary, primaryUrl, backupClient, backupUrl, backupBucket, backupWriter = backupClient }) {
+export function createSupabaseFiscalBackup({ primary, primaryUrl, backupClient, backupUrl, backupBucket, backupWriter }) {
   if (projectRef(primaryUrl) === projectRef(backupUrl) || primary.client === backupClient) {
     throw new TypeError('A cópia fiscal exige outro projeto Supabase.');
   }
   const source = createSupabaseFiscalArtifactStorage({
     ...primary,
     independentCopy: primary.productionReadiness?.configuration?.independentCopy === true
-      && backupWriter !== backupClient,
+      && Boolean(backupWriter),
   });
-  const backup = createSupabaseFiscalArtifactStorage({ client: backupClient, writer: backupWriter, bucket: backupBucket });
+  const backup = createSupabaseFiscalArtifactStorage({ client: backupClient, writer: backupWriter ?? backupClient, bucket: backupBucket });
 
   return Object.freeze({
     ...source,
