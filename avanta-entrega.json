@@ -1,13 +1,4 @@
 {
-  "baseDeploymentId": "dpl_G5cgzdXCf513y3r8R8YnACoxp8T8",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261110180200_vendas_emissao_ambiente.sql",
-      "sha256": "5be7653f6905f6fbb71d51899ab0b2b2bb496cda843b6ea3aee3048a1365e380"
-    },
-    {
-      "path": "supabase/migrations/20261110180300_vendas_tridium_nfe_producao_serie.sql",
-      "sha256": "bbd1e7bf9c3f05ce0f473eb86ac09ad5be8ca948082b2f5f6abe86b151818c08"
-    }
-  ]
+  "baseDeploymentId": "dpl_Ecsp1SFXXMkVQ6ffKVULm1VRCDz2",
+  "migrations": []
 }

@@ -1,3 +1,7 @@
+## 3.2.0.392 — Vendas: integrar cópia fiscal em projeto Supabase independente
+
+- A guarda de produção confirma o armazenamento em dois projetos e permite restaurar os documentos com verificação de integridade.
+
 ## 3.2.0.391 — Vendas: preparar NF-e de produção da Tridium na série 2
 
 - Conecta o fluxo da NF-e modelo 55 ao ambiente definido no servidor, da reserva ao protocolo, XML processado e DANFE.

@@ -71,3 +71,34 @@ test('migração cria bucket privado sem liberar policies ao navegador', async (
   assert.match(migration, /10485760/);
   assert.doesNotMatch(migration, /create policy/i);
 });
+
+test('restaura XML e DANFE a partir de outro projeto e rejeita cópia corrompida', async () => {
+  const { createSupabaseFiscalBackup } = await import('../../app/vendas/lib/server/supabase-fiscal-backup.mjs');
+  const source = storageFixture();
+  const copy = storageFixture();
+  const options = {
+    primary: { client: source.client, bucket: 'avantalab-fiscal-private' },
+    primaryUrl: 'https://primary.supabase.co', backupUrl: 'https://backup.supabase.co',
+    backupClient: copy.client, backupBucket: 'avantalab-fiscal-private',
+  };
+  assert.throws(() => createSupabaseFiscalBackup({ ...options, backupUrl: options.primaryUrl }), /outro projeto/);
+  const storage = createSupabaseFiscalBackup(options);
+  assert.equal((await storage.inspectReadiness()).backupReady, true);
+  for (const [suffix, contentType, body] of [
+    ['procNFe.xml', 'application/xml', '<synthetic/>'],
+    ['danfe.pdf', 'application/pdf', '%PDF-synthetic'],
+  ]) {
+    const storageKey = LOGICAL_KEY.replace('signedNFe.xml', suffix);
+    const checksum = createHash('sha256').update(body).digest('hex');
+    const target = { accessKey: ACCESS_KEY, storageKey, contentType };
+    const input = { ...target, content: body, checksum, byteLength: Buffer.byteLength(body) };
+    await storage.putImmutable(input);
+    source.objects.clear();
+    const query = { ...target, expectedChecksum: checksum };
+    await storage.restore(query);
+    assert.equal(Buffer.from((await storage.readVerified(query)).content).toString(), body);
+    const physicalKey = [...copy.objects.keys()].find(key => key.endsWith(suffix));
+    copy.objects.get(physicalKey).body = Buffer.from('corrompido');
+    await assert.rejects(storage.restore(query));
+  }
+});

@@ -1,3 +1,4 @@
+import { createSupabaseFiscalBackup } from './supabase-fiscal-backup.mjs';
 import { NFE_PRODUCTION_SCOPE, NFE_PRODUCTION_CONFIRMATION } from './nfe-issuance-orchestrator.mjs';
 import { validateFiscalDurableStorageConfiguration } from './fiscal-durable-storage-policy.mjs';
 import {createFiscalEditorSettingsRepository} from './fiscal-editor-settings.mjs';
@@ -226,7 +227,18 @@ async function createArtifactStorageRuntime({ environment, databaseUrl, supabase
     try {
       const client = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
       const policy = production ? validateFiscalDurableStorageConfiguration(JSON.parse(text(environment.FISCAL_STORAGE_POLICY_JSON))) : null;
-      const storage = createSupabaseFiscalArtifactStorage({ client, bucket, environment: production ? 'production' : 'homologacao', productionReadiness: policy });
+      const primary = { client, bucket, environment: production ? 'production' : 'homologacao', productionReadiness: policy };
+      const backupUrl = text(environment.FISCAL_BACKUP_SUPABASE_URL);
+      const backupKey = text(environment.FISCAL_BACKUP_SUPABASE_SERVICE_ROLE_KEY);
+      const backupBucket = text(environment.FISCAL_BACKUP_STORAGE_BUCKET);
+      if (production && (!backupUrl || !backupKey || !backupBucket)) return null;
+      const storage = production ? createSupabaseFiscalBackup({
+        primary,
+        primaryUrl: supabaseUrl,
+        backupUrl,
+        backupClient: createClient(backupUrl, backupKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }),
+        backupBucket,
+      }) : createSupabaseFiscalArtifactStorage(primary);
       const readiness = await storage.inspectReadiness();
       return (production ? readiness.productionReady : readiness.homologationReady) === true ? storage : null;
     } catch {
