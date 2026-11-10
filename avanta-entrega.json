@@ -1,7 +1,7 @@
 {
-  "baseDeploymentId": "dpl_F1jYmvGjXY4WVu6xCssi3qqwEBKg",
-  "version": "3.2.0.389",
-  "scope": "Vendas: consultar status da SEFAZ-SP de produção",
+  "baseDeploymentId": "dpl_7kBA4iPGutHoXBzKQEockasC59ku",
+  "version": "3.2.0.390",
+  "scope": "Vendas: acionar diagnóstico da SEFAZ-SP no certificado",
   "migrations": [],
   "reconciliationStatus": "reviewed",
   "auditReview": "Diagnóstico restrito ao perfil Tridium, com permissão fiscal, sem emissão e sem movimentação da sequência."

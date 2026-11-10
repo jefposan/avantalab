@@ -5402,10 +5402,11 @@ function certificateBlockerDescription(blockers: readonly string[]) {
   return [...new Set(descriptions)];
 }
 
-function CertificateDigitalDialog({ open, company, bridge, onClose, onRequestCompanyRegistration, onInstall, onActivate }: { open: boolean; company: CompanyProfile; bridge: FiscalCertificateBridgeState; onClose: () => void; onRequestCompanyRegistration: () => void; onInstall: (certificate: File, passphrase: string) => Promise<{ ok: boolean; message: string; certificate?: FiscalCertificateStatus }>; onActivate: () => Promise<{ ok: boolean; message: string; certificate?: FiscalCertificateStatus }> }) {
+function CertificateDigitalDialog({ open, company, bridge, onClose, onRequestCompanyRegistration, onInstall, onActivate, productionStatusAvailable }: { productionStatusAvailable: boolean; open: boolean; company: CompanyProfile; bridge: FiscalCertificateBridgeState; onClose: () => void; onRequestCompanyRegistration: () => void; onInstall: (certificate: File, passphrase: string) => Promise<{ ok: boolean; message: string; certificate?: FiscalCertificateStatus }>; onActivate: (productionStatus?: boolean) => Promise<{ ok: boolean; message: string; certificate?: FiscalCertificateStatus }> }) {
   const [adding, setAdding] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [validationError, setValidationError] = useState('');
+  const [productionStatusMessage, setProductionStatusMessage] = useState('');
   const [validationResult, setValidationResult] = useState<NfeA1ValidationDiagnostic | null>(null);
   const [validating, setValidating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -5555,7 +5556,12 @@ function CertificateDigitalDialog({ open, company, bridge, onClose, onRequestCom
         </div>
       </>}
     </div>
-    <footer className="dialog-footer">{!companyRegistration.ready ? <><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={onRequestCompanyRegistration}><Icon name="edit" size={16}/> Completar cadastro</BotaoAcaoCompacto></> : adding ? <><BotaoAcaoCompacto type="button" variante="secundario" onClick={() => { resetSensitiveFields(); setValidationError(''); onClose(); }} disabled={validating}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={validateCertificate} disabled={validating || (bridge.integrated && !bridge.available)}>{validating ? bridge.integrated ? 'Instalando…' : 'Validando…' : bridge.integrated ? 'Instalar certificado' : 'Validar certificado'}</BotaoAcaoCompacto></> : <><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto>{certificateInstalled && !certificateActive && <BotaoAcaoCompacto type="button" variante="primario" onClick={retryActivation} disabled={bridge.loading}>{bridge.loading ? 'Verificando…' : 'Verificar novamente'}</BotaoAcaoCompacto>}<BotaoAcaoCompacto type="button" variante="secundario" onClick={() => { setValidationError(''); setAdding(true); }} disabled={bridge.loading}><Icon name="plus" size={16}/> {certificateInstalled || validationResult?.valid ? 'Substituir certificado' : 'Adicionar certificado'}</BotaoAcaoCompacto></>}</footer>
+    {open && !adding && productionStatusAvailable && certificateActive && <p role="status" className="field-message">{productionStatusMessage}</p>}
+    <footer className="dialog-footer">{!companyRegistration.ready ? <><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={onRequestCompanyRegistration}><Icon name="edit" size={16}/> Completar cadastro</BotaoAcaoCompacto></> : adding ? <><BotaoAcaoCompacto type="button" variante="secundario" onClick={() => { resetSensitiveFields(); setValidationError(''); onClose(); }} disabled={validating}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={validateCertificate} disabled={validating || (bridge.integrated && !bridge.available)}>{validating ? bridge.integrated ? 'Instalando…' : 'Validando…' : bridge.integrated ? 'Instalar certificado' : 'Validar certificado'}</BotaoAcaoCompacto></> : <><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose}>Fechar</BotaoAcaoCompacto>{productionStatusAvailable && certificateActive && <BotaoAcaoCompacto type="button" variante="secundario" disabled={bridge.loading} onClick={async () => {
+      setProductionStatusMessage('Consultando a SEFAZ-SP…');
+      const result = await onActivate(true);
+      setProductionStatusMessage(result.message);
+    }}>Testar conexão em produção</BotaoAcaoCompacto>}{certificateInstalled && !certificateActive && <BotaoAcaoCompacto type="button" variante="primario" onClick={retryActivation} disabled={bridge.loading}>{bridge.loading ? 'Verificando…' : 'Verificar novamente'}</BotaoAcaoCompacto>}<BotaoAcaoCompacto type="button" variante="secundario" onClick={() => { setValidationError(''); setAdding(true); }} disabled={bridge.loading}><Icon name="plus" size={16}/> {certificateInstalled || validationResult?.valid ? 'Substituir certificado' : 'Adicionar certificado'}</BotaoAcaoCompacto></>}</footer>
   </Dialog>;
 }
 
@@ -5772,7 +5778,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     setFiscalCertificateBridgeState((current) => ({ ...current, loading: true, message: 'Instalando certificado…' }));
     window.parent.postMessage(request, managementBridgeOrigin, [channel.port2]);
   }), [managementBridgeOrigin]);
-  const activateProtectedCertificate = useCallback(() => new Promise<{ ok: boolean; message: string; certificate?: FiscalCertificateStatus }>((resolve) => {
+  const activateProtectedCertificate = useCallback((productionStatus = false) => new Promise<{ ok: boolean; message: string; certificate?: FiscalCertificateStatus }>((resolve) => {
     if (!managementBridgeOrigin || window.parent === window) {
       resolve({ ok: false, message: 'Abra Vendas pela Gestão para verificar o certificado com segurança.' });
       return;
@@ -5798,6 +5804,13 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       finish({ ok: false, message });
     }, 60_000);
     channel.port1.onmessage = (event) => {
+      if (productionStatus) {
+        if (event.data?.requestId !== requestId) return;
+        const message = typeof event.data.message === 'string' ? event.data.message : 'Consulta indisponível.';
+        setFiscalCertificateBridgeState((current) => ({ ...current, loading: false }));
+        finish({ ok: event.data.ok === true, message });
+        return;
+      }
       const response = parseFiscalCertificateActivateResponse(event.data);
       if (!response || response.requestId !== requestId) return;
       if (!response.ok) {
@@ -5809,7 +5822,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       finish({ ok: true, message: response.message, certificate: response.certificate });
     };
     setFiscalCertificateBridgeState((current) => ({ ...current, loading: true, message: 'Verificando certificado…' }));
-    window.parent.postMessage(request, managementBridgeOrigin, [channel.port2]);
+    window.parent.postMessage({ ...request, productionStatus }, managementBridgeOrigin, [channel.port2]);
   }), [managementBridgeOrigin]);
   const applyFiscalIssueResponse = (data: unknown) => {
     const issued = parseFiscalIssueResponse(data);
@@ -8008,7 +8021,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     <FiscalIssuerRegistryDialog open={fiscalCorrectionIssuerOpen} registry={fiscalIssuerRegistry} company={moduleSettings.company} readOnly={!effectivePermissions['fiscal.configure']} onClose={() => setFiscalCorrectionIssuerOpen(false)} onSave={(next) => { saveFiscalIssuerRegistry(next); setFiscalCorrectionIssuerOpen(false); }}/>
     <FiscalNumberingDialog open={fiscalNumberingOpen} ledger={fiscalNumberingLedger} documentScope={['nfe']} actor={activeUser?.name ?? 'Sistema'} readOnly={!effectivePermissions['fiscal.configure']} onClose={()=>setFiscalNumberingOpen(false)} onSave={persistFiscalNumbering} onLoadRemote={loadRemoteFiscalNumbering} onSaveRemote={saveRemoteFiscalNumbering}/>
     <FiscalEmissionServiceDialog open={fiscalServiceOpen} execution={fiscalCertificateBridgeState.execution} onClose={() => setFiscalServiceOpen(false)}/>
-    <CertificateDigitalDialog open={certificateOpen} company={moduleSettings.company} bridge={fiscalCertificateBridgeState} onClose={() => setCertificateOpen(false)} onRequestCompanyRegistration={() => { setCertificateOpen(false); setCompanyRegistrationOpen(true); }} onInstall={installProtectedCertificate} onActivate={activateProtectedCertificate}/>
+    <CertificateDigitalDialog open={certificateOpen} company={moduleSettings.company} bridge={fiscalCertificateBridgeState} onClose={() => setCertificateOpen(false)} onRequestCompanyRegistration={() => { setCertificateOpen(false); setCompanyRegistrationOpen(true); }} onInstall={installProtectedCertificate} onActivate={activateProtectedCertificate} productionStatusAvailable={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('companyId') === 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'}/>
     <ClientFormDialog priceTables={realFiscalEditor?.priceTables} open={clientCreateOpen} client={null} clientRecords={clientRecords} sellers={moduleSettings.commercial.sellers} defaultSeller={moduleSettings.commercial.defaultSeller} connected={Boolean(managementCatalogBridge)} onClose={() => setClientCreateOpen(false)} onSave={saveClient}/>
     <SupplierFormDialog open={supplierCreateOpen} suppliers={supplierRecords} onClose={() => setSupplierCreateOpen(false)} onSave={saveSupplier}/>
     <SettingsDialog section={companyRegistrationOpen ? 'empresa' : null} settings={moduleSettings} onClose={() => { setCompanyRegistrationOpen(false); setCertificateOpen(true); }} onSave={(next) => { if (!saveModuleSettings(next)) return; setCompanyRegistrationOpen(false); setCertificateOpen(true); }}/>

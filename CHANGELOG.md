@@ -1,3 +1,7 @@
+## 3.2.0.390 — Vendas: acionar diagnóstico da SEFAZ-SP no certificado
+
+- O perfil Tridium pode consultar a conexão de produção no painel do certificado e ver o resultado.
+
 ## 3.2.0.389 — Vendas: consultar status da SEFAZ-SP de produção
 
 - Consulta autenticada para o perfil Tridium, usando o certificado ativo do cofre e sem movimentar a numeração.

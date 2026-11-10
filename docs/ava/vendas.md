@@ -1,6 +1,6 @@
-<!-- ava-version: 3.2.0.389 -->
+<!-- ava-version: 3.2.0.390 -->
 
-> Revisão 3.2.0.389: sem impacto operacional. Diagnóstico técnico da SEFAZ-SP sem emissão.
+> Revisão 3.2.0.390: Em Ajustes, Certificado digital, a Tridium pode testar a conexão com a SEFAZ-SP de produção sem emitir ou consumir número.
 
 > Revisão 3.2.0.387: Sem impacto operacional. O ajuste pertence aos avisos de Marketplaces da Gestão Web.
 

@@ -1,6 +1,6 @@
-<!-- ava-version: 3.2.0.389 -->
+<!-- ava-version: 3.2.0.390 -->
 
-> Revisão 3.2.0.389: sem impacto operacional. Diagnóstico técnico da SEFAZ-SP sem emissão.
+> Revisão 3.2.0.390: sem impacto operacional. Diagnóstico técnico da SEFAZ-SP sem emissão.
 
 > Revisão 3.2.0.387: Em **Anúncios em marketplaces → Pendências**, o **OK** mantém oculto o cancelamento já dispensado mesmo se o marketplace atualizar o motivo. Novos cancelamentos continuam aparecendo. Em uma falha de leitura das dispensas, a lista avisa que a consulta está parcial. O número no ícone conta apenas pendências e notificações de venda aguardando leitura. Se houver somente um alerta da sincronização, o ícone chama atenção sem mostrar um número.
 

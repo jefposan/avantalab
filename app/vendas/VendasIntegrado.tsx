@@ -794,6 +794,19 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
               deliver({ type: responseType, requestId, ok: true, certificate: payload.certificate, execution: payload.execution, message: payload.message || '' });
               return;
             }
+            if (event.data.type === FISCAL_CERTIFICATE_ACTIVATE_REQUEST_TYPE && event.data.productionStatus === true) {
+              params.set('action', 'production-status');
+              const response = await fetch(`/api/modulos/vendas/fiscal/certificate?${params}`, {
+                method: 'POST', headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
+              });
+              const payload = await response.json().catch(() => ({}));
+              const codes = [payload.cStat, ...(Array.isArray(payload.errors) ? payload.errors : []), payload.code]
+                .filter((code) => typeof code === 'string' && /^[A-Z0-9-]{1,80}$/.test(code)).join(', ');
+              deliver({ type: responseType, requestId, ok: response.ok && payload.ok === true,
+                message: response.ok && payload.ok === true ? 'SEFAZ-SP de produção operacional (107).'
+                  : `Falha na consulta à SEFAZ-SP de produção${codes ? ` (${codes})` : ''}.` });
+              return;
+            }
             if (event.data.type === FISCAL_CERTIFICATE_ACTIVATE_REQUEST_TYPE) {
               const response = await fetch(`/api/modulos/vendas/fiscal/certificate?${params}`, {
                 method: 'PATCH',

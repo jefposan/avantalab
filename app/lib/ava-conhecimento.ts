@@ -1,4 +1,4 @@
-// Revisão 3.2.0.389: diagnóstico técnico da SEFAZ-SP sem alteração no roteiro de emissão.
+// Revisão 3.2.0.390: a Tridium pode testar a conexão da SEFAZ-SP de produção no painel do certificado, sem emitir.
 // Revisão 3.2.0.387: aviso de cancelamento dispensado permanece oculto em Marketplaces.
 // Revisão 3.2.0.386: próxima rolagem nos blocos de Marketplaces da Gestão Web.
 // Revisão 3.2.0.384-av198: no AvantaVendas, rodapé só para falhas, validações no formulário e pendências na sincronização.
