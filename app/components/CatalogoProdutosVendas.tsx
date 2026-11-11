@@ -1,17 +1,20 @@
 'use client';
 
 import Image from 'next/image';
+import CampoMoeda from './CampoMoeda';
+import BotaoAcaoCompacto from './BotaoAcaoCompacto';
+import { corTextoSobreFundo } from '../lib/cores-avanta';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import { formatarDescricao } from '../lib/formatters';
 import { supabase } from '../lib/supabase';
 import ModalConfirmacao from './ModalConfirmacao';
 
-type Produto = { id: string; catalogo_id: string; sku: string | null; nome: string; marca: string | null; categoria: string | null; descricao: string | null; preco_divulgacao: number | null; unidade: string; imagem_url: string | null; ncm: string | null; codigo_barras: string | null; ativo: boolean; atualizado_em: string };
+type Produto = { id: string; catalogo_id: string; sku: string | null; nome: string; marca: string | null; categoria: string | null; descricao: string | null; preco_divulgacao: number | null; preco_representante: number | null; unidade: string; imagem_url: string | null; ncm: string | null; codigo_barras: string | null; ativo: boolean; atualizado_em: string };
 type Catalogo = { id: string; nome: string; codigo: string; origem: 'externa' | 'custos_local' | 'manual'; ativo: boolean; publicado_avantavendas: boolean; padrao: boolean; atualizado_em: string };
 type Props = { empresaId: string; darkMode: boolean; corPrimaria: string };
 
-const vazio = { id: '', sku: '', nome: '', marca: '', categoria: '', descricao: '', preco_divulgacao: '', unidade: 'un', imagem_url: '', ncm: '', codigo_barras: '', ativo: true };
+const vazio = { id: '', sku: '', nome: '', marca: '', categoria: '', descricao: '', preco_divulgacao: '', preco_representante: '', unidade: 'un', imagem_url: '', ncm: '', codigo_barras: '', ativo: true };
 const textoNumero = (valor: string) => {
   const texto = String(valor || '').replace(/R\$|\s/g, '');
   return Number(texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto);
@@ -46,7 +49,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const indiceVozSolicitadoRef = useRef('');
   const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
-  const campos = [['nome', 'Nome'], ['marca', 'Marca'], ['categoria', 'Categoria'], ['sku', 'SKU'], ['unidade', 'Unidade'], ['preco_divulgacao', 'Preço sugerido de revenda'], ['codigo_barras', 'EAN / GTIN'], ['ncm', 'NCM']];
+  const campos = [['nome', 'Nome'], ['marca', 'Marca'], ['categoria', 'Categoria'], ['sku', 'SKU'], ['codigo_barras', 'EAN / GTIN'], ['ncm', 'NCM']];
   const haCatalogoPublicado = catalogos.some((catalogo) => catalogo.publicado_avantavendas);
 
   const solicitarIndiceVoz = useCallback(async (productId = '') => {
@@ -111,7 +114,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   };
   const editar = (produto: Produto) => {
     setErro('');
-    setFormulario({ ...vazio, ...produto, preco_divulgacao: Number(produto.preco_divulgacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: produto.sku || skuLegado(produto.id), descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
+    setFormulario({ ...vazio, ...produto, preco_representante: produto.preco_representante == null ? '' : Number(produto.preco_representante).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), preco_divulgacao: Number(produto.preco_divulgacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: produto.sku || skuLegado(produto.id), descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
     setFormularioAberto(true);
     levarAoFormulario();
   };
@@ -169,16 +172,21 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const salvar = async () => {
     const nome = formatarDescricao(String(formulario.nome || ''));
     const revenda = textoNumero(String(formulario.preco_divulgacao || ''));
+    const custoInformado = String(formulario.preco_representante || '').trim();
+    const custo = custoInformado ? textoNumero(custoInformado) : null;
     const sku = String(formulario.sku || '').trim().toUpperCase();
+    if (custo !== null && (!Number.isFinite(custo) || custo < 0 || custo > 9999999999.99)) {
+      setErro('Informe um preço de custo válido.');
+      return;
+    }
     if (!sku || !nome || !Number.isFinite(revenda) || revenda <= 0) {
       setErro('Código, nome e preço sugerido de revenda são obrigatórios.');
       return;
     }
     setSalvando(true);
     setErro('');
-    const payload = { sku, codigo_barras: String(formulario.codigo_barras || '').trim() || null, marca: String(formulario.marca || '').trim() || null, categoria: String(formulario.categoria || '').trim() || null, nome, descricao: String(formulario.descricao || '').trim() || null, preco_divulgacao: revenda, unidade: String(formulario.unidade || 'un').trim() || 'un', imagem_url: String(formulario.imagem_url || '').trim() || null, ncm: String(formulario.ncm || '').trim() || null, ativo: formulario.ativo !== false };
-    // A rotina protegida aceita somente campos de divulgação. Ela confirma a
-    // linha escrita e preserva preço de custo e venda internos da Gestão.
+    const payload = { sku, codigo_barras: String(formulario.codigo_barras || '').trim() || null, marca: String(formulario.marca || '').trim() || null, categoria: String(formulario.categoria || '').trim() || null, nome, descricao: String(formulario.descricao || '').trim() || null, preco_divulgacao: revenda, preco_representante: custo, unidade: String(formulario.unidade || 'un').trim() || 'un', imagem_url: String(formulario.imagem_url || '').trim() || null, ncm: String(formulario.ncm || '').trim() || null, ativo: formulario.ativo !== false };
+    // A rotina protegida separa o preço cobrado do representante dos custos internos da empresa.
     const { data, error } = await supabase.rpc('salvar_produto_conteudo_vendas_mobile_rpc', {
       p_empresa_id: empresaId,
       p_produto_id: formulario.id ? String(formulario.id) : null,
@@ -245,7 +253,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
             }
           } catch { /* o produto ainda é exportado, apenas sem a cópia da imagem */ }
         }
-        return { ...produto, preco_custo: 0, preco_venda: Number(produto.preco_divulgacao || 0), imagem_arquivo };
+        return { ...produto, preco_custo: Number(produto.preco_representante || 0), preco_venda: Number(produto.preco_divulgacao || 0), imagem_arquivo };
       }));
       zip.file('catalogo-vendas-mobile.json', JSON.stringify({ versao: 1, criado_em: new Date().toISOString(), catalogo: { id: catalogo.id, nome: catalogo.nome, codigo: catalogo.codigo }, produtos: itens }, null, 2));
       const arquivo = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
@@ -302,7 +310,21 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
         {formulario.id && String(formulario.sku || '').startsWith('LEGADO-') && <p className="mt-2 text-[10px] font-bold text-cyan-700">Este produto não tinha código. Um SKU técnico foi preparado para salvar a edição.</p>}
         {erro && <p role="alert" className="mt-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
         <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
-          {campos.map(([chave, rotulo]) => <label key={chave} className="text-[9px] font-black uppercase opacity-70">{rotulo}<input value={String(formulario[chave] || '')} onChange={(e) => mudar(chave, chave.startsWith('preco') ? formatarMoedaDigitada(e.target.value) : e.target.value)} onBlur={chave === 'nome' ? () => mudar('nome', formatarDescricao(String(formulario.nome || ''))) : undefined} inputMode={chave.startsWith('preco') ? 'numeric' : undefined} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs font-bold normal-case ${campo}`} /></label>)}
+          {campos.slice(0, 4).map(([chave, rotulo]) => <label key={chave} className="text-[9px] font-black uppercase opacity-70">{rotulo}<input value={String(formulario[chave] || '')} onChange={(e) => mudar(chave, chave.startsWith('preco') ? formatarMoedaDigitada(e.target.value) : e.target.value)} onBlur={chave === 'nome' ? () => mudar('nome', formatarDescricao(String(formulario.nome || ''))) : undefined} inputMode={chave.startsWith('preco') ? 'numeric' : undefined} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs font-bold normal-case ${campo}`} /></label>)}
+        </div>
+        <div className="mt-1.5 grid grid-cols-[minmax(40px,.2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-1.5">
+          <label className="min-w-0 text-[9px] font-black uppercase opacity-70">Unidade
+            <input value={String(formulario.unidade || '')} onChange={(e) => mudar('unidade', e.target.value)} className={`mt-0.5 h-8 w-full rounded-md border px-1 text-xs font-bold normal-case ${campo}`} />
+          </label>
+          <label className="min-w-0 text-[9px] font-black uppercase opacity-70">Preço custo
+            <CampoMoeda value={String(formulario.preco_representante || '')} onChange={(valor) => mudar('preco_representante', valor)} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs font-bold normal-case ${campo}`} />
+          </label>
+          <label className="min-w-0 text-[9px] font-black uppercase opacity-70">Preço revenda
+            <CampoMoeda value={String(formulario.preco_divulgacao || '')} onChange={(valor) => mudar('preco_divulgacao', valor)} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs font-bold normal-case ${campo}`} />
+          </label>
+        </div>
+        <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
+          {campos.slice(4).map(([chave, rotulo]) => <label key={chave} className="text-[9px] font-black uppercase opacity-70">{rotulo}<input value={String(formulario[chave] || '')} onChange={(e) => mudar(chave, e.target.value)} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs font-bold normal-case ${campo}`} /></label>)}
         </div>
         <label className="mt-1.5 block text-[9px] font-black uppercase opacity-70">Descrição<textarea value={String(formulario.descricao || '')} onChange={(e) => mudar('descricao', e.target.value)} rows={2} className={`mt-0.5 w-full rounded-md border p-2 text-xs normal-case ${campo}`} /></label>
         <div className="mt-1.5 flex items-end gap-2">
@@ -311,7 +333,16 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
           {formulario.imagem_url && <a href={String(formulario.imagem_url)} target="_blank" rel="noreferrer" title="Abrir pré-visualização"><Image src={String(formulario.imagem_url)} alt="Pré-visualização do produto" width={32} height={32} unoptimized className="h-8 w-8 shrink-0 rounded-md border border-cyan-300 object-cover" /></a>}
           <button type="button" onClick={() => arquivoRef.current?.click()} disabled={salvando} className="h-8 shrink-0 rounded-md border border-cyan-300 px-3 text-[10px] font-black uppercase text-cyan-700">Enviar imagem</button>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2"><label className="mr-auto flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo</label><div className="flex items-center gap-2">{formulario.id && formulario.ativo !== false && <button type="button" onClick={solicitarExclusaoProduto} disabled={salvando} className="min-h-11 rounded-md border border-amber-300 bg-amber-50 px-2.5 text-[10px] font-black uppercase text-amber-800 disabled:opacity-60">Inativar</button>}<button type="button" onClick={() => void salvar()} disabled={salvando} className="min-h-11 rounded-md px-3 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Salvando...' : 'Salvar produto'}</button><button type="button" onClick={cancelarFormulario} disabled={salvando} className="min-h-11 rounded-md border px-2.5 text-[10px] font-black disabled:opacity-60">Cancelar</button></div></div>
+        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <label className="mr-auto flex min-h-11 items-center gap-2 text-xs font-medium">
+            <input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo
+          </label>
+          <div className="flex flex-wrap items-center gap-2" style={{ '--brand': corPrimaria, '--av-action-on-brand': corTextoSobreFundo(corPrimaria) } as React.CSSProperties}>
+            {formulario.id && formulario.ativo !== false && <BotaoAcaoCompacto onClick={solicitarExclusaoProduto} disabled={salvando} className={darkMode ? 'text-amber-300' : 'text-amber-800'}>Inativar</BotaoAcaoCompacto>}
+            <BotaoAcaoCompacto variante="primario" onClick={() => void salvar()} disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar produto'}</BotaoAcaoCompacto>
+            <BotaoAcaoCompacto onClick={cancelarFormulario} disabled={salvando} className={darkMode ? 'text-slate-200' : 'text-slate-600'}>Cancelar</BotaoAcaoCompacto>
+          </div>
+        </div>
       </section>
       </div>}
       <section className={`min-h-0 flex-col ${formularioAberto ? 'hidden xl:flex' : 'flex lg:col-span-2'}`}><h4 className="shrink-0 text-sm font-black">Produtos dos catálogos publicados</h4><div className="mt-2 min-h-0 flex-1 overflow-auto rounded-xl border"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Revenda sugerida</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={4} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{catalogos.find((catalogo) => catalogo.id === produto.catalogo_id)?.nome || 'Catálogo'} · {produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_divulgacao || 0).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} className="min-h-11 rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={4} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>

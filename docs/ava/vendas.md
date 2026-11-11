@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.400 -->
+<!-- ava-version: 3.2.0.401 -->
+
+> Revisão 3.2.0.401: Conteúdo AvantaVendas → Produtos oferece Preço custo (valor cobrado do representante) e Preço revenda na linha de Unidade. O preço custo é distribuído para o custo do produto na conta do representante e alimenta a rentabilidade. Alterações da empresa substituem o respectivo preço nas contas vinculadas. Edições posteriores do representante permanecem até a próxima alteração daquele preço pela empresa. Pedidos anteriores mantêm os valores registrados.
 
 > Revisão 3.2.0.400: sem impacto operacional no Vendas; marca institucional AvantaLab renovada nas superfícies próprias.
 

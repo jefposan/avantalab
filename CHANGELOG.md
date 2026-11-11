@@ -1,3 +1,8 @@
+## 3.2.0.401 — AvantaVendas: custo do representante no catálogo da empresa
+
+- Conteúdo AvantaVendas → Produtos oferece Preço custo (valor cobrado do representante) e Preço revenda na linha de Unidade. O preço custo é distribuído para o custo do produto na conta do representante e alimenta a rentabilidade. Alterações da empresa substituem o respectivo preço nas contas vinculadas. Edições posteriores do representante permanecem até a próxima alteração daquele preço pela empresa. Pedidos anteriores mantêm os valores registrados.
+- Formulário com Unidade compacta, preços na mesma linha e ações compactas com mais espaço acima.
+
 ## 3.2.0.400 — AvantaLab: logos institucionais em WebP
 
 - Novos logos renderizados na Web/Mobile, preservando slogan e contraste; WebP sem perdas e cache atualizado. Sem backend, migração ou alteração de logos personalizados.

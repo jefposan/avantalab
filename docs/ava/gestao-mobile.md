@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.400 -->
+<!-- ava-version: 3.2.0.401 -->
+
+> Revisão 3.2.0.401: Sem impacto operacional na Gestão Mobile. O custo do representante é distribuído ao AvantaVendas.
 
 > Revisão 3.2.0.400: marca institucional de acesso renovada em WebP; sem impacto operacional.
 

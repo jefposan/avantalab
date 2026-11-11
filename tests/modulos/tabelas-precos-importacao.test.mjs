@@ -125,14 +125,14 @@ test('preço de revenda da divulgação é independente da venda interna da Gest
   assert.match(separacaoDivulgacao, /nullif\(produto\.preco_venda, 0\)/);
   assert.match(separacaoDivulgacao, /v_produto\.preco_divulgacao, 0/);
   assert.doesNotMatch(separacaoDivulgacao, /coalesce\(v_produto\.preco_divulgacao, v_produto\.preco_venda\)/);
-  assert.match(catalogoDivulgacao, /Preço sugerido de revenda/);
+  assert.match(catalogoDivulgacao, /Preço revenda/);
   assert.match(catalogoDivulgacao, /preco_divulgacao: revenda/);
   assert.match(catalogoDivulgacao, /salvar_produto_conteudo_vendas_mobile_rpc/);
   assert.match(catalogoDivulgacao, /skuLegado\(produto\.id\)/);
   assert.match(migracaoSkuLegado, /LEGADO-/);
   assert.match(migracaoConteudoCatalogo, /preco_divulgacao = v_preco/);
   assert.match(migracaoConteudoCatalogo, /v_preco, 0, 0, v_unidade/);
-  assert.match(catalogoDivulgacao, /preco_custo: 0, preco_venda: Number\(produto\.preco_divulgacao \|\| 0\)/);
+  assert.match(catalogoDivulgacao, /preco_custo: Number\(produto\.preco_representante \|\| 0\), preco_venda: Number\(produto\.preco_divulgacao \|\| 0\)/);
   assert.doesNotMatch(catalogoDivulgacao, /preco_custo: custo/);
   assert.doesNotMatch(repositorio, /preco_divulgacao/);
   assert.match(repositorio, /preco_venda: produto\.preco_venda/);
