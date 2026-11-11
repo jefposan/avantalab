@@ -1,4 +1,9 @@
 {
-  "baseDeploymentId": "dpl_H891CLUPg4UdfLRLHuTcZU6nNscS",
-  "migrations": []
+  "baseDeploymentId": "dpl_2nLZ5jUWWe4jcnzXtzfrCpbyAr6C",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261111190000_excluir_produto_conteudo_catalogo.sql",
+      "sha256": "bfa02f3ef3e7c815ef4ec1f378220c6d1d3975eb6042fbf47007dd270c469fc4"
+    }
+  ]
 }

@@ -26,7 +26,7 @@ function montar({ produtosExtras = [], darkMode = false } = {}) {
   }};
   const modulo={exports:{}};
   const codigo=ts.transpileModule(fs.readFileSync('app/components/CatalogoProdutosVendas.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-  vm.runInNewContext(codigo,{exports:modulo.exports,module:modulo,require:n=>n==='react'?react:n==='react/jsx-runtime'?jsxRuntime:n.endsWith('/supabase')?{supabase}:n.endsWith('/formatters')?{formatarDescricao:s=>s.trim(),formatarMoeda:v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}:n.endsWith('/cores-avanta')?{corTextoSobreFundo:()=> '#000'}:{default:()=>null},window:{setTimeout:fn=>{fn();return 1;},clearTimeout(){},requestAnimationFrame:fn=>fn()},console});
+  vm.runInNewContext(codigo,{exports:modulo.exports,module:modulo,require:n=>n==='react'?react:n==='react/jsx-runtime'?jsxRuntime:n.endsWith('/supabase')?{supabase}:n.endsWith('/formatters')?{formatarDescricao:s=>s.trim(),formatarMoeda:v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),correspondeBusca:(texto,busca)=>String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(String(busca).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase())}:n.endsWith('/cores-avanta')?{corTextoSobreFundo:()=> '#000'}:{default:()=>null},window:{setTimeout:fn=>{fn();return 1;},clearTimeout(){},requestAnimationFrame:fn=>fn()},console});
   const render=()=>{cursor=0;cursorRef=0;const t=modulo.exports.default({empresaId:'empresa',darkMode,corPrimaria:'#00aaaa'});primeira=false;return t;};
   function nos(t) { if(!t||typeof t!=='object') return []; if(Array.isArray(t))return t.flatMap(nos);return [t,...nos(t.props?.children)]; }
   const texto=t=>typeof t==='string'?t:Array.isArray(t)?t.map(texto).join(''):t?.props?texto(t.props.children):'';
@@ -76,4 +76,19 @@ test('lista apresenta custo do representante e status; diferencia custo zero de 
   assert.equal(c.texto(celulas(linhas[1])[2]),'—');assert.match(c.texto(celulas(linhas[2])[2]),/0,00/);
   assert.match(nos.find(n=>n.type==='thead').props.className,/sticky top-0/);
  }
+});
+
+
+test('pesquisa filtra por nome/EAN e exclusão exige confirmação antes da RPC',async()=>{
+ const c=montar({produtosExtras:[{id:'p2',nome:'Máquina de corte',sku:'MAQ',codigo_barras:'78912345',ativo:true}]});await c.iniciar();
+ const busca=()=>c.nos(c.render()).find(n=>n.props?.['aria-label']==='Pesquisar produtos');
+ busca().props.onChange('maquina');assert.equal(c.nos(c.render()).filter(n=>n.type==='td').length,6);
+ busca().props.onChange('78912345');assert.ok(c.texto(c.render()).includes('Máquina de corte'));
+ busca().props.onChange('inexistente');assert.ok(c.texto(c.render()).includes('Nenhum produto encontrado.'));
+ busca().props.onChange('');c.botao('Editar').props.onClick();c.botao('Excluir produto').props.onClick();
+ assert.equal(c.chamadas.some(x=>x.nome==='excluir_produto_conteudo_vendas_mobile_rpc'),false);
+ let modal=c.nos(c.render()).find(n=>n.props?.titulo==='Excluir produto');assert.equal(modal.props.aberto,true);modal.props.aoCancelar();
+ assert.equal(c.chamadas.some(x=>x.nome==='excluir_produto_conteudo_vendas_mobile_rpc'),false);
+ c.botao('Excluir produto').props.onClick();modal=c.nos(c.render()).find(n=>n.props?.titulo==='Excluir produto');modal.props.aoConfirmar();await c.flush();
+ const chamada=c.chamadas.find(x=>x.nome==='excluir_produto_conteudo_vendas_mobile_rpc');assert.equal(chamada.args.p_confirmado,true);assert.equal(chamada.args.p_produto_id,'p1');assert.equal(c.input('Nome'),undefined);
 });

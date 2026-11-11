@@ -2,11 +2,12 @@
 
 import Image from 'next/image';
 import CampoMoeda from './CampoMoeda';
+import CampoBusca from './CampoBusca';
 import BotaoAcaoCompacto from './BotaoAcaoCompacto';
 import { corTextoSobreFundo } from '../lib/cores-avanta';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
-import { formatarDescricao, formatarMoeda } from '../lib/formatters';
+import { formatarDescricao, formatarMoeda, correspondeBusca } from '../lib/formatters';
 import { supabase } from '../lib/supabase';
 import ModalConfirmacao from './ModalConfirmacao';
 
@@ -39,7 +40,8 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const revisaoFormularioRef = useRef(0);
   const [exportando, setExportando] = useState(false);
   const [erro, setErro] = useState('');
-  const [produtoExclusao, setProdutoExclusao] = useState<{ id: string; nome: string } | null>(null);
+  const [busca, setBusca] = useState('');
+  const [produtoExclusao, setProdutoExclusao] = useState<{ id: string; nome: string; excluir: boolean } | null>(null);
   const [catalogosAbertos, setCatalogosAbertos] = useState(false);
   const [catalogoEmEdicao, setCatalogoEmEdicao] = useState<Pick<Catalogo, 'id' | 'nome' | 'codigo' | 'origem'> | null>(null);
   const [salvandoCatalogo, setSalvandoCatalogo] = useState(false);
@@ -52,6 +54,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
   const campos = [['nome', 'Nome'], ['marca', 'Marca'], ['categoria', 'Categoria'], ['sku', 'SKU'], ['codigo_barras', 'EAN / GTIN'], ['ncm', 'NCM']];
+  const produtosVisiveis = produtos.filter((produto) => correspondeBusca([produto.nome, produto.marca, produto.categoria, produto.sku, produto.codigo_barras].filter(Boolean).join(' '), busca));
   const haCatalogoPublicado = catalogos.some((catalogo) => catalogo.publicado_avantavendas);
 
   const solicitarIndiceVoz = useCallback(async (productId = '') => {
@@ -282,26 +285,26 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     finally { setExportando(false); setExportacaoAberta(false); }
   };
 
-  const solicitarExclusaoProduto = () => {
+  const solicitarExclusaoProduto = (excluir = false) => {
     const id = String(formulario.id || '');
     if (!id) return;
-    setProdutoExclusao({ id, nome: String(formulario.nome || 'selecionado') });
+    setProdutoExclusao({ id, nome: String(formulario.nome || 'selecionado'), excluir });
   };
 
   const excluirProduto = async () => {
     if (!produtoExclusao) return;
-    const { id } = produtoExclusao;
+    const { id, excluir } = produtoExclusao;
     setSalvando(true);
     setErro('');
-    const { data, error } = await supabase.rpc('inativar_produto_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId, p_produto_id: id });
+    const { data, error } = await supabase.rpc(excluir ? 'excluir_produto_conteudo_vendas_mobile_rpc' : 'inativar_produto_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId, p_produto_id: id, ...(excluir ? { p_confirmado: true } : {}) });
     const produtoInativado = data as { id?: string } | null;
     setSalvando(false);
     setProdutoExclusao(null);
     if (error || !produtoInativado?.id) {
-      setErro('Não foi possível inativar o produto.');
+      setErro(excluir ? 'Não foi possível excluir o produto. O cadastro foi preservado; tente novamente.' : 'Não foi possível inativar o produto.');
       return;
     }
-    setProdutos((atuais) => atuais.map((produto) => produto.id === id ? { ...produto, ativo: false } : produto));
+    setProdutos((atuais) => excluir ? atuais.filter((produto) => produto.id !== id) : atuais.map((produto) => produto.id === id ? { ...produto, ativo: false } : produto));
     setFormulario(vazio);
     setFormularioAberto(false);
   };
@@ -309,12 +312,15 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   return <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
     <div className={`${formularioAberto ? 'mb-2' : 'mb-4'} shrink-0 sm:flex sm:items-start sm:justify-between sm:gap-5`}>
       <div className="min-w-0"><h3 className="text-base font-black">Pacote de produtos</h3>{!formularioAberto && <p className={`mt-1 max-w-xl text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Somente catálogos ativos no AvantaVendas alimentam as contas vinculadas. O estado em Vendas e Serviços é independente.</p>}</div>
-      <div className={`${formularioAberto ? 'hidden' : 'grid'} mt-3 w-full grid-cols-2 gap-2 sm:mt-0 sm:w-72 sm:shrink-0`} aria-label="Ações do catálogo">
+      <div className={`${formularioAberto ? 'hidden' : 'grid'} mt-3 w-full grid-cols-2 gap-2 sm:mt-0 sm:w-[min(100%,42rem)] sm:shrink-0`} aria-label="Ações do catálogo">
         <span className="flex h-9 items-center justify-center rounded-lg bg-cyan-500/10 px-2 text-[10px] font-black uppercase text-cyan-700">{produtos.length} produtos</span>
         <button type="button" onClick={abrirExportacao} disabled={exportando} className="h-9 rounded-lg border border-cyan-300 px-2 text-[10px] font-black uppercase text-cyan-700 disabled:opacity-60">{exportando ? 'Gerando...' : 'Gerar ZIP'}</button>
         <button type="button" onClick={abrirGerenciadorCatalogos} className="col-span-2 h-9 rounded-lg border border-cyan-300 px-3 text-[10px] font-black uppercase text-cyan-700">Gerenciar catálogos</button>
-        <button type="button" onClick={abrirNovoCatalogo} disabled={carregando || salvandoCatalogo} className="h-9 rounded-lg border border-cyan-300 px-2 text-[10px] font-black uppercase text-cyan-700 disabled:opacity-60">Novo catálogo</button>
-        <button ref={botaoNovoRef} type="button" onClick={iniciarNovoProduto} disabled={carregando || salvando || !haCatalogoPublicado} title={!haCatalogoPublicado ? 'Ative um catálogo no AvantaVendas em Gerenciar catálogos.' : undefined} className="h-9 rounded-lg px-2 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>Novo produto</button>
+        <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
+          <CampoBusca aria-label="Pesquisar produtos" placeholder="Pesquisar produtos" value={busca} onChange={setBusca} className={`h-11 w-full min-w-0 rounded-lg border px-3 text-sm ${campo}`} />
+        <button type="button" onClick={abrirNovoCatalogo} disabled={carregando || salvandoCatalogo} className="h-11 rounded-lg border border-cyan-300 px-2 text-[10px] font-black uppercase text-cyan-700 disabled:opacity-60">Novo catálogo</button>
+        <button ref={botaoNovoRef} type="button" onClick={iniciarNovoProduto} disabled={carregando || salvando || !haCatalogoPublicado} title={!haCatalogoPublicado ? 'Ative um catálogo no AvantaVendas em Gerenciar catálogos.' : undefined} className="h-11 rounded-lg px-2 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>Novo produto</button>
+        </div>
       </div>
     </div>
     {!carregando && !haCatalogoPublicado && !formularioAberto && <p role="status" className={`mb-3 rounded-lg border px-3 py-2 text-xs font-bold ${darkMode ? 'border-amber-500/40 bg-amber-500/10 text-amber-200' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>Nenhum catálogo está ativo no AvantaVendas. Use Gerenciar catálogos para ativar o desejado.</p>}
@@ -353,7 +359,8 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
             <input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo
           </label>
           <div className="flex flex-wrap items-center gap-2" style={{ '--brand': corPrimaria, '--av-action-on-brand': corTextoSobreFundo(corPrimaria) } as React.CSSProperties}>
-            {formulario.id && formulario.ativo !== false && <BotaoAcaoCompacto onClick={solicitarExclusaoProduto} disabled={salvando} className={darkMode ? 'text-amber-300' : 'text-amber-800'}>Inativar</BotaoAcaoCompacto>}
+            {formulario.id && formulario.ativo !== false && <BotaoAcaoCompacto onClick={() => solicitarExclusaoProduto()} disabled={salvando} className={darkMode ? 'text-amber-300' : 'text-amber-800'}>Inativar</BotaoAcaoCompacto>}
+            {formulario.id && <BotaoAcaoCompacto variante="destrutivo" onClick={() => solicitarExclusaoProduto(true)} disabled={salvando}>Excluir produto</BotaoAcaoCompacto>}
             <BotaoAcaoCompacto variante="primario" onClick={() => void salvar()} disabled={salvando || alteracaoSalva} aria-live="polite">{salvando ? 'Salvando...' : alteracaoSalva ? 'Alteração salva' : 'Salvar alterações'}</BotaoAcaoCompacto>
             <BotaoAcaoCompacto onClick={cancelarFormulario} disabled={salvando} className={darkMode ? 'text-slate-200' : 'text-slate-600'}>Cancelar</BotaoAcaoCompacto>
           </div>
@@ -361,7 +368,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
       </section>
       </div>}
       <section className={`min-h-0 flex-col ${formularioAberto ? 'hidden xl:flex' : 'flex lg:col-span-2'}`}>
-        <h4 className="shrink-0 text-sm font-black">Produtos dos catálogos publicados</h4>
+        <div className="flex shrink-0 flex-wrap items-center gap-2"><h4 className="mr-auto text-sm font-black">Produtos dos catálogos publicados</h4>{formularioAberto && <CampoBusca aria-label="Pesquisar produtos" placeholder="Pesquisar produtos" value={busca} onChange={setBusca} className={`h-11 w-full min-w-0 rounded-lg border px-3 text-sm ${campo}`} />}</div>
         <div className="mt-2 min-h-0 flex-1 overflow-auto rounded-xl border">
           <table className="min-w-full text-left text-xs">
             <thead className={`sticky top-0 z-10 ${darkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
@@ -375,14 +382,14 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
               </tr>
             </thead>
             <tbody>
-              {carregando ? <tr><td colSpan={6} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              {carregando ? <tr><td colSpan={6} className="px-3 py-10 text-center">Carregando...</td></tr> : produtosVisiveis.length ? produtosVisiveis.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
                 <td className="min-w-48 px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{catalogos.find((catalogo) => catalogo.id === produto.catalogo_id)?.nome || 'Catálogo'} · {produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td>
                 <td className="px-3 py-2 text-center"><span className={`inline-flex min-w-16 items-center justify-center rounded-full px-2.5 py-1 text-[11px] font-medium ${produto.ativo ? darkMode ? 'bg-green-500/15 text-green-300' : 'bg-green-100 text-green-800' : darkMode ? 'bg-red-500/15 text-red-300' : 'bg-red-100 text-red-800'}`}>{produto.ativo ? 'Ativo' : 'Inativo'}</span></td>
                 <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{produto.preco_representante == null ? '—' : formatarMoeda(Number(produto.preco_representante))}</td>
                 <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatarMoeda(Number(produto.preco_divulgacao || 0))}</td>
                 <td className="px-3 py-2 text-center">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem" className="inline-block"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td>
                 <td className="px-3 py-2 text-center"><BotaoAcaoCompacto onClick={() => editar(produto)} disabled={salvando} className={darkMode ? 'text-cyan-300' : 'text-cyan-700'}>Editar</BotaoAcaoCompacto></td>
-              </tr>) : <tr><td colSpan={6} className="px-3 py-10 text-center">Nenhum produto cadastrado.</td></tr>}
+              </tr>) : <tr><td colSpan={6} className="px-3 py-10 text-center">{busca ? 'Nenhum produto encontrado.' : 'Nenhum produto cadastrado.'}</td></tr>}
             </tbody>
           </table>
         </div>
@@ -391,11 +398,11 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     {erro && !formularioAberto && !catalogosAbertos && <p role="alert" className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
     <ModalConfirmacao
       aberto={Boolean(produtoExclusao)}
-      titulo="Inativar produto"
-      mensagem={`O produto “${produtoExclusao?.nome || 'selecionado'}” ficará inativo no Catálogo e em Custos. O cadastro e o histórico serão preservados.`}
+      titulo={produtoExclusao?.excluir ? "Excluir produto" : "Inativar produto"}
+      mensagem={produtoExclusao?.excluir ? `Excluir “${produtoExclusao.nome}” dos catálogos, de Custos e Precificação, de Vendas e Serviços e das contas vinculadas do AvantaVendas? Pedidos, lançamentos e históricos anteriores serão preservados.` : `O produto “${produtoExclusao?.nome || 'selecionado'}” ficará inativo no Catálogo e em Custos. O cadastro e o histórico serão preservados.`}
       textoCancelar="Manter produto"
-      textoConfirmar="Inativar produto"
-      variante="alerta"
+      textoConfirmar={produtoExclusao?.excluir ? "Confirmar exclusão" : "Inativar produto"}
+      variante={produtoExclusao?.excluir ? "destrutiva" : "alerta"}
       carregando={salvando}
       corPrimaria={corPrimaria}
       darkMode={darkMode}

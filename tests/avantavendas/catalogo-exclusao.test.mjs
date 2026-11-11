@@ -1,0 +1,40 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
+const sql=readFileSync('supabase/migrations/20261111190000_excluir_produto_conteudo_catalogo.sql','utf8');
+const empresa='10000000-0000-0000-0000-000000000001', outra='10000000-0000-0000-0000-000000000002', produto='20000000-0000-0000-0000-000000000001', vizinho='20000000-0000-0000-0000-000000000002', usuario='30000000-0000-0000-0000-000000000001';
+test('exclusão confirmada retira cadastro e cópias, preserva histórico e isola empresa/produto',async()=>{
+ const db=new PGlite();
+ try {
+ await db.exec(`create schema auth; create role anon; create role authenticated;
+ create function auth.uid() returns uuid language sql as $$select nullif(current_setting('teste.usuario',true),'')::uuid$$;
+ create function vendas_mobile_pode_publicar_conteudo(uuid) returns boolean language sql as $$select coalesce(current_setting('teste.permissao',true),'')='sim'$$;
+ create table vendas_mobile_catalogos(id uuid primary key,empresa_id uuid,publicado_avantavendas boolean);
+ create table vendas_mobile_catalogo_produtos(id uuid primary key,catalogo_id uuid,ativo boolean,disponivel_catalogo boolean,excluido_em timestamptz,excluido_por uuid,atualizado_em timestamptz);
+ create table vendas_mobile_produtos(id int primary key,catalogo_produto_origem_id uuid,ativo boolean,atualizado_em timestamptz);
+ create table vendas_mobile_pedido_itens(id int,produto_id uuid,preco_unitario numeric,preco_custo numeric);
+ create table custos_historico(id int,produto_id uuid,custo numeric);
+ insert into vendas_mobile_catalogos values('${empresa}','${empresa}',true),('${outra}','${outra}',true);
+ insert into vendas_mobile_catalogo_produtos(id,catalogo_id,ativo,disponivel_catalogo) values('${produto}','${empresa}',true,true),('${vizinho}','${outra}',true,true);
+ insert into vendas_mobile_produtos values(1,'${produto}',true,null),(2,'${produto}',true,null),(3,'${vizinho}',true,null);
+ insert into vendas_mobile_pedido_itens values(1,'${produto}',31,17);
+ insert into custos_historico values(1,'${produto}',17);
+ set teste.usuario='${usuario}'; set teste.permissao='sim';`);
+ await db.exec(sql);
+ const excluir=(e=empresa,p=produto,confirmado=true)=>db.query('select excluir_produto_conteudo_vendas_mobile_rpc($1,$2,$3) as resultado',[e,p,confirmado]);
+ await assert.rejects(excluir(empresa,produto,false),/Confirme/);
+ await assert.rejects(excluir(outra,produto),/não localizado/);
+ await db.exec("set teste.permissao='nao'");await assert.rejects(excluir(),/permissão/);
+ await db.exec("set teste.permissao='sim';set teste.usuario=''");await assert.rejects(excluir(),/Sessão/);
+ await db.exec(`set teste.usuario='${usuario}'`);
+ assert.equal((await excluir()).rows[0].resultado.excluido,true);
+ const mestre=(await db.query('select * from vendas_mobile_catalogo_produtos where id=$1',[produto])).rows[0];
+ assert.equal(mestre.ativo,false);assert.equal(mestre.disponivel_catalogo,false);assert.ok(mestre.excluido_em);assert.equal(mestre.excluido_por,usuario);
+ assert.deepEqual((await db.query('select id,ativo from vendas_mobile_produtos order by id')).rows,[{id:1,ativo:false},{id:2,ativo:false},{id:3,ativo:true}]);
+ assert.equal((await db.query('select ativo from vendas_mobile_catalogo_produtos where id=$1',[vizinho])).rows[0].ativo,true);
+ assert.deepEqual((await db.query('select preco_unitario,preco_custo from vendas_mobile_pedido_itens')).rows[0],{preco_unitario:'31',preco_custo:'17'});
+ assert.equal((await db.query('select custo from custos_historico')).rows[0].custo,'17');
+ assert.equal((await excluir()).rows[0].resultado.excluido,true);
+ } finally {await db.close();}
+});

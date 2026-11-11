@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.403 -->
+<!-- ava-version: 3.2.0.404 -->
+
+> Revisão 3.2.0.404: Conteúdo AvantaVendas → Produtos: pesquisa ao lado de Novo catálogo e Novo produto, ou acima da lista durante edição. Busca ignora acentos e caixa e considera nome, marca, categoria, SKU e EAN. Excluir produto exige Confirmar exclusão e retira o cadastro das operações de Conteúdo, Custos e Precificação, Vendas e Serviços e contas vinculadas do AvantaVendas. Preserva pedidos, lançamentos e históricos; Inativar continua disponível e permite reativação.
 
 > Revisão 3.2.0.403: Conteúdo AvantaVendas → Produtos: a lista mostra Status (Ativo verde, Inativo vermelho), Preço custo do representante e Preço revenda. Travessão no custo indica valor não informado, diferente de R$ 0,00. Editar e salvar mantêm o fluxo anterior.
 

@@ -2890,3 +2890,5 @@ GUIAS.vendas += '\nConteúdo AvantaVendas → Produtos oferece Preço custo (val
 GUIAS["gestao-web"] += " No editor de produtos do Conteúdo AvantaVendas, Salvar alterações mantém a edição aberta e indica Alteração salva; mudar um campo permite salvar novamente. Cancelar fecha a edição.";
 
 GUIAS["gestao-web"] += " A lista de produtos do Conteúdo AvantaVendas mostra status Ativo em verde ou Inativo em vermelho, Preço custo do representante e Preço revenda. Custo sem preenchimento aparece como travessão.";
+
+GUIAS["gestao-web"] += " Conteúdo AvantaVendas → Produtos: pesquisa por nome, marca, categoria, SKU e EAN ao lado de Novo catálogo/Novo produto e também ao editar. Excluir produto pede confirmação e exclui logicamente o cadastro de todos os destinos vinculados, preservando pedidos e históricos. Inativar continua separado de Excluir.";

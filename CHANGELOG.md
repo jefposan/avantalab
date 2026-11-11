@@ -1,3 +1,8 @@
+## 3.2.0.404
+
+- Conteúdo AvantaVendas: pesquisa ao lado de Novo catálogo/Novo produto, por nome, marca, categoria, SKU e EAN. Disponível também durante a edição.
+- Excluir produto exige confirmação e retira o cadastro mestre de todos os destinos vinculados, com exclusão lógica e preservação dos pedidos e históricos. Inativar continua disponível.
+
 ## 3.2.0.403
 
 - Conteúdo AvantaVendas: lista exibe Status (Ativo verde/Inativo vermelho), Preço custo e Preço revenda em reais; custo não informado aparece como travessão. Cabeçalho permanece visível na rolagem e Editar usa a ação compacta oficial. Preservada a edição aberta após salvar.
