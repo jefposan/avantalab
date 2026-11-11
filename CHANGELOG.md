@@ -1,3 +1,7 @@
+## 3.2.0.406
+
+- Conteúdo AvantaVendas: SKU opcional e preenchido manualmente, sem recriar códigos LEGADO ao editar ou salvar. Limpeza dos SKUs técnicos do perfil Tridium e das cópias vinculadas que ainda usam o mesmo código; SKUs reais e históricos preservados.
+
 ## 3.2.0.405
 
 - Conteúdo AvantaVendas: excluir produto mantém a área de edição, pesquisa e lista abertas; o painel aguarda a seleção do próximo produto. Cancelar retorna à lista principal. Sem alteração na exclusão do banco.

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.405 -->
+<!-- ava-version: 3.2.0.406 -->
+
+> Revisão 3.2.0.406: Conteúdo AvantaVendas → Produtos: SKU pode permanecer vazio para preenchimento manual posterior; não é mais gerado LEGADO automaticamente. A limpeza solicitada retira os códigos técnicos do perfil Tridium e suas cópias vinculadas, preservando SKUs reais, pedidos e históricos.
 
 > Revisão 3.2.0.405: Conteúdo AvantaVendas → Produtos: após confirmar a exclusão, a área de edição permanece aberta, com pesquisa e lista disponíveis para selecionar o próximo produto. O painel esquerdo informa Produto excluído e aguarda a seleção; Cancelar fecha a área.
 

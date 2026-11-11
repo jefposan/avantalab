@@ -25,7 +25,6 @@ const formatarMoedaDigitada = (valor: string) => {
   if (!digitos) return '';
   return (Number(digitos) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
-const skuLegado = (id: string) => `LEGADO-${id.replace(/-/g, '').toUpperCase()}`;
 const rotuloOrigemCatalogo = (origem: Catalogo['origem']) => origem === 'custos_local' ? 'Custos e Precificação' : origem === 'manual' ? 'Catálogo próprio' : 'Fonte externa';
 const nomeArquivoCatalogo = (codigo: string) => codigo.toLocaleLowerCase('pt-BR').replace(/[^a-z0-9_-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'catalogo';
 
@@ -133,7 +132,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     setAguardandoSelecao(false);
     setAlteracaoSalva(false);
     setErro('');
-    setFormulario({ ...vazio, ...produto, preco_representante: produto.preco_representante == null ? '' : Number(produto.preco_representante).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), preco_divulgacao: Number(produto.preco_divulgacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: produto.sku || skuLegado(produto.id), descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
+    setFormulario({ ...vazio, ...produto, preco_representante: produto.preco_representante == null ? '' : Number(produto.preco_representante).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), preco_divulgacao: Number(produto.preco_divulgacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: /^LEGADO-[0-9A-F]{32}$/i.test(produto.sku || '') ? '' : produto.sku || '', descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
     setFormularioAberto(true);
     levarAoFormulario();
   };
@@ -200,8 +199,8 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
       setErro('Informe um preço de custo válido.');
       return;
     }
-    if (!sku || !nome || !Number.isFinite(revenda) || revenda <= 0) {
-      setErro('Código, nome e preço sugerido de revenda são obrigatórios.');
+    if (!nome || !Number.isFinite(revenda) || revenda <= 0) {
+      setErro('Nome e preço sugerido de revenda são obrigatórios.');
       return;
     }
     setSalvando(true);
@@ -337,8 +336,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
           <p role="status" className="text-sm">Produto excluído. Selecione outro produto na lista para editar.</p>
           <BotaoAcaoCompacto onClick={cancelarFormulario}>Cancelar</BotaoAcaoCompacto>
         </div> : <>
-        <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full px-3 py-1 text-sm font-black text-white" style={{ backgroundColor: corPrimaria }}>{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: código, nome e preço sugerido de revenda.</p></div>
-        {formulario.id && String(formulario.sku || '').startsWith('LEGADO-') && <p className="mt-2 text-[10px] font-bold text-cyan-700">Este produto não tinha código. Um SKU técnico foi preparado para salvar a edição.</p>}
+        <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full px-3 py-1 text-sm font-black text-white" style={{ backgroundColor: corPrimaria }}>{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: nome e preço sugerido de revenda.</p></div>
         {erro && <p role="alert" className="mt-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
         <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
           {campos.slice(0, 4).map(([chave, rotulo]) => <label key={chave} className="text-[9px] font-black uppercase opacity-70">{rotulo}<input value={String(formulario[chave] || '')} onChange={(e) => mudar(chave, chave.startsWith('preco') ? formatarMoedaDigitada(e.target.value) : e.target.value)} onBlur={chave === 'nome' ? () => mudar('nome', formatarDescricao(String(formulario.nome || ''))) : undefined} inputMode={chave.startsWith('preco') ? 'numeric' : undefined} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs font-bold normal-case ${campo}`} /></label>)}

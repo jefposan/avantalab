@@ -1,4 +1,9 @@
 {
-  "baseDeploymentId": "dpl_3mEzqiSMm4taLyKd2YLxaSEJT4K3",
-  "migrations": []
+  "baseDeploymentId": "dpl_6JmcsuYc877wnUHebYoofeGgtL16",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261111210000_sku_manual_sem_legado.sql",
+      "sha256": "1d57df35626190c1e0cdfd4ab12061cfd6bcd84e98a1f2f69a4380b67e692599"
+    }
+  ]
 }

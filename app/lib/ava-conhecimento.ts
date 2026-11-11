@@ -2894,3 +2894,5 @@ GUIAS["gestao-web"] += " A lista de produtos do Conteúdo AvantaVendas mostra st
 GUIAS["gestao-web"] += " Conteúdo AvantaVendas → Produtos: pesquisa por nome, marca, categoria, SKU e EAN ao lado de Novo catálogo/Novo produto e também ao editar. Excluir produto pede confirmação e exclui logicamente o cadastro de todos os destinos vinculados, preservando pedidos e históricos. Inativar continua separado de Excluir.";
 
 GUIAS["gestao-web"] += " Após excluir um produto no Conteúdo AvantaVendas, a área de edição permanece aberta e aguarda selecionar outro item na lista; pesquisa continua disponível. Cancelar fecha a área.";
+
+GUIAS["gestao-web"] += " No Conteúdo AvantaVendas, o SKU é opcional e deve ser preenchido manualmente; código LEGADO não é mais criado ao editar ou salvar. A limpeza dos técnicos não altera SKUs reais nem pedidos anteriores.";

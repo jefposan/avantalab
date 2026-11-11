@@ -95,3 +95,12 @@ test('pesquisa filtra por nome/EAN e exclusão exige confirmação antes da RPC'
  c.botao('Editar').props.onClick();assert.equal(c.input('Nome').props.value,'Máquina de corte');
  c.botao('Cancelar').props.onClick();assert.ok(c.botao('Novo produto'));
 });
+
+
+test('SKU técnico abre vazio e salvar não exige nem recria código',async()=>{
+ const c=montar();c.produto.sku='LEGADO-10000000000040008000000000000001';await c.iniciar();c.botao('Editar').props.onClick();
+ assert.equal(c.input('SKU').props.value,'');c.botao('Salvar alterações').props.onClick();await c.flush();
+ const salvo=c.chamadas.find(x=>x.nome==='salvar_produto_conteudo_vendas_mobile_rpc');assert.equal(salvo.args.p_dados.sku,'');assert.ok(c.botao('Alteração salva'));
+ c.input('SKU').props.onChange({target:{value:'T013'}});c.botao('Salvar alterações').props.onClick();await c.flush();
+ assert.equal(c.chamadas.filter(x=>x.nome==='salvar_produto_conteudo_vendas_mobile_rpc').at(-1).args.p_dados.sku,'T013');
+});

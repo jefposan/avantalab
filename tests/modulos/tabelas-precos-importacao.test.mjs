@@ -128,7 +128,7 @@ test('preço de revenda da divulgação é independente da venda interna da Gest
   assert.match(catalogoDivulgacao, /Preço revenda/);
   assert.match(catalogoDivulgacao, /preco_divulgacao: revenda/);
   assert.match(catalogoDivulgacao, /salvar_produto_conteudo_vendas_mobile_rpc/);
-  assert.match(catalogoDivulgacao, /skuLegado\(produto\.id\)/);
+  assert.doesNotMatch(catalogoDivulgacao, /skuLegado\(produto\.id\)/);
   assert.match(migracaoSkuLegado, /LEGADO-/);
   assert.match(migracaoConteudoCatalogo, /preco_divulgacao = v_preco/);
   assert.match(migracaoConteudoCatalogo, /v_preco, 0, 0, v_unidade/);
