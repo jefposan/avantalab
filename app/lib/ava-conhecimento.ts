@@ -2888,3 +2888,5 @@ GUIAS['gestao-web'] += '\nConteúdo AvantaVendas → Produtos oferece Preço cus
 GUIAS.vendas += '\nConteúdo AvantaVendas → Produtos oferece Preço custo (valor cobrado do representante) e Preço revenda na linha de Unidade. O preço custo é distribuído para o custo do produto na conta do representante e alimenta a rentabilidade. Alterações da empresa substituem o respectivo preço nas contas vinculadas. Edições posteriores do representante permanecem até a próxima alteração daquele preço pela empresa. Pedidos anteriores mantêm os valores registrados.\n';
 
 GUIAS["gestao-web"] += " No editor de produtos do Conteúdo AvantaVendas, Salvar alterações mantém a edição aberta e indica Alteração salva; mudar um campo permite salvar novamente. Cancelar fecha a edição.";
+
+GUIAS["gestao-web"] += " A lista de produtos do Conteúdo AvantaVendas mostra status Ativo em verde ou Inativo em vermelho, Preço custo do representante e Preço revenda. Custo sem preenchimento aparece como travessão.";

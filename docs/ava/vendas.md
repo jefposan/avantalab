@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.402 -->
+<!-- ava-version: 3.2.0.403 -->
+
+> Revisão 3.2.0.403: Conteúdo AvantaVendas → Produtos: a lista mostra Status (Ativo verde, Inativo vermelho), Preço custo do representante e Preço revenda. Travessão no custo indica valor não informado, diferente de R$ 0,00. Editar e salvar mantêm o fluxo anterior.
 
 > Revisão 3.2.0.402: Conteúdo AvantaVendas → Produtos: Salvar alterações mantém a edição aberta e a lista ao lado; indica Salvando... e depois Alteração salva. Editar um campo reabilita Salvar alterações. Cancelar fecha a área de edição.
 

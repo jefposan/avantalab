@@ -1,3 +1,7 @@
+## 3.2.0.403
+
+- Conteúdo AvantaVendas: lista exibe Status (Ativo verde/Inativo vermelho), Preço custo e Preço revenda em reais; custo não informado aparece como travessão. Cabeçalho permanece visível na rolagem e Editar usa a ação compacta oficial. Preservada a edição aberta após salvar.
+
 ## 3.2.0.402
 
 - Conteúdo AvantaVendas: salvar mantém o editor aberto e a lista à direita; botão Salvar alterações indica Salvando... e Alteração salva até uma nova edição. Cancelar fecha o formulário.

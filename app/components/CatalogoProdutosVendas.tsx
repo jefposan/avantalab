@@ -6,7 +6,7 @@ import BotaoAcaoCompacto from './BotaoAcaoCompacto';
 import { corTextoSobreFundo } from '../lib/cores-avanta';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
-import { formatarDescricao } from '../lib/formatters';
+import { formatarDescricao, formatarMoeda } from '../lib/formatters';
 import { supabase } from '../lib/supabase';
 import ModalConfirmacao from './ModalConfirmacao';
 
@@ -360,7 +360,33 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
         </div>
       </section>
       </div>}
-      <section className={`min-h-0 flex-col ${formularioAberto ? 'hidden xl:flex' : 'flex lg:col-span-2'}`}><h4 className="shrink-0 text-sm font-black">Produtos dos catálogos publicados</h4><div className="mt-2 min-h-0 flex-1 overflow-auto rounded-xl border"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Revenda sugerida</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={4} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{catalogos.find((catalogo) => catalogo.id === produto.catalogo_id)?.nome || 'Catálogo'} · {produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_divulgacao || 0).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} disabled={salvando} className="min-h-11 rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={4} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
+      <section className={`min-h-0 flex-col ${formularioAberto ? 'hidden xl:flex' : 'flex lg:col-span-2'}`}>
+        <h4 className="shrink-0 text-sm font-black">Produtos dos catálogos publicados</h4>
+        <div className="mt-2 min-h-0 flex-1 overflow-auto rounded-xl border">
+          <table className="min-w-full text-left text-xs">
+            <thead className={`sticky top-0 z-10 ${darkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
+              <tr>
+                <th scope="col" className="px-3 py-2">Produto</th>
+                <th scope="col" className="px-3 py-2 text-center">Status</th>
+                <th scope="col" className="whitespace-nowrap px-3 py-2 text-right">Preço custo</th>
+                <th scope="col" className="whitespace-nowrap px-3 py-2 text-right">Preço revenda</th>
+                <th scope="col" className="px-3 py-2 text-center">Imagem</th>
+                <th scope="col" className="px-3 py-2 text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {carregando ? <tr><td colSpan={6} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                <td className="min-w-48 px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{catalogos.find((catalogo) => catalogo.id === produto.catalogo_id)?.nome || 'Catálogo'} · {produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td>
+                <td className="px-3 py-2 text-center"><span className={`inline-flex min-w-16 items-center justify-center rounded-full px-2.5 py-1 text-[11px] font-medium ${produto.ativo ? darkMode ? 'bg-green-500/15 text-green-300' : 'bg-green-100 text-green-800' : darkMode ? 'bg-red-500/15 text-red-300' : 'bg-red-100 text-red-800'}`}>{produto.ativo ? 'Ativo' : 'Inativo'}</span></td>
+                <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{produto.preco_representante == null ? '—' : formatarMoeda(Number(produto.preco_representante))}</td>
+                <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatarMoeda(Number(produto.preco_divulgacao || 0))}</td>
+                <td className="px-3 py-2 text-center">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem" className="inline-block"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td>
+                <td className="px-3 py-2 text-center"><BotaoAcaoCompacto onClick={() => editar(produto)} disabled={salvando} className={darkMode ? 'text-cyan-300' : 'text-cyan-700'}>Editar</BotaoAcaoCompacto></td>
+              </tr>) : <tr><td colSpan={6} className="px-3 py-10 text-center">Nenhum produto cadastrado.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
     {erro && !formularioAberto && !catalogosAbertos && <p role="alert" className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
     <ModalConfirmacao
