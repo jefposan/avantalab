@@ -94,9 +94,12 @@ test('carrinho: não aprova outros pedidos; relato de problema fica limitado ao 
  const view=await load(db,'claim:987');assert.equal(view.cases[0].actions.includes('return_review_ok'),false);assert.deepEqual(view.returnReview.reasons.map(r=>r.id),['SRF3']);await sendServiceCommand(db,company,actor,command(view,{action:'return_review_fail',confirmed:true,reviewReason:'SRF3',reviewText:'Falta o acessório.'}));assert.equal(db.sends[0].options.body[0].order_id,Number(providerId));
 });
 
-test('prova e previsão de envio exigem ação explícita atual, data e transportadora; mediação bloqueia a postagem de prova',async()=>{
- const db=fixture();db.claims=[claim({players:[{type:'seller',user_id:'123',available_actions:[{action:'add_shipping_evidence'},{action:'send_potential_shipping'}]}]})];let view=await load(db,'claim:987');const today=new Date().toISOString().slice(0,10);
+test('prova e previsão de envio exigem ação explícita atual, data e transportadora; mediação bloqueia a postagem de prova',async(t)=>{
+ // Já é dia 11 em UTC, mas a postagem ainda está no dia 10 em São Paulo.
+ t.mock.timers.enable({apis:['Date'],now:new Date('2026-11-11T01:00:00Z')});
+ const db=fixture();db.claims=[claim({players:[{type:'seller',user_id:'123',available_actions:[{action:'add_shipping_evidence'},{action:'send_potential_shipping'}]}]})];let view=await load(db,'claim:987');const today='2026-11-10';
  await assert.rejects(sendServiceCommand(db,company,actor,command(view,{action:'shipping_evidence',confirmed:true,shipping:{date:today}})),/transportadora/);
+ await assert.rejects(sendServiceCommand(db,company,actor,command(view,{action:'shipping_evidence',confirmed:true,shipping:{date:'2026-11-11',company:'Correios'}})),/data de postagem já realizada/);
  await sendServiceCommand(db,company,actor,command(view,{action:'shipping_evidence',confirmed:true,shipping:{date:today,company:'Correios',tracking:'BR123456789'}}));assert.match(db.sends[0].path,/actions\/evidences/);assert.equal(db.sends[0].options.body.shipping_method,'mail');assert.equal(db.sends[0].options.body.tracking_number,'BR123456789');
  db.claims[0].stage='dispute';view=await load(db,'claim:987');assert.equal(view.cases[0].actions.includes('shipping_evidence'),false);assert.equal(view.cases[0].actions.includes('shipping_promise'),false);
 });
