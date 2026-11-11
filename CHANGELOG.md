@@ -1,3 +1,7 @@
+## 3.2.0.402
+
+- Conteúdo AvantaVendas: salvar mantém o editor aberto e a lista à direita; botão Salvar alterações indica Salvando... e Alteração salva até uma nova edição. Cancelar fecha o formulário.
+
 ## 3.2.0.401 — AvantaVendas: custo do representante no catálogo da empresa
 
 - Conteúdo AvantaVendas → Produtos oferece Preço custo (valor cobrado do representante) e Preço revenda na linha de Unidade. O preço custo é distribuído para o custo do produto na conta do representante e alimenta a rentabilidade. Alterações da empresa substituem o respectivo preço nas contas vinculadas. Edições posteriores do representante permanecem até a próxima alteração daquele preço pela empresa. Pedidos anteriores mantêm os valores registrados.

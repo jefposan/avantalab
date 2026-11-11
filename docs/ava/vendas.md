@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.401 -->
+<!-- ava-version: 3.2.0.402 -->
+
+> Revisão 3.2.0.402: Conteúdo AvantaVendas → Produtos: Salvar alterações mantém a edição aberta e a lista ao lado; indica Salvando... e depois Alteração salva. Editar um campo reabilita Salvar alterações. Cancelar fecha a área de edição.
 
 > Revisão 3.2.0.401: Conteúdo AvantaVendas → Produtos oferece Preço custo (valor cobrado do representante) e Preço revenda na linha de Unidade. O preço custo é distribuído para o custo do produto na conta do representante e alimenta a rentabilidade. Alterações da empresa substituem o respectivo preço nas contas vinculadas. Edições posteriores do representante permanecem até a próxima alteração daquele preço pela empresa. Pedidos anteriores mantêm os valores registrados.
 

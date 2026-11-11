@@ -1,9 +1,4 @@
 {
-  "baseDeploymentId": "dpl_Fc9YXbbzZEKxoBoAkXJPBdGsTUoC",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261111160000_preco_representante_catalogo.sql",
-      "sha256": "2944ffb91c77aa7f2b31ffc7b7af07b0944a63ef7f4140acad4e4990f3d3e59a"
-    }
-  ]
+  "baseDeploymentId": "dpl_4pVaLF76viuJCdikMYYGC8PNUSF8",
+  "migrations": []
 }

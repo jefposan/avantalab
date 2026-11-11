@@ -35,6 +35,8 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const [formularioAberto, setFormularioAberto] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [alteracaoSalva, setAlteracaoSalva] = useState(false);
+  const revisaoFormularioRef = useRef(0);
   const [exportando, setExportando] = useState(false);
   const [erro, setErro] = useState('');
   const [produtoExclusao, setProdutoExclusao] = useState<{ id: string; nome: string } | null>(null);
@@ -66,9 +68,9 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     } catch { /* O índice determinístico já está disponível; a IA tentará novamente depois. */ }
   }, [empresaId]);
 
-  const carregar = useCallback(async () => {
+  const carregar = useCallback(async (emSegundoPlano = false) => {
     if (!empresaId) return;
-    setCarregando(true);
+    if (!emSegundoPlano) setCarregando(true);
     setErro('');
     const [{ data, error }, catalogosResultado] = await Promise.all([
       supabase.rpc('listar_produtos_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId }),
@@ -91,11 +93,18 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   }, [empresaId, solicitarIndiceVoz]);
 
   useEffect(() => { const timer = window.setTimeout(() => void carregar(), 0); return () => window.clearTimeout(timer); }, [carregar]);
-  const mudar = (nome: string, valor: string | boolean) => setFormulario((atual) => ({ ...atual, [nome]: valor }));
+  const mudar = (nome: string, valor: string | boolean) => {
+    if (formulario[nome] === valor) return;
+    revisaoFormularioRef.current += 1;
+    setAlteracaoSalva(false);
+    setFormulario((atual) => ({ ...atual, [nome]: valor }));
+  };
   const levarAoFormulario = () => {
     window.requestAnimationFrame(() => formularioRef.current?.scrollTo({ top: 0, behavior: 'auto' }));
   };
   const iniciarNovoProduto = () => {
+    if (salvando) return;
+    setAlteracaoSalva(false);
     if (!haCatalogoPublicado) {
       setErro('Ative um catálogo no AvantaVendas antes de cadastrar produtos.');
       return;
@@ -107,12 +116,15 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   };
   const cancelarFormulario = () => {
     if (salvando) return;
+    setAlteracaoSalva(false);
     setErro('');
     setFormulario(vazio);
     setFormularioAberto(false);
     window.requestAnimationFrame(() => botaoNovoRef.current?.focus());
   };
   const editar = (produto: Produto) => {
+    if (salvando) return;
+    setAlteracaoSalva(false);
     setErro('');
     setFormulario({ ...vazio, ...produto, preco_representante: produto.preco_representante == null ? '' : Number(produto.preco_representante).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), preco_divulgacao: Number(produto.preco_divulgacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: produto.sku || skuLegado(produto.id), descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
     setFormularioAberto(true);
@@ -170,6 +182,8 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   };
 
   const salvar = async () => {
+    if (salvando || alteracaoSalva) return;
+    const revisaoSalva = revisaoFormularioRef.current;
     const nome = formatarDescricao(String(formulario.nome || ''));
     const revenda = textoNumero(String(formulario.preco_divulgacao || ''));
     const custoInformado = String(formulario.preco_representante || '').trim();
@@ -199,9 +213,10 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
       return;
     }
     void solicitarIndiceVoz(produtoSalvo.id);
-    setFormulario(vazio);
-    setFormularioAberto(false);
-    await carregar();
+    const semNovasAlteracoes = revisaoFormularioRef.current === revisaoSalva;
+    setFormulario((atual) => ({ ...atual, id: produtoSalvo.id!, ...(semNovasAlteracoes ? { nome, sku } : {}) }));
+    setAlteracaoSalva(semNovasAlteracoes);
+    await carregar(true);
   };
 
   const enviarImagem = async (arquivo: File | undefined) => {
@@ -339,13 +354,13 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
           </label>
           <div className="flex flex-wrap items-center gap-2" style={{ '--brand': corPrimaria, '--av-action-on-brand': corTextoSobreFundo(corPrimaria) } as React.CSSProperties}>
             {formulario.id && formulario.ativo !== false && <BotaoAcaoCompacto onClick={solicitarExclusaoProduto} disabled={salvando} className={darkMode ? 'text-amber-300' : 'text-amber-800'}>Inativar</BotaoAcaoCompacto>}
-            <BotaoAcaoCompacto variante="primario" onClick={() => void salvar()} disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar produto'}</BotaoAcaoCompacto>
+            <BotaoAcaoCompacto variante="primario" onClick={() => void salvar()} disabled={salvando || alteracaoSalva} aria-live="polite">{salvando ? 'Salvando...' : alteracaoSalva ? 'Alteração salva' : 'Salvar alterações'}</BotaoAcaoCompacto>
             <BotaoAcaoCompacto onClick={cancelarFormulario} disabled={salvando} className={darkMode ? 'text-slate-200' : 'text-slate-600'}>Cancelar</BotaoAcaoCompacto>
           </div>
         </div>
       </section>
       </div>}
-      <section className={`min-h-0 flex-col ${formularioAberto ? 'hidden xl:flex' : 'flex lg:col-span-2'}`}><h4 className="shrink-0 text-sm font-black">Produtos dos catálogos publicados</h4><div className="mt-2 min-h-0 flex-1 overflow-auto rounded-xl border"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Revenda sugerida</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={4} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{catalogos.find((catalogo) => catalogo.id === produto.catalogo_id)?.nome || 'Catálogo'} · {produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_divulgacao || 0).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} className="min-h-11 rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={4} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
+      <section className={`min-h-0 flex-col ${formularioAberto ? 'hidden xl:flex' : 'flex lg:col-span-2'}`}><h4 className="shrink-0 text-sm font-black">Produtos dos catálogos publicados</h4><div className="mt-2 min-h-0 flex-1 overflow-auto rounded-xl border"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Revenda sugerida</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={4} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{catalogos.find((catalogo) => catalogo.id === produto.catalogo_id)?.nome || 'Catálogo'} · {produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_divulgacao || 0).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><Image src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} width={36} height={36} unoptimized className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} disabled={salvando} className="min-h-11 rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={4} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
     </div>
     {erro && !formularioAberto && !catalogosAbertos && <p role="alert" className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
     <ModalConfirmacao
