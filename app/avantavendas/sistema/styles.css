@@ -1118,7 +1118,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .system-header .system-brand { width: 0; min-width: 0; flex: 1 1 0; overflow: hidden; }
 .system-brand .vendas-brand-logo { width: 140px; }
 .system-header .system-brand .vendas-brand-logo { max-width: 100%; }
-.vendas-brand-logo { display: block; aspect-ratio: 1258 / 184; }
+.vendas-brand-logo { display: block; aspect-ratio: 1316 / 167; }
 .vendas-brand-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .vendas-logo-escuro { display: none !important; }
 .dark-theme .vendas-logo-claro { display: none !important; }
@@ -2757,9 +2757,6 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
     .mobile-menu-brand .vendas-brand-logo { width: 126px; }
     .mobile-menu-header .system-header-actions { gap: 5px; }
     .mobile-menu-header .offline-header-indicator, .mobile-menu-header .sync-pending-header-button, .mobile-menu-header .agenda-header-button, .mobile-menu-header .birthday-header-button { width: 33px; height: 33px; flex-basis: 33px; }
-    .mobile-menu-header .sales-profile-header-button { width: 66px; min-height: 40px; flex-basis: 66px; grid-template-rows: 24px 11px; gap: 2px; }
-    .mobile-menu-header .sales-profile-header-button .svg-icon { width: 23px; height: 23px; }
-    .mobile-menu-header .sales-profile-header-button span { font-size: 8px; line-height: 11px; }
   }
   .mobile-menu-card, .mobile-menu-wide { overflow: hidden; border: 0; padding: 0; background: transparent; box-shadow: none; text-shadow: none; transform: none !important; }
   .mobile-menu-card { width: 90%; min-height: 0; justify-self: center; overflow: visible; aspect-ratio: 1 / 1; box-shadow: none; }

@@ -1,9 +1,4 @@
 {
-  "baseDeploymentId": "dpl_DLpRvewZiiz4n3xC6gPR8ZBv8bc2",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261110183000_marketplace_receitas_historico_liquido.sql",
-      "sha256": "aea3716ae7860999555a4eb90b657fb3c3ea10707216e31fb3396625776610af"
-    }
-  ]
+  "baseDeploymentId": "dpl_AzuZkAy1RtNieBPHm43EzG1Ztz8j",
+  "migrations": []
 }

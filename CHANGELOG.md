@@ -1,3 +1,7 @@
+## 3.2.0.399-av199 - AvantaVendas: novos logos e troca de conta uniforme
+
+- PNGs fornecidos no acesso e nos cabeçalhos claro/escuro. Botão de troca de conta com as mesmas medidas na dashboard e nas páginas internas. Sem impacto operacional ou migração.
+
 ## 3.2.0.398 — Marketplaces: salvar configurações automaticamente e integrar receitas históricas
 
 - Salva preços, aparência e faturamento automaticamente. A linha de faturamento reúne a chave de envio e a escolha entre Bruto e Líquido.

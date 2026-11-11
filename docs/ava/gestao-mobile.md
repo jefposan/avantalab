@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.398 -->
+<!-- ava-version: 3.2.0.399 -->
+
+> Revisão 3.2.0.399: sem impacto operacional; ajuste visual exclusivo do AvantaVendas.
 
 > Revisão 3.2.0.398: Em Receitas do mês, Vendas Mkt Places é a receita automática de cada competência com vendas disponíveis. O valor pode ser bruto ou líquido, conforme a escolha nas configurações de Marketplaces na Gestão Web. Quando faltam custos no modo Líquido, o mês aguarda a confirmação.
 

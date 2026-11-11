@@ -1566,7 +1566,7 @@ function svgIconEstavel(nome, classe = '') {
 }
 
 function logoVendas() {
-  return `<span class="vendas-brand-logo" role="img" aria-label="AvantaVendas"><img class="vendas-logo-claro" src="/avantavendas/recursos/assets/logo-avantavendas-positivo.png?v=marca-20261025-v2" alt=""><img class="vendas-logo-escuro" src="/avantavendas/recursos/assets/logo-avantavendas-negativo.png?v=marca-20261025-v2" alt="" aria-hidden="true"></span>`;
+  return `<span class="vendas-brand-logo" role="img" aria-label="AvantaVendas"><img class="vendas-logo-claro" src="/avantavendas/recursos/assets/logo-avantavendas-positivo-20261110.png" alt=""><img class="vendas-logo-escuro" src="/avantavendas/recursos/assets/logo-avantavendas-negativo-20261110.png" alt="" aria-hidden="true"></span>`;
 }
 
 function botaoAgendamentosHojeVendas(agendamentosHoje) {
@@ -2288,7 +2288,7 @@ function renderPreparandoAcessoEstavel() {
 }
 
 function renderMarcaAcesso() {
-  return `<div class="access-brand-zone"><img src="/avantavendas/recursos/assets/logo-avantavendas-positivo.png?v=marca-20261025-v2" alt="AvantaVendas"></div>`;
+  return `<div class="access-brand-zone"><img src="/avantavendas/recursos/assets/logo-avantavendas-positivo-20261110.png" alt="AvantaVendas"></div>`;
 }
 
 function renderLoadingPreparacaoVendas() {
@@ -2537,8 +2537,8 @@ const RECURSOS_SALA_BOTOES = [
   ...SALA_BOTOES_PADRAO.map(([, arquivo]) => `/avantavendas/recursos/assets/menu/${arquivo}`),
   '/avantavendas/recursos/assets/menu/13_Configurações.png',
   '/avantavendas/recursos/assets/menu/14_Sair.png',
-  '/avantavendas/recursos/assets/logo-avantavendas-positivo.png?v=marca-20261025-v2',
-  '/avantavendas/recursos/assets/logo-avantavendas-negativo.png?v=marca-20261025-v2',
+  '/avantavendas/recursos/assets/logo-avantavendas-positivo-20261110.png',
+  '/avantavendas/recursos/assets/logo-avantavendas-negativo-20261110.png',
 ];
 
 function carregarImagemEssencial(url) {

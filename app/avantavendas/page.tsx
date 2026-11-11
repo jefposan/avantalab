@@ -107,7 +107,7 @@ export default function AvantaVendasPage() {
         <section className="login-screen preparing-access-screen">
           <div className="access-brand-zone">
             <img
-              src="/avantavendas/recursos/assets/logo-avantavendas-positivo.png?v=marca-20261025-v2"
+              src="/avantavendas/recursos/assets/logo-avantavendas-positivo-20261110.png"
               alt="AvantaVendas"
             />
           </div>

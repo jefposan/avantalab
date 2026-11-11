@@ -94,11 +94,11 @@ test('fallback entre versões de cache gera comprovante sem erro de altura', () 
 test('entrada, cabeçalho e cache usam a marca do Vendas sem trocar a do Gestão', () => {
   const pagina = readFileSync(new URL('../../app/avantavendas/page.tsx', import.meta.url), 'utf8');
   const sw = readFileSync(new URL('../../app/avantavendas/sw.js/route.ts', import.meta.url), 'utf8');
-  assert.match(pagina, /logo-avantavendas-positivo\.png/);
+  assert.match(pagina, /logo-avantavendas-positivo-20261110\.png/);
   assert.doesNotMatch(pagina, /src="\/images\/logo-avantalab-oficial/);
   for (const variante of ['positivo', 'negativo']) {
-    assert.ok(fonte.includes(`logo-avantavendas-${variante}.png`));
-    assert.ok(sw.includes(`logo-avantavendas-${variante}.png`));
+    assert.ok(fonte.includes(`logo-avantavendas-${variante}-20261110.png`));
+    assert.ok(sw.includes(`logo-avantavendas-${variante}-20261110.png`));
   }
   assert.ok(fonte.includes('aria-label="AvantaVendas"'));
 });

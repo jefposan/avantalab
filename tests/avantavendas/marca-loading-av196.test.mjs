@@ -52,12 +52,12 @@ test('mobile utiliza exatamente a marcação do LoadingPontos oficial sem duplic
 
 test('cabeçalho possui variantes por tema e novos recursos não reutilizam o cache antigo', () => {
   for (const p of ['app/avantavendas/page.tsx', 'app/avantavendas/sistema/app.js', 'app/avantavendas/sw.js/route.ts']) {
-    assert.match(read(p), /logo-avantavendas-positivo\.png\?v=marca-20261025-v2/);
+    assert.match(read(p), /logo-avantavendas-positivo-20261110\.png/);
   }
   const css = read('app/avantavendas/sistema/styles.css');
   assert.match(css, /\.dark-theme \.vendas-logo-claro \{ display: none !important; \}/);
   assert.match(css, /\.dark-theme \.vendas-logo-escuro \{ display: block !important; \}/);
-  assert.match(css, /aspect-ratio: 1258 \/ 184/);
+  assert.match(css, /aspect-ratio: 1316 \/ 167/);
 });
 
 for (const platform of ['ios', 'android']) {
