@@ -1,3 +1,7 @@
+## 3.2.0.405
+
+- Conteúdo AvantaVendas: excluir produto mantém a área de edição, pesquisa e lista abertas; o painel aguarda a seleção do próximo produto. Cancelar retorna à lista principal. Sem alteração na exclusão do banco.
+
 ## 3.2.0.404
 
 - Conteúdo AvantaVendas: pesquisa ao lado de Novo catálogo/Novo produto, por nome, marca, categoria, SKU e EAN. Disponível também durante a edição.

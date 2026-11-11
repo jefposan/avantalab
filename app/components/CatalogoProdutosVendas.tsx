@@ -34,6 +34,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const [catalogos, setCatalogos] = useState<Catalogo[]>([]);
   const [formulario, setFormulario] = useState<Record<string, string | boolean>>(vazio);
   const [formularioAberto, setFormularioAberto] = useState(false);
+  const [aguardandoSelecao, setAguardandoSelecao] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [alteracaoSalva, setAlteracaoSalva] = useState(false);
@@ -107,6 +108,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   };
   const iniciarNovoProduto = () => {
     if (salvando) return;
+    setAguardandoSelecao(false);
     setAlteracaoSalva(false);
     if (!haCatalogoPublicado) {
       setErro('Ative um catálogo no AvantaVendas antes de cadastrar produtos.');
@@ -119,6 +121,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   };
   const cancelarFormulario = () => {
     if (salvando) return;
+    setAguardandoSelecao(false);
     setAlteracaoSalva(false);
     setErro('');
     setFormulario(vazio);
@@ -127,6 +130,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   };
   const editar = (produto: Produto) => {
     if (salvando) return;
+    setAguardandoSelecao(false);
     setAlteracaoSalva(false);
     setErro('');
     setFormulario({ ...vazio, ...produto, preco_representante: produto.preco_representante == null ? '' : Number(produto.preco_representante).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), preco_divulgacao: Number(produto.preco_divulgacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: produto.sku || skuLegado(produto.id), descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
@@ -306,7 +310,9 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     }
     setProdutos((atuais) => excluir ? atuais.filter((produto) => produto.id !== id) : atuais.map((produto) => produto.id === id ? { ...produto, ativo: false } : produto));
     setFormulario(vazio);
-    setFormularioAberto(false);
+    setAlteracaoSalva(false);
+    setAguardandoSelecao(excluir);
+    setFormularioAberto(excluir);
   };
 
   return <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
@@ -327,6 +333,10 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     <div className={`grid min-h-0 flex-1 gap-4 ${formularioAberto ? 'grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]' : 'grid-rows-[minmax(0,1fr)]'}`}>
       {formularioAberto && <div className="flex min-h-0">
       <section ref={formularioRef} tabIndex={-1} className={`h-full min-h-0 w-full overflow-y-auto rounded-xl border p-3 focus:outline-none md:overflow-visible ${painel}`}>
+        {aguardandoSelecao ? <div className="flex h-full flex-col items-start gap-4">
+          <p role="status" className="text-sm">Produto excluído. Selecione outro produto na lista para editar.</p>
+          <BotaoAcaoCompacto onClick={cancelarFormulario}>Cancelar</BotaoAcaoCompacto>
+        </div> : <>
         <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full px-3 py-1 text-sm font-black text-white" style={{ backgroundColor: corPrimaria }}>{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: código, nome e preço sugerido de revenda.</p></div>
         {formulario.id && String(formulario.sku || '').startsWith('LEGADO-') && <p className="mt-2 text-[10px] font-bold text-cyan-700">Este produto não tinha código. Um SKU técnico foi preparado para salvar a edição.</p>}
         {erro && <p role="alert" className="mt-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
@@ -365,6 +375,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
             <BotaoAcaoCompacto onClick={cancelarFormulario} disabled={salvando} className={darkMode ? 'text-slate-200' : 'text-slate-600'}>Cancelar</BotaoAcaoCompacto>
           </div>
         </div>
+        </>}
       </section>
       </div>}
       <section className={`min-h-0 flex-col ${formularioAberto ? 'hidden xl:flex' : 'flex lg:col-span-2'}`}>

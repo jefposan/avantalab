@@ -91,4 +91,7 @@ test('pesquisa filtra por nome/EAN e exclusão exige confirmação antes da RPC'
  assert.equal(c.chamadas.some(x=>x.nome==='excluir_produto_conteudo_vendas_mobile_rpc'),false);
  c.botao('Excluir produto').props.onClick();modal=c.nos(c.render()).find(n=>n.props?.titulo==='Excluir produto');modal.props.aoConfirmar();await c.flush();
  const chamada=c.chamadas.find(x=>x.nome==='excluir_produto_conteudo_vendas_mobile_rpc');assert.equal(chamada.args.p_confirmado,true);assert.equal(chamada.args.p_produto_id,'p1');assert.equal(c.input('Nome'),undefined);
+ assert.ok(c.texto(c.render()).includes('Produto excluído. Selecione outro produto na lista para editar.'));assert.ok(busca(),'pesquisa deve continuar disponível durante seleção');assert.ok(c.botao('Editar'),'lista deve permanecer aberta');
+ c.botao('Editar').props.onClick();assert.equal(c.input('Nome').props.value,'Máquina de corte');
+ c.botao('Cancelar').props.onClick();assert.ok(c.botao('Novo produto'));
 });

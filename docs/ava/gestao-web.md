@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.404 -->
+<!-- ava-version: 3.2.0.405 -->
+
+> Revisão 3.2.0.405: Conteúdo AvantaVendas → Produtos: após confirmar a exclusão, a área de edição permanece aberta, com pesquisa e lista disponíveis para selecionar o próximo produto. O painel esquerdo informa Produto excluído e aguarda a seleção; Cancelar fecha a área.
 
 > Revisão 3.2.0.404: Conteúdo AvantaVendas → Produtos: pesquisa ao lado de Novo catálogo e Novo produto, ou acima da lista durante edição. Busca ignora acentos e caixa e considera nome, marca, categoria, SKU e EAN. Excluir produto exige Confirmar exclusão e retira o cadastro das operações de Conteúdo, Custos e Precificação, Vendas e Serviços e contas vinculadas do AvantaVendas. Preserva pedidos, lançamentos e históricos; Inativar continua disponível e permite reativação.
 
