@@ -8978,7 +8978,7 @@ if (validacaoTelefoneObrigatoria) {
     return (
       <main className="avanta-access-scene relative overflow-hidden font-sans">
         <FundoAcessoResponsivo />
-        <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" className="avanta-access-brand pointer-events-none relative z-10" />
+        <img src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab — Do zero ao operacional" className="avanta-access-brand pointer-events-none relative z-10" />
         <section className="avanta-loading-stage relative z-10">
           <div className="w-full max-w-sm rounded-xl border border-white/50 bg-white/90 p-5 text-center shadow-xl backdrop-blur-xl">
             <h1 className="text-base font-black text-slate-900">Não foi possível verificar o cadastro</h1>

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.399 -->
+<!-- ava-version: 3.2.0.400 -->
+
+> Revisão 3.2.0.400: marca institucional de acesso renovada em WebP; sem impacto operacional.
 
 > Revisão 3.2.0.399: sem impacto operacional; ajuste visual exclusivo do AvantaVendas.
 

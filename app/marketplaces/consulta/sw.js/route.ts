@@ -6,7 +6,7 @@ export async function GET() {
   const code = `
 const CACHE = 'avantalab-marketplaces-mobile-${APP_VERSION}';
 const PREFIX = 'avantalab-marketplaces-mobile-';
-const SHELL = ['/marketplaces/consulta', '/marketplaces/consulta/manifest.webmanifest', '/images/logo-avantalab-oficial.png', '/images/marketplaces-mobile-icon-180.png', '/images/marketplaces-mobile-icon-192.png', '/images/marketplaces-mobile-icon-512.png'];
+const SHELL = ['/marketplaces/consulta', '/marketplaces/consulta/manifest.webmanifest', '/images/avantalab-positivo-com-slogan-20261110.webp', '/images/marketplaces-mobile-icon-180.png', '/images/marketplaces-mobile-icon-192.png', '/images/marketplaces-mobile-icon-512.png'];
 self.addEventListener('install', (event) => event.waitUntil(caches.open(CACHE).then((cache) => Promise.allSettled(SHELL.map((url) => cache.add(new Request(url, { cache: 'reload' }))))).then(() => self.skipWaiting())));
 self.addEventListener('activate', (event) => event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith(PREFIX) && key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', (event) => {

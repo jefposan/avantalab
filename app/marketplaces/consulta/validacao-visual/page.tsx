@@ -72,12 +72,12 @@ export default async function MarketplaceViewportValidationPage({ searchParams }
     <main className={styles.loginWrap} data-avantaprecos-viewport="access" style={accessSafeStyle}>
       {carregando ? (
         <section className={styles.loadingStage} role="status">
-          <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
+          <img src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab — Do zero ao operacional" />
           <span aria-hidden="true" />
           <p>Preparando seu acesso…</p>
         </section>
       ) : (
-        <><img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" /><section className={styles.loginContent}><div className={styles.loginCard}>
+        <><img className={styles.brandLogo} src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab — Do zero ao operacional" /><section className={styles.loginContent}><div className={styles.loginCard}>
           <h1>AvantaPreços</h1>
           <p>Entre para consultar produtos e preços.</p>
           <label htmlFor="validacao-login">Login</label>

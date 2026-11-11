@@ -15,7 +15,7 @@ export default function SelecaoModulos({ perfis, perfil, error, opening, onAbrir
   const temLogo = Boolean(perfil?.empresa.logoUrl && perfil.empresa.logoUrl !== '__blank__');
   return <main className={`${styles.scene} ${escuro ? styles.dark : ''} typography-system`} style={{ '--modulos-brand': perfil?.empresa.corPrimaria || '#003E73', '--modulos-on-brand': corEhClara(perfil?.empresa.corPrimaria || '#003E73') ? '#17222d' : '#ffffff' } as CSSProperties}>
     <FundoAcessoResponsivo />
-    <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={1200} height={298} className={styles.avantaBrand} priority />
+    <Image src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab" width={1200} height={274} className={styles.avantaBrand} priority />
     <section className={styles.panel} aria-labelledby="meus-modulos-title">
       <header className={styles.header}><h1 id="meus-modulos-title">{perfil ? 'Meus módulos' : 'Selecionar perfil'}</h1><p>{perfil ? 'Escolha o módulo que deseja acessar.' : 'Escolha o perfil para ver seus acessos.'}</p></header>
       <div className={styles.content}>

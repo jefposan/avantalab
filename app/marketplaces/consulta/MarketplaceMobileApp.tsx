@@ -694,9 +694,9 @@ export default function MarketplaceMobileApp() {
   };
 
 
-  if (access === 'loading') return <main className={styles.loginWrap} data-avantaprecos-viewport="access"><section className={styles.loadingStage} role="status" aria-live="polite"><Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={260} height={65} priority /><span /><p>Preparando seu acesso…</p></section></main>;
+  if (access === 'loading') return <main className={styles.loginWrap} data-avantaprecos-viewport="access"><section className={styles.loadingStage} role="status" aria-live="polite"><Image src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab" width={260} height={59} priority /><span /><p>Preparando seu acesso…</p></section></main>;
   if (access === 'guest') return <main className={styles.loginWrap} data-avantaprecos-viewport="access">
-    <Image className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={220} height={55} preload />
+    <Image className={styles.brandLogo} src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab" width={220} height={50} preload />
     <section className={styles.loginContent} aria-labelledby="avantaprecos-login-title"><div className={styles.loginCard}>
       <h1 id="avantaprecos-login-title">AvantaPreços</h1><p>Entre para consultar produtos e preços.</p>
       <form onSubmit={signIn}>
@@ -707,9 +707,9 @@ export default function MarketplaceMobileApp() {
       </form>
     </div><InstalarPwa nome="AvantaPreços" estado={instalacaoPwa}/></section>
   </main>;
-  if (access === 'no-company') return <main className={styles.loginWrap} data-avantaprecos-viewport="access"><Image className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={240} height={60} /><section className={`${styles.loginCard} ${styles.emptyAccessCard}`}><h1>Acesso não liberado</h1><p>Peça ao gestor da empresa para cadastrar seu usuário no módulo Marketplaces.</p><button type="button" onClick={() => void logout()}>Sair</button></section></main>;
+  if (access === 'no-company') return <main className={styles.loginWrap} data-avantaprecos-viewport="access"><Image className={styles.brandLogo} src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab" width={240} height={55} /><section className={`${styles.loginCard} ${styles.emptyAccessCard}`}><h1>Acesso não liberado</h1><p>Peça ao gestor da empresa para cadastrar seu usuário no módulo Marketplaces.</p><button type="button" onClick={() => void logout()}>Sair</button></section></main>;
   if (access === 'choose-company') return <main className={styles.loginWrap} data-avantaprecos-viewport="access">
-    <Image className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab" width={230} height={58} priority />
+    <Image className={styles.brandLogo} src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab" width={230} height={52} priority />
     <section className={`${styles.loginCard} ${styles.companySelectionCard}`} aria-labelledby="company-selection-title">
       <h1 id="company-selection-title">Escolha a empresa</h1>
       <p>Selecione o perfil que será usado nesta sessão.</p>

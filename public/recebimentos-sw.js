@@ -1,6 +1,6 @@
 // Service worker do PWA "Recebimentos Presenciais".
 // Escopo restrito a /recebimentos/colaborador — não interfere no restante do app.
-const RECEB_CACHE = 'avantalab-recebimentos-v14';
+const RECEB_CACHE = 'avantalab-recebimentos-v14-marca-20261110';
 const RECEB_SHELL = [
   '/recebimentos/colaborador',
   '/recebimentos-manifest.json',
@@ -9,7 +9,7 @@ const RECEB_SHELL = [
   '/images/recebimentos-icon-512.png',
   '/images/bg-avantalab-mobile-1080x1920-sem-logo.webp',
   '/images/bg-avantalab-mobile-1080x1920-sem-logo.png',
-  '/images/logo-avantalab-oficial.png',
+  '/images/avantalab-positivo-com-slogan-20261110.webp',
 ];
 
 self.addEventListener('install', (event) => {

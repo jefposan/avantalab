@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.399 -->
+<!-- ava-version: 3.2.0.400 -->
+
+> Revisão 3.2.0.400: sem impacto operacional no Vendas; marca institucional AvantaLab renovada nas superfícies próprias.
 
 > Revisão 3.2.0.399-av199: logos substituídos e tamanho do botão de troca de conta padronizado; sem impacto operacional.
 

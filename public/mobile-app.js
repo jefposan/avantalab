@@ -12110,7 +12110,7 @@
   function cenaAcessoGestaoMobile(card, classeExtra) {
     return (
       '<section class="gestao-login-screen' + (classeExtra ? ' ' + classeExtra : '') + '">' +
-        '<div class="gestao-login-brand"><img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" /></div>' +
+        '<div class="gestao-login-brand"><img src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab — Do zero ao operacional" /></div>' +
         card +
       '</section>'
     );

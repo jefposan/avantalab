@@ -91,7 +91,7 @@ const telasGestao: readonly LandingCarouselItem[] = [
 const dadosEstruturados = {
   '@context': 'https://schema.org',
   '@graph': [
-    { '@type': 'Organization', name: 'AvantaLab', url: siteUrl, logo: `${siteUrl}/images/landing/logo-avantalab.png`, contactPoint: { '@type': 'ContactPoint', email: 'contato@avantalab.com.br', contactType: 'customer support', availableLanguage: 'Portuguese' } },
+    { '@type': 'Organization', name: 'AvantaLab', url: siteUrl, logo: `${siteUrl}/images/avantalab-positivo-com-slogan-20261110.webp`, contactPoint: { '@type': 'ContactPoint', email: 'contato@avantalab.com.br', contactType: 'customer support', availableLanguage: 'Portuguese' } },
     { '@type': 'WebSite', name: 'AvantaLab', url: siteUrl, inLanguage: 'pt-BR' },
     { '@type': 'SoftwareApplication', name: 'AvantaLab Gestão', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url: siteUrl, description: 'Plataforma de gestão financeira e operacional com indicadores, rotinas de equipe e assistência por IA.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL', description: 'Plano Free gratuito para uso pessoal, sem cartão de crédito' } },
     { '@type': 'MobileApplication', name: 'AvantaLab', applicationCategory: 'FinanceApplication', operatingSystem: 'iOS', url: 'https://apps.apple.com/br/app/avantalab/id6793744930', downloadUrl: 'https://apps.apple.com/br/app/avantalab/id6793744930', description: 'Aplicativo oficial de gestão financeira e operacional do AvantaLab.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' } },
@@ -119,7 +119,7 @@ const dadosEstruturadosLaboratorio = {
       '@type': 'Organization',
       name: 'AvantaLab',
       url: siteUrl,
-      logo: `${siteUrl}/images/landing/logo-avantalab.png`,
+      logo: `${siteUrl}/images/avantalab-positivo-com-slogan-20261110.webp`,
       contactPoint: {
         '@type': 'ContactPoint',
         email: 'contato@avantalab.com.br',
@@ -243,7 +243,7 @@ export function AvantaLandingPage({ contexto = 'laboratorio' }: { contexto?: 'la
         <div className={styles.wrap} data-scroll-target><p className={styles.kicker}>Próximo passo</p><h2>Organize hoje. Decida com mais segurança amanhã.</h2><p>Comece pelo Free ou escolha o plano que acompanha a sua rotina pessoal ou empresarial.</p><AcessoPublicoLink className={styles.primaryButton} modo="cadastro">Começar grátis <span aria-hidden="true">→</span></AcessoPublicoLink></div>
       </section>
 
-      <footer className={styles.footer} id="rodape"><div className={styles.wrap}><Image src="/images/landing/logo-avantalab.png" alt="AvantaLab" width={154} height={40} /><div><Link href="/suporte">Suporte</Link><Link href="/termos">Termos de Uso</Link><Link href="/privacidade">Política de Privacidade</Link><Link href="/cookies">Cookies</Link></div><small>© 2026 AvantaLab. Todos os direitos reservados.</small></div></footer>
+      <footer className={styles.footer} id="rodape"><div className={styles.wrap}><Image src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab" width={154} height={35} /><div><Link href="/suporte">Suporte</Link><Link href="/termos">Termos de Uso</Link><Link href="/privacidade">Política de Privacidade</Link><Link href="/cookies">Cookies</Link></div><small>© 2026 AvantaLab. Todos os direitos reservados.</small></div></footer>
       <BotaoProximoScroll destinos={destinosProximaRolagem} distanciaInferior={22} ariaLabel="Avançar para a próxima seção" title="Próxima seção" />
       </> : <>
       <section id="conteudo">
@@ -259,7 +259,7 @@ export function AvantaLandingPage({ contexto = 'laboratorio' }: { contexto?: 'la
           </div>
         </div>
       </section>
-      <footer className={styles.footer} id="rodape"><div className={styles.wrap}><Image src="/images/landing/logo-avantalab.png" alt="AvantaLab" width={154} height={40} /><div><Link href="/suporte">Suporte</Link><Link href="/termos">Termos de Uso</Link><Link href="/privacidade">Política de Privacidade</Link><Link href="/cookies">Cookies</Link></div><small>© 2026 AvantaLab. Todos os direitos reservados.</small></div></footer>
+      <footer className={styles.footer} id="rodape"><div className={styles.wrap}><Image src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab" width={154} height={35} /><div><Link href="/suporte">Suporte</Link><Link href="/termos">Termos de Uso</Link><Link href="/privacidade">Política de Privacidade</Link><Link href="/cookies">Cookies</Link></div><small>© 2026 AvantaLab. Todos os direitos reservados.</small></div></footer>
       </>}
       </main>
     </>

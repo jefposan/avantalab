@@ -67,10 +67,10 @@ export default async function BaixarAvantaVendasPage({ searchParams }: { searchP
       <section className={styles.card} aria-labelledby="titulo-download">
         <Image
           className={styles.logo}
-          src="/images/AvantaLab_pos_vendas.png"
-          alt="AvantaVendas"
+          src="/images/avantalab-positivo-com-slogan-20261110.webp"
+          alt="AvantaLab — Do zero ao operacional"
           width={1200}
-          height={298}
+          height={274}
           priority
         />
         <div className={styles.copy}>

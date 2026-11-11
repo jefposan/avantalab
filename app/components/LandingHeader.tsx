@@ -58,7 +58,7 @@ export default function LandingHeader({ contexto }: { contexto: ContextoLanding 
     <header data-public-header data-contexto={contexto} className={`${landingStyles.header} ${styles.header} ${rolado ? styles.rolado : ''}`}>
       <nav className={`${landingStyles.nav} ${styles.nav} ${menuAberto ? menuStyles.foreground : ''}`} aria-label="Navegação principal">
         <Link className={landingStyles.brand} href="/" aria-label="AvantaLab — voltar ao início" onClick={voltarAoInicio}>
-          <Image src="/images/landing/logo-avantalab.png" alt="AvantaLab" width={154} height={40} priority />
+          <Image src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab" width={154} height={35} priority />
         </Link>
         <div className={styles.contextSwitcher} aria-label="Área do site">
           <Link href="/" aria-current={contexto === 'laboratorio' ? 'page' : undefined}>Laboratório de marcas</Link>

@@ -538,7 +538,7 @@ export default function ColaboradorApp() {
   if (estado === 'carregando') {
     return (
       <main className={`${styles.loginWrap} ${styles.preparandoAcesso} avanta-access-scene`}>
-        <img className="avanta-access-brand" src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
+        <img className="avanta-access-brand" src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab — Do zero ao operacional" />
         <section className="avanta-loading-stage" role="status" aria-live="polite">
           <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
             <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
@@ -555,7 +555,7 @@ export default function ColaboradorApp() {
   if (estado === 'bloqueado') {
     return (
       <div className={styles.loginWrap}>
-        <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
+        <img className={styles.brandLogo} src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab — Do zero ao operacional" />
         <div className={styles.loginCard}>
           <div className={styles.loginMarca}>AvantaLab</div>
           <h1 className={styles.loginTitulo}>Acesso indisponível</h1>
@@ -569,7 +569,7 @@ export default function ColaboradorApp() {
   if (estado === 'login') {
     return (
       <div className={styles.loginWrap}>
-        <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
+        <img className={styles.brandLogo} src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab — Do zero ao operacional" />
         <div className={styles.loginContent}>
           <form className={styles.loginCard} onSubmit={(event) => { event.preventDefault(); void entrar(); }}>
             <h1 className={styles.loginTitulo}>Operações em Campo</h1>
@@ -639,7 +639,7 @@ export default function ColaboradorApp() {
   const descricaoDaOperacao = operacao === 'servicos' ? 'Registro de serviços' : 'Registro de recebimentos';
   if (operacao === 'seletor') return (
     <main className={`${styles.loginWrap} ${styles.seletorOperacaoPwa}`}>
-      <img className={styles.brandLogo} src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
+      <img className={styles.brandLogo} src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab — Do zero ao operacional" />
       <section className={styles.loginContent} aria-labelledby="operacao-titulo">
         <div className={`${styles.loginCard} ${styles.seletorOperacaoCard}`}>
           <header className={styles.seletorOperacaoCabecalho}><p className={styles.seletorOperacaoEmpresa}>{nomeDoPerfil}</p></header>

@@ -106,7 +106,7 @@ export default function PontoPage() {
       >
         <section className="avantalab-mobile-bg ponto-access-layout fixed inset-0 overflow-hidden" style={{ height: '100dvh' }}>
           <img
-            src="/images/logo-avantalab-oficial.png"
+            src="/images/avantalab-positivo-com-slogan-20261110.webp"
             alt="AvantaLab — Do zero ao operacional"
             className="ponto-access-brand pointer-events-none"
           />

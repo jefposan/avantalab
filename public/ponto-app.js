@@ -821,7 +821,7 @@
 
   // ---------- telas ----------
   function marcaAcessoPonto() {
-    return '<img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" class="ponto-access-brand pointer-events-none">';
+    return '<img src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab — Do zero ao operacional" class="ponto-access-brand pointer-events-none">';
   }
 
   function telaLogin() {

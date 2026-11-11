@@ -1,3 +1,4 @@
+// Revisão 3.2.0.400: logos institucionais Web/Mobile em WebP sem perdas; mesmo slogan e contraste, sem mudança de dados ou autenticação.
 // Revisão 3.2.0.391: a NF-e de produção da Tridium depende da liberação do servidor. Em retorno incerto, consulte a mesma nota e preserve sua numeração.
 // Revisão 3.2.0.390: a Tridium pode testar a conexão da SEFAZ-SP de produção no painel do certificado, sem emitir.
 // Revisão 3.2.0.387: aviso de cancelamento dispensado permanece oculto em Marketplaces.

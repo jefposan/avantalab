@@ -1,3 +1,7 @@
+## 3.2.0.400 — AvantaLab: logos institucionais em WebP
+
+- Novos logos renderizados na Web/Mobile, preservando slogan e contraste; WebP sem perdas e cache atualizado. Sem backend, migração ou alteração de logos personalizados.
+
 ## 3.2.0.399-av199 - AvantaVendas: novos logos e troca de conta uniforme
 
 - PNGs fornecidos no acesso e nos cabeçalhos claro/escuro. Botão de troca de conta com as mesmas medidas na dashboard e nas páginas internas. Sem impacto operacional ou migração.

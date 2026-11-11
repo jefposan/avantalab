@@ -702,7 +702,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
             }}
           >
             <img
-              src="/images/logo-avantalab-oficial.png"
+              src="/images/avantalab-positivo-com-slogan-20261110.webp"
               alt="AvantaLab — Do zero ao operacional"
               className="gestao-access-brand pointer-events-none"
             />
