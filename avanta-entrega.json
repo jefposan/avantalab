@@ -1,9 +1,9 @@
 {
-  "baseDeploymentId": "dpl_6JmcsuYc877wnUHebYoofeGgtL16",
+  "baseDeploymentId": "dpl_AkouoE3KRtTH7V7LaVfby66Nwtje",
   "migrations": [
     {
-      "path": "supabase/migrations/20261111210000_sku_manual_sem_legado.sql",
-      "sha256": "1d57df35626190c1e0cdfd4ab12061cfd6bcd84e98a1f2f69a4380b67e692599"
+      "path": "supabase/migrations/20261112120000_mover_materiais_divulgacao.sql",
+      "sha256": "1c227edf7c969f327aa4834910fcc26122220b52d7c5d735a64c297dbc45cc3c"
     }
   ]
 }

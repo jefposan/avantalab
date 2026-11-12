@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.406 -->
+<!-- ava-version: 3.2.0.407 -->
+
+> Revisão 3.2.0.407: Compartilhar e Detalhes aparecem somente com um item selecionado. Compartilhar pasta reúne os links existentes de seus arquivos, sem mudar permissões; Detalhes mostra criação, tipo, localização, tamanho conhecido e contagem. O menu + fecha ao clicar fora ou pressionar Escape. A barra de seleção permanece no rodapé do modal, fora da área rolável. Cabeçalho compacto da pasta fica fixo enquanto o conteúdo rola. Selecionar permite marcar arquivos para Mover/Excluir ou pastas para exclusão de todo o conteúdo, sempre com confirmação. Cancelar desfaz a seleção. Os itens que falharam permanecem selecionados para tentar novamente.  Conteúdo AvantaVendas → Divulgação: arraste um material publicado sobre uma pasta ou subpasta para movê-lo. Também é possível usar Mover e selecionar o destino pelo teclado ou celular. A movimentação conserva o arquivo e seus links; se a imagem usada como capa sair da árvore, a referência daquela capa é limpa. Menu + oferece Nova pasta, Adicionar arquivo e Trocar capa; Nova pasta cria uma subpasta diretamente dentro da pasta aberta; a pasta atual permanece aberta após criar. A criação lateral continua disponível.
 
 > Revisão 3.2.0.406: Conteúdo AvantaVendas → Produtos: SKU pode permanecer vazio para preenchimento manual posterior; não é mais gerado LEGADO automaticamente. A limpeza solicitada retira os códigos técnicos do perfil Tridium e suas cópias vinculadas, preservando SKUs reais, pedidos e históricos.
 

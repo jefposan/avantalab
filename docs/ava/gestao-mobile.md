@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.406 -->
+<!-- ava-version: 3.2.0.407 -->
+
+> Revisão 3.2.0.407: Sem impacto operacional na Gestão Mobile.
 
 > Revisão 3.2.0.406: Sem impacto operacional na Gestão Mobile.
 

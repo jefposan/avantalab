@@ -2896,3 +2896,7 @@ GUIAS["gestao-web"] += " Conteúdo AvantaVendas → Produtos: pesquisa por nome,
 GUIAS["gestao-web"] += " Após excluir um produto no Conteúdo AvantaVendas, a área de edição permanece aberta e aguarda selecionar outro item na lista; pesquisa continua disponível. Cancelar fecha a área.";
 
 GUIAS["gestao-web"] += " No Conteúdo AvantaVendas, o SKU é opcional e deve ser preenchido manualmente; código LEGADO não é mais criado ao editar ou salvar. A limpeza dos técnicos não altera SKUs reais nem pedidos anteriores.";
+
+GUIAS["gestao-web"] += " Conteúdo AvantaVendas → Divulgação: arrastar material publicado para pasta/subpasta move seu vínculo sem novo upload; Mover oferece seleção de destino para teclado e celular. O menu + oferece Nova pasta, Adicionar arquivo e Trocar capa; fecha ao clicar fora ou pressionar Escape. Nova pasta cria diretamente dentro da pasta aberta. Links e miniaturas são preservados; capa por material que saiu da árvore é limpa.";
+
+GUIAS["gestao-web"] += " Divulgação: cabeçalho fixo no painel da pasta e ações de seleção no rodapé. Compartilhar e Detalhes aparecem somente com um item selecionado. Compartilhar pasta reúne links existentes dos arquivos sem alterar permissões. Detalhes mostra metadados registrados. Selecionar marca arquivos para mover/excluir e pastas para excluir com seu conteúdo, mediante confirmação. Cancelar limpa a seleção. Falha parcial conserva os itens restantes selecionados.";

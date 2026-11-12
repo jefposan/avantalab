@@ -1,3 +1,16 @@
+## 3.2.0.407
+
+- Barra de seleção: interação destaca a borda da própria face e aplica zoom discreto; sem contorno externo flutuante nem mudança de fundo, preservando foco interno, estados desabilitados e movimento reduzido.
+
+- Refinamento local: menu + fecha por clique fora/Escape; ações de seleção fixas no rodapé do modal, sem ocupar o cabeçalho.
+
+- Divulgação: navegação compacta com menu + e faixa baixa de envio. Compartilhar e Detalhes disponíveis somente com um item selecionado; detalhes usam metadados existentes, e compartilhamento de pasta reúne links dos arquivos sem alterar permissões.
+
+- Refinamento local: destaque de arraste interno ao limite da pasta; cabeçalho fixo. Selecionar permite mover/excluir vários arquivos e excluir pastas com confirmação de todo o conteúdo; Cancelar limpa a seleção. Falha parcial mantém os itens restantes selecionados.
+
+- Conteúdo AvantaVendas → Divulgação: arrastar materiais publicados para pastas/subpastas move apenas o vínculo; mantém arquivo, URL, miniatura e hash. Opção Mover por seletor atende teclado e celular. RPC usa RLS existente, verifica empresa/destino/origem e limpa referências de capa que deixaram a árvore.
+- Botão de pasta Nova junto de capa e Adicionar cria subpasta diretamente na pasta aberta, sem depender do formulário lateral.
+
 ## 3.2.0.406
 
 - Conteúdo AvantaVendas: SKU opcional e preenchido manualmente, sem recriar códigos LEGADO ao editar ou salvar. Limpeza dos SKUs técnicos do perfil Tridium e das cópias vinculadas que ainda usam o mesmo código; SKUs reais e históricos preservados.

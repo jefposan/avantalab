@@ -4,6 +4,8 @@ import { type DragEvent as ReactDragEvent, type PointerEvent as ReactPointerEven
 import { supabase } from '../lib/supabase';
 import CatalogoProdutosVendas from './CatalogoProdutosVendas';
 import ModalConfirmacao from './ModalConfirmacao';
+import CardExpandidoModal from './CardExpandidoModal';
+import BotaoAcaoCompacto from './BotaoAcaoCompacto';
 
 type Novidade = { id: string; tipo: string; titulo: string; descricao: string; criado_em: string };
 type Pasta = { id: string; pasta_pai_id: string | null; capa_material_id: string | null; capa_arquivo_path: string | null; capa_arquivo_url: string | null; nome: string; descricao: string | null; criado_em: string };
@@ -231,6 +233,40 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const gestoVisualizacao = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   const [arrastandoMateriais, setArrastandoMateriais] = useState(false);
   const [arrastandoCapa, setArrastandoCapa] = useState(false);
+  const menuMaisRef = useRef<HTMLDetailsElement>(null);
+  const [menuMais, setMenuMais] = useState(false);
+  useEffect(() => {
+    if (!menuMais) return;
+    const fecharFora = (evento: PointerEvent) => {
+      if (evento.target instanceof Node && !menuMaisRef.current?.contains(evento.target)) setMenuMais(false);
+    };
+    const fecharEsc = (evento: KeyboardEvent) => {
+      if (evento.key === 'Escape') { setMenuMais(false); menuMaisRef.current?.querySelector('summary')?.focus(); }
+    };
+    document.addEventListener('pointerdown', fecharFora, true);
+    document.addEventListener('keydown', fecharEsc);
+    return () => {
+      document.removeEventListener('pointerdown', fecharFora, true);
+      document.removeEventListener('keydown', fecharEsc);
+    };
+  }, [menuMais]);
+  const [painelSelecao, setPainelSelecao] = useState<'detalhes' | 'compartilhar' | null>(null);
+  const [linkCopiado, setLinkCopiado] = useState(false);
+  const [modoSelecao, setModoSelecao] = useState(false);
+  const [itensSelecionados, setItensSelecionados] = useState<Set<string>>(new Set());
+  const [moverSelecaoAberta, setMoverSelecaoAberta] = useState(false);
+  const [excluirSelecaoAberta, setExcluirSelecaoAberta] = useState(false);
+  const [acaoSelecao, setAcaoSelecao] = useState<'mover' | 'excluir' | null>(null);
+  const operacaoSelecaoRef = useRef(false);
+  const [materialArrastadoId, setMaterialArrastadoId] = useState<string | null>(null);
+  const [pastaDestinoArraste, setPastaDestinoArraste] = useState<string | null>(null);
+  const [materialParaMover, setMaterialParaMover] = useState<Material | null>(null);
+  const [destinoMovimento, setDestinoMovimento] = useState('');
+  const [movendoMaterialId, setMovendoMaterialId] = useState<string | null>(null);
+  const [subpastaLocal, setSubpastaLocal] = useState<{ paiId: string; nome: string } | null>(null);
+  const arrasteMaterialRef = useRef<{ id: string; empresaId: string } | null>(null);
+  const movimentoAtivoRef = useRef(false);
+  const contextoOperacaoRef = useRef(0);
 
   const carregar = async () => {
     if (!empresaId) return;
@@ -248,6 +284,11 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
 
   useEffect(() => {
     if (!aberto || !empresaId) return;
+    contextoOperacaoRef.current += 1;
+    setMenuMais(false); setPainelSelecao(null); setLinkCopiado(false); setModoSelecao(false); setItensSelecionados(new Set()); setMoverSelecaoAberta(false); setExcluirSelecaoAberta(false); setAcaoSelecao(null); operacaoSelecaoRef.current = false;
+    setMaterialParaMover(null); setSubpastaLocal(null); setMovendoMaterialId(null); setSalvando(false);
+    movimentoAtivoRef.current = false; arrasteMaterialRef.current = null;
+    setMaterialArrastadoId(null); setPastaDestinoArraste(null);
     setAba('divulgacao');
     setCriacaoPastaAberta(false);
     setPastaEmEdicao(null);
@@ -257,6 +298,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     setMaterialEmVisualizacao(null);
     setPastaCapaEmEdicao(null);
     void carregar();
+    return () => { contextoOperacaoRef.current += 1; };
   }, [aberto, empresaId]);
 
   useEffect(() => {
@@ -291,15 +333,27 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     setNovidades((atuais) => [data as Novidade, ...atuais]); setTitulo(''); setDescricao('');
   };
 
-  const criarPasta = async () => {
-    if (!empresaId || !novaPasta.trim()) { setErro('Informe o nome da pasta.'); return; }
-    const pastaPaiId = pastaPaiNova || null;
+  const criarPasta = async (contexto?: { paiId: string; nome: string }) => {
+    const nomeDaPasta = contexto ? contexto.nome : novaPasta;
+    if (salvando) return;
+    if (!empresaId || !nomeDaPasta.trim()) { setErro('Informe o nome da pasta.'); return; }
+    const pastaPaiId = contexto?.paiId || pastaPaiNova || null;
+    const geracao = contextoOperacaoRef.current;
     setSalvando(true); setErro('');
-    const { data, error } = await supabase.from('vendas_mobile_divulgacao_pastas').insert({ empresa_id: empresaId, pasta_pai_id: pastaPaiId, nome: formatarNomePasta(novaPasta.trim()), descricao: novaDescricao.trim() || null }).select('id, pasta_pai_id, capa_material_id, capa_arquivo_path, capa_arquivo_url, nome, descricao, criado_em').single();
-    setSalvando(false); if (error || !data) { setErro('Não foi possível criar a pasta.'); return; }
-    setPastas((atuais) => [data as Pasta, ...atuais]); setPastaAtiva(data.id);
-    if (pastaPaiId) setPastasExpandidas((atuais) => new Set([...atuais, pastaPaiId]));
-    setPastaPaiNova(''); setNovaPasta(''); setNovaDescricao(''); setCriacaoPastaAberta(false);
+    try {
+      const { data, error } = await supabase.from('vendas_mobile_divulgacao_pastas').insert({ empresa_id: empresaId, pasta_pai_id: pastaPaiId, nome: formatarNomePasta(nomeDaPasta.trim()), descricao: contexto ? null : novaDescricao.trim() || null }).select('id, pasta_pai_id, capa_material_id, capa_arquivo_path, capa_arquivo_url, nome, descricao, criado_em').single();
+      if (geracao !== contextoOperacaoRef.current) return;
+      if (error || !data) { setErro('Não foi possível criar a pasta.'); return; }
+      setPastas((atuais) => [data as Pasta, ...atuais]);
+      if (!contexto) setPastaAtiva(data.id);
+      setSubpastaLocal(null);
+      if (pastaPaiId) setPastasExpandidas((atuais) => new Set([...atuais, pastaPaiId]));
+      if (!contexto) { setPastaPaiNova(''); setNovaPasta(''); setNovaDescricao(''); setCriacaoPastaAberta(false); }
+    } catch {
+      if (geracao === contextoOperacaoRef.current) setErro('Não foi possível criar a pasta. Tente novamente.');
+    } finally {
+      if (geracao === contextoOperacaoRef.current) setSalvando(false);
+    }
   };
 
   const salvarNomeDaPasta = async () => {
@@ -312,6 +366,63 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     setPastas((atuais) => atuais.map((pasta) => pasta.id === data.id ? data as Pasta : pasta));
     setPastaEmEdicao(null); setNovaPasta(''); setNovaDescricao(''); setCriacaoPastaAberta(false);
   };
+
+  const limparArrasteMaterial = () => {
+    arrasteMaterialRef.current = null; setMaterialArrastadoId(null); setPastaDestinoArraste(null);
+  };
+  const iniciarArrasteMaterial = (evento: ReactDragEvent<HTMLElement>, material: Material) => {
+    if (!empresaId || modoSelecao || operacaoSelecaoRef.current || movimentoAtivoRef.current || salvando || excluindo) { evento.preventDefault(); return; }
+    arrasteMaterialRef.current = { id: material.id, empresaId };
+    setMaterialArrastadoId(material.id);
+    evento.dataTransfer.effectAllowed = 'move';
+    evento.dataTransfer.setData('application/x-avanta-material', material.id);
+  };
+  const moverMaterial = async (material: Material, pastaDestinoId: string, emLote = false): Promise<boolean> => {
+    if (!empresaId || movimentoAtivoRef.current || (!emLote && operacaoSelecaoRef.current) || salvando || excluindo || material.pasta_id === pastaDestinoId) return false;
+    if (!pastas.some((pasta) => pasta.id === pastaDestinoId)) return false;
+    const geracao = contextoOperacaoRef.current;
+    movimentoAtivoRef.current = true; setMovendoMaterialId(material.id); setErro(''); setResultadoEnvio(null);
+    try {
+      const { data, error } = await supabase.rpc('mover_material_divulgacao_rpc', {
+        p_empresa_id: empresaId, p_material_id: material.id,
+        p_pasta_origem_id: material.pasta_id, p_pasta_destino_id: pastaDestinoId,
+      });
+      if (geracao !== contextoOperacaoRef.current) return false;
+      const resultado = data as { material?: Material; capas_limpas?: string[] } | null;
+      if (error || resultado?.material?.id !== material.id || resultado.material.pasta_id !== pastaDestinoId) {
+        throw new Error(error?.code === 'P0001' ? error.message : 'Não foi possível mover o material. Tente novamente.');
+      }
+      setMateriais((atuais) => atuais.map((item) => item.id === material.id ? { ...item, ...resultado.material! } : item));
+      const capasLimpas = new Set(resultado.capas_limpas || []);
+      setPastas((atuais) => atuais.map((pasta) => capasLimpas.has(pasta.id) ? { ...pasta, capa_material_id: null } : pasta));
+      if (!emLote) {
+        setMaterialParaMover(null); setDestinoMovimento('');
+        setResultadoEnvio({ tipo: 'sucesso', mensagem: `Material movido para “${pastas.find((pasta) => pasta.id === pastaDestinoId)?.nome || 'a pasta selecionada'}”.` });
+      }
+      return true;
+    } catch (erroMovimento) {
+      if (geracao === contextoOperacaoRef.current) setErro(erroMovimento instanceof Error && /Não foi possível|Material indisponível|Pasta de destino|O material já|Sessão expirada/.test(erroMovimento.message) ? erroMovimento.message : 'Não foi possível mover o material. Tente novamente.');
+      return false;
+    } finally {
+      if (geracao === contextoOperacaoRef.current) { movimentoAtivoRef.current = false; setMovendoMaterialId(null); }
+    }
+  };
+  const receberArrasteNaPasta = (evento: ReactDragEvent<HTMLElement>, pastaId: string, soltar = false) => {
+    const arraste = arrasteMaterialRef.current;
+    const material = arraste?.empresaId === empresaId ? materiais.find((item) => item.id === arraste.id) : null;
+    if (!material || material.pasta_id === pastaId || movimentoAtivoRef.current || salvando || excluindo) return;
+    evento.preventDefault(); evento.stopPropagation(); evento.dataTransfer.dropEffect = 'move';
+    if (!soltar) { setPastaDestinoArraste(pastaId); return; }
+    limparArrasteMaterial(); void moverMaterial(material, pastaId);
+  };
+  const eventosDestinoPasta = (pastaId: string) => ({
+    onDragOver: (evento: ReactDragEvent<HTMLElement>) => receberArrasteNaPasta(evento, pastaId),
+    onDrop: (evento: ReactDragEvent<HTMLElement>) => receberArrasteNaPasta(evento, pastaId, true),
+    onDragLeave: (evento: ReactDragEvent<HTMLElement>) => {
+      if (!evento.currentTarget.contains(evento.relatedTarget as Node)) setPastaDestinoArraste(null);
+    },
+  });
+  const destaqueDestino = (pastaId: string) => pastaDestinoArraste === pastaId ? 'ring-2 ring-inset ring-cyan-500 bg-cyan-500/10' : '';
 
   const enviarArquivos = async (files: FileList | File[] | null, pastaDestino = pastaAtiva, capaDaPasta: Pasta | null = null) => {
     if (!empresaId || !pastaDestino || !files?.length) return;
@@ -578,6 +689,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   };
 
   const iniciarArrasteDeArquivo = (evento: ReactDragEvent<HTMLElement>, destino: 'materiais' | 'capa') => {
+    if (arrasteMaterialRef.current) return;
     if (!evento.dataTransfer.types.includes('Files')) return;
     evento.preventDefault();
     if (destino === 'materiais') setArrastandoMateriais(true); else setArrastandoCapa(true);
@@ -588,33 +700,31 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     if (destino === 'materiais') setArrastandoMateriais(false); else setArrastandoCapa(false);
   };
 
-  const executarExclusaoPendente = async () => {
-    if (!exclusaoPendente || excluindo) return;
-    setExcluindo(true);
-    setErro('');
-    try {
-      if (exclusaoPendente.tipo === 'novidade') {
-        const item = exclusaoPendente.item;
-        const { error } = await supabase.from('vendas_mobile_conteudos').delete().eq('id', item.id).eq('empresa_id', empresaId);
-        if (error) setErro('Não foi possível excluir.');
-        else setNovidades((lista) => lista.filter((i) => i.id !== item.id));
-        return;
+  const excluirItemConfirmado = async (alvo: ExclusaoPendente): Promise<string[]> => {
+      const geracao = contextoOperacaoRef.current;
+      if (alvo.tipo === 'novidade') {
+        const item = alvo.item;
+        const { data: removido, error } = await supabase.from('vendas_mobile_conteudos').delete().eq('id', item.id).eq('empresa_id', empresaId).select('id').single();
+        if (error || !removido?.id) throw new Error('Não foi possível excluir.');
+        if (geracao !== contextoOperacaoRef.current) return [];
+        setNovidades((lista) => lista.filter((i) => i.id !== item.id));
+        return [];
       }
 
-      if (exclusaoPendente.tipo === 'material') {
-        const item = exclusaoPendente.item;
-        const { error } = await supabase.from('vendas_mobile_divulgacao_materiais').delete().eq('id', item.id).eq('empresa_id', empresaId);
-        if (error) {
-          setErro('Não foi possível excluir o material.');
-          return;
+      if (alvo.tipo === 'material') {
+        const item = alvo.item;
+        const { data: removido, error } = await supabase.from('vendas_mobile_divulgacao_materiais').delete().eq('id', item.id).eq('empresa_id', empresaId).select('id').single();
+        if (error || !removido?.id) {
+          throw new Error('Não foi possível excluir o material.');
         }
-        await supabase.storage.from(BUCKET).remove([item.arquivo_path, ...(item.miniatura_path ? [item.miniatura_path] : [])]);
+        await supabase.storage.from(BUCKET).remove([item.arquivo_path, ...(item.miniatura_path ? [item.miniatura_path] : [])]).catch(() => undefined);
+        if (geracao !== contextoOperacaoRef.current) return [];
         setMateriais((lista) => lista.filter((i) => i.id !== item.id));
         setPastas((lista) => lista.map((pasta) => pasta.capa_material_id === item.id ? { ...pasta, capa_material_id: null } : pasta));
-        return;
+        return [`material:${item.id}`];
       }
 
-      const pasta = exclusaoPendente.item;
+      const pasta = alvo.item;
       const ids = new Set([pasta.id]);
       let encontrou = true;
       while (encontrou) {
@@ -630,22 +740,91 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         .filter((item) => ids.has(item.pasta_id))
         .flatMap((item) => [item.arquivo_path, ...(item.miniatura_path ? [item.miniatura_path] : [])]);
       const materiaisExcluidos = new Set(materiais.filter((item) => ids.has(item.pasta_id)).map((item) => item.id));
-      const { error } = await supabase.from('vendas_mobile_divulgacao_pastas').delete().eq('id', pasta.id).eq('empresa_id', empresaId);
-      if (error) {
-        setErro('Não foi possível excluir a pasta.');
-        return;
+      const { data: removido, error } = await supabase.from('vendas_mobile_divulgacao_pastas').delete().eq('id', pasta.id).eq('empresa_id', empresaId).select('id').single();
+      if (error || !removido?.id) {
+        throw new Error('Não foi possível excluir a pasta.');
       }
-      if (arquivos.length) await supabase.storage.from(BUCKET).remove(arquivos);
+      if (arquivos.length) await supabase.storage.from(BUCKET).remove(arquivos).catch(() => undefined);
+      if (geracao !== contextoOperacaoRef.current) return [];
       setPastas((lista) => lista
         .filter((item) => !ids.has(item.id))
         .map((item) => item.capa_material_id && materiaisExcluidos.has(item.capa_material_id) ? { ...item, capa_material_id: null } : item));
       setMateriais((lista) => lista.filter((item) => !ids.has(item.pasta_id)));
       if (pastaAtiva && ids.has(pastaAtiva)) setPastaAtiva(null);
       if (pastaPaiNova && ids.has(pastaPaiNova)) setPastaPaiNova('');
-    } finally {
-      setExcluindo(false);
-      setExclusaoPendente(null);
-    }
+      return [...ids].map((id) => `pasta:${id}`).concat([...materiaisExcluidos].map((id) => `material:${id}`));
+  };
+  const executarExclusaoPendente = async () => {
+    if (!exclusaoPendente || excluindo || operacaoSelecaoRef.current) return;
+    setExcluindo(true); setErro('');
+    try { await excluirItemConfirmado(exclusaoPendente); }
+    catch (falha) { setErro(falha instanceof Error ? falha.message : 'Não foi possível excluir.'); }
+    finally { setExcluindo(false); setExclusaoPendente(null); }
+  };
+  const cancelarSelecao = () => {
+    if (operacaoSelecaoRef.current) return;
+    setMenuMais(false); setPainelSelecao(null); setLinkCopiado(false); setModoSelecao(false); setItensSelecionados(new Set()); setMoverSelecaoAberta(false); setExcluirSelecaoAberta(false);
+  };
+  const alternarSelecao = (chave: string) => {
+    if (operacaoSelecaoRef.current) return;
+    setItensSelecionados((atuais) => { const novos = new Set(atuais); if (novos.has(chave)) novos.delete(chave); else novos.add(chave); return novos; });
+  };
+  const arquivosSelecionados = materiais.filter((item) => itensSelecionados.has(`material:${item.id}`));
+  const pastasSelecionadas = pastas.filter((item) => itensSelecionados.has(`pasta:${item.id}`));
+  const itemUnico: Material | Pasta | null = itensSelecionados.size === 1 ? (arquivosSelecionados.length ? arquivosSelecionados[0] : pastasSelecionadas.length ? pastasSelecionadas[0] : null) : null;
+  const pastaUnica = itemUnico && 'nome' in itemUnico ? itemUnico : null;
+  const arquivosDoItem = pastaUnica ? materiais.filter((item) => (item.pasta_id === pastaUnica.id || idsSubpastasDaPasta(pastaUnica.id, pastas).has(item.pasta_id))) : arquivosSelecionados;
+  const textoCompartilhar = itemUnico ? [ 'titulo' in itemUnico ? itemUnico.titulo : itemUnico.nome, ...arquivosDoItem.map((item) => `${item.titulo}\n${item.arquivo_url}`)].join('\n\n') : '';
+  const compartilharSelecao = async () => {
+    if (!itemUnico) return;
+    try {
+      if (navigator.share) await navigator.share({ title: 'titulo' in itemUnico ? itemUnico.titulo : itemUnico.nome, text: textoCompartilhar });
+      else { await navigator.clipboard.writeText(textoCompartilhar); setLinkCopiado(true); }
+    } catch (falha) { if (!(falha instanceof Error && falha.name === 'AbortError')) setErro('Não foi possível compartilhar. Copie o conteúdo exibido.'); }
+  };
+
+  const executarMovimentoSelecao = async () => {
+    if (!destinoMovimento || !arquivosSelecionados.length || pastasSelecionadas.length || operacaoSelecaoRef.current) return;
+    const geracao = contextoOperacaoRef.current;
+    operacaoSelecaoRef.current = true; setAcaoSelecao('mover'); setErro('');
+    let feitos = 0;
+    try {
+      for (const item of arquivosSelecionados) {
+        if (geracao !== contextoOperacaoRef.current) break;
+        if (!await moverMaterial(item, destinoMovimento, true)) break;
+        feitos += 1;
+        setItensSelecionados((atuais) => { const novos = new Set(atuais); novos.delete(`material:${item.id}`); return novos; });
+      }
+      if (geracao !== contextoOperacaoRef.current) return;
+      setResultadoEnvio({ tipo: feitos === arquivosSelecionados.length ? 'sucesso' : 'aviso', mensagem: `${feitos} de ${arquivosSelecionados.length} arquivo(s) movido(s).` });
+      if (feitos === arquivosSelecionados.length) { setMoverSelecaoAberta(false); setModoSelecao(false); setItensSelecionados(new Set()); }
+    } finally { if (geracao === contextoOperacaoRef.current) { operacaoSelecaoRef.current = false; setAcaoSelecao(null); } }
+  };
+  const executarExclusaoSelecao = async () => {
+    if (!itensSelecionados.size || operacaoSelecaoRef.current) return;
+    const geracao = contextoOperacaoRef.current;
+    const pastasRaiz = pastasSelecionadas.filter((pasta) => !pastasSelecionadas.some((outra) => outra.id !== pasta.id && idsSubpastasDaPasta(outra.id, pastas).has(pasta.id)));
+    const idsDentro = new Set(pastasRaiz.flatMap((pasta) => [pasta.id, ...idsSubpastasDaPasta(pasta.id, pastas)]));
+    const plano: ExclusaoPendente[] = [
+      ...pastasRaiz.map((item): ExclusaoPendente => ({ tipo: 'pasta', item })),
+      ...arquivosSelecionados.filter((item) => !idsDentro.has(item.pasta_id)).map((item): ExclusaoPendente => ({ tipo: 'material', item })),
+    ];
+    operacaoSelecaoRef.current = true; setAcaoSelecao('excluir'); setExcluindo(true); setErro('');
+    let feitos = 0;
+    try {
+      for (const item of plano) {
+        if (geracao !== contextoOperacaoRef.current) break;
+        const removidos = new Set(await excluirItemConfirmado(item));
+        if (geracao !== contextoOperacaoRef.current) break;
+        feitos += 1;
+        setItensSelecionados((atuais) => new Set([...atuais].filter((id) => !removidos.has(id))));
+      }
+      if (geracao !== contextoOperacaoRef.current) return;
+      setModoSelecao(false); setItensSelecionados(new Set());
+      setResultadoEnvio({ tipo: 'sucesso', mensagem: 'Itens selecionados excluídos.' });
+    } catch (falha) {
+      if (geracao === contextoOperacaoRef.current) { setErro(falha instanceof Error ? falha.message : 'Não foi possível excluir.'); setResultadoEnvio({ tipo: 'aviso', mensagem: `${feitos} de ${plano.length} operação(ões) concluída(s). Os itens restantes continuam selecionados.` }); }
+    } finally { if (geracao === contextoOperacaoRef.current) { operacaoSelecaoRef.current = false; setAcaoSelecao(null); setExcluindo(false); setExcluirSelecaoAberta(false); } }
   };
 
   const fundo = darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'; const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900'; const suave = darkMode ? 'text-slate-400' : 'text-slate-500';
@@ -710,6 +889,8 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     });
   };
   const selecionarPasta = (pasta: Pasta, temFilhos: boolean) => {
+    if (operacaoSelecaoRef.current) return;
+    cancelarSelecao();
     setPastaAtiva(pasta.id);
     if (!temFilhos) {
       focarDetalheDaPastaNoMobile();
@@ -723,11 +904,15 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     focarDetalheDaPastaNoMobile();
   };
   const abrirPastaPeloConteudo = (pasta: Pasta) => {
+    if (operacaoSelecaoRef.current) return;
+    if (modoSelecao) { alternarSelecao(`pasta:${pasta.id}`); return; }
     setPastaAtiva(pasta.id);
     if (pasta.pasta_pai_id) setPastasExpandidas((atuais) => new Set([...atuais, pasta.pasta_pai_id as string]));
     focarDetalheDaPastaNoMobile();
   };
   const voltarPastaPeloConteudo = () => {
+    if (operacaoSelecaoRef.current) return;
+    cancelarSelecao();
     setPastaAtiva(pastaAtivaObjeto?.pasta_pai_id || null);
     focarDetalheDaPastaNoMobile();
   };
@@ -752,7 +937,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           <input ref={inputCapaArquivo} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => enviarCapaExterna(e.target.files)} />
-          <button type="button" onClick={() => inputCapaArquivo.current?.click()} onDragEnter={(e) => iniciarArrasteDeArquivo(e, 'capa')} onDragOver={(e) => iniciarArrasteDeArquivo(e, 'capa')} onDragLeave={(e) => sairDoArrasteDeArquivo(e, 'capa')} onDrop={(e) => { e.preventDefault(); setArrastandoCapa(false); enviarCapaExterna(e.dataTransfer.files); }} disabled={salvando || salvandoCapa} className={`mb-4 flex min-h-28 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 text-center transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 disabled:cursor-not-allowed disabled:opacity-60 ${arrastandoCapa ? 'border-cyan-500 bg-cyan-500/10 text-cyan-700' : darkMode ? 'border-slate-700 bg-slate-800/60 text-slate-200 hover:border-cyan-500/70' : 'border-cyan-200 bg-cyan-50/60 text-cyan-800 hover:border-cyan-500'}`}>
+          <button type="button" onClick={() => inputCapaArquivo.current?.click()} onDragEnter={(e) => iniciarArrasteDeArquivo(e, 'capa')} onDragOver={(e) => iniciarArrasteDeArquivo(e, 'capa')} onDragLeave={(e) => sairDoArrasteDeArquivo(e, 'capa')} onDrop={(e) => { e.preventDefault(); setArrastandoCapa(false); enviarCapaExterna(e.dataTransfer.files); }} disabled={salvando || salvandoCapa} className={`mb-4 flex min-h-28 w-full items-center justify-center gap-2 rounded-xl border border-dashed px-3 text-center transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 disabled:cursor-not-allowed disabled:opacity-60 ${arrastandoCapa ? 'border-cyan-500 bg-cyan-500/10 text-cyan-700' : darkMode ? 'border-slate-700 bg-slate-800/60 text-slate-200 hover:border-cyan-500/70' : 'border-cyan-200 bg-cyan-50/60 text-cyan-800 hover:border-cyan-500'}`}>
             <Icone tipo="upload" className="h-6 w-6" /><b className="mt-2 text-xs font-black">Enviar capa privada</b><span className={`mt-1 text-[11px] ${suave}`}>Arraste uma imagem aqui ou clique para selecionar.</span><span className={`mt-1 text-[10px] ${suave}`}>Ela aparece apenas no cartão da pasta e não fica disponível para vendedores.</span>
           </button>
           {imagensCandidatasCapa.length ? <><div className={`mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[.12em] ${suave}`}><span className={`h-px flex-1 ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`} />Imagens já publicadas<span className={`h-px flex-1 ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`} /></div><p className={`mb-3 text-center text-[10px] ${suave}`}>Essas imagens continuam disponíveis para os vendedores, mesmo quando usadas como capa.</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -831,34 +1016,80 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
                 : subpastaDoRamoAtivo
                   ? 'border-cyan-400/70 bg-cyan-500/5 ring-1 ring-inset ring-cyan-500/15'
                   : darkMode ? 'border-slate-700' : 'border-slate-200';
-              return <div key={pasta.id} style={{ marginLeft: `${Math.min(nivel, 4) * 12}px` }} className={`flex flex-wrap items-center gap-1.5 rounded-lg border p-2 ${destaquePasta}`}><button type="button" onClick={() => selecionarPasta(pasta, temFilhos)} aria-expanded={temFilhos ? expandida : undefined} className="flex min-w-0 flex-1 items-center gap-2 text-left"><Icone tipo="folder" className={`h-5 w-5 shrink-0 ${pastaAtiva === pasta.id || subpastaDoRamoAtivo ? 'text-cyan-500' : 'text-amber-500'}`} /><span className="min-w-0 flex-1"><b className="block truncate text-xs">{pasta.nome}</b><small className={`block text-[9px] ${suave}`}>{totalMateriais} {totalMateriais === 1 ? 'material' : 'materiais'} · {totalSubpastas} {totalSubpastas === 1 ? 'subpasta' : 'subpastas'}</small></span>{temFilhos && <span className={`shrink-0 text-base transition-transform ${expandida ? 'rotate-90' : ''}`} aria-hidden="true">›</span>}</button><button type="button" onClick={() => iniciarEdicaoPasta(pasta)} aria-label={`Editar nome da pasta ${pasta.nome}`} title="Editar nome" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-cyan-600 hover:bg-cyan-500/10"><Icone tipo="edit" className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setExclusaoPendente({ tipo: 'pasta', item: pasta })} aria-label={`Excluir pasta ${pasta.nome}`} title="Excluir pasta" className="h-8 w-8 shrink-0 rounded-md text-red-500 hover:bg-red-500/10">×</button>{pastaAtiva === pasta.id && <button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="mt-1 flex h-12 basis-full items-center justify-center gap-2 rounded-lg text-xs font-black uppercase text-white disabled:opacity-60 lg:hidden" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Enviar arquivos para esta pasta'}</button>}</div>;
+              return <div key={pasta.id} {...eventosDestinoPasta(pasta.id)} style={{ marginLeft: `${Math.min(nivel, 4) * 12}px` }} className={`flex flex-wrap items-center gap-1.5 rounded-lg border p-2 ${destaquePasta} ${destaqueDestino(pasta.id)}`}><button type="button" onClick={() => selecionarPasta(pasta, temFilhos)} aria-expanded={temFilhos ? expandida : undefined} className="flex min-w-0 flex-1 items-center gap-2 text-left"><Icone tipo="folder" className={`h-5 w-5 shrink-0 ${pastaAtiva === pasta.id || subpastaDoRamoAtivo ? 'text-cyan-500' : 'text-amber-500'}`} /><span className="min-w-0 flex-1"><b className="block truncate text-xs">{pasta.nome}</b><small className={`block text-[9px] ${suave}`}>{totalMateriais} {totalMateriais === 1 ? 'material' : 'materiais'} · {totalSubpastas} {totalSubpastas === 1 ? 'subpasta' : 'subpastas'}</small></span>{temFilhos && <span className={`shrink-0 text-base transition-transform ${expandida ? 'rotate-90' : ''}`} aria-hidden="true">›</span>}</button><button type="button" onClick={() => iniciarEdicaoPasta(pasta)} aria-label={`Editar nome da pasta ${pasta.nome}`} title="Editar nome" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-cyan-600 hover:bg-cyan-500/10"><Icone tipo="edit" className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setExclusaoPendente({ tipo: 'pasta', item: pasta })} aria-label={`Excluir pasta ${pasta.nome}`} title="Excluir pasta" className="h-8 w-8 shrink-0 rounded-md text-red-500 hover:bg-red-500/10">×</button>{pastaAtiva === pasta.id && <button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="mt-1 flex h-12 basis-full items-center justify-center gap-2 rounded-lg text-xs font-black uppercase text-white disabled:opacity-60 lg:hidden" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Enviar arquivos para esta pasta'}</button>}</div>;
             })}
             {!listaPastasVisiveis.length && <p className={`py-3 text-center text-xs ${suave}`}>Nenhuma pasta criada.</p>}
           </div>
         </aside>
         <section id="detalhe-divulgacao-vendas" tabIndex={-1} className="order-1 min-w-0 scroll-mt-3 focus:outline-none lg:order-2 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              {pastaAtivaObjeto && <button type="button" onClick={voltarPastaPeloConteudo} className={`mb-2 inline-flex min-h-11 items-center gap-1 rounded-xl border px-3 text-xs font-black ${darkMode ? 'border-slate-700 bg-slate-800 text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}><span aria-hidden="true">‹</span> Voltar</button>}
-              <p className={`text-[9px] font-black uppercase tracking-[.14em] ${suave}`}>{pastaAtivaObjeto ? 'Pasta atual' : 'Divulgação'}</p>
-              <h3 className="mt-1 text-base font-black">{pastaAtivaObjeto?.nome || 'Materiais de divulgação'}</h3>
-              <p className={`mt-1 text-xs ${suave}`}>{pastaAtiva ? 'Veja os materiais publicados e adicione novos arquivos nesta pasta.' : 'Selecione uma pasta abaixo para ver os materiais já publicados.'}</p>
+          <header className={`sticky top-0 z-20 flex flex-wrap items-start justify-between gap-3 pb-3 ${darkMode ? 'bg-slate-900' : 'bg-white'}`} data-divulgacao-fixed-header>
+            <div className="flex min-w-0 items-center gap-3">
+              {pastaAtivaObjeto && <button type="button" aria-label="Voltar à pasta anterior" {...(pastaAtivaObjeto.pasta_pai_id ? eventosDestinoPasta(pastaAtivaObjeto.pasta_pai_id) : {})} onClick={voltarPastaPeloConteudo} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-xl">‹</button>}
+              <h3 className="min-w-0 truncate text-sm font-semibold"><span className={suave}>Divulgação</span>{pastaAtivaObjeto && <> / {pastaAtivaObjeto.nome}</>}</h3>
             </div>
-            {pastaAtivaObjeto && <div className="flex shrink-0 flex-wrap justify-end gap-2">
-              {pastaAtivaObjeto.pasta_pai_id === null && <button type="button" onClick={() => setPastaCapaEmEdicao(pastaAtivaObjeto)} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-xs font-black ${darkMode ? 'border-cyan-700 bg-cyan-950/30 text-cyan-300' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}><Icone tipo="image" className="h-4 w-4" />{pastaAtivaObjeto.capa_material_id || pastaAtivaObjeto.capa_arquivo_url ? 'Trocar capa' : 'Escolher capa'}</button>}
+            {pastaAtivaObjeto && <div className="flex items-center gap-2">
+              <details ref={menuMaisRef} open={menuMais} onToggle={(evento) => setMenuMais(evento.currentTarget.open)} className="relative">
+                <summary aria-label="Mais opções" className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-full text-2xl text-white focus-visible:outline-2 focus-visible:outline-offset-2" style={{ backgroundColor: corPrimaria }}>+</summary>
+                <div className={`absolute right-0 top-12 z-30 w-52 rounded-xl border p-1 shadow-lg ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+                  <button type="button" aria-label="Nova pasta dentro da pasta aberta" disabled={salvando || Boolean(acaoSelecao)} onClick={() => { setMenuMais(false); setSubpastaLocal({ paiId: pastaAtivaObjeto.id, nome: '' }); setErro(''); }} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs hover:bg-cyan-500/10"><Icone tipo="folder" className="h-4 w-4" />Nova pasta</button>
+                  <button type="button" disabled={salvando} onClick={() => { setMenuMais(false); inputArquivos.current?.click(); }} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs hover:bg-cyan-500/10"><Icone tipo="upload" className="h-4 w-4" />Adicionar arquivo</button>
+                  {pastaAtivaObjeto.pasta_pai_id === null && <button type="button" onClick={() => { setMenuMais(false); setPastaCapaEmEdicao(pastaAtivaObjeto); }} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs hover:bg-cyan-500/10"><Icone tipo="image" className="h-4 w-4" />Trocar capa</button>}
+                  <button type="button" onClick={() => { setMenuMais(false); setModoSelecao(true); setItensSelecionados(new Set([`pasta:${pastaAtivaObjeto.id}`])); }} className="min-h-11 w-full rounded-lg px-3 text-left text-xs hover:bg-cyan-500/10">Selecionar esta pasta</button>
+                </div>
+              </details>
               <input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,application/pdf,.pdf" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} />
-              <button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-black text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button>
+              {!modoSelecao && <BotaoAcaoCompacto disabled={Boolean(movendoMaterialId) || salvando || excluindo} onClick={() => { limparArrasteMaterial(); setItensSelecionados(new Set()); setModoSelecao(true); }}>Selecionar</BotaoAcaoCompacto>}
             </div>}
-          </div>
-          {pastaAtivaObjeto && <button type="button" onClick={() => inputArquivos.current?.click()} onDragEnter={(e) => iniciarArrasteDeArquivo(e, 'materiais')} onDragOver={(e) => iniciarArrasteDeArquivo(e, 'materiais')} onDragLeave={(e) => sairDoArrasteDeArquivo(e, 'materiais')} onDrop={(e) => { e.preventDefault(); setArrastandoMateriais(false); void enviarArquivos(e.dataTransfer.files); }} disabled={salvando} className={`mt-4 hidden min-h-28 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 text-center transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 disabled:cursor-not-allowed disabled:opacity-60 lg:flex ${arrastandoMateriais ? 'border-cyan-500 bg-cyan-500/10 text-cyan-700' : darkMode ? 'border-slate-700 bg-slate-800/60 text-slate-200 hover:border-cyan-500/70' : 'border-cyan-200 bg-cyan-50/60 text-cyan-800 hover:border-cyan-500'}`}>
-            <Icone tipo="upload" className="h-6 w-6" /><b className="mt-2 text-xs font-black">Adicionar materiais a esta pasta</b><span className={`mt-1 text-[11px] ${suave}`}>Arraste fotos, vídeos ou PDFs aqui ou clique para selecionar.</span>
+
+          </header>
+          {pastaAtivaObjeto && !modoSelecao && <button type="button" onClick={() => inputArquivos.current?.click()} onDragEnter={(e) => iniciarArrasteDeArquivo(e, 'materiais')} onDragOver={(e) => iniciarArrasteDeArquivo(e, 'materiais')} onDragLeave={(e) => sairDoArrasteDeArquivo(e, 'materiais')} onDrop={(e) => { e.preventDefault(); setArrastandoMateriais(false); void enviarArquivos(e.dataTransfer.files); }} disabled={salvando} className={`mt-3 hidden min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed px-3 text-center transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 disabled:cursor-not-allowed disabled:opacity-60 lg:flex ${arrastandoMateriais ? 'border-cyan-500 bg-cyan-500/10 text-cyan-700' : darkMode ? 'border-slate-700 bg-slate-800/60 text-slate-200 hover:border-cyan-500/70' : 'border-cyan-200 bg-cyan-50/60 text-cyan-800 hover:border-cyan-500'}`}>
+            <Icone tipo="upload" className="h-4 w-4" /><span className="text-xs">Arraste arquivos para enviar ou clique em <b>Adicionar arquivo</b></span>
           </button>}
-          {!pastaAtiva && <section className="mt-5" aria-labelledby="pastas-de-divulgacao"><div className="mb-2 flex items-center justify-between gap-3"><h4 id="pastas-de-divulgacao" className="text-xs font-black uppercase tracking-[.12em]">Pastas de divulgação</h4><span className={`text-[10px] font-bold ${suave}`}>{pastasPrincipais.length} {pastasPrincipais.length === 1 ? 'pasta' : 'pastas'}</span></div>{pastasPrincipais.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{pastasPrincipais.map((pasta) => { const capa = urlCapaDaPasta(pasta, pastas, materiais); const quantidade = contarMateriaisNaArvore(pasta.id, pastas, materiais); const subpastas = pastas.filter((item) => item.pasta_pai_id === pasta.id).length; return <button key={pasta.id} type="button" onClick={() => abrirPastaPeloConteudo(pasta)} className={`overflow-hidden rounded-xl border text-left transition hover:border-cyan-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 hover:bg-slate-800/70' : 'border-slate-200 bg-white hover:bg-cyan-50/50'}`}>{capa ? <img src={capa} alt="" className="aspect-[16/10] w-full object-cover" /> : <span className={`flex aspect-[16/10] items-center justify-center ${darkMode ? 'bg-slate-950 text-amber-400' : 'bg-amber-50 text-amber-600'}`}><Icone tipo="folder" className="h-9 w-9" /></span>}<span className="block p-3"><b className="block truncate text-xs">{pasta.nome}</b><span className={`mt-1 block text-[10px] ${suave}`}>{quantidade} {quantidade === 1 ? 'material' : 'materiais'} · {subpastas} {subpastas === 1 ? 'subpasta' : 'subpastas'}</span></span></button>; })}</div> : <p className={`rounded-xl border border-dashed px-4 py-10 text-center text-sm ${suave}`}>Crie a primeira pasta para começar a publicar materiais.</p>}</section>}
-          {pastaAtivaObjeto && subpastasAtivas.length > 0 && <section className="mt-5" aria-labelledby="subpastas-da-pasta"><div className="mb-2 flex items-center justify-between gap-3"><h4 id="subpastas-da-pasta" className="text-xs font-black uppercase tracking-[.12em]">Subpastas</h4><span className={`text-[10px] font-bold ${suave}`}>{subpastasAtivas.length} {subpastasAtivas.length === 1 ? 'subpasta' : 'subpastas'}</span></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{subpastasAtivas.map((pasta) => { const quantidade = contarMateriaisNaArvore(pasta.id, pastas, materiais); return <button key={pasta.id} type="button" onClick={() => abrirPastaPeloConteudo(pasta)} className={`min-h-24 rounded-xl border p-3 text-left transition hover:border-cyan-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 hover:bg-slate-800/70' : 'border-slate-200 bg-white hover:bg-cyan-50/50'}`}><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600"><Icone tipo="folder" className="h-4 w-4" /></span><b className="mt-2 block truncate text-xs">{pasta.nome}</b><span className={`mt-1 block text-[10px] ${suave}`}>{quantidade} {quantidade === 1 ? 'material' : 'materiais'}</span></button>; })}</div></section>}
-          {pastaAtivaObjeto && <section className="mt-5" aria-labelledby="materiais-publicados"><div className="mb-2 flex items-center justify-between gap-3"><h4 id="materiais-publicados" className="text-xs font-black uppercase tracking-[.12em]">Materiais publicados</h4><span className={`text-[10px] font-bold ${suave}`}>{materiaisAtivos.length} {materiaisAtivos.length === 1 ? 'material' : 'materiais'}</span></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><button type="button" onClick={() => setMaterialEmVisualizacao(item)} aria-label={`Visualizar ${item.titulo}`} className="relative block aspect-square w-full bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-cyan-400">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></button><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => setExclusaoPendente({ tipo: 'material', item })} aria-label={`Excluir ${item.titulo}`} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{!materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda não possui materiais publicados.</p>}</div></section>}
+          {!pastaAtiva && <section className="mt-5" aria-labelledby="pastas-de-divulgacao"><div className="mb-2 flex items-center justify-between gap-3"><h4 id="pastas-de-divulgacao" className="text-xs font-black uppercase tracking-[.12em]">Pastas de divulgação</h4><span className={`text-[10px] font-bold ${suave}`}>{pastasPrincipais.length} {pastasPrincipais.length === 1 ? 'pasta' : 'pastas'}</span></div>{pastasPrincipais.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{pastasPrincipais.map((pasta) => { const capa = urlCapaDaPasta(pasta, pastas, materiais); const quantidade = contarMateriaisNaArvore(pasta.id, pastas, materiais); const subpastas = pastas.filter((item) => item.pasta_pai_id === pasta.id).length; return <button key={pasta.id} {...eventosDestinoPasta(pasta.id)} type="button" onClick={() => abrirPastaPeloConteudo(pasta)} className={`${destaqueDestino(pasta.id)} overflow-hidden rounded-xl border text-left transition hover:border-cyan-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 hover:bg-slate-800/70' : 'border-slate-200 bg-white hover:bg-cyan-50/50'}`}>{capa ? <img src={capa} alt="" className="aspect-[16/10] w-full object-cover" /> : <span className={`flex aspect-[16/10] items-center justify-center ${darkMode ? 'bg-slate-950 text-amber-400' : 'bg-amber-50 text-amber-600'}`}><Icone tipo="folder" className="h-9 w-9" /></span>}<span className="block p-3"><b className="block truncate text-xs">{pasta.nome}</b><span className={`mt-1 block text-[10px] ${suave}`}>{quantidade} {quantidade === 1 ? 'material' : 'materiais'} · {subpastas} {subpastas === 1 ? 'subpasta' : 'subpastas'}</span></span></button>; })}</div> : <p className={`rounded-xl border border-dashed px-4 py-10 text-center text-sm ${suave}`}>Crie a primeira pasta para começar a publicar materiais.</p>}</section>}
+          {pastaAtivaObjeto && subpastasAtivas.length > 0 && <section className="mt-5" aria-labelledby="subpastas-da-pasta"><div className="mb-2 flex items-center justify-between gap-3"><h4 id="subpastas-da-pasta" className="text-xs font-black uppercase tracking-[.12em]">Subpastas</h4><span className={`text-[10px] font-bold ${suave}`}>{subpastasAtivas.length} {subpastasAtivas.length === 1 ? 'subpasta' : 'subpastas'}</span></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{subpastasAtivas.map((pasta) => { const quantidade = contarMateriaisNaArvore(pasta.id, pastas, materiais); return <div key={pasta.id} className="relative">{modoSelecao && <input type="checkbox" aria-label={`Selecionar pasta ${pasta.nome}`} checked={itensSelecionados.has(`pasta:${pasta.id}`)} disabled={Boolean(acaoSelecao)} onChange={() => alternarSelecao(`pasta:${pasta.id}`)} className="absolute right-3 top-3 z-10 h-5 w-5" />}<button {...eventosDestinoPasta(pasta.id)} type="button" onClick={() => abrirPastaPeloConteudo(pasta)} aria-pressed={modoSelecao ? itensSelecionados.has(`pasta:${pasta.id}`) : undefined} className={`${destaqueDestino(pasta.id)} w-full min-h-24 rounded-xl border p-3 text-left transition hover:border-cyan-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 ${darkMode ? 'border-slate-700 bg-slate-800 hover:bg-slate-800/70' : 'border-slate-200 bg-white hover:bg-cyan-50/50'}`}><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600"><Icone tipo="folder" className="h-4 w-4" /></span><b className="mt-2 block truncate text-xs">{pasta.nome}</b><span className={`mt-1 block text-[10px] ${suave}`}>{quantidade} {quantidade === 1 ? 'material' : 'materiais'}</span></button></div>; })}</div></section>}
+          {pastaAtivaObjeto && <section className="mt-5" aria-labelledby="materiais-publicados"><div className="mb-2 flex items-center justify-between gap-3"><h4 id="materiais-publicados" className="text-xs font-black uppercase tracking-[.12em]">Materiais publicados</h4><span className={`text-[10px] font-bold ${suave}`}>{movendoMaterialId ? 'Movendo material...' : materialArrastadoId ? 'Solte sobre a pasta de destino' : materiaisAtivos.length} {movendoMaterialId || materialArrastadoId ? '' : materiaisAtivos.length === 1 ? 'material' : 'materiais'}</span></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} draggable={!modoSelecao && !movendoMaterialId && !salvando && !excluindo} onDragStart={(evento) => iniciarArrasteMaterial(evento, item)} onDragEnd={limparArrasteMaterial} className={`group relative overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}>{modoSelecao && <input type="checkbox" aria-label={`Selecionar arquivo ${item.titulo}`} checked={itensSelecionados.has(`material:${item.id}`)} disabled={Boolean(acaoSelecao)} onChange={() => alternarSelecao(`material:${item.id}`)} className="absolute right-3 top-3 z-10 h-5 w-5" />}<button type="button" onClick={() => modoSelecao ? alternarSelecao(`material:${item.id}`) : setMaterialEmVisualizacao(item)} aria-pressed={modoSelecao ? itensSelecionados.has(`material:${item.id}`) : undefined} aria-label={`${modoSelecao ? 'Selecionar' : 'Visualizar'} ${item.titulo}`} className="relative block aspect-square w-full bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-cyan-400">{item.miniatura_url ? <img src={item.miniatura_url} alt="" draggable={false} className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></button><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><BotaoAcaoCompacto aria-label={`Mover ${item.titulo}`} hidden={modoSelecao} disabled={Boolean(movendoMaterialId) || salvando || excluindo} onClick={() => { setMaterialParaMover(item); setDestinoMovimento(''); setErro(''); }}>Mover</BotaoAcaoCompacto><button type="button" onClick={() => setExclusaoPendente({ tipo: 'material', item })} aria-label={`Excluir ${item.titulo}`} hidden={modoSelecao} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{!materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda não possui materiais publicados.</p>}</div></section>}
         </section>
       </div>}
+            {aba === 'divulgacao' && pastaAtivaObjeto && modoSelecao && <footer className={`flex shrink-0 flex-wrap items-center gap-2 border-t px-4 py-3 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`} aria-label="Seleção de materiais">
+                <span role="status" className={`mr-auto text-xs ${suave}`}>{itensSelecionados.size} selecionado(s)</span>
+                <BotaoAcaoCompacto className="focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!shadow-none [&>span]:transition-[transform,border-color] [&>span]:duration-150 [&:enabled:hover>span]:!border-current [&:enabled:hover>span]:!filter-none [&:enabled:hover>span]:scale-[1.04] [&:enabled:active>span]:scale-[0.97] [&:focus-visible>span]:!border-current [&:focus-visible>span]:shadow-[inset_0_0_0_1px_currentColor] motion-reduce:[&>span]:!transform-none motion-reduce:[&>span]:transition-none" disabled={!arquivosSelecionados.length || Boolean(pastasSelecionadas.length) || Boolean(acaoSelecao)} title={pastasSelecionadas.length ? 'Para mover, selecione somente arquivos.' : undefined} onClick={() => { setDestinoMovimento(''); setMoverSelecaoAberta(true); setErro(''); }}>{acaoSelecao === 'mover' ? 'Movendo...' : 'Mover'}</BotaoAcaoCompacto>
+                {itemUnico && <><BotaoAcaoCompacto className="focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!shadow-none [&>span]:transition-[transform,border-color] [&>span]:duration-150 [&:enabled:hover>span]:!border-current [&:enabled:hover>span]:!filter-none [&:enabled:hover>span]:scale-[1.04] [&:enabled:active>span]:scale-[0.97] [&:focus-visible>span]:!border-current [&:focus-visible>span]:shadow-[inset_0_0_0_1px_currentColor] motion-reduce:[&>span]:!transform-none motion-reduce:[&>span]:transition-none" disabled={Boolean(acaoSelecao)} onClick={() => { setLinkCopiado(false); setPainelSelecao('compartilhar'); }}>Compartilhar</BotaoAcaoCompacto><BotaoAcaoCompacto className="focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!shadow-none [&>span]:transition-[transform,border-color] [&>span]:duration-150 [&:enabled:hover>span]:!border-current [&:enabled:hover>span]:!filter-none [&:enabled:hover>span]:scale-[1.04] [&:enabled:active>span]:scale-[0.97] [&:focus-visible>span]:!border-current [&:focus-visible>span]:shadow-[inset_0_0_0_1px_currentColor] motion-reduce:[&>span]:!transform-none motion-reduce:[&>span]:transition-none" disabled={Boolean(acaoSelecao)} onClick={() => setPainelSelecao('detalhes')}>Detalhes</BotaoAcaoCompacto></>}
+                <BotaoAcaoCompacto className="focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!shadow-none [&>span]:transition-[transform,border-color] [&>span]:duration-150 [&:enabled:hover>span]:!border-current [&:enabled:hover>span]:!filter-none [&:enabled:hover>span]:scale-[1.04] [&:enabled:active>span]:scale-[0.97] [&:focus-visible>span]:!border-current [&:focus-visible>span]:shadow-[inset_0_0_0_1px_currentColor] motion-reduce:[&>span]:!transform-none motion-reduce:[&>span]:transition-none" variante="destrutivo" disabled={!itensSelecionados.size || Boolean(acaoSelecao)} onClick={() => setExcluirSelecaoAberta(true)}>{acaoSelecao === 'excluir' ? 'Excluindo...' : 'Excluir'}</BotaoAcaoCompacto>
+                <BotaoAcaoCompacto className="focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!shadow-none [&>span]:transition-[transform,border-color] [&>span]:duration-150 [&:enabled:hover>span]:!border-current [&:enabled:hover>span]:!filter-none [&:enabled:hover>span]:scale-[1.04] [&:enabled:active>span]:scale-[0.97] [&:focus-visible>span]:!border-current [&:focus-visible>span]:shadow-[inset_0_0_0_1px_currentColor] motion-reduce:[&>span]:!transform-none motion-reduce:[&>span]:transition-none" disabled={Boolean(acaoSelecao)} onClick={cancelarSelecao}>Cancelar</BotaoAcaoCompacto>
+            </footer>}
     </section>
+    <CardExpandidoModal aberto={Boolean(painelSelecao && itemUnico)} rotulo={painelSelecao === 'detalhes' ? 'Detalhes da seleção' : 'Compartilhar seleção'} variante="compacto" darkMode={darkMode} onFechar={() => setPainelSelecao(null)}>
+      {itemUnico && <section className={`rounded-2xl border p-5 ${fundo}`}>
+        <h3 className="text-lg font-semibold">{painelSelecao === 'detalhes' ? 'Detalhes' : 'Compartilhar'}</h3>
+        <p className="mt-2 break-words text-sm font-medium">{'titulo' in itemUnico ? itemUnico.titulo : itemUnico.nome}</p>
+        {painelSelecao === 'detalhes' ? <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-xs">
+          <dt>Tipo</dt><dd>{pastaUnica ? 'Pasta' : rotuloMaterial(arquivosSelecionados[0].tipo)}</dd>
+          <dt>Criado em</dt><dd>{itemUnico.criado_em ? new Date(itemUnico.criado_em).toLocaleString('pt-BR') : 'Não informado'}</dd>
+          <dt>Localização</dt><dd>{pastaUnica ? pastas.find((pasta) => pasta.id === pastaUnica.pasta_pai_id)?.nome || 'Divulgação' : pastas.find((pasta) => pasta.id === arquivosSelecionados[0].pasta_id)?.nome || 'Não informada'}</dd>
+          <dt>Tamanho{pastaUnica ? ' conhecido' : ''}</dt><dd>{arquivosDoItem.some((item) => item.tamanho_bytes != null) ? `${(arquivosDoItem.reduce((total, item) => total + (item.tamanho_bytes || 0), 0) / 1024 / 1024).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} MB` : 'Não informado'}</dd>
+          {pastaUnica && <><dt>Conteúdo</dt><dd>{arquivosDoItem.length} arquivo(s) · {idsSubpastasDaPasta(pastaUnica.id, pastas).size} subpasta(s)</dd></>}
+          <dt>Identificador</dt><dd className="break-all">{itemUnico.id}</dd>
+        </dl> : <><p className={`mt-2 text-xs ${suave}`}>{pastaUnica ? 'Compartilha os links dos arquivos desta pasta. As permissões existentes não são alteradas.' : 'Compartilhe o link do arquivo.'}</p><textarea readOnly aria-label="Conteúdo para compartilhar" value={textoCompartilhar} className={`mt-3 min-h-28 w-full rounded-xl border p-3 text-xs ${campo}`} /><BotaoAcaoCompacto disabled={!arquivosDoItem.length} onClick={() => void compartilharSelecao()}>{linkCopiado ? 'Copiado' : 'Compartilhar ou copiar'}</BotaoAcaoCompacto></>}
+        <div className="mt-4 flex justify-end"><BotaoAcaoCompacto onClick={() => setPainelSelecao(null)}>Fechar</BotaoAcaoCompacto></div>
+      </section>}
+    </CardExpandidoModal>
+    <CardExpandidoModal aberto={Boolean(subpastaLocal)} rotulo="Nova subpasta" variante="compacto" darkMode={darkMode} onFechar={() => { if (!salvando) setSubpastaLocal(null); }}>
+      <form className={`rounded-2xl border p-5 ${fundo}`} onSubmit={(evento) => { evento.preventDefault(); if (subpastaLocal) void criarPasta(subpastaLocal); }}>
+        <h3 className="text-lg font-semibold">Nova pasta</h3><p className={`mt-1 text-xs ${suave}`}>Dentro de {pastas.find((pasta) => pasta.id === subpastaLocal?.paiId)?.nome}</p>
+        <label className="mt-4 block text-xs font-medium">Nome da pasta<input autoFocus value={subpastaLocal?.nome || ''} onChange={(evento) => setSubpastaLocal((atual) => atual ? { ...atual, nome: evento.target.value } : null)} disabled={salvando} className={`mt-1 h-11 w-full rounded-xl border px-3 text-sm ${campo}`} required /></label>
+        {erro && <p role="alert" className="mt-2 text-xs text-red-600">{erro}</p>}
+        <div className="mt-4 flex justify-end gap-2"><BotaoAcaoCompacto onClick={() => setSubpastaLocal(null)} disabled={salvando}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="submit" disabled={salvando}>{salvando ? 'Criando...' : 'Criar pasta'}</BotaoAcaoCompacto></div>
+      </form>
+    </CardExpandidoModal>
+    <CardExpandidoModal aberto={Boolean(materialParaMover) || moverSelecaoAberta} rotulo="Mover material" variante="compacto" darkMode={darkMode} onFechar={() => { if (!movendoMaterialId && !acaoSelecao) { setMaterialParaMover(null); setMoverSelecaoAberta(false); } }}>
+      <form className={`rounded-2xl border p-5 ${fundo}`} onSubmit={(evento) => { evento.preventDefault(); if (moverSelecaoAberta) void executarMovimentoSelecao(); else if (materialParaMover && destinoMovimento) void moverMaterial(materialParaMover, destinoMovimento); }}>
+        <h3 className="text-lg font-semibold">{moverSelecaoAberta ? 'Mover arquivos selecionados' : 'Mover material'}</h3><p className={`mt-1 truncate text-xs ${suave}`}>{moverSelecaoAberta ? `${arquivosSelecionados.length} arquivo(s)` : materialParaMover?.titulo}</p>
+        <label className="mt-4 block text-xs font-medium">Pasta de destino<select value={destinoMovimento} onChange={(evento) => setDestinoMovimento(evento.target.value)} disabled={Boolean(movendoMaterialId) || Boolean(acaoSelecao)} className={`mt-1 h-11 w-full rounded-xl border px-3 text-sm ${campo}`} required><option value="">Selecione a pasta</option>{pastasOrdenadas.filter(({ pasta }) => pasta.id !== (moverSelecaoAberta ? pastaAtiva : materialParaMover?.pasta_id)).map(({ pasta, nivel }) => <option key={pasta.id} value={pasta.id}>{`${'— '.repeat(nivel)}${pasta.nome}`}</option>)}</select></label>
+        {erro && <p role="alert" className="mt-2 text-xs text-red-600">{erro}</p>}
+        <div className="mt-4 flex justify-end gap-2"><BotaoAcaoCompacto onClick={() => { setMaterialParaMover(null); setMoverSelecaoAberta(false); }} disabled={Boolean(movendoMaterialId) || Boolean(acaoSelecao)}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="submit" disabled={Boolean(movendoMaterialId) || Boolean(acaoSelecao) || !destinoMovimento}>{movendoMaterialId ? 'Movendo...' : 'Mover'}</BotaoAcaoCompacto></div>
+      </form>
+    </CardExpandidoModal>
+    <ModalConfirmacao aberto={excluirSelecaoAberta} titulo="Excluir itens selecionados" mensagem={`Excluir ${arquivosSelecionados.length} arquivo(s) e ${pastasSelecionadas.length} pasta(s) selecionada(s)? As pastas serão excluídas com todas as suas subpastas e arquivos. Esta ação não pode ser desfeita.`} textoCancelar="Voltar" textoConfirmar="Confirmar exclusão" carregando={acaoSelecao === 'excluir'} corPrimaria={corPrimaria} darkMode={darkMode} aoCancelar={() => { if (!acaoSelecao) setExcluirSelecaoAberta(false); }} aoConfirmar={() => void executarExclusaoSelecao()} />
     <ModalConfirmacao
       aberto={Boolean(exclusaoPendente)}
       titulo={tituloExclusao}
