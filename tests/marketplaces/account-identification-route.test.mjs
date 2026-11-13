@@ -27,6 +27,7 @@ class Query {
   constructor(db, table) { this.db=db; this.table=table; this.filters=[]; }
   select(columns) { this.columns=columns.split(','); return this; }
   eq(key,value) { this.filters.push(row=>row[key]===value); return this; }
+  is(key,value) { this.filters.push(row=>(row[key]??null)===value); return this; }
   neq(key,value) { this.filters.push(row=>row[key]!==value); return this; }
   in(key,values) { this.filters.push(row=>values.includes(row[key])); return this; }
   update(values) { this.updateValues=values; return this; }
@@ -36,6 +37,7 @@ class Query {
   single() { return this.maybeSingle(); }
   then(resolve,reject) { return this.run().then(resolve,reject); }
   async run() {
+    if(this.db.oldSchema&&this.columns.includes('catalog_import_enabled'))return {error:{code:'42703'},data:null};
     if(this.db.fail===this.table) return {error:new Error('database'),data:null};
     const rows=this.db.tables[this.table];
     if(this.values) {
@@ -100,12 +102,12 @@ test('consulta combina identificação da empresa, nunca expõe token e tolera t
   assert.equal(response.status,200); assert.equal(result.labelsAvailable,false); assert.equal(result.accounts.length,1);
 });
 
-test('consulta inclui Magalu autorizado e ML da empresa; rejeita outra empresa, provedor e desconexão',async()=>{
+test('consulta inclui Magalu autorizado e ML da empresa; isola empresa e provedor; conta desconectada permanece disponível para limpeza',async()=>{
   const db=setup();const magalu={id:actor,empresa_id:company,provider:'magalu',seller_reference:'GENPUB.test',status:'attention',last_error_code:'magalu_connector_pending',token_sealed:'PRIVATE',scopes:['open:portfolio-categories-seller:read','open:portfolio-skus-seller:read','open:portfolio-prices-seller:read','open:portfolio-stocks-seller:read','open:portfolio-skus-seller:write','open:portfolio-prices-seller:write','open:portfolio-stocks-seller:write']};
-  db.tables.marketplace_connections.push(magalu,{...magalu,id:'outside',empresa_id:actor},{...magalu,id:'unsupported',provider:'shopee'},{...magalu,id:'disconnected',status:'disconnected'});
+  db.tables.marketplace_connections.push(magalu,{...magalu,id:'outside',empresa_id:actor},{...magalu,id:'unsupported',provider:'shopee'},{...magalu,id:'disconnected',status:'disconnected'},{...magalu,id:'archived',data_archived_at:'2026-11-13T12:00:00Z'});
   db.tables.marketplace_connection_labels.push({connection_id:actor,empresa_id:company,local_label:'Minha loja'},{connection_id:actor,empresa_id:actor,local_label:'Outra empresa'});
   const response=await GET(new Request(`https://example.test/api?empresaId=${company}`));const {accounts}=await response.json();
-  assert.equal(response.status,200);assert.deepEqual(accounts.map(row=>row.id),[connection,actor]);assert.equal(accounts[1].local_label,'Minha loja');assert.equal(accounts[1].status,'attention');assert.equal(accounts[1].last_error_code,'magalu_connector_pending');assert.equal(accounts[1].magalu_catalog_authorized,true);assert.equal(accounts[0].magalu_catalog_authorized,false);
+  assert.equal(response.status,200);assert.deepEqual(accounts.map(row=>row.id),[connection,actor,'disconnected']);assert.equal(accounts[1].local_label,'Minha loja');assert.equal(accounts[1].status,'attention');assert.equal(accounts[1].last_error_code,'magalu_connector_pending');assert.equal(accounts[1].magalu_catalog_authorized,true);assert.equal(accounts[0].magalu_catalog_authorized,false);
   for(const row of accounts)assert.equal(row.token_sealed,undefined);assert.equal(db.writes.length,0);
 });
 
@@ -124,4 +126,18 @@ test('desconectar Magalu exige confirmação/permissão e limita alteração à 
 test('Magalu autorizado recebe identificação sem modificar seus tokens ou estado de sincronização',async()=>{
   const db=setup();Object.assign(db.tables.marketplace_connections[0],{provider:'magalu',status:'attention',last_error_code:'magalu_connector_pending'});
   const before=JSON.stringify(db.tables.marketplace_connections);assert.equal((await PATCH(request('Loja Magalu'))).status,200);assert.equal(JSON.stringify(db.tables.marketplace_connections),before);assert.equal(db.writes[0].local_label,'Loja Magalu');
+});
+
+test('conta desconectada antiga aparece também antes da instalação da migração de limpeza',async()=>{
+  const db=setup();
+  db.oldSchema=true;
+  db.tables.marketplace_connections.push({...db.tables.marketplace_connections[0],id:'old-disconnected',status:'disconnected'});
+  const response=await GET(new Request(`https://example.test/api?empresaId=${company}`));
+  assert.equal(response.status,200);
+  const {accounts}=await response.json();
+  const old=accounts.find(account=>account.id==='old-disconnected');
+  assert.ok(old);
+  assert.equal(old.status,'disconnected');
+  assert.equal(old.catalog_import_enabled,undefined);
+  assert.equal(old.token_sealed,undefined);
 });

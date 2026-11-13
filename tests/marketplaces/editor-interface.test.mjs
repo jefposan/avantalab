@@ -30,7 +30,7 @@ test('navegação explícita pode recolher edição; atualização automática p
   assert.match(page,/onAccountSelectionLockedChange\(acting\)/);
   assert.match(page, /MarketplaceAccountPicker label="Conta de destino"/);
   const client = read('app/marketplaces/MarketplacesClient.tsx');
-  assert.match(client,/disabled=\{accountSelectionLocked \|\| publicationBusy\}/);
+  assert.match(client,/disabled=\{accountSelectionLocked \|\| publicationBusy \|\| account.status === \'disconnected\'\}/);
 });
 test('os campos editáveis, incluindo tipo e taxa do anúncio, antecedem o EAN na mesma lista expandida', () => {
   const row = page.split('{expanded === itemKey && <tr')[1];

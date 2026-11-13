@@ -4,7 +4,7 @@ import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
 
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
 import { watchMarketplaceNoticeOpening, cancelMarketplaceNoticeOpening } from './notice-opening';
@@ -23,6 +23,7 @@ import type { MarketplaceId } from '@/app/modules/marketplaces/types';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
 import styles from './marketplaces.module.css';
+import AccountCleanup from './AccountCleanup';
 import Anunciados, { marketplaceClientRequest, type MarketplaceAccount } from './Anunciados';
 import {QualityCacheProvider} from './QualitySummary';
 import NewListing, { type ListingCopyRequest } from './NewListing';
@@ -166,6 +167,9 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     } catch (reason) { if (priceLotCompany.current === companyId) setPriceLotError((reason as Error).message); }
   }
   const [priceLinkStatus, setPriceLinkStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+  const [cleanupAccount, setCleanupAccount] = useState<MarketplaceAccount | null>(null);
+  const [importAccount, setImportAccount] = useState<MarketplaceAccount | null>(null);
+  const [enablingImport, setEnablingImport] = useState(false);
   const [disconnectAccount, setDisconnectAccount] = useState<MarketplaceAccount | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
   const [renewAccount, setRenewAccount] = useState<MarketplaceAccount | null>(null);
@@ -441,10 +445,10 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   ) : [...new Map(sales.filter(s=>s.directSale).map(s=>[`warehouse:${s.directSale!.warehouseId}`,{value:`warehouse:${s.directSale!.warehouseId}` as SalesMarketplace,label:s.directSale!.warehouseName}])).values()], [accounts, sales, salesView]);
   const selectedSalesMarketplaces = useMemo(() => salesMarketplaces.filter(value => availableSalesMarketplaces.some(option => option.value === value)), [salesMarketplaces, availableSalesMarketplaces]);
   const filteredSalesAccounts = salesView === 'online' ? salesAccounts.filter(account => !selectedSalesMarketplaces.length || selectedSalesMarketplaces.includes(account.provider === 'magalu' ? 'magalu' : 'mercado_livre')) : [];
-  const renewableAccounts = accounts.filter((account) => ['connected', 'expired', 'attention'].includes(account.status));
   const marketplaceAccounts = accountsForMarketplace(accounts, marketplace);
-  const displayedAccounts = accountsForMarketplace(renewableAccounts, marketplace);
-  const displayedConnectedAccounts = accountsForMarketplace(connectedAccounts, marketplace);
+  const displayedAccounts = accountsForMarketplace(accounts.filter(account => ['connected','expired','attention','disconnected'].includes(account.status)), marketplace)
+    .sort((first, second) => Number(first.status === 'disconnected') - Number(second.status === 'disconnected'));
+  const disconnectedAccounts = displayedAccounts.filter(account => account.status === 'disconnected');
   const publicationAccountId = publicationAccount(marketplaceAccounts, selectedAccount);
   const accountSignature = salesAccounts.map((account) => account.id).sort().join(',');
   const periodSales = useMemo(() => salesInPeriod(sales, salesPeriod), [sales, salesPeriod]);
@@ -764,12 +768,21 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       <article className={styles.panel}>
         <div className={styles.connectedAccounts} aria-labelledby="connected-accounts-title" aria-busy={accountsLoading}>
           <div className={styles.connectedAccountsHeading}>
-            <div className={styles.connectedAccountsTitle}><h3 id="connected-accounts-title">Contas conectadas</h3><span>{displayedConnectedAccounts.length}</span></div>
-            {accountsLoading && <div className={styles.connectedAccountsLoading}><CarregamentoDadosModulo ativo variante="indicador" compacto={false} mostrarMensagem titulo="Contas conectadas" mensagem="Conectando contas..." corPrimaria={empresa.corPrimaria} temaEscuro={effectiveDark} /></div>}
+            <div className={styles.connectedAccountsTitle}><h3 id="connected-accounts-title">Contas de marketplace</h3><span>{displayedAccounts.length}</span></div>
+            {accountsLoading && <div className={styles.connectedAccountsLoading}><CarregamentoDadosModulo ativo variante="indicador" compacto={false} mostrarMensagem titulo="Contas de marketplace" mensagem="Conectando contas..." corPrimaria={empresa.corPrimaria} temaEscuro={effectiveDark} /></div>}
           <div className={styles.connectionGeneralActions}>
             <button type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton} ${styles.renewalPrimary}`} disabled={connecting || connectionsRefreshing || accountSelectionLocked || publicationBusy || !!identificationAccountId || !companyId || !canManageConnections || (marketplace !== 'mercado_livre' && marketplace !== 'magalu')} onClick={() => void connectMarketplace()}>{connecting ? `Abrindo ${selectedProvider.name}…` : connectedAccounts.length ? 'Conectar outra conta' : 'Conectar conta'}</button>
             {marketplace === 'magalu' && connecting && <button type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton}`} onClick={cancelMarketplaceConnection}>Cancelar conexão</button>}
             <Tooltip texto={marketplace === 'magalu' ? 'Recarregar contas e verificar anúncios Magalu; não renova autorizações' : 'Recarregar a lista de todas as contas desta empresa; não renova autorizações nem consulta reclamações'}><button type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton}`} disabled={connecting || connectionsRefreshing || disconnecting || accountSelectionLocked || publicationBusy || !companyId} onClick={() => void updateConnections()}>{connectionsRefreshing ? 'Atualizando…' : 'Atualizar contas'}</button></Tooltip>
+            {disconnectedAccounts.length > 0 && <BotaoAcaoCompacto disabled={accountSelectionLocked || publicationBusy}
+              onClick={() => {
+                setConnectedAccountsExpanded(true);
+                requestAnimationFrame(() => {
+                  const heading = document.getElementById('disconnected-accounts-title');
+                  heading?.focus({ preventScroll: true });
+                  heading?.scrollIntoView({ block: 'center' });
+                });
+              }}>Contas desconectadas ({disconnectedAccounts.length})</BotaoAcaoCompacto>}
             <BotaoExpandirCard variante="painel" modo="lista" somenteIcone contexto="contas conectadas" controlsId="connected-accounts-content" expandido={connectedAccountsExpanded} corPrimaria={empresa.corPrimaria} darkMode={effectiveDark} onClick={() => setConnectedAccountsExpanded(value => !value)} />
           </div>
           </div>
@@ -778,27 +791,35 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
           {startupSyncError.companyId===companyId&&Object.keys(startupSyncError.issues).length>0&&<p className={styles.connectionMessage} role="alert">Atualização automática pendente: {Object.values(startupSyncError.issues).join(' ')}</p>}
           <CatalogCompletion companyId={companyId} enabled={accessState==='ready'&&canManage&&accounts.some(account=>account.provider==='mercado_livre'&&account.status==='connected')} request={marketplaceClientRequest}/>
           <div id="connected-accounts-content" hidden={!connectedAccountsExpanded}>
-            {displayedAccounts.length ? <div className={styles.connectedAccountsList}>{displayedAccounts.map((account) => {
+            {displayedAccounts.length ? <div className={styles.connectedAccountsList}>{displayedAccounts.map((account, index) => {
             const accountProvider = providers.find(provider => provider.id === (account.provider ?? 'mercado_livre'));
-            return <article key={account.id} data-provider={account.provider ?? 'mercado_livre'} className={`${styles.connectedAccount} ${account.id === selectedAccount ? styles.connectedAccountSelected : ''}`}>
-            <button type="button" className={styles.connectedAccountSelect} onClick={() => setSelectedAccount(account.id)} disabled={accountSelectionLocked || publicationBusy} aria-pressed={account.id === publicationAccountId}>
+            return <Fragment key={account.id}>
+            {account.status === 'disconnected' && (index === 0 || displayedAccounts[index - 1].status !== 'disconnected') &&
+              <h4 id="disconnected-accounts-title" className={styles.disconnectedAccountsTitle} tabIndex={-1}>Contas desconectadas ({disconnectedAccounts.length})</h4>}
+            <article data-provider={account.provider ?? 'mercado_livre'} className={`${styles.connectedAccount} ${account.id === selectedAccount ? styles.connectedAccountSelected : ''}`}>
+            <button type="button" className={styles.connectedAccountSelect} onClick={() => setSelectedAccount(account.id)} disabled={accountSelectionLocked || publicationBusy || account.status === 'disconnected'} aria-pressed={account.id === publicationAccountId}>
               <span className={styles.accountMarketplaceBrand}>{accountProvider ? <Image src={`/images/marketplaces/${accountProvider.logo}`} alt={accountProvider.name} width={accountProvider.width} height={accountProvider.height} unoptimized /> : 'Marketplace'}</span>
               <strong className={styles.accountName}>{accountDisplayName(account)}{pendingSales[account.id] ? <em className={styles.accountSalesBadge} title="Vendas nos filtros selecionados">{pendingSales[account.id]}</em> : null}</strong>
               {account.local_label && <small className={styles.accountReference}>{account.seller_name || `Vendedor ${account.seller_reference}`}</small>}
               <small className={styles.accountReference}>ID {account.seller_reference}</small>
-              <small className={styles.accountStatus} data-status={account.status}>{account.provider === 'magalu' && account.status === 'attention' && account.last_error_code === 'magalu_connector_pending' ? (account.magalu_catalog_authorized ? 'Autorizada · publicação em teste' : magaluCatalogAuthorizationEnabled ? 'Autorizada · reautorize para publicar' : 'Autorizada para vendas · publicação não liberada') : account.status === 'connected' ? 'Conectada' : account.status === 'expired' ? 'Autorização expirada' : 'Requer atenção'}</small>
+              <small className={styles.accountStatus} data-status={account.status}>{account.provider === 'magalu' && account.status === 'attention' && account.last_error_code === 'magalu_connector_pending' ? (account.magalu_catalog_authorized ? 'Autorizada · publicação em teste' : magaluCatalogAuthorizationEnabled ? 'Autorizada · reautorize para publicar' : 'Autorizada para vendas · publicação não liberada') : account.status === 'connected' ? 'Conectada' : account.status === 'expired' ? 'Autorização expirada' : account.status === 'disconnected' ? 'Desconectada' : 'Requer atenção'}</small>
+              {account.catalog_import_enabled === false && <small className={styles.accountReference}>Importação de anúncios desativada</small>}
               {account.provider === 'magalu'
                 ? <small className={styles.accountCatalog} data-state={salesAccountAvailable(account) ? magaluCatalogChecks[account.id] || 'checking' : 'unverified'}>{salesAccountAvailable(account) ? MAGALU_CATALOG_MESSAGES[magaluCatalogChecks[account.id] || 'checking'].account : `${MAGALU_CATALOG_MESSAGES.unverified.account} · ${account.status === 'expired' ? 'reautorize a conta' : 'revise a conexão'}`}</small>
                 : <small className={styles.accountSync}>Última sincronização: {account.last_synced_at ? marketplaceDateTimeLabel(account.last_synced_at) : 'Ainda não sincronizado'}</small>}
             </button>
             {canManageConnections && <div className={styles.accountConnectionActions}>
-              <Tooltip texto="Editar identificação da conta"><button id={`edit-account-${account.id}`} type="button" className={styles.editListing} disabled={disconnecting || connecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} aria-label={`Editar identificação de ${accountDisplayName(account)}`} aria-expanded={identificationAccountId === account.id} aria-controls={`account-identification-${account.id}`} onClick={() => { setRenewAccount(null); setConnectionNotice(''); setIdentificationAccountId(account.id); }}><Icon name="edit" size={18} /></button></Tooltip>
-              {(!account.provider || account.provider === 'mercado_livre') && <Tooltip texto="Renovar a autorização desta conta sem excluir a conexão ou o histórico"><button id={`renew-account-${account.id}`} type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton}`} disabled={disconnecting || connecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} aria-label={`Renovar autorização de ${account.seller_name || account.seller_reference}`} aria-expanded={renewAccount?.id === account.id} aria-controls={`account-renewal-${account.id}`} onClick={() => setRenewAccount((current) => current?.id === account.id ? null : account)}>Renovar</button></Tooltip>}
-              <button type="button" className={`${styles.disconnectAccountButton} ${styles.compactConnectionButton}`} disabled={disconnecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} onClick={() => setDisconnectAccount(account)}>Desconectar</button>
+              <Tooltip texto="Editar identificação da conta"><button id={`edit-account-${account.id}`} type="button" className={styles.editListing} disabled={account.status === 'disconnected' || disconnecting || connecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} aria-label={`Editar identificação de ${accountDisplayName(account)}`} aria-expanded={identificationAccountId === account.id} aria-controls={`account-identification-${account.id}`} onClick={() => { setRenewAccount(null); setConnectionNotice(''); setIdentificationAccountId(account.id); }}><Icon name="edit" size={18} /></button></Tooltip>
+              {account.status !== 'disconnected' && (!account.provider || account.provider === 'mercado_livre') && <Tooltip texto="Renovar a autorização desta conta sem excluir a conexão ou o histórico"><button id={`renew-account-${account.id}`} type="button" className={`${styles.renewalAction} ${styles.compactConnectionButton}`} disabled={disconnecting || connecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} aria-label={`Renovar autorização de ${account.seller_name || account.seller_reference}`} aria-expanded={renewAccount?.id === account.id} aria-controls={`account-renewal-${account.id}`} onClick={() => setRenewAccount((current) => current?.id === account.id ? null : account)}>Renovar</button></Tooltip>}
+              {account.status !== 'disconnected' && <button type="button" className={`${styles.disconnectAccountButton} ${styles.compactConnectionButton}`} disabled={disconnecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} onClick={() => setDisconnectAccount(account)}>Desconectar</button>}
+              <Tooltip texto={account.catalog_import_enabled === undefined ? 'A limpeza estará disponível após a atualização do banco.' : 'Conferir e limpar os dados desta conta neste perfil.'}>
+                <BotaoAcaoCompacto variante="destrutivo" disabled={account.catalog_import_enabled === undefined || disconnecting || accountSelectionLocked || publicationBusy || !!identificationAccountId} onClick={() => setCleanupAccount(account)}>Limpar dados da conta</BotaoAcaoCompacto>
+              </Tooltip>
+              {account.catalog_import_enabled === false && salesAccountAvailable(account) && <BotaoAcaoCompacto disabled={enablingImport || publicationBusy} onClick={() => setImportAccount(account)}>Importar anúncios novamente</BotaoAcaoCompacto>}
             </div>}
             {canManageConnections && identificationAccountId === account.id && <div id={`account-identification-${account.id}`}><AccountIdentification key={account.id} companyId={companyId} account={account} canEdit={canManageConnections} available={identificationAvailable} onSaved={updateAccountIdentification} onCancel={closeAccountIdentification} /></div>}
             {canManageConnections && renewAccount?.id === account.id && <div id={`account-renewal-${account.id}`}><AuthorizationRenewal companyId={companyId} account={account} onCompleted={completeAccountRenewal} onClose={() => { setRenewAccount(null); document.getElementById(`renew-account-${account.id}`)?.focus(); }} /></div>}
-            </article>; })}</div> : <p className={styles.emptyConnectedAccounts}>Nenhuma conta conectada ao {selectedProvider.name}.</p>}
+            </article></Fragment>; })}</div> : <p className={styles.emptyConnectedAccounts}>Nenhuma conta cadastrada no {selectedProvider.name}.</p>}
           </div>
         </div>
       </article>
@@ -844,6 +865,26 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     {priceSettings.error && <p className={styles.connectionMessage} role="alert">{priceSettings.error} Os preços sugeridos não puderam ser calculados. <button type="button" onClick={priceSettings.refresh}>Tentar novamente</button></p>}
     {priceUsersOpen && <PriceUsersPanel key={companyId} companyId={companyId} settings={priceSettings.settings} settingsError={priceSettings.error} onSettingsSaved={priceSettings.accept} onReloadSettings={priceSettings.refresh} dark={effectiveDark} brand={empresa.corPrimaria} onClose={() => setPriceUsersOpen(false)} />}
     {priceLotsPanel && <PriceLotsPanel key={companyId} companyId={companyId} request={priceLotsRequest} initialId={priceLotsPanel.id} createInitially={priceLotsPanel.create} onClose={() => setPriceLotsPanel(null)} onActivate={detail => { setPriceLotPending(undefined); setPriceLotError(''); priceLotCapture.activate(detail); }} onUpdated={detail => { if (priceLotCapture.active?.lot.id === detail.lot.id) priceLotCapture.activate(detail.lot.status === 'open' && detail.canEdit ? detail : null); }} onResolve={(item, lot) => { void resolvePriceLotItem(item, lot); }} dark={effectiveDark} brand={empresa.corPrimaria} />}
+    {cleanupAccount && <AccountCleanup key={`${companyId}:${cleanupAccount.id}`} companyId={companyId} account={cleanupAccount} dark={effectiveDark} brand={empresa.corPrimaria}
+      onClose={() => setCleanupAccount(null)} onCleaned={() => {
+        setRefreshKey(value => value + 1);
+        notifyProductStockChanged(companyId);
+        void refreshConnections();
+        void salesReader.current?.manual();
+        window.dispatchEvent(new CustomEvent('avanta:marketplace-refresh-notices', { detail: { companyId } }));
+      }} />}
+    <ModalConfirmacao aberto={!!importAccount} titulo="Importar anúncios novamente?"
+      mensagem={importAccount ? `A conta ${accountDisplayName(importAccount)} voltará a importar anúncios para ${empresa.nome}.` : ''}
+      textoConfirmar="Liberar importação" carregando={enablingImport} darkMode={effectiveDark} corPrimaria={empresa.corPrimaria}
+      aoCancelar={() => { if (!enablingImport) setImportAccount(null); }} aoConfirmar={() => {
+        if (!importAccount || enablingImport) return;
+        setEnablingImport(true);
+        void marketplaceClientRequest('conexoes/limpeza', { empresaId: companyId, connectionId: importAccount.id,
+          action: 'enable_import', confirmation: accountDisplayName(importAccount) })
+          .then(() => { setImportAccount(null); setRefreshKey(value => value + 1); return refreshConnections(); })
+          .catch(reason => setConnectionNotice(reason instanceof Error ? reason.message : 'Não foi possível liberar a importação.'))
+          .finally(() => setEnablingImport(false));
+      }} />
     <ModalConfirmacao aberto={!!disconnectAccount} titulo="Desconectar conta?" mensagem={disconnectAccount ? `${accountDisplayName(disconnectAccount)}. O AvantaLab apagará os tokens desta conexão. Os anúncios na plataforma não serão alterados.` : ''} textoConfirmar="Desconectar" carregando={disconnecting} darkMode={effectiveDark} corPrimaria={empresa.corPrimaria} variante="destrutiva" aoCancelar={() => { if (!disconnecting) setDisconnectAccount(null); }} aoConfirmar={() => void confirmDisconnectAccount()} />
     </div>
     <RodapeAvanta darkMode={effectiveDark} />

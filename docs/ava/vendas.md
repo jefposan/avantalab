@@ -1,4 +1,10 @@
-<!-- ava-version: 3.2.0.408 -->
+<!-- ava-version: 3.2.0.411 -->
+
+> Revisão 3.2.0.411: sem impacto operacional. Limpeza por conta, acesso às desconectadas e ajuste visual do Novo anúncio pertencem à Gestão Web.
+
+> Revisão 3.2.0.410: sem impacto operacional. Acesso a contas desconectadas e limpeza posterior pertencem à Gestão Web, em teste local.
+
+> Revisão 3.2.0.409: sem impacto operacional no AvantaVendas. Limpeza local de dados de contas pertence a Anúncios Mkt Places.
 
 > Revisão 3.2.0.408: Divulgação permite Renomear somente com um arquivo ou pasta selecionado, sem mudar arquivo, links ou localização. Nomes completos dos materiais aparecem com quebra de linha, com ações separadas abaixo. Compartilhar e Detalhes aparecem somente com um item selecionado. Compartilhar pasta reúne os links existentes de seus arquivos, sem mudar permissões; Detalhes mostra criação, tipo, localização, tamanho conhecido e contagem. O menu + fecha ao clicar fora ou pressionar Escape. A barra de seleção permanece no rodapé do modal, fora da área rolável. Cabeçalho compacto da pasta fica fixo enquanto o conteúdo rola. Selecionar permite marcar arquivos para Mover/Excluir ou pastas para exclusão de todo o conteúdo, sempre com confirmação. Cancelar desfaz a seleção. Os itens que falharam permanecem selecionados para tentar novamente.  Conteúdo AvantaVendas → Divulgação: arraste um material publicado sobre uma pasta ou subpasta para movê-lo. Também é possível usar Mover e selecionar o destino pelo teclado ou celular. A movimentação conserva o arquivo e seus links; se a imagem usada como capa sair da árvore, a referência daquela capa é limpa. Menu + oferece Nova pasta, Adicionar arquivo e Trocar capa; Nova pasta cria uma subpasta diretamente dentro da pasta aberta; a pasta atual permanece aberta após criar. A criação lateral continua disponível.
 

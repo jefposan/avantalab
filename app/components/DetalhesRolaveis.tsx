@@ -9,6 +9,8 @@ export default function DetalhesRolaveis({cabecalhoId,rotulo,children,className=
   const body=area.current,header=document.getElementById(cabecalhoId);
   if(!body||!header)return;
   const main=header.closest('main');
+  const search=cabecalhoInterno?body.querySelector<HTMLElement>('[data-preparation-search]'):null;
+  const layout=cabecalhoInterno?body.parentElement?.parentElement:null;
   const navigation=[main?.querySelector('header'),main?.querySelector('[data-marketplace-selector]'),header.closest('[data-avantaprecos-viewport]')?.firstElementChild].filter((node):node is Element=>!!node);
   let frame=0;
   const measure=()=>{
@@ -20,11 +22,13 @@ export default function DetalhesRolaveis({cabecalhoId,rotulo,children,className=
    const contentTop=cabecalhoInterno?Math.max(top,body.getBoundingClientRect().top):top;
    const available=height+offset-contentTop-(cabecalhoInterno?0:header.getBoundingClientRect().height)-24;
    // Em zoom/telas muito baixas, a página continua livre para alcançar o conteúdo.
-   body.style.maxBlockSize=`${Math.max(120,available)}px`;
+   // Os controles fixos precisam caber inteiros, mesmo quando o bloco está abaixo da tela.
+   const minimum=cabecalhoInterno?header.getBoundingClientRect().height+(search?.getBoundingClientRect().height??0)+24:120;
+   body.style.maxBlockSize=`${Math.max(120,minimum,available)}px`;
   };
   const schedule=()=>{if(!frame)frame=requestAnimationFrame(measure);};
   const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(schedule);
-  observer?.observe(header);navigation.forEach(node=>observer?.observe(node));
+  observer?.observe(header);if(search)observer?.observe(search);if(layout)observer?.observe(layout);navigation.forEach(node=>observer?.observe(node));
   measure();
   window.addEventListener('resize',schedule);window.addEventListener('scroll',schedule,{passive:true});
   window.visualViewport?.addEventListener('resize',schedule);

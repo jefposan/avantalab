@@ -127,7 +127,7 @@ test('seletor filtra contas e destinos sem desmontar os blocos nem alterar aviso
   assert.match(connect, /connectionTarget\(marketplace\)/);assert.match(connect, /fetch\(target.endpoint/);
   assert.match(connect, /validateConnectionAuthorization\(marketplace, payload.authorizationUrl\)/);
   assert.doesNotMatch(connect, /setSelectedAccount|setSalesAccount|setSalesExpanded|setCopyRequest/);
-  assert.match(client, /const displayedAccounts = accountsForMarketplace\(renewableAccounts, marketplace\)/);
+  assert.match(client, /const displayedAccounts = accountsForMarketplace\(accounts\.filter\(account => \['connected','expired','attention','disconnected'\]\.includes\(account\.status\)\), marketplace\)/);
   assert.match(client, /const publicationAccountId = publicationAccount\(marketplaceAccounts, selectedAccount\)/);
   assert.match(rendered, /accounts=\{marketplaceAccounts\}/);
   assert.match(rendered, /<Anunciados companyId=\{companyId\} marketplace=\{marketplace\}/);
@@ -276,7 +276,7 @@ test('listing widths fit desktop and keep an accessible pencil visible when scro
 
 test('connected accounts stay in rounded controls at the bottom of the marketplace card', () => {
   assert.match(client, /<div className=\{styles\.connectedAccounts\} aria-labelledby="connected-accounts-title" aria-busy=\{accountsLoading\}>/);
-  assert.match(client, /<h3 id="connected-accounts-title">Contas conectadas<\/h3>/);
+  assert.match(client, /<h3 id="connected-accounts-title">Contas de marketplace<\/h3>/);
   assert.match(client, /className=\{styles\.connectedAccountSelect\}/);
   assert.match(client, /className=\{`\$\{styles\.disconnectAccountButton\} \$\{styles\.compactConnectionButton\}`\}/);
   assert.doesNotMatch(listings, /Conta do Mercado Livre|accountSummary|Desconectar conta/);
@@ -286,7 +286,7 @@ test('connected accounts stay in rounded controls at the bottom of the marketpla
 });
 
 test('contas compactas preservam campos, marca da conexão e controles com alvo acessível', () => {
-  const cards = client.slice(client.indexOf('displayedAccounts.map'), client.indexOf('</article>; })}</div>'));
+  const cards = client.slice(client.indexOf('displayedAccounts.map'), client.indexOf('</article></Fragment>; })}</div>'));
   assert.match(cards, /provider.id === \(account.provider \?\? 'mercado_livre'\)/);
   assert.match(cards, /data-provider=\{account.provider \?\? 'mercado_livre'\}/);
   assert.doesNotMatch(cards, /data-provider=\{marketplace\}|provider.id === marketplace/);
@@ -297,7 +297,7 @@ test('contas compactas preservam campos, marca da conexão e controles com alvo 
   assert.match(cards, /aria-label=\{`Renovar autorização de \$\{account.seller_name \|\| account.seller_reference\}`\}/);
   assert.match(cards, />Renovar<\/button>/);
   assert.match(cards, /setDisconnectAccount\(account\)/);
-  assert.match(cards, /disabled=\{accountSelectionLocked \|\| publicationBusy\} aria-pressed=\{account.id === publicationAccountId\}/);
+  assert.match(cards, /disabled=\{accountSelectionLocked \|\| publicationBusy \|\| account.status === \'disconnected\'\} aria-pressed=\{account.id === publicationAccountId\}/);
   assert.match(css, /\.connectedAccount \{ display: grid; grid-template-columns: minmax\(0, 1fr\) auto;/);
   assert.match(css, /\.connectedAccountSelect \{ display: flex; flex-wrap: wrap;/);
   assert.match(css, /\.connectedAccount > div:is\(\[id\^="account-renewal-"\], \[id\^="account-identification-"\]\) \{ grid-column: 1 \/ -1;/);

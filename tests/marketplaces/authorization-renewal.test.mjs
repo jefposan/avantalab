@@ -171,7 +171,7 @@ test('callback de conexão anterior permanece compatível com verificador cripto
 test('interface usa tooltip padrão, mantém contas expiradas e link sem token de acesso',()=>{
   const source=readFileSync(resolve(root,'app/marketplaces/MarketplacesClient.tsx'),'utf8');
   assert.match(source,/Renovar autorização/);assert.match(source,/<Tooltip texto="Renovar a autorização/);
-  assert.match(source,/\['connected', 'expired', 'attention'\]/);
+  assert.match(source,/\['connected','expired','attention','disconnected'\]/);
   const panel=readFileSync(resolve(root,'app/marketplaces/AuthorizationRenewal.tsx'),'utf8');
   assert.match(panel,/Copiar link/);assert.match(panel,/Cancelar link/);assert.match(panel,/sem compartilhar a senha/);assert.doesNotMatch(panel,/localStorage|sessionStorage/);
   assert.match(panel,/Autorizar agora/);assert.match(panel,/popup\.opener = null/);assert.match(panel,/if \(!popup\)/);assert.match(panel,/popup\.closed/);
@@ -188,7 +188,7 @@ test('interface usa tooltip padrão, mantém contas expiradas e link sem token d
 });
 test('renovação expande dentro da conta e atualização geral fica ao lado de conectar',()=>{
   const source=readFileSync(resolve(root,'app/marketplaces/MarketplacesClient.tsx'),'utf8');
-  const accountCards=source.slice(source.indexOf('displayedAccounts.map'),source.indexOf('</article>; })}</div>'));
+  const accountCards=source.slice(source.indexOf('displayedAccounts.map'),source.indexOf('</article></Fragment>; })}</div>'));
   assert.match(accountCards,/renewAccount\?\.id === account\.id && <div id=\{`account-renewal-\$\{account\.id\}`\}><AuthorizationRenewal companyId=\{companyId\} account=\{account\}/);
   assert.match(accountCards,/aria-controls=\{`account-renewal-\$\{account\.id\}`\}/);
   assert.match(accountCards,/document\.getElementById\(`renew-account-\$\{account\.id\}`\)\?\.focus\(\)/);

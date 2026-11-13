@@ -44,7 +44,7 @@ import { marketplaceListingEmptyMessage, marketplaceListingEmptyOutcome } from '
 import ListingGroupHeader from './ListingGroupHeader';
 import {unlinkedListingGroups,type ListingGroup} from '@/app/modules/marketplaces/listing-groups';
 
-export type MarketplaceAccount = { id: string; provider?: MarketplaceId; local_label?: string | null; local_label_updated_at?: string | null; seller_reference: string; seller_name: string | null; status: string; connected_at?:string|null; last_error_code?: string | null; last_synced_at: string | null; expires_at: string | null; magalu_catalog_authorized?: boolean };
+export type MarketplaceAccount = { id: string; catalog_import_enabled?: boolean; provider?: MarketplaceId; local_label?: string | null; local_label_updated_at?: string | null; seller_reference: string; seller_name: string | null; status: string; connected_at?:string|null; last_error_code?: string | null; last_synced_at: string | null; expires_at: string | null; magalu_catalog_authorized?: boolean };
 type Row = { snapshot: ListingSnapshot; status: string; operationalStatus?: string; operations?: ListingOperation; connectionId: string };
 type Confirmation = { action: ListingAction; id: string; name: string; connectionId: string; companyId:string; provider:MarketplaceId; requestKey:string };
 const listingRowKey=(provider:string,connection:string,id:string)=>provider==='magalu'?`${connection}|${id}`:id;

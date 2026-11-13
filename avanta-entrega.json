@@ -1,4 +1,9 @@
 {
-  "baseDeploymentId": "dpl_5FHGxtkvE3FXSZq6ZAyuk9kPTmKU",
-  "migrations": []
+  "baseDeploymentId": "dpl_5wDnSg9UpZt9KQYZsBNoFtnxBUqD",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261113180000_marketplace_account_cleanup.sql",
+      "sha256": "b28c0ad08762f0a13bc95ae6d91bb33361c09aa40b176120e88d95a28bc195b0"
+    }
+  ]
 }

@@ -1,3 +1,23 @@
+## 3.2.0.411 — Marketplaces: limpeza por conta, acesso às desconectadas e Novo anúncio completo
+
+- A altura da área rolável considera o título e a pesquisa completos, mesmo quando a expansão das contas desloca o bloco para baixo da tela.
+- O cálculo acompanha mudanças no formulário e no layout, preservando a rolagem interna da preparação.
+- Publicação inclui limpeza de dados por conta e perfil com prévia e confirmação, acesso direto às contas desconectadas e bloqueio da reimportação após a limpeza. Produtos compartilhados, com saldo ou histórico são preservados; a publicação não executa limpeza de contas.
+- Integração sobre a main oficial 3.2.0.408, preservando os ajustes mais recentes.
+
+## 3.2.0.410 — Marketplaces: destacar contas desconectadas e acesso à limpeza posterior
+
+- Inclui acesso direto Contas desconectadas no cabeçalho e separa esses registros na lista, com Limpar dados da conta.
+- A leitura também inclui contas desconectadas antes da instalação da limpeza. Banco ainda sem a migração mantém a conta visível e informa a indisponibilidade da limpeza.
+- Prévia local começa com a JEFF já desconectada para reproduzir o caso da TRIDIUM. Entrega exclusivamente local.
+
+## 3.2.0.409 — Marketplaces: limpar dados por conta e perfil com prévia
+
+- Contas desconectadas continuam acessíveis para limpeza posterior. A ação Limpar dados da conta permite escolher avisos, anúncios importados, produtos exclusivos elegíveis e arquivamento.
+- A confirmação revalida o perfil, o administrador e os registros da prévia. Produtos com saldo, conferência física, vínculos em outras contas ou histórico são preservados.
+- A limpeza impede reimportação automática. Após reconectar, Importar anúncios novamente exige escolha explícita. Vendas, movimentações e documentos financeiros e fiscais mantêm seu histórico.
+- Migração e teste local preparados. Publicação e aplicação em produção dependem de autorização posterior.
+
 ## 3.2.0.408
 
 - Divulgação: Renomear na seleção de um arquivo ou pasta, com confirmação de salvamento, erros visíveis e preservação de links/arquivo/localização. Nomes completos quebram linha em área exclusiva, com ações abaixo, sem truncamento.

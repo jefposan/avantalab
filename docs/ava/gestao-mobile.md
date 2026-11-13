@@ -1,4 +1,10 @@
-<!-- ava-version: 3.2.0.408 -->
+<!-- ava-version: 3.2.0.411 -->
+
+> Revisão 3.2.0.411: sem impacto operacional. Limpeza por conta, acesso às desconectadas e ajuste visual do Novo anúncio pertencem à Gestão Web.
+
+> Revisão 3.2.0.410: sem impacto operacional. Acesso a contas desconectadas e limpeza posterior pertencem à Gestão Web, em teste local.
+
+> Revisão 3.2.0.409: sem impacto operacional na Gestão Mobile. A limpeza de dados por conta de marketplace é administrada na Gestão Web; os dados do perfil continuam isolados.
 
 > Revisão 3.2.0.408: Sem impacto operacional na Gestão Mobile.
 

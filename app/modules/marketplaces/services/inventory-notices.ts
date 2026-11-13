@@ -1,4 +1,5 @@
 import 'server-only';
+import { filterAccountCleanupNotices } from './account-cleanup-notices';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { inventoryNoticeDismissAction, type InventoryNotice } from '../live-feed';
 import { inventoryRows, type InventoryRow } from './inventory-read';
@@ -95,5 +96,5 @@ export async function readInventoryNotices(db: SupabaseClient, company: string):
     if(hint)notices.push({id:`divergence:${product.id}`,source:'stock',code:product.stock_quantity==null?'local_stock_unset':hint==='Pausa pendente'?'pause_unconfirmed':'stock_divergence',...identity({product_id:product.id},linked.find(l=>['mercado_livre','magalu'].includes(String(l.provider))))});
   }
   // Pontuação é acompanhada visualmente no anúncio; não gera pendência.
-  return notices;
+  return filterAccountCleanupNotices(db, company, notices);
 }

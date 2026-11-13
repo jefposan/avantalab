@@ -1,0 +1,30 @@
+.dialog { margin:0 auto;border-radius:20px;width:min(100%,640px);max-height:calc(100dvh - 2rem);overflow:auto;background:#fff;color:#1f2937; }
+.header { --av-action-focus:currentColor; display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 20px;background:var(--brand);color:var(--av-action-on-brand,#fff); }
+.header h2 { margin:0;font-size:20px;font-weight:600; }
+.body { display:grid;gap:16px;padding:20px; }
+.body p { margin:0;line-height:1.5; }
+.identity { display:grid;gap:4px; }
+.identity strong { font-size:17px; }
+.identity span,.help,.choices small,.body li small { font-size:13px;line-height:1.45;opacity:.85; }
+.choices { display:grid;gap:8px;padding:0;margin:0;border:0; }
+.choices legend { font-size:14px;font-weight:600;margin-bottom:8px; }
+.choices label { display:flex;align-items:flex-start;gap:12px;min-height:44px;cursor:pointer; }
+.choices input { flex:none;width:18px;height:18px;margin:4px 0 0;accent-color:var(--brand); }
+.choices span { display:grid;gap:4px; }
+.choices strong { font-size:14px;font-weight:500; }
+.summary { padding:14px;border-radius:12px;background:color-mix(in srgb,var(--brand) 6%,transparent); }
+.body h3 { font-size:15px;margin:0 0 10px; }
+.summary dl { display:grid;gap:6px;margin:0; }
+.summary dl div { display:flex;justify-content:space-between;gap:12px;font-size:14px; }
+.summary dd { margin:0;font-weight:600; }
+.body summary { cursor:pointer;min-height:44px;padding:12px 0;box-sizing:border-box;font-size:13px; }
+.body ul { display:grid;gap:10px;margin:8px 0;padding-left:20px; }
+.body li { font-size:13px; }
+.body li small { display:block; }
+.confirmation { display:block;font-size:14px; }
+.confirmation input { display:block;width:100%;box-sizing:border-box;min-height:44px;margin-top:8px;padding:10px 12px;border:1px solid color-mix(in srgb,currentColor 30%,transparent);border-radius:12px;background:transparent;color:inherit;font:inherit; }
+.body :is(input,summary):focus-visible { outline:2px solid var(--brand);outline-offset:3px; }
+.warning { padding:10px 12px;border-left:3px solid #b45309;background:color-mix(in srgb,#f59e0b 12%,transparent);font-size:13px; }
+.actions { display:flex;justify-content:flex-end;gap:10px; }
+.dark { background:#182235;color:#edf3f8; }
+@media(max-width:600px) { .body { padding:16px; }.actions { flex-wrap:wrap; }.actions button { flex:1;min-height:48px; }.choices label { min-height:48px; } }

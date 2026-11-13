@@ -1191,3 +1191,6 @@
 
 /* Vendas: ao atingir a borda dos detalhes, continuar a rolagem na página. */
 .saleDetailsScroll[data-product-scroll] { overscroll-behavior-y: auto; }
+
+.disconnectedAccountsTitle { margin:12px 0 4px;padding-top:12px;border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);font-size:14px;font-weight:600;color:inherit; }
+.disconnectedAccountsTitle:focus-visible { outline:2px solid var(--brand);outline-offset:4px; }
