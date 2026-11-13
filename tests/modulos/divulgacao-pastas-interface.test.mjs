@@ -14,7 +14,7 @@ function montar({extras=[]}={}){
  const nomes=[...source.matchAll(/const\s+\[(\w+),\s*\w+\]\s*=\s*useState/g)].map(x=>x[1]);
  let cursor=0,refCursor=0,falha=false,limiteSucessos=Infinity,rpcs=0;const states=[],refs=[],calls=[];
  const react={useState(v){const i=cursor++;if(!(i in states))states[i]=nomes[i] in presets?presets[nomes[i]]:v;return[states[i],n=>{states[i]=typeof n==='function'?n(states[i]):n;}];},useRef(v){return refs[refCursor++] ||= {current:v};},useEffect(){}};
- const supabase={rpc:async(nome,args)=>{calls.push({nome,args});rpcs++;return (falha||rpcs>limiteSucessos)?{error:{code:'P0001',message:'Não foi possível mover o material.'}}:{data:{material:{...materiais.find(m=>m.id===args.p_material_id),pasta_id:args.p_pasta_destino_id},capas_limpas:[]}};},storage:{from(){return{remove:async(paths)=>{calls.push({storage:paths});return{};}}}},from(tabela){return{delete(){let id;const q={eq(chave,valor){if(chave==='id')id=valor;return q;},select(){return q;},async single(){calls.push({tabela,excluir:id});return falha?{error:{message:'Falha'}}:{data:{id}};}};return q;},insert(payload){calls.push({tabela,payload});return{select(){return{single:async()=>({data:{id:'nova',...payload,pasta_pai_id:payload.pasta_pai_id,criado_em:''}})}}}}}}};
+ const supabase={rpc:async(nome,args)=>{calls.push({nome,args});rpcs++;return (falha||rpcs>limiteSucessos)?{error:{code:'P0001',message:'Não foi possível mover o material.'}}:{data:{material:{...materiais.find(m=>m.id===args.p_material_id),pasta_id:args.p_pasta_destino_id},capas_limpas:[]}};},storage:{from(){return{remove:async(paths)=>{calls.push({storage:paths});return{};}}}},from(tabela){return{update(payload){let id;const q={eq(chave,valor){if(chave==='id')id=valor;return q;},select(){return q;},async single(){calls.push({tabela,atualizar:id,payload});return falha?{error:{message:'Falha'}}:{data:{id,...payload}};}};return q;},delete(){let id;const q={eq(chave,valor){if(chave==='id')id=valor;return q;},select(){return q;},async single(){calls.push({tabela,excluir:id});return falha?{error:{message:'Falha'}}:{data:{id}};}};return q;},insert(payload){calls.push({tabela,payload});return{select(){return{single:async()=>({data:{id:'nova',...payload,pasta_pai_id:payload.pasta_pai_id,criado_em:''}})}}}}}}};
  const m={exports:{}};vm.runInNewContext(codigo,{exports:m.exports,module:m,require:n=>n==='react'?react:n==='react/jsx-runtime'?jsx:n.endsWith('/supabase')?{supabase}:{default:()=>null},process:{env:{}},console,window:{matchMedia:()=>({matches:false}),requestAnimationFrame:fn=>fn()},Set,Map});
  const render=()=>{cursor=0;refCursor=0;return m.exports.default({aberto:true,empresaId:'empresa',nomeEmpresa:'Empresa',darkMode:false,corPrimaria:'#009999',onFechar(){}});};
  const nos=t=>!t||typeof t!=='object'?[]:Array.isArray(t)?t.flatMap(nos):(t.props?.hidden?[]:[t,...(t.props?.aberto===false?[]:nos(t.props?.children))]);
@@ -23,7 +23,7 @@ function montar({extras=[]}={}){
  const arrastavel=()=>find(n=>n.type==='article'&&n.props.draggable!==undefined);
  const destino=()=>find(n=>n.type==='button'&&n.props.onDrop&&texto(n).includes('2026'));
  const evento=()=>({preventDefault(){},stopPropagation(){},dataTransfer:{setData(){},files:[]},currentTarget:{contains(){return false;}},relatedTarget:null});
- return{render,nos,texto,find,arrastavel,destino,evento,calls,flush:()=>new Promise(r=>setImmediate(r)),falhar:()=>{falha=true;},falharDepois:n=>{limiteSucessos=n;}};
+ return{render,nos,texto,find,arrastavel,destino,evento,calls,flush:()=>new Promise(r=>setImmediate(r)),falhar:(valor=true)=>{falha=valor;},falharDepois:n=>{limiteSucessos=n;}};
 }
 
 test('arrastar PDF move vínculo uma vez; arraste externo/cancelado não vira movimentação ou upload',async()=>{
@@ -94,4 +94,17 @@ test('Compartilhar e Detalhes só aparecem com um item e detalhes de pasta conta
  assert.equal(c.find(n=>n.props?.rotulo==='Detalhes da seleção').props.aberto,true);clicar('Fechar');
  c.find(n=>n.props?.['aria-label']==='Selecionar pasta 2026').props.onChange();assert.equal(acao('Detalhes'),undefined);assert.equal(acao('Compartilhar'),undefined);
  c.find(n=>n.props?.['aria-label']==='Selecionar arquivo Catálogo PDF').props.onChange();clicar('Detalhes');assert.match(c.texto(c.render()),/1 arquivo\(s\) · 0 subpasta\(s\)/);
+});
+
+
+test('renomear exige um item, rejeita vazio e preserva arquivo e localização; falha permite tentar novamente',async()=>{
+ const c=montar();const clicar=t=>c.find(n=>n.props?.onClick&&c.texto(n)===t).props.onClick();
+ clicar('Selecionar');assert.equal(c.find(n=>n.props?.onClick&&c.texto(n)==='Renomear'),undefined);
+ c.find(n=>n.props?.['aria-label']==='Selecionar arquivo Catálogo PDF').props.onChange();clicar('Renomear');
+ const modal=()=>c.find(n=>n.props?.rotulo==='Renomear item');const form=()=>c.nos(modal()).find(n=>n.type==='form');const input=()=>c.nos(modal()).find(n=>n.type==='input');
+ input().props.onChange({target:{value:'  '}});form().props.onSubmit({preventDefault(){}});await c.flush();assert.equal(c.calls.length,0);
+ input().props.onChange({target:{value:'Catálogo completo 2027'}});c.falhar();form().props.onSubmit({preventDefault(){}});await c.flush();assert.equal(modal().props.aberto,true);assert.match(c.texto(modal()),/Não foi possível renomear/);
+ assert.deepEqual({...c.calls[0].payload},{titulo:'Catálogo completo 2027'});assert.equal(c.calls[0].atualizar,'pdf');
+ c.falhar(false);form().props.onSubmit({preventDefault(){}});await c.flush();assert.equal(modal().props.aberto,false);assert.ok(c.find(n=>n.props?.['aria-label']==='Selecionar arquivo Catálogo completo 2027'));
+ const card=c.find(n=>n.type==='article');assert.match(c.texto(card),/Catálogo completo 2027/);assert.equal(c.nos(card).find(n=>n.type==='b').props.className.includes('truncate'),false);
 });

@@ -1,3 +1,7 @@
+## 3.2.0.408
+
+- Divulgação: Renomear na seleção de um arquivo ou pasta, com confirmação de salvamento, erros visíveis e preservação de links/arquivo/localização. Nomes completos quebram linha em área exclusiva, com ações abaixo, sem truncamento.
+
 ## 3.2.0.407
 
 - Barra de seleção: interação destaca a borda da própria face e aplica zoom discreto; sem contorno externo flutuante nem mudança de fundo, preservando foco interno, estados desabilitados e movimento reduzido.
