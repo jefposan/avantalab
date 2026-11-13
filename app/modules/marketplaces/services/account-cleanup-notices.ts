@@ -14,5 +14,18 @@ export async function filterAccountCleanupNotices(db: SupabaseClient, companyId:
     return result;
   });
   const hidden = new Set(rows.map(row => JSON.stringify([row.connection_id, row.notice_key])));
-  return notices.filter(notice => !hidden.has(JSON.stringify([notice.connectionId, inventoryNoticeDismissKey(notice)])));
+  // A limpeza dispensa o evento de venda atual, mesmo se a rotina revisar seu motivo.
+  // O vínculo removido pode transformar stock_not_confirmed em product_not_linked.
+  const hiddenSales = new Set<string>();
+  for (const row of rows) {
+    try {
+      const key: unknown = JSON.parse(String(row.notice_key));
+      if (Array.isArray(key) && key.length === 2 && typeof key[0] === 'string'
+        && typeof key[1] === 'string' && key[0].startsWith('sale:')) {
+        hiddenSales.add(JSON.stringify([row.connection_id, key[0]]));
+      }
+    } catch { /* Uma chave antiga inválida não dispensa outros avisos. */ }
+  }
+  return notices.filter(notice => !hidden.has(JSON.stringify([notice.connectionId, inventoryNoticeDismissKey(notice)]))
+    && !(notice.source === 'sale' && hiddenSales.has(JSON.stringify([notice.connectionId, notice.id]))));
 }

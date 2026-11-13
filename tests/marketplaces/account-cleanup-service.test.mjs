@@ -37,6 +37,10 @@ test('prévia real e endpoint limpam avisos do perfil e retornam o resultado per
   try {
     globalThis.cleanupScope = f.scope;
     globalThis.cleanupClient = fixtureClient(f.db);
+    const previousEvent = crypto.randomUUID();
+    await f.db.query(`insert into marketplace_inventory_events(id,empresa_id,product_id,connection_id,listing_id,provider,order_id,state,issue)
+      values($1,$2,$3,$4,'MLB7897013526107','mercado_livre','pedido-antigo','pending','stock_not_confirmed')`,
+      [previousEvent, f.scope.company, f.products.sold, f.scope.account]);
     const request = (body, token = 'admin') => POST(new Request('http://local/api/modulos/marketplaces/conexoes/limpeza', {
       method: 'POST', headers: { authorization: 'Bearer '+token, 'content-type': 'application/json' }, body: JSON.stringify(body),
     }));
@@ -58,8 +62,26 @@ test('prévia real e endpoint limpam avisos do perfil e retornam o resultado per
     const replay = await request(body);
     assert.equal(replay.status, 200);
     assert.equal((await replay.json()).replayed, true);
+    // A rotina de estoque pode revisar o motivo depois de a limpeza retirar o vínculo.
+    await f.db.query("update marketplace_inventory_events set issue='product_not_linked' where id=$1", [previousEvent]);
     const notices = await readInventoryNotices(globalThis.cleanupClient, f.scope.company);
     assert.equal(notices.filter(notice => notice.connectionId === f.scope.account).length, 0);
+    const newEvent = crypto.randomUUID();
+    await f.db.query(`insert into marketplace_inventory_events(id,empresa_id,product_id,connection_id,listing_id,provider,order_id,state,issue)
+      values($1,$2,$3,$4,'MLB7897013526107','mercado_livre','pedido-novo','pending','product_not_linked')`,
+      [newEvent, f.scope.company, f.products.sold, f.scope.account]);
+    const updated = await readInventoryNotices(globalThis.cleanupClient, f.scope.company);
+    assert.ok(updated.some(notice => notice.id === 'sale:' + newEvent));
+    assert.ok(!updated.some(notice => notice.id === 'sale:' + previousEvent));
+    // A dispensa não alcança a mesma identificação em outra conta ou perfil.
+    await f.db.query(`insert into marketplace_inventory_events(id,empresa_id,product_id,connection_id,listing_id,provider,state,issue)
+      values($1,$2,$3,$4,'MLB7897013526107','mercado_livre','pending','product_not_linked'),
+      ($1,$5,$6,$7,'MLB7898578153678','mercado_livre','pending','product_not_linked')`,
+      [previousEvent, f.scope.company, f.products.shared, f.scope.sharedAccount, f.scope.other, f.products.foreign, f.scope.foreignAccount]);
+    const scoped = await readInventoryNotices(globalThis.cleanupClient, f.scope.company);
+    assert.ok(scoped.some(notice => notice.id === 'sale:' + previousEvent && notice.connectionId === f.scope.sharedAccount));
+    const foreignNotices = await readInventoryNotices(globalThis.cleanupClient, f.scope.other);
+    assert.ok(foreignNotices.some(notice => notice.id === 'sale:' + previousEvent));
     assert.equal((await request({ ...input, action: 'unknown' })).status, 400);
   } finally {
     delete globalThis.cleanupScope;

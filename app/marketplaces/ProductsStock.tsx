@@ -6,6 +6,7 @@ import ProductLinkedListings from './ProductLinkedListings';
 import ProductQuality from './ProductQuality';
 import QualitySummary from './QualitySummary';
 import ProductRemoval from './ProductRemoval';
+import ProductCleanup from './ProductCleanup';
 import ProductListingUpdate from './ProductListingUpdate';
 import CatalogFullReview from './CatalogFullReview';
 import {changedProductListingFields,type ListingUpdateRequest} from '@/app/modules/marketplaces/product-listing-update';
@@ -44,7 +45,7 @@ import PriceProductStock from './PriceProductStock';
 import type { Warehouse } from '@/app/modules/marketplaces/warehouses';
 import styles from './marketplaces.module.css';
 
-type Props = { companyId: string; dark: boolean; brand: string; canManage: boolean; accounts: MarketplaceAccount[]; publicationAccounts?: MarketplaceAccount[]; refreshKey: number; preparationLocked: boolean; onPrepare: (productId: string, connectionId: string) => void; reorderHandle?: ReactNode; searchRef?: Ref<ProductSearchHandle>; request?: typeof marketplaceClientRequest; percentages?: PricePercentages | null };
+type Props = { companyId: string; dark: boolean; brand: string; canManage: boolean; canCleanup?: boolean; accounts: MarketplaceAccount[]; publicationAccounts?: MarketplaceAccount[]; refreshKey: number; preparationLocked: boolean; onPrepare: (productId: string, connectionId: string) => void; reorderHandle?: ReactNode; searchRef?: Ref<ProductSearchHandle>; request?: typeof marketplaceClientRequest; percentages?: PricePercentages | null };
 export type ProductListContext = Pick<Props, 'accounts' | 'publicationAccounts' | 'preparationLocked' | 'onPrepare' | 'percentages'>;
 export type ProductListCount = { total: number | null; loading: boolean };
 type ListProps = Props & PanelExpansionProps & { noticeTarget?: { key:string; productId?:string; origin?:'announced' }; noticeNavigationHost?: HTMLElement | null; searchNavigationHost?: HTMLElement | null; onNoticeDismiss?: () => void; warehouse?: Warehouse; stockAccountId?: string; listVisible?: boolean; publicationFilter?: ProductPublicationFilter; onInteractionLockChange?: (locked: boolean) => void; onCountChange?: (count: ProductListCount) => void };
@@ -268,6 +269,7 @@ export default function ProductsStock(props: ListProps) {
   const [noticeResult,setNoticeResult]=useState<{key:string;error?:string}>();
   const [creating, setCreating] = useState(false);
   const [stockLoadOpen, setStockLoadOpen] = useState(false);
+  const [cleanupOpen, setCleanupOpen] = useState(false);
   const [stockLoadConfirmation, setStockLoadConfirmation] = useState(false);
   const [loading, setLoading] = useState(!!warehouseId);
   const [busy, setBusy] = useState(false);
@@ -484,6 +486,7 @@ export default function ProductsStock(props: ListProps) {
     <Tooltip texto="Importar anúncios já sincronizados, sem somar estoques"><BotaoAcaoCompacto disabled={busy||loading} onClick={()=>onCommand({action:'import'},'Importar os anúncios já sincronizados de todas as contas desta empresa? Produtos novos sem saldo informado exibem zero. Anúncios do mesmo produto poderão ser vinculados por você depois, sem somar quantidades.')}>{busy?'Aguarde…':'Importar anúncios existentes'}</BotaoAcaoCompacto></Tooltip>
     <Tooltip texto="Recuperar fotos dos anúncios vinculados somente nos cadastros vazios."><BotaoAcaoCompacto disabled={busy||loading||creating} onClick={()=>onCommand({action:'recover_photos'})}>Recuperar fotos</BotaoAcaoCompacto></Tooltip>
     <Tooltip texto="Revisar as quantidades atuais dos anúncios ativos para a carga inicial local"><BotaoAcaoCompacto id="load-listing-stock-button" disabled={busy||loading||stockLoadOpen} aria-expanded={stockLoadOpen} aria-controls="initial-stock-load" onClick={()=>setStockLoadConfirmation(true)}>Carregar estoque dos anúncios</BotaoAcaoCompacto></Tooltip>
+    {(props.canCleanup ?? canManage) && <Tooltip wrapperClassName={styles.cleanupProductsAction} texto="Selecionar cadastros para apagar, preservando os históricos"><BotaoAcaoCompacto variante="destrutivo" className={styles.cleanupProductsButton} disabled={busy||loading||creating||stockLoadOpen} onClick={()=>{setDetailId('');setCleanupOpen(true);}}><Icon name="trash" size={16}/>Limpar cadastros</BotaoAcaoCompacto></Tooltip>}
   </div>:null;
   const publicationAccountId = (props.publicationAccounts ?? props.accounts).find(publicationAccountAvailable)?.id || '';
   const searchControls = <div className={styles.productSearchArea}>
@@ -495,7 +498,8 @@ export default function ProductsStock(props: ListProps) {
     </div>;
   return <section ref={panel} data-marketplace-notice-result={noticeResult?.key} data-marketplace-notice-error={noticeResult?.error} data-marketplace-page-card={warehouseId ? undefined : ''} className={`${warehouseId ? styles.embeddedProducts : styles.panel} ${styles.listingsPanel}`} aria-labelledby={warehouseId ? undefined : "products-title"} aria-label={props.warehouse ? `Produtos do estoque ${props.warehouse.name}` : undefined}>
     {noticeNavigation && (props.noticeNavigationHost ? createPortal(noticeNavigation, props.noticeNavigationHost) : noticeNavigation)}
-{!warehouseId && <div className={`${styles.panelHeading} ${expanded ? '' : styles.panelHeadingCollapsed}`}><div><h2 id="products-title" tabIndex={-1}>Produtos cadastrados</h2><p className={styles.help} role="status">{countFailed ? 'Quantidade indisponível' : countLoading && confirmedCount.current == null ? 'Consultando quantidade…' : productCountLabel(total, query)}</p></div><div className={styles.panelHeadingActions}>{reorderHandle}<Tooltip texto="Atualizar os cadastros locais"><BotaoAcaoCompacto disabled={loading || busy} onClick={() => { setActionError(''); void countProducts(); if(listVisible)void load(); }}>Atualizar</BotaoAcaoCompacto></Tooltip>{registeredActions}<BotaoExpandirCard variante="painel" somenteIcone modo="lista" contexto="produtos cadastrados" controlsId="products-content" expandido={expanded} corPrimaria={brand} darkMode={dark} onClick={() => setExpanded(value => !value)} /></div></div>}
+{!warehouseId && <div className={`${styles.panelHeading} ${expanded ? '' : styles.panelHeadingCollapsed}`}><div><h2 id="products-title" tabIndex={-1}>Produtos cadastrados</h2><p className={styles.help} role="status">{countFailed ? 'Quantidade indisponível' : countLoading && confirmedCount.current == null ? 'Consultando quantidade…' : productCountLabel(total, query)}</p></div><div className={styles.panelHeadingActions}>{reorderHandle}<Tooltip texto="Atualizar os cadastros locais"><BotaoAcaoCompacto disabled={loading || busy} onClick={() => { setActionError(''); void countProducts(); if(listVisible)void load(); }}>Atualizar</BotaoAcaoCompacto></Tooltip><BotaoExpandirCard variante="painel" somenteIcone modo="lista" contexto="produtos cadastrados" controlsId="products-content" expandido={expanded} corPrimaria={brand} darkMode={dark} onClick={() => setExpanded(value => !value)} /></div></div>}
+    {registeredActions}
     {warehouseId && props.searchNavigationHost ? createPortal(searchControls, props.searchNavigationHost) : searchControls}
     <div id={warehouseId ? `${searchId}-content` : "products-content"} hidden={!expanded && !warehouseId}>
       {stockLoadOpen && canManage && <div id="initial-stock-load" className={styles.localStockLoad}><InitialStockLoad companyId={companyId} dark={dark} brand={brand} onBusyChange={setBusy} onUpdated={load} onClose={() => {
@@ -516,6 +520,10 @@ export default function ProductsStock(props: ListProps) {
 {!warehouseId && <div className={`${styles.panelHeadingActions} ${styles.panelFooterActions}`}><BotaoExpandirCard variante="painel" somenteIcone modo="lista" contexto="produtos cadastrados" controlsId="products-content" expandido={expanded} corPrimaria={brand} darkMode={dark} onClick={() => collapseMarketplacePanel('products-content', () => setExpanded(false))} /></div>}
     </div>
     {message && <p className={styles.catalogSuccess} role="status">{message}</p>}{error && <p className={styles.connectionMessage} role="alert">{error}</p>}{actionError && <p className={styles.connectionMessage} role="alert">{actionError}</p>}
+    {cleanupOpen && canManage && !warehouseId && <ProductCleanup key={companyId} companyId={companyId} dark={dark} brand={brand} request={request} onClose={()=>setCleanupOpen(false)} onBusyChange={setBusy} onCleaned={result=>{
+      controller.current?.abort();generation.current++;setProducts(rows=>rows.filter(row=>!result.productIds.includes(row.id)));setDetailId('');setNoticeProduct('');setPage(1);loadedListKey.current='';
+      setMessage(result.removed+' cadastro(s) apagado(s) da lista ativa. Históricos preservados.');notifyProductStockChanged(companyId);
+    }}/>}
     {canManage&&listingUpdate&&<ProductListingUpdate key={listingUpdate.id} companyId={companyId} change={listingUpdate} accounts={props.accounts} request={request} brand={brand} dark={dark} onClose={()=>setListingUpdate(null)} onBusyChange={setBusy} onUpdated={pending=>{setMessage(pending?'Cadastro salvo. Atualização do anúncio enviada; aguardando confirmação do marketplace.':'Cadastro salvo. Alterações do anúncio confirmadas pelo marketplace.');void load();}}/>}
     {canManage && <ModalConfirmacao aberto={stockLoadConfirmation} titulo="Revisar estoque dos anúncios?"
       mensagem={'Vamos consultar os anúncios ativos e mostrar as quantidades para sua revisão.\n\nSó produtos sem estoque definido poderão receber um saldo. Estoques já definidos, inclusive zero, serão mantidos.\n\nNada será salvo nesta consulta.'}

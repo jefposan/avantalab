@@ -1,9 +1,9 @@
 {
-  "baseDeploymentId": "dpl_5wDnSg9UpZt9KQYZsBNoFtnxBUqD",
+  "baseDeploymentId": "dpl_CjDttPxgmHSNkUK6EGYsp122p4Rh",
   "migrations": [
     {
-      "path": "supabase/migrations/20261113180000_marketplace_account_cleanup.sql",
-      "sha256": "b28c0ad08762f0a13bc95ae6d91bb33361c09aa40b176120e88d95a28bc195b0"
+      "path": "supabase/migrations/20261113210000_marketplace_product_cleanup.sql",
+      "sha256": "3ee4f4463c430c60a4636d26c56550eb02a8c4a17d7a2d45cfb7618d142d9927"
     }
   ]
 }

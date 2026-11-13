@@ -347,14 +347,16 @@ test('cabeçalho de Anunciados reutiliza os estilos de Vendas sem sobrepor Expan
   assert.equal((css.match(/:not\(:where\(\.panelHeadingActions button\)\)/g) || []).length, 2);
 });
 
-test('busca permanece local e ações ficam no cabeçalho somente expandido, respeitando permissões', () => {
+test('busca permanece local e ações ficam abaixo do cabeçalho somente expandido, respeitando permissões', () => {
   const props = { companyId: 'empresa', dark: false, brand: '#003E73', accounts: [], refreshKey: 0, preparationLocked: false, onPrepare: noop };
   const html = render(ProductsStock, { ...props, canManage: true });
   assert.ok(html.indexOf('id="local-product-search"') < html.indexOf('id="products-content"'));
   assert.match(html, /Ler EAN/);
   const source=readFileSync(resolve(root,'app/marketplaces/ProductsStock.tsx'),'utf8');
   assert.match(source,/const registeredActions=canManage&&!warehouseId&&expanded\?/);
-  assert.match(source,/Atualizar<\/BotaoAcaoCompacto><\/Tooltip>\{registeredActions\}<BotaoExpandirCard/);
+  assert.match(source,/Atualizar<\/BotaoAcaoCompacto><\/Tooltip><BotaoExpandirCard/);
+  assert.ok(source.indexOf('{registeredActions}\n') < source.indexOf('{warehouseId && props.searchNavigationHost ?'));
+  assert.match(source,/variante="destrutivo"[\s\S]*Limpar cadastros/);
   assert.match(source,/registeredProductActions[\s\S]*Novo produto[\s\S]*Importar anúncios existentes[\s\S]*Recuperar fotos[\s\S]*Carregar estoque dos anúncios/);
   assert.equal((source.match(/id="load-listing-stock-button"/g)||[]).length,1);
   assert.doesNotMatch(source,/Busca automática nos cadastros desta empresa/);

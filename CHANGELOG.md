@@ -1,3 +1,25 @@
+## 3.2.0.414 — Marketplaces: Limpar cadastros e liberar referências de contas desconectadas
+
+- Publica Limpar cadastros como na prévia aprovada, com seleção individual/todos, filtros e confirmação explícita de apagamento da lista ativa por nome do perfil e ciência marcada.
+- Referências de contas explicitamente desconectadas não bloqueiam a limpeza. Os vínculos e controles locais são retirados, com cópia na auditoria; vendas, documentos, movimentações e pesquisas de preços são preservados.
+- Conta conectada, vencida ou com autorização pendente continua protegida. Produto compartilhado com outra conta atual, saldo e operação em voo impedem a limpeza. A reconexão invalida a prévia e aguarda a transação em andamento.
+- A auditoria impede que uma importação posterior recrie automaticamente o cadastro apagado. Não envia exclusão aos marketplaces. Publicação instala a função e não limpa dados de nenhuma conta.
+- Inclui a correção da dispensa do evento de venda já limpo quando seu motivo muda, preparada na 3.2.0.412.
+
+## 3.2.0.413 — Marketplaces: Limpar cadastros com seleção e confirmação explícita
+
+- Produtos cadastrados organiza as ações como na prévia aprovada, com Limpar cadastros separado à direita.
+- Administradores selecionam itens individualmente ou Selecionar todos no filtro, pesquisando nome/EAN/código e filtrando AvantaPreços, Sem vínculo ou Todos. A confirmação mostra a seleção completa, exige o nome do perfil e ciência explícita de que os cadastros serão apagados da lista ativa.
+- A limpeza preserva as linhas históricas e retira os cadastros das operações ativas. Vendas, movimentações, documentos e pesquisas de preços permanecem; nenhum anúncio externo é excluído. Itens com saldo, anúncios encontrados/vinculados ou trabalho pendente ficam bloqueados.
+- O servidor refaz a conferência na transação, valida perfil e administrador e registra auditoria. Mudanças após a prévia e falhas revertem o lote inteiro; repetir a mesma tentativa não duplica operações.
+- Inclui a correção local 3.2.0.412 para impedir que o evento dispensado na limpeza da conta reapareça ao mudar de motivo. Migração e validação somente locais nesta etapa; sem aplicação em produção nem publicação.
+
+## 3.2.0.412 — Marketplaces: manter dispensado o evento já limpo quando o motivo mudar
+
+- A dispensa por limpeza de conta reconhece a identidade do evento de venda, preservando seu efeito quando a retirada do vínculo muda o motivo de estoque não confirmado para produto não vinculado.
+- Novos eventos, outras contas e outros perfis continuam visíveis. Nenhum cadastro adicional é excluído e os registros históricos são preservados.
+- Diagnóstico da TRIDIUM: a limpeza removeu 59 produtos e 61 vínculos/anúncios; os 14 cadastros originados do histórico do AvantaPreços não pertenciam aos vínculos da conta. Uma calculadora foi preservada por histórico. Correção validada localmente, sem publicação nesta etapa.
+
 ## 3.2.0.411 — Marketplaces: limpeza por conta, acesso às desconectadas e Novo anúncio completo
 
 - A altura da área rolável considera o título e a pesquisa completos, mesmo quando a expansão das contas desloca o bloco para baixo da tela.

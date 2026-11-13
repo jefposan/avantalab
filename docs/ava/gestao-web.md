@@ -1,4 +1,10 @@
-<!-- ava-version: 3.2.0.411 -->
+<!-- ava-version: 3.2.0.414 -->
+
+> Revisão 3.2.0.414: Em Anúncios Mkt Places → Produtos cadastrados → Limpar cadastros, administradores selecionam itens ou todos os disponíveis no filtro. Revisar exclusão exibe toda a seleção. Apagar da lista ativa exige nome exato do perfil e ciência marcada. Referências de contas desconectadas não bloqueiam: os vínculos locais são retirados e auditados. Contas ainda conectadas, vencidas ou com autorização pendente continuam protegidas, assim como saldo e operações em andamento. Reconectar invalida a prévia anterior. Vendas, documentos, movimentos e histórico de preços são preservados. A limpeza não exclui anúncios externos. O evento já dispensado pela limpeza da conta permanece oculto mesmo se mudar de motivo.
+
+> Revisão 3.2.0.413: Em Anúncios Mkt Places → Produtos cadastrados → Limpar cadastros, administradores podem pesquisar e selecionar itens ou Selecionar todos os disponíveis no filtro. Revisar exclusão mostra todos os selecionados, inclusive os de outros filtros. Para apagar da lista ativa, digite o nome do perfil e marque a ciência. Vendas, movimentos, documentos e histórico de preços permanecem. Saldo, anúncios vinculados/encontrados e operações pendentes bloqueiam os respectivos itens. Não apaga anúncios no marketplace. Falhas de conferência impedem o lote inteiro; uma resposta incerta pode ser repetida com a mesma tentativa. Validação local, sem publicação.
+
+> Revisão 3.2.0.412: A limpeza por conta mantém dispensado o mesmo evento de venda quando a rotina muda seu motivo. Eventos novos continuam aparecendo. Limpar dados da conta não apaga cadastros sem vínculo, como produtos vindos do histórico do AvantaPreços, e preserva produtos com histórico. Correção em validação local.
 
 > Revisão 3.2.0.411: Em Anúncios Mkt Places, expandir as contas mantém o título, os campos e as ações de Novo anúncio inteiros. A preparação continua com rolagem própria quando necessário. Contas desconectadas têm acesso direto no cabeçalho. Limpar dados da conta apresenta prévia e exige confirmação do nome; preserva produtos compartilhados, saldos e históricos. Após limpeza, a importação só retorna por confirmação explícita.
 

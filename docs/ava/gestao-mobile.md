@@ -1,4 +1,10 @@
-<!-- ava-version: 3.2.0.411 -->
+<!-- ava-version: 3.2.0.414 -->
+
+> Revisão 3.2.0.414: sem impacto operacional neste ambiente. Limpar cadastros e retirada de vínculos locais de contas desconectadas pertencem ao Marketplaces da Gestão Web; históricos preservados.
+
+> Revisão 3.2.0.413: sem impacto operacional neste ambiente. Limpar cadastros com seleção e confirmação explícita pertence ao Marketplaces da Gestão Web. Históricos preservados; entrega em validação local.
+
+> Revisão 3.2.0.412: sem impacto operacional neste ambiente. Correção da dispensa de eventos já limpos no Marketplaces da Gestão Web, validada localmente.
 
 > Revisão 3.2.0.411: sem impacto operacional. Limpeza por conta, acesso às desconectadas e ajuste visual do Novo anúncio pertencem à Gestão Web.
 
