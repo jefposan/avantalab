@@ -1,7 +1,7 @@
 import {NextResponse} from 'next/server';
 import {createReservationsFixture} from '@/app/modules/marketplaces/dev/reservations-fixture';
 import {publicReservation,reservationCommandData} from '@/app/modules/marketplaces/services/stock-reservations';
-import {directCommandData} from '@/app/modules/marketplaces/services/direct-sales';
+import {directCommandData,publicDirectSale} from '@/app/modules/marketplaces/services/direct-sales';
 export const runtime='nodejs';
 export const maxDuration=60;
 async function fixture(){
@@ -43,7 +43,7 @@ export async function POST(request:Request){
   if(path.startsWith('/api/modulos/marketplaces/vendas-diretas')){
    if(body.action==='context')return NextResponse.json({actorId:f.actor,canSell:true,canWithdraw:true,product:{id:f.product,name:'Liquidificador · Produto de teste',ean:'7909569454787',picture:null,referenceCents:22000},percentages:{minimum:50,medium:70,ideal:90},warehousesReady:true,warehouses:await f.balances()},{headers});
    if(body.action){const c=directCommandData(body);return NextResponse.json({result:await f.command(c.action,c.data,c.requestKey)},{headers});}
-   return NextResponse.json({sales:[],canSell:true},{headers});
+   const sales=await f.db.query('select * from marketplace_direct_sales order by sold_on desc,id');return NextResponse.json({sales:sales.rows.map(publicDirectSale),canSell:true},{headers});
   }
   throw Error('Operação indisponível nesta prévia.');
  }catch(e){const err=e as Error&{code?:string;status?:number};return NextResponse.json({rejected:err.code==='P0001'||[400,409].includes(err.status||0),message:err.message},{status:err.code==='P0001'||[400,409].includes(err.status||0)?200:503,headers});}

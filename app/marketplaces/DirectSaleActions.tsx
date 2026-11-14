@@ -50,7 +50,7 @@ export default function DirectSaleActions({companyId,productId,historyId,initial
  },[saleRequest,context,disabled,hasSaleStock,selectedMissing,saleTriggerRef,onSaleRequestHandled]);
  const otherActions=<>
    {context?.canWithdraw&&<BotaoAcaoCompacto data-stock-action="withdraw" disabled={disabled||!context.warehousesReady||selectedMissing} onClick={e=>{lastTrigger.current=e.currentTarget;setMode('withdraw');}}>Outras saídas</BotaoAcaoCompacto>}
-   {context?.canSell&&<BotaoAcaoCompacto data-stock-action="history" disabled={disabled} onClick={e=>{lastTrigger.current=e.currentTarget;setMode('history');}}>Vendas diretas</BotaoAcaoCompacto>}
+   {context?.canSell&&<BotaoAcaoCompacto data-stock-action="history" disabled={disabled} onClick={e=>{lastTrigger.current=e.currentTarget;setMode('history');}}>Histórico de vendas</BotaoAcaoCompacto>}
  </>;
  return <div className={`${styles.scope} ${dark?styles.dark:''}`} style={{'--brand':brand||'#003e73'} as CSSProperties}>
   {(context?.canSell||context?.canWithdraw)&&(compactSale?<details className={styles.moreActions}><summary>Outras ações</summary><div className={styles.actions}>{otherActions}</div></details>:<section className={styles.actionSection} aria-label="Vendas e saídas"><h3>Vendas e saídas</h3><div className={styles.actions}>

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.415 -->
+<!-- ava-version: 3.2.0.416 -->
+
+> Revisão local 3.2.0.416: sem impacto operacional neste ambiente. Renomeação e testes de reservas/estoque/preço pertencem ao AvantaPreços e Marketplaces Web.
 
 > Revisão 3.2.0.415: sem impacto operacional neste ambiente. Reservas pertencem ao PWA AvantaPreços e Marketplaces Web; não altera Gestão nativa nem AvantaVendas.
 

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.415 -->
+<!-- ava-version: 3.2.0.416 -->
+
+> Revisão local 3.2.0.416: O botão e a janela Vendas diretas passam a Histórico de vendas; consultas, cancelamentos e devoluções preservados. Reserva, cancelamento e edição de preços reconferem retorno do marketplace; envio pendente não é sucesso.
 
 > Revisão 3.2.0.415: AvantaPreços e Marketplaces — Reserva: botão ao lado de Venda. Escolha explicitamente o estoque, quantidade e possível comprador; revise e confirme. Requer a mesma permissão Registrar vendas. Se houver apenas uma unidade, a quantidade é 1. O disponível por estoque exclui reservadas; Total inclui disponíveis e reservadas. A etiqueta Reservado identifica o bloqueio. Reserva total bloqueia venda comum naquele estoque; parcial deixa o restante livre. Abra Reserva → Minhas reservas para concluir a venda com preço unitário/data ou cancelar para devolver as unidades à disponibilidade. Não há vencimento automático, edição ou liberação silenciosa. Não registre a mesma unidade novamente por Venda. Online reduz/recompõe somente o disponível dos anúncios vinculados pela fila de sincronização; mensagem de envio pendente não é confirmação do marketplace. Pausa manual nunca deve ser reativada por cancelar uma reserva; somente a pausa de estoque feita pelo próprio sistema pode ser retomada após confirmação do saldo. Reservar/cancelar não cria receita; concluir reutiliza a venda direta uma única vez. Protótipo em validação local, versão ainda não publicada.
 

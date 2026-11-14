@@ -19,8 +19,8 @@ export default function DirectSalesHistory({companyId,productId,request,onClose,
   catch(e){if(!signal?.aborted)setError(e instanceof Error?e.message:'Não foi possível consultar as vendas.');}finally{if(!signal?.aborted)setLoading(false);}
  },[companyId,productId,request]);
  useEffect(()=>{const a=new AbortController(),frame=requestAnimationFrame(()=>void load(a.signal));return()=>{cancelAnimationFrame(frame);a.abort();};},[load]);
- return <DirectDialog title="Vendas diretas" onClose={onClose} dark={dark} brand={brand}><div className={styles.body}><div className={styles.actions}><BotaoAcaoCompacto disabled={loading} onClick={()=>void load()}>Atualizar</BotaoAcaoCompacto></div>
- {loading?<p role="status">Carregando vendas diretas…</p>:error?<p role="alert" className={styles.error}>{error}</p>:!sales.length?<p>Nenhuma venda direta registrada.</p>:<div className={styles.list}>{sales.map(s=><DirectSaleRow key={`${s.id}:${s.revision}`} sale={s} companyId={companyId} request={request} canSell={canSell} dark={dark} brand={brand} onUpdated={()=>void load()}/>)}</div>}
+ return <DirectDialog title="Histórico de vendas" onClose={onClose} dark={dark} brand={brand}><div className={styles.body}><div className={styles.actions}><BotaoAcaoCompacto disabled={loading} onClick={()=>void load()}>Atualizar</BotaoAcaoCompacto></div>
+ {loading?<p role="status">Carregando histórico de vendas…</p>:error?<p role="alert" className={styles.error}>{error}</p>:!sales.length?<p>Nenhuma venda registrada neste histórico.</p>:<div className={styles.list}>{sales.map(s=><DirectSaleRow key={`${s.id}:${s.revision}`} sale={s} companyId={companyId} request={request} canSell={canSell} dark={dark} brand={brand} onUpdated={()=>void load()}/>)}</div>}
  </div></DirectDialog>;
 }
 export function DirectSaleRow({sale:s,companyId,request,canSell,onUpdated,dark,brand}:{sale:DirectSale;companyId:string;request:LotsRequest;canSell:boolean;onUpdated:()=>void;dark?:boolean;brand?:string}){

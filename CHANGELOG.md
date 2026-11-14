@@ -1,3 +1,11 @@
+## 3.2.0.416 — AvantaPreços: Histórico de vendas e validação integrada de reservas, estoque e preço
+
+- Renomeia o botão e a janela Vendas diretas para Histórico de vendas, preservando consultas, cancelamento e devolução. A prévia local passa a mostrar as vendas realmente concluídas no banco fictício.
+- Integra nos testes a reserva SQL, a fila oficial, o worker de produção e o editor real de preços com quatro provedores simulados: redução parcial, pausa por reserva total, cancelamento/reposição, conclusão sem dupla baixa e ajuste manual do estoque.
+- Verifica resposta aceita sem aplicação, retenção da pendência, nova tentativa, revisão/generation antigos, preço por conta sem alterar referência ou estoque e preservação do estado do anúncio.
+- Teste real autorizado do mixer EAN 7896443138355: preço JEFF R$ 92,00 → R$ 91,99 → R$ 92,00; estoque 2 → 1 → 2 nas quatro contas, com confirmação remota, preços e pausas preservados. Evidência e limites em `docs/auditorias/reservas-avanta-precos-local-2026-11-14.md`.
+- Mantém a entrega somente local; migração de reservas não aplicada em produção e versão não publicada. Reserva/cancelamento/conclusão validados no pipeline local; teste real usa o editor e sincronismo existentes em produção.
+
 ## 3.2.0.415 — AvantaPreços: reservas por estoque (validação local)
 
 - Reserva ao lado de Ajustar estoque, Adicionar saldo e Venda: seleção explícita do estoque, quantidade e possível comprador, com revisão antes de confirmar.
