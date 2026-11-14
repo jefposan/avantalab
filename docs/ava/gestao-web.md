@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.417 -->
+<!-- ava-version: 3.2.0.418 -->
+
+> Revisão 3.2.0.418: os botões públicos de download usam a identidade visual das lojas e os rótulos Baixar na App Store / Baixar no Google Play. Links e funcionamento preservados; sem impacto operacional.
 
 > Revisão 3.2.0.417: Reserva na Web fica em Estoques e movimentações, ao lado de Editar e Atualizar estoques. Abre o mesmo seletor de origem e gerenciador de reservas do AvantaPreços; criação, conclusão e cancelamento usam a mesma API e fila. Mesma disponibilidade e permissões do AvantaPreços.
 

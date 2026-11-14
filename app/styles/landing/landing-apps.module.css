@@ -176,7 +176,8 @@
 }
 
 .appStoreButton {
-  background: #111827;
+  border: 1px solid #a6a6a6;
+  background: #000;
   color: #fff;
   text-decoration: none;
   transition: transform .18s ease, box-shadow .18s ease;
@@ -184,7 +185,7 @@
 
 .appStoreButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 22px rgb(17 24 39 / 20%);
+  box-shadow: 0 10px 22px rgb(0 0 0 / 20%);
 }
 
 .appStoreButton:focus-visible {
@@ -199,17 +200,17 @@
 }
 
 .googlePlayButton {
-  border: 1px solid #d4e4ef;
+  border: 1px solid #dadce0;
   background: #fff;
-  color: #003e73;
-  box-shadow: 0 5px 14px rgb(0 62 115 / 7%);
+  color: #202124;
+  box-shadow: 0 5px 14px rgb(32 33 36 / 7%);
   text-decoration: none;
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 
 .googlePlayButton:hover {
-  border-color: #18a7c8;
-  box-shadow: 0 10px 22px rgb(0 62 115 / 14%);
+  border-color: #9aa0a6;
+  box-shadow: 0 10px 22px rgb(32 33 36 / 14%);
   transform: translateY(-2px);
 }
 
@@ -221,14 +222,12 @@
 .appStoreButton svg,
 .googlePlaySoon svg,
 .googlePlayButton svg {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  fill: currentColor;
+  stroke: none;
 }
 
 .appStoreButton span,
@@ -332,7 +331,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .appStoreButton {
+  .appStoreButton,
+  .googlePlayButton {
     transition: none;
+  }
+
+  .appStoreButton:hover,
+  .googlePlayButton:hover {
+    transform: none;
   }
 }

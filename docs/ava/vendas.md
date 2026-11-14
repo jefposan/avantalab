@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.417 -->
+<!-- ava-version: 3.2.0.418 -->
+
+> Revisão 3.2.0.418: sem impacto operacional. O card público do AvantaVendas usa as marcas das lojas e chamadas Baixar, preservando os mesmos links; sem alteração no aplicativo.
 
 > Revisão 3.2.0.417: sem impacto operacional neste ambiente. Posição do botão Reserva refinada somente na ficha Web de Marketplaces.
 

@@ -1,3 +1,9 @@
+## 3.2.0.418 — Página pública: identidade das lojas nos botões de download
+
+- App Store usa fundo preto com maçã branca; Google Play usa fundo branco, texto escuro e símbolo nas quatro cores da marca.
+- Padroniza as chamadas em Baixar na App Store e Baixar no Google Play nos cards do Gestão e AvantaVendas. Mantém links, abertura segura em nova aba, foco visível e layout responsivo.
+- Respeita a redução de movimento nos dois botões. Sem mudança nos aplicativos instalados, acesso, dados ou regras comerciais.
+
 ## 3.2.0.417 — Marketplaces: Reserva na linha de ações do estoque Web
 
 - Posiciona Reserva ao lado de Editar e Atualizar estoques na ficha Web expandida, reutilizando o gerenciador, API e sincronização do AvantaPreços.

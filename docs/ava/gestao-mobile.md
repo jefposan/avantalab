@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.417 -->
+<!-- ava-version: 3.2.0.418 -->
+
+> Revisão 3.2.0.418: sem impacto operacional. Apenas o visual dos botões de download na página pública foi atualizado, com marcas Apple/Google Play e chamadas Baixar. O aplicativo instalado permanece igual.
 
 > Revisão 3.2.0.417: sem impacto operacional neste ambiente. Posição do botão Reserva refinada somente na ficha Web de Marketplaces.
 
