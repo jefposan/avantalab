@@ -1,3 +1,9 @@
+## 3.2.0.417 — Marketplaces: Reserva na linha de ações do estoque Web
+
+- Posiciona Reserva ao lado de Editar e Atualizar estoques na ficha Web expandida, reutilizando o gerenciador, API e sincronização do AvantaPreços.
+- Prévia local alterna entre a apresentação de celular e a apresentação Web real do componente; abertura do seletor de estoque e restauração de foco verificadas no navegador.
+- Somente local, sem publicação ou migração em produção.
+
 ## 3.2.0.416 — AvantaPreços: Histórico de vendas e validação integrada de reservas, estoque e preço
 
 - Renomeia o botão e a janela Vendas diretas para Histórico de vendas, preservando consultas, cancelamento e devolução. A prévia local passa a mostrar as vendas realmente concluídas no banco fictício.

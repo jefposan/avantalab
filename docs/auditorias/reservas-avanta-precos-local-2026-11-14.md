@@ -1,4 +1,4 @@
-# AvantaPreços — Reservas por estoque — candidato local 3.2.0.416
+# AvantaPreços — Reservas por estoque — candidato local 3.2.0.417
 
 Estado: implementação candidata e migração de reservas somente locais, sem push ou publicação. Teste real autorizado de preço/estoque do mixer realizado pela interface de produção existente, com restauração dos valores. Não foi criada reserva em produção.
 
@@ -67,3 +67,7 @@ Capturas na pasta `reservas` dos artefatos da conversa: `mixer-real-restaurado.j
 ## Ações existentes
 
 Venda registra uma nova venda. Histórico de vendas (nome aplicado na 416 ao botão e à janela antes chamados Vendas diretas) abre as vendas manuais para consulta/cancelamento/devolução, incluindo as concluídas pela reserva. Outras saídas registra perda, avaria ou uso interno, sem venda. A operação interna continua sendo venda direta; a mudança de nome não altera seus lançamentos.
+
+## Posição Web — refinamento 3.2.0.417
+
+Reserva integrada à linha Editar / Reserva / Atualizar estoques da apresentação Web do componente compartilhado, consumido por Produtos cadastrados, Estoques e consulta Web do AvantaPreços. Mesma API e fluxo da versão de celular. Prévia local Mobile / Web agora troca a apresentação real do componente. No navegador, abertura exibiu Estoque de origem com Online e Saldão, e o fechamento devolveu foco a Reserva. Captura `reserva-web-previa.jpg`, com dados fictícios; sem nova publicação ou escrita real em contas.

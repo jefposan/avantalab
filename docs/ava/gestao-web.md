@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.416 -->
+<!-- ava-version: 3.2.0.417 -->
+
+> Revisão local 3.2.0.417: Reserva na Web fica em Estoques e movimentações, ao lado de Editar e Atualizar estoques. Abre o mesmo seletor de origem e gerenciador de reservas do AvantaPreços; criação, conclusão e cancelamento usam a mesma API e fila. Posição em avaliação local, sem publicação.
 
 > Revisão local 3.2.0.416: O botão e a janela Vendas diretas passam a Histórico de vendas; consultas, cancelamentos e devoluções preservados. Reserva, cancelamento e edição de preços reconferem retorno do marketplace; envio pendente não é sucesso.
 

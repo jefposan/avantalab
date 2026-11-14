@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.416 -->
+<!-- ava-version: 3.2.0.417 -->
+
+> Revisão local 3.2.0.417: sem impacto operacional neste ambiente. Posição do botão Reserva refinada somente na ficha Web de Marketplaces.
 
 > Revisão local 3.2.0.416: sem impacto operacional neste ambiente. Renomeação e testes de reservas/estoque/preço pertencem ao AvantaPreços e Marketplaces Web.
 
