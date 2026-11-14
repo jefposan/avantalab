@@ -7,7 +7,7 @@ export type MarketPriceResearch = {
  catalogId:string|null;productName:string;checkedAt:string;totalReported:number|null;fetchedCount:number;
  count:number;mean:number|null;median:number|null;minimum:number|null;maximum:number|null;
  exclusions:Record<string,number>;offers:MarketPriceOffer[];message:string;
- mlResearch?:MarketPriceResearch;complement?:{status:'completed'|'unavailable';checkedAt:string;accepted:number;message:string};
+ mlResearch?:MarketPriceResearch;complement?:{status:'completed'|'unavailable';checkedAt:string;accepted:number;message:string;rounds?:number;candidates?:number;rejected?:number};
 };
 export const ML_PRICE_PAGE_SIZE=20,ML_PRICE_MAX_OFFERS=200,ML_PRICE_MIN_SELLERS=1,ML_PRICE_PREFERRED_SELLERS=3;
 const record=(v:unknown):Record<string,unknown>=>v&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:{};

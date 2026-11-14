@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.424 -->
+<!-- ava-version: 3.2.0.425 -->
+
+> Revisão local 3.2.0.425 — Sem impacto operacional na Gestão Mobile nativa ou no AvantaVendas. No PWA AvantaPreços, a pesquisa web complementar pode continuar em segunda rodada após descartar ofertas, excluindo lojas anteriores e preservando as já comprovadas. Veja a revisão atual de gestao-web.md. Não altera estoque, anúncios ou reservas. Sem nova migração de banco. Validação local; publicação pela main autorizada, em preparação.
 
 > Revisão local 3.2.0.424 — Sem impacto operacional na Gestão Mobile nativa e no AvantaVendas. No PWA AvantaPreços, vale o novo fluxo ML primeiro e complemento web com IA só abaixo de três vendedores, com conferência nas lojas e preservação da referência em falha. Não altera preços de anúncios, estoques ou reservas. Veja a regra completa na revisão atual de gestao-web.md. Migração validada localmente, aplicada e registrada em produção após autorização. Publicação pela main autorizada, em preparação. Esta regra substitui a pesquisa exclusivamente ML das revisões 420/422.
 

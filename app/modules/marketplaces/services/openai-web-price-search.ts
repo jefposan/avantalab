@@ -8,7 +8,7 @@ import {isValidEan} from './ean';
 import type { OriginPriceEvidence } from '../price-origin-evidence';
 
 type JsonRecord = Record<string, unknown>;
-type PriceSearchInput={ean:string|null;productName:string;model?:string;brand?:string;variant?:string;mode?:'shopping_complement'};
+type PriceSearchInput={ean:string|null;productName:string;model?:string;brand?:string;variant?:string;mode?:'shopping_complement';searchRound?:1|2;excludedDomains?:string[];minimumOffers?:number};
 
 export type WebPriceOffer = {
   title: string;
@@ -27,7 +27,7 @@ export type OpenAIWebPriceSample = {
   maximum: number;
 };
 
-export type OpenAIWebPriceLookup = { status: 'completed'; sample: OpenAIWebPriceSample | null; product?: WebProductFacts | null; fromCache?: boolean; researchedAt?: string };
+export type OpenAIWebPriceLookup = { status: 'completed'; candidateUrls?:string[]; sample: OpenAIWebPriceSample | null; product?: WebProductFacts | null; fromCache?: boolean; researchedAt?: string };
 
 type OpenAIResponse = {
   id?: string;
@@ -136,20 +136,23 @@ async function executePriceSearch(input: PriceSearchInput, control?: PriceSearch
   if (!productName) throw new MarketplaceError(400, 'invalid_price_query', 'Não foi possível determinar o produto para pesquisar preços.');
   // Escolha explícita do responsável. Sem override/fallback silencioso para modelo caro.
   const model = PRICE_SEARCH_MODEL;
+  const excludedDomains=[...new Set((input.excludedDomains||[]).filter(domain=>/^[a-z0-9.-]+$/.test(domain)).map(domain=>domain.toLowerCase()))].sort().slice(0,16);
   const prompt = [
     input.mode === 'shopping_complement' ? 'Complemento de uma consulta prévia no Mercado Livre. Priorize pesquisar no Google Shopping Brasil pelo EAN e modelo/variante, abrindo as lojas de origem. A ferramenta disponível é pesquisa web: se a grade do Google Shopping não estiver acessível, pesquise páginas públicas das lojas e nunca alegue que acessou a grade. Exclua Mercado Livre desta etapa para não repetir vendedores nem incluir contas próprias. Retorne até 8 lojas diferentes; uma oferta por domínio de loja. Não altere ficha técnica; product deve ser null.' : '',
+    input.mode === 'shopping_complement' ? `Rodada ${input.searchRound||1} de no máximo 2. Ainda faltam ${Math.max(1,Math.min(3,input.minimumOffers||3))} lojas válidas para a amostra. Procure várias lojas independentes, até 8. Não encerre na primeira oferta se as buscas permitidas ainda puderem localizar alternativas. Não invente ofertas para cumprir a meta.` : '',
+    input.mode === 'shopping_complement' && input.searchRound === 2 ? `A rodada anterior foi conferida pelo servidor e não completou a amostra: ofertas podem estar sem estoque, incompatíveis ou não comprovadas. Faça consultas DIFERENTES, principalmente marca + modelo + tensão + comprar sem EAN, além de variantes curtas do modelo. Não insista no mesmo resultado. Domínios já consultados: ${excludedDomains.join(', ')||'nenhum domínio aproveitável'}. Exclua-os das pesquisas com ${excludedDomains.map(domain=>'-site:'+domain).join(' ')} e não os retorne no JSON.` : '',
     'Pesquise ofertas atuais do produto EXATO informado abaixo e retorne os preços totais anunciados em reais, a loja e o link da fonte consultada. Você deve entregar os PREÇOS no JSON; não apenas links. O servidor calculará a média.',
     `Produto: ${productName}`,
     input.ean ? `EAN prioritário: ${input.ean}. Identifique a ficha exata e pesquise a oferta desse código; o título local é uma pista, não precisa ser reproduzido literalmente.` : '',
     input.brand ? `Marca do cadastro: ${input.brand}` : '',
     input.model ? `Modelo/referência do fabricante no cadastro: ${input.model}` : '',
     `Termos curtos para pesquisar: ${priceSearchQuery(productName)}`,
-    'Na pesquisa inicial reúna duas consultas complementares: EAN + preço e marca/modelo/variante + comprar preço sem EAN. Use termos curtos; não repita o título completo nem o EAN em todas as consultas. Exclua listas genéricas com -inurl:busca -inurl:lista quando dominarem os resultados. Não repita pesquisas apenas para aumentar a quantidade.',
-    'Inclua no MESMO lote inicial uma consulta para varejistas independentes com marca, modelo, cor/tensão e preço, excluindo nesta consulta secundária -site:magazineluiza.com.br -site:shopee.com.br. A consulta principal continua livre para todos os sites. Isso evita concentração em páginas que bloqueiam a leitura; não é busca adicional para completar ofertas. Se usar a segunda chamada, use-a apenas para esclarecer identidade/variante ou origem ilegível, excluindo os domínios que dominaram a primeira; não repita a consulta equivalente.',
+    input.mode === 'shopping_complement' ? 'Use até duas chamadas web nesta rodada para localizar lojas DIFERENTES. Na primeira rodada combine EAN + preço e marca/modelo/tensão + comprar sem EAN. Na continuação, mude os termos e exclua as lojas anteriores. O título local é uma pista; termos promocionais como timer/antiaderente não são obrigatórios na consulta.' : 'Na pesquisa inicial reúna duas consultas complementares: EAN + preço e marca/modelo/variante + comprar preço sem EAN. Use termos curtos; não repita o título completo nem o EAN em todas as consultas. Exclua listas genéricas com -inurl:busca -inurl:lista quando dominarem os resultados. Não repita pesquisas apenas para aumentar a quantidade.',
+    input.mode !== 'shopping_complement' ? 'Inclua no MESMO lote inicial uma consulta para varejistas independentes com marca, modelo, cor/tensão e preço, excluindo nesta consulta secundária -site:magazineluiza.com.br -site:shopee.com.br. A consulta principal continua livre para todos os sites. Isso evita concentração em páginas que bloqueiam a leitura; não é busca adicional para completar ofertas. Se usar a segunda chamada, use-a apenas para esclarecer identidade/variante ou origem ilegível, excluindo os domínios que dominaram a primeira; não repita a consulta equivalente.' : '',
     '',
     'Regras obrigatórias:',
-    '- pesquise lojas brasileiras por EAN e marca/modelo/variante, priorizando páginas DIRETAS de varejistas. Mercado Livre e Amazon Brasil também servem, mas não concentre buscas em suas listas genéricas. Priorize resultados que mostrem preço e a variante exata;',
-    '- reúna até 8 ofertas válidas e representativas. Não persiga os menores preços, não reserve vagas por plataforma e não faça buscas extras apenas para completar a quantidade. O servidor calculará a média de todas as ofertas comprovadas;',
+    input.mode === 'shopping_complement' ? '- pesquise lojas brasileiras independentes por EAN e marca/modelo/variante, priorizando páginas diretas. Não retorne Mercado Livre nem domínios já consultados. Use o Google Shopping quando acessível e pesquisa web das lojas como alternativa.' : '- pesquise lojas brasileiras por EAN e marca/modelo/variante, priorizando páginas DIRETAS de varejistas. Mercado Livre e Amazon Brasil também servem, mas não concentre buscas em suas listas genéricas. Priorize resultados que mostrem preço e a variante exata;',
+    input.mode === 'shopping_complement' ? '- reúna até 8 ofertas válidas e representativas de lojas diferentes, tentando completar a quantidade indicada dentro das duas chamadas permitidas. Não persiga os menores preços nem substitua o modelo ou a tensão para aumentar a amostra.' : '- reúna até 8 ofertas válidas e representativas. Não persiga os menores preços, não reserve vagas por plataforma e não faça buscas extras apenas para completar a quantidade. O servidor calculará a média de todas as ofertas comprovadas;',
     '- se o produto exato não existir em um desses marketplaces, não substitua por modelo parecido e não invente oferta; apenas omita esse marketplace;',
     '- em cada oferta, preencha ean somente quando o código for explicitamente informado pela fonte para a opção selecionada; sem comprovação use null, nunca copie o EAN da consulta para a oferta. Código diferente deve ser descartado.',
     '- quando houver EAN, use-o como identificador prioritário, mas não exija sua presença em todo anúncio: marca, modelo e variante comprovados na ficha também identificam a oferta. Código de outra variante nunca serve;',
@@ -228,12 +231,14 @@ async function executePriceSearch(input: PriceSearchInput, control?: PriceSearch
     const offerEan=text(candidate.ean);
     if(offerEan&&(!isValidEan(offerEan)||input.ean&&offerEan.replace(/^0+/,'')!==input.ean.replace(/^0+/,'')))return [];
     const offer=normalizedOffer(candidate);
+    if(offer&&input.mode==='shopping_complement'&&excludedDomains.includes(new URL(offer.url).hostname.toLowerCase().replace(/^www\./,'')))return [];
     const identity=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
     if(offer&&input.brand&&!identity(offer.title+' '+text(candidate.variant)).includes(identity(input.brand)))return [];
     if(offer&&/\b(usad[oa]|seminov[oa]|recondicionad[oa]|reembalad[oa]|remanufaturad[oa]|avaria|outlet|open[ -]?box|refurbished|used)\b/i.test(offer.title))return [];
     return offer&&isProductOfferUrl(offer.url)&&citedUrls.has(offer.url)&&matchesPriceOfferSource(offer.url,productName)&&matchesPriceOffer(offer.title,productName,text(candidate.variant))?[offer]:[];
   });
-  // Como no fluxo aprovado: preço, fonte citada, disponibilidade e variante
-  // retornados pela pesquisa; o HTML direto da loja não é uma condição adicional.
-  return { status: 'completed', sample:priceSample({offers:candidates}), product:control?.includeFacts === false ? null : readWebProductFacts(payload?.product,input,cited) };
+  const candidateUrls=input.mode==='shopping_complement'?[...new Set(citedUrls)].filter((url):url is string=>Boolean(url)&&isProductOfferUrl(url!)&&!excludedDomains.includes(new URL(url!).hostname.toLowerCase().replace(/^www\./,''))).slice(0,24):undefined;
+  // O fluxo legado conserva ofertas citadas. No complemento, o orquestrador
+  // também lê estas fontes candidatas e exige prova na página primária.
+  return { status: 'completed', ...(candidateUrls?{candidateUrls}:{}), sample:priceSample({offers:candidates}), product:control?.includeFacts === false ? null : readWebProductFacts(payload?.product,input,cited) };
 }
