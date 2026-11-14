@@ -42,6 +42,7 @@ import { collapseMarketplacePanel } from './collapse-panel';
 import {usePanelExpansion,type PanelExpansionProps} from './panel-expansion';
 import InitialStockLoad from './InitialStockLoad';
 import PriceProductStock from './PriceProductStock';
+import PriceResearchDetails from './PriceResearchDetails';
 import type { Warehouse } from '@/app/modules/marketplaces/warehouses';
 import styles from './marketplaces.module.css';
 
@@ -193,6 +194,7 @@ export function ProductDetail({ product, props, busy, onCommand, onStockBusy, on
     <ProductQuality product={linkedProduct||product} accounts={accounts} canManage={canManage} busy={busy} dark={props.dark} brand={props.brand} request={request} onBusy={onStockBusy}/>
     <section className={styles.productDetailSection} aria-label="Cadastro do produto"><header className={styles.productSectionHeader}><h3>Cadastro do produto</h3>{canManage && <div className={styles.productDetailActions}><BotaoAcaoCompacto disabled={busy} aria-expanded={editing} onClick={() => setEditing(value => !value)}>Editar cadastro</BotaoAcaoCompacto>{visibleLinks.length > 0 && <BotaoAcaoCompacto disabled={busy || !sourceLink} onClick={() => onCommand({ action: 'refresh_listing', productId: product.id, connectionId: sourceLink?.connection_id, listingId: sourceLink?.provider_listing_id })}>Consultar ficha do anúncio</BotaoAcaoCompacto>}</div>}</header>
     <dl className={styles.productSummaryFacts}><div><dt>Código interno</dt><dd>{product.sku}</dd></div><div><dt>EAN / GTIN</dt><dd>{product.ean || 'Não informado'}</dd></div><div><dt>Preço de referência</dt><dd>{product.price_cents ? formatarMoeda(product.price_cents / 100) : 'Não informado'}</dd></div><div><dt>Categoria</dt><dd>{product.category_id || 'Ainda não cadastrada'}</dd></div></dl>
+    <PriceResearchDetails key={`${product.id}:${product.revision}`} dark={props.dark} brand={props.brand} loadResearch={async()=>{const data=await stockRequest('/api/modulos/marketplaces/precos/produto',{method:'POST',body:JSON.stringify({empresaId:companyId,productId:product.id})}) as {result?:{marketResearch?:import('@/app/modules/marketplaces/market-price-research').MarketPriceResearch}};return data.result?.marketResearch||null;}}/>
     {canManage&&!editing&&<CatalogFullReview key={product.id} companyId={companyId} productId={product.id} request={request} brand={props.brand} dark={props.dark} disabled={busy||!product.ean} onBusy={onStockBusy}/>}
     {editing && <ProductFields idPrefix={fieldPrefix} product={product} disabled={busy} onSave={onCommand} onCancel={() => setEditing(false)} />}
     {product.internal_notes && <section className={styles.localSection} aria-label="Observações internas do produto"><h4>Observações internas</h4><p className={styles.localDescription}>{product.internal_notes}</p><small>Visíveis aos usuários deste perfil. Não são enviadas aos anúncios online.</small></section>}

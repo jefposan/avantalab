@@ -25,7 +25,8 @@ hooks.deregister();
 
 const ean = '7891129598607';
 const productId = 'MLB75636839';
-const connection = { id: crypto.randomUUID(), empresa_id: crypto.randomUUID() };
+const connection = { id: crypto.randomUUID(), empresa_id: crypto.randomUUID(),seller_reference:'999999' };
+const marketDb={from(table){assert.equal(table,'marketplace_connections');const q={select(){return q},eq(){return q},then(ok,bad){return Promise.resolve({data:[],error:null}).then(ok,bad)}};return q;}};
 test('preço total confirmado do EAN 7899882311471 gera referência e três sugestões',()=>{
  assert.deepEqual(calculatePriceSuggestions([26590]),{market:265.9,minimum:132.95,medium:186.13,ideal:239.31});
 });
@@ -43,13 +44,14 @@ test('consulta compartilhada Web/AvantaPreços entrega nome compacto sem perder 
  assert.equal(result.product.attributes.find(attribute=>attribute.id==='MODEL').value,'ESI10');
 });
 
-function mockCatalog() {
+function mockCatalog(prices=[800,850,900]) {
   process.env.MARKETPLACE_SECRETS_KEY = 'configured-for-test';
   globalThis.__mlPriceMock = async (path) => {
     const url = new URL(`https://api.mercadolibre.com${path}`);
     if (url.pathname === '/products/search') return { results: [product()] };
     if (url.pathname === `/products/${productId}`) return product({ short_description: { content: 'Produto localizado' } });
-    throw new Error(`A consulta assistida não deve acessar a vitrine pública: ${path}`);
+    if(url.pathname===`/products/${productId}/items`)return {paging:{total:prices.length,offset:0},results:prices.map((price,i)=>({item_id:'MLB'+(1000+i),seller_id:2000+i,price,currency_id:'BRL',condition:'new'}))};
+    throw new Error(`Consulta inesperada: ${path}`);
   };
 }
 
@@ -90,63 +92,16 @@ test('referência usa média de todas as ofertas válidas, limitada a oito', () 
   );
 });
 
-test('consulta identifica o produto e calcula a média sem consultar a vitrine do Mercado Livre', async () => {
-  mockCatalog();
-  mockPriceProvider();
-  const result = await consultMercadoLivrePrice({}, connection, { ean });
-  assert.equal(result.status, 'found');
-  assert.equal(result.product?.name, 'Fogão de teste');
-  assert.equal(globalThis.__openAIPriceRequest.model, 'gpt-5.4-mini');
-  assert.equal(globalThis.__openAIPriceRequest.max_tool_calls, 2);
-  assert.equal(globalThis.__openAIPriceRequest.tool_choice, 'required');
-  assert.equal(globalThis.__openAIPriceRequest.tools[0].type, 'web_search');
-  assert.match(globalThis.__openAIPriceRequest.input, /Fogão de teste/);
-  assert.deepEqual(result.prices, { market: 850, minimum: 425, medium: 595, ideal: 765 });
-  assert.equal(result.sample?.source, 'openai_web_search');
-  assert.deepEqual(result.sample?.offers?.map(({ seller, price }) => ({ seller, price })), [{ seller: 'Loja A', price: 800 }, { seller: 'Loja B', price: 900 }]);
+test('consulta identifica produto e calcula referência direta do catálogo ML sem chamar IA',async()=>{
+ mockCatalog();globalThis.fetch=async()=>{throw Error('OpenAI não pode ser chamada')};
+ const r=await consultMercadoLivrePrice(marketDb,connection,{ean});assert.equal(r.status,'found');assert.equal(r.product.name,'Fogão de teste');assert.deepEqual(r.prices,{market:850,minimum:425,medium:595,ideal:765});assert.equal(r.sample.source,'mercadolivre_catalog');assert.equal(r.marketResearch.count,3);
 });
-
-
-test('consulta usa a amostra representativa sem reservar vagas por marketplace', async () => {
-  mockCatalog();
-  mockPriceProvider({ offers: [
-    { title: 'Fogão de teste', seller: 'Loja 1', price: 100, url: 'https://um.example/fogao' },
-    { title: 'Fogão de teste', seller: 'Loja 2', price: 110, url: 'https://dois.example/fogao' },
-    { title: 'Fogão de teste', seller: 'Loja 3', price: 120, url: 'https://tres.example/fogao' },
-    { title: 'Fogão de teste', seller: 'Mercado Livre - caro', price: 350, url: 'https://produto.mercadolivre.com.br/MLB-350' },
-    { title: 'Fogão de teste', seller: 'Mercado Livre - menor', price: 300, url: 'https://produto.mercadolivre.com.br/MLB-300' },
-    { title: 'Fogão de teste', seller: 'Amazon - caro', price: 450, url: 'https://www.amazon.com.br/dp/TEST450' },
-    { title: 'Fogão de teste', seller: 'Amazon - menor', price: 400, url: 'https://www.amazon.com.br/dp/TEST400' },
-  ] });
-  const result = await consultMercadoLivrePrice({}, connection, { ean });
-  assert.match(globalThis.__openAIPriceRequest.input, /Mercado Livre/);
-  assert.match(globalThis.__openAIPriceRequest.input, /Amazon Brasil/);
-  assert.deepEqual(result.sample?.offers?.map(({ seller, price }) => ({ seller, price })), [
-    { seller: 'Loja 1', price: 100 },
-    { seller: 'Loja 2', price: 110 },
-    { seller: 'Loja 3', price: 120 },
-    { seller: 'Mercado Livre - menor', price: 300 },
-    { seller: 'Mercado Livre - caro', price: 350 },
-    { seller: 'Amazon - menor', price: 400 },
-    { seller: 'Amazon - caro', price: 450 },
-  ]);
-  assert.deepEqual(result.prices, { market: 261.43, minimum: 130.72, medium: 183, ideal: 235.29 });
+test('consulta direta considera mais de oito vendedores na média',async()=>{
+ mockCatalog(Array.from({length:12},(_,i)=>100+i*10));globalThis.fetch=async()=>{throw Error('IA proibida')};
+ const r=await consultMercadoLivrePrice(marketDb,connection,{ean});assert.equal(r.sample.count,12);assert.equal(r.prices.market,155);assert.equal(r.sample.offers.length,12);
 });
-
-test('consulta com IA não descarta oferta comprovada só por ter preço mais alto', async () => {
-  mockCatalog();
-  mockPriceProvider({ offers: [
-    { title: 'Fogão de teste', seller: 'Loja cara', price: 5_000, url: 'https://cara.example/fogao' },
-    { title: 'Fogão de teste', seller: 'Loja 5', price: 500, url: 'https://cinco.example/fogao' },
-    { title: 'Fogão de teste', seller: 'Loja 1', price: 100, url: 'https://um.example/fogao' },
-    { title: 'Fogão de teste', seller: 'Loja 4', price: 400, url: 'https://quatro.example/fogao' },
-    { title: 'Fogão de teste', seller: 'Loja 2', price: 200, url: 'https://dois.example/fogao' },
-    { title: 'Fogão de teste', seller: 'Loja 3', price: 300, url: 'https://tres.example/fogao' },
-  ] });
-  const result = await consultMercadoLivrePrice({}, connection, { ean });
-  assert.equal(result.status, 'found');
-  assert.deepEqual(result.prices, { market: 1083.33, minimum: 541.67, medium: 758.33, ideal: 975 });
-  assert.deepEqual(result.sample?.offers?.map((offer) => offer.price), [100, 200, 300, 400, 500, 5000]);
+test('uma única oferta do catálogo não define preço médio',async()=>{
+ mockCatalog([5000]);const r=await consultMercadoLivrePrice(marketDb,connection,{ean});assert.equal(r.status,'found');assert.equal(r.prices,undefined);assert.equal(r.marketResearch.status,'insufficient');assert.equal(r.marketResearch.offers[0].price,5000);
 });
 
 test('tarefa Google concluída sem ofertas encerra a consulta em vez de permanecer pendente', async () => {

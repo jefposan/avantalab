@@ -18,6 +18,8 @@ import ColaboradorTopbar from '@/app/recebimentos/components/ColaboradorTopbar';
 import PriceLotsPanel from '../PriceLotsPanel';
 import usePriceSettings from '../usePriceSettings';
 import PriceProductStock from '../PriceProductStock';
+import PriceResearchDetails from '../PriceResearchDetails';
+import type {MarketPriceResearch} from '@/app/modules/marketplaces/market-price-research';
 import ProductPost from '../ProductPost';
 import {PRODUCT_STOCK_CHANGED} from '../product-stock-events';
 import PriceLabelReader from '../PriceLabelReader';
@@ -34,7 +36,7 @@ import CatalogCandidateChooser from '../CatalogCandidateChooser';
 import type { CatalogCandidate } from '@/app/modules/marketplaces/services/catalog-publication';
 
 type Company = { id: string; nome: string; perfil: string; [key: string]: unknown };
-type PriceSource = 'active_offers' | 'catalog_reference' | 'manual_reference' | 'google_shopping' | 'openai_web_search' | 'local_reference';
+type PriceSource = 'active_offers' | 'catalog_reference' | 'manual_reference' | 'google_shopping' | 'openai_web_search' | 'local_reference' | 'mercadolivre_catalog';
 type PriceOffer = { title: string; seller: string; price: number; url: string };
 type Consultation = {
   status: 'found' | 'not_found' | 'choose';
@@ -48,6 +50,7 @@ type Consultation = {
   historyId?: string;
   localProductId?: string;
   localProductRevision?: number;
+  marketResearch?: MarketPriceResearch;
   referenceStatus?: 'saved' | 'missing' | 'preserved';
   consultedAt?: string;
 };
@@ -56,7 +59,7 @@ type HistoryRow = {
   id: string; ean: string | null; input_type: 'ean' | 'text'; input_value: string; provider_product_id: string;
   product_name: string; product_description: string | null; image_url: string | null; currency: string;
   market_price_cents: number; minimum_price_cents: number; medium_price_cents: number; ideal_price_cents: number;
-  sample_count: number; sample_min_cents: number; sample_max_cents: number; sample_source: PriceSource; source_offers?: PriceOffer[]; created_at: string;
+  sample_count: number; sample_min_cents: number; sample_max_cents: number; sample_source: PriceSource; source_offers?: PriceOffer[]; market_evidence?:MarketPriceResearch|null; created_at: string;
   updated_at: string; last_researched_at: string; manually_updated_at: string | null;
 };
 type Account = { id: string; status: string; seller_name: string | null; seller_reference: string };
@@ -68,6 +71,7 @@ const PRICE_CONTINUATION_INTERVAL_MS = 2_000;
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 function priceReferenceLabel(source?: PriceSource) {
+  if (source === 'mercadolivre_catalog') return 'Referência do Mercado Livre';
   if (source === 'local_reference') return 'Referência cadastrada';
   if (source === 'google_shopping' || source === 'openai_web_search') return 'Média dos até 5 menores preços';
   if (source === 'manual_reference') return 'Preço informado';
@@ -76,6 +80,7 @@ function priceReferenceLabel(source?: PriceSource) {
 }
 
 function priceReferenceNote(source?: PriceSource) {
+  if (source === 'mercadolivre_catalog') return 'Referência obtida das ofertas do catálogo do Mercado Livre.';
   if (source === 'local_reference') return 'Valor salvo no cadastro do produto. Use Atualizar preço para pesquisar o mercado novamente.';
   if (source === 'openai_web_search') return 'Média das até 5 menores ofertas atuais verificadas pela pesquisa web com IA.';
   if (source === 'google_shopping') return 'Média das até 5 menores ofertas comparáveis localizadas no Google Shopping.';
@@ -137,7 +142,7 @@ function historyToConsultation(row: HistoryRow): Consultation {
     product: { id: row.provider_product_id, name: row.product_name, description: row.product_description || '', image: row.image_url, attributes: [] },
     prices: { market: row.market_price_cents / 100, minimum: row.minimum_price_cents / 100, medium: row.medium_price_cents / 100, ideal: row.ideal_price_cents / 100 },
     sample: { count: row.sample_count, minimum: row.sample_min_cents / 100, maximum: row.sample_max_cents / 100, source: row.sample_source, ...(row.source_offers?.length ? { offers: row.source_offers } : {}) },
-    historyId: row.id, localProductId: row.local_product_id || undefined, consultedAt: row.sample_source === 'local_reference' ? undefined : row.last_researched_at || row.created_at,
+    ...(row.market_evidence?{marketResearch:row.market_evidence}:{}), historyId: row.id, localProductId: row.local_product_id || undefined, consultedAt: row.sample_source === 'local_reference' ? undefined : row.last_researched_at || row.created_at,
   };
 }
 
@@ -532,7 +537,7 @@ export default function MarketplaceMobileApp() {
         setSearchIsLocal(true);
         const cached = await request('/api/modulos/marketplaces/precos/produto', { method: 'POST', signal: controller.signal, body: JSON.stringify({ empresaId: company.id, ean: clean.ean }) });
         if (run !== consultationRunRef.current) return;
-        if (cached.result) { setResultFromCatalog(false); setResult(cached.result); setResultDetailsOpen(true); setCandidates([]); await resolveLotRead(read,cached.result.historyId); return; }
+        if (cached.result?.prices) { setResultFromCatalog(false); setResult(cached.result); setResultDetailsOpen(true); setCandidates([]); await resolveLotRead(read,cached.result.historyId); return; }
         setSearchIsLocal(false);
       }
       // Uma continuação apenas lê o mesmo task do Google Shopping; não repete
@@ -565,7 +570,7 @@ export default function MarketplaceMobileApp() {
           if (next.localProductId) {
             const local = await request('/api/modulos/marketplaces/precos/produto', { method: 'POST', signal: controller.signal, body: JSON.stringify({ empresaId: company.id, productId: next.localProductId }) });
             if (run !== consultationRunRef.current) return;
-            if (local.result) setResult(local.result.prices?.market === next.prices?.market ? { ...local.result, sample: next.sample, notice: next.notice, consultedAt: next.consultedAt } : local.result);
+            if (local.result) setResult(local.result.prices?.market === next.prices?.market ? { ...local.result, sample: next.sample, marketResearch:next.marketResearch||local.result.marketResearch, notice: next.notice, consultedAt: next.consultedAt } : local.result);
           }
           await resolveLotRead(read,next.historyId);
           if (run !== consultationRunRef.current) return;
@@ -575,7 +580,7 @@ export default function MarketplaceMobileApp() {
         await waitForPriceSearch(PRICE_CONTINUATION_INTERVAL_MS, controller.signal);
       }
       if (run === consultationRunRef.current) {
-        const message = 'O Google Shopping ainda não concluiu esta coleta. Nenhum valor foi alterado; tente novamente em alguns instantes.';
+        const message = 'A consulta ao Mercado Livre não foi concluída. Nenhum valor foi alterado; tente novamente em alguns instantes.';
         if (isHistoryRefresh) setResultError(message); else setError(message);
       }
     } catch (reason) {
@@ -756,7 +761,7 @@ export default function MarketplaceMobileApp() {
           <div className={styles.mediumPrice}><span>Preço médio de venda</span><strong>{money.format(result.prices.medium)}</strong></div>
           <div className={styles.idealPrice}><span>Preço ideal</span><strong>{money.format(result.prices.ideal)}</strong></div>
         </div><p className={styles.sampleNote}>{priceReferenceNote(result.sample?.source)}</p>
-        {result.sample?.offers?.length ? <section className={styles.priceSources} aria-labelledby="price-sources-title"><h2 id="price-sources-title">Ofertas usadas no cálculo</h2><div>{result.sample.offers.map((offer) => <a key={`${offer.url}-${offer.price}`} href={offer.url} target="_blank" rel="noreferrer"><span><strong>{offer.seller}</strong><small>{offer.title}</small></span><b>{money.format(offer.price)}</b></a>)}</div></section> : null}</> : <section className={styles.assistedPrice} aria-labelledby="assisted-price-title">
+        </> : <section className={styles.assistedPrice} aria-labelledby="assisted-price-title">
           <h2 id="assisted-price-title">{loading ? 'Consultando preços' : searchNotice ? 'Pesquisa cancelada' : result.localProductId ? 'Produto cadastrado sem preço' : 'Preço indisponível'}</h2>
           <p role="status">{loading ? 'Estamos acompanhando a coleta de ofertas automaticamente.' : searchNotice ? 'Você pode iniciar uma nova pesquisa.' : result.localProductId ? 'Informe uma referência em Ajustar preço médio ou toque em Atualizar preço para pesquisar novamente.' : 'Não foram encontradas ofertas comparáveis para este produto neste momento.'}</p>
           {!loading && result.historyId && <button type="button" className={styles.secondaryButton} onClick={() => void consult({ historyId: result.historyId })}><Icon name="refresh" />Consultar novamente</button>}
@@ -764,7 +769,7 @@ export default function MarketplaceMobileApp() {
         {result.referenceStatus && result.prices && !loading && <p className={styles.searchNotice} role="status">{result.referenceStatus === 'preserved' ? 'Referência anterior preservada e conferida no servidor.' : 'Referência salva e conferida no servidor.'}</p>}
         {result.notice && !loading && !searchNotice && !priceResearchFeedback && <p className={styles.sampleNote} role="status">{result.notice}</p>}
         {resultError && !priceResearchFeedback?.error && <p className={styles.error} role="alert">{resultError}</p>}
-        {result.consultedAt && <p className={styles.consultedAt}>Preço pesquisado em {dateTime.format(new Date(result.consultedAt))}</p>}
+        <PriceResearchDetails key={`${result.localProductId||result.historyId}:${result.marketResearch?.checkedAt||result.consultedAt||"saved"}`} research={result.marketResearch} offers={result.sample?.offers} consultedAt={result.consultedAt} dark={effectiveDark} brand={priceSettings.settings?.profileColor}/>
         {((result.prices && result.historyId) || result.localProductId) && <form className={styles.manualPriceEdit} onSubmit={updateHistoryPrice}>
           <label htmlFor="history-market-price">Ajustar preço médio</label>
           <p>Altere a referência e atualize os três preços sugeridos.</p>

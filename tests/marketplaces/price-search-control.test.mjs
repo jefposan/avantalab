@@ -171,9 +171,9 @@ test('SQL real: RLS, cache entre usuários da mesma empresa, limites e isolament
  }finally{await db.close();}
 });
 
-test('todas as rotas pagas propagam controle autenticado e cancelamento',()=>{
+test('consulta ML não chama IA; atualização explícita preserva autenticação e cancelamento',()=>{
  const api=readFileSync(resolve(root,'app/api/modulos/marketplaces/precos/route.ts'),'utf8');
- assert.match(api,/actorId: usuario.id, signal: request.signal/);assert.match(api,/actorId: actor, signal/);
+ assert.match(api,/actorId: usuario.id, signal: request.signal/);assert.doesNotMatch(api,/consultOpenAIWebPrices\s*\(/);assert.match(api,/researchLocalProductPrice\(db,empresaId,actor,[^\n]+,signal\)/);
  for(const file of ['precos/produto/route.ts','produtos/preco/route.ts'])assert.match(readFileSync(resolve(root,'app/api/modulos/marketplaces/'+file),'utf8'),/researchLocalProductPrice\(db, empresaId, usuario.id, body, request.signal\)/);
 });
 

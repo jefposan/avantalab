@@ -8,6 +8,7 @@ import { calculatePriceSuggestions, type PriceConsultationResult } from './merca
 import { readPriceSettings } from './price-settings';
 import { sourceUrl } from './web-product-facts';
 import { readPersistedReference } from './price-persistence';
+import {readProductMarketResearch} from './mercadolivre-market-prices';
 
 /** Primeiro o cadastro canônico; consultar um EAN existente não pesquisa nem soma estoque. */
 export async function consultLocalPrice(db: SupabaseClient, companyId: string, actor: string, input: { ean?: unknown; productId?: unknown }): Promise<PriceConsultationResult | null> {
@@ -26,10 +27,12 @@ export async function consultLocalPrice(db: SupabaseClient, companyId: string, a
   const product = await getLocalProduct(db, companyId, id);
   const prices = product.price_cents ? calculatePriceSuggestions([product.price_cents], (await readPriceSettings(db, companyId)).percentages) : undefined;
   let historyId: string | undefined;
+  let historyResearch: import('../market-price-research').MarketPriceResearch | null=null;
   if (prices) {
     const source = `LOCAL:${product.id}`;
-    const { data: previous, error } = await db.from('marketplace_price_consultations').select('id,product_name,product_description,image_url,ean,minimum_price_cents,medium_price_cents,ideal_price_cents').eq('empresa_id', companyId).eq('local_product_id', product.id).eq('market_price_cents', product.price_cents).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    const { data: previous, error } = await db.from('marketplace_price_consultations').select('id,product_name,product_description,image_url,ean,minimum_price_cents,medium_price_cents,ideal_price_cents,market_evidence').eq('empresa_id', companyId).eq('local_product_id', product.id).eq('market_price_cents', product.price_cents).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (error) throw new MarketplaceError(503, 'history_unavailable', 'Não foi possível conferir a referência salva.');
+    historyResearch=previous?.market_evidence||null;
     historyId = previous && previous.product_name === product.name && (previous.product_description || '') === product.description && previous.image_url === (product.pictures[0] || null) && previous.ean === product.ean && previous.minimum_price_cents === Math.round(prices.minimum*100) && previous.medium_price_cents === Math.round(prices.medium*100) && previous.ideal_price_cents === Math.round(prices.ideal*100) ? previous.id : undefined;
     if (!historyId) {
       const { data: saved, error: failure } = await db.from('marketplace_price_consultations').insert({
@@ -42,8 +45,9 @@ export async function consultLocalPrice(db: SupabaseClient, companyId: string, a
       historyId = saved.id;
     }
   }
+  const marketResearch=await readProductMarketResearch(db,companyId,product.id)||historyResearch;
   const researchSources=objectValue(product.publication_form).web_research_sources;
-  return { status: 'found', ean: product.ean, query: null, localProductId: product.id, localProductRevision: product.revision, historyId,
+  return { status: 'found', ...(marketResearch?{marketResearch}:{}), ean: product.ean, query: null, localProductId: product.id, localProductRevision: product.revision, historyId,
     product: { id: `LOCAL:${product.id}`, name: product.name, description: product.description, image: product.pictures[0] || null, attributes: product.attributes, sources:(Array.isArray(researchSources)?researchSources:[]).slice(0,20).map(sourceUrl).filter((url):url is string=>Boolean(url)) }, prices,
     referenceStatus: prices ? 'saved' : 'missing',
     ...(prices ? { sample: { count: 1, minimum: prices.market, maximum: prices.market, source: 'local_reference' as const } } : {}), notice: prices ? 'Referência salva no cadastro e conferida no servidor. Nenhuma pesquisa externa ou entrada de estoque foi feita.' : 'Produto cadastrado sem preço. Informe uma referência manual ou use Atualizar preço para pesquisar novamente.' };

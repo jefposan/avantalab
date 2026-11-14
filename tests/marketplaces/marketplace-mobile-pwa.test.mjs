@@ -129,14 +129,13 @@ test('resultado diferencia os quatro valores e o histórico pode ser reaberto, a
   assert.match(client, /M3 12a9 9 0 0 1 15-6\.7L21 8/);
 });
 
-test('Consultar novamente usa somente a pesquisa web OpenAI e preserva as fontes', () => {
-  const historyBranch = api.match(/if \(input\.historyId\) \{([\s\S]*?)\n    \}\n    const connection = await resolveMercadoLivreConnection/)?.[1] || '';
-  assert.match(historyBranch, /refreshHistoryPrice\(db, empresaId, input\.historyId, usuario.id, request.signal, body.refreshPrice === true\)/);
-  assert.doesNotMatch(historyBranch, /resolveMercadoLivreConnection|consultMercadoLivrePrice/);
-  assert.match(api, /consultOpenAIWebPrices\(\{ ean: stored\.ean, productName: stored\.product_name \}, \{ db, companyId: empresaId, actorId: actor, signal/);
-  assert.match(api, /source_offers: lookup\.sample\.offers/);
-  assert.match(client, /Ofertas usadas no cálculo/);
-  assert.match(client, /href=\{offer\.url\}/);
+test('Consultar novamente usa pesquisa direta ML; fontes e data ficam recolhidas até exibir resultados',()=>{
+ const historyBranch=api.match(/if \(input\.historyId\) \{([\s\S]*?)\n    \}\n    const connection = await resolveMercadoLivreConnection/)?.[1]||'';
+ assert.match(historyBranch,/refreshHistoryPrice\(db, empresaId, input\.historyId, usuario.id, request.signal, body.refreshPrice === true\)/);
+ assert.doesNotMatch(historyBranch,/resolveMercadoLivreConnection|consultMercadoLivrePrice/);
+ assert.doesNotMatch(api,/consultOpenAIWebPrices\s*\(/);assert.match(api,/await researchLocalProductPrice/);assert.match(api,/market_evidence: result.marketResearch/);
+ assert.match(client,/<PriceResearchDetails/);assert.doesNotMatch(client,/Ofertas usadas no cálculo/);
+ const details=readFileSync('app/marketplaces/PriceResearchDetails.tsx','utf8');assert.match(details,/useState\(false\)/);assert.match(details,/hidden=\{!open\}/);assert.match(details,/Ver resultados da pesquisa/);assert.match(details,/href=\{offer\.url\}/);assert.match(details,/aria-expanded=\{open\}/);assert.match(details,/marketplaceDateTimeLabel/);
 });
 
 test('falha ao consultar novamente permanece no resultado aberto, não no dashboard', () => {

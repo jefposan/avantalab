@@ -15,7 +15,7 @@ function toCents(value: unknown) {
 }
 
 function historyFields() {
-  return 'id,local_product_id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,currency,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,source_offers,created_at,updated_at,last_researched_at,manually_updated_at';
+  return 'id,local_product_id,ean,input_type,input_value,provider_product_id,product_name,product_description,image_url,currency,market_price_cents,minimum_price_cents,medium_price_cents,ideal_price_cents,sample_count,sample_min_cents,sample_max_cents,sample_source,source_offers,market_evidence,created_at,updated_at,last_researched_at,manually_updated_at';
 }
 
 export async function GET(request: Request) {

@@ -7,6 +7,7 @@ import { lotMoney, lotTotals, lotUnits, type PriceLotDetail } from '@/app/module
 import { Icon } from '@/app/projetos/components/Icon';
 import { consultLotPrice, type LotPriceResult } from './price-lot-consultation';
 import PriceProductStock from './PriceProductStock';
+import PriceResearchDetails from './PriceResearchDetails';
 import type { LotRead, LotsRequest } from './usePriceLotCapture';
 import styles from './price-lots.module.css';
 
@@ -85,6 +86,7 @@ export default function PriceLotWebReader({ companyId, detail, request, capture,
     {error && <p className={styles.error} role="alert">{error} <button type="button" disabled={busy} onClick={() => void consult(undefined, pending.current?.code === code.trim())}>Tentar novamente</button></p>}
     {result?.result?.candidates?.length ? <div className={styles.readerCandidates}>{result.result.candidates.map(candidate => <button type="button" key={candidate.id} disabled={busy} onClick={() => void consult(candidate.id, true)}>{candidate.name}</button>)}</div> : null}
     {result?.prices && <div className={styles.readerResult}><strong>{result.name}</strong><span>Referência: {lotMoney(Math.round(result.prices.market * 100))}</span><span className={styles.minimum}>Mínimo: {lotMoney(Math.round(result.prices.minimum * 100))}</span><span className={styles.medium}>Médio: {lotMoney(Math.round(result.prices.medium * 100))}</span><span className={styles.ideal}>Ideal: {lotMoney(Math.round(result.prices.ideal * 100))}</span></div>}
+    {result?.result&&<PriceResearchDetails key={result.result.marketResearch?.checkedAt||result.historyId} research={result.result.marketResearch} offers={result.result.sample?.offers} consultedAt={result.result.consultedAt} dark={dark} brand={brand}/>}
     {result?.localProductId && result.revision && canManagePrice && <button type="button" disabled={busy || stockBusy} onClick={() => void refreshPrice()}>Atualizar preço</button>}
     {manual && <form className={styles.form} onSubmit={saveManual}><label>Nome do produto<input required value={manualName} disabled={busy} onChange={event => setManualName(event.target.value)} /></label><label>Preço médio de referência (R$)<CampoMoeda required value={manualPrice} disabled={busy} onChange={setManualPrice} /></label><div className={styles.actions}><button type="submit" disabled={busy} className={styles.primary}>Salvar referência no lote</button></div></form>}
   </section>;

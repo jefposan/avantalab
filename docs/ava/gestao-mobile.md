@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.419 -->
+<!-- ava-version: 3.2.0.420 -->
+
+> Revisão local 3.2.0.420: sem impacto operacional na Gestão Mobile nativa. A consulta direta de preços pertence ao PWA AvantaPreços e Marketplaces Web; não altera o aplicativo instalado.
 
 > Revisão 3.2.0.419: sem impacto operacional na Gestão Mobile; detalhamento de cards exclusivo do AvantaVendas.
 

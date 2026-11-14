@@ -1,6 +1,11 @@
 {
-  "baseDeploymentId": "dpl_DbcHS124tp6d1S6Nhn2BPYk1jeUK",
-  "migrations": [],
-  "version": "3.2.0.419",
-  "scope": "AvantaVendas: divisão dos recebimentos por forma e consignados por cliente, com ficha e retorno preservado"
+  "baseDeploymentId": "dpl_4BN3iYSXo9WbyxCCkEZmrwxbLGCc",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261114190000_marketplace_ml_price_research.sql",
+      "sha256": "34debeec8b5cde5d01d31393865eb8e96099ab5a6c5d6113ef2558bca4eca59a"
+    }
+  ],
+  "version": "3.2.0.420",
+  "scope": "AvantaPreços: preços diretos do catálogo Mercado Livre, sem IA automática, com resultados recolhidos e recibo persistido"
 }

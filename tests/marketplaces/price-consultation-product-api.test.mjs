@@ -12,7 +12,7 @@ const hooks=registerHooks({resolve(s,c,next){
   if(s.endsWith('/management-access'))return mock(`export class MarketplaceError extends Error{constructor(status,code,message){super(message);this.status=status;this.code=code}};export function managementFailure(e){return Response.json({message:e.message},{status:e.status||503})}`);
   if(s.endsWith('/price-access'))return mock(`export async function authorizePriceConsultation(){return {db:globalThis.consultProductDb,empresaId:'company',usuario:{id:'actor'}}}`);
   if(s.endsWith('/price-settings') && s!=='../price-settings')return mock(`export async function readPriceSettings(){return {percentages:{minimum:50,medium:70,ideal:90}}}`);
-  if(s.endsWith('/price-product-stock'))return mock(`export async function registerConsultedProduct(db,c,a,p,ean,price){globalThis.consultProductCalls.push({p,ean,price});if(globalThis.consultProductFail)throw Error('Cadastro indisponível');globalThis.consultProductStored=globalThis.consultProductPersist===false?null:(price?Math.round(price*100):null);return 'local-product'}`);
+  if(s.endsWith('/price-product-stock'))return mock(`export async function priceStockProduct(){throw Error('Atualização explícita usa pesquisa ML')};export async function registerConsultedProduct(db,c,a,p,ean,price){globalThis.consultProductCalls.push({p,ean,price});if(globalThis.consultProductFail)throw Error('Cadastro indisponível');globalThis.consultProductStored=globalThis.consultProductPersist===false?null:(price?Math.round(price*100):null);return 'local-product'}`);
   if(s.endsWith('/local-price-consultation'))return mock(`export async function consultLocalPrice(){return globalThis.consultLocalResult??null}`);
   if(s.endsWith('/local-product-price-research'))return mock(`export async function researchLocalProductPrice(db,c,a,input){globalThis.localResearchCalls.push(input);if(globalThis.localResearchError)throw Error('Pesquisa indisponível');globalThis.consultLocalResult=globalThis.localResearchResult;return {message:'Pesquisa concluída'}}`);
   if(s.endsWith('/mercadolivre-management'))return mock(`export async function resolveMercadoLivreConnection(){return {id:'connection'}}`);
@@ -42,7 +42,7 @@ test('abrir histórico retorna preço salvo sem consultar provedor; atualizar ex
  globalThis.consultProductDb={from(name){assert.equal(name,'marketplace_price_consultations');const q={select(){return q},eq(){return q},async maybeSingle(){return {data:row}}};return q;}};
  const request=refreshPrice=>new Request('http://localhost/api',{method:'POST',body:JSON.stringify({empresaId:'company',historyId:'saved',refreshPrice})});
  const response=await POST(request());assert.equal(response.status,200);const result=(await response.json()).result;assert.equal(result.prices.market,200);assert.equal(result.sample.count,2);assert.equal(result.consultedAt,'2026-10-20');
- const refreshed=await POST(request(true));assert.equal(refreshed.status,503);assert.match((await refreshed.json()).message,/Não deve pesquisar de novo/,'somente atualização explícita alcança o provedor simulado');
+ const refreshed=await POST(request(true));assert.equal(refreshed.status,503);assert.match((await refreshed.json()).message,/pesquisa ML/,'somente atualização explícita alcança a pesquisa ML');
  delete globalThis.consultProductDb;
 });
 test('consulta identifica e cadastra mesmo sem preços; candidatos/ausência não criam produtos',async()=>{

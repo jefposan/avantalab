@@ -1,3 +1,10 @@
+## 3.2.0.420 — AvantaPreços: consulta direta no Mercado Livre com resultados recolhidos
+
+- Atualizar preço usa ofertas do catálogo exato do ML, sem chamadas de IA nem fallback pago automático. Abrir produto/histórico conserva a referência salva, sem nova pesquisa externa.
+- Resultados começam ocultos no celular e na Web: Ver resultados da pesquisa expande quantidade de ofertas/vendedores, faixa, média, mediana, fontes, data e exclusões.
+- Pagina até 200 ofertas, exige amostra completa e três vendedores, considera um preço por vendedor e exclui contas próprias, duplicatas e extremos. Amostra insuficiente, consulta parcial, variante inconclusiva, dispersão excessiva ou falha preservam a referência anterior. Estoque, reservas e preços dos anúncios preservados.
+- Migração aditiva preparada para recibos persistidos e amostras maiores, validada somente em banco descartável local. Evidências e limites em docs/auditorias/precos-diretos-ml-local-2026-11-14.md. Sem publicação ou migração em produção nesta etapa.
+
 ## 3.2.0.419-av201 - AvantaVendas: detalhar recebimentos e consignados do dashboard
 
 - Total recebido abre divisão por forma dos pagamentos do mesmo período aplicado. Produtos consignados abrem saldos ativos por cliente, ordenáveis por quantidade ou nome.

@@ -4,11 +4,11 @@ import { MarketplaceError } from './management-access';
 import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
 import type { SellerConnection } from './mercadolivre-management';
 import { lookupProfileCatalogByEan } from './profile-catalog';
-import { consultOpenAIWebPrices, type WebPriceOffer } from './openai-web-price-search';
+import type {WebPriceOffer} from './openai-web-price-search';
+import {consultMercadoLivreMarketPrices} from './mercadolivre-market-prices';
+import {emptyMarketResearch,type MarketPriceResearch} from '../market-price-research';
 import { selectReferencePriceCents } from './price-reference';
-import { completeProductFacts } from './web-product-facts';
 import { DEFAULT_PRICE_PERCENTAGES, suggestedPriceCents, type PricePercentages } from '../price-settings';
-import { priceSearchDetails } from '../price-offer-identity';
 import { productRegistrationName } from '../product-registration-name';
 import type { PriceSearchControl } from './price-search-control';
 
@@ -19,7 +19,7 @@ export type PriceSuggestions = {
   ideal: number;
 };
 
-export type PriceSampleSource = 'manual_reference' | 'google_shopping' | 'openai_web_search' | 'local_reference';
+export type PriceSampleSource = 'manual_reference' | 'google_shopping' | 'openai_web_search' | 'local_reference' | 'mercadolivre_catalog';
 
 export type PriceConsultationResult = {
   status: 'found' | 'not_found' | 'choose';
@@ -44,6 +44,7 @@ export type PriceConsultationResult = {
   referenceStatus?: 'saved' | 'missing' | 'preserved';
   consultedAt?: string;
   notice?: string;
+  marketResearch?: MarketPriceResearch;
 };
 
 function priceInCents(value: unknown) {
@@ -71,9 +72,8 @@ export function calculatePriceSuggestions(pricesInCents: readonly number[], perc
 }
 
 /**
- * O PWA usa a conexão Mercado Livre apenas para identificar o produto no
- * catálogo isolado da empresa. A média vem da integração de pesquisa de preços
- * configurada somente no servidor; nenhum segredo ou token é enviado ao PWA.
+ * O PWA identifica o produto e consulta as ofertas do catálogo no servidor.
+ * Sem IA ou fallback pago; nenhum segredo ou token é enviado ao PWA.
  */
 export async function consultMercadoLivrePrice(
   db: SupabaseClient,
@@ -141,18 +141,10 @@ export async function consultMercadoLivrePrice(
     };
   }
 
-  const lookup = await consultOpenAIWebPrices({ ean, productName: product.name, ...priceSearchDetails(product.attributes,product.name) }, control);
-  const enriched={...base,ean:ean||lookup.product?.ean||null,product:completeProductFacts(base.product,lookup.product)};
-  if (!lookup.sample) return {
-    ...enriched,
-    notice: 'Produto localizado, mas nenhuma oferta com preço e disponibilidade pôde ser confirmada na origem. Nenhum preço sem comprovação foi usado.',
-  };
-  const prices = calculatePriceSuggestions(lookup.sample.pricesInCents, percentages);
-  return {
-    ...enriched,
-    prices,
-    sample: { count: lookup.sample.count, minimum: lookup.sample.minimum, maximum: lookup.sample.maximum, source: 'openai_web_search', offers: lookup.sample.offers },
-    ...(lookup.researchedAt ? { consultedAt: lookup.researchedAt } : {}),
-    notice: lookup.fromCache ? 'Preços e fontes da pesquisa recente reaproveitados. Nenhuma nova consulta paga foi feita.' : `Referência calculada com ${lookup.sample.count} oferta(s) pesquisada(s) e suas fontes.`,
-  };
+  let evidence:MarketPriceResearch;
+  try { evidence=await consultMercadoLivreMarketPrices(db,connection,{ean,productName:product.name,attributes:product.attributes,identification},control?.signal); }
+  catch(error){control?.signal?.throwIfAborted();evidence=emptyMarketResearch(product.name,'unavailable',error instanceof MarketplaceError?error.message:'Não foi possível consultar as ofertas do Mercado Livre.');}
+  if(evidence.status!=='ready'||evidence.mean==null)return {...base,marketResearch:evidence,notice:evidence.message};
+  const suggestions=suggestedPriceCents(Math.round(evidence.mean*100),percentages)!;
+  return {...base,prices:{market:evidence.mean,minimum:suggestions.minimum/100,medium:suggestions.medium/100,ideal:suggestions.ideal/100},sample:{count:evidence.count,minimum:evidence.minimum!,maximum:evidence.maximum!,source:'mercadolivre_catalog',offers:evidence.offers},marketResearch:evidence,consultedAt:evidence.checkedAt,notice:'Referência obtida diretamente do Mercado Livre.'};
 }

@@ -38,12 +38,12 @@ export function createSearchRenderFixture(overrides={}){
    if(full.endsWith('PriceLotsPanel')||full.endsWith('ProductPost')||full.endsWith('InstalarPwa'))return component(()=>null);
    if(full.endsWith('price-lots'))return{lotTotals:()=>({quantity:0})};
    if(full.endsWith('scroll-panel-row'))return{scrollMarketplacePageTop:()=>()=>{}};
-   if(full.endsWith('date-format'))return{marketplaceDateTime:new Intl.DateTimeFormat('pt-BR')};
+   if(full.endsWith('date-format'))return{marketplaceDateTime:new Intl.DateTimeFormat('pt-BR'),marketplaceDateTimeLabel:v=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(new Date(v))};
    if(full.endsWith('services/ean'))return{isValidEan:v=>/^\d{13}$/.test(v),normalizeEan:v=>v.replace(/\D/g,'')};
    if(full.endsWith('price-search-cancellation'))return{boundedPriceRequest:()=>{throw Error('Não pode acessar rede no render');}};
    if(id==='next/image')return component(({priority,preload,...props})=>React.createElement('img',props));
    if(full.endsWith('BotaoExpandirCard'))return component(props=>React.createElement('button',{type:'button','aria-expanded':props.expandido,'aria-controls':props.controlsId,'aria-label':`${props.expandido?'Recolher':'Expandir'} ${props.contexto}`,onClick:props.onClick},props.expandido?'⌃':'⌄'));
-   if(full.endsWith('ColaboradorTopbar')||full.endsWith('CampoBusca')||full.endsWith('BotaoAcaoCompacto')||full.endsWith('PriceSearchProgress')||full.endsWith('DetalhesRolaveis'))return load(full+'.tsx');
+   if(full.endsWith('ColaboradorTopbar')||full.endsWith('CampoBusca')||full.endsWith('BotaoAcaoCompacto')||full.endsWith('PriceSearchProgress')||full.endsWith('PriceResearchDetails')||full.endsWith('DetalhesRolaveis'))return load(full+'.tsx');
    throw Error('Import não simulado: '+id);
   };
   vm.runInNewContext(ts.transpileModule(readFileSync(resolve(root,file),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:localRequire,Intl,AbortController,AbortSignal,crypto,setTimeout,clearTimeout,requestAnimationFrame:fn=>fn(),cancelAnimationFrame:()=>{},console});

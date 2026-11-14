@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.419 -->
+<!-- ava-version: 3.2.0.420 -->
+
+> Revisão local 3.2.0.420: sem impacto operacional na AvantaVendas. A consulta direta de preços pertence ao AvantaPreços e Marketplaces Web; sem mudança em vendas, recebimentos ou consignados.
 
 > Revisão 3.2.0.419-av201: Total recebido detalha por forma de pagamento no período aplicado. Produtos consignados mostram clientes e quantidades, com ordenação por quantidade/nome; nome abre a mesma ficha de Clientes sem compra e fechar restaura lista, posição e ordem.
 

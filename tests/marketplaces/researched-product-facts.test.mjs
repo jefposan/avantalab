@@ -69,12 +69,14 @@ test('consulta por descrição recupera GTIN único da ficha; múltiplos GTINs n
  try{assert.equal((await identifyMercadoLivreCatalog({}, {}, {query:input.productName})).ean,ean);gtins=[ean,'7908103790527'];assert.equal((await identifyMercadoLivreCatalog({}, {}, {query:input.productName})).ean,undefined);}
  finally{delete globalThis.factsMlRequest;if(secret===undefined)delete process.env.MARKETPLACE_SECRETS_KEY;else process.env.MARKETPLACE_SECRETS_KEY=secret;}
 });
-test('fluxo real de consulta retorna ficha web mesmo sem preço: EAN e características vão ao registro',async()=>{
- const fetch=globalThis.fetch,key=process.env.OPENAI_API_KEY,secret=process.env.MARKETPLACE_SECRETS_KEY;process.env.OPENAI_API_KEY='test-only';process.env.MARKETPLACE_SECRETS_KEY='test-only';
- const row={id:'MLB123',name:input.productName,domain_id:'MLB-CALCULATORS',status:'active',attributes:[]};globalThis.factsMlRequest=async path=>path.startsWith('/products/search')?{results:[row]}:row;
- globalThis.fetch=async()=>Response.json({output:[{type:'web_search_call',action:{sources:[{url:source}]}},{content:[{type:'output_text',text:JSON.stringify({offers:[],product:product()})}]}]});
- try{const result=await consultMercadoLivrePrice({}, {empresa_id:'company'}, {query:input.productName});assert.equal(result.ean,ean);assert.equal(result.product.attributes.find(a=>a.id==='MODEL').value,'MB7142');assert.equal(result.product.description,'Descrição de teste, não é ficha real.');assert.deepEqual(result.product.sources,[source]);assert.equal(result.prices,undefined);}
- finally{globalThis.fetch=fetch;delete globalThis.factsMlRequest;if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;if(secret===undefined)delete process.env.MARKETPLACE_SECRETS_KEY;else process.env.MARKETPLACE_SECRETS_KEY=secret;}
+test('consulta direta mantém a ficha do ML mesmo sem preço, sem complementar por IA automaticamente',async()=>{
+ const original=globalThis.fetch,secret=process.env.MARKETPLACE_SECRETS_KEY;process.env.MARKETPLACE_SECRETS_KEY='test-only';
+ const row={id:'MLB123',name:input.productName,domain_id:'MLB-CALCULATORS',status:'active',short_description:{content:'Descrição do catálogo ML'},attributes:[{id:'GTIN',value_name:ean},{id:'MODEL',value_name:'MB7142'}]};
+ globalThis.factsMlRequest=async path=>path.startsWith('/products/search')?{results:[row]}:path.includes('/items?')?{paging:{total:0},results:[]}:row;
+ globalThis.fetch=async()=>{throw Error('IA não autorizada neste fluxo')};
+ const db={from(){const q={select(){return q},eq(){return q},then(ok,bad){return Promise.resolve({data:[]}).then(ok,bad)}};return q;}};
+ try{const result=await consultMercadoLivrePrice(db,{empresa_id:'company',seller_reference:'999'},{query:input.productName});assert.equal(result.ean,ean);assert.equal(result.product.attributes.find(a=>a.id==='MODEL').value,'MB7142');assert.equal(result.product.description,'Descrição do catálogo ML');assert.equal(result.product.sources,undefined);assert.equal(result.prices,undefined);assert.equal(result.marketResearch.status,'insufficient');}
+ finally{globalThis.fetch=original;delete globalThis.factsMlRequest;if(secret===undefined)delete process.env.MARKETPLACE_SECRETS_KEY;else process.env.MARKETPLACE_SECRETS_KEY=secret;}
 });
 test('SQL real: completa campos por empresa sem duplicar, substituir manual ou alterar saldo/preço',async()=>{
  const db=new PGlite();try{

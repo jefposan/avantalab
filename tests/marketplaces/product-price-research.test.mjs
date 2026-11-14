@@ -12,7 +12,8 @@ const hooks=registerHooks({resolve(specifier,context,next){
   if(specifier==='next/server')return {url:'data:text/javascript,export const NextResponse={json:(v,o)=>Response.json(v,o)}',shortCircuit:true};
   if(specifier.endsWith('/management-access')||specifier==='./management-access')return {url:'data:text/javascript,'+encodeURIComponent(access),shortCircuit:true};
   if(specifier==='./local-products')return {url:'data:text/javascript,'+encodeURIComponent(`export async function getLocalProduct(db,company,id){return db.product(company,id)};export const productCommand=()=>{throw Error('Não deve alterar saldo')}`),shortCircuit:true};
-  if(specifier==='./openai-web-price-search')return {url:'data:text/javascript,export async function consultOpenAIWebPrices(input){return globalThis.researchLookup(input)}',shortCircuit:true};
+  if(specifier==='./mercadolivre-management')return {url:'data:text/javascript,export async function resolveMercadoLivreConnection(_db,company){return {empresa_id:company}}',shortCircuit:true};
+  if(specifier==='./mercadolivre-market-prices')return {url:'data:text/javascript,export async function consultMercadoLivreMarketPrices(_db,_c,input){return globalThis.researchLookup(input)};export async function readProductMarketResearch(){return null}',shortCircuit:true};
   const file=specifier.startsWith('@/')?resolve(root,specifier.slice(2)):specifier.startsWith('.')&&context.parentURL?.startsWith('file:')?resolve(dirname(new URL(context.parentURL).pathname),specifier):null;
   if(file&&existsSync(file+'.ts'))return next(pathToFileURL(file+'.ts').href,context);return next(specifier,context);
 }});
@@ -20,26 +21,25 @@ const {researchLocalProductPrice}=await import('../../app/modules/marketplaces/s
 const {POST}=await import('../../app/api/modulos/marketplaces/produtos/preco/route.ts');hooks.deregister();
 const productId='00000000-0000-4000-8000-000000000001',company='00000000-0000-4000-8000-000000000002';
 const input=()=>({productId,revision:1,requestKey:crypto.randomUUID()});
-const offers=[{title:'Produto exato',seller:'Loja A',price:100,url:'https://loja.example/a'},{title:'Produto exato',seller:'Loja B',price:120,url:'https://loja.example/b'}];
-function mockDb(status){return {from(table){assert.equal(table,'marketplace_products');const filters={},q={select(){return q},eq(k,v){filters[k]=v;return q},is(k,v){filters[k]=v;return q},async maybeSingle(){assert.equal(filters.empresa_id,company);assert.equal(filters.id,productId);return {data:{id:productId,price_cents:11000,revision:2}}}};return q;},calls:[],async product(c,id){assert.equal(c,company);assert.equal(id,productId);return {id,ean:'7908103790527',name:'Produto salvo'};},async rpc(name,args){assert.equal(name,'marketplace_product_price_research');assert.equal(args.p_empresa_id,company);this.calls.push(args);return {data:status?{status,claimed:false}:{status:args.p_action==='claim'?'pending':args.p_action==='fail'?'failed':args.p_offers.length?'updated':'no_offers',claimed:args.p_action==='claim',price_cents:11000,offers_count:args.p_offers.length},error:null};}};}
+const offers=[{title:'Produto exato',seller:'Loja A',price:100,url:'https://loja.example/a'},{title:'Produto exato',seller:'Loja B',price:110,url:'https://loja.example/b'},{title:'Produto exato',seller:'Loja C',price:120,url:'https://loja.example/c'}];
+const lookup=(ready=true)=>({provider:'mercado_livre',status:ready?'ready':'insufficient',offers:ready?offers:[],message:'Sem ofertas',checkedAt:'2026-11-14T18:00:00Z'});
+function mockDb(status){return {from(table){assert.equal(table,'marketplace_products');const filters={},q={select(){return q},eq(k,v){filters[k]=v;return q},is(k,v){filters[k]=v;return q},async maybeSingle(){assert.equal(filters.empresa_id,company);assert.equal(filters.id,productId);return {data:{id:productId,price_cents:11000,revision:2}}}};return q;},calls:[],async product(c,id){assert.equal(c,company);assert.equal(id,productId);return {id,ean:'7908103790527',name:'Produto salvo'};},async rpc(name,args){assert.equal(name,'marketplace_ml_price_research');assert.equal(args.p_empresa_id,company);this.calls.push(args);return {data:status?{status,claimed:false}:{status:args.p_action==='claim'?'pending':args.p_action==='fail'?'failed':args.p_offers.length?'updated':'no_offers',claimed:args.p_action==='claim',price_cents:11000,offers_count:args.p_offers.length},error:null};}};}
 test('pesquisa usa identidade salva, ignora preço/nome enviados e só conclui com ofertas atuais',async()=>{
-  const db=mockDb();globalThis.researchLookup=async value=>{assert.deepEqual(value,{ean:'7908103790527',productName:'Produto salvo'});return {sample:{offers}};};
+  const db=mockDb();globalThis.researchLookup=async value=>{assert.deepEqual(value,{ean:'7908103790527',productName:'Produto salvo',attributes:undefined});return lookup();};
   const result=await researchLocalProductPrice(db,company,'actor',{...input(),price:1,name:'Outro produto'});
   assert.equal(result.status,'updated');assert.equal(result.priceCents,11000);assert.equal(db.calls.length,2);assert.deepEqual(db.calls[1].p_offers,offers);
-  globalThis.researchLookup=async()=>({sample:null});
+  globalThis.researchLookup=async()=>lookup(false);
   assert.equal((await researchLocalProductPrice(mockDb(),company,'actor',input())).status,'no_offers');
 });
 test('repetição, operação em andamento, conflito e limite não disparam outra pesquisa',async()=>{
-  let calls=0;globalThis.researchLookup=async()=>{calls++;return {sample:{offers}};};
+  let calls=0;globalThis.researchLookup=async()=>{calls++;return lookup();};
   assert.equal((await researchLocalProductPrice(mockDb('updated'),company,'actor',input())).status,'updated');
   for(const [status,code] of [['pending','price_research_busy'],['busy','price_research_busy'],['limited','price_research_limited'],['conflict','price_research_conflict'],['failed','price_research_failed']])await assert.rejects(researchLocalProductPrice(mockDb(status),company,'actor',input()),{code});
   assert.equal(calls,0);
 });
-test('Atualizar preço também completa ficha no produto local, após confirmar resultado da pesquisa',async()=>{
- const db=mockDb(),rpc=db.rpc.bind(db);let saved;
- db.rpc=async(name,args)=>{if(name==='marketplace_price_product_register'){saved=args;return{data:productId};}return rpc(name,args);};
- globalThis.researchLookup=async()=>({sample:null,product:{ean:null,description:'Descrição confirmada',image:null,attributes:[{id:'MODEL',name:'Modelo',value:'MB7142'}],sources:['https://fabricante.example/modelo']}});
- assert.equal((await researchLocalProductPrice(db,company,'actor',input())).status,'no_offers');assert.equal(saved.p_source_key,`mercado_livre:LOCAL:${productId}`);assert.equal(saved.p_data.attributes[0].value,'MB7142');assert.equal(saved.p_data.description,'Descrição confirmada');assert.equal(saved.p_data.ean,'7908103790527');
+test('Atualizar preço preserva nome, ficha e fotos: consulta direta só grava referência/recibo',async()=>{
+ const db=mockDb();globalThis.researchLookup=async()=>lookup(false);
+ assert.equal((await researchLocalProductPrice(db,company,'actor',input())).status,'no_offers');assert.deepEqual(db.calls.map(c=>c.p_action),['claim','complete']);assert.equal(db.calls[1].p_evidence.provider,'mercado_livre');assert.deepEqual(db.calls[1].p_offers,[]);
 });
 test('falha registra apenas código seguro, não grava referência e entrada inválida é recusada',async()=>{
   const db=mockDb();globalThis.researchLookup=async()=>{throw Object.assign(Error('Falha segura'),{code:'x-secret-detail'});};
@@ -48,7 +48,7 @@ test('falha registra apenas código seguro, não grava referência e entrada inv
   await assert.rejects(researchLocalProductPrice(db,company,'actor',{...input(),revision:'1'}),{code:'invalid_price_research'});
 });
 test('API exige gestão da empresa e devolve resposta sem cache',async()=>{
-  globalThis.researchDb=mockDb();globalThis.researchLookup=async()=>({sample:{offers}});
+  globalThis.researchDb=mockDb();globalThis.researchLookup=async()=>lookup();
   const request=token=>new Request('http://localhost/api/modulos/marketplaces/produtos/preco',{method:'POST',headers:{authorization:token,'content-type':'application/json'},body:JSON.stringify({...input(),empresaId:company})});
   assert.equal((await POST(request('Bearer reader'))).status,403);assert.equal(globalThis.researchDb.calls.length,0);
   const result=await POST(request('Bearer manager'));assert.equal(result.status,200);assert.equal(result.headers.get('cache-control'),'no-store');assert.equal((await result.json()).status,'updated');
