@@ -14,7 +14,7 @@ export async function createMarketPricesFixture(){
    create table marketplace_product_operations(empresa_id uuid,request_key uuid,actor_id uuid,action text,request_hash text,result jsonb);
    create table marketplace_connections(empresa_id uuid,provider text,seller_reference text);
    create table marketplace_price_consultations(id uuid primary key, sample_source text constraint marketplace_price_consultations_sample_source_check check(sample_source in ('local_reference','openai_web_search')));`);
-  for(const file of ['20261019010000_marketplace_product_price_research.sql','20261021050000_marketplace_price_reference_access.sql','20261024030000_marketplace_price_eight_offers.sql','20261114190000_marketplace_ml_price_research.sql'])await db.exec(await readFile('supabase/migrations/'+file,'utf8'));
+  for(const file of ['20261019010000_marketplace_product_price_research.sql','20261021050000_marketplace_price_reference_access.sql','20261024030000_marketplace_price_eight_offers.sql','20261114190000_marketplace_ml_price_research.sql','20261114210000_marketplace_ml_price_small_sample.sql'])await db.exec(await readFile('supabase/migrations/'+file,'utf8'));
   await db.query('insert into empresas values($1),($2)',[company,other]);await db.query('insert into auth.users values($1)',[actor]);
   await db.query("insert into usuarios_empresa values($1,$2,'ativo','administrador')",[actor,company]);
   await db.query("insert into empresa_modulos values($1,'marketplaces',true,null),($2,'marketplaces',true,null)",[company,other]);
@@ -25,8 +25,8 @@ export async function createMarketPricesFixture(){
   const snapshot=async()=>({product:await current(),research:(await db.query<{evidence:MarketPriceResearch}>('select evidence from marketplace_product_price_researches where empresa_id=$1 and product_id=$2 order by created_at desc limit 1',[company,product])).rows[0]?.evidence||null});
   function scenario(kind:string){
    if(kind==='unavailable')return emptyMarketResearch('Liquidificador Electrolux EBL1500','unavailable','O Mercado Livre não autorizou esta consulta. A referência anterior foi mantida.');
-   const n=kind==='insufficient'?1:kind==='empty'?0:49;
-   const rows=Array.from({length:n},(_,i)=>({item_id:'MLB'+(1000000+i),seller_id:i===3?999:20000+Math.floor(i/2),price:i===48?4999:190+(i%20)*3,currency_id:'BRL',condition:'new'}));
+   const n=kind==='single'?1:kind==='double'?2:kind==='empty'||kind==='insufficient'?0:49;
+   const rows=Array.from({length:n},(_,i)=>({item_id:'MLB'+(1000000+i),seller_id:i===3?999:20000+(n<3?i:Math.floor(i/2)),price:i===48?4999:190+(i%20)*3,currency_id:'BRL',condition:'new'}));
    return analyzeMercadoLivreOffers({catalogId:'MLB56235019',productName:'Liquidificador Electrolux EBL1500 127V Cinza',rows:kind==='partial'?rows.slice(0,20):rows,total:n,complete:kind!=='partial',ownSellers:['999']});
   }
   return {db,company,other,actor,product,current,command,snapshot,scenario};

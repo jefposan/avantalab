@@ -1,3 +1,10 @@
+## 3.2.0.422 — AvantaPreços: usar amostra disponível após a coleta completa
+
+- Mantém busca de todas as páginas e prioridade de várias ofertas; aceita uma ou duas ofertas válidas ao final. Uma oferta usa seu preço e várias usam a média, sem interromper a coleta antecipadamente.
+- Preserva filtros de identidade/variante, contas próprias, duplicatas, condição/moeda, valores extremos e grande dispersão. Zero ofertas válidas, consulta parcial ou erro preservam a referência anterior.
+- Migração incremental altera apenas o mínimo da validação ML no banco; não reescreve histórico nem altera estoque ou anúncios. Migração aplicada e conferida em produção; publicação do código autorizada pela main, após build integral aprovado.
+- Mantém os ajustes recentes da main, inclusive a 3.2.0.421-av203.
+
 ## 3.2.0.420 — AvantaPreços: consulta direta no Mercado Livre com resultados recolhidos
 
 - Atualizar preço usa ofertas do catálogo exato do ML, sem chamadas de IA nem fallback pago automático. Abrir produto/histórico conserva a referência salva, sem nova pesquisa externa.

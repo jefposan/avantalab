@@ -10,18 +10,29 @@ test('SQL real: média ML auditada usa todos os vendedores, preserva estoque/fic
   const rights=(await f.db.query("select has_function_privilege('anon','marketplace_ml_price_research(uuid,uuid,uuid,bigint,uuid,text,jsonb,jsonb,text)','execute') as anon,has_function_privilege('authenticated','marketplace_ml_price_research(uuid,uuid,uuid,bigint,uuid,text,jsonb,jsonb,text)','execute') as authenticated,has_function_privilege('service_role','marketplace_ml_price_research(uuid,uuid,uuid,bigint,uuid,text,jsonb,jsonb,text)','execute') as service")).rows[0];assert.deepEqual(rights,{anon:false,authenticated:false,service:true});
  }finally{await f.db.close();}
 });
-test('SQL real: ausência, amostra insuficiente, pesquisa parcial e falha mantêm a referência e o recibo consultável',async()=>{
- for(const kind of ['empty','insufficient','partial','unavailable']){
+test('SQL real: ausência, pesquisa parcial e falha mantêm a referência e o recibo consultável',async()=>{
+ for(const kind of ['empty','partial','unavailable']){
   const f=await createMarketPricesFixture();try{const e=f.scenario(kind),key=crypto.randomUUID();await f.command('claim',key,1);const r=await f.command(kind==='unavailable'?'fail':'complete',key,1,[],e);assert.equal(r.status,kind==='unavailable'?'failed':'no_offers');assert.equal((await f.current()).price_cents,22000);assert.equal((await f.current()).revision,1);assert.deepEqual((await f.snapshot()).research,e);}finally{await f.db.close();}
  }
 });
-test('SQL real: recusa próprias contas, repetição de vendedor, fonte forjada, amostra única e recibo sem identidade',async()=>{
+test('SQL real: recusa próprias contas, repetição de vendedor, fonte forjada, recibo vazio pronto e recibo sem identidade',async()=>{
  const f=await createMarketPricesFixture();try{
   const e=f.scenario('ready'),key=crypto.randomUUID();await f.command('claim',key,1);
-  const bad=[{...e,catalogId:null},{...e,count:null},{...e,offers:[e.offers[0]],count:1}, {...e,offers:e.offers.map((o,i)=>i===0?{...o,sellerId:'999'}:o)}, {...e,offers:e.offers.map((o,i)=>i===0?{...o,url:'https://evil.example'}:o)}, {...e,offers:e.offers.map((o,i)=>i===1?{...o,sellerId:e.offers[0].sellerId}:o)}];
+  const bad=[{...e,catalogId:null},{...e,count:null},{...e,offers:[],count:0}, {...e,offers:e.offers.map((o,i)=>i===0?{...o,sellerId:'999'}:o)}, {...e,offers:e.offers.map((o,i)=>i===0?{...o,url:'https://evil.example'}:o)}, {...e,offers:e.offers.map((o,i)=>i===1?{...o,sellerId:e.offers[0].sellerId}:o)}];
   for(const receipt of bad)await assert.rejects(f.command('complete',key,1,receipt.offers,receipt));assert.equal((await f.current()).price_cents,22000);assert.equal((await f.current()).stock_quantity,3);
   await assert.rejects(f.command('complete',key,1,e.offers,{...e,provider:'openai'}));
  }finally{await f.db.close();}
+});
+test('SQL real: uma e duas ofertas aplicam o valor ou a média, guardam recibo e preservam estoque e ficha',async()=>{
+ for(const kind of ['single','double']){
+  const f=await createMarketPricesFixture();try{
+   const before=await f.current(),e=f.scenario(kind),key=crypto.randomUUID();assert.equal(e.status,'ready');assert.equal(e.count,kind==='single'?1:2);
+   await f.command('claim',key,1);const result=await f.command('complete',key,1,e.offers,e),after=await f.current();
+   assert.equal(result.status,'updated');assert.equal(result.offers_count,e.count);assert.equal(result.price_cents,kind==='single'?19000:19150);assert.equal(after.price_cents,result.price_cents);assert.equal(after.revision,2);
+   assert.equal(after.stock_quantity,before.stock_quantity);assert.equal(after.name,before.name);assert.deepEqual(after.pictures,before.pictures);assert.equal(after.publication_form.custom,'preservado');
+   assert.deepEqual((await f.snapshot()).research,e);assert.equal((await f.command('complete',key,1,e.offers,e)).price_cents,result.price_cents);assert.equal((await f.current()).revision,2);
+  }finally{await f.db.close();}
+ }
 });
 test('SQL real: edição concorrente, perfil errado e ator sem acesso não sobrescrevem preço nem recebem recibo de outra empresa',async()=>{
  const f=await createMarketPricesFixture();try{

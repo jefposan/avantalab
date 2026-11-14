@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.421 -->
+<!-- ava-version: 3.2.0.422 -->
+
+> Revisão local 3.2.0.422: sem impacto operacional na Gestão Mobile nativa. No PWA AvantaPreços, a consulta completa prioriza várias ofertas e pode usar uma ou duas válidas ao final; não altera o aplicativo instalado. Migração aplicada; liberação do código pela main depende de build aprovado.
 
 > Revisão 3.2.0.421: sem impacto operacional; ajustes exclusivos do dashboard AvantaVendas.
 

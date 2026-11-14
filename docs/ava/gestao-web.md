@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.421 -->
+<!-- ava-version: 3.2.0.422 -->
+
+> Revisão local 3.2.0.422 — AvantaPreços e Marketplaces: a coleta continua buscando todas as páginas do catálogo confirmado e priorizando vários vendedores. Ao final, usa todas as ofertas válidas disponíveis, mesmo quando restar apenas uma ou duas. Uma oferta define a referência pelo seu próprio preço; duas ou mais usam a média aritmética dos preços aceitos. O painel recolhido conserva quantidade de vendedores, fontes e data. Mantém menor preço por vendedor, exclusão de contas próprias, duplicatas e extremos, conferência de variante, coleta completa e bloqueio por grande dispersão. Nenhuma oferta válida, consulta parcial, identificação inconclusiva ou erro mantêm a referência anterior. Sem IA automática, alteração de anúncios, estoque ou reservas. Migração validada em banco local descartável e aplicada em produção, com preços/estoques preservados; publicação do código autorizada pela main após build aprovado. Esta revisão substitui o mínimo de três vendedores da 3.2.0.420.
 
 > Revisão 3.2.0.421: sem impacto operacional; ajustes exclusivos do dashboard AvantaVendas.
 

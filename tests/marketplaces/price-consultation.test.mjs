@@ -100,8 +100,15 @@ test('consulta direta considera mais de oito vendedores na média',async()=>{
  mockCatalog(Array.from({length:12},(_,i)=>100+i*10));globalThis.fetch=async()=>{throw Error('IA proibida')};
  const r=await consultMercadoLivrePrice(marketDb,connection,{ean});assert.equal(r.sample.count,12);assert.equal(r.prices.market,155);assert.equal(r.sample.offers.length,12);
 });
-test('uma única oferta do catálogo não define preço médio',async()=>{
- mockCatalog([5000]);const r=await consultMercadoLivrePrice(marketDb,connection,{ean});assert.equal(r.status,'found');assert.equal(r.prices,undefined);assert.equal(r.marketResearch.status,'insufficient');assert.equal(r.marketResearch.offers[0].price,5000);
+test('consulta completa usa uma ou duas ofertas disponíveis e recalcula as três sugestões sem IA',async()=>{
+ globalThis.fetch=async()=>{throw Error('IA proibida')};
+ for(const prices of [[429.9],[429.9,430]]){
+  mockCatalog(prices);const r=await consultMercadoLivrePrice(marketDb,connection,{ean});
+  assert.equal(r.status,'found');assert.equal(r.marketResearch.status,'ready');assert.equal(r.sample.count,prices.length);
+  assert.deepEqual(r.prices,prices.length===1?{market:429.9,minimum:214.95,medium:300.93,ideal:386.91}:{market:429.95,minimum:214.98,medium:300.97,ideal:386.96});
+  assert.deepEqual(r.sample.offers.map(o=>o.price),prices);assert.equal(r.sample.source,'mercadolivre_catalog');
+ }
+ mockCatalog([]);const empty=await consultMercadoLivrePrice(marketDb,connection,{ean});assert.equal(empty.prices,undefined);assert.equal(empty.marketResearch.status,'insufficient');
 });
 
 test('tarefa Google concluída sem ofertas encerra a consulta em vez de permanecer pendente', async () => {

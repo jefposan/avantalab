@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.421 -->
+<!-- ava-version: 3.2.0.422 -->
+
+> Revisão local 3.2.0.422: sem impacto operacional no AvantaVendas. Apenas flexibiliza a amostra mínima de preços no AvantaPreços/Marketplaces após a coleta completa; preserva o dashboard e os ajustes da 3.2.0.421-av203.
 
 > Revisão 3.2.0.421-av203: escolha as datas inicial/final no dashboard e toque Filtrar para aplicar exatamente o período. Escolher um dia não o transforma em mês completo; setas e Mês atual continuam mensais. Total recebido tem Ver detalhes. Distribuição consignada tem topo/total fixos e só a lista rola; Quantidade/Nome mantêm a ordenação e a ficha do cliente com retorno à posição anterior. Sem mudança nos dados ou no backend.
 

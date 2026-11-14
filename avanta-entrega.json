@@ -1,6 +1,11 @@
 {
-  "baseDeploymentId": "dpl_HrPTfSGCeVYeAa3RQjDCGAf1yZxy",
-  "migrations": [],
-  "version": "3.2.0.421",
-  "scope": "AvantaVendas: filtro por período exato, consignados compactos com rolagem central e Ver detalhes no Total recebido"
+  "baseDeploymentId": "dpl_EAt8GobCvMy3iCqsvvK1WuL2B8QH",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261114210000_marketplace_ml_price_small_sample.sql",
+      "sha256": "c8e1fd2492006f1f28e199d4c67fa97227705825d3e6c85951e8320707fdea87"
+    }
+  ],
+  "version": "3.2.0.422",
+  "scope": "AvantaPreços: priorizar múltiplas ofertas e aceitar uma ou duas válidas após coleta completa"
 }

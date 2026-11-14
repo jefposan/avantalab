@@ -6,7 +6,7 @@ export type MarketPriceResearch = {
  count:number;mean:number|null;median:number|null;minimum:number|null;maximum:number|null;
  exclusions:Record<string,number>;offers:MarketPriceOffer[];message:string;
 };
-export const ML_PRICE_PAGE_SIZE=20,ML_PRICE_MAX_OFFERS=200,ML_PRICE_MIN_SELLERS=3;
+export const ML_PRICE_PAGE_SIZE=20,ML_PRICE_MAX_OFFERS=200,ML_PRICE_MIN_SELLERS=1,ML_PRICE_PREFERRED_SELLERS=3;
 const record=(v:unknown):Record<string,unknown>=>v&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:{};
 const id=(v:unknown)=>typeof v==='number'&&Number.isSafeInteger(v)&&v>0?String(v):typeof v==='string'&&/^[1-9]\d{0,19}$/.test(v)?v:null;
 const quantile=(v:number[],p:number)=>{const x=(v.length-1)*p,i=Math.floor(x);return v[i]+(v[Math.min(i+1,v.length-1)]-v[i])*(x-i);};
@@ -41,6 +41,6 @@ export function analyzeMercadoLivreOffers(input:{catalogId:string;productName:st
  const values=offers.map(o=>Math.round(o.price*100)),count=values.length;
  const mean=count?Math.round(values.reduce((a,b)=>a+b,0)/count)/100:null,median=count?Math.round(quantile(values,.5))/100:null;
  const status:MarketPriceResearch['status']=!input.complete?'partial':count<ML_PRICE_MIN_SELLERS?'insufficient':values.at(-1)!>values[0]*3?'review':'ready';
- const message=status==='ready'?`Referência calculada com ${count} vendedores do Mercado Livre.`:status==='partial'?'A consulta não cobriu todas as ofertas do catálogo. A referência anterior foi mantida.':status==='review'?'Os preços do catálogo apresentam grande diferença. Confira as ofertas; a referência anterior foi mantida.':`Foram encontrados preços de ${count} vendedor(es). São necessários pelo menos ${ML_PRICE_MIN_SELLERS} para atualizar a referência.`;
+ const message=status==='ready'?`Referência calculada com ${count} ${count===1?'vendedor':'vendedores'} do Mercado Livre.${count<ML_PRICE_PREFERRED_SELLERS?' A consulta completa encontrou poucas ofertas válidas; foram usadas todas as disponíveis.':''}`:status==='partial'?'A consulta não cobriu todas as ofertas do catálogo. A referência anterior foi mantida.':status==='review'?'Os preços do catálogo apresentam grande diferença. Confira as ofertas; a referência anterior foi mantida.':'Nenhuma oferta válida de outro vendedor foi encontrada. A referência anterior foi mantida.';
  return {provider:'mercado_livre',status,catalogId:input.catalogId,productName:input.productName,checkedAt:input.checkedAt||new Date().toISOString(),totalReported:input.total,fetchedCount:input.rows.length,count,mean,median,minimum:count?values[0]/100:null,maximum:count?values.at(-1)!/100:null,exclusions:excluded,offers,message};
 }

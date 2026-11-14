@@ -44,11 +44,24 @@ test('deduplica anúncios/vendedores, exclui próprias contas e valida condiçã
  const r=analyze(rows,{ownSellers:['999']});assert.equal(r.status,'ready');assert.equal(r.count,3);assert.equal(r.mean,110);assert.equal(r.exclusions.mesmo_vendedor,1);assert.equal(r.exclusions.anuncio_repetido,1);assert.equal(r.exclusions.nossas_contas,1);assert.equal(r.exclusions.condicao_ou_indisponivel,2);assert.equal(r.exclusions.outro_produto,1);assert.equal(r.exclusions.dados_invalidos,2);
  assert(r.offers.every(o=>o.sellerId!=='999'));assert.equal(new Set(r.offers.map(o=>o.sellerId)).size,3);
 });
-test('uma ou duas ofertas preservam a referência; extremos e grande divergência são identificados',()=>{
- for(const n of [0,1,2])assert.equal(analyze(Array.from({length:n},(_,i)=>offer(i))).status,'insufficient');
+test('uma ou duas ofertas válidas atualizam a referência após a coleta completa; ausência, extremos e divergência mantêm os filtros',()=>{
+ assert.equal(analyze([]).status,'insufficient');assert.equal(analyze([]).mean,null);
+ for(const n of [1,2]){
+  const r=analyze(Array.from({length:n},(_,i)=>offer(i,429.9+i*.1)));
+  assert.equal(r.status,'ready');assert.equal(r.count,n);assert.equal(r.mean,n===1?429.9:429.95);assert.match(r.message,/consulta completa encontrou poucas ofertas válidas/);
+  assert.equal(analyze(r.offers.map((_,i)=>offer(i)),{complete:false,total:49}).status,'partial');
+ }
  const r=analyze([offer(1,100),offer(2,101),offer(3,102),offer(4,103),offer(5,9999)]);assert.equal(r.status,'ready');assert.equal(r.count,4);assert.equal(r.mean,101.5);assert.equal(r.exclusions.valor_extremo,1);
  assert.equal(analyze([offer(1,100),offer(2,110),offer(3,1000)]).status,'review');
+ assert.equal(analyze([offer(1,100),offer(2,1000)]).status,'review');
  assert.equal(analyze([offer(1),offer(2),offer(3)],{complete:false,total:49}).status,'partial');
+});
+test('prioriza várias ofertas e percorre todas as páginas mesmo quando a primeira já tem uma oferta válida',async()=>{
+ const rows=Array.from({length:49},(_,i)=>({...offer(i,100+i),seller_id:i===0?2000:i===48?2048:999}));
+ const f=fixture(rows),r=await consultMercadoLivreMarketPrices(f.db,f.connection,f.input);
+ assert.equal(f.calls.length,3);assert.equal(r.fetchedCount,49);assert.equal(r.status,'ready');assert.equal(r.count,2);assert.equal(r.mean,124);
+ const only=analyze([offer(1,90),{...offer(2,110),seller_id:999},{...offer(3,10),status:'paused'},{...offer(4,120),condition:'used'}],{ownSellers:['999']});
+ assert.equal(only.status,'ready');assert.equal(only.count,1);assert.equal(only.mean,90);assert.equal(only.exclusions.nossas_contas,1);assert.equal(only.exclusions.condicao_ou_indisponivel,2);
 });
 test('falha de paginação/permissão, cancelamento e falha ao conferir contas não passam por fallback pago',async()=>{
  const f=fixture();f.db.read=async()=>{throw Object.assign(Error('Acesso negado'),{status:403});};await assert.rejects(consultMercadoLivreMarketPrices(f.db,f.connection,f.input),{status:403});
