@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.422 -->
+<!-- ava-version: 3.2.0.423 -->
+
+> Revisão 3.2.0.423: sem impacto operacional na Gestão Mobile ou no PWA AvantaPreços. Diagnóstico administrativo de acesso ML ampliado somente no backend/Web; cálculo de preços da 3.2.0.422 preservado.
 
 > Revisão local 3.2.0.422: sem impacto operacional na Gestão Mobile nativa. No PWA AvantaPreços, a consulta completa prioriza várias ofertas e pode usar uma ou duas válidas ao final; não altera o aplicativo instalado. Migração aplicada; liberação do código pela main depende de build aprovado.
 

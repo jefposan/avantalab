@@ -8,6 +8,7 @@ import { MarketplaceError } from './management-access';
 import { mercadoLivreValidationError, isWarningOnlyPrevalidation } from './mercadolivre-validation-error';
 import { actionBody, listingIdIsValid, normalizeListing, objectValue, uuidIsValid, type ListingAction } from './listing-model';
 import { fiscalProviderProblem, isFiscalPath } from './fiscal-provider-error';
+import {readMLDiagnosticEvidence,type MLReadDiagnostic} from './mercadolivre-diagnostic-evidence';
 
 export type ListingTypeFeeEstimate = { fee: number | null; percent: number | null; notice?: string };
 
@@ -91,18 +92,21 @@ async function accessToken(db: SupabaseClient, initial: SellerConnection, force 
   throw new MarketplaceError(409, 'refresh_busy', 'A conexão está sendo renovada. Aguarde alguns segundos.');
 }
 
-export async function mlRequest(db: SupabaseClient, connection: SellerConnection, path: string, method = 'GET', body?: unknown, options?: { xml: string }): Promise<unknown> {
+export async function mlRequest(db: SupabaseClient, connection: SellerConnection, path: string, method = 'GET', body?: unknown, options?: { xml: string }, diagnostic?:{signal:AbortSignal;observe:(evidence:MLReadDiagnostic)=>void}): Promise<unknown> {
   if (!path.startsWith('/') || path.startsWith('//')) throw new Error('Invalid API path');
+  if(diagnostic&&(method!=='GET'||body!==undefined||options!==undefined))throw new Error('Diagnóstico permite somente GET sem corpo.');
+  diagnostic?.signal.throwIfAborted();
   let token = await accessToken(db, connection);
   for (let attempt = 0; attempt < 2; attempt++) {
     let response: Response;
     try {
-      response = await fetch(`https://api.mercadolibre.com${path}`, { method, cache: 'no-store', redirect: isFiscalPath(path) ? 'error' : 'follow', signal: AbortSignal.timeout(8_000),
+      response = await fetch(`https://api.mercadolibre.com${path}`, { method, cache: 'no-store', redirect: isFiscalPath(path)||diagnostic ? 'error' : 'follow', signal: diagnostic?AbortSignal.any([diagnostic.signal,AbortSignal.timeout(8_000)]):AbortSignal.timeout(8_000),
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(/^\/shipments\/\d+/.test(path) ? { 'X-Format-New': 'true' } : {}), ...(/^\/users\/\d+\/shipping_modes$/.test(path) && method === 'POST' ? { 'X-Format-New': 'true', 'x-multichannel': 'true' } : {}), ...(options || body ? { 'Content-Type': options ? 'application/xml' : 'application/json' } : {}) },
         ...(options ? { body: options.xml } : body ? { body: JSON.stringify(body) } : {}) });
     } catch {
       throw new MarketplaceError(503, method === 'GET' ? 'provider_unavailable' : 'mutation_uncertain', method === 'GET' ? 'Mercado Livre indisponível. Tente novamente.' : 'A resposta do Mercado Livre não chegou. Atualize a lista antes de repetir a ação.');
     }
+    if(diagnostic)diagnostic.observe(await readMLDiagnosticEvidence(response,path,token));
     if (response.status === 401 && attempt === 0) { token = await accessToken(db, connection, true); continue; }
     if (!response.ok) {
       if (isFiscalPath(path)) throw fiscalProviderProblem(response.status, await response.json().catch(() => null), response.headers.get('x-request-id') || response.headers.get('x-correlation-id'));

@@ -23,6 +23,18 @@ const {refreshKnownListingStatuses}=await import('../../app/modules/marketplaces
 hooks.deregister();
 const company = '11111111-1111-4111-8111-111111111111', connectionId = '22222222-2222-4222-8222-222222222222';
 const itemId = 'MLB5324529993';
+test('diagnóstico GET registra política/correlação sem repetir 403 nem expor o corpo no erro comum',()=>environment(async()=>{
+ const db=database(),connection=await loadConnection(db,company,connectionId),before=structuredClone(db.tables),observed=[];let calls=0;
+ globalThis.fetch=async(_url,init)=>{calls++;assert.equal(init.method,'GET');assert.equal(init.redirect,'error');return Response.json({code:'PA_UNAUTHORIZED_RESULT_FROM_POLICIES',blocked_by:'PolicyAgent',message:'At least one policy returned UNAUTHORIZED.',private:'buyer@example.test',access_token:'test-access'},{status:403,headers:{'x-request-id':'99d2bd12-abcd-4123-9123-999999999999'}});};
+ await assert.rejects(mlRequest(db,connection,'/sites/MLB/search?q=Mixer','GET',undefined,undefined,{signal:AbortSignal.timeout(1000),observe:e=>observed.push(e)}),e=>e.code==='provider_403'&&!e.details&&!e.message.includes('buyer'));
+ assert.equal(calls,1);assert.equal(observed[0].providerCode,'PA_UNAUTHORIZED_RESULT_FROM_POLICIES');assert.equal(observed[0].blockedBy,'PolicyAgent');assert.doesNotMatch(JSON.stringify(observed),/test-access|buyer@example/);assert.deepEqual(db.tables,before);
+}));
+test('observação de diagnóstico não autoriza POST, XML ou corpo e não alcança o provedor',()=>environment(async()=>{
+ let calls=0;globalThis.fetch=async()=>{calls++;throw Error('Não deve consultar')};
+ const diag={signal:AbortSignal.timeout(1000),observe:()=>{}};
+ for(const [method,body,options] of [['POST',{},undefined],['GET',{},undefined],['GET',undefined,{xml:'secret'}]])await assert.rejects(mlRequest({}, {},'/items',method,body,options,diag),/somente GET/);
+ assert.equal(calls,0);
+}));
 test('edição pendente só é confirmada quando todos os campos relidos correspondem, na empresa/conta exatas',()=>environment(async()=>{
  const db=database();db.tables.marketplace_listing_actions=[{id:'a',empresa_id:company,connection_id:connectionId,provider_listing_id:itemId,action:'edit',status:'uncertain',request_payload:{changes:{price:150,title:'Produto',description:'Descrição',stock:3,listingType:'gold_special'}}}];
  const values={price:149,title:'Produto',description:'Descrição',stock:3,listingType:'gold_special'};

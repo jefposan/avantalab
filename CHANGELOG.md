@@ -1,3 +1,10 @@
+## 3.2.0.423 — Marketplaces: diagnóstico administrativo do acesso ML pela JEFF
+
+- Amplia o diagnóstico existente, mantendo autorização administrativa e isolamento da conta/empresa. Confirma identidade e compara aplicação/grant, catálogo, busca geral, anúncios próprios e item de outro vendedor.
+- Registra somente códigos de erro permitidos, política e correlação; omite corpos brutos, mensagens livres, tokens e dados pessoais. Limita prazo, caminhos e quantidade de GETs, sem repetir 403 automaticamente.
+- Agenda uma verificação JEFF no ambiente de produção da Vercel, reutilizando o controle de leitura existente, sem exportar segredos nem criar alternativa de autenticação HTTP. Bloqueia escritas comerciais; preserva renovação normal de credencial, preços, estoque e a regra de amostra da 3.2.0.422.
+- Sem migração de banco. Publicação autorizada pela main, preservando ajustes recentes; resultados reais dependem da execução controlada no build e confirmação do domínio.
+
 ## 3.2.0.422 — AvantaPreços: usar amostra disponível após a coleta completa
 
 - Mantém busca de todas as páginas e prioridade de várias ofertas; aceita uma ou duas ofertas válidas ao final. Uma oferta usa seu preço e várias usam a média, sem interromper a coleta antecipadamente.

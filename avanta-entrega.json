@@ -1,11 +1,15 @@
 {
-  "baseDeploymentId": "dpl_EAt8GobCvMy3iCqsvvK1WuL2B8QH",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261114210000_marketplace_ml_price_small_sample.sql",
-      "sha256": "c8e1fd2492006f1f28e199d4c67fa97227705825d3e6c85951e8320707fdea87"
-    }
-  ],
-  "version": "3.2.0.422",
-  "scope": "AvantaPreços: priorizar múltiplas ofertas e aceitar uma ou duas válidas após coleta completa"
+  "baseDeploymentId": "dpl_7MrcDdrjntCy7EvBQ5DjEcgPYjEK",
+  "migrations": [],
+  "version": "3.2.0.423",
+  "scope": "Marketplaces: diagnóstico administrativo de acesso ML e investigação JEFF sem alterar preços ou estoque",
+  "mlPriceAccessCheck": {
+    "version": "3.2.0.423",
+    "type": "marketplace-price-access-jeff",
+    "accountLabel": "JEFF",
+    "mode": "production-read-only",
+    "companyId": "baa8c115-634a-41d3-9e2a-8666dce11454",
+    "connectionId": "d9267ba0-232b-4dd3-a606-0ce3eadf5313",
+    "sellerReference": "230210240"
+  }
 }

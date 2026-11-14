@@ -36,7 +36,7 @@ test('limita catálogo a duas fichas e oferta a vinte mesmo com resposta excessi
 test('rota exige administração e isola conexão na empresa antes de qualquer GET ao provedor',()=>{
  const route=readFileSync('app/api/modulos/marketplaces/diagnostico-precos/route.ts','utf8');
  assert.match(route,/authorizeMarketplace\(request, body.empresaId, 'connections'\)/);assert.match(route,/loadConnection\(db, empresaId, body.connectionId\)/);
- assert.ok(route.indexOf('await authorizeMarketplace')<route.indexOf('await loadConnection'));assert.ok(route.indexOf('await loadConnection')<route.indexOf('await diagnoseMercadoLivrePrices'));
- assert.match(route,/mlRequest\(db, connection, path, 'GET'\)/);assert.match(route,/'Cache-Control': 'no-store'/);
+ assert.ok(route.indexOf('await authorizeMarketplace')<route.indexOf('await loadConnection'));assert.ok(route.indexOf('await loadConnection')<route.indexOf('await diagnoseMercadoLivreAccess'));
+ assert.match(route,/diagnoseMercadoLivreAccess\(db, connection, input\)/);assert.match(route,/'Cache-Control': 'no-store'/);
  assert.doesNotMatch(source+route,/consultOpenAI|fetch\(|\.rpc\(|\.update\(|\.insert\(|\.delete\(/);
 });

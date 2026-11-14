@@ -1,3 +1,4 @@
+// Revisão 3.2.0.423: diagnóstico ML administrativo com códigos sanitizados, confirmação de identidade e controle JEFF de leitura em produção.
 // Revisão local 3.2.0.422: coleta completa com prioridade de várias ofertas; aceita uma ou duas válidas ao final. Sem publicação.
 // Revisão 3.2.0.420: preços diretos do catálogo ML, sem IA automática; resultados recolhidos. Migração aplicada; publicação pela main em preparação.
 // Revisão 3.2.0.419-av201: dashboard do Vendas detalha Total recebido por forma e consignados por cliente. Ficha real de Clientes sem compra, com retorno à lista/ordem/rolagem; sem migração, escrita financeira ou mudança da Gestão.
@@ -2918,3 +2919,5 @@ GUIAS["gestao-web"] += " Revisão 3.2.0.420 — regra atual do AvantaPreços e M
 // Revisão 3.2.0.421-av203: Vendas aplica o intervalo exato escolhido ao Filtrar; só as setas/Mês atual são mensais. Total recebido tem Ver detalhes; consignados compactos com topo/total fixos e retorno à posição da lista. Gestão preservada.
 
 GUIAS["gestao-web"] += " Revisão local 3.2.0.422: o mínimo de três vendedores da revisão 3.2.0.420 foi substituído. Mantém coleta completa e filtros, prioriza várias ofertas e aceita uma ou duas válidas ao terminar; com uma, a referência é o preço da oferta. A migração foi aplicada; a liberação do código pela main depende de build aprovado.";
+
+GUIAS["gestao-web"] += " Revisão 3.2.0.423: o diagnóstico de preços administrativo confere a conta e compara catálogo, busca geral, anúncios próprios, aplicação/grant e item de outro vendedor. Retorna códigos técnicos permitidos e correlação, sem tokens ou dados pessoais. Acesso continua restrito ao administrador da empresa. Não muda preço, estoque, anúncio, permissões ou referência. Renovação normal da credencial é separada de ação comercial. Um HTTP 403 não determina a causa; não prometer que reconectar ou certificar resolverá. Há execução controlada JEFF desta versão no ambiente de produção da Vercel; diferenciar origem do build da origem de uma função em execução. Não confundir o diagnóstico com uma nova pesquisa de preços salva.";

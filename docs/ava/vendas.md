@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.422 -->
+<!-- ava-version: 3.2.0.423 -->
+
+> Revisão 3.2.0.423: sem impacto operacional no AvantaVendas. Diagnóstico de acesso ML restrito ao módulo Marketplaces, sem alterações em vendas, preços ou estoque; preserva os ajustes av203.
 
 > Revisão local 3.2.0.422: sem impacto operacional no AvantaVendas. Apenas flexibiliza a amostra mínima de preços no AvantaPreços/Marketplaces após a coleta completa; preserva o dashboard e os ajustes da 3.2.0.421-av203.
 
