@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.418 -->
+<!-- ava-version: 3.2.0.419 -->
+
+> Revisão 3.2.0.419: sem impacto operacional na Gestão Mobile; detalhamento de cards exclusivo do AvantaVendas.
 
 > Revisão 3.2.0.418: sem impacto operacional. Apenas o visual dos botões de download na página pública foi atualizado, com marcas Apple/Google Play e chamadas Baixar. O aplicativo instalado permanece igual.
 

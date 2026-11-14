@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.418 -->
+<!-- ava-version: 3.2.0.419 -->
+
+> Revisão 3.2.0.419-av201: Total recebido detalha por forma de pagamento no período aplicado. Produtos consignados mostram clientes e quantidades, com ordenação por quantidade/nome; nome abre a mesma ficha de Clientes sem compra e fechar restaura lista, posição e ordem.
 
 > Revisão 3.2.0.418: sem impacto operacional. O card público do AvantaVendas usa as marcas das lojas e chamadas Baixar, preservando os mesmos links; sem alteração no aplicativo.
 
@@ -992,7 +994,7 @@ Revisão 3.2.0.98: correção do extrator de preços do Web/AvantaPreços; sem i
 > Revisão 3.1.0.45: card compacto de Produtos e estoque no Marketplaces Web; sem impacto operacional no AvantaVendas. Menu av188, dados e preferências preservados. Local, não publicado.
 
 > Revisão 3.1.0.44: configurações, referência editável e sugestões do Marketplaces/AvantaPreços; sem impacto operacional no AvantaVendas independente. Menu av188 e suas preferências permanecem intactos. Local, não publicado.
-<!-- avantavendas-asset-revision: 199 -->
+<!-- avantavendas-asset-revision: 201 -->
 
 > Revisão 3.1.0.43-av188: o topo do menu inferior tem linha fina azul-ciano que desliza até o botão acionado, no padrão da Gestão Mobile (2 px, 300 ms). O indicador acompanha atalhos personalizados, Início, Configurações, mudança de tema e Lançar, sem atrasar ações. Ao navegar por outras áreas, volta a indicar o destino representado no menu, ou Início quando não houver atalho correspondente. A preferência de movimento reduzido desativa o deslizamento. Círculo continua removido e resposta tátil opcional preservada. Sem alteração de dados, permissões ou fluxo da Gestão. Testado em Chrome isolado, não em aparelhos físicos. Local, não publicado.
 

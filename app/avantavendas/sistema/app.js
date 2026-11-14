@@ -4970,7 +4970,7 @@ function resumoConsignadosDashboard() {
   pedidos.forEach((pedido) => (pedido.itens || []).forEach((item) => {
     if (itemPedidoBonificado(item)) return;
     const chave = item.produto_id || item.produto_sku || item.produto_nome;
-    const atual = produtos.get(chave) || { nome: item.produto_nome || 'Produto', quantidade: 0 };
+    const atual = produtos.get(chave) || { chave: String(chave || ''), nome: item.produto_nome || 'Produto', quantidade: 0 };
     atual.quantidade += Number(item.quantidade || 0);
     produtos.set(chave, atual);
   }));
@@ -4986,6 +4986,58 @@ function resumoConsignadosDashboard() {
 function alternarConsignadosDashboard() {
   state.dashboardConsignadosExpandido = !state.dashboardConsignadosExpandido;
   render();
+}
+
+let distribuicaoConsignadoDashboard = null;
+
+function clientesDoProdutoConsignadoDashboard(chave, ordem = 'quantidade-desc') {
+  const clientes = new Map();
+  for (const pedido of state.vendas.filter(pedidoConsignadoAtivo)) {
+    for (const item of pedido.itens || []) {
+      if (itemPedidoBonificado(item) || String(item.produto_id || item.produto_sku || item.produto_nome || '') !== String(chave)) continue;
+      const quantidade = Number(item.quantidade || 0);
+      if (!Number.isFinite(quantidade) || quantidade <= 0) continue;
+      const idCliente = String(pedido.cliente_id || '');
+      const cadastro = state.clientes.find(cliente => String(cliente.id) === idCliente);
+      const linha = clientes.get(idCliente) || { id: idCliente, nome: cadastro?.nome || 'Cliente não localizado', disponivel: Boolean(cadastro), quantidade: 0 };
+      linha.quantidade += quantidade;
+      clientes.set(idCliente, linha);
+    }
+  }
+  return [...clientes.values()].sort((a, b) => {
+    const nome = a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+    return ordem === 'nome' ? nome : (ordem === 'quantidade-asc' ? a.quantidade - b.quantidade : b.quantidade - a.quantidade) || nome;
+  });
+}
+
+function conteudoDistribuicaoConsignadoDashboard() {
+  const { chave, ordem } = distribuicaoConsignadoDashboard;
+  const clientes = clientesDoProdutoConsignadoDashboard(chave, ordem);
+  const total = clientes.reduce((soma, cliente) => soma + cliente.quantidade, 0);
+  const proximaQuantidade = ordem === 'quantidade-desc' ? 'quantidade-asc' : 'quantidade-desc';
+  return `<p class="muted">Onde estão as unidades consignadas</p><div class="consignment-distribution-sort" role="group" aria-label="Ordenar clientes"><button type="button" class="${ordem !== 'nome' ? 'active' : ''}" aria-pressed="${ordem !== 'nome'}" onclick="ordenarDistribuicaoConsignadoDashboard('${proximaQuantidade}')">Quantidade ${ordem === 'quantidade-asc' ? '↑' : '↓'}</button><button type="button" class="${ordem === 'nome' ? 'active' : ''}" aria-pressed="${ordem === 'nome'}" onclick="ordenarDistribuicaoConsignadoDashboard('nome')">Nome A–Z</button></div><div class="consignment-distribution-list">${clientes.length ? clientes.map(cliente => `<div>${cliente.disponivel ? `<button type="button" onclick="abrirClienteDashboard(${escapeAttr(JSON.stringify(cliente.id))})">${escapeHtml(cliente.nome)} ${svgIcon('chevron-right')}</button>` : `<span>${escapeHtml(cliente.nome)}</span>`}<b>${cliente.quantidade.toLocaleString('pt-BR')} un.</b></div>`).join('') : '<p class="muted">Nenhum consignado ativo deste produto.</p>'}</div><div class="dashboard-received-total"><span>${clientes.length} ${clientes.length === 1 ? 'cliente' : 'clientes'}</span><strong>${total.toLocaleString('pt-BR')} unidades</strong></div><p class="muted dashboard-received-hint">Toque no nome para abrir a ficha</p>`;
+}
+
+function abrirDistribuicaoConsignadoDashboard(chave) {
+  const produto = resumoConsignadosDashboard().produtos.find(item => item.chave === String(chave));
+  if (!produto) return;
+  distribuicaoConsignadoDashboard = { chave: String(chave), ordem: 'quantidade-desc' };
+  sheet(`<div class="sheet-header"><div><h2 id="distribuicaoConsignadoTitulo">Estoque consignado</h2><p class="muted small">${escapeHtml(produto.nome)}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar estoque consignado">${svgIcon('x')}</button></div><div id="distribuicaoConsignadoConteudo">${conteudoDistribuicaoConsignadoDashboard()}</div>`, 'sheet-backdrop-centered consignment-distribution-backdrop');
+  const card = document.querySelector('#sheetBackdrop .sheet');
+  card?.setAttribute('role', 'dialog');
+  card?.setAttribute('aria-modal', 'true');
+  card?.setAttribute('aria-labelledby', 'distribuicaoConsignadoTitulo');
+  card?.querySelector('.close')?.focus({ preventScroll: true });
+}
+
+function ordenarDistribuicaoConsignadoDashboard(ordem) {
+  if (!distribuicaoConsignadoDashboard || !['quantidade-desc', 'quantidade-asc', 'nome'].includes(ordem)) return;
+  distribuicaoConsignadoDashboard.ordem = ordem;
+  const conteudo = document.getElementById('distribuicaoConsignadoConteudo');
+  if (conteudo) {
+    conteudo.innerHTML = conteudoDistribuicaoConsignadoDashboard();
+    conteudo.querySelector('.consignment-distribution-sort .active')?.focus({ preventScroll: true });
+  }
 }
 
 function alternarEstoqueDashboard() {
@@ -5074,13 +5126,54 @@ function clientesInativosDashboard() {
     });
 }
 
-function renderDashboard() {
-  const t = totaisPeriodo();
-  const pagamentosPeriodo = (state.pagamentos || []).filter((pagamento) => {
+function pagamentosNoPeriodoDashboard() {
+  return (state.pagamentos || []).filter((pagamento) => {
     const dataPagamento = new Date(`${pagamento.data_pagamento || String(pagamento.criado_em || '').slice(0, 10)}T12:00:00`);
     return dataPagamento >= new Date(`${state.filtroInicio}T00:00:00`) && dataPagamento <= new Date(`${state.filtroFim}T23:59:59`);
   });
-  const totalRecebido = pagamentosPeriodo.reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
+}
+
+function resumoRecebimentosDashboard() {
+  const grupos = new Map();
+  const nomes = { pix: 'Pix', dinheiro: 'Dinheiro', 'cartao de credito': 'Cartão de crédito', 'cartao credito': 'Cartão de crédito', 'cartao de debito': 'Cartão de débito', 'cartao debito': 'Cartão de débito', cheque: 'Cheque', boleto: 'Boleto' };
+  for (const pagamento of pagamentosNoPeriodoDashboard()) {
+    const valor = Number(pagamento.valor || 0);
+    if (!Number.isFinite(valor)) continue;
+    const formaOriginal = String(pagamento.forma_pagamento || '').trim().replace(/\s+/g, ' ');
+    const nome = nomes[normalizar(formaOriginal)] || formaOriginal || 'Não informado';
+    const chave = normalizar(nome);
+    const grupo = grupos.get(chave) || { nome, centavos: 0 };
+    grupo.centavos += Math.round(valor * 100);
+    grupos.set(chave, grupo);
+  }
+  const formas = [...grupos.values()].sort((a, b) => b.centavos - a.centavos || a.nome.localeCompare(b.nome, 'pt-BR'));
+  return { formas, total: formas.reduce((soma, grupo) => soma + grupo.centavos, 0) / 100 };
+}
+
+function abrirRecebimentosDashboard() {
+  const origem = document.activeElement;
+  const resumo = resumoRecebimentosDashboard();
+  const periodo = `${dataBR(state.filtroInicio + 'T12:00:00')} a ${dataBR(state.filtroFim + 'T12:00:00')}`;
+  const linhas = resumo.formas.map((forma) => `<div class="dashboard-received-row"><span class="dashboard-received-icon" aria-hidden="true">${svgIcon('credit-card')}</span><span>${escapeHtml(forma.nome)}</span><strong>${moeda(forma.centavos / 100)}</strong></div>`).join('');
+  sheet(`<div class="sheet-header"><div><h2 id="dashboardRecebimentosTitulo">Total recebido</h2><p class="muted small">${escapeHtml(periodo)}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar recebimentos">${svgIcon('x')}</button></div><p class="muted dashboard-received-intro">Recebimentos por forma de pagamento</p><div class="dashboard-received-list">${linhas || '<p class="muted">Nenhum recebimento neste período.</p>'}</div><div class="dashboard-received-total"><span>Total no período</span><strong>${moeda(resumo.total)}</strong></div><p class="muted dashboard-received-hint">Toque fora do card para fechar</p>`, 'sheet-backdrop-centered dashboard-received-backdrop');
+  const wrap = document.getElementById('sheetBackdrop');
+  if (!wrap) return;
+  const card = wrap.querySelector('.sheet');
+  card.setAttribute('role', 'dialog');
+  card.setAttribute('aria-modal', 'true');
+  card.setAttribute('aria-labelledby', 'dashboardRecebimentosTitulo');
+  wrap.__recebimentosOrigem = origem;
+  const fechar = card.querySelector('.close');
+  fechar.focus({ preventScroll: true });
+  wrap.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') { event.preventDefault(); fecharSheet(); }
+    if (event.key === 'Tab') { event.preventDefault(); fechar.focus(); }
+  });
+}
+
+function renderDashboard() {
+  const t = totaisPeriodo();
+  const totalRecebido = resumoRecebimentosDashboard().total;
   const anosRelatorio = anosRelatorioAnualDashboard();
   const anoRelatorio = anosRelatorio.includes(Number(state.dashboardAnoRelatorio))
     ? Number(state.dashboardAnoRelatorio)
@@ -5106,7 +5199,7 @@ function renderDashboard() {
   const tabelaClientes = clientesTop.length ? clientesTop.map((item) => `<tr><td><b>${escapeHtml(item.nome)}</b><small>${item.pedidos} ${item.pedidos === 1 ? 'pedido' : 'pedidos'}</small></td><td>${moeda(item.total)}</td></tr>`).join('') : '<tr><td colspan="2">Nenhuma venda no período.</td></tr>';
   const tabelaInativos = clientesInativos.length ? clientesInativos.map((item) => `<tr class="dashboard-inactive-row" tabindex="0" role="button" onclick="abrirClienteDashboard('${item.id}')" onkeydown="if(event.key==='Enter'||event.key===' ')abrirClienteDashboard('${item.id}')"><td>${escapeHtml(item.nome)}</td><td>${item.ultima ? dataCurtaBR(item.ultima.criado_em) : 'Sem compra'}</td><td>${item.dias ?? '—'}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum cliente sem pedido no período selecionado.</td></tr>';
   const graficoProdutos = produtosTop.length ? produtosTop.map((item) => `<div class="dashboard-bar-row"><span><b>${escapeHtml(item.nome)}</b><small>${item.qtd} un. · ${moeda(item.total)}</small></span><i><em style="width:${Math.max(4, item.qtd / produtosTop[0].qtd * 100)}%"></em></i></div>`).join('') : '<p>Sem vendas de produtos no período.</p>';
-  const listaConsignados = consignados.produtos.length ? consignados.produtos.map((item) => `<div><span>${escapeHtml(item.nome)}</span><b>${item.quantidade.toLocaleString('pt-BR')} un.</b></div>`).join('') : '<p>Nenhum produto consignado ativo.</p>';
+  const listaConsignados = consignados.produtos.length ? consignados.produtos.map((item) => `<div role="button" tabindex="0" onclick="abrirDistribuicaoConsignadoDashboard(${escapeAttr(JSON.stringify(item.chave))})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" aria-label="${escapeAttr(item.nome + ': ver clientes com este produto consignado')}"><span>${escapeHtml(item.nome)}</span><b>${item.quantidade.toLocaleString('pt-BR')} un.</b></div>`).join('') : '<p>Nenhum produto consignado ativo.</p>';
   const produtosEstoque = state.produtos
     .filter((produto) => produto.ativo !== false && produto.estoque_controlado)
     .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
@@ -5136,7 +5229,7 @@ function renderDashboard() {
       </section>
       <section class="dashboard-kpis">
         ${kpi('Total Vendido', moeda(t.total), '$')}
-        ${kpi('Total Recebido', moeda(totalRecebido), '⌁')}
+        ${kpi('Total Recebido', moeda(totalRecebido), '⌁', 'abrirRecebimentosDashboard()')}
         ${kpi('Saldo a Receber', moeda(totalAReceber), '◷')}
         ${kpi('Clientes Ativos', state.clientes.filter((cliente) => cliente.ativo !== false).length, '♧')}
         ${kpi('Pedidos', t.pedidos.toLocaleString('pt-BR'), '▤')}
@@ -5180,7 +5273,8 @@ function renderDashboard() {
   `;
 }
 
-function kpi(label, value, icon = '') {
+function kpi(label, value, icon = '', acao = '') {
+  if (acao) return `<button type="button" class="kpi kpi-clickable" onclick="${acao}" aria-haspopup="dialog" aria-label="${escapeAttr(label + ': ' + value + '. Ver formas de recebimento')}"><div><span>${label}</span><strong>${value}</strong></div><b aria-hidden="true">${icon}</b></button>`;
   return `<article class="kpi"><div><span>${label}</span><strong>${value}</strong></div><b>${icon}</b></article>`;
 }
 
@@ -11315,10 +11409,23 @@ function prepararSheetTransacaoParaTeclado(wrap) {
 }
 
 function sheet(html, backdropClass = '') {
-  fecharSheet();
-  elementoRolagemAnteriorSheet = elementoRolagemPrincipalVendas();
-  rolagemAnteriorSheet = posicaoRolagemPrincipalVendas(elementoRolagemAnteriorSheet);
+  const anterior = document.getElementById('sheetBackdrop');
+  const preservarConsignado = anterior?.classList.contains('consignment-distribution-backdrop')
+    && backdropClass.split(' ').includes('dashboard-client-backdrop');
+  if (preservarConsignado) {
+    anterior.__focoDistribuicao = document.activeElement;
+    anterior.__scrollDistribuicao = anterior.querySelector('.sheet')?.scrollTop || 0;
+    anterior.id = 'distribuicaoConsignadoSuspensa';
+    anterior.style.pointerEvents = 'none';
+    anterior.setAttribute('aria-hidden', 'true');
+    anterior.inert = true;
+  } else {
+    fecharSheet(null, true);
+    elementoRolagemAnteriorSheet = elementoRolagemPrincipalVendas();
+    rolagemAnteriorSheet = posicaoRolagemPrincipalVendas(elementoRolagemAnteriorSheet);
+  }
   const wrap = document.createElement('div');
+  if (preservarConsignado) wrap.__consignadoAnterior = anterior;
   wrap.className = `sheet-backdrop ${backdropClass}`;
   wrap.id = 'sheetBackdrop';
   if (backdropClass.includes('client-transaction-backdrop') || backdropClass.includes('consignment-')) {
@@ -11340,10 +11447,23 @@ function sheet(html, backdropClass = '') {
   }
 }
 
-function fecharSheet(evento = null) {
+function fecharSheet(evento = null, descartarRetorno = false) {
   evento?.preventDefault?.();
   evento?.stopPropagation?.();
   const sheetAtual = document.getElementById('sheetBackdrop');
+  const retornoConsignado = sheetAtual?.__consignadoAnterior;
+  if (retornoConsignado?.isConnected && !descartarRetorno) {
+    sheetAtual.remove();
+    retornoConsignado.id = 'sheetBackdrop';
+    retornoConsignado.style.pointerEvents = '';
+    retornoConsignado.removeAttribute('aria-hidden');
+    retornoConsignado.inert = false;
+    const card = retornoConsignado.querySelector('.sheet');
+    if (card) card.scrollTop = retornoConsignado.__scrollDistribuicao || 0;
+    retornoConsignado.__focoDistribuicao?.focus({ preventScroll: true });
+    return;
+  }
+  if (retornoConsignado?.isConnected) retornoConsignado.remove();
   if (sheetAtual?.classList.contains('material-preview-backdrop')) encerrarRenderizacaoPdfMaterial();
   const estavaBloqueado = document.body.classList.contains('sheet-open')
     || document.documentElement.classList.contains('sheet-open');
@@ -11378,6 +11498,7 @@ function fecharSheet(evento = null) {
     }
   }
   elementoRolagemAnteriorSheet = null;
+  if (sheetAtual?.__recebimentosOrigem?.isConnected) sheetAtual.__recebimentosOrigem.focus({ preventScroll: true });
   if (sincronizacaoRetomadaAguardandoTela) agendarRetomadaVendas();
 }
 

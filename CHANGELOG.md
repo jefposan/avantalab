@@ -1,3 +1,8 @@
+## 3.2.0.419-av201 - AvantaVendas: detalhar recebimentos e consignados do dashboard
+
+- Total recebido abre divisão por forma dos pagamentos do mesmo período aplicado. Produtos consignados abrem saldos ativos por cliente, ordenáveis por quantidade ou nome.
+- Nome reutiliza a ficha de Clientes sem compra; fechar restaura a lista original, ordenação e rolagem. Sem gravação financeira, migração ou alteração da Gestão Mobile. Correção do filtro de datas diagnosticada separadamente não incluída.
+
 ## 3.2.0.418 — Página pública: identidade das lojas nos botões de download
 
 - App Store usa fundo preto com maçã branca; Google Play usa fundo branco, texto escuro e símbolo nas quatro cores da marca.

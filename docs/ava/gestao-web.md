@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.418 -->
+<!-- ava-version: 3.2.0.419 -->
+
+> Revisão 3.2.0.419: sem impacto operacional na Gestão Web; detalhamento de cards exclusivo do AvantaVendas.
 
 > Revisão 3.2.0.418: os botões públicos de download usam a identidade visual das lojas e os rótulos Baixar na App Store / Baixar no Google Play. Links e funcionamento preservados; sem impacto operacional.
 

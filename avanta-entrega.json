@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_2iwMb1dD7ETa3XSZzKm4Kbxm9CSb",
+  "baseDeploymentId": "dpl_DbcHS124tp6d1S6Nhn2BPYk1jeUK",
   "migrations": [],
-  "version": "3.2.0.418",
-  "scope": "Página pública: identidade das lojas nos botões de download"
+  "version": "3.2.0.419",
+  "scope": "AvantaVendas: divisão dos recebimentos por forma e consignados por cliente, com ficha e retorno preservado"
 }

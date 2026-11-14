@@ -1,3 +1,4 @@
+// Revisão 3.2.0.419-av201: dashboard do Vendas detalha Total recebido por forma e consignados por cliente. Ficha real de Clientes sem compra, com retorno à lista/ordem/rolagem; sem migração, escrita financeira ou mudança da Gestão.
 // Revisão 3.2.0.417: reservas no AvantaPreços e na linha de ações do estoque Web.
 // Revisão 3.2.0.400: logos institucionais Web/Mobile em WebP sem perdas; mesmo slogan e contraste, sem mudança de dados ou autenticação.
 // Revisão 3.2.0.391: a NF-e de produção da Tridium depende da liberação do servidor. Em retorno incerto, consulte a mesma nota e preserve sua numeração.
