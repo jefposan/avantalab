@@ -454,7 +454,7 @@ export default function ProductsStock(props: ListProps) {
         } while (cursor && active.current);
         if (active.current) setMessage(`${recovered} produto(s) com fotos recuperadas. Fotos existentes preservadas; preços e estoque não foram alterados.${pending ? ` ${pending} cadastro(s) continuam sem fotos recuperáveis. Consulte a origem e tente novamente.` : ''}`);
       } else if (command.action === 'refresh_price') {
-        const result = await request('produtos/preco', { ...command, empresaId: companyId, requestKey: command.requestKey || crypto.randomUUID() }, AbortSignal.timeout(65_000));
+        const result = await request('produtos/preco', { ...command, empresaId: companyId, requestKey: command.requestKey || crypto.randomUUID() }, AbortSignal.timeout(125_000));
         if (!active.current) return;
         if (!['updated','no_offers'].includes(result.status) || typeof result.message !== 'string') throw new Error('Não foi possível confirmar o resultado da pesquisa. A referência anterior foi preservada.');
         const saved = await request(`produtos?${new URLSearchParams({empresaId:companyId,productId:String(command.productId)})}`, undefined, AbortSignal.timeout(20_000));

@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import {registerHooks} from 'node:module';
+import {dirname,resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {existsSync} from 'node:fs';
+import {originFixture} from './price-origin-fixture.mjs';
+const hooks=registerHooks({resolve(s,c,next){
+ if(s==='server-only')return {url:'data:text/javascript,export {}',shortCircuit:true};
+ if(s==='./mercadolivre-market-prices')return {url:'data:text/javascript,export async function consultMercadoLivreMarketPrices(...args){return globalThis.mlComplementMock(...args)}',shortCircuit:true};
+ if(s==='./openai-web-price-search')return {url:'data:text/javascript,export async function consultOpenAIWebPrices(...args){return globalThis.aiComplementMock(...args)}',shortCircuit:true};
+ if(s==='./public-price-page')return {url:'data:text/javascript,export async function readPublicPricePage(...args){return globalThis.originComplementMock(...args)}',shortCircuit:true};
+ if(s==='./management-access'||s.endsWith('/management-access.ts'))return {url:'data:text/javascript,export class MarketplaceError extends Error {constructor(status,code,message){super(message);this.status=status;this.code=code;}}',shortCircuit:true};
+ const p=s.startsWith('.')&&c.parentURL?.startsWith('file:')?resolve(dirname(new URL(c.parentURL).pathname),s):null;
+ return p&&existsSync(p+'.ts')?next(pathToFileURL(p+'.ts').href,c):next(s,c);
+}});
+const {consultMarketPricesWithComplement:consult}=await import('../../app/modules/marketplaces/services/market-prices-with-complement.ts');
+const {analyzeMercadoLivreOffers,emptyMarketResearch}=await import('../../app/modules/marketplaces/market-price-research.ts');
+const {MarketplaceError}=await import('../../app/modules/marketplaces/services/management-access.ts');
+hooks.deregister();
+const name='Liquidificador Electrolux EBL1500 127V Cinza',ean='7909569454787',input={ean,productName:name},control={db:{},companyId:'company',actorId:'actor',includeFacts:true};
+const ml=(prices)=>analyzeMercadoLivreOffers({catalogId:'MLB123456',productName:name,total:prices.length,rows:prices.map((price,i)=>({item_id:'MLB'+(1000+i),seller_id:2000+i,currency_id:'BRL',condition:'new',price})),complete:true,ownSellers:[]});
+function setup(prices=[200,210],external=[{title:name,seller:'Loja',price:220,url:'https://loja.example/produto'}]){
+ globalThis.mlComplementMock=async()=>ml(prices);
+ let calls=0;
+ globalThis.aiComplementMock=async(query,c)=>{calls++;assert.equal(query.mode,'shopping_complement');assert.equal(c.includeFacts,false);assert.equal(c.companyId,'company');return {sample:{offers:external}};};
+ globalThis.originComplementMock=async(url)=>{const offer=external.find(o=>o.url===url);return offer?{url,html:'<script type="application/ld+json">'+JSON.stringify(originFixture(offer))+'</script>'}:null;};
+ return ()=>calls;
+}
+test('três vendedores válidos no ML dispensam completamente IA e leitura externa',async()=>{const calls=setup([200,210,220]);const r=await consult({}, {},input,control);assert.equal(calls(),0);assert.equal(r.provider,'mercado_livre');assert.equal(r.mean,210);});
+test('duas ofertas ML e uma loja verificada geram média de todas, mantendo proveniência e ficha intacta',async()=>{const calls=setup();const r=await consult({}, {},input,control);assert.equal(calls(),1);assert.equal(r.mean,210);assert.equal(r.count,3);assert.equal(r.provider,'ml_web_search');assert.equal(r.mlResearch.count,2);assert.equal(r.complement.accepted,1);assert.equal(r.offers[2].origin.method,'json_ld');});
+test('página primária corrige preço desatualizado retornado pela IA',async()=>{setup();globalThis.originComplementMock=async url=>({url,html:'<script type="application/ld+json">'+JSON.stringify(originFixture({title:name,price:250,url}))+'</script>'});const r=await consult({}, {},input,control);assert.equal(r.mean,220);assert.equal(r.offers.at(-1).price,250);});
+test('falha da IA preserva uma única oferta ML',async()=>{setup([200]);globalThis.aiComplementMock=async()=>{throw new Error('timeout')};const r=await consult({}, {},input,control);assert.equal(r.status,'ready');assert.equal(r.mean,200);assert.equal(r.provider,'mercado_livre');assert.equal(r.complement.status,'unavailable');});
+test('lojas bloqueadas ou sem comprovação não entram na média',async()=>{setup([200]);globalThis.originComplementMock=async()=>null;const r=await consult({}, {},input,control);assert.equal(r.mean,200);assert.equal(r.count,1);assert.equal(r.complement.accepted,0);});
+test('mesma loja com URLs diferentes conta somente uma vez e ML externo nunca entra',async()=>{setup([200],[{title:name,seller:'A',price:220,url:'https://loja.example/a'},{title:name,seller:'B',price:220,url:'https://loja.example/b'},{title:name,seller:'C',price:230,url:'https://www.mercadolivre.com.br/p/MLB12345'}]);const r=await consult({}, {},input,control);assert.equal(r.count,2);assert.equal(r.mean,210);});
+test('variante incompatível é recusada na origem',async()=>{setup([200],[{title:name.replace('127V','220V'),seller:'A',price:100,url:'https://loja.example/a'}]);const r=await consult({}, {},input,control);assert.equal(r.mean,200);assert.equal(r.count,1);});
+test('nenhuma oferta ML permite referência só das lojas verificadas',async()=>{setup([]);const r=await consult({}, {},input,control);assert.equal(r.status,'ready');assert.equal(r.count,1);assert.equal(r.mean,220);assert.equal(r.mlResearch.count,0);});
+test('produto ausente no catálogo pode usar identidade local com EAN comprovado na origem',async()=>{setup([]);globalThis.mlComplementMock=async()=>emptyMarketResearch(name,'identity_unconfirmed','Fora do catálogo');const r=await consult({}, {},input,control);assert.equal(r.mean,220);assert.equal(r.catalogId,null);});
+test('403 do recurso ML permite complemento, falha de banco não inicia gasto',async()=>{const calls=setup([]);globalThis.mlComplementMock=async()=>{throw new MarketplaceError(403,'provider_403','Bloqueado')};assert.equal((await consult({}, {},input,control)).mean,220);assert.equal(calls(),1);globalThis.mlComplementMock=async()=>{throw new MarketplaceError(503,'database','Banco')};await assert.rejects(consult({}, {},input,control),{code:'database'});assert.equal(calls(),1);});
+test('paginação parcial e preços para revisão não são substituídos por amostra seletiva da IA',async()=>{const calls=setup();for(const status of ['partial','review']){globalThis.mlComplementMock=async()=>({...ml([200]),status});assert.equal((await consult({}, {},input,control)).status,status);}assert.equal(calls(),0);});
+test('sem controle de custo não inicia IA, e cancelamento não vira sucesso',async()=>{const calls=setup();assert.equal((await consult({}, {},input)).provider,'mercado_livre');assert.equal(calls(),0);const c=new AbortController();globalThis.aiComplementMock=async()=>{c.abort();throw Error('cancelled')};await assert.rejects(consult({}, {},input,{...control,signal:c.signal}),{name:'AbortError'});});
+test('grande dispersão combinada exige conferência em vez de aplicar média enganosa',async()=>{setup([200],[{title:name,seller:'A',price:1000,url:'https://loja.example/a'}]);const r=await consult({}, {},input,control);assert.equal(r.status,'review');});
+test('valores extremos do complemento ficam fora da média',async()=>{setup([200,210],[{title:name,seller:'A',price:220,url:'https://loja-a.example/a'},{title:name,seller:'B',price:230,url:'https://loja-b.example/a'},{title:name,seller:'C',price:9999,url:'https://loja-c.example/a'}]);const r=await consult({}, {},input,control);assert.equal(r.status,'ready');assert.equal(r.mean,215);assert.equal(r.count,4);assert.equal(r.complement.accepted,2);assert.equal(r.exclusions.valor_extremo,1);});
+test('ofertas da mesma loja usam o menor preço confirmado, mesmo se o resumo estiver desatualizado',async()=>{setup([200],[{title:name,seller:'A',price:210,url:'https://loja.example/a'},{title:name,seller:'A',price:220,url:'https://loja.example/b'}]);globalThis.originComplementMock=async url=>({url,html:'<script type="application/ld+json">'+JSON.stringify(originFixture({title:name,url,price:url.endsWith('/a')?250:230}))+'</script>'});const r=await consult({}, {},input,control);assert.equal(r.count,2);assert.equal(r.mean,215);assert.equal(r.offers.at(-1).price,230);});

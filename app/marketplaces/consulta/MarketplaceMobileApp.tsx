@@ -367,7 +367,7 @@ export default function MarketplaceMobileApp() {
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw Object.assign(new Error(body.message || 'Não foi possível concluir a consulta.'), {code:body.code});
     return body;
-    }, options?.signal, options?.method && options.method !== 'GET' ? 65_000 : 25_000);
+    }, options?.signal, options?.method && options.method !== 'GET' ? (/\/precos(?:\/produto)?$/.test(path) ? 125_000 : 65_000) : 25_000);
   }, []);
   const lotCapture = usePriceLotCapture(company?.id || '', request);
   const priceSettings = usePriceSettings(company?.id || '', request);

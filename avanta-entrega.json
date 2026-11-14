@@ -1,15 +1,11 @@
 {
-  "baseDeploymentId": "dpl_7MrcDdrjntCy7EvBQ5DjEcgPYjEK",
-  "migrations": [],
-  "version": "3.2.0.423",
-  "scope": "Marketplaces: diagnóstico administrativo de acesso ML e investigação JEFF sem alterar preços ou estoque",
-  "mlPriceAccessCheck": {
-    "version": "3.2.0.423",
-    "type": "marketplace-price-access-jeff",
-    "accountLabel": "JEFF",
-    "mode": "production-read-only",
-    "companyId": "baa8c115-634a-41d3-9e2a-8666dce11454",
-    "connectionId": "d9267ba0-232b-4dd3-a606-0ce3eadf5313",
-    "sellerReference": "230210240"
-  }
+  "baseDeploymentId": "dpl_F1veBP7nEWFuugATndKXRbNcT2Bg",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261114230000_marketplace_price_web_complement.sql",
+      "sha256": "ca9684e1bd4917955d0a579ac8a28bd4350c25feb3902d101edd5d687c1068fa"
+    }
+  ],
+  "version": "3.2.0.424",
+  "scope": "AvantaPreços: ML primeiro e complemento web com IA abaixo de três vendedores, com validação nas lojas"
 }

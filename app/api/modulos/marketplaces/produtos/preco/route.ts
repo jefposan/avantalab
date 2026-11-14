@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorizeMarketplace, managementFailure } from '@/app/modules/marketplaces/services/management-access';
 import { researchLocalProductPrice } from '@/app/modules/marketplaces/services/local-product-price-research';
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
 export async function POST(request: Request) {
   try {
     const body = await request.json();

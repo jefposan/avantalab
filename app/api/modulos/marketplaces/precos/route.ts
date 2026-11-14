@@ -16,7 +16,7 @@ import {priceStockProduct} from '@/app/modules/marketplaces/services/price-produ
 import { openMarketplaceSecret, sealMarketplaceSecret, type SealedMarketplaceSecret } from '@/app/modules/marketplaces/services/secret-vault';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 function cents(value: number) {
   return Math.round(value * 100);
