@@ -5,6 +5,7 @@ import {readMagaluListing,saveMagaluListing,loadMagaluConnection} from './magalu
 import {magaluCatalogRequest} from './magalu-request';
 import {MAGALU_CHANNEL_ID} from '../magalu-publication-model';
 import {stockIncreaseBlocker} from './inventory-product-guard';
+import {reservationRestoreAllowed} from './reservation-restore';
 type Job={link_id:string;empresa_id:string;product_id:string;desired_quantity:number;revision:number;generation:string;allow_increase:boolean;attempts:number};
 type Link={id:string;connection_id:string;provider_listing_id:string};
 export async function deliverMagaluStockJob(db:SupabaseClient,job:Job,link:Link,deadline=Infinity){
@@ -40,6 +41,12 @@ export async function deliverMagaluStockJob(db:SupabaseClient,job:Job,link:Link,
   }
   if(job.desired_quantity===0&&current.raw.active!==false)throw new MarketplaceError(409,'pause_unconfirmed','Pausa não confirmada.');
   if(job.desired_quantity===0&&control.data?.pause_requested_at){const r=await db.from('marketplace_listing_stock_control').update({paused_by_system:true,pause_confirmed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('empresa_id',job.empresa_id).eq('link_id',link.id);if(r.error)throw Error('audit');}
+  if(current.raw.active===false&&await reservationRestoreAllowed(db,job,connection.id,link.provider_listing_id)){
+   await assertCurrent();
+   await magaluCatalogRequest(db,connection,'PATCH',`/seller/v1/portfolios/skus/${encodeURIComponent(link.provider_listing_id)}`,{active:true});
+   throw new MarketplaceError(409,'magalu_resume_processing','Reativação após cancelar reserva enviada; aguardando confirmação do canal.');
+  }
+  if(current.raw.active===true&&control.data?.paused_by_system){const clear=await db.from('marketplace_listing_stock_control').update({paused_by_system:false,updated_at:new Date().toISOString()}).eq('empresa_id',job.empresa_id).eq('link_id',link.id);if(clear.error)throw Error('audit');}
   await saveMagaluListing(db,connection,current.listing);state='synced';
  }catch(error){issue=error instanceof MarketplaceError?error.code:'inventory_database';}
  const result=await db.from('marketplace_inventory_outbox').update({state,issue,attempts:job.attempts+1,next_attempt_at:new Date(Date.now()+60000).toISOString(),synced_at:state==='synced'?new Date().toISOString():null}).eq('empresa_id',job.empresa_id).eq('link_id',job.link_id).eq('product_id',job.product_id).eq('revision',job.revision).eq('generation',job.generation);

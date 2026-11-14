@@ -14,9 +14,9 @@ export async function listWarehouses(db: SupabaseClient, companyId: string): Pro
   }
 }
 async function readBalances(db:SupabaseClient,companyId:string,productIds:string[]) {
-  const rows:Array<{warehouse_id:string;product_id:string;quantity:number|null;revision:number;confirmed_at:string|null}>=[];
+  const rows:Array<{warehouse_id:string;product_id:string;quantity:number|null;reserved_quantity:number;revision:number;confirmed_at:string|null}>=[];
   for(let offset=0;;offset+=500) {
-    const {data,error}=await db.from('marketplace_warehouse_balances').select('warehouse_id,product_id,quantity,revision,confirmed_at').eq('empresa_id',companyId).in('product_id',productIds).order('warehouse_id').order('product_id').range(offset,offset+499).abortSignal(AbortSignal.timeout(20_000));
+    const {data,error}=await db.from('marketplace_warehouse_balances').select('warehouse_id,product_id,quantity,reserved_quantity,revision,confirmed_at').eq('empresa_id',companyId).in('product_id',productIds).order('warehouse_id').order('product_id').range(offset,offset+499).abortSignal(AbortSignal.timeout(20_000));
     if(error)throw error;
     rows.push(...data||[]);if((data||[]).length<500)return rows;
   }
@@ -28,7 +28,7 @@ export async function warehouseContext(db: SupabaseClient, companyId: string, pr
     const data=await readBalances(db,companyId,[productId]);
     return {warehousesReady:true,warehouses:warehouses.map(w=>{
       const balance=data?.find(b=>b.warehouse_id===w.id);
-      return {...w,quantity:balance ? balance.quantity : 0,revision:balance?.revision ?? 1,confirmed_at:balance?.confirmed_at ?? null};
+      return {...w,quantity:balance ? balance.quantity : 0,reservedQuantity:balance?.reserved_quantity ?? 0,revision:balance?.revision ?? 1,confirmed_at:balance?.confirmed_at ?? null};
     })};
   } catch {
     // Versões antigas continuam lendo o online; não presumir ausência de estoques.
@@ -40,7 +40,7 @@ export async function productAllocations(db: SupabaseClient, companyId: string, 
   const warehouses=await listWarehouses(db,companyId);
   if(warehouses.filter(w=>w.is_online).length!==1)throw new Error('Estoque online não confirmado.');
   const data=await readBalances(db,companyId,productIds);
-  return new Map(productIds.map(id=>[id,warehouses.map(w=>{const b=data?.find(b=>b.product_id===id&&b.warehouse_id===w.id);return {warehouseId:w.id,name:w.name,online:w.is_online,quantity:b?b.quantity:0};})]));
+  return new Map(productIds.map(id=>[id,warehouses.map(w=>{const b=data?.find(b=>b.product_id===id&&b.warehouse_id===w.id);return {warehouseId:w.id,name:w.name,online:w.is_online,quantity:b?b.quantity:0,reservedQuantity:b?.reserved_quantity ?? 0};})]));
 }
 export async function warehouseCommand(db: SupabaseClient, companyId: string, actor: string, input: unknown) {
   const body=objectValue(input);
@@ -77,7 +77,7 @@ export async function warehouseProducts(db:SupabaseClient,companyId:string,wareh
   if(!warehouses.some(w=>w.id===warehouseId)) throw new MarketplaceError(404,'warehouse_missing','Estoque não encontrado neste perfil.');
   const {data,error,count}=await db.from('marketplace_warehouse_balances')
     .select('quantity,product:marketplace_products!inner(id,name,ean)',{count:'exact'})
-    .eq('empresa_id',companyId).eq('warehouse_id',warehouseId).gt('quantity',0).is('product.archived_at',null)
+    .eq('empresa_id',companyId).eq('warehouse_id',warehouseId).or('quantity.gt.0,reserved_quantity.gt.0').is('product.archived_at',null)
     .order('product_id').range((page-1)*25,page*25-1);
   if(error) throw new MarketplaceError(503,'warehouses_database','Não foi possível listar os produtos deste estoque.');
   return {products:data||[],total:count||0,page};

@@ -136,7 +136,7 @@ export async function listLocalProducts(db: SupabaseClient, empresaId: string, s
     if (!uuidIsValid(warehouseId)) throw new MarketplaceError(400, 'warehouse_missing', 'Selecione um estoque válido.');
     if (!(await listWarehouses(db, empresaId)).some(w => w.id === warehouseId)) throw new MarketplaceError(404, 'warehouse_missing', 'Estoque não encontrado neste perfil.');
   }
-  const warehouseJoin = warehouseId != null ? ',warehouse_balance:marketplace_warehouse_balances!inner(warehouse_id,quantity)' : '';
+  const warehouseJoin = warehouseId != null ? ',warehouse_balance:marketplace_warehouse_balances!inner(warehouse_id,quantity,reserved_quantity)' : '';
   const stateKeys=Object.keys(PUBLICATION_STATES) as Array<keyof typeof PUBLICATION_STATES>;
   const higherStates=stateKeys.slice(0,stateKeys.indexOf(publicationFilter as keyof typeof PUBLICATION_STATES)).flatMap(key=>[...PUBLICATION_STATES[key].statuses]);
   const excludeHigher=['paused','review','disabled'].includes(publicationFilter);
@@ -162,8 +162,8 @@ export async function listLocalProducts(db: SupabaseClient, empresaId: string, s
     }
     return publicationFilter !== 'unadvertised' ? scoped.not('publication_link', 'is', null) : scoped.is('publication_link', null);
   };
-  const scopeWarehouse = <T extends { eq: (key: string, value: string) => T; gt: (key: string, value: number) => T }>(query: T): T => warehouseId != null
-    ? query.eq('warehouse_balance.empresa_id', empresaId).eq('warehouse_balance.warehouse_id', warehouseId).gt('warehouse_balance.quantity', 0) : query;
+  const scopeWarehouse = <T extends { eq: (key: string, value: string) => T; gt: (key: string, value: number) => T; or:(filter:string,options:{referencedTable:string})=>T }>(query: T): T => warehouseId != null
+    ? query.eq('warehouse_balance.empresa_id', empresaId).eq('warehouse_balance.warehouse_id', warehouseId).or('quantity.gt.0,reserved_quantity.gt.0',{referencedTable:'warehouse_balance'}) : query;
   let orderedIds: string[] | null = null;
   if (term) {
     try {

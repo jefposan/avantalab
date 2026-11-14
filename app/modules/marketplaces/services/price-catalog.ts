@@ -25,13 +25,14 @@ export async function readPriceCatalog(db: SupabaseClient, companyId: string, se
     if(!w.data)throw new MarketplaceError(404,'warehouse_missing','Estoque não encontrado nesta empresa.');
   }
   const stockFilter=Boolean(warehouseId)||sort==='with_stock'||sort==='without_stock';
-  const joins=(sort==='advertised'?',publication_link:marketplace_product_links()':'')+(stockFilter?',stock_balance:marketplace_warehouse_balances(quantity,warehouse_id,warehouse:marketplace_warehouses!inner(id))':'');
+  const joins=(sort==='advertised'?',publication_link:marketplace_product_links()':'')+(stockFilter?',stock_balance:marketplace_warehouse_balances(quantity,reserved_quantity,warehouse_id,warehouse:marketplace_warehouses!inner(id))':'');
   // Aplicar filtros antes da contagem/paginação, não só nos 25 itens da tela.
   const scoped=(columns:string,count?:'exact')=>{
     let query=db.from('marketplace_products').select(columns+joins,count?{count}:{}).eq('empresa_id',companyId).is('archived_at',null);
     if(sort==='advertised')query=query.eq('publication_link.empresa_id',companyId).in('publication_link.provider',PUBLICATION_PROVIDERS).neq('publication_link.provider_listing_id','').or(PUBLICATION_STATUS_QUERY,{referencedTable:'publication_link'}).not('publication_link','is',null);
     if(stockFilter){
-      query=query.eq('stock_balance.empresa_id',companyId).eq('stock_balance.warehouse.empresa_id',companyId).is('stock_balance.warehouse.archived_at',null).gt('stock_balance.quantity',0);
+      query=query.eq('stock_balance.empresa_id',companyId).eq('stock_balance.warehouse.empresa_id',companyId).is('stock_balance.warehouse.archived_at',null);
+      query=warehouseId?query.or('quantity.gt.0,reserved_quantity.gt.0',{referencedTable:'stock_balance'}):query.gt('stock_balance.quantity',0);
       if(warehouseId)query=query.eq('stock_balance.warehouse_id',warehouseId);
       query=sort==='without_stock'?query.is('stock_balance',null):query.not('stock_balance','is',null);
     }

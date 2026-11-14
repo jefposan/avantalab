@@ -62,7 +62,7 @@ function database(products, { failAt = null, warehouses = [], balances = [], lin
       gt(key,value) { call.greater.push([key,value]); return this; },
       is(key,value) { call.nulls.push([key,value]); return this; },
       not(key,operator,value) { call.advertised=true; return this; },
-      neq() { return this; }, or(value,options) { call.publicationStatus={value,options}; return this; },
+      neq() { return this; }, or(value,options) { if(options?.referencedTable==='warehouse_balance')call.warehouseStatus={value,options};else call.publicationStatus={value,options}; return this; },
       in(key,values) { if(!key.startsWith('publication_link.'))call.ids={key,values};return this; },
       order() { return this; }, range(a,b) { call.range=[a,b]; return this; },
       abortSignal(signal) { call.signal=signal; return this; },
@@ -70,7 +70,7 @@ function database(products, { failAt = null, warehouses = [], balances = [], lin
         if (failAt === call.range?.[0]) return Promise.resolve(resolve({data:null,error:{message:'Falha simulada'}}));
         const rows=table==='marketplace_connections'?connections:table==='marketplace_product_links'?links:table==='marketplace_warehouses'?warehouses:table==='marketplace_warehouse_balances'?balances:products;
         const nested=call.equals.filter(([k])=>k.startsWith('warehouse_balance.'));
-        let data = rows.filter(p => call.equals.filter(([k])=>!k.startsWith('warehouse_balance.')&&!k.startsWith('publication_link.')).every(([k,v])=>p[k]===v) && call.nulls.filter(([k])=>k!=='publication_link').every(([k,v])=>p[k]===v) && (!call.ids || call.ids.values.includes(p[call.ids.key])) && (!nested.length || balances.some(b=>b.product_id===p.id&&nested.every(([k,v])=>b[k.split('.')[1]]===v)&&call.greater.every(([k,v])=>b[k.split('.')[1]]>v))));
+        let data = rows.filter(p => call.equals.filter(([k])=>!k.startsWith('warehouse_balance.')&&!k.startsWith('publication_link.')).every(([k,v])=>p[k]===v) && call.nulls.filter(([k])=>k!=='publication_link').every(([k,v])=>p[k]===v) && (!call.ids || call.ids.values.includes(p[call.ids.key])) && (!nested.length || balances.some(b=>b.product_id===p.id&&nested.every(([k,v])=>b[k.split('.')[1]]===v)&&call.greater.every(([k,v])=>b[k.split('.')[1]]>v)&&(!call.warehouseStatus||b.quantity>0||b.reserved_quantity>0))));
         if(call.columns.includes('publication_link:'))data=data.filter(p=>{
           const selectedLinks=links.filter(l=>l.product_id===p.id&&l.empresa_id===p.empresa_id&&call.equals.filter(([k])=>k.startsWith('publication_link.')).every(([k,v])=>l[k.split('.')[1]]===v));
           const match=call.publicationStatus?productPublicationChannels(selectedLinks).length:selectedLinks.filter(l=>l.provider_listing_id.trim()).length;
@@ -152,12 +152,12 @@ test('mesma lista completa é filtrada pelo estoque antes da busca/paginação e
   const wid=crypto.randomUUID(),other=crypto.randomUUID();
   const products=Array.from({length:61},(_,i)=>row(String(i),{description:'Hidratação intensa',ean:i===30?'7891129598607':null,stock_quantity:999,pictures:['https://example.com/photo.jpg']}));
   const warehouses=[{id:wid,name:'Saldão',empresa_id:'empresa',archived_at:null,is_online:true},{id:other,name:'Outra empresa',empresa_id:'outra',archived_at:null,is_online:true}];
-  const balances=products.slice(0,60).map(p=>({empresa_id:'empresa',warehouse_id:wid,product_id:p.id,quantity:2}));
+  const balances=products.slice(0,60).map(p=>({empresa_id:'empresa',warehouse_id:wid,product_id:p.id,quantity:p.id==='30'?0:2,reserved_quantity:p.id==='30'?1:0}));
   balances.push({empresa_id:'outra',warehouse_id:other,product_id:'60',quantity:10});
   const db=database(products,{warehouses,balances});
   const result=await listLocalProducts(db,'empresa','hidratacao',2,undefined,wid);
   assert.equal(result.total,60);assert.equal(result.products.length,25);assert.equal(result.products[0].id,'25');assert.equal(result.products[0].stock_quantity,999);assert.deepEqual(result.products[0].pictures,['https://example.com/photo.jpg']);
-  for(const q of db.calls.filter(c=>c.table==='marketplace_products')){assert.ok(q.columns.includes('marketplace_warehouse_balances!inner'));assert.ok(q.equals.some(([k,v])=>k==='warehouse_balance.empresa_id'&&v==='empresa'));assert.ok(q.equals.some(([k,v])=>k==='warehouse_balance.warehouse_id'&&v===wid));assert.deepEqual(q.greater,[['warehouse_balance.quantity',0]]);}
+  for(const q of db.calls.filter(c=>c.table==='marketplace_products')){assert.ok(q.columns.includes('marketplace_warehouse_balances!inner'));assert.ok(q.equals.some(([k,v])=>k==='warehouse_balance.empresa_id'&&v==='empresa'));assert.ok(q.equals.some(([k,v])=>k==='warehouse_balance.warehouse_id'&&v===wid));assert.deepEqual(q.warehouseStatus,{value:'quantity.gt.0,reserved_quantity.gt.0',options:{referencedTable:'warehouse_balance'}});}
   const exact=await listLocalProducts(database(products,{warehouses,balances}),'empresa','7891129598607',1,undefined,wid);assert.deepEqual(exact.products.map(p=>p.id),['30']);
   const unfiltered=await listLocalProducts(database(products,{warehouses,balances}),'empresa','',1);assert.equal(unfiltered.total,61);
   await assert.rejects(listLocalProducts(db,'empresa','',1,undefined,other),e=>e.status===404);

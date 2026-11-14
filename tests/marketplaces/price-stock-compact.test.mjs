@@ -27,7 +27,7 @@ test('quantidade compacta: passos, cancelar sem gravar, saldo final, espera e re
       if (name.includes('StockSync')) return {StockSyncDialog:'stock-sync-dialog'};
       if (name.includes('stock-reconciliation')) return stockSyncModel;
       if (name.includes('direct-sales')) return { DIRECT_SALES_CHANGED:'direct-sales-changed' };
-      if (name.includes('DirectSaleActions')) return { default: 'direct-sales' };
+      if (name.includes('ReservationActions')) return {default:'reservation-actions'};if (name.includes('DirectSaleActions')) return { default: 'direct-sales' };
       if (name.includes('BotaoAcaoCompacto')) return { default: 'button' };
       if (name.endsWith('.module.css')) return { default: new Proxy({}, { get: (_, key) => key }) };
       if (name.includes('price-stock-state')) return { priceStockState };

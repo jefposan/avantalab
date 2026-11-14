@@ -1,3 +1,12 @@
+## 3.2.0.415 — AvantaPreços: reservas por estoque (validação local)
+
+- Reserva ao lado de Ajustar estoque, Adicionar saldo e Venda: seleção explícita do estoque, quantidade e possível comprador, com revisão antes de confirmar.
+- Unidades bloqueadas ficam separadas do disponível. Reserva total impede venda/transferência comum; a parcial preserva o restante. Total inclui bloqueadas, com identificação Reservado por estoque e etiqueta na lista.
+- Minhas reservas permite concluir a venda com valor/data ou cancelar e liberar unidades. Operações transacionais, recibo persistido, isolamento por perfil e revisão de saldo impedem duplicidade e concorrência. Reutiliza o registro de venda direta, sem segunda baixa.
+- Online usa fila durável existente para reduzir/repor anúncios; mostra envio pendente até confirmação. Cancelamento avalia reativação somente de pausa de estoque comprovadamente feita pelo sistema, preservando pausas manuais e revisões antigas.
+- Cadastros e estoques com reservas ativas não podem ser retirados ou trocar sua designação Online. Produtos totalmente reservados continuam aparecendo no estoque selecionado.
+- Prévia local com PostgreSQL/WASM e quatro anúncios simulados; migração preparada e aplicada somente ao banco de teste. Sem publicação ou alteração em anúncios reais.
+
 ## 3.2.0.414 — Marketplaces: Limpar cadastros e liberar referências de contas desconectadas
 
 - Publica Limpar cadastros como na prévia aprovada, com seleção individual/todos, filtros e confirmação explícita de apagamento da lista ativa por nome do perfil e ciência marcada.

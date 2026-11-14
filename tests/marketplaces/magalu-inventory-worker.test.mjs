@@ -15,7 +15,7 @@ const hook=registerHooks({resolve(s,c,next){
  if(p&&existsSync(p+'.ts'))return next(pathToFileURL(p+'.ts').href,c);return next(s,c);
 }});
 const {deliverMagaluStockJob}=await import('../../app/modules/marketplaces/services/magalu-inventory.ts');hook.deregister();
-class Query{constructor(db,t){this.db=db;this.t=t;this.filters=[];}select(){return this;}eq(k,v){this.filters.push(r=>r[k]===v);return this;}is(k,v){return this.eq(k,v);}maybeSingle(){this.single=true;return this;}update(v){this.change=v;return this;}upsert(v){this.insert=v;return this;}then(ok,bad){return Promise.resolve().then(()=>{const rows=this.db.tables[this.t]||[];if(this.insert){const old=rows.find(r=>r.link_id===this.insert.link_id);if(old)Object.assign(old,this.insert);else rows.push(this.insert);this.db.tables[this.t]=rows;}const found=rows.filter(r=>this.filters.every(f=>f(r)));if(this.change)for(const row of found)Object.assign(row,this.change);return{data:this.single?structuredClone(found[0]||null):structuredClone(found),error:null};}).then(ok,bad);}}
+class Query{constructor(db,t){this.db=db;this.t=t;this.filters=[];}select(){return this;}eq(k,v){this.filters.push(r=>r[k]===v);return this;}is(k,v){return this.eq(k,v);}order(){return this;}limit(){return this;}maybeSingle(){this.single=true;return this;}update(v){this.change=v;return this;}upsert(v){this.insert=v;return this;}then(ok,bad){return Promise.resolve().then(()=>{const rows=this.db.tables[this.t]||[];if(this.insert){const old=rows.find(r=>r.link_id===this.insert.link_id);if(old)Object.assign(old,this.insert);else rows.push(this.insert);this.db.tables[this.t]=rows;}const found=rows.filter(r=>this.filters.every(f=>f(r)));if(this.change)for(const row of found)Object.assign(row,this.change);return{data:this.single?structuredClone(found[0]||null):structuredClone(found),error:null};}).then(ok,bad);}}
 function fixture(desired=0){const job={link_id:'link',empresa_id:'company',product_id:'product',desired_quantity:desired,revision:2,generation:'generation',allow_increase:true,attempts:0};const out={...job,state:'pending'};const db={company:'company',writes:[],saved:[],remote:{raw:{active:true,fulfillment:false},listing:{id:'SKU1',stock:2,status:'active'}},tables:{marketplace_products:[{id:'product',empresa_id:'company',stock_quantity:desired,revision:2,archived_at:null}],marketplace_inventory_outbox:[out]},from(t){return new Query(this,t);}};return{db,job,out,link:{id:'link',connection_id:'account',provider_listing_id:'SKU1'}};}
 test('Magalu não recebe saldo ou pausa enquanto importação aguarda conferência física',async()=>{
  for(const quantity of [0,3]){const f=fixture(quantity);f.db.tables.marketplace_products[0].listing_stock_review_at=new Date().toISOString();await deliverMagaluStockJob(f.db,f.job,f.link);assert.equal(f.out.issue,'import_stock_review');assert.equal(f.db.writes.length,0);}
@@ -31,4 +31,15 @@ test('saldo indisponível, Fulfillment, revisão alterada ou venda pendente não
 test('reposição preserva pausa manual e o job de outra geração não é concluído',async()=>{
  const f=fixture(3);f.db.remote.raw.active=false;f.db.remote.listing.status='paused';await deliverMagaluStockJob(f.db,f.job,f.link);await deliverMagaluStockJob(f.db,f.job,f.link);assert.equal(f.out.state,'synced');assert.ok(f.db.writes.every(w=>w.body.active!==true));assert.equal(f.db.tables.marketplace_listing_stock_control,undefined);
  const g=fixture(2);g.out.generation='newer';await deliverMagaluStockJob(g.db,g.job,g.link);assert.equal(g.out.state,'pending');
+});
+
+test('liberar reserva no Magalu só confirma reativação após releitura e preserva pausa manual',async()=>{
+ for(const owned of [true,false]){
+  const f=fixture(3);f.db.remote.raw.active=false;f.db.remote.listing.status='paused';f.db.remote.listing.stock=3;
+  f.db.tables.marketplace_reservation_releases=[{empresa_id:'company',product_id:'product',revision:2,since_at:'2026-11-14T12:00:00Z'}];
+  f.db.tables.marketplace_listing_stock_control=[{empresa_id:'company',link_id:'link',paused_by_system:owned,pause_requested_at:'2026-11-14T12:01:00Z',pause_confirmed_at:'2026-11-14T12:01:02Z'}];
+  await deliverMagaluStockJob(f.db,f.job,f.link);
+  if(owned){assert.equal(f.out.state,'pending');assert.equal(f.out.issue,'magalu_resume_processing');assert.equal(f.db.writes[0].body.active,true);await deliverMagaluStockJob(f.db,f.job,f.link);assert.equal(f.out.state,'synced');assert.equal(f.db.tables.marketplace_listing_stock_control[0].paused_by_system,false);}
+  else{assert.equal(f.out.state,'synced');assert.equal(f.db.writes.length,0);assert.equal(f.db.remote.raw.active,false);}
+ }
 });

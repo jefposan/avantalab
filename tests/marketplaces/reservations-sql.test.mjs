@@ -1,0 +1,44 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createReservationsFixture} from '../../app/modules/marketplaces/dev/reservations-fixture.ts';
+test('reservas: bloqueio parcial/total, repetição, concorrência, cancelamento, venda atômica e isolamento',async()=>{
+ const f=await createReservationsFixture();try{
+  const {db,company,actor,editor,product,online,offline,reserve}=f;
+  const stock=async w=>(await f.balances()).find(b=>b.id===w);
+  const data=async(w=online,q=1)=>({productId:product,warehouseId:w,revision:(await stock(w)).revision,quantity:q,buyer:'Comprador de teste',note:''});
+  const key=crypto.randomUUID(),p=await data(),r=await reserve('reserve',p,key);
+  assert.equal((await stock(online)).quantity,9);assert.equal((await stock(online)).reservedQuantity,1);assert.equal((await stock(offline)).quantity,8);
+  assert.deepEqual(await reserve('reserve',p,key),r);assert.equal((await stock(online)).quantity,9);
+  await assert.rejects(reserve('reserve',{...p,quantity:2},key),/outros dados/);
+  await assert.rejects(reserve('reserve',p),/Saldo atualizado/);
+  await assert.rejects(reserve('reserve',await data(online,10)),/Saldo insuficiente/);
+  await reserve('cancel',{reservationId:r.reservationId,reservationRevision:1});
+  assert.equal((await stock(online)).quantity,10);assert.equal((await stock(online)).reservedQuantity,0);
+  assert.equal((await db.query('select count(*)::int n from marketplace_direct_sales')).rows[0].n,0,'reserva e cancelamento não geram venda');
+  assert.equal((await db.query('select increase from queued order by ctid desc limit 1')).rows[0].increase,true,'cancelamento autoriza reposição');
+  const full=await reserve('reserve',await data(offline,8));assert.equal((await stock(offline)).quantity,0);assert.equal((await stock(offline)).reservedQuantity,8);
+  await assert.rejects(f.command('sell',{...await data(offline),unitPriceCents:10000,soldOn:'2026-11-14'}),/Saldo insuficiente/,'venda comum não consome reservado');
+  await assert.rejects(db.query("select marketplace_warehouse_command($1,$2,'transfer',$3,$4)",[company,actor,JSON.stringify({...await data(offline),destinationId:online,destinationRevision:(await stock(online)).revision}),crypto.randomUUID()]),/Saldo insuficiente/);
+  await assert.rejects(db.query('update marketplace_products set archived_at=now() where id=$1',[product]),/reservas|saldos/);
+  await assert.rejects(db.query('update marketplace_warehouses set archived_at=now() where id=$1',[offline]),/reservas/);
+  await assert.rejects(db.query('update marketplace_warehouses set is_online=false where id=$1',[online]),/reservas/);
+  await assert.rejects(reserve('sell',{reservationId:full.reservationId,reservationRevision:1,unitPriceCents:0,soldOn:'2026-11-14'}),/preço/);
+  assert.equal((await stock(offline)).quantity,0);assert.equal((await stock(offline)).reservedQuantity,8,'erro reverte liberação temporária');
+  const sk=crypto.randomUUID(),sell={reservationId:full.reservationId,reservationRevision:1,unitPriceCents:12345,soldOn:'2026-11-14'};
+  const done=await reserve('sell',sell,sk);assert.deepEqual(await reserve('sell',sell,sk),done);
+  assert.equal((await stock(offline)).quantity,0);assert.equal((await stock(offline)).reservedQuantity,0);
+  const sale=(await db.query('select * from marketplace_direct_sales')).rows[0];assert.equal(sale.quantity,8);assert.equal(sale.total_cents,98760);
+  await assert.rejects(reserve('cancel',{reservationId:full.reservationId,reservationRevision:2}),/já concluída/);
+  await assert.rejects(reserve('reserve',await data(),crypto.randomUUID(),editor),/Sem permissão/);
+  await db.query('update marketplace_price_users set can_register_sales=true where user_id=$1',[editor]);
+  const created=await reserve('reserve',await data(),crypto.randomUUID(),editor);
+  await assert.rejects(reserve('cancel',{reservationId:created.reservationId,reservationRevision:1},crypto.randomUUID(),actor,f.other),/Sem permissão/);
+  await db.query("insert into usuarios_empresa values($1,$2,'ativo','administrador')",[actor,f.other]);
+  await assert.rejects(reserve('cancel',{reservationId:created.reservationId,reservationRevision:1},crypto.randomUUID(),actor,f.other),/não encontrada neste perfil/);
+  await assert.rejects(reserve('reserve',{...await data(),warehouseId:crypto.randomUUID()}),/Estoque não encontrado/);
+  await assert.rejects(reserve('reserve',{...await data(),quantity:1.5}),/inteira/);
+  const ck=crypto.randomUUID(),c={reservationId:created.reservationId,reservationRevision:1};await reserve('cancel',c,ck);await reserve('cancel',c,ck);assert.equal((await stock(online)).quantity,10);
+  const shared=await data(online,6),simultaneous=await Promise.allSettled([reserve('reserve',shared),reserve('reserve',shared)]);assert.equal(simultaneous.filter(r=>r.status==='fulfilled').length,1,'duas reservas com a mesma revisão não duplicam saldo');
+  const rights=(await db.query("select has_function_privilege('authenticated','marketplace_reservation_command(uuid,uuid,text,jsonb,uuid)','execute') rpc,has_table_privilege('anon','marketplace_stock_reservations','select') public_read,relrowsecurity rls from pg_class where relname='marketplace_stock_reservations'")).rows[0];assert.deepEqual(rights,{rpc:false,public_read:false,rls:true});
+ }finally{await f.db.close();}
+});

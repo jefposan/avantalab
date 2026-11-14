@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.414 -->
+<!-- ava-version: 3.2.0.415 -->
+
+> Revisão 3.2.0.415: sem impacto operacional neste ambiente. Reservas pertencem ao PWA AvantaPreços e Marketplaces Web; não altera Gestão nativa nem AvantaVendas.
 
 > Revisão 3.2.0.414: sem impacto operacional neste ambiente. Limpar cadastros e retirada de vínculos locais de contas desconectadas pertencem ao Marketplaces da Gestão Web; históricos preservados.
 

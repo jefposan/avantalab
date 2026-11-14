@@ -21,7 +21,7 @@ test('card real: saldo numérico e confirmação direta do Online, sem somar out
    if(name.includes('BotaoAcaoCompacto'))return{default:'button'};
    if(name.endsWith('.module.css'))return{default:new Proxy({},{get:(_,k)=>k})};
    if(name.includes('price-stock-state'))return{priceStockState};
-   if(name.includes('DirectSaleActions'))return{default:'sales'};
+   if(name.includes('ReservationActions'))return{default:'reservation-actions'};if(name.includes('DirectSaleActions'))return{default:'sales'};
    if(name.includes('direct-sales'))return{DIRECT_SALES_CHANGED:'sales'};
    if(name.includes('product-stock-events'))return{notifyProductStockChanged(){}};
    if(name.includes('product-internal-notes'))return{PRODUCT_INTERNAL_NOTES_LIMIT:160};

@@ -1,4 +1,5 @@
 import 'server-only';
+import {assertNoOnlineReservationImport} from './reservation-restore';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {MarketplaceError} from './management-access';
 import {getLocalProduct} from './local-products';
@@ -83,6 +84,7 @@ export async function applyStockSync(db:SupabaseClient,company:string,actor:stri
  if(reviewed.error||!reviewed.data||Date.now()-Date.parse(reviewed.data.created_at)>300000)throw new MarketplaceError(409,'stock_review_expired','Consulte os saldos novamente; a conferência expirou.');
  const product=await syncProduct(db,company,reviewed.data.product_id);
  if(product.revision!==reviewed.data.revision)throw new MarketplaceError(409,'stock_changed','O saldo local mudou. Consulte novamente.');
+ if(input.direction==='listing_to_local')await assertNoOnlineReservationImport(db,company,product.id);
  const blocker=await stockIncreaseBlocker(db,company,product.id);
  if(blocker)throw new MarketplaceError(409,blocker,'Há pedidos ou vendas aguardando conferência. Atualize os avisos antes de sincronizar.');
  const sources=reviewed.data.sources as StockSyncSource[];

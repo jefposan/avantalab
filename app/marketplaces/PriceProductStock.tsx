@@ -5,11 +5,12 @@ import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import type { WarehouseContext } from '@/app/modules/marketplaces/warehouses';
 import type { LotsRequest } from './usePriceLotCapture';
-import { notifyProductStockChanged } from './product-stock-events';
+import { notifyProductStockChanged, PRODUCT_STOCK_CHANGED } from './product-stock-events';
 import { priceStockState } from '../modules/marketplaces/price-stock-state';
 import styles from './price-product-stock.module.css';
 import postStyles from './product-post.module.css';
 import DirectSaleActions from './DirectSaleActions';
+import ReservationActions from './ReservationActions';
 import {DIRECT_SALES_CHANGED} from '@/app/modules/marketplaces/direct-sales';
 import {StockSyncDialog} from './StockSync';
 import {STOCK_SYNC_PATH,listingStockSyncTerminated,type StockSyncContext} from '@/app/modules/marketplaces/stock-reconciliation';
@@ -60,7 +61,8 @@ function StockController({ companyId, historyId, productId, request, disabled, o
       directRefresh.current=true;
       setRefresh(value=>value+1);
     };
-    window.addEventListener(DIRECT_SALES_CHANGED,changed);return()=>window.removeEventListener(DIRECT_SALES_CHANGED,changed);
+    const stockChanged=(event:Event)=>{if(!locked.current)changed(event);};
+    window.addEventListener(DIRECT_SALES_CHANGED,changed);window.addEventListener(PRODUCT_STOCK_CHANGED,stockChanged);return()=>{window.removeEventListener(DIRECT_SALES_CHANGED,changed);window.removeEventListener(PRODUCT_STOCK_CHANGED,stockChanged);};
   },[companyId,editing,confirmBalance]);
   const busy = loading || saving || syncing || !!syncContext || disabled;
   const warehouses=stock?.warehouses || [];
@@ -74,7 +76,7 @@ function StockController({ companyId, historyId, productId, request, disabled, o
   // A confirmação pertence à auditoria; não substitui a quantidade apresentada.
   const confirmedTotal = warehouses.reduce((sum, warehouse) => sum + (warehouse.quantity ?? 0), 0);
   const hasSaleStock = warehouses.some(warehouse => (warehouse.quantity ?? 0) > 0);
-  const totalLabel = stock?.warehousesReady === false ? 'Indisponível' : `${stock?.warehousesReady ? confirmedTotal : stock?.quantity ?? 0} un.`;
+  const totalLabel = stock?.warehousesReady === false ? 'Indisponível' : `${stock?.warehousesReady ? confirmedTotal+warehouses.reduce((sum,w)=>sum+(w.reservedQuantity||0),0) : stock?.quantity ?? 0} un.`;
   function openStockEditor(nextOperation: 'add' | 'set') {
     setEditing(true); setOperation(nextOperation); setDestinationId('');
     setNotes(stock?.internalNotes || '');
@@ -138,18 +140,21 @@ function StockController({ companyId, historyId, productId, request, disabled, o
       {compactSummary ? <>
         <dl className={`${postStyles.stockOptions} ${styles.balanceTotals}`} aria-label="Saldos por estoque">
           <div className={postStyles.stockIndicator}><dt>Total</dt><dd>{totalLabel}</dd></div>
-          {stock.warehousesReady&&warehouses.map(w=><div className={postStyles.stockIndicator} key={w.id} aria-label={`${w.name}: ${w.quantity??0} unidades`} data-quantity={w.quantity??0}><dt>{w.name}{w.is_online&&w.name.toLowerCase()!=='online'?' · Online':''}</dt><dd>{`${w.quantity??0} un.`}</dd></div>)}
+          {stock.warehousesReady&&warehouses.map(w=><div className={postStyles.stockIndicator} key={w.id} aria-label={`${w.name}: ${w.quantity??0} unidades`} data-quantity={w.quantity??0}><dt>{w.name}{w.is_online&&w.name.toLowerCase()!=='online'?' · Online':''}</dt><dd>{`${w.quantity??0} un.`}</dd>{!!w.reservedQuantity&&<small className={styles.reservedBadge}>Reservado · {w.reservedQuantity} un.</small>}</div>)}
         </dl>
         {refreshContainer ? createPortal(<BotaoAcaoCompacto somenteIcone className={styles.refreshBalance} aria-label={syncing?"Atualizando saldos…":"Sincronizar e atualizar saldos"} disabled={busy} onClick={()=>void synchronizeAndRefresh()}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></BotaoAcaoCompacto>,refreshContainer) :         <div className={styles.balanceControls}><BotaoAcaoCompacto somenteIcone className={styles.refreshBalance} aria-label={syncing?"Atualizando saldos…":"Sincronizar e atualizar saldos"} disabled={busy} onClick={()=>void synchronizeAndRefresh()}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></BotaoAcaoCompacto></div>}
         {!editing && <div className={styles.balanceActions}>
           <BotaoAcaoCompacto ref={trigger} className={styles.adjustBalance} disabled={!stock.canManage || busy || requiredWarehouseMissing || stock.warehousesReady === false} onClick={() => openStockEditor('set')}>Ajustar estoque</BotaoAcaoCompacto>
           <BotaoAcaoCompacto className={styles.addBalance} disabled={!stock.canManage || busy || !selected || requiredWarehouseMissing || stock.warehousesReady === false} onClick={() => openStockEditor('add')}>Adicionar saldo</BotaoAcaoCompacto>
           <BotaoAcaoCompacto ref={saleTrigger} className={styles.sellBalance} disabled={busy || !canSell || !hasSaleStock || requiredWarehouseMissing || stock.warehousesReady === false} onClick={() => { if (hasSaleStock && canSell && !busy) setSaleRequest(value=>value+1); }}>Venda</BotaoAcaoCompacto>
+          <ReservationActions className={styles.reserveBalance} companyId={companyId} productId={stock.productId} request={request} disabled={!!busy||requiredWarehouseMissing||stock.warehousesReady===false} dark={dark} brand={brand} onChanged={()=>{directRefresh.current=true;setRefresh(value=>value+1);}} onBusyChange={onBusyChange}/>
         </div>}
-      </> : stock.warehousesReady && <div className={styles.allocations}><strong>Total: {`${confirmedTotal} un.`}</strong>{warehouses.map(w=><span key={w.id}>{w.name}{w.is_online&&w.name.toLowerCase()!=='online'?' · Online':''}: {`${w.quantity ?? 0} un.`}</span>)}</div>}
+      </> : stock.warehousesReady && <div className={styles.allocations}><strong>Total: {totalLabel}</strong>{warehouses.map(w=><span key={w.id}>{w.name}{w.is_online&&w.name.toLowerCase()!=='online'?' · Online':''}: {`${w.quantity ?? 0} un.`}{!!w.reservedQuantity&&` · Reservado: ${w.reservedQuantity} un.`}</span>)}</div>}
+      {warehouses.some(w=>!!w.reservedQuantity)&&<p role="status">Reservado: {warehouses.reduce((n,w)=>n+(w.reservedQuantity||0),0)} un. bloqueada(s). Os saldos por estoque são os disponíveis. Total inclui unidades reservadas. Para vender essas unidades, abra Reserva → Minhas reservas.</p>}
+      {!compactSummary&&<ReservationActions companyId={companyId} productId={stock.productId} request={request} disabled={!!busy||editing} dark={dark} brand={brand} onChanged={()=>{directRefresh.current=true;setRefresh(value=>value+1);}} onBusyChange={onBusyChange}/>}
       {stock.warehouseError && <p role="alert">{stock.warehouseError}</p>}
       {requiredWarehouseMissing && <p role="alert">O estoque selecionado não está mais disponível. Atualize a lista de estoques antes de movimentar.</p>}
-      {!compactSummary && <div className={styles.heading}><div role="status"><strong>{selected?`${selected.name} · ${state.available?'Em estoque':'Sem unidades'}`:state.title}</strong><span>{selected?`${selected.quantity ?? 0} un.`:state.detail}</span></div>
+      {!compactSummary && <div className={styles.heading}><div role="status"><strong>{selected?`${selected.name} · ${state.available?'Em estoque':selected.reservedQuantity?'Reservado':'Sem unidades'}`:state.title}</strong><span>{selected?`${selected.quantity ?? 0} un.`:state.detail}</span></div>
         {!editing&&<div className={styles.headingActions}>{stock.canManage && <BotaoAcaoCompacto data-stock-action="adjust" ref={trigger} disabled={busy || requiredWarehouseMissing || stock.warehousesReady===false} onClick={() => openStockEditor('set')}>{state.action}</BotaoAcaoCompacto>}{stock.warehousesReady!==undefined&&<BotaoAcaoCompacto data-stock-action="refresh" disabled={busy} onClick={refreshStock}>Atualizar estoques</BotaoAcaoCompacto>}</div>}
       </div>}
       {editing && stock.canManage && !requiredWarehouseMissing && stock.warehousesReady!==false && <form onSubmit={submit} className={styles.form} style={{'--stock-accent':brand || '#003e73'} as CSSProperties}>
@@ -159,7 +164,7 @@ function StockController({ companyId, historyId, productId, request, disabled, o
           <label>Operação<select value={operation} disabled={busy||quantityLocked} onChange={event=>{setOperation(event.target.value as typeof operation);setDestinationId('');setQuantity('');setError('');}}><option value="add">Entrada</option><option value="set">Saldo final</option><option value="transfer">Transferir</option></select></label>
           {operation==='transfer'&&<label>Estoque de destino<select value={destination?.id || ''} disabled={busy||quantityLocked} onChange={event=>setDestinationId(event.target.value)}><option value="">Selecione</option>{warehouses.filter(w=>w.id!==selected?.id).map(w=><option key={w.id} value={w.id}>{w.name}{w.is_online&&w.name.toLowerCase()!=='online'?' · Online':''}</option>)}</select></label>}
         </div>}
-        <div className={styles.quantityRow}><div className={styles.quantityField}><label htmlFor={`${idPrefix}-stock-${stock.productId}`}>{operation==='set'?'Saldo final':'Quantidade'}</label>
+        <div className={styles.quantityRow}><div className={styles.quantityField}><label htmlFor={`${idPrefix}-stock-${stock.productId}`}>{operation==='set'?'Saldo disponível final':'Quantidade'}</label>
         <div className={styles.controls}>
           <BotaoAcaoCompacto somenteIcone aria-label="Diminuir quantidade" disabled={busy || quantityLocked || (quantity !== '' && Number(quantity) <= minimum)} onClick={() => stepQuantity(-1)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M5 12h14" /></svg></BotaoAcaoCompacto>
           <input ref={field} id={`${idPrefix}-stock-${stock.productId}`} inputMode="numeric" autoComplete="off" placeholder="0" size={5} maxLength={5} value={quantity} onChange={event => { if (/^\d{0,5}$/.test(event.target.value)) setQuantity(event.target.value); }} disabled={busy || quantityLocked} aria-invalid={!!error} aria-describedby={error ? `${idPrefix}-stock-error-${stock.productId}` : undefined} />

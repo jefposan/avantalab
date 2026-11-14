@@ -61,21 +61,21 @@ test('ordenações e filtros são aplicados antes da paginação, em todas as co
 
 test('estoque selecionado filtra saldos positivos antes da contagem, pesquisa e paginação e informa quantidade exata',async()=>{
  const online='00000000-0000-4000-8000-000000000001',saldao='00000000-0000-4000-8000-000000000002';
- const source=Array.from({length:65},(_,i)=>row(i,{name:'Air Fryer '+i,stock_balance:[{warehouse_id:online,quantity:i<45?1:0},{warehouse_id:saldao,quantity:i<30?i+2:0}]}));
+ const source=Array.from({length:65},(_,i)=>row(i,{name:'Air Fryer '+i,stock_balance:[{warehouse_id:online,quantity:i<45?1:0},{warehouse_id:saldao,quantity:i===29?0:i<30?i+2:0,reserved_quantity:i===29?1:0}]}));
  const calls=[];
  globalThis.catalogDb={from(table){
   if(table==='marketplace_warehouses'){
    const filters={};const q={select(){return q},eq(k,v){filters[k]=v;return q},is(){return q},async maybeSingle(){assert.equal(filters.empresa_id,'company');return {data:[online,saldao].includes(filters.id)?{id:filters.id}:null}}};return q;
   }
   assert.equal(table,'marketplace_products');let range,ids,warehouse;
-  const q=new Proxy({then(done){let rows=source.map(p=>({...p,stock_balance:p.stock_balance.filter(b=>b.warehouse_id===warehouse&&b.quantity>0)})).filter(p=>p.stock_balance.length&&(!ids||ids.includes(p.id)));const count=rows.length;if(range)rows=rows.slice(range[0],range[1]+1);return Promise.resolve(done({data:rows,count,error:null}));}},{get(t,key){if(key==='then')return t.then;return(...args)=>{calls.push([key,...args]);if(key==='range')range=args;if(key==='in'&&args[0]==='id')ids=args[1];if(key==='eq'&&args[0]==='stock_balance.warehouse_id')warehouse=args[1];return q;};}});return q;
+  const q=new Proxy({then(done){let rows=source.map(p=>({...p,stock_balance:p.stock_balance.filter(b=>b.warehouse_id===warehouse&&(b.quantity>0||b.reserved_quantity>0))})).filter(p=>p.stock_balance.length&&(!ids||ids.includes(p.id)));const count=rows.length;if(range)rows=rows.slice(range[0],range[1]+1);return Promise.resolve(done({data:rows,count,error:null}));}},{get(t,key){if(key==='then')return t.then;return(...args)=>{calls.push([key,...args]);if(key==='range')range=args;if(key==='in'&&args[0]==='id')ids=args[1];if(key==='eq'&&args[0]==='stock_balance.warehouse_id')warehouse=args[1];return q;};}});return q;
  }};
  const get=(id,page=1,query='')=>GET(new Request(`http://local/api?empresaId=company&warehouseId=${id}&page=${page}&q=${encodeURIComponent(query)}`,{headers:{authorization:'Bearer valid'}}));
  let r=await get(saldao,2);assert.equal(r.status,200);let b=await r.json();assert.equal(b.total,30);assert.equal(b.products.length,5);assert.equal(b.products[0].selected_stock_quantity,27);assert.equal(b.products.at(-1).id,'29');
  assert.ok(calls.findIndex(([k,f,v])=>k==='eq'&&f==='stock_balance.warehouse_id'&&v===saldao)<calls.findIndex(([k])=>k==='range'));
- assert.ok(calls.some(([k,f,v])=>k==='gt'&&f==='stock_balance.quantity'&&v===0));
+ assert.ok(calls.some(([k,f,v])=>k==='or'&&f==='quantity.gt.0,reserved_quantity.gt.0'&&v.referencedTable==='stock_balance'));
  b=await(await get(online,2)).json();assert.equal(b.total,45);assert.equal(b.products.length,20);assert.ok(b.products.every(p=>p.selected_stock_quantity===1));
- b=await(await get(saldao,1,'air fryer 29')).json();assert.equal(b.total,1);assert.equal(b.products[0].id,'29');assert.equal(b.products[0].selected_stock_quantity,31);
+ b=await(await get(saldao,1,'air fryer 29')).json();assert.equal(b.total,1);assert.equal(b.products[0].id,'29');assert.equal(b.products[0].selected_stock_quantity,0);
  assert.equal((await get('invalid')).status,400);assert.equal((await get('00000000-0000-4000-8000-000000000003')).status,404);
  delete globalThis.catalogDb;
 });

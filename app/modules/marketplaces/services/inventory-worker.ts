@@ -12,6 +12,7 @@ import { salesAccountAvailable } from '../magalu-sales-model';
 import { stockIncreaseBlocker } from './inventory-product-guard';
 import { listingStockSyncTerminated } from '../stock-reconciliation';
 import { stockRetry } from '../stock-retry';
+import {reservationRestoreAllowed} from './reservation-restore';
 
 type StockJob = { link_id: string; empresa_id: string; product_id: string; desired_quantity: number; revision: number; generation: string; allow_increase: boolean; attempts: number; issue?: string | null };
 const failureCode = (error: unknown) => error instanceof MarketplaceError ? error.code : 'processing';
@@ -100,6 +101,15 @@ export async function deliverStockJob(db: SupabaseClient, job: StockJob, deadlin
         }
       }
     }
+    async function restoreReservationListing(observed:Record<string,unknown>){
+      if(observed.status!=='paused'||!await reservationRestoreAllowed(db,job,connection.id,link!.provider_listing_id))return;
+      if(Date.now()>deadline-16_000)throw new MarketplaceError(409,'worker_time_limit','Reativação continuará no próximo ciclo.');
+      await mlRequest(db,connection,`/items/${link!.provider_listing_id}`,'PUT',{status:'active'});
+      const fresh=objectValue(await mlRequest(db,connection,`/items/${link!.provider_listing_id}`));
+      if(fresh.id!==link!.provider_listing_id||String(fresh.seller_id)!==connection.seller_reference||fresh.status!=='active'||fresh.available_quantity!==job.desired_quantity)throw new MarketplaceError(409,'remote_status_unconfirmed','A reativação após cancelar a reserva ainda não foi confirmada.');
+      Object.assign(observed,fresh);
+      const cleared=await db.from('marketplace_listing_stock_control').update({paused_by_system:false,updated_at:new Date().toISOString()}).eq('empresa_id',job.empresa_id).eq('link_id',job.link_id);assertDatabase(cleared.error);
+    }
     // Atualizar quantidade de uma pausa manual não envia status active nem reativa o anúncio.
     const pausedStockOnly=item.status==='paused'&&Array.isArray(item.sub_status)&&item.sub_status.every(status=>['out_of_stock','paused_by_seller'].includes(String(status)));
     const policy = listingStockPolicy((job.desired_quantity===0&&item.status==='paused'||pausedStockOnly)?{...item,status:'active'}:item, seller.tags, job.desired_quantity, job.allow_increase);
@@ -134,7 +144,7 @@ export async function deliverStockJob(db: SupabaseClient, job: StockJob, deadlin
     }
     else if (userProductIssue) issue=userProductIssue;
     else if (policy === 'inactive') { if(item.status==='paused'&&job.desired_quantity>0)issue='paused_listing_review';else outcome='excluded'; }
-    else if (policy === 'equal') { await saveListing(db, connection, item, false); outcome = 'synced'; }
+    else if (policy === 'equal') { await restoreReservationListing(item); await saveListing(db, connection, item, false); outcome = 'synced'; }
     else if (policy !== 'write') issue = policy;
     else {
       if ((item.available_quantity as number) < job.desired_quantity) {
@@ -149,6 +159,7 @@ export async function deliverStockJob(db: SupabaseClient, job: StockJob, deadlin
       await mlRequest(db, connection, `/items/${link.provider_listing_id}`, 'PUT', { available_quantity: job.desired_quantity });
       const verified = objectValue(await mlRequest(db, connection, `/items/${link.provider_listing_id}`));
       if (verified.id !== link.provider_listing_id || String(verified.seller_id) !== connection.seller_reference || verified.available_quantity !== job.desired_quantity) throw new MarketplaceError(409, 'remote_stock_unconfirmed', 'O Mercado Livre ainda não confirmou o saldo enviado.');
+      await restoreReservationListing(verified);
       await saveListing(db, connection, verified, false);
       const refreshed = await db.from('marketplace_product_links').update({ reported_stock: job.desired_quantity, status: verified.status, updated_at: new Date().toISOString() }).eq('id', link.id).eq('empresa_id', job.empresa_id).eq('product_id', job.product_id);
       assertDatabase(refreshed.error); outcome = 'synced';

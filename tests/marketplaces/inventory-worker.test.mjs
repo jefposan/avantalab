@@ -232,3 +232,24 @@ test('falha técnica continua tendo retry normal e contador de novas tentativas'
  await deliverStockJob(f.db,{...f.outbox()});assert.equal(f.outbox().attempts,2);
  assert.ok(Date.parse(f.outbox().next_attempt_at)<Date.now()+3*60000);
 });
+
+test('cancelar reserva repõe saldo e reativa somente pausa de estoque feita pelo sistema',async()=>{
+ const f=fixture();Object.assign(f.job,{allow_increase:true});Object.assign(f.outbox(),f.job);
+ f.db.item.status='paused';f.db.item.sub_status=['paused_by_seller'];f.db.item.available_quantity=0;
+ f.db.tables.marketplace_reservation_releases=[{empresa_id:company,product_id:productId,revision:2,since_at:'2026-11-14T12:00:00Z'}];
+ f.db.tables.marketplace_listing_stock_control=[{empresa_id:company,link_id:linkId,paused_by_system:true,pause_requested_at:'2026-11-14T12:01:00Z',pause_confirmed_at:'2026-11-14T12:01:02Z'}];
+ await deliverStockJob(f.db,f.job);
+ assert.equal(f.db.item.available_quantity,3);assert.equal(f.db.item.status,'active');assert.equal(f.outbox().state,'synced');
+ assert.equal(f.db.tables.marketplace_listing_stock_control[0].paused_by_system,false);
+ assert.deepEqual(f.db.calls.filter(c=>c.method==='PUT').map(c=>c.body),[{available_quantity:3},{status:'active'}]);
+});
+test('liberação da reserva preserva pausa manual, revisão antiga e controle de pausa anterior à reserva',async()=>{
+ for(const scenario of ['manual','old_revision','old_pause','manual_after']){
+  const f=fixture();Object.assign(f.job,{allow_increase:true});Object.assign(f.outbox(),f.job);
+  f.db.item.status='paused';f.db.item.sub_status=['paused_by_seller'];f.db.item.available_quantity=0;
+  f.db.tables.marketplace_reservation_releases=[{empresa_id:company,product_id:productId,revision:scenario==='old_revision'?1:2,since_at:'2026-11-14T12:00:00Z'}];
+  f.db.tables.marketplace_listing_stock_control=[{empresa_id:company,link_id:linkId,paused_by_system:scenario!=='manual',pause_requested_at:scenario==='old_pause'?'2026-11-13T12:00:00Z':'2026-11-14T12:01:00Z',pause_confirmed_at:'2026-11-14T12:01:02Z'}];
+  if(scenario==='manual_after')f.db.tables.marketplace_listing_actions=[{id:crypto.randomUUID(),empresa_id:company,connection_id:connectionId,provider_listing_id:'MLB123456',action:'pause',created_at:'2026-11-14T12:03:00Z'}];
+  await deliverStockJob(f.db,f.job);assert.equal(f.db.item.available_quantity,3,scenario);assert.equal(f.db.item.status,'paused',scenario);assert(!f.db.calls.some(c=>c.body?.status==='active'),scenario);
+ }
+});
