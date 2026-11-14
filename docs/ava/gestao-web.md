@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.414 -->
+<!-- ava-version: 3.2.0.415 -->
+
+> Revisão 3.2.0.415: na página pública /gestao-financeira#nossos-apps, o AvantaLab Gestão já pode ser baixado no Google Play pelo link https://play.google.com/store/apps/details?id=br.com.avantalab.app. O botão não indica mais Em breve. Os demais links permanecem disponíveis.
 
 > Revisão 3.2.0.414: Em Anúncios Mkt Places → Produtos cadastrados → Limpar cadastros, administradores selecionam itens ou todos os disponíveis no filtro. Revisar exclusão exibe toda a seleção. Apagar da lista ativa exige nome exato do perfil e ciência marcada. Referências de contas desconectadas não bloqueiam: os vínculos locais são retirados e auditados. Contas ainda conectadas, vencidas ou com autorização pendente continuam protegidas, assim como saldo e operações em andamento. Reconectar invalida a prévia anterior. Vendas, documentos, movimentos e histórico de preços são preservados. A limpeza não exclui anúncios externos. O evento já dispensado pela limpeza da conta permanece oculto mesmo se mudar de motivo.
 

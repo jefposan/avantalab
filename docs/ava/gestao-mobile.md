@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.414 -->
+<!-- ava-version: 3.2.0.415 -->
+
+> Revisão 3.2.0.415: o download Android do AvantaLab Gestão está disponível na seção Nossos apps da página pública, com link oficial https://play.google.com/store/apps/details?id=br.com.avantalab.app. Esta entrega não altera o aplicativo instalado nem o fluxo de acesso.
 
 > Revisão 3.2.0.414: sem impacto operacional neste ambiente. Limpar cadastros e retirada de vínculos locais de contas desconectadas pertencem ao Marketplaces da Gestão Web; históricos preservados.
 
