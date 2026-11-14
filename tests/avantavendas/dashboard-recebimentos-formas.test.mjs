@@ -59,6 +59,8 @@ test('card nativo acessível abre popup, com X, Escape e foco inicial; fundo usa
   assert.equal(fechamentos, 1);
   assert.equal(classe, 'sheet-backdrop-centered dashboard-received-backdrop');
   assert.match(ctx.kpi('Total Recebido', 'R$ 10', '', 'abrirRecebimentosDashboard()'), /^<button type="button"/);
+  assert.match(ctx.kpi('Total Recebido', 'R$ 10', '', 'abrirRecebimentosDashboard()'), /Ver detalhes ›/);
+  assert.doesNotMatch(ctx.kpi('Outro', '1'), /Ver detalhes/);
   assert.match(ctx.kpi('Outro', '1'), /^<article/);
   assert.match(source, /event\.target === wrap && !wrap\.classList\.contains\('sheet-backdrop-static'\)/);
   assert.match(source, /sheetAtual\?\.__recebimentosOrigem\?\.isConnected/);

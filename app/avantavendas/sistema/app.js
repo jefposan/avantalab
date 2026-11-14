@@ -1830,9 +1830,17 @@ function selecionarAnoRelatorioDashboard(ano) {
 }
 
 function aplicarFiltroDashboard() {
-  aplicarPeriodoCompletoMesSelecionado();
+  const inicio = document.getElementById('filtroInicio')?.value || state.filtroInicio;
+  const fim = document.getElementById('filtroFim')?.value || state.filtroFim;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || !/^\d{4}-\d{2}-\d{2}$/.test(fim) || inicio > fim) {
+    toast('A data inicial deve ser igual ou anterior à data final.', { tipo: 'erro' });
+    return;
+  }
+  state.filtroInicio = inicio;
+  state.filtroFim = fim;
+  state.mesReferencia = isoData(limitesDoMes(inicio).inicio);
+  salvarEstado();
   render();
-  toast('Mês completo aplicado.');
 }
 
 function campoDataCentralizado(idCampo, data, rotulo) {
@@ -1915,11 +1923,7 @@ function selecionarDataCalendario(data) {
   if (campo) { campo.value = data; campo.textContent = dataBR(`${data}T12:00:00`); }
   if (idCampo === 'pedidoClienteData' && pedidoClienteRascunho) pedidoClienteRascunho.data = data;
   if (idCampo === 'filtroInicio' || idCampo === 'filtroFim') {
-    const { inicio } = limitesDoMes(data);
-    state.mesReferencia = isoData(inicio);
-    aplicarPeriodoCompletoMesSelecionado();
     fecharCalendarioCentralizado();
-    render();
     return;
   }
   fecharCalendarioCentralizado();
@@ -5015,7 +5019,7 @@ function conteudoDistribuicaoConsignadoDashboard() {
   const clientes = clientesDoProdutoConsignadoDashboard(chave, ordem);
   const total = clientes.reduce((soma, cliente) => soma + cliente.quantidade, 0);
   const proximaQuantidade = ordem === 'quantidade-desc' ? 'quantidade-asc' : 'quantidade-desc';
-  return `<p class="muted">Onde estão as unidades consignadas</p><div class="consignment-distribution-sort" role="group" aria-label="Ordenar clientes"><button type="button" class="${ordem !== 'nome' ? 'active' : ''}" aria-pressed="${ordem !== 'nome'}" onclick="ordenarDistribuicaoConsignadoDashboard('${proximaQuantidade}')">Quantidade ${ordem === 'quantidade-asc' ? '↑' : '↓'}</button><button type="button" class="${ordem === 'nome' ? 'active' : ''}" aria-pressed="${ordem === 'nome'}" onclick="ordenarDistribuicaoConsignadoDashboard('nome')">Nome A–Z</button></div><div class="consignment-distribution-list">${clientes.length ? clientes.map(cliente => `<div>${cliente.disponivel ? `<button type="button" onclick="abrirClienteDashboard(${escapeAttr(JSON.stringify(cliente.id))})">${escapeHtml(cliente.nome)} ${svgIcon('chevron-right')}</button>` : `<span>${escapeHtml(cliente.nome)}</span>`}<b>${cliente.quantidade.toLocaleString('pt-BR')} un.</b></div>`).join('') : '<p class="muted">Nenhum consignado ativo deste produto.</p>'}</div><div class="dashboard-received-total"><span>${clientes.length} ${clientes.length === 1 ? 'cliente' : 'clientes'}</span><strong>${total.toLocaleString('pt-BR')} unidades</strong></div><p class="muted dashboard-received-hint">Toque no nome para abrir a ficha</p>`;
+  return `<div class="consignment-distribution-sort" role="group" aria-label="Ordenar clientes"><button type="button" class="${ordem !== 'nome' ? 'active' : ''}" aria-pressed="${ordem !== 'nome'}" onclick="ordenarDistribuicaoConsignadoDashboard('${proximaQuantidade}')">Quantidade ${ordem === 'quantidade-asc' ? '↑' : '↓'}</button><button type="button" class="${ordem === 'nome' ? 'active' : ''}" aria-pressed="${ordem === 'nome'}" onclick="ordenarDistribuicaoConsignadoDashboard('nome')">Nome A–Z</button></div><div class="consignment-distribution-list">${clientes.length ? clientes.map(cliente => `<div>${cliente.disponivel ? `<button type="button" onclick="abrirClienteDashboard(${escapeAttr(JSON.stringify(cliente.id))})">${escapeHtml(cliente.nome)} ${svgIcon('chevron-right')}</button>` : `<span>${escapeHtml(cliente.nome)}</span>`}<b>${cliente.quantidade.toLocaleString('pt-BR')} un.</b></div>`).join('') : '<p class="muted">Nenhum consignado ativo deste produto.</p>'}</div><div class="dashboard-received-total"><span>${clientes.length} ${clientes.length === 1 ? 'cliente' : 'clientes'}</span><strong>${total.toLocaleString('pt-BR')} unidades</strong></div><p class="muted dashboard-received-hint">Toque no nome para abrir a ficha</p>`;
 }
 
 function abrirDistribuicaoConsignadoDashboard(chave) {
@@ -5274,7 +5278,7 @@ function renderDashboard() {
 }
 
 function kpi(label, value, icon = '', acao = '') {
-  if (acao) return `<button type="button" class="kpi kpi-clickable" onclick="${acao}" aria-haspopup="dialog" aria-label="${escapeAttr(label + ': ' + value + '. Ver formas de recebimento')}"><div><span>${label}</span><strong>${value}</strong></div><b aria-hidden="true">${icon}</b></button>`;
+  if (acao) return `<button type="button" class="kpi kpi-clickable" onclick="${acao}" aria-haspopup="dialog" aria-label="${escapeAttr(label + ': ' + value + '. Ver formas de recebimento')}"><div><span>${label}</span><strong>${value}</strong></div><small class="kpi-details" aria-hidden="true">Ver detalhes ›</small></button>`;
   return `<article class="kpi"><div><span>${label}</span><strong>${value}</strong></div><b>${icon}</b></article>`;
 }
 
@@ -11414,7 +11418,7 @@ function sheet(html, backdropClass = '') {
     && backdropClass.split(' ').includes('dashboard-client-backdrop');
   if (preservarConsignado) {
     anterior.__focoDistribuicao = document.activeElement;
-    anterior.__scrollDistribuicao = anterior.querySelector('.sheet')?.scrollTop || 0;
+    anterior.__scrollDistribuicao = anterior.querySelector('.consignment-distribution-list')?.scrollTop || 0;
     anterior.id = 'distribuicaoConsignadoSuspensa';
     anterior.style.pointerEvents = 'none';
     anterior.setAttribute('aria-hidden', 'true');
@@ -11458,7 +11462,7 @@ function fecharSheet(evento = null, descartarRetorno = false) {
     retornoConsignado.style.pointerEvents = '';
     retornoConsignado.removeAttribute('aria-hidden');
     retornoConsignado.inert = false;
-    const card = retornoConsignado.querySelector('.sheet');
+    const card = retornoConsignado.querySelector('.consignment-distribution-list');
     if (card) card.scrollTop = retornoConsignado.__scrollDistribuicao || 0;
     retornoConsignado.__focoDistribuicao?.focus({ preventScroll: true });
     return;

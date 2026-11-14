@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.420 -->
+<!-- ava-version: 3.2.0.421 -->
+
+> Revisão 3.2.0.421: sem impacto operacional; ajustes exclusivos do dashboard AvantaVendas.
 
 > Revisão local 3.2.0.420 — AvantaPreços e Marketplaces: Atualizar preço consulta diretamente as ofertas do catálogo do Mercado Livre, sem pesquisa de preços por IA ou fallback pago automático. Abrir produto/histórico reutiliza a referência e o resultado salvos; expandir Ver resultados da pesquisa apenas mostra esses dados, sem nova busca externa. Quantidade de ofertas, vendedores, faixa, média, mediana, fontes e data começam recolhidos, no celular e na Web. A referência automática exige produto/variante confirmados, paginação completa e pelo menos três vendedores válidos. Considera o menor preço retornado por vendedor, exclui contas próprias, duplicatas e extremos. Consulta parcial, amostra insuficiente, variante não confirmada, grande dispersão ou falha preservam a referência anterior e informam o motivo; não afirmar preço de mercado atualizado nessas situações. Os preços pertencem ao contexto da conta consultada e não incluem frete personalizado. Atualizar preço altera a referência, não o preço anunciado, o estoque ou reservas. Edição manual da referência e Completar com IA da ficha técnica continuam separados. Migração validada localmente e aplicada em produção após autorização; publicação pela main em preparação.
 

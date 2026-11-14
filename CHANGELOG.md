@@ -14902,3 +14902,9 @@ Publicação confirmada das revisões 3.2.0.110–112: READY/PROMOTED nos domín
 - Zero sem conferência inicial pendente não gera aviso de esgotamento. Falhas reais de sincronização, pausa e vendas continuam visíveis.
 - Conferência inicial não aparece para produtos sem anúncio ou somente com anúncios encerrados/excluídos. Mantém validações, revisões e idempotência, sem alterar saldos existentes.
 
+## 3.2.0.421-av203 - AvantaVendas: período exato e dashboard compacto
+
+- Calendário preserva o dia selecionado; Filtrar aplica o intervalo exato, inclusive entre meses. Período invertido não substitui o aplicado. Setas e Mês atual continuam preenchendo o mês completo.
+- Distribuição dos consignados compacta, com cabeçalho/total fixos e rolagem somente na lista; preserva posição/ordenação ao retornar da ficha. Dois botões iguais ocupam a linha, com destaque apenas na borda ativa e sem frase introdutória.
+- Total recebido mostra Ver detalhes no canto inferior direito, sem aumentar o card. Demais dados, módulos e backend preservados.
+

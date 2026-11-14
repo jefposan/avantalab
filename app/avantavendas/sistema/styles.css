@@ -1178,6 +1178,9 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .dashboard-kpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin: 0; }
 .kpi-clickable { width: 100%; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .kpi-clickable:focus-visible { outline: 3px solid #1687D9; outline-offset: 3px; }
+.dashboard-kpis .kpi-clickable .kpi-details { position: absolute; right: 11px; bottom: 5px; color: #0874a8; font-size: 8px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.kpi-clickable:active { transform: scale(.98); }
+.dark-theme .dashboard-kpis .kpi-clickable .kpi-details { color: #7dd3fc; }
 .dashboard-received-backdrop .sheet { width: min(92vw, 480px); max-height: calc(100dvh - max(16px, env(safe-area-inset-top)) - max(16px, env(safe-area-inset-bottom))); overflow-y: auto; }
 .dashboard-received-backdrop .close { display: grid; place-items: center; flex: 0 0 44px; min-width: 44px; min-height: 44px; }
 .dashboard-received-intro { font-size: 14px; }
@@ -2072,17 +2075,24 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
 .dashboard-consignment-products > div { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #edf0f3; padding: 8px 2px; }
 .dashboard-consignment-products > [role="button"] { cursor: pointer; min-height: 44px; }
 .dashboard-consignment-products > [role="button"]:focus-visible { outline: 2px solid #1687D9; outline-offset: -2px; }
-.consignment-distribution-backdrop .sheet { width: min(92vw, 480px); max-height: calc(100dvh - max(16px, env(safe-area-inset-top)) - max(16px, env(safe-area-inset-bottom))); overflow-y: auto; }
-.consignment-distribution-sort { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-.consignment-distribution-sort button { min-height: 44px; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 12px; background: transparent; color: inherit; font-size: 13px; }
-.consignment-distribution-sort button.active { background: #e0f2fe; border-color: #7dd3fc; color: #075985; }
-.consignment-distribution-list > div { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 0; }
-.consignment-distribution-list button { display: flex; gap: 6px; align-items: center; min-height: 44px; padding: 4px 0; text-align: left; border: 0; background: transparent; color: #0874a8; font: inherit; font-weight: 700; overflow-wrap: anywhere; }
+.consignment-distribution-backdrop .sheet { display: flex; flex-direction: column; width: min(92vw, 480px); max-height: min(560px, calc(100dvh - max(16px, env(safe-area-inset-top)) - max(16px, env(safe-area-inset-bottom)))); overflow: hidden; }
+.consignment-distribution-backdrop .sheet > .sheet-header { flex: 0 0 auto; }
+#distribuicaoConsignadoConteudo { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+#distribuicaoConsignadoConteudo > p, .consignment-distribution-sort, #distribuicaoConsignadoConteudo > .dashboard-received-total { flex: 0 0 auto; }
+#distribuicaoConsignadoConteudo > p { margin: 4px 0; font-size: 12px; }
+#distribuicaoConsignadoConteudo > .dashboard-received-total { margin-top: 10px; padding: 10px 12px; font-size: 13px; }
+.consignment-distribution-list { flex: 1 1 auto; min-height: 0; max-height: 300px; overflow-y: auto; overscroll-behavior: contain; }
+.consignment-distribution-sort { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 8px; }
+.consignment-distribution-sort button { min-width: 0; min-height: 32px; padding: 4px 8px; border: 1px solid #c6dfef; border-radius: 10px; background: #eff8ff; color: #0A1F44; font-size: 11px; line-height: 1.2; }
+.consignment-distribution-sort button.active { border-color: #1687D9; box-shadow: inset 0 0 0 1px #1687D9; }
+.consignment-distribution-list > div { display: grid; min-height: 44px; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 8px 2px; font-size: 10px; }
+.consignment-distribution-list button { display: flex; gap: 6px; align-items: center; min-height: 44px; margin: -8px -2px; padding: 8px 2px; text-align: left; border: 0; background: transparent; color: #0874a8; font: inherit; font-weight: 700; overflow-wrap: anywhere; }
 .consignment-distribution-list .svg-icon { flex: 0 0 16px; width: 16px; height: 16px; }
 .consignment-distribution-list b { white-space: nowrap; }
 .dark-theme .consignment-distribution-list > div { border-color: #334155; }
 .dark-theme .consignment-distribution-list button { color: #7dd3fc; }
-.dark-theme .consignment-distribution-sort button.active { color: #bae6fd; background: #173d53; border-color: #33718f; }
+.dark-theme .consignment-distribution-sort button { color: #bae6fd; background: #173d53; border-color: #33718f; }
+.dark-theme .consignment-distribution-sort button.active { border-color: #7dd3fc; box-shadow: inset 0 0 0 1px #7dd3fc; }
 .dashboard-consignment-products span { overflow: hidden; color: #526477; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .dashboard-consignment-products b { flex: 0 0 auto; color: #0A1F44; font-size: 10px; }
 .dashboard-consignment-products p { grid-column: 1 / -1; margin: 8px 0; text-align: center; }

@@ -14,7 +14,7 @@ function ambiente() {
     focus() { document.activeElement = this; }
     blur() {}
     contains(x) { return x === this.close; }
-    querySelector(s) { if (s === '.sheet') return this.card; if (s === '.close') return this.close; return null; }
+    querySelector(s) { if (s === '.sheet') return this.card; if (s === '.consignment-distribution-list') return this.list; if (s === '.close') return this.close; return null; }
     querySelectorAll() { return []; }
     addEventListener(k, fn) { this.handlers[k] = fn; }
     remove() { this.isConnected = false; }
@@ -25,7 +25,7 @@ function ambiente() {
     getElementById: id => nodes.find(n => n.id === id && n.isConnected),
     querySelector: () => document.getElementById('sheetBackdrop')?.card,
     createElement: () => {
-      const node = new Elemento(); node.card = new Elemento(); node.card.close = new Elemento();
+      const node = new Elemento(); node.card = new Elemento(); node.card.close = new Elemento(); node.list = new Elemento();
       Object.defineProperty(node, 'className', { set(c) { node.classList = { contains: x => c.split(' ').includes(x) }; } });
       nodes.push(node); return node;
     },
@@ -57,7 +57,7 @@ test('mesma ficha do cliente fica sobre a lista e fechar restaura nó, posição
   ctx.abrirDistribuicaoConsignadoDashboard('p1');
   ctx.ordenarDistribuicaoConsignadoDashboard('nome');
   const lista = document.getElementById('sheetBackdrop');
-  lista.card.scrollTop = 213;
+  lista.list.scrollTop = 213;
   const linha = document.activeElement;
   ctx.abrirClienteDashboard('c2');
   const ficha = document.getElementById('sheetBackdrop');
@@ -67,7 +67,7 @@ test('mesma ficha do cliente fica sobre a lista e fechar restaura nó, posição
   assert.equal(lista.inert,true);
   ctx.fecharSheet();
   assert.equal(document.getElementById('sheetBackdrop'),lista);
-  assert.equal(lista.card.scrollTop,213);
+  assert.equal(lista.list.scrollTop,213);
   assert.equal(lista.inert,false);
   assert.equal(document.activeElement,linha);
   assert.match(ctx.conteudoDistribuicaoConsignadoDashboard(),/class="active" aria-pressed="true" onclick="ordenarDistribuicaoConsignadoDashboard\('nome'\)"/);
