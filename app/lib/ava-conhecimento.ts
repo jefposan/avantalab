@@ -1,4 +1,4 @@
-// Revisão local 3.2.0.424: ML primeiro; complemento web com IA apenas abaixo de três vendedores, validado na origem. Sem publicação.
+// Revisão local 3.2.0.424: ML primeiro; complemento web com IA apenas abaixo de três vendedores, validado na origem. Migração aplicada; publicação pela main autorizada, em preparação.
 // Revisão 3.2.0.423: diagnóstico ML administrativo com códigos sanitizados, confirmação de identidade e controle JEFF de leitura em produção.
 // Revisão local 3.2.0.422: coleta completa com prioridade de várias ofertas; aceita uma ou duas válidas ao final. Sem publicação.
 // Revisão 3.2.0.420: preços diretos do catálogo ML, sem IA automática; resultados recolhidos. Migração aplicada; publicação pela main em preparação.

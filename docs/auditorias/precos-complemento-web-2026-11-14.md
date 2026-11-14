@@ -1,6 +1,6 @@
 # 3.2.0.424 — complemento de preços com pesquisa web
 
-Candidato local, sem publicação e sem aplicação do SQL em produção.
+Publicação autorizada pelo responsável. Migração aplicada e registrada em produção; envio do código pela main em preparação.
 Base: main 236f911c7b692413712b818262c9a86c5739ed95 (3.2.0.423).
 Restauração: tag local restauracao/precos-complemento-base-20261114.
 PADRÃO AVANTA 1.23.1. Checkout canônico e trabalhos paralelos preservados.
@@ -35,9 +35,8 @@ PADRÃO AVANTA 1.23.1. Checkout canônico e trabalhos paralelos preservados.
 
 SQL novo: 20261114230000_marketplace_price_web_complement.sql. Atualiza o comando
 backend para aceitar recibos combinados, conservando a validação ML e acesso
-somente service_role. Não reescreve históricos ou saldos. Validado somente em
-PostgreSQL descartável via PGlite; migrações já aplicadas não foram alteradas.
-Publicar o código requer aplicar esse SQL após autorização. Antes de integrar,
+somente service_role. Não reescreve históricos ou saldos. Validado em PostgreSQL descartável via PGlite e aplicado em produção com guarda da definição anterior e registro atômico. Migrações já aplicadas não foram alteradas.
+A migração foi autorizada junto da publicação e aplicada antes do envio. Antes de integrar,
 reconferir main/produção e preservar qualquer entrega posterior à base.
 
 ## Validação local
@@ -49,9 +48,16 @@ reconferir main/produção e preservar qualquer entrega posterior à base.
   estatísticos adicionais passaram no conjunto de 15 do orquestrador.
 - Segurança: 714 aprovados, zero falhas.
 - TypeScript, PADRÃO AVANTA, Ava e git diff --check aprovados.
-- Não executou teste pago real, não publicou e não alterou preços/estoque reais.
+- Não executou teste pago real nem alterou preços/estoque reais. Publicação autorizada em preparação.
   Cobertura da pesquisa web/Google Shopping depende das fontes acessíveis;
   teste simulado não comprova quantidade de lojas para cada EAN em produção.
 
 A execução administrativa JEFF agendada somente para 3.2.0.423 foi retirada do
 manifesto desta entrega; o diagnóstico continua disponível, sem novo agendamento.
+
+## Conferência do banco antes do envio
+
+Migração 20261114230000 registrada; contrato combinado confirmado. Privilégios:
+anon=false, authenticated=false, service_role=true. Permanecem 209 produtos e
+83 pesquisas antes/depois; nenhuma pesquisa ou alteração comercial nesta etapa.
+Backup da definição anterior e recibos preservados no registro local da entrega.

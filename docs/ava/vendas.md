@@ -1,6 +1,6 @@
 <!-- ava-version: 3.2.0.424 -->
 
-> Revisão local 3.2.0.424 — Sem impacto operacional na Gestão Mobile nativa e no AvantaVendas. No PWA AvantaPreços, vale o novo fluxo ML primeiro e complemento web com IA só abaixo de três vendedores, com conferência nas lojas e preservação da referência em falha. Não altera preços de anúncios, estoques ou reservas. Veja a regra completa na revisão atual de gestao-web.md. Migração preparada e validada somente em banco descartável; não aplicada em produção. Sem publicação. Esta regra substitui a pesquisa exclusivamente ML das revisões 420/422.
+> Revisão local 3.2.0.424 — Sem impacto operacional na Gestão Mobile nativa e no AvantaVendas. No PWA AvantaPreços, vale o novo fluxo ML primeiro e complemento web com IA só abaixo de três vendedores, com conferência nas lojas e preservação da referência em falha. Não altera preços de anúncios, estoques ou reservas. Veja a regra completa na revisão atual de gestao-web.md. Migração validada localmente, aplicada e registrada em produção após autorização. Publicação pela main autorizada, em preparação. Esta regra substitui a pesquisa exclusivamente ML das revisões 420/422.
 
 > Revisão 3.2.0.423: sem impacto operacional no AvantaVendas. Diagnóstico de acesso ML restrito ao módulo Marketplaces, sem alterações em vendas, preços ou estoque; preserva os ajustes av203.
 
