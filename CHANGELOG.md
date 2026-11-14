@@ -1,3 +1,10 @@
+## 3.2.0.424 — AvantaPreços: ML primeiro e complemento de pesquisa web com IA
+
+- Preserva a coleta completa do ML; abaixo de três vendedores tenta pesquisa web com IA, priorizando Google Shopping quando acessível. Valida preço, disponibilidade e variante na loja primária e combina ofertas, sem DataForSEO.
+- Não chama IA com três vendedores ML; mantém uma/duas ofertas válidas quando o complemento falhar, sem sobrescrever a referência com dados não comprovados. Fontes e resultado do complemento permanecem recolhidos.
+- Reutiliza cache, limites por empresa e contabilização; separa a chave do complemento das pesquisas antigas. Prazos de servidor/cliente compatíveis com as duas etapas, cancelamento preservado.
+- Migração aditiva permite recibo combinado somente pelo backend, preservando isolamento, revisão, idempotência e a validação ML existente. Validada em banco local descartável, aplicada e registrada em produção após autorização. Publicação pela main autorizada, em preparação; sem teste pago real nesta entrega.
+
 ## 3.2.0.423 — Marketplaces: diagnóstico administrativo do acesso ML pela JEFF
 
 - Amplia o diagnóstico existente, mantendo autorização administrativa e isolamento da conta/empresa. Confirma identidade e compara aplicação/grant, catálogo, busca geral, anúncios próprios e item de outro vendedor.

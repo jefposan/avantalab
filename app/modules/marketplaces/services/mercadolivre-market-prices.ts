@@ -50,6 +50,6 @@ export async function consultMercadoLivreMarketPrices(db:SupabaseClient,connecti
 export async function readProductMarketResearch(db:SupabaseClient,company:string,productId:string):Promise<MarketPriceResearch|null>{
  const {data,error}=await db.from('marketplace_product_price_researches').select('status,evidence').eq('empresa_id',company).eq('product_id',productId).order('created_at',{ascending:false}).limit(1).maybeSingle();
  if(error){if(['42703','42P01','PGRST204'].includes(error.code))return null;throw new MarketplaceError(503,'price_research_database','Não foi possível conferir os resultados da última pesquisa.');}
- const e=objectValue(data?.evidence);if(e.provider!=='mercado_livre'||!Array.isArray(e.offers)||typeof e.checkedAt!=='string')return null;
+ const e=objectValue(data?.evidence);if(!['mercado_livre','ml_web_search'].includes(String(e.provider))||!Array.isArray(e.offers)||typeof e.checkedAt!=='string')return null;
  return {...e,...(['failed','conflict'].includes(data?.status)?{status:'unavailable',message:'Esta pesquisa não foi aplicada. A referência do cadastro foi preservada.'}:{})} as unknown as MarketPriceResearch;
 }

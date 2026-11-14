@@ -66,7 +66,7 @@ export default function PriceLotWebReader({ companyId, detail, request, capture,
   async function refreshPrice() {
     if (!result?.localProductId || !result.revision || !start()) return;
     try {
-      const body = await request('/api/modulos/marketplaces/precos/produto', { method: 'PATCH', signal: AbortSignal.timeout(65_000), body: JSON.stringify({ empresaId: companyId, action: 'research', productId: result.localProductId, revision: result.revision, requestKey: crypto.randomUUID() }) }) as { result: import('@/app/modules/marketplaces/services/mercadolivre-price-consultation').PriceConsultationResult };
+      const body = await request('/api/modulos/marketplaces/precos/produto', { method: 'PATCH', signal: AbortSignal.timeout(125_000), body: JSON.stringify({ empresaId: companyId, action: 'research', productId: result.localProductId, revision: result.revision, requestKey: crypto.randomUUID() }) }) as { result: import('@/app/modules/marketplaces/services/mercadolivre-price-consultation').PriceConsultationResult };
       if (alive.current) { const value=body.result; setResult({ result:value, historyId:value.historyId, localProductId:value.localProductId, revision:value.localProductRevision, name:value.product?.name || '', prices:value.prices }); setNotice(value.notice || 'Referência atualizada.'); }
     } catch (reason) { if (alive.current) setError(`${(reason as Error).message} Reabra o produto para conferir antes de repetir.`); }
     finally { finish(); }

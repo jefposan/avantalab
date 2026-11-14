@@ -14,7 +14,7 @@ export async function createMarketPricesFixture(){
    create table marketplace_product_operations(empresa_id uuid,request_key uuid,actor_id uuid,action text,request_hash text,result jsonb);
    create table marketplace_connections(empresa_id uuid,provider text,seller_reference text);
    create table marketplace_price_consultations(id uuid primary key, sample_source text constraint marketplace_price_consultations_sample_source_check check(sample_source in ('local_reference','openai_web_search')));`);
-  for(const file of ['20261019010000_marketplace_product_price_research.sql','20261021050000_marketplace_price_reference_access.sql','20261024030000_marketplace_price_eight_offers.sql','20261114190000_marketplace_ml_price_research.sql','20261114210000_marketplace_ml_price_small_sample.sql'])await db.exec(await readFile('supabase/migrations/'+file,'utf8'));
+  for(const file of ['20261019010000_marketplace_product_price_research.sql','20261021050000_marketplace_price_reference_access.sql','20261024030000_marketplace_price_eight_offers.sql','20261114190000_marketplace_ml_price_research.sql','20261114210000_marketplace_ml_price_small_sample.sql','20261114230000_marketplace_price_web_complement.sql'])await db.exec(await readFile('supabase/migrations/'+file,'utf8'));
   await db.query('insert into empresas values($1),($2)',[company,other]);await db.query('insert into auth.users values($1)',[actor]);
   await db.query("insert into usuarios_empresa values($1,$2,'ativo','administrador')",[actor,company]);
   await db.query("insert into empresa_modulos values($1,'marketplaces',true,null),($2,'marketplaces',true,null)",[company,other]);

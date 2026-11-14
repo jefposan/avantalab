@@ -5,7 +5,7 @@ import { identifyMercadoLivreCatalog } from './mercadolivre-catalog';
 import type { SellerConnection } from './mercadolivre-management';
 import { lookupProfileCatalogByEan } from './profile-catalog';
 import type {WebPriceOffer} from './openai-web-price-search';
-import {consultMercadoLivreMarketPrices} from './mercadolivre-market-prices';
+import {consultMarketPricesWithComplement} from './market-prices-with-complement';
 import {emptyMarketResearch,type MarketPriceResearch} from '../market-price-research';
 import { selectReferencePriceCents } from './price-reference';
 import { DEFAULT_PRICE_PERCENTAGES, suggestedPriceCents, type PricePercentages } from '../price-settings';
@@ -73,7 +73,7 @@ export function calculatePriceSuggestions(pricesInCents: readonly number[], perc
 
 /**
  * O PWA identifica o produto e consulta as ofertas do catálogo no servidor.
- * Sem IA ou fallback pago; nenhum segredo ou token é enviado ao PWA.
+ * Complemento web com IA só quando a amostra ML não atinge três vendedores.
  */
 export async function consultMercadoLivrePrice(
   db: SupabaseClient,
@@ -142,9 +142,9 @@ export async function consultMercadoLivrePrice(
   }
 
   let evidence:MarketPriceResearch;
-  try { evidence=await consultMercadoLivreMarketPrices(db,connection,{ean,productName:product.name,attributes:product.attributes,identification},control?.signal); }
+  try { evidence=await consultMarketPricesWithComplement(db,connection,{ean,productName:product.name,attributes:product.attributes,identification},control); }
   catch(error){control?.signal?.throwIfAborted();evidence=emptyMarketResearch(product.name,'unavailable',error instanceof MarketplaceError?error.message:'Não foi possível consultar as ofertas do Mercado Livre.');}
   if(evidence.status!=='ready'||evidence.mean==null)return {...base,marketResearch:evidence,notice:evidence.message};
   const suggestions=suggestedPriceCents(Math.round(evidence.mean*100),percentages)!;
-  return {...base,prices:{market:evidence.mean,minimum:suggestions.minimum/100,medium:suggestions.medium/100,ideal:suggestions.ideal/100},sample:{count:evidence.count,minimum:evidence.minimum!,maximum:evidence.maximum!,source:'mercadolivre_catalog',offers:evidence.offers},marketResearch:evidence,consultedAt:evidence.checkedAt,notice:'Referência obtida diretamente do Mercado Livre.'};
+  return {...base,prices:{market:evidence.mean,minimum:suggestions.minimum/100,medium:suggestions.medium/100,ideal:suggestions.ideal/100},sample:{count:evidence.count,minimum:evidence.minimum!,maximum:evidence.maximum!,source:evidence.provider==='ml_web_search'?'openai_web_search':'mercadolivre_catalog',offers:evidence.offers},marketResearch:evidence,consultedAt:evidence.checkedAt,notice:evidence.message};
 }

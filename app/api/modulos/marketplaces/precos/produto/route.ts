@@ -5,7 +5,7 @@ import { consultLocalPrice, editLocalReference } from '@/app/modules/marketplace
 import { researchLocalProductPrice } from '@/app/modules/marketplaces/services/local-product-price-research';
 import { readPriceCatalog } from '@/app/modules/marketplaces/services/price-catalog';
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);

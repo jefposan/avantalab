@@ -9,9 +9,9 @@ export type PriceSearchControl = { db: SupabaseClient; companyId: string; actorI
 export type PriceSearchUsage = { inputTokens: number; cachedTokens: number; outputTokens: number; webCalls: number; requestId?: string; usageKnown?: boolean; attempts?: number };
 export const emptyPriceSearchUsage = (): PriceSearchUsage => ({ inputTokens: 0, cachedTokens: 0, outputTokens: 0, webCalls: 0, usageKnown: false });
 
-export function priceSearchHash(input: { ean: string | null; productName: string; model?:string; brand?:string;variant?:string }) {
+export function priceSearchHash(input: { ean: string | null; productName: string; model?:string; brand?:string;variant?:string;mode?:'shopping_complement' }) {
   // Nome/variante permanece na chave mesmo com EAN: nunca compartilhar variantes por aproximação.
-  return createHash('sha256').update(JSON.stringify(['mini-cited-eight-restored-v13', input.ean?.trim() || '', input.productName.trim().normalize('NFC').toLowerCase().replace(/\s+/g, ' '),input.model?.trim().toLowerCase()||'',input.brand?.trim().toLowerCase()||'',input.variant?.trim().toLowerCase()||''])).digest('hex');
+  return createHash('sha256').update(JSON.stringify([input.mode === 'shopping_complement' ? 'ml-shopping-origin-v1' : 'mini-cited-eight-restored-v13', input.ean?.trim() || '', input.productName.trim().normalize('NFC').toLowerCase().replace(/\s+/g, ' '),input.model?.trim().toLowerCase()||'',input.brand?.trim().toLowerCase()||'',input.variant?.trim().toLowerCase()||''])).digest('hex');
 }
 
 export async function controlledPriceSearch(input: { ean: string | null; productName: string }, control: PriceSearchControl, run: (record: (usage: PriceSearchUsage) => void) => Promise<OpenAIWebPriceLookup>) {

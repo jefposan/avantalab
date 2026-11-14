@@ -8,7 +8,7 @@ import {isValidEan} from './ean';
 import type { OriginPriceEvidence } from '../price-origin-evidence';
 
 type JsonRecord = Record<string, unknown>;
-type PriceSearchInput={ean:string|null;productName:string;model?:string;brand?:string;variant?:string};
+type PriceSearchInput={ean:string|null;productName:string;model?:string;brand?:string;variant?:string;mode?:'shopping_complement'};
 
 export type WebPriceOffer = {
   title: string;
@@ -137,6 +137,7 @@ async function executePriceSearch(input: PriceSearchInput, control?: PriceSearch
   // Escolha explícita do responsável. Sem override/fallback silencioso para modelo caro.
   const model = PRICE_SEARCH_MODEL;
   const prompt = [
+    input.mode === 'shopping_complement' ? 'Complemento de uma consulta prévia no Mercado Livre. Priorize pesquisar no Google Shopping Brasil pelo EAN e modelo/variante, abrindo as lojas de origem. A ferramenta disponível é pesquisa web: se a grade do Google Shopping não estiver acessível, pesquise páginas públicas das lojas e nunca alegue que acessou a grade. Exclua Mercado Livre desta etapa para não repetir vendedores nem incluir contas próprias. Retorne até 8 lojas diferentes; uma oferta por domínio de loja. Não altere ficha técnica; product deve ser null.' : '',
     'Pesquise ofertas atuais do produto EXATO informado abaixo e retorne os preços totais anunciados em reais, a loja e o link da fonte consultada. Você deve entregar os PREÇOS no JSON; não apenas links. O servidor calculará a média.',
     `Produto: ${productName}`,
     input.ean ? `EAN prioritário: ${input.ean}. Identifique a ficha exata e pesquise a oferta desse código; o título local é uma pista, não precisa ser reproduzido literalmente.` : '',
@@ -157,7 +158,7 @@ async function executePriceSearch(input: PriceSearchInput, control?: PriceSearch
     '- cada oferta precisa ter título real, loja, price numérico em reais e URL HTTPS DIRETA da página de produto presente nas fontes. Listas de busca, categorias e vitrines não comprovam uma oferta e não devem ser retornadas. Não repita a mesma oferta com preços/nomes de loja diferentes;',
     '- preserve o título real do anúncio. Em variant, registre apenas modelo, voltagem, potência e capacidade explicitamente comprovados na ficha/seleção daquela oferta, mesmo quando não aparecem no título. Não invente atributos. Variante sem comprovação deve ser omitida;',
     '- variant deve descrever a opção SELECIONADA e comprável, não todas as versões mencionadas na descrição. Uma ficha que lista 110V e 220V não comprova a disponibilidade de 220V. Se o título/SKU escolhido indica outra tensão, descarte; não transforme produto de tensão única em bivolt;',
-    '- você deve confirmar preço total, disponibilidade e variante nas fontes consultadas pela ferramenta web. O servidor não depende de baixar novamente o HTML da loja. Se houver opções de tensão, use a URL/SKU da opção correta e seu preço. Não use texto da consulta como evidência; não invente oferta;',
+    '- você deve confirmar preço total, disponibilidade e variante nas fontes consultadas pela ferramenta web. Para o complemento, o servidor também conferirá a página da loja. Se houver opções de tensão, use a URL/SKU da opção correta e seu preço. Não use texto da consulta como evidência; não invente oferta;',
     '- se uma página bloquear a leitura ou não mostrar preço/estoque, use outra fonte em vez de gastar as buscas tentando destravá-la. Antes de retornar vazio, procure uma alternativa por marca/modelo/variante em outras lojas;',
     '- price é o valor TOTAL anunciado do produto. Oferecer parcelamento não exclui a oferta: use o total, nunca o valor de uma parcela. Não use preço anterior, frete, cupom pessoal ou clube restrito. Ignore anúncios pausados/encerrados ou sem estoque;',
     '- use no máximo duas chamadas da ferramenta web, reunindo os termos necessários; encontre até 8 ofertas válidas, sem obrigação de completar. Não calcule média nem invente valores;',
@@ -181,7 +182,7 @@ async function executePriceSearch(input: PriceSearchInput, control?: PriceSearch
         model,
         store: false,
         reasoning: { effort: 'low' },
-        tools: [{ type: 'web_search', search_context_size: 'low' }],
+        tools: [{ type: 'web_search', search_context_size: 'low', external_web_access: true }],
         max_tool_calls: 2,
         tool_choice: 'required',
         include: ['web_search_call.action.sources'],
