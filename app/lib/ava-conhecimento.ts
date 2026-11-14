@@ -1,4 +1,4 @@
-// Revisão local 3.2.0.417: reservas no AvantaPreços e na linha de ações do estoque Web, sem publicação.
+// Revisão 3.2.0.417: reservas no AvantaPreços e na linha de ações do estoque Web.
 // Revisão 3.2.0.400: logos institucionais Web/Mobile em WebP sem perdas; mesmo slogan e contraste, sem mudança de dados ou autenticação.
 // Revisão 3.2.0.391: a NF-e de produção da Tridium depende da liberação do servidor. Em retorno incerto, consulte a mesma nota e preserve sua numeração.
 // Revisão 3.2.0.390: a Tridium pode testar a conexão da SEFAZ-SP de produção no painel do certificado, sem emitir.
@@ -1984,7 +1984,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // Revisado na versão 1.8.4.01: Nossos apps usa capturas reais dos dashboards,
 // sem mudança nos fluxos de Gestão ou AvantaVendas.
 // Revisado na versão 1.8.4: a landing pública apresenta Gestão e AvantaVendas
-// em Nossos apps, com links oficiais da App Store e Google Play em breve.
+// em Nossos apps, com links oficiais da App Store e do Google Play.
 // Revisado na versão 1.8.3: perfil compartilhado mantém o acesso durante o
 // checkout e só libera a vaga quando a assinatura própria é paga e ativada.
 // Revisado na versão 1.8.2: assinatura, quota, cupom, App Store e módulos foram
@@ -2315,7 +2315,7 @@ Em Marketplaces, a ordem inicial é **Vendas**, **Produtos e estoque**, **Anunci
 Em Vendas de Marketplaces, abra o pedido e a faixa Documento e etiqueta. Solicitar DC-e exige perfil PF/PJ não contribuinte e confirmação de que não há solicitação anterior sem retorno. O mesmo botão fica DC-e solicitada e inativo após aceite ou tentativa incerta. O histórico é independente da sincronização e da etiqueta. Expanda Documentos fiscais para consultar situação e arquivos oferecidos pelo ML. NF-e é para PJ contribuinte: importar XML original modelo 55 autorizado em produção (até 2 MB), substituir a NF-e importada antes da impressão ou solicitar emissão pelo Faturador, confirmando certificado A1/cadastro/dados fiscais prontos. Não confundir permissão OAuth com configuração do Faturador. Recurso não localizado (404) não significa ausência de documento. Erro definitivo de envio permite correção; incerteza mantém a reserva. Consultar não emite nem importa. A data de envio programado é um dia civil; impressão/reimpressão só após liberação logística. Downloads de NF-e externa dependem dos arquivos disponibilizados pelo ML. Pós-venda com ações de cancelamento/reembolso/devolução permanece no Mercado Livre. Não afirmar emissão real sem confirmação do provedor.
 
 NAVEGAÇÃO E PERFIS
-- Na landing pública, **Nossos apps** apresenta AvantaLab Gestão e AvantaVendas. Cada card abre a página oficial correspondente na App Store; Google Play aparece apenas como disponibilidade futura.
+- Na landing pública, **Nossos apps** apresenta AvantaLab Gestão e AvantaVendas com links oficiais para App Store e Google Play. O Gestão Android já está disponível em https://play.google.com/store/apps/details?id=br.com.avantalab.app; não orientar como Em breve.
 - Depois que o acesso Web é iniciado, a landing não reaparece durante o retorno de Google/Apple nem na retomada de uma sessão ativa. Preparando acesso permanece visível até a Gestão abrir; se a confirmação falhar, o sistema retorna ao login com uma mensagem clara.
 - O perfil Pessoal gratuito usa a Gestão Mobile. Ao tentar entrar na Gestão Web, ele vê a página de assinatura do Premium Pessoal; assinatura vigente ou cortesia libera o mesmo perfil também no Web.
 - O dashboard é a página inicial. Os cards podem ser organizados pelo lápis: mostrar, ocultar, mover entre colunas, expandir, reduzir ou remover da visão.
@@ -2441,7 +2441,7 @@ Se a sessão não existir mais no servidor, o mobile abre seu próprio login e i
 Você atende no app/PWA Gestão Mobile (/mobile). Não confunda este ambiente com Vendas Mobile ou com a Gestão Web.
 
 NAVEGAÇÃO E PERFIS
-- Na landing pública, **Nossos apps** apresenta o AvantaLab Gestão e abre sua página oficial na App Store. Google Play aparece apenas como disponibilidade futura.
+- Na landing pública, **Nossos apps** permite baixar o AvantaLab Gestão na App Store ou no Google Play. O link Android oficial é https://play.google.com/store/apps/details?id=br.com.avantalab.app.
 - Após sair do aplicativo Gestão Mobile, a entrada aceita **E-mail** (também aceita o login já cadastrado) ou **Telefone** brasileiro com DDD. O telefone precisa estar vinculado à conta; a senha é a mesma.
 - A rota da Gestão abre sempre a própria Gestão. Gestão e AvantaVendas são
   abertos separadamente pelo usuário; não existe troca direta entre aplicativos.
@@ -2552,7 +2552,7 @@ o AvantaVendas atual. Priorize funções deste aplicativo e não redirecione par
 Gestão quando a ação existir no Vendas.
 
 SALA E NAVEGAÇÃO
-- Na landing pública, **Nossos apps** apresenta o AvantaVendas e abre sua página oficial na App Store. Google Play aparece apenas como disponibilidade futura.
+- Na landing pública, **Nossos apps** apresenta o AvantaVendas e abre suas páginas oficiais na App Store e no Google Play; os links do AvantaVendas permanecem inalterados nesta revisão.
 - Após autenticar, o Vendas Mobile abre na própria sala por padrão; pode recuperar
   posição recente autorizada da mesma conta. Não oferece acesso direto à Gestão.
 - As telas de acesso exibem **Gestão de Vendas** para identificar este
@@ -2904,8 +2904,8 @@ GUIAS["gestao-web"] += " Divulgação: cabeçalho fixo no painel da pasta e aç�
 
 GUIAS["gestao-web"] += " Divulgação: selecione um único arquivo ou pasta e use Renomear na barra inferior. Salvar nome atualiza só o nome exibido, preservando arquivo, links e localização; Cancelar não grava.";
 
-GUIAS["gestao-web"] += " AvantaPreços e Marketplaces — Reserva: botão ao lado de Venda. Escolha explicitamente o estoque, quantidade e possível comprador; revise e confirme. Requer a mesma permissão Registrar vendas. Se houver apenas uma unidade, a quantidade é 1. O disponível por estoque exclui reservadas; Total inclui disponíveis e reservadas. A etiqueta Reservado identifica o bloqueio. Reserva total bloqueia venda comum naquele estoque; parcial deixa o restante livre. Abra Reserva → Minhas reservas para concluir a venda com preço unitário/data ou cancelar para devolver as unidades à disponibilidade. Não há vencimento automático, edição ou liberação silenciosa. Não registre a mesma unidade novamente por Venda. Online reduz/recompõe somente o disponível dos anúncios vinculados pela fila de sincronização; mensagem de envio pendente não é confirmação do marketplace. Pausa manual nunca deve ser reativada por cancelar uma reserva; somente a pausa de estoque feita pelo próprio sistema pode ser retomada após confirmação do saldo. Reservar/cancelar não cria receita; concluir reutiliza a venda direta uma única vez. Protótipo em validação local, versão ainda não publicada.";
+GUIAS["gestao-web"] += " AvantaPreços e Marketplaces — Reserva: botão ao lado de Venda. Escolha explicitamente o estoque, quantidade e possível comprador; revise e confirme. Requer a mesma permissão Registrar vendas. Se houver apenas uma unidade, a quantidade é 1. O disponível por estoque exclui reservadas; Total inclui disponíveis e reservadas. A etiqueta Reservado identifica o bloqueio. Reserva total bloqueia venda comum naquele estoque; parcial deixa o restante livre. Abra Reserva → Minhas reservas para concluir a venda com preço unitário/data ou cancelar para devolver as unidades à disponibilidade. Não há vencimento automático, edição ou liberação silenciosa. Não registre a mesma unidade novamente por Venda. Online reduz/recompõe somente o disponível dos anúncios vinculados pela fila de sincronização; mensagem de envio pendente não é confirmação do marketplace. Pausa manual nunca deve ser reativada por cancelar uma reserva; somente a pausa de estoque feita pelo próprio sistema pode ser retomada após confirmação do saldo. Reservar/cancelar não cria receita; concluir reutiliza a venda direta uma única vez. Recurso integrado ao AvantaPreços e à ficha Web de estoques.";
 
 GUIAS["gestao-web"] += " Revisão local 3.2.0.416: Vendas diretas foi renomeado para Histórico de vendas no botão e na janela. Não cria outra venda: consulta as vendas manuais, incluindo as concluídas pela reserva, e permite cancelamento/devolução. Outras saídas continua destinado a perda, avaria ou uso interno, sem faturamento. Reserva bloqueia o disponível; cancelar devolve uma única vez. Estoque Online e preços somente ficam confirmados após releitura do marketplace; confirmação local não equivale a confirmação remota. Atualizar preço continua sendo nova pesquisa de mercado, não alteração automática do preço anunciado.";
 
-GUIAS["gestao-web"] += " Revisão local 3.2.0.417: na ficha expandida de Produtos cadastrados/Estoques e na consulta Web do AvantaPreços, Reserva fica em Estoques e movimentações, entre Editar e Atualizar estoques. Abre o mesmo gerenciador de reservas por estoque usado no celular. Selecionar origem, revisar e confirmar continua obrigatório; concluir e cancelar usam a mesma reserva, sem movimentação duplicada.";
+GUIAS["gestao-web"] += " Revisão 3.2.0.417: na ficha expandida de Produtos cadastrados/Estoques e na consulta Web do AvantaPreços, Reserva fica em Estoques e movimentações, entre Editar e Atualizar estoques. Abre o mesmo gerenciador de reservas por estoque usado no celular. Selecionar origem, revisar e confirmar continua obrigatório; concluir e cancelar usam a mesma reserva, sem movimentação duplicada.";

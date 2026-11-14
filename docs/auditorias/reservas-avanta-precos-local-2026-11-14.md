@@ -71,3 +71,13 @@ Venda registra uma nova venda. Histórico de vendas (nome aplicado na 416 ao bot
 ## Posição Web — refinamento 3.2.0.417
 
 Reserva integrada à linha Editar / Reserva / Atualizar estoques da apresentação Web do componente compartilhado, consumido por Produtos cadastrados, Estoques e consulta Web do AvantaPreços. Mesma API e fluxo da versão de celular. Prévia local Mobile / Web agora troca a apresentação real do componente. No navegador, abertura exibiu Estoque de origem com Online e Saldão, e o fechamento devolveu foco a Reserva. Captura `reserva-web-previa.jpg`, com dados fictícios; sem nova publicação ou escrita real em contas.
+
+## Liberação autorizada — 3.2.0.417
+
+Em 14/11/2026, o responsável aprovou migração e publicação pela main, preservando os ajustes recentes. A main avançou para `0e579d5d9612910e55c2be513adc72f9bbb42ada` (download do Gestão no Google Play); essa alteração foi integrada sem alterar o checkout compartilhado. A publicação anterior em andamento foi preservada, aguardando a fila.
+
+Migração `20261114160000` aplicada e registrada atomicamente no projeto oficial `qzewxhdkwettnlmkjoqd`. Após a aplicação: 304 saldos e 209 produtos com os mesmos fingerprints; 44 vendas diretas e 464 movimentos preservados. Zero reservas criadas pela migração. RLS ativa, execução do RPC negada a anon/authenticated e concedida apenas a service_role. Dois gatilhos de proteção presentes; conteúdo SQL registrado conferido com a fonte. Evidência antes/aplicação/depois e restauração em `/private/tmp/avanta-417-auditoria/`. A aplicação da migração não equivale à publicação da interface.
+
+Após a integração: 13 testes focados aprovados; 713 testes de segurança aprovados; TypeScript, PADRÃO AVANTA e Ava aprovados. O build remoto integral continua obrigatório antes de considerar a versão publicada.
+
+Base imediatamente antes do envio: `dpl_D8SKdSLV3DNgyTnWRfcKvmqAhtuk`, READY no domínio oficial, SHA `0e579d5d9612910e55c2be513adc72f9bbb42ada`; fila livre. O link Google Play e seu teste foram preservados integralmente.

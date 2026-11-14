@@ -2,7 +2,7 @@
 
 - Posiciona Reserva ao lado de Editar e Atualizar estoques na ficha Web expandida, reutilizando o gerenciador, API e sincronização do AvantaPreços.
 - Prévia local alterna entre a apresentação de celular e a apresentação Web real do componente; abertura do seletor de estoque e restauração de foco verificadas no navegador.
-- Somente local, sem publicação ou migração em produção.
+- Entrega autorizada para produção com migração aditiva de reservas. Mantém a página pública e o link oficial do Gestão no Google Play incorporados da main atual.
 
 ## 3.2.0.416 — AvantaPreços: Histórico de vendas e validação integrada de reservas, estoque e preço
 
@@ -20,6 +20,11 @@
 - Online usa fila durável existente para reduzir/repor anúncios; mostra envio pendente até confirmação. Cancelamento avalia reativação somente de pausa de estoque comprovadamente feita pelo sistema, preservando pausas manuais e revisões antigas.
 - Cadastros e estoques com reservas ativas não podem ser retirados ou trocar sua designação Online. Produtos totalmente reservados continuam aparecendo no estoque selecionado.
 - Prévia local com PostgreSQL/WASM e quatro anúncios simulados; migração preparada e aplicada somente ao banco de teste. Sem publicação ou alteração em anúncios reais.
+
+## 3.2.0.415 — Página pública: liberar download do Gestão no Google Play
+
+- A seção Nossos apps apresenta o botão ativo do AvantaLab Gestão no Google Play, com o link oficial do pacote br.com.avantalab.app no lugar de Em breve.
+- Reutiliza o botão existente, preservando aparência, acessibilidade, abertura segura em nova aba e links dos demais aplicativos. Sem novo envio às lojas ou alteração de dados.
 
 ## 3.2.0.414 — Marketplaces: Limpar cadastros e liberar referências de contas desconectadas
 

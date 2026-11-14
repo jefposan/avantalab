@@ -1,9 +1,11 @@
 {
-  "baseDeploymentId": "dpl_BJxGAg2rsowa9oHwwVA8RhuUuqfo",
+  "baseDeploymentId": "dpl_D8SKdSLV3DNgyTnWRfcKvmqAhtuk",
   "migrations": [
     {
       "path": "supabase/migrations/20261114160000_marketplace_stock_reservations.sql",
       "sha256": "1849c0b3c17659238204e6cc72e82988cb69ee10aedda444149ba406ff9cc7af"
     }
-  ]
+  ],
+  "version": "3.2.0.417",
+  "scope": "Marketplaces: reservas no celular e Web, conclusão de venda e liberação com sincronização"
 }

@@ -1,10 +1,12 @@
 <!-- ava-version: 3.2.0.417 -->
 
-> Revisão local 3.2.0.417: sem impacto operacional neste ambiente. Posição do botão Reserva refinada somente na ficha Web de Marketplaces.
+> Revisão 3.2.0.417: sem impacto operacional neste ambiente. Posição do botão Reserva refinada somente na ficha Web de Marketplaces.
 
 > Revisão local 3.2.0.416: sem impacto operacional neste ambiente. Renomeação e testes de reservas/estoque/preço pertencem ao AvantaPreços e Marketplaces Web.
 
 > Revisão 3.2.0.415: sem impacto operacional neste ambiente. Reservas pertencem ao PWA AvantaPreços e Marketplaces Web; não altera Gestão nativa nem AvantaVendas.
+
+> Revisão 3.2.0.415: sem impacto operacional no AvantaVendas. Apenas o botão público de download do Gestão no Google Play passou a oferecer o link oficial; os links do AvantaVendas permanecem inalterados.
 
 > Revisão 3.2.0.414: sem impacto operacional neste ambiente. Limpar cadastros e retirada de vínculos locais de contas desconectadas pertencem ao Marketplaces da Gestão Web; históricos preservados.
 

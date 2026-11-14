@@ -1,10 +1,12 @@
 <!-- ava-version: 3.2.0.417 -->
 
-> Revisão local 3.2.0.417: sem impacto operacional neste ambiente. Posição do botão Reserva refinada somente na ficha Web de Marketplaces.
+> Revisão 3.2.0.417: sem impacto operacional neste ambiente. Posição do botão Reserva refinada somente na ficha Web de Marketplaces.
 
 > Revisão local 3.2.0.416: sem impacto operacional neste ambiente. Renomeação e testes de reservas/estoque/preço pertencem ao AvantaPreços e Marketplaces Web.
 
 > Revisão 3.2.0.415: sem impacto operacional neste ambiente. Reservas pertencem ao PWA AvantaPreços e Marketplaces Web; não altera Gestão nativa nem AvantaVendas.
+
+> Revisão 3.2.0.415: o download Android do AvantaLab Gestão está disponível na seção Nossos apps da página pública, com link oficial https://play.google.com/store/apps/details?id=br.com.avantalab.app. Esta entrega não altera o aplicativo instalado nem o fluxo de acesso.
 
 > Revisão 3.2.0.414: sem impacto operacional neste ambiente. Limpar cadastros e retirada de vínculos locais de contas desconectadas pertencem ao Marketplaces da Gestão Web; históricos preservados.
 
