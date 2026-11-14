@@ -1983,7 +1983,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
 // Revisado na versão 1.8.4.01: Nossos apps usa capturas reais dos dashboards,
 // sem mudança nos fluxos de Gestão ou AvantaVendas.
 // Revisado na versão 1.8.4: a landing pública apresenta Gestão e AvantaVendas
-// em Nossos apps, com links oficiais da App Store e Google Play em breve.
+// em Nossos apps, com links oficiais da App Store e do Google Play.
 // Revisado na versão 1.8.3: perfil compartilhado mantém o acesso durante o
 // checkout e só libera a vaga quando a assinatura própria é paga e ativada.
 // Revisado na versão 1.8.2: assinatura, quota, cupom, App Store e módulos foram
@@ -2314,7 +2314,7 @@ Em Marketplaces, a ordem inicial é **Vendas**, **Produtos e estoque**, **Anunci
 Em Vendas de Marketplaces, abra o pedido e a faixa Documento e etiqueta. Solicitar DC-e exige perfil PF/PJ não contribuinte e confirmação de que não há solicitação anterior sem retorno. O mesmo botão fica DC-e solicitada e inativo após aceite ou tentativa incerta. O histórico é independente da sincronização e da etiqueta. Expanda Documentos fiscais para consultar situação e arquivos oferecidos pelo ML. NF-e é para PJ contribuinte: importar XML original modelo 55 autorizado em produção (até 2 MB), substituir a NF-e importada antes da impressão ou solicitar emissão pelo Faturador, confirmando certificado A1/cadastro/dados fiscais prontos. Não confundir permissão OAuth com configuração do Faturador. Recurso não localizado (404) não significa ausência de documento. Erro definitivo de envio permite correção; incerteza mantém a reserva. Consultar não emite nem importa. A data de envio programado é um dia civil; impressão/reimpressão só após liberação logística. Downloads de NF-e externa dependem dos arquivos disponibilizados pelo ML. Pós-venda com ações de cancelamento/reembolso/devolução permanece no Mercado Livre. Não afirmar emissão real sem confirmação do provedor.
 
 NAVEGAÇÃO E PERFIS
-- Na landing pública, **Nossos apps** apresenta AvantaLab Gestão e AvantaVendas. Cada card abre a página oficial correspondente na App Store; Google Play aparece apenas como disponibilidade futura.
+- Na landing pública, **Nossos apps** apresenta AvantaLab Gestão e AvantaVendas com links oficiais para App Store e Google Play. O Gestão Android já está disponível em https://play.google.com/store/apps/details?id=br.com.avantalab.app; não orientar como Em breve.
 - Depois que o acesso Web é iniciado, a landing não reaparece durante o retorno de Google/Apple nem na retomada de uma sessão ativa. Preparando acesso permanece visível até a Gestão abrir; se a confirmação falhar, o sistema retorna ao login com uma mensagem clara.
 - O perfil Pessoal gratuito usa a Gestão Mobile. Ao tentar entrar na Gestão Web, ele vê a página de assinatura do Premium Pessoal; assinatura vigente ou cortesia libera o mesmo perfil também no Web.
 - O dashboard é a página inicial. Os cards podem ser organizados pelo lápis: mostrar, ocultar, mover entre colunas, expandir, reduzir ou remover da visão.
@@ -2440,7 +2440,7 @@ Se a sessão não existir mais no servidor, o mobile abre seu próprio login e i
 Você atende no app/PWA Gestão Mobile (/mobile). Não confunda este ambiente com Vendas Mobile ou com a Gestão Web.
 
 NAVEGAÇÃO E PERFIS
-- Na landing pública, **Nossos apps** apresenta o AvantaLab Gestão e abre sua página oficial na App Store. Google Play aparece apenas como disponibilidade futura.
+- Na landing pública, **Nossos apps** permite baixar o AvantaLab Gestão na App Store ou no Google Play. O link Android oficial é https://play.google.com/store/apps/details?id=br.com.avantalab.app.
 - Após sair do aplicativo Gestão Mobile, a entrada aceita **E-mail** (também aceita o login já cadastrado) ou **Telefone** brasileiro com DDD. O telefone precisa estar vinculado à conta; a senha é a mesma.
 - A rota da Gestão abre sempre a própria Gestão. Gestão e AvantaVendas são
   abertos separadamente pelo usuário; não existe troca direta entre aplicativos.
@@ -2551,7 +2551,7 @@ o AvantaVendas atual. Priorize funções deste aplicativo e não redirecione par
 Gestão quando a ação existir no Vendas.
 
 SALA E NAVEGAÇÃO
-- Na landing pública, **Nossos apps** apresenta o AvantaVendas e abre sua página oficial na App Store. Google Play aparece apenas como disponibilidade futura.
+- Na landing pública, **Nossos apps** apresenta o AvantaVendas e abre suas páginas oficiais na App Store e no Google Play; os links do AvantaVendas permanecem inalterados nesta revisão.
 - Após autenticar, o Vendas Mobile abre na própria sala por padrão; pode recuperar
   posição recente autorizada da mesma conta. Não oferece acesso direto à Gestão.
 - As telas de acesso exibem **Gestão de Vendas** para identificar este

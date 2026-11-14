@@ -1,3 +1,8 @@
+## 3.2.0.415 — Página pública: liberar download do Gestão no Google Play
+
+- A seção Nossos apps apresenta o botão ativo do AvantaLab Gestão no Google Play, com o link oficial do pacote br.com.avantalab.app no lugar de Em breve.
+- Reutiliza o botão existente, preservando aparência, acessibilidade, abertura segura em nova aba e links dos demais aplicativos. Sem novo envio às lojas ou alteração de dados.
+
 ## 3.2.0.414 — Marketplaces: Limpar cadastros e liberar referências de contas desconectadas
 
 - Publica Limpar cadastros como na prévia aprovada, com seleção individual/todos, filtros e confirmação explícita de apagamento da lista ativa por nome do perfil e ciência marcada.

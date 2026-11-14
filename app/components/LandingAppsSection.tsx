@@ -21,6 +21,7 @@ const aplicativos: readonly AppAvanta[] = [
     icone: '/images/avantalab-icon-512.png',
     tela: '/images/landing/avantalab-gestao-dashboard.jpg',
     appStoreUrl: 'https://apps.apple.com/br/app/avantalab/id6793744930',
+    googlePlayUrl: 'https://play.google.com/store/apps/details?id=br.com.avantalab.app',
     recursos: ['Receitas e despesas', 'Agenda e indicadores', 'Equipe e notificações'],
   },
   {
