@@ -47,3 +47,11 @@ Fontes oficiais consultadas: https://developers.mercadolivre.com.br/buscador-de-
 - Capturas: `precos-ml/consulta-recolhida-celular.jpg`, `consulta-expandida-celular.jpg`, `consulta-recolhida-web.jpg`, `consulta-expandida-web.jpg`, nos artefatos desta conversa.
 
 Esta evidência local não substitui o build integral e a conferência da main exigidos para uma publicação futura.
+
+## Liberação autorizada — preparação da publicação
+
+O responsável autorizou a publicação da entrega 3.2.0.420. Main consultada na rede permanece `9dd92bafc7916a6657e431f72a01386a61e77fcf`, correspondente à produção READY `dpl_4BN3iYSXo9WbyxCCkEZmrwxbLGCc`; fila livre. Versão e ajustes recentes preservados. Snapshot local validado: `1a8815df20fa7d3e960b0220d08884e22676bc56`.
+
+Migração 20261114190000 aplicada e registrada atomicamente no projeto oficial qzewxhdkwettnlmkjoqd. Fingerprints dos 209 produtos (preço, estoque, revisão) e 304 saldos preservados; 212 consultas, 78 pesquisas e zero reservas mantidos. O conteúdo registrado coincide com a fonte. Função anterior preservada integralmente, exceto o teto autorizado de ofertas; execução do novo wrapper negada a anon/authenticated e permitida a service_role. RLS das tabelas preservada. Nenhum preço, anúncio ou estoque alterado pela migração.
+
+Evidências antes/aplicação/depois, definição original e restauração em `/private/tmp/avanta-420-auditoria/`. O código anterior é compatível com as colunas aditivas enquanto o build é concluído. Não apagar recibos produzidos após a liberação. Integração Git não equivale à publicação; build integral remoto e conferência READY/domínio ainda obrigatórios.
