@@ -10,7 +10,7 @@ import type {PriceSearchControl} from './price-search-control';
 import type {CatalogIdentification} from './mercadolivre-catalog';
 import {MarketplaceError} from './management-access';
 import {isValidEan} from './ean';
-import {priceModelCodes} from '../price-offer-identity';
+import {priceModelCodes,priceSearchDetails,isProductOfferUrl} from '../price-offer-identity';
 
 type Input={ean:string|null;productName:string;attributes?:Array<{id:string;name?:string;value:string}>;identification?:CatalogIdentification};
 const host=(url:string)=>new URL(url).hostname.toLowerCase().replace(/^www\./,'');
@@ -30,37 +30,64 @@ export async function consultMarketPricesWithComplement(db:SupabaseClient,connec
  if(!control||ml.count>=ML_PRICE_PREFERRED_SELLERS||['partial','review'].includes(ml.status))return ml;
  if(!isValidEan(input.ean||'')&&!priceModelCodes(input.productName).length)return ml;
  const facts=(input.attributes||[]).filter(a=>/^(BRAND|MODEL|MPN|VOLTAGE|OPERATING_VOLTAGE|COLOR|CAPACITY|TOTAL_CAPACITY)$/.test(a.id));
- const attr=(id:string)=>facts.find(a=>a.id===id)?.value;
+ const details=priceSearchDetails(input.attributes,input.productName);
  const variant=facts.filter(a=>!['BRAND','MODEL','MPN'].includes(a.id)).map(a=>a.value).join(' ');
  const identityName=[input.productName,variant].filter(Boolean).join(' ');
- const failed=(message:string):MarketPriceResearch=>({...ml,complement:{status:'unavailable',checkedAt:new Date().toISOString(),accepted:0,message},message:ml.message+' '+message});
- try{
-  const complementSignal=AbortSignal.any([AbortSignal.timeout(Math.max(1,80_000-(Date.now()-started))),...(control.signal?[control.signal]:[])]);
-  const web=await consultOpenAIWebPrices({ean:input.ean,productName:input.productName,brand:attr('BRAND'),model:attr('MODEL'),variant,mode:'shopping_complement'},{...control,signal:complementSignal,includeFacts:false});
+ const vendors=new Map<string,MarketPriceOffer>(),seenDomains=new Set<string>(),seenUrls=new Set<string>();
+ let rounds=0,candidatesCount=0,stop:'limit'|'time'|'provider'|'target'='limit',failure='';
+ const complementSignal=AbortSignal.any([AbortSignal.timeout(Math.max(1,80_000-(Date.now()-started))),...(control.signal?[control.signal]:[])]);
+ const analyze=()=>summarizeMarketOffers({...ml,provider:'ml_web_search',checkedAt:new Date().toISOString()},[...ml.offers,...vendors.values()]);
+ for(const round of [1,2] as const){
   control.signal?.throwIfAborted();
-  const vendors=new Map<string,MarketPriceOffer>();
-  // Até oito origens, em dois lotes: sem cookies, JS ou tentativa de contornar bloqueios.
-  const candidates=(web.sample?.offers||[]).slice(0,8).filter(offer=>!mlHost(host(offer.url)));
-  const deadline=AbortSignal.any([AbortSignal.timeout(20_000),complementSignal]);
-  for(let i=0;i<candidates.length;i+=4){
-   const batch=await Promise.all(candidates.slice(i,i+4).map(async offer=>{
-    const page=await readPublicPricePage(offer.url,deadline).catch(()=>null);
-    return page?{offer,origin:readOriginPriceEvidence(page.html,page.url,{ean:input.ean,productName:identityName})}:null;
-   }));
-   for(const item of batch){
-    if(!item?.origin)continue;
-    const {origin}=item,domain=host(origin.url);
-    if(mlHost(domain)||vendors.has(domain)&&vendors.get(domain)!.price<=origin.price)continue;
-    // A página primária manda no preço, nunca o resumo desatualizado da IA.
-    vendors.set(domain,{id:'web:'+domain,sellerId:'web:'+domain,seller:domain,title:origin.title,price:origin.price,url:origin.url,source:'openai_web_search',origin});
+  if(complementSignal.aborted){stop='time';break;}
+  const prior=analyze();
+  if(prior.count>=ML_PRICE_PREFERRED_SELLERS){stop='target';break;}
+  const blocked=new Set(seenDomains);
+  try{
+   rounds++;
+   const web=await consultOpenAIWebPrices({ean:input.ean,productName:input.productName,brand:details.brand,model:details.model,variant,mode:'shopping_complement',searchRound:round,minimumOffers:ML_PRICE_PREFERRED_SELLERS-prior.count,excludedDomains:[...blocked].sort()},{...control,signal:complementSignal,includeFacts:false});
+   control.signal?.throwIfAborted();
+   // Fontes citadas sem preço no JSON também podem conter uma oferta primária.
+   // Nunca entram na média sem o mesmo leitor independente de preço/variante/estoque.
+   const codes=priceModelCodes(input.productName),normalized=(url:string)=>url.toLowerCase().replace(/[^a-z0-9]/g,'');
+   const extra=(web.candidateUrls||[]).filter(isProductOfferUrl).sort((a,b)=>Number(codes.some(code=>normalized(b).includes(code)))-Number(codes.some(code=>normalized(a).includes(code))));
+   const raw=[...new Set([...(web.sample?.offers||[]).map(o=>o.url),...extra])].filter(isProductOfferUrl).filter(url=>!mlHost(host(url))&&!blocked.has(host(url))&&!seenUrls.has(url)).slice(0,16);
+   const candidates=raw;
+   const deadline=AbortSignal.any([AbortSignal.timeout(20_000),complementSignal]);
+   for(let i=0;i<candidates.length;i+=4){
+    if(vendors.size>=8||deadline.aborted)break;
+    const urls=candidates.slice(i,i+4);candidatesCount+=urls.length;
+    const batch=await Promise.all(urls.map(async url=>{
+     seenUrls.add(url);seenDomains.add(host(url));
+     const page=await readPublicPricePage(url,deadline).catch(()=>null);
+     return page?readOriginPriceEvidence(page.html,page.url,{ean:input.ean,productName:identityName}):null;
+    }));
+    for(const origin of batch){
+     if(!origin)continue;
+     const domain=host(origin.url);
+     if(mlHost(domain)||blocked.has(domain)||vendors.has(domain)&&vendors.get(domain)!.price<=origin.price)continue;
+     if(!vendors.has(domain)&&vendors.size>=8)continue;
+     // A página primária manda no preço; conserva as provas das rodadas anteriores.
+     vendors.set(domain,{id:'web:'+domain,sellerId:'web:'+domain,seller:domain,title:origin.title,price:origin.price,url:origin.url,source:'openai_web_search',origin});
+    }
    }
+   control.signal?.throwIfAborted();
+  }catch(error){
+   control.signal?.throwIfAborted();
+   stop=complementSignal.aborted?'time':'provider';
+   failure=error instanceof MarketplaceError?error.message:'O complemento com IA não foi concluído.';
+   break; // Falha do provedor/limite não autoriza repetição paga automática.
   }
-  control.signal?.throwIfAborted();
-  const offers=[...vendors.values()];
-  if(!offers.length)return {...ml,complement:{status:'completed',checkedAt:new Date().toISOString(),accepted:0,message:'A pesquisa com IA não acrescentou ofertas verificadas.'},message:ml.message+' A pesquisa com IA não acrescentou ofertas verificadas.'};
-  const combined=summarizeMarketOffers({...ml,provider:'ml_web_search',checkedAt:new Date().toISOString()},[...ml.offers,...offers]);
-  const accepted=combined.offers.filter(o=>o.source==='openai_web_search').length;
-  if(!accepted)return {...ml,complement:{status:'completed',checkedAt:combined.checkedAt,accepted:0,message:'As ofertas complementares ficaram fora do cálculo.'}};
-  return {...combined,mlResearch:ml,complement:{status:'completed',checkedAt:combined.checkedAt,accepted,message:'Pesquisa web com IA; preços conferidos nas lojas de origem.'},message:combined.status==='ready'?`Referência calculada com ${combined.count} ofertas: Mercado Livre e pesquisa web com IA, com preços conferidos nas lojas.`:'Os preços combinados exigem conferência. A referência anterior foi mantida.'};
- }catch(error){control.signal?.throwIfAborted();return failed(error instanceof MarketplaceError?error.message:'O complemento com IA não foi concluído. As ofertas válidas do ML foram preservadas.');}
+ }
+ if(complementSignal.aborted)stop='time';
+ const combined=analyze(),accepted=combined.offers.filter(o=>o.source==='openai_web_search').length;
+ if(combined.count>=ML_PRICE_PREFERRED_SELLERS)stop='target';
+ const rejected=Math.max(0,candidatesCount-vendors.size);
+ const summary=`Pesquisa web: ${rounds} rodada(s), ${candidatesCount} candidata(s), ${accepted} oferta(s) complementar(es) no cálculo e ${rejected} descarte(s) por falta de comprovação ou duplicidade.`;
+ const ending=stop==='target'?'A amostra preferencial foi alcançada.':stop==='time'?'O prazo da pesquisa foi atingido; foram preservadas as ofertas válidas.':stop==='provider'?failure:'As duas rodadas foram concluídas; foram usadas as ofertas válidas disponíveis.';
+ const complement={status:stop==='provider'||stop==='time'?'unavailable' as const:'completed' as const,checkedAt:combined.checkedAt,accepted,rounds,candidates:candidatesCount,rejected,message:summary+' '+ending};
+ if(!accepted)return {...ml,complement,message:ml.message+' '+complement.message};
+ // O contrato de persistência considera completed quando há provas aproveitáveis,
+ // mesmo se a continuação falhou; o texto mantém a falha explícita para o usuário.
+ return {...combined,mlResearch:ml,complement:{...complement,status:'completed'},message:combined.status==='ready'?`Referência calculada com ${combined.count} ofertas: Mercado Livre e pesquisa web com IA, com preços conferidos nas lojas.`:'Os preços combinados exigem conferência. A referência anterior foi mantida.'};
 }

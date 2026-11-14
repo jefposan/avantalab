@@ -1,11 +1,6 @@
 {
-  "baseDeploymentId": "dpl_F1veBP7nEWFuugATndKXRbNcT2Bg",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261114230000_marketplace_price_web_complement.sql",
-      "sha256": "ca9684e1bd4917955d0a579ac8a28bd4350c25feb3902d101edd5d687c1068fa"
-    }
-  ],
-  "version": "3.2.0.424",
-  "scope": "AvantaPreços: ML primeiro e complemento web com IA abaixo de três vendedores, com validação nas lojas"
+  "baseDeploymentId": "dpl_DU25ABycnJnjjTpsSPiZSTLRoVfG",
+  "migrations": [],
+  "version": "3.2.0.425",
+  "scope": "AvantaPreços: continuar pesquisa em outras lojas após descartar ofertas, com duas rodadas controladas"
 }

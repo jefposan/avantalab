@@ -1,3 +1,10 @@
+## 3.2.0.425 — AvantaPreços: continuar busca em outras lojas após descartes
+
+- Corrige o encerramento após uma única rodada: abaixo de três ofertas consideradas, faz uma segunda pesquisa com termos diferentes e exclusão das lojas já consultadas. Remove a instrução conflitante de não buscar para completar a amostra no modo complementar.
+- Aproveita também links citados pela pesquisa que não vieram com preço no JSON, conferindo até 16 páginas por rodada. Só usa ofertas comprovadas na origem.
+- Preserva ofertas verificadas entre rodadas, mesmo em falha posterior. Mantém máximo de duas rodadas, oito lojas complementares, prazo global, cache por rodada/domínios e controles de consumo. Não repete automaticamente erros do provedor.
+- Resultados recolhidos informam rodadas, candidatas, descartes e encerramento por amostra/limite/falha. Identidade, disponibilidade e preço da origem continuam obrigatórios. Sem nova migração ou teste pago real. Publicação pela main autorizada, em preparação.
+
 ## 3.2.0.424 — AvantaPreços: ML primeiro e complemento de pesquisa web com IA
 
 - Preserva a coleta completa do ML; abaixo de três vendedores tenta pesquisa web com IA, priorizando Google Shopping quando acessível. Valida preço, disponibilidade e variante na loja primária e combina ofertas, sem DataForSEO.
