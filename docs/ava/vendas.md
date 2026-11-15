@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.425 -->
+<!-- ava-version: 3.2.0.426 -->
+
+> Revisão 3.2.0.426: sem impacto operacional neste ambiente.
 
 > Revisão local 3.2.0.425 — Sem impacto operacional na Gestão Mobile nativa ou no AvantaVendas. No PWA AvantaPreços, a pesquisa web complementar pode continuar em segunda rodada após descartar ofertas, excluindo lojas anteriores e preservando as já comprovadas. Veja a revisão atual de gestao-web.md. Não altera estoque, anúncios ou reservas. Sem nova migração de banco. Validação local; publicação pela main autorizada, em preparação.
 

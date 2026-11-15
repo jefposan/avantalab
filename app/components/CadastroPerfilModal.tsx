@@ -351,7 +351,7 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
               <div>
                 <h3 className="mb-2 border-b border-slate-200 pb-1 text-xs font-black uppercase text-sky-800">Dados Gerais</h3>
                 {pessoal ? (
-                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1.6fr)_minmax(14rem,1fr)]">
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_minmax(10rem,.8fr)]">
                     <label className={label}>Nome do perfil<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
                     <label className={label} htmlFor="cadastro-perfil-nome-completo">
                       Nome completo
@@ -369,6 +369,22 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
                           Informe nome e sobrenome.
                         </span>
                       )}
+                    </label>
+                    <label className={label} htmlFor={documentoId}>
+                      CPF
+                      <input
+                        id={documentoId}
+                        className={`${input} min-w-0 ${documentoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}
+                        inputMode="numeric"
+                        autoComplete="off"
+                        placeholder="000.000.000-00"
+                        value={formatarDocumentoFiscal(dados.documento, 'cpf')}
+                        aria-invalid={documentoInvalido}
+                        aria-describedby={documentoInvalido ? 'cadastro-perfil-documento-erro' : undefined}
+                        onBlur={() => setDocumentoTocado(true)}
+                        onChange={(e) => set('documento', somenteDigitos(e.target.value, 11))}
+                      />
+                      {documentoInvalido && <span id="cadastro-perfil-documento-erro" className="text-[10px] font-bold text-red-600" role="alert">{mensagemDocumento}</span>}
                     </label>
                   </div>
                 ) : (

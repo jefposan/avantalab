@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_DU25ABycnJnjjTpsSPiZSTLRoVfG",
+  "baseDeploymentId": "dpl_FPCsr7mmLSZJiqvUkE4qSAAPCt91",
   "migrations": [],
-  "version": "3.2.0.425",
-  "scope": "AvantaPreços: continuar pesquisa em outras lojas após descartar ofertas, com duas rodadas controladas"
+  "version": "3.2.0.426",
+  "scope": "Cadastro pessoal: exibir CPF com máscara e validação na mesma linha dos nomes"
 }

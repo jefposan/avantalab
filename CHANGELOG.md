@@ -1,3 +1,7 @@
+## 3.2.0.426
+
+- Cadastro do perfil pessoal: CPF visível na mesma linha de Nome do perfil e Nome completo, com máscara e validação existentes; empilha em telas estreitas.
+
 ## 3.2.0.425 — AvantaPreços: continuar busca em outras lojas após descartes
 
 - Corrige o encerramento após uma única rodada: abaixo de três ofertas consideradas, faz uma segunda pesquisa com termos diferentes e exclusão das lojas já consultadas. Remove a instrução conflitante de não buscar para completar a amostra no modo complementar.
