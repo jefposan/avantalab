@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_CPcynmc48Nr8ZCza9Q6gsD2Y3VAM",
+  "baseDeploymentId": "dpl_dwwUPmahjwVbdPvqFKUEsYDynfaM",
   "migrations": [],
-  "version": "3.2.0.449",
-  "scope": "Conteúdo AvantaVendas: abrir cadastro pelo nome do produto no mobile"
+  "version": "3.2.0.450",
+  "scope": "Vendas e Serviços: preencher série cadastrada e exibir número somente leitura"
 }

@@ -9,3 +9,5 @@ export function appendNoteMessage(current:string,message:string):string;
 export function validateFiscalNoteFields(fields:ReturnType<typeof newFiscalNoteFields>):string[];
 export function deliveryForecastAllowed(freightMode:string):boolean;
 export function updateFiscalNoteFields(current:ReturnType<typeof newFiscalNoteFields>,patch?:Partial<ReturnType<typeof newFiscalNoteFields>>):ReturnType<typeof newFiscalNoteFields>;
+
+export function syncFiscalNoteNumbering<T extends {series:string;number:string}>(current:T,editor?:{series?:string;number?:string},options?:{seriesEdited?:boolean;reserved?:boolean}):T;

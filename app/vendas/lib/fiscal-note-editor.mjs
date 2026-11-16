@@ -12,3 +12,12 @@ export function validateFiscalNoteFields(fields){const issues=[];if(!/^[0-9]{1,3
 /** NT 2025.002-RTC, B10a-50: previsão não pode constar em modFrete 1, 4 e 9. */
 export function deliveryForecastAllowed(freightMode){return ['0','2','3'].includes(freightMode);}
 export function updateFiscalNoteFields(current,patch={}){const next={...current,...patch};return {...next,deliveryForecast:deliveryForecastAllowed(next.freightMode)?next.deliveryForecast:''};}
+
+/** Prévia de leitura: nunca reserva número nem substitui edição manual da série. */
+export function syncFiscalNoteNumbering(current,editor,{seriesEdited=false,reserved=false}={}){
+ if(reserved||!editor)return current;
+ const series=seriesEdited?current.series:String(editor.series||'');
+ const same=series!==''&&String(editor.series||'')!==''&&Number(series)===Number(editor.series);
+ const number=same?String(editor.number||''):'';
+ return {...current,series,number};
+}

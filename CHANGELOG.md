@@ -1,3 +1,9 @@
+## 3.2.0.450 — Vendas e Serviços: série cadastrada e número somente leitura
+
+- Editor recebe série e próximo número disponível do estabelecimento e ambiente fiscal corretos, incluindo números liberados válidos. Consulta somente de leitura.
+- Configuração recebida após abertura preenche campos sem sobrescrever série editada manualmente ou número reservado em correção. Número não permite digitação; sugestões do navegador desligadas.
+- Prévia não reserva, consome ou transmite nota. Sem alteração de banco, permissões ou sequência fiscal.
+
 ## 3.2.0.449 — Conteúdo AvantaVendas: abrir cadastro pelo nome no mobile
 
 - Nome e identificação do produto abrem a edição existente por toque, clique ou teclado, inclusive nos resultados filtrados. Ação permanece visível na primeira coluna da tabela.

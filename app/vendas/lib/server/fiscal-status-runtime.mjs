@@ -411,7 +411,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     });
     return Object.freeze({
       configured: true,
-      fiscalEditorRepository:createFiscalEditorSettingsRepository({pool,issuerResolver}),
+      fiscalEditorRepository:createFiscalEditorSettingsRepository({pool,issuerResolver,environment:fiscalEnvironment}),
       pendingDraftService: createFiscalDraftDeleteService({pool}),
       reason: 'ready',
       accessResolver,

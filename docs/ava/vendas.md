@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.449 -->
+<!-- ava-version: 3.2.0.450 -->
+
+> Revisão 3.2.0.450: No preenchimento da NF-e, Série carrega a sequência do perfil/estabelecimento/ambiente e permanece editável. Número é somente leitura: prévia do próximo disponível, sem reserva ao abrir; correções preservam o número já reservado. A reserva definitiva permanece na confirmação da emissão.
 
 > Revisão 3.2.0.449: Em Conteúdo AvantaVendas → Produtos, toque ou clique no nome do produto para abrir a edição, também nos resultados da busca no celular. Mantém o botão Editar e o fluxo de salvamento existente.
 
