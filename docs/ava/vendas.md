@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.430 -->
+<!-- ava-version: 3.2.0.431 -->
+
+> Revisão 3.2.0.431-av205: pesquise clientes pelo telefone completo ou parcial, com ou sem pontuação. Na lista de Clientes, inativos ficam ao final mesmo em Z–A; inativo/inativos pesquisa os desativados e pode combinar com nome ou telefone. Seleção de cliente para pedido/pagamento preserva apenas ativos. Pagamentos usa Com débito e Com crédito, com os mesmos critérios financeiros.
 
 > Revisão 3.2.0.426: sem impacto operacional neste ambiente.
 
@@ -1008,7 +1010,7 @@ Revisão 3.2.0.98: correção do extrator de preços do Web/AvantaPreços; sem i
 > Revisão 3.1.0.45: card compacto de Produtos e estoque no Marketplaces Web; sem impacto operacional no AvantaVendas. Menu av188, dados e preferências preservados. Local, não publicado.
 
 > Revisão 3.1.0.44: configurações, referência editável e sugestões do Marketplaces/AvantaPreços; sem impacto operacional no AvantaVendas independente. Menu av188 e suas preferências permanecem intactos. Local, não publicado.
-<!-- avantavendas-asset-revision: 203 -->
+<!-- avantavendas-asset-revision: 205 -->
 
 > Revisão 3.1.0.43-av188: o topo do menu inferior tem linha fina azul-ciano que desliza até o botão acionado, no padrão da Gestão Mobile (2 px, 300 ms). O indicador acompanha atalhos personalizados, Início, Configurações, mudança de tema e Lançar, sem atrasar ações. Ao navegar por outras áreas, volta a indicar o destino representado no menu, ou Início quando não houver atalho correspondente. A preferência de movimento reduzido desativa o deslizamento. Círculo continua removido e resposta tátil opcional preservada. Sem alteração de dados, permissões ou fluxo da Gestão. Testado em Chrome isolado, não em aparelhos físicos. Local, não publicado.
 

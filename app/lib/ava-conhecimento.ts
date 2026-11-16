@@ -2931,3 +2931,4 @@ GUIAS["gestao-web"] += " Regra atual 3.2.0.425: Atualizar preço continua consul
 GUIAS["gestao-web"] += " Cadastro do perfil pessoal: Dados gerais contém Nome do perfil, Nome completo e CPF na mesma linha em telas largas. Preencha CPF válido com a máscara exibida para concluir o cadastro.";
 
 GUIAS["gestao-web"] += " Revisão local 3.2.0.430: AvantaPreços usa a referência atual do cadastro ao reabrir pelo histórico. Aguarde terminar a conferência para editar a referência em Atualizar cálculos. Essa ação recalcula e salva a referência sem nova pesquisa ou alteração de estoque/anúncios.";
+// Revisão 3.2.0.431-av205: Vendas busca telefone completo/parcial sem máscara; Clientes mantém inativos ao final e permite pesquisar inativo/inativos. Novos lançamentos continuam só com ativos. Pagamentos: Com débito e Com crédito; cálculos inalterados.

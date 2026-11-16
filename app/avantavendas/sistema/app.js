@@ -1968,12 +1968,22 @@ function produtosFiltrados() {
     : String(b.nome || '').localeCompare(String(a.nome || ''), 'pt-BR', { sensitivity: 'base' }));
 }
 
+function telefoneCorrespondeBusca(telefone, termo) {
+  const busca = String(termo || '').trim();
+  if (!/^[+\d\s().-]+$/.test(busca)) return false;
+  const digitos = busca.replace(/\D/g, '');
+  return Boolean(digitos) && String(telefone || '').replace(/\D/g, '').includes(digitos);
+}
+
 function clientesFiltrados() {
-  const q = normalizar(buscaAplicada);
-  const clientes = q ? state.clientes.filter((c) => [c.nome, c.telefone, c.email].some((v) => normalizar(v).includes(q))) : [...state.clientes];
-  return clientes.sort((a, b) => ordemAlfabetica === 'asc'
+  const pesquisa = normalizar(buscaAplicada).trim();
+  const somenteInativos = /(^|\s)inativos?(?=\s|$)/.test(pesquisa);
+  const q = (somenteInativos ? pesquisa.replace(/\binativos?\b/g, ' ') : pesquisa).replace(/\s+/g, ' ').trim();
+  const clientes = state.clientes.filter((c) => (!somenteInativos || c.ativo === false)
+    && (!q || telefoneCorrespondeBusca(c.telefone, q) || [c.nome, c.telefone, c.email].some((v) => normalizar(v).includes(q))));
+  return clientes.sort((a, b) => Number(a.ativo === false) - Number(b.ativo === false) || (ordemAlfabetica === 'asc'
     ? String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' })
-    : String(b.nome || '').localeCompare(String(a.nome || ''), 'pt-BR', { sensitivity: 'base' }));
+    : String(b.nome || '').localeCompare(String(a.nome || ''), 'pt-BR', { sensitivity: 'base' })));
 }
 
 function assinaturaVisualSalaBotoes() {
@@ -8525,6 +8535,7 @@ function clientesFiltradosLancamento(termo = '') {
   const clientes = clientesDisponiveisPedido();
   if (!palavras.length) return clientes;
   return clientes.filter((cliente) => {
+    if (telefoneCorrespondeBusca(cliente.telefone, termo)) return true;
     const textoCliente = normalizar([
       cliente.nome,
       cliente.telefone,
@@ -10122,7 +10133,7 @@ function renderPagamentos() {
     : '<h3>Nenhum pagamento registrado</h3><p>Pesquise um cliente para registrar o primeiro recebimento.</p>';
   const rotuloOrdem = 'Ordem';
   const indicadorResultados = `<div class="module-stats payment-results-stats" aria-live="polite"><span>Exibindo <b>${clientes.length}</b> de <b>${todosClientes.length}</b> clientes</span></div>`;
-  return `<section class="module-page pagamentos-page"><div class="module-sticky-head"><div class="module-title pagamentos-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div><button type="button" class="payment-order-button" onclick="alternarOrdemPagamentos()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button></div>${renderBarraBuscaPagamentos()}<nav class="order-type-filters payment-type-filters" aria-label="Filtrar pagamentos por situação">${botaoFiltroPagamentos('todos', 'Todos')}${botaoFiltroPagamentos('debito', 'Débito')}${botaoFiltroPagamentos('credito', 'Crédito')}${botaoFiltroPagamentos('ultimo_pagamento', 'Último pagamento')}</nav>${indicadorResultados}</div>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>${todosClientes.length > clientes.length ? `<button type="button" class="ghost payment-clients-more" onclick="carregarMaisClientesPagamentos()">Carregar mais ${quantidadeProximoLote} clientes</button>` : ''}` : `<article class="publication-empty"><span>${svgIcon('users')}</span>${mensagemVazia}</article>`}</section>`;
+  return `<section class="module-page pagamentos-page"><div class="module-sticky-head"><div class="module-title pagamentos-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div><button type="button" class="payment-order-button" onclick="alternarOrdemPagamentos()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button></div>${renderBarraBuscaPagamentos()}<nav class="order-type-filters payment-type-filters" aria-label="Filtrar pagamentos por situação">${botaoFiltroPagamentos('todos', 'Todos')}${botaoFiltroPagamentos('debito', 'Com débito')}${botaoFiltroPagamentos('credito', 'Com crédito')}${botaoFiltroPagamentos('ultimo_pagamento', 'Último pagamento')}</nav>${indicadorResultados}</div>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>${todosClientes.length > clientes.length ? `<button type="button" class="ghost payment-clients-more" onclick="carregarMaisClientesPagamentos()">Carregar mais ${quantidadeProximoLote} clientes</button>` : ''}` : `<article class="publication-empty"><span>${svgIcon('users')}</span>${mensagemVazia}</article>`}</section>`;
 }
 
 function alternarOrdemPagamentos() {

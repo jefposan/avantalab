@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.430 -->
+<!-- ava-version: 3.2.0.431 -->
+
+> Revisão 3.2.0.431: sem impacto operacional. Ajustes exclusivos da pesquisa de clientes e dos rótulos de Pagamentos no AvantaVendas.
 
 > Revisão 3.2.0.426: Cadastro do perfil pessoal exibe Nome do perfil, Nome completo e CPF; CPF usa máscara e validação e deve ser preenchido para concluir o cadastro.
 

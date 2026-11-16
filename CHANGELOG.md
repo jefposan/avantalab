@@ -14946,3 +14946,9 @@ Publicação confirmada das revisões 3.2.0.110–112: READY/PROMOTED nos domín
 - Distribuição dos consignados compacta, com cabeçalho/total fixos e rolagem somente na lista; preserva posição/ordenação ao retornar da ficha. Dois botões iguais ocupam a linha, com destaque apenas na borda ativa e sem frase introdutória.
 - Total recebido mostra Ver detalhes no canto inferior direito, sem aumentar o card. Demais dados, módulos e backend preservados.
 
+## 3.2.0.431-av205 - AvantaVendas: busca por telefone, inativos e filtros
+
+- Clientes localizáveis por telefone completo ou parcial sem depender de pontuação, também na seleção de pedido/pagamento.
+- Lista de clientes mantém inativos ao final em A–Z/Z–A e encontra o status com inativo/inativos, inclusive com nome/telefone. Novos lançamentos continuam restritos a ativos.
+- Pagamentos usa os rótulos Com débito e Com crédito, preservando critérios e cálculos. Sem alteração de cadastros, banco ou permissões.
+
