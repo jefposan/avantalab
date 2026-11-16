@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_FHrDiMP3YGDQDgztmUYCpsywQzzW",
+  "baseDeploymentId": "dpl_CPcynmc48Nr8ZCza9Q6gsD2Y3VAM",
   "migrations": [],
-  "version": "3.2.0.448",
-  "scope": "Vendas e Serviços: confirmar salvamento fiscal, persistir tipos de nota e remover modelos gerais"
+  "version": "3.2.0.449",
+  "scope": "Conteúdo AvantaVendas: abrir cadastro pelo nome do produto no mobile"
 }

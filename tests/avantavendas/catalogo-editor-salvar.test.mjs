@@ -104,3 +104,18 @@ test('SKU técnico abre vazio e salvar não exige nem recria código',async()=>{
  c.input('SKU').props.onChange({target:{value:'T013'}});c.botao('Salvar alterações').props.onClick();await c.flush();
  assert.equal(c.chamadas.filter(x=>x.nome==='salvar_produto_conteudo_vendas_mobile_rpc').at(-1).args.p_dados.sku,'T013');
 });
+
+test('nome na primeira coluna abre o cadastro do resultado pesquisado, sem usar ação fora da tela',async()=>{
+ for(const darkMode of [false,true]) {
+  const c=montar({darkMode,produtosExtras:[{id:'p2',nome:'Máscara Nutri',sku:'NUTRI',preco_representante:17.6,preco_divulgacao:31,ativo:true}]});await c.iniciar();
+  const buscar=()=>c.nos(c.render()).find(n=>n.props?.['aria-label']==='Pesquisar produtos');
+  buscar().props.onChange('nutri');
+  const nome=c.nos(c.render()).find(n=>n.type==='button'&&n.props['aria-label']==='Editar produto Máscara Nutri');
+  assert.ok(nome);assert.equal(nome.props.type,'button');assert.match(nome.props.className,/min-h-11/);assert.match(nome.props.className,/focus-visible/);
+  assert.equal(c.nos(c.render()).filter(n=>n.type==='td')[0].props.children.props['aria-label'],nome.props['aria-label'],'ação fica na coluna visível de identificação');
+  nome.props.onClick();
+  assert.equal(c.input('Nome').props.value,'Máscara Nutri');assert.equal(c.input('SKU').props.value,'NUTRI');assert.ok(c.botao('Salvar alterações'));
+  assert.equal(c.chamadas.some(x=>x.nome==='salvar_produto_conteudo_vendas_mobile_rpc'),false,'abrir cadastro não grava produto');
+  c.botao('Cancelar').props.onClick();assert.equal(buscar().props.value,'nutri');
+ }
+});

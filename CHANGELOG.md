@@ -1,3 +1,8 @@
+## 3.2.0.449 — Conteúdo AvantaVendas: abrir cadastro pelo nome no mobile
+
+- Nome e identificação do produto abrem a edição existente por toque, clique ou teclado, inclusive nos resultados filtrados. Ação permanece visível na primeira coluna da tabela.
+- Mantém botão Editar, bloqueio durante salvamento, custos, status, filtros e persistência existentes. Sem alteração de banco ou permissões.
+
 ## 3.2.0.448 — Vendas e Serviços: persistir tipos de nota e remover modelos gerais
 
 - Remove regras gerais dos novos modelos. Regras existentes são preservadas e seus nomes originais passam a Regra para operações não previstas.
