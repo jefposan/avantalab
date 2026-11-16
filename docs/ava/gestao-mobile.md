@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.439 -->
+<!-- ava-version: 3.2.0.440 -->
+
+> Revisão 3.2.0.440: sem impacto operacional neste ambiente; consulta cadastral corrigida no módulo Vendas e Serviços da Gestão Web.
 
 > Revisão 3.2.0.439: sem impacto operacional adicional; declaração de tipos da correção de navegação.
 

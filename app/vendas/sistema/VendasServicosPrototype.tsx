@@ -1,4 +1,5 @@
 'use client';
+import { lookupCompanyCnpj } from '../lib/company-cnpj-lookup.mjs';
 import {focarCampoComErro} from '@/app/lib/foco-validacao.mjs';
 import {fiscalValidationIssue,fiscalValidationTarget} from '../lib/fiscal-validation.mjs';
 import dynamic from 'next/dynamic';
@@ -3747,6 +3748,8 @@ function FiscalIssuerRegistryDialog({ open, registry, company, readOnly, onClose
   const [submitted, setSubmitted] = useState(false);
   const [lookup, setLookup] = useState<{ kind: 'cnpj' | 'cep'; message: string; tone: 'success' | 'error' } | null>(null);
   const [searching, setSearching] = useState<'cnpj' | 'cep' | null>(null);
+  const cnpjRequest = useRef(0);
+  useEffect(() => { cnpjRequest.current += 1; setSearching(null); setLookup(null); return () => { cnpjRequest.current += 1; }; }, [open, registry, company, selectedId]);
   useEffect(() => {
     if (!open) return;
     const normalized = normalizeFiscalIssuerRegistry(registry, company);
@@ -3791,16 +3794,16 @@ function FiscalIssuerRegistryDialog({ open, registry, company, readOnly, onClose
     const synced = createFiscalEstablishmentFromCompany(company);
     updateEstablishment({ legalName: synced.legalName, document: synced.document, uf: synced.uf, city: synced.city, cityCode: synced.cityCode, cep: synced.cep, street: synced.street, number: synced.number, complement: synced.complement, district: synced.district, phone: synced.phone, taxRegime: synced.taxRegime, stateRegistration: synced.stateRegistration, municipalRegistration: synced.municipalRegistration });
   };
-  const searchEstablishmentCnpj = () => {
+  const searchEstablishmentCnpj = async () => {
     if (!selected) return;
     const document = selected.document.replace(/\D/g, '');
     if (document.length !== 14) { setLookup({ kind: 'cnpj', message: 'Informe os 14 dígitos do CNPJ.', tone: 'error' }); return; }
     setSearching('cnpj');
     setLookup(null);
-    window.setTimeout(() => {
-      const found = demoCnpjDirectory[document] ?? clients.find((item) => item.document.replace(/\D/g, '') === document);
-      setSearching(null);
-      if (!found) { setLookup({ kind: 'cnpj', message: 'CNPJ não encontrado na base local. Você pode preencher os dados manualmente.', tone: 'error' }); return; }
+    const request = ++cnpjRequest.current;
+    try {
+      const found = await lookupCompanyCnpj(document);
+      if (request !== cnpjRequest.current) return;
       updateEstablishment({
         document,
         legalName: found.legalName ?? selected.legalName,
@@ -3812,11 +3815,16 @@ function FiscalIssuerRegistryDialog({ open, registry, company, readOnly, onClose
         complement: found.complement ?? selected.complement,
         district: found.district ?? selected.district,
         city: found.cityName ?? selected.city,
-        cityCode: found.cityCode ?? selected.cityCode,
+        cityCode: found.cityCode ?? resolveMunicipalityCode({ city: found.cityName ?? selected.city, uf: found.state ?? selected.uf, cep: found.cep ?? selected.cep }),
         uf: found.state ?? selected.uf,
         phone: found.phone?.replace(/\D/g, '') ?? selected.phone,
       });
-    }, 320);
+      setLookup({ kind: 'cnpj', message: 'Dados consultados. Confira as informações antes de salvar.', tone: 'success' });
+    } catch (cause) {
+      if (request === cnpjRequest.current) setLookup({ kind: 'cnpj', message: cause instanceof Error ? cause.message : 'Não foi possível consultar o CNPJ. Tente novamente.', tone: 'error' });
+    } finally {
+      if (request === cnpjRequest.current) setSearching(null);
+    }
   };
   const searchEstablishmentCep = () => {
     if (!selected) return;
@@ -3863,7 +3871,7 @@ function FiscalIssuerRegistryDialog({ open, registry, company, readOnly, onClose
             <div className="integration-candidate-heading"><div><span>Estabelecimento selecionado</span><h4>{selected.label}</h4><p>{selected.kind} · {formatCnpj(selected.document) || 'CNPJ pendente'}</p></div><button type="button" className="button secondary" onClick={removeEstablishment} disabled={readOnly || draft.establishments.length <= 1}><Icon name="close" size={15}/> Excluir</button></div>
             <div className="issuer-editor-actions"><button type="button" className="button secondary" onClick={syncCompany} disabled={readOnly}><Icon name="copy" size={15}/> Sincronizar empresa ativa</button><label className="check-field"><input type="checkbox" checked={draft.defaultEstablishmentId === selected.id} onChange={(event) => event.target.checked && updateRegistry({ defaultEstablishmentId: selected.id })} disabled={readOnly}/><span><strong>Emissor padrão</strong><small>Usado quando a operação não indicar outra filial.</small></span></label></div>
             <div className="form-grid">
-              <label className="field"><span>CNPJ *</span><div className="lookup-control"><input inputMode="numeric" value={formatCnpj(selected.document)} onChange={(event) => { updateEstablishment({ document: event.target.value.replace(/\D/g, '').slice(0, 14) }); setLookup(null); }} disabled={readOnly} maxLength={18} placeholder="00.000.000/0000-00"/><button type="button" onClick={searchEstablishmentCnpj} disabled={readOnly || searching === 'cnpj'} aria-label="Buscar dados do estabelecimento pelo CNPJ">{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button></div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
+              <label className="field"><span>CNPJ *</span><div className="lookup-control"><input inputMode="numeric" value={formatCnpj(selected.document)} onChange={(event) => { cnpjRequest.current += 1; setSearching(null); updateEstablishment({ document: event.target.value.replace(/\D/g, '').slice(0, 14) }); setLookup(null); }} disabled={readOnly} maxLength={18} placeholder="00.000.000/0000-00"/><button type="button" onClick={searchEstablishmentCnpj} disabled={readOnly || searching === 'cnpj'} aria-label="Buscar dados do estabelecimento pelo CNPJ">{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button></div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
               <label className="field"><span>Identificação *</span><input value={selected.label} onChange={(event) => updateEstablishment({ label: event.target.value })} disabled={readOnly} maxLength={80}/></label>
               <label className="field"><span>Tipo</span><select value={selected.kind} onChange={(event) => updateEstablishment({ kind: event.target.value as FiscalEstablishment['kind'] })} disabled={readOnly}><option>Matriz</option><option>Filial</option></select></label>
               <label className="field field-wide"><span>Razão social *</span><input value={selected.legalName} onChange={(event) => updateEstablishment({ legalName: event.target.value })} disabled={readOnly} maxLength={120}/></label>
@@ -4980,6 +4988,8 @@ function SettingsDialog({ section, settings, onClose, onSave, onOpenNumbering }:
   const [error, setError] = useState('');
   const [lookup, setLookup] = useState<{ kind: 'cnpj' | 'cep'; message: string; tone: 'success' | 'error' } | null>(null);
   const [searching, setSearching] = useState<'cnpj' | 'cep' | null>(null);
+  const cnpjRequest = useRef(0);
+  useEffect(() => { cnpjRequest.current += 1; setSearching(null); setLookup(null); return () => { cnpjRequest.current += 1; }; }, [section, settings]);
   useEffect(() => { setDraft(settings); setError(''); setLookup(null); setSearching(null); }, [section, settings]);
   if (!section) return null;
   const titles: Record<SettingsSection, [string, string]> = {
@@ -4997,15 +5007,15 @@ function SettingsDialog({ section, settings, onClose, onSave, onOpenNumbering }:
     }
     return { ...current, company };
   });
-  const searchCompanyCnpj = () => {
+  const searchCompanyCnpj = async () => {
     const document = draft.company.document.replace(/\D/g, '');
     if (document.length !== 14) { setLookup({ kind: 'cnpj', message: 'Informe os 14 dígitos do CNPJ.', tone: 'error' }); return; }
     setSearching('cnpj');
     setLookup(null);
-    window.setTimeout(() => {
-      const found = demoCnpjDirectory[document] ?? clients.find((item) => item.document.replace(/\D/g, '') === document);
-      setSearching(null);
-      if (!found) { setLookup({ kind: 'cnpj', message: 'CNPJ não encontrado na base local. Você pode preencher os dados manualmente.', tone: 'error' }); return; }
+    const request = ++cnpjRequest.current;
+    try {
+      const found = await lookupCompanyCnpj(document);
+      if (request !== cnpjRequest.current) return;
       setDraft((current) => {
         const cityName = found.cityName ?? current.company.city.replace(/\/[A-Z]{2}$/, '');
         const state = found.state ?? current.company.city.match(/\/([A-Z]{2})$/)?.[1] ?? '';
@@ -5028,7 +5038,12 @@ function SettingsDialog({ section, settings, onClose, onSave, onOpenNumbering }:
           cityCode: found.cityCode ?? resolveMunicipalityCode({ city: cityName, uf: state, cep, currentCode: current.company.cityCode }),
         } };
       });
-    }, 320);
+      setLookup({ kind: 'cnpj', message: 'Dados consultados. Confira as informações antes de salvar.', tone: 'success' });
+    } catch (cause) {
+      if (request === cnpjRequest.current) setLookup({ kind: 'cnpj', message: cause instanceof Error ? cause.message : 'Não foi possível consultar o CNPJ. Tente novamente.', tone: 'error' });
+    } finally {
+      if (request === cnpjRequest.current) setSearching(null);
+    }
   };
   const searchCompanyCep = () => {
     const cep = draft.company.cep.replace(/\D/g, '');
@@ -5072,7 +5087,7 @@ function SettingsDialog({ section, settings, onClose, onSave, onOpenNumbering }:
     <div className="dialog-body settings-dialog-body">
       {section === 'empresa' && <div className="settings-form-stack">
         <section className="settings-form-section"><div className="client-section-heading"><h3>Identificação da empresa</h3><p>O CNPJ inicia o cadastro e pode preencher os demais dados disponíveis.</p></div><div className="form-grid">
-          <label className="field"><span>CNPJ *</span><div className="lookup-control"><input inputMode="numeric" value={draft.company.document} onChange={(event) => { updateCompany('document', formatCnpj(event.target.value)); setLookup(null); }} maxLength={18} placeholder="00.000.000/0000-00"/><button type="button" onClick={searchCompanyCnpj} disabled={searching === 'cnpj'} aria-label="Buscar dados da empresa pelo CNPJ">{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button></div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
+          <label className="field"><span>CNPJ *</span><div className="lookup-control"><input inputMode="numeric" value={draft.company.document} onChange={(event) => { cnpjRequest.current += 1; setSearching(null); updateCompany('document', formatCnpj(event.target.value)); setLookup(null); }} maxLength={18} placeholder="00.000.000/0000-00"/><button type="button" onClick={searchCompanyCnpj} disabled={searching === 'cnpj'} aria-label="Buscar dados da empresa pelo CNPJ">{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button></div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
           <label className="field field-wide"><span>Razão social *</span><input value={draft.company.legalName} onChange={(event) => updateCompany('legalName', event.target.value)} maxLength={120}/></label>
           <label className="field"><span>Nome de exibição *</span><input value={draft.company.name} onChange={(event) => updateCompany('name', event.target.value)} maxLength={80}/></label>
           <label className="field"><span>Iniciais do perfil</span><input value={draft.company.logoInitials} onChange={(event) => updateCompany('logoInitials', event.target.value.toLocaleUpperCase('pt-BR').slice(0, 4))} maxLength={4}/></label>

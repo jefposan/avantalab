@@ -2943,3 +2943,6 @@ GUIAS["gestao-web"] += " Vendas e Serviços não está mais restrito à Tridium:
 GUIAS["gestao-web"] += " A navegação de Vendas e Serviços não depende de preencher CNPJ. O perfil autenticado e as permissões determinam o acesso; conclua o cadastro fiscal para emissão, sem usar dados de outra empresa.";
 
 // Revisado na versão 3.2.0.439: declaração de tipos do contexto; sem impacto operacional adicional.
+
+// Revisão 3.2.0.440: consulta real de CNPJ nos cadastros fiscais da Gestão Web.
+GUIAS["gestao-web"] += " Em Vendas e Serviços, Buscar CNPJ em Dados da empresa e Estabelecimentos fiscais consulta a Central de Consultas real, sem base de demonstração. Confira os dados e salve explicitamente. Em falha, o formulário é preservado para tentar novamente ou preencher manualmente.";

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.439 -->
+<!-- ava-version: 3.2.0.440 -->
+
+> Revisão 3.2.0.440: Dados da empresa e estabelecimentos fiscais em Vendas e Serviços usam Buscar CNPJ com consulta real. Conferir os dados e salvar explicitamente; falhas preservam o formulário.
 
 > Revisão 3.2.0.439: sem impacto operacional adicional; declaração de tipos da correção de navegação.
 

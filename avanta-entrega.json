@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_DqkzrNQJfwUVh6WjjgeUEzxpyWfs",
+  "baseDeploymentId": "dpl_58ub3wtdc2pmCnvEw9XBr87sdc9D",
   "migrations": [],
-  "version": "3.2.0.439",
-  "scope": "Vendas e Serviços: navegação com cadastro fiscal pendente e tipagem do contexto"
+  "version": "3.2.0.440",
+  "scope": "Vendas e Serviços: consulta real de CNPJ na empresa e nos estabelecimentos fiscais"
 }
