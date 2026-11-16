@@ -14959,3 +14959,8 @@ Publicação confirmada das revisões 3.2.0.110–112: READY/PROMOTED nos domín
 - Bonificações: quantidade e referência abrem popup com produto, data dd/mm/aaaa e quantidade; cada lançamento separado. Ausência de referência histórica é sinalizada, sem usar o preço atual do produto.
 - Impressão com opção de salvar PDF pelo navegador, sem serviço externo. Compras excluem consignados ativos/cancelados/bonificações; pagamentos seguem a data recebida e não incluem desconto como dinheiro.
 
+## 3.2.0.433-av207 - AvantaVendas: seletor de cliente destacado e limpeza
+
+- Seletor azul suave com ícone, identificação, seta e X independente, adaptado aos temas claro/escuro. Nome não é repetido fora do seletor.
+- X limpa somente cliente/pesquisa/mês da tela, preserva o ano e oculta os relatórios; lista fica recolhida até novo acionamento ou busca. Nenhum cadastro ou lançamento é excluído.
+

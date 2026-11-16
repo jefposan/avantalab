@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.432 -->
+<!-- ava-version: 3.2.0.433 -->
+
+> Revisão 3.2.0.433: sem impacto operacional; seletor e limpeza visual exclusivos do relatório AvantaVendas.
 
 > Revisão 3.2.0.432: sem impacto operacional; relatório exclusivo do AvantaVendas, sem alteração financeira ou nativa.
 

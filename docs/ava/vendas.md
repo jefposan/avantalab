@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.432 -->
+<!-- ava-version: 3.2.0.433 -->
+
+> Revisão 3.2.0.433-av207: seletor do Relatório do cliente destacado em azul suave. A seta abre a lista. O X à direita limpa seleção e pesquisa e oculta gráficos/totais, sem excluir o cadastro ou lançamentos. Ano permanece escolhido; buscar/selecionar novamente abre outro relatório.
 
 > Revisão 3.2.0.432-av206: na Sala de Botões, Relatórios ocupa a posição de Informações em preto. Pesquise o cliente com a barra de Clientes, selecione na lista e escolha o ano. Torres mostram compras mensais e pagamentos do mês; resumo anual e produtos são individuais. Quantidade/valor de Bonificações abrem o mesmo popup com produto, data completa, quantidade e referência histórica, separados por lançamento. Valor ausente aparece Não registrado; não usar o preço atual para estimar o passado. Informações do aplicativo continua disponível por link. Imprimir / salvar PDF abre a impressão do navegador; salvar PDF depende das opções oferecidas pelo sistema. Sem alteração dos dados.
 
@@ -1012,7 +1014,7 @@ Revisão 3.2.0.98: correção do extrator de preços do Web/AvantaPreços; sem i
 > Revisão 3.1.0.45: card compacto de Produtos e estoque no Marketplaces Web; sem impacto operacional no AvantaVendas. Menu av188, dados e preferências preservados. Local, não publicado.
 
 > Revisão 3.1.0.44: configurações, referência editável e sugestões do Marketplaces/AvantaPreços; sem impacto operacional no AvantaVendas independente. Menu av188 e suas preferências permanecem intactos. Local, não publicado.
-<!-- avantavendas-asset-revision: 206 -->
+<!-- avantavendas-asset-revision: 207 -->
 
 > Revisão 3.1.0.43-av188: o topo do menu inferior tem linha fina azul-ciano que desliza até o botão acionado, no padrão da Gestão Mobile (2 px, 300 ms). O indicador acompanha atalhos personalizados, Início, Configurações, mudança de tema e Lançar, sem atrasar ações. Ao navegar por outras áreas, volta a indicar o destino representado no menu, ou Início quando não houver atalho correspondente. A preferência de movimento reduzido desativa o deslizamento. Círculo continua removido e resposta tátil opcional preservada. Sem alteração de dados, permissões ou fluxo da Gestão. Testado em Chrome isolado, não em aparelhos físicos. Local, não publicado.
 

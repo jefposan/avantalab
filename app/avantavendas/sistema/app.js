@@ -5353,6 +5353,17 @@ function selecionarClienteRelatorio(idCliente) {
   render();
 }
 
+function limparClienteRelatorio() {
+  relatorioClienteUI.id = null;
+  relatorioClienteUI.mes = null;
+  relatorioClienteUI.pesquisaSelecionada = '';
+  relatorioClienteUI.selecaoLimpa = true;
+  state.busca = '';
+  buscaAplicada = '';
+  render();
+  requestAnimationFrame(() => document.querySelector('.relatorio-cliente-page .client-search-input-wrap input')?.focus());
+}
+
 function selecionarAnoClienteRelatorio(ano) {
   const numero = Number(ano);
   if (!Number.isInteger(numero) || numero < 1900 || numero > 2200) return;
@@ -5403,7 +5414,7 @@ function renderRelatorioCliente() {
   const resultados = clientesFiltrados();
   const opcoes = resultados.map(c => `<button type="button" class="relatorio-cliente-option" onclick="selecionarClienteRelatorio(${escapeAttr(JSON.stringify(c.id))})"><b>${escapeHtml(c.nome)}</b><span>${escapeHtml(c.telefone || '')}${c.ativo === false ? ' · Inativo' : ''}</span>${svgIcon('chevron-right')}</button>`).join('');
   const topo = `<div class="module-sticky-head"><div class="module-title"><div><h2>Relatório do cliente</h2></div></div>${renderBarraBuscaClientes()}</div>`;
-  const seletor = `<details class="relatorio-seletor" ${!dados.cliente || buscaAplicada !== relatorioClienteUI.pesquisaSelecionada ? 'open' : ''}><summary>${dados.cliente ? `Trocar cliente · ${escapeHtml(dados.cliente.nome)}` : 'Selecionar cliente'}</summary><div class="relatorio-cliente-options">${opcoes || '<p class="muted">Nenhum cliente encontrado.</p>'}</div></details>`;
+  const seletor = `<div class="relatorio-seletor-campo${dados.cliente ? ' has-client' : ''}"><details class="relatorio-seletor" ${(!dados.cliente && !relatorioClienteUI.selecaoLimpa) || buscaAplicada !== relatorioClienteUI.pesquisaSelecionada ? 'open' : ''}><summary><span class="relatorio-seletor-icone" aria-hidden="true">${svgIcon('user')}</span><span class="relatorio-seletor-nome"><small>${dados.cliente ? 'Cliente selecionado' : 'Relatório individual'}</small><b>${dados.cliente ? escapeHtml(dados.cliente.nome) : 'Selecionar cliente'}</b></span>${svgIcon('chevron-down')}</summary><div class="relatorio-cliente-options">${opcoes || '<p class="muted">Nenhum cliente encontrado.</p>'}</div></details>${dados.cliente ? `<button type="button" class="relatorio-limpar-cliente" onclick="limparClienteRelatorio()" aria-label="Limpar cliente selecionado" title="Limpar cliente selecionado">${svgIcon('x')}</button>` : ''}</div>`;
   if (!dados.cliente) return `<section class="module-page relatorio-cliente-page">${topo}${seletor}<article class="publication-empty"><h3>Selecione um cliente</h3><p>Consulte compras, pagamentos e bonificações por ano.</p></article><button class="ghost" type="button" onclick="abrirInformacoesDoRelatorio()">Informações do aplicativo</button></section>`;
   const anos = [...new Set([new Date().getFullYear(), ano, ...dados.anos.map(a => a.ano)])].sort((a,b) => b - a);
   const mes = relatorioClienteUI.mes ?? (ano === new Date().getFullYear() ? new Date().getMonth() : 11);
@@ -5411,7 +5422,7 @@ function renderRelatorioCliente() {
   const maximo = Math.max(1, ...dados.meses.map(m => m.compras));
   const selecionado = dados.meses[mes];
   const bloco = (titulo, conteudo) => `<details class="dashboard-annual-report relatorio-bloco" open><summary>${titulo}${svgIcon('chevron-down')}</summary><div class="relatorio-conteudo">${conteudo}</div></details>`;
-  return `<section class="module-page relatorio-cliente-page">${topo}${seletor}<div class="relatorio-cliente-heading"><h3>${escapeHtml(dados.cliente.nome)}</h3>${dados.cliente.ativo === false ? '<span>Inativo</span>' : ''}</div><label class="relatorio-ano">Ano do relatório<select onchange="selecionarAnoClienteRelatorio(this.value)">${anos.map(a => `<option ${a === ano ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
+  return `<section class="module-page relatorio-cliente-page">${topo}${seletor}<label class="relatorio-ano">Ano do relatório<select onchange="selecionarAnoClienteRelatorio(this.value)">${anos.map(a => `<option ${a === ano ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
     <section class="dashboard-kpis">${kpi('Compras no ano', moeda(dados.compras / 100))}${kpi('Pagamentos no ano', moeda(dados.pagamentos / 100))}${kpi('Ticket médio', moeda(dados.pedidos ? dados.compras / 100 / dados.pedidos : 0))}${kpi('Produtos comprados', `${dados.unidades.toLocaleString('pt-BR')} un.`)}</section><p class="muted small">${dados.pedidos} pedidos · ${dados.numeroPagamentos} pagamentos no ano</p>
     <section class="dashboard-sales-evolution-card"><header><h3>Evolução das compras</h3><strong>${moeda(selecionado.compras / 100)}</strong></header><div class="dashboard-sales-evolution-bars">${dados.meses.map(m => `<button type="button" class="dashboard-sales-evolution-bar ${m.mes === mes ? 'is-selected' : ''}" onclick="selecionarMesClienteRelatorio(${m.mes})" aria-pressed="${m.mes === mes}" aria-label="${nomes[m.mes]}: ${escapeAttr(moeda(m.compras / 100))}"><span><i style="height:${m.compras ? Math.max(4, Math.round(m.compras / maximo * 100)) : 0}%"></i></span><b>${nomes[m.mes]}</b></button>`).join('')}</div><p class="relatorio-mes">${nomes[mes]} · ${selecionado.pedidos} pedidos · Pagamentos: ${moeda(selecionado.pagamentos / 100)}</p></section>
     ${bloco('Resumo por ano', `<table><thead><tr><th>Ano</th><th>Compras</th><th>Pagamentos</th></tr></thead><tbody>${dados.anos.map(a => `<tr><td>${a.ano}<small>${a.pedidos} pedidos</small></td><td>${moeda(a.compras / 100)}</td><td>${moeda(a.pagamentos / 100)}</td></tr>`).join('')}</tbody></table>`)}
@@ -8390,6 +8401,7 @@ function preencherEnderecoClientePorLocalizacao(clienteId, botao) {
 
 function aplicarBusca() {
   buscaAplicada = state.busca;
+  if (state.aba === 'informacoes') relatorioClienteUI.selecaoLimpa = false;
   if (state.aba === 'clientes') memorizarPesquisaClientes();
   if (state.aba === 'vendas') limitePedidos = 10;
   if (state.aba === 'vender') limiteClientesPagamentos = 10;
