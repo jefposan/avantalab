@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.446 -->
+<!-- ava-version: 3.2.0.447 -->
+
+> Revisão 3.2.0.447: Sem impacto operacional: lista de regras fiscais mais larga, nomes completos e tooltip padrão acessível pelo teclado.
 
 > Revisão 3.2.0.446-av211: AvantaVendas impede repetir SKU preenchido na mesma conta em cadastro, edição e importação; maiúsculas/minúsculas e espaços externos não diferenciam o código, mas zeros e pontuação são preservados. SKU vazio continua opcional. Proteção no banco abrange inclusive inativos e gravações concorrentes; outra conta pode usar o mesmo SKU. Não bloqueia nomes iguais. Nos rankings do dashboard, relatório por cliente e seu PDF, produtos são reunidos por SKU OU nome repetido, mesmo com IDs distintos ou cadastro excluído. Nomes são comparados sem diferença de caixa, acentos ou espaços repetidos, sem aproximação por trecho. Identidades ligadas transitivamente formam um grupo só; contas permanecem separadas. Estoque consignado e detalhamento por cliente usam a mesma chave agrupada. Apenas soma na leitura: preserva itens, datas, preços, descontos, vendas e comprovantes originais. Bonificações continuam discriminadas por lançamento. Erro de SKU fica no campo, com possibilidade de corrigir sem perder o formulário.
 

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.446 -->
+<!-- ava-version: 3.2.0.447 -->
+
+> Revisão 3.2.0.447: Sem impacto operacional: lista de regras fiscais mais larga, nomes completos e tooltip padrão acessível pelo teclado.
 
 > Revisão 3.2.0.446: sem impacto operacional na Gestão; validação de SKU e agrupamento dos relatórios exclusivos do AvantaVendas.
 

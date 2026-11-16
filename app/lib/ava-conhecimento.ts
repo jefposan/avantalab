@@ -1,3 +1,4 @@
+// Revisão 3.2.0.447: regras fiscais com nomes completos e tooltip padrão; sem alteração de procedimento fiscal.
 // Revisão local 3.2.0.425: continuar pesquisa em outras lojas após descarte, com duas rodadas limitadas. Publicação pela main autorizada, em preparação.
 // Revisão local 3.2.0.424: ML primeiro; complemento web com IA apenas abaixo de três vendedores, validado na origem. Migração aplicada; publicação pela main autorizada, em preparação.
 // Revisão 3.2.0.423: diagnóstico ML administrativo com códigos sanitizados, confirmação de identidade e controle JEFF de leitura em produção.

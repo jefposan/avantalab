@@ -1,3 +1,9 @@
+## 3.2.0.447 — Vendas e Serviços: nomes completos nas regras fiscais
+
+- Amplia a lista à esquerda e ajusta o editor à direita, com títulos em múltiplas linhas sem reticências.
+- Tooltip oficial apresenta nome, documento, prioridade e situação também pelo teclado.
+- Preserva responsividade, seleção, selos e a entrega AvantaVendas 3.2.0.446-av211. Sem mudança de dados ou validação fiscal.
+
 ## 3.2.0.445 — Vendas e Serviços: retorno da numeração e preferências fiscais
 
 - Preserva o card fiscal e os campos não salvos ao abrir, salvar e fechar série/numeração; atualiza somente as séries confirmadas.
