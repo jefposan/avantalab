@@ -9,3 +9,5 @@ Correção: referência e sugestões atuais do cadastro têm precedência ao ter
 Validação: teste da API edita referência de 200 para 250, confere sugestões de 125/175/225 (percentuais 50/70/90) e reabre cadastro em 250. Regressões executam o callback real da tela com cadastro mais recente, mesma referência/percentuais diferentes e resposta cancelada. 16 testes direcionados aprovados; segurança 715 aprovados. Padrão Avanta 1.23.1 e Ava aprovados. TypeScript executado após gerar tipos de rotas do Next no clone novo (RouteContext depende desses arquivos gerados).
 
 Limite: cenários locais simulam API/banco ou banco de teste; não houve reprodução no navegador do cliente nem leitura/gravação de seu produto real. Não se afirma publicação ou aplicação em produção.
+
+Publicação autorizada em 16/11/2026. Base vigente conferida: 3.2.0.426, dpl_Gx7aR3TSJT3o4QJs9vnQQWmHoi2s, READY, SHA a9400faa7d0552246976bf21407ac076adc3c217; inclui ajuste CPF do cadastro pessoal. Manifesto atualizado antes do envio; não há migrações. As frases acima descrevem o estado da validação local, anterior à autorização. Estado final deve ser conferido no recibo da publicação.
