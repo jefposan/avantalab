@@ -19,3 +19,10 @@ export const coreProfileByModuleRole: Readonly<Record<'gestor' | 'administrador'
 export function normalizeAccessBoundary(input?: Partial<AccessBoundary>): AccessBoundary;
 export function evaluateAccessDecision(input: { boundary: Partial<AccessBoundary>; effectivePermissions: Record<string, boolean>; permission: string }): AccessDecision;
 export function accessDecisionMessage(reason: AccessDecisionReason): string;
+export function createCommercialUiAccessBoundary(input?: {
+  integrated?: boolean;
+  companyId?: string;
+  companyDocument?: string;
+  user?: { id: string; active: boolean } | null;
+  accessReady?: boolean;
+}): AccessBoundary;

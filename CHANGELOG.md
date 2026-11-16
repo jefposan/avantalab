@@ -1,3 +1,7 @@
+## 3.2.0.438.01
+
+- Vendas e Serviços: declaração TypeScript do contexto de acesso integrado, preservando a navegação pelo ID do perfil sem exigir CNPJ para abrir.
+
 ## 3.2.0.438
 
 - Vendas e Serviços: navegação usa o ID do perfil autenticado, sem depender de CNPJ preenchido. Cadastro fiscal incompleto continua impedindo emissão, mas permite acessar os ajustes para completá-lo. Sem usuário autenticado reconhecido, não assume outro usuário da lista.

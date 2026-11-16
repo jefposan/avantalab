@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.438 -->
+<!-- ava-version: 3.2.0.438.01 -->
+
+> Revisão 3.2.0.438.01: sem impacto operacional adicional; declaração de tipos da correção de navegação.
 
 > Revisão 3.2.0.438: Sem impacto operacional neste ambiente; correção no acesso da Gestão Web.
 
