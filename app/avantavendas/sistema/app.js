@@ -2136,7 +2136,7 @@ function render() {
         ${tab('agenda', 'calendar', 'Agenda')}
         ${tab('novidades', 'bell', 'Novidades')}
         ${tab('divulgacao', 'megaphone', 'Divulgação')}
-        ${tab('informacoes', 'info', 'Informações')}
+        ${tab('informacoes', 'info', 'Relatórios')}
         ${tab('configuracoes', 'settings', 'Configurações')}
       </nav>
       <button class="side-link exit" onclick="sairSistema()">${svgIcon('log-out')} Sair</button>
@@ -2203,7 +2203,7 @@ function renderModuloVendasDesativado() {
   const itens = [
     ['1_Dashboard.png', 'Dashboard'], ['4_Clientes.png', 'Clientes'], ['2_Produtos.png', 'Produtos'],
     ['5_Pedidos.png', 'Pedidos'], ['6_Pagamentos.png', 'Pagamentos'], ['3_Agenda.png', 'Agenda'],
-    ['8_Novidades.png', 'Novidades'], ['7_Divulgacao.png', 'Divulgação'], ['9_Informacoes.png', 'Informações'],
+    ['8_Novidades.png', 'Novidades'], ['7_Divulgacao.png', 'Divulgação'], ['9_Relatorios.svg', 'Relatórios'],
   ];
   return `<section class="module-suspended-screen">
     <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div></header>
@@ -2544,7 +2544,7 @@ function tab(idAba, icon, label) {
 const SALA_BOTOES_PADRAO = [
   ['dashboard', '1_Dashboard.png', 'Dashboard'], ['clientes', '4_Clientes.png', 'Clientes'], ['produtos', '2_Produtos.png', 'Produtos'],
   ['vendas', '5_Pedidos.png', 'Pedidos'], ['vender', '6_Pagamentos.png', 'Pagamentos'], ['agenda', '3_Agenda.png', 'Agenda'],
-  ['novidades', '8_Novidades.png', 'Novidades'], ['divulgacao', '7_Divulgacao.png', 'Divulgação'], ['informacoes', '9_Informacoes.png', 'Informações'],
+  ['novidades', '8_Novidades.png', 'Novidades'], ['divulgacao', '7_Divulgacao.png', 'Divulgação'], ['informacoes', '9_Relatorios.svg', 'Relatórios'],
 ];
 
 const RECURSOS_SALA_BOTOES = [
@@ -5292,7 +5292,135 @@ function kpi(label, value, icon = '', acao = '') {
   return `<article class="kpi"><div><span>${label}</span><strong>${value}</strong></div><b>${icon}</b></article>`;
 }
 
+let relatorioClienteUI = { id: null, ano: null, mes: null, contexto: null };
+
+function periodoRegistroRelatorio(valor) {
+  const texto = String(valor || '');
+  const data = new Date(/^\d{4}-\d{2}-\d{2}$/.test(texto) ? `${texto}T12:00:00` : texto);
+  return Number.isNaN(data.getTime()) ? null : { ano: data.getFullYear(), mes: data.getMonth() };
+}
+
+function dadosRelatorioCliente(clienteId, ano) {
+  const cliente = state.clientes.find(c => c.id === clienteId);
+  const meses = Array.from({ length: 12 }, (_, mes) => ({ mes, compras: 0, pagamentos: 0, pedidos: 0 }));
+  const anos = new Map();
+  const produtos = new Map();
+  const bonificacoes = [];
+  let unidades = 0;
+  if (!cliente) return { cliente: null, meses, anos: [], produtos: [], bonificacoes, compras: 0, pagamentos: 0, pedidos: 0, unidades, valorBonificado: 0, referenciasAusentes: false };
+  const resumoAno = a => { if (!anos.has(a)) anos.set(a, { ano: a, compras: 0, pagamentos: 0, pedidos: 0, numeroPagamentos: 0 }); return anos.get(a); };
+  (state.vendas || []).filter(v => v.cliente_id === clienteId && v.status !== 'cancelada' && !pedidoEhConsignado(v)).forEach(v => {
+    const periodo = periodoRegistroRelatorio(v.criado_em);
+    if (!periodo) return;
+    const resumo = resumoAno(periodo.ano);
+    if (!pedidoSomenteBonificado(v)) {
+      const centavos = Math.round(Number(v.total || 0) * 100);
+      resumo.compras += centavos; resumo.pedidos++;
+      if (periodo.ano === ano) { meses[periodo.mes].compras += centavos; meses[periodo.mes].pedidos++; }
+    }
+    if (periodo.ano !== ano) return;
+    (v.itens || []).forEach(item => {
+      const quantidade = Number(item.quantidade || 0);
+      if (!Number.isFinite(quantidade) || quantidade <= 0) return;
+      const preco = Number(item.preco ?? item.preco_unitario);
+      if (itemPedidoBonificado(item)) {
+        bonificacoes.push({ produto: item.produto_nome || 'Produto', data: v.criado_em, quantidade, valor: Number.isFinite(preco) && preco > 0 ? Math.round(preco * quantidade * 100) : null });
+        return;
+      }
+      unidades += quantidade;
+      const chave = item.produto_id || item.produto_sku || item.produto_nome;
+      const produto = produtos.get(chave) || { nome: item.produto_nome || 'Produto', quantidade: 0, valor: 0 };
+      produto.quantidade += quantidade;
+      produto.valor += Math.round(Number(item.total ?? quantidade * (Number.isFinite(preco) ? preco : 0)) * 100);
+      produtos.set(chave, produto);
+    });
+  });
+  (state.pagamentos || []).filter(p => p.cliente_id === clienteId).forEach(p => {
+    const periodo = periodoRegistroRelatorio(p.data_pagamento || p.criado_em);
+    if (!periodo) return;
+    const valor = Math.round(Number(p.valor || 0) * 100);
+    const resumo = resumoAno(periodo.ano);
+    resumo.pagamentos += valor; resumo.numeroPagamentos++;
+    if (periodo.ano === ano) meses[periodo.mes].pagamentos += valor;
+  });
+  const resumo = resumoAno(ano);
+  return { cliente, meses, anos: [...anos.values()].sort((a,b) => b.ano - a.ano), produtos: [...produtos.values()].sort((a,b) => b.quantidade - a.quantidade || a.nome.localeCompare(b.nome, 'pt-BR')), bonificacoes: bonificacoes.sort((a,b) => String(b.data).localeCompare(String(a.data))), unidades, ...resumo, valorBonificado: bonificacoes.reduce((s,b) => s + (b.valor || 0), 0), referenciasAusentes: bonificacoes.some(b => b.valor === null) };
+}
+
+function selecionarClienteRelatorio(idCliente) {
+  if (!state.clientes.some(c => c.id === idCliente)) return;
+  relatorioClienteUI.id = idCliente; relatorioClienteUI.mes = null; relatorioClienteUI.pesquisaSelecionada = buscaAplicada;
+  render();
+}
+
+function selecionarAnoClienteRelatorio(ano) {
+  const numero = Number(ano);
+  if (!Number.isInteger(numero) || numero < 1900 || numero > 2200) return;
+  relatorioClienteUI.ano = numero; relatorioClienteUI.mes = null; render();
+}
+
+function selecionarMesClienteRelatorio(mes) {
+  const numero = Number(mes);
+  if (!Number.isInteger(numero) || numero < 0 || numero > 11) return;
+  relatorioClienteUI.mes = numero; render();
+}
+
+function abrirBonificacoesClienteRelatorio() {
+  const dados = dadosRelatorioCliente(relatorioClienteUI.id, relatorioClienteUI.ano);
+  if (!dados.cliente) return;
+  const linhas = dados.bonificacoes.map(b => `<div class="relatorio-bonus-row"><div><b>${escapeHtml(b.produto)}</b><small>${escapeHtml(dataBR(b.data))}</small></div><span>${b.quantidade.toLocaleString('pt-BR')} un.</span><strong>${b.valor === null ? 'Não registrado' : moeda(b.valor / 100)}</strong></div>`).join('');
+  sheet(`<div class="sheet-header"><div><h2 id="relatorioBonusTitulo">Bonificações</h2><p class="muted small">${escapeHtml(dados.cliente.nome)} · ${relatorioClienteUI.ano}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar bonificações">${svgIcon('x')}</button></div><div class="relatorio-bonus-list">${linhas || '<p class="muted">Nenhuma bonificação neste ano.</p>'}</div><div class="dashboard-received-total"><span>${dados.bonificacoes.reduce((s,b) => s + b.quantidade, 0).toLocaleString('pt-BR')} unidades</span><strong>${moeda(dados.valorBonificado / 100)}</strong></div>${dados.referenciasAusentes ? '<p class="muted small">Total apenas dos valores de referência registrados.</p>' : ''}`, 'sheet-backdrop-centered relatorio-bonus-backdrop');
+  const wrap = document.getElementById('sheetBackdrop');
+  const card = wrap?.querySelector('.sheet');
+  card?.setAttribute('role', 'dialog'); card?.setAttribute('aria-modal', 'true'); card?.setAttribute('aria-labelledby', 'relatorioBonusTitulo');
+  if (wrap) wrap.__recebimentosOrigem = document.activeElement;
+  const fechar = card?.querySelector('.close'); fechar?.focus({ preventScroll: true });
+  wrap?.addEventListener('keydown', e => { if (e.key === 'Escape') fecharSheet(e); if (e.key === 'Tab') { e.preventDefault(); fechar?.focus(); } });
+}
+
+function abrirInformacoesDoRelatorio() {
+  sheet(`<div class="sheet-header"><div><h2>Informações do aplicativo</h2></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar informações">${svgIcon('x')}</button></div>${renderInformacoesVendas()}`, 'sheet-backdrop-centered relatorio-bonus-backdrop');
+}
+
+function imprimirRelatorioCliente() {
+  const dados = dadosRelatorioCliente(relatorioClienteUI.id, relatorioClienteUI.ano);
+  if (!dados.cliente) return;
+  const janela = window.open('', '_blank');
+  if (!janela) { toast('Não foi possível abrir o relatório para impressão. Tente pelo navegador.', { tipo: 'erro' }); return; }
+  const tabela = (titulo, cabecalho, linhas) => `<h2>${titulo}</h2><table><thead><tr>${cabecalho.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${linhas}</tbody></table>`;
+  const html = `<h1>Relatório do cliente</h1><p>${escapeHtml(dados.cliente.nome)} · ${relatorioClienteUI.ano}</p><p>Compras: ${moeda(dados.compras / 100)} · Pagamentos: ${moeda(dados.pagamentos / 100)} · ${dados.pedidos} pedidos</p>${tabela('Produtos mais comprados', ['Produto','Quantidade','Valor dos itens'], dados.produtos.map(p => `<tr><td>${escapeHtml(p.nome)}</td><td>${p.quantidade}</td><td>${moeda(p.valor / 100)}</td></tr>`).join(''))}${tabela('Bonificações', ['Produto','Data','Quantidade','Referência'], dados.bonificacoes.map(b => `<tr><td>${escapeHtml(b.produto)}</td><td>${escapeHtml(dataBR(b.data))}</td><td>${b.quantidade}</td><td>${b.valor === null ? 'Não registrado' : moeda(b.valor / 100)}</td></tr>`).join(''))}${tabela('Resumo por ano', ['Ano','Compras','Pagamentos'], dados.anos.map(a => `<tr><td>${a.ano}</td><td>${moeda(a.compras / 100)}</td><td>${moeda(a.pagamentos / 100)}</td></tr>`).join(''))}<p>Bonificações e consignados ativos não compõem as compras. Valores de itens antes do desconto geral do pedido. Impressão: escolha Salvar como PDF quando disponível.</p>`;
+  janela.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório do cliente</title><style>body{font:14px Arial;color:#0a1f44;padding:24px}h1{font-size:24px}h2{font-size:18px;margin-top:24px}table{width:100%;border-collapse:collapse}th,td{padding:8px;text-align:left;border-bottom:1px solid #ddd}p{line-height:1.5}@media print{tr{break-inside:avoid}thead{display:table-header-group}}</style></head><body>${html}</body></html>`);
+  janela.document.close();
+  janela.focus();
+  if (typeof janela.print === 'function') janela.print();
+}
+
+function renderRelatorioCliente() {
+  const contexto = `${state.usuario?.id || ''}:${state.contaVendasAtiva?.id || ''}`;
+  if (relatorioClienteUI.contexto !== contexto) relatorioClienteUI = { id: null, ano: new Date().getFullYear(), mes: null, contexto };
+  const ano = relatorioClienteUI.ano || new Date().getFullYear();
+  const dados = dadosRelatorioCliente(relatorioClienteUI.id, ano);
+  const resultados = clientesFiltrados();
+  const opcoes = resultados.map(c => `<button type="button" class="relatorio-cliente-option" onclick="selecionarClienteRelatorio(${escapeAttr(JSON.stringify(c.id))})"><b>${escapeHtml(c.nome)}</b><span>${escapeHtml(c.telefone || '')}${c.ativo === false ? ' · Inativo' : ''}</span>${svgIcon('chevron-right')}</button>`).join('');
+  const topo = `<div class="module-sticky-head"><div class="module-title"><div><h2>Relatório do cliente</h2></div></div>${renderBarraBuscaClientes()}</div>`;
+  const seletor = `<details class="relatorio-seletor" ${!dados.cliente || buscaAplicada !== relatorioClienteUI.pesquisaSelecionada ? 'open' : ''}><summary>${dados.cliente ? `Trocar cliente · ${escapeHtml(dados.cliente.nome)}` : 'Selecionar cliente'}</summary><div class="relatorio-cliente-options">${opcoes || '<p class="muted">Nenhum cliente encontrado.</p>'}</div></details>`;
+  if (!dados.cliente) return `<section class="module-page relatorio-cliente-page">${topo}${seletor}<article class="publication-empty"><h3>Selecione um cliente</h3><p>Consulte compras, pagamentos e bonificações por ano.</p></article><button class="ghost" type="button" onclick="abrirInformacoesDoRelatorio()">Informações do aplicativo</button></section>`;
+  const anos = [...new Set([new Date().getFullYear(), ano, ...dados.anos.map(a => a.ano)])].sort((a,b) => b - a);
+  const mes = relatorioClienteUI.mes ?? (ano === new Date().getFullYear() ? new Date().getMonth() : 11);
+  const nomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const maximo = Math.max(1, ...dados.meses.map(m => m.compras));
+  const selecionado = dados.meses[mes];
+  const bloco = (titulo, conteudo) => `<details class="dashboard-annual-report relatorio-bloco" open><summary>${titulo}${svgIcon('chevron-down')}</summary><div class="relatorio-conteudo">${conteudo}</div></details>`;
+  return `<section class="module-page relatorio-cliente-page">${topo}${seletor}<div class="relatorio-cliente-heading"><h3>${escapeHtml(dados.cliente.nome)}</h3>${dados.cliente.ativo === false ? '<span>Inativo</span>' : ''}</div><label class="relatorio-ano">Ano do relatório<select onchange="selecionarAnoClienteRelatorio(this.value)">${anos.map(a => `<option ${a === ano ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
+    <section class="dashboard-kpis">${kpi('Compras no ano', moeda(dados.compras / 100))}${kpi('Pagamentos no ano', moeda(dados.pagamentos / 100))}${kpi('Ticket médio', moeda(dados.pedidos ? dados.compras / 100 / dados.pedidos : 0))}${kpi('Produtos comprados', `${dados.unidades.toLocaleString('pt-BR')} un.`)}</section><p class="muted small">${dados.pedidos} pedidos · ${dados.numeroPagamentos} pagamentos no ano</p>
+    <section class="dashboard-sales-evolution-card"><header><h3>Evolução das compras</h3><strong>${moeda(selecionado.compras / 100)}</strong></header><div class="dashboard-sales-evolution-bars">${dados.meses.map(m => `<button type="button" class="dashboard-sales-evolution-bar ${m.mes === mes ? 'is-selected' : ''}" onclick="selecionarMesClienteRelatorio(${m.mes})" aria-pressed="${m.mes === mes}" aria-label="${nomes[m.mes]}: ${escapeAttr(moeda(m.compras / 100))}"><span><i style="height:${m.compras ? Math.max(4, Math.round(m.compras / maximo * 100)) : 0}%"></i></span><b>${nomes[m.mes]}</b></button>`).join('')}</div><p class="relatorio-mes">${nomes[mes]} · ${selecionado.pedidos} pedidos · Pagamentos: ${moeda(selecionado.pagamentos / 100)}</p></section>
+    ${bloco('Resumo por ano', `<table><thead><tr><th>Ano</th><th>Compras</th><th>Pagamentos</th></tr></thead><tbody>${dados.anos.map(a => `<tr><td>${a.ano}<small>${a.pedidos} pedidos</small></td><td>${moeda(a.compras / 100)}</td><td>${moeda(a.pagamentos / 100)}</td></tr>`).join('')}</tbody></table>`)}
+    ${bloco('Bonificações', `<div class="relatorio-bonus-kpis"><button type="button" onclick="abrirBonificacoesClienteRelatorio()" aria-haspopup="dialog"><span>Itens bonificados</span><b>${dados.bonificacoes.reduce((s,b) => s + b.quantidade, 0).toLocaleString('pt-BR')} un.</b></button><button type="button" onclick="abrirBonificacoesClienteRelatorio()" aria-haspopup="dialog"><span>Valor de referência</span><b>${moeda(dados.valorBonificado / 100)}</b></button></div><p class="muted small">${dados.referenciasAusentes ? 'Há itens sem valor de referência registrado. ' : ''}Bonificações não entram nas compras.</p>`)}
+    ${bloco('Produtos mais comprados', `<table><thead><tr><th>Produto</th><th>Quantidade</th></tr></thead><tbody>${dados.produtos.map(p => `<tr><td><b>${escapeHtml(p.nome)}</b><small>${moeda(p.valor / 100)} em itens, antes do desconto geral</small></td><td>${p.quantidade.toLocaleString('pt-BR')} un.</td></tr>`).join('') || '<tr><td colspan="2">Nenhum produto comprado no ano.</td></tr>'}</tbody></table>`)}<button class="primary" type="button" onclick="imprimirRelatorioCliente()">Imprimir / salvar PDF</button><button class="ghost" type="button" onclick="abrirInformacoesDoRelatorio()">Informações do aplicativo</button></section>`;
+}
+
 function renderModuloEmBreve() {
+  if (state.aba === 'informacoes') return renderRelatorioCliente();
   if (state.aba === 'agenda') return renderAgenda();
   if (state.aba === 'novidades') return renderPublicacoes('novidades');
   if (state.aba === 'divulgacao') return renderDivulgacao();

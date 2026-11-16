@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_ACuFntVLyFBF2dwCf6XZZ6pkfiVN",
+  "baseDeploymentId": "dpl_7BeC2Jxy9HPh3JYnat7kugDMwncN",
   "migrations": [],
-  "version": "3.2.0.431",
-  "scope": "AvantaVendas: busca de clientes por telefone parcial, inativos ao final e filtros Com débito/Com crédito"
+  "version": "3.2.0.432",
+  "scope": "AvantaVendas: relatório individual por cliente e ano, compras, pagamentos, produtos e bonificações detalhadas"
 }

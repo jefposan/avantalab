@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.431 -->
+<!-- ava-version: 3.2.0.432 -->
+
+> Revisão 3.2.0.432: sem impacto operacional; relatório exclusivo do AvantaVendas, sem alteração financeira ou nativa.
 
 > Revisão 3.2.0.431: sem impacto operacional. Ajustes exclusivos da pesquisa de clientes e dos rótulos de Pagamentos no AvantaVendas.
 

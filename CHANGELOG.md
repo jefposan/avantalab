@@ -14952,3 +14952,10 @@ Publicação confirmada das revisões 3.2.0.110–112: READY/PROMOTED nos domín
 - Lista de clientes mantém inativos ao final em A–Z/Z–A e encontra o status com inativo/inativos, inclusive com nome/telefone. Novos lançamentos continuam restritos a ativos.
 - Pagamentos usa os rótulos Com débito e Com crédito, preservando critérios e cálculos. Sem alteração de cadastros, banco ou permissões.
 
+## 3.2.0.432-av206 - AvantaVendas: relatório individual do cliente
+
+- Relatórios substitui Informações no menu, mantendo o ID e a posição personalizada do botão, em tons pretos. Informações antigas permanecem acessíveis por link.
+- Pesquisa reutiliza Clientes, com nome/telefone e A–Z. Ano e torres mensais controlam compras e pagamentos individuais, resumo por ano e ranking de produtos; sem escrita no financeiro.
+- Bonificações: quantidade e referência abrem popup com produto, data dd/mm/aaaa e quantidade; cada lançamento separado. Ausência de referência histórica é sinalizada, sem usar o preço atual do produto.
+- Impressão com opção de salvar PDF pelo navegador, sem serviço externo. Compras excluem consignados ativos/cancelados/bonificações; pagamentos seguem a data recebida e não incluem desconto como dinheiro.
+
