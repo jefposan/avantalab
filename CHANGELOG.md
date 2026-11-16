@@ -1,4 +1,4 @@
-## 3.2.0.438.01
+## 3.2.0.439
 
 - Vendas e Serviços: declaração TypeScript do contexto de acesso integrado, preservando a navegação pelo ID do perfil sem exigir CNPJ para abrir.
 

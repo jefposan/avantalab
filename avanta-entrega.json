@@ -1,6 +1,6 @@
 {
   "baseDeploymentId": "dpl_DqkzrNQJfwUVh6WjjgeUEzxpyWfs",
   "migrations": [],
-  "version": "3.2.0.438.01",
+  "version": "3.2.0.439",
   "scope": "Vendas e Serviços: navegação com cadastro fiscal pendente e tipagem do contexto"
 }

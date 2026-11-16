@@ -2942,4 +2942,4 @@ GUIAS["gestao-web"] += " Vendas e Serviços não está mais restrito à Tridium:
 
 GUIAS["gestao-web"] += " A navegação de Vendas e Serviços não depende de preencher CNPJ. O perfil autenticado e as permissões determinam o acesso; conclua o cadastro fiscal para emissão, sem usar dados de outra empresa.";
 
-// Revisado na versão 3.2.0.438.01: declaração de tipos do contexto; sem impacto operacional adicional.
+// Revisado na versão 3.2.0.439: declaração de tipos do contexto; sem impacto operacional adicional.

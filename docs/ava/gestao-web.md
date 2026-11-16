@@ -1,6 +1,6 @@
-<!-- ava-version: 3.2.0.438.01 -->
+<!-- ava-version: 3.2.0.439 -->
 
-> Revisão 3.2.0.438.01: sem impacto operacional adicional; declaração de tipos da correção de navegação.
+> Revisão 3.2.0.439: sem impacto operacional adicional; declaração de tipos da correção de navegação.
 
 > Revisão 3.2.0.438: Vendas e Serviços abre para o usuário autorizado mesmo sem CNPJ preenchido, usando o identificador do perfil. Complete o cadastro fiscal e o A1 próprio antes de emitir nota.
 
