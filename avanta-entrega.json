@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_29cyQRPNkhydNPibB3P7wvdyDBon",
+  "baseDeploymentId": "dpl_CQC7pKW73YjDGvjZ8snA2S1bVG9m",
   "migrations": [],
-  "version": "3.2.0.441",
-  "scope": "Vendas e Serviços: separar validação do cadastro da empresa e CFOP fiscal"
+  "version": "3.2.0.442",
+  "scope": "Vendas e Serviços: persistir endereço e dados da empresa no cadastro central"
 }

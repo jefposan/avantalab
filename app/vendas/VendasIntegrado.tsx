@@ -1,4 +1,5 @@
 'use client';
+import { COMPANY_PROFILE_SAVE_REQUEST, COMPANY_PROFILE_SAVE_RESPONSE, saveCompanyProfile } from './lib/company-profile-save.mjs';
 
 import { FISCAL_CHECKOUT_REQUEST_TYPE, FISCAL_CHECKOUT_RESPONSE_TYPE } from './lib/fiscal-checkout.mjs';
 import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
@@ -738,6 +739,24 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
           }
         };
         void publish();
+        return;
+      }
+      if (event.data?.type === COMPANY_PROFILE_SAVE_REQUEST) {
+        const port = event.ports[0];
+        if (!port || !requestIdValido(event.data?.requestId)) return;
+        const requestId = event.data.requestId;
+        const company = event.data.company;
+        const respond = (payload: Record<string, unknown>) => { port.postMessage({type:COMPANY_PROFILE_SAVE_RESPONSE, requestId, ...payload}); port.close(); };
+        void (async () => {
+          try {
+            const {data} = await supabase.auth.getSession();
+            const token=data.session?.access_token;
+            if (!token) throw new Error('Confirme novamente sua sessão na Gestão.');
+            const saved=await saveCompanyProfile({companyId:empresaId,company,token});
+            setPerfilCadastro(saved.cadastro);
+            respond({ok:true,message:'Dados da empresa salvos e confirmados pela Gestão.',company:saved.company});
+          } catch(cause) { respond({ok:false,message:cause instanceof Error ? cause.message : 'Não foi possível salvar os dados da empresa.'}); }
+        })();
         return;
       }
       if (event.data?.type === FISCAL_PROFILE_SAVE_REQUEST_TYPE) {

@@ -1,3 +1,9 @@
+## 3.2.0.442 — Vendas e Serviços: persistir dados da empresa
+
+- Conecta a edição de empresa ao cadastro central autenticado; endereço e identificação deixam de ser descartados pelo salvamento de configurações fiscais.
+- Preserva dados não editados do perfil, confirma por releitura e mantém o formulário aberto em falha, com estado de salvamento.
+- Sem migração, alteração de permissões ou emissão fiscal.
+
 ## 3.2.0.441 — Vendas e Serviços: cadastro sem exigência de CFOP
 
 - Salvar Dados da empresa valida somente seus campos; pendências da matriz fiscal não bloqueiam esse cadastro.

@@ -25,7 +25,7 @@ export function isAllowedLocalManagementOrigin(origin, currentOrigin = '') {
   } catch { return false; }
 }
 
-function mapCompanyProfile(profile, companyId) {
+export function mapCompanyProfile(profile, companyId) {
   if (!profile || typeof profile !== 'object' || text(profile.empresa_id) !== companyId) return null;
   return {
     name: text(profile.nome_fantasia),

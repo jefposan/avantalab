@@ -2949,3 +2949,6 @@ GUIAS["gestao-web"] += " Em Vendas e Serviços, Buscar CNPJ em Dados da empresa 
 
 // Revisão 3.2.0.441: separar cadastro e prontidão fiscal.
 GUIAS["gestao-web"] += " Salvar Dados da empresa em Vendas e Serviços valida somente os campos cadastrais. CFOP é configurado nas regras fiscais e conferido na emissão; sua ausência não impede salvar o cadastro da empresa.";
+
+// Revisão 3.2.0.442: confirmação da persistência cadastral.
+GUIAS["gestao-web"] += " Dados da empresa em Vendas e Serviços é salvo no cadastro central do perfil. A ação mostra Salvando e só fecha após confirmação do servidor e releitura. Em erro ou timeout, mantém o formulário. Não basta um aviso local para confirmar gravação; pode reabrir o cadastro para conferir endereço. A gravação mantém os campos do perfil que não aparecem nesse formulário e requer gestor ou administrador conforme autorização central.";

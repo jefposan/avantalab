@@ -37,3 +37,5 @@ export function mapManagementCatalogItem(item: Record<string, unknown>): Managem
 export function parseManagementCatalogMessage(data: unknown): ManagementCatalogBridge | null;
 export const MANAGEMENT_CATALOG_MESSAGE_TYPE: 'AVANTALAB_VENDAS_CATALOGO_V1';
 export const MANAGEMENT_CATALOG_READY_TYPE: 'AVANTALAB_VENDAS_CATALOGO_READY_V1';
+
+export function mapCompanyProfile(profile: Record<string, unknown>, companyId: string): ManagementCatalogBridge['company'];

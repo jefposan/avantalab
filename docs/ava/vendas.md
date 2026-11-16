@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.441 -->
+<!-- ava-version: 3.2.0.442 -->
+
+> Revisão 3.2.0.442: Sem impacto operacional adicional neste ambiente; persistência do cadastro corrigida na Gestão Web.
 
 > Revisão 3.2.0.441: Sem impacto operacional neste ambiente; validação cadastral corrigida na Gestão Web.
 

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.441 -->
+<!-- ava-version: 3.2.0.442 -->
+
+> Revisão 3.2.0.442: Dados da empresa em Vendas e Serviços grava no cadastro central com a sessão da Gestão e só fecha após confirmação por releitura. Em falha, conserva o formulário para nova tentativa. Os demais campos do perfil são preservados.
 
 > Revisão 3.2.0.441: Dados da empresa em Vendas e Serviços valida somente o cadastro; CFOP continua obrigatório nas regras fiscais e na emissão.
 
