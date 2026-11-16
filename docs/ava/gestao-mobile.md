@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.444 -->
+<!-- ava-version: 3.2.0.445 -->
+
+> Revisão 3.2.0.445: Sem impacto operacional neste ambiente; correção do fluxo de configurações fiscais na Gestão Web.
 
 > Revisão 3.2.0.444: Sem impacto operacional: revisão visual dos selos de Vendas e Serviços. Ícones e textos auxiliares não impõem dimensões aos selos; rótulos longos permanecem dentro do fundo, inclusive em telas pequenas.
 

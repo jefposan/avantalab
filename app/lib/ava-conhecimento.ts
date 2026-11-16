@@ -2958,3 +2958,6 @@ GUIAS["gestao-web"] += " O campo CNPJ mantém o foco ao digitar em Vendas e Serv
 GUIAS["gestao-mobile"] += " A consulta cadastral de CNPJ aguarda até 30 segundos, preservando os campos se houver falha.";
 
 // Revisão 3.2.0.444: sem impacto operacional; correção visual dos selos de Vendas e Serviços, preservando seus textos, estados e ações.
+
+// Revisão 3.2.0.445: retorno da numeração e validação das preferências fiscais.
+GUIAS["gestao-web"] += " Em Vendas e Serviços → Dados para emissão, Configurar série e numeração retorna ao card Configurações fiscais após salvar ou cancelar. Mantém o responsável, os tipos de nota e as marcações ainda não salvos. Salvar configurações fiscais não publica regras nem emite nota e não exige CFOP nessa tela; a publicação das regras fiscais e a emissão mantêm suas validações obrigatórias.";

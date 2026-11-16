@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.444 -->
+<!-- ava-version: 3.2.0.445 -->
+
+> Revisão 3.2.0.445: Em Dados para emissão, Configurar série e numeração suspende o card fiscal e retorna a ele após salvar ou cancelar, preservando responsável e marcações ainda não salvos. Salvar configurações fiscais valida somente as preferências; CFOP continua obrigatório na publicação de regras e na emissão.
 
 > Revisão 3.2.0.444: Sem impacto operacional: revisão visual dos selos de Vendas e Serviços. Ícones e textos auxiliares não impõem dimensões aos selos; rótulos longos permanecem dentro do fundo, inclusive em telas pequenas.
 

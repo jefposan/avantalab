@@ -1,3 +1,9 @@
+## 3.2.0.445 — Vendas e Serviços: retorno da numeração e preferências fiscais
+
+- Preserva o card fiscal e os campos não salvos ao abrir, salvar e fechar série/numeração; atualiza somente as séries confirmadas.
+- Preferências fiscais têm validação própria sem CFOP; publicação da matriz e emissão mantêm as exigências existentes.
+- Teste local com componentes reais e servidor simulado, sem alteração da numeração de produção. Sem migração ou mudança de permissões.
+
 ## 3.2.0.444 — Vendas e Serviços: selos com fundo ajustado ao texto
 
 - Auditoria dos 122 usos de Badge: 152 regras genéricas de span foram isoladas dos selos, incluindo breakpoints, sem alterar a geometria dos ícones.
