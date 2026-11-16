@@ -2939,3 +2939,5 @@ GUIAS["gestao-web"] += " Revisão local 3.2.0.430: AvantaPreços usa a referênc
 // Revisão 3.2.0.436-av210: Produtos mais comprados do relatório sempre inicia recolhido; tocar no título expande com a rolagem anterior. PDF, demais blocos e Gestão sem alteração.
 
 GUIAS["gestao-web"] += " Vendas e Serviços não está mais restrito à Tridium: disponível para perfis empresariais conforme plano, instalação e permissões. Em Módulos, instale Custos e Precificação e depois Vendas e Serviços. Não é instalado automaticamente. Para emitir NF-e, configure o cadastro fiscal e o certificado A1 do próprio CNPJ e confira sua série/numeração; não são copiados de outra empresa. O executor atual é NF-e de São Paulo; NFC-e e NFS-e não têm executor liberado.";
+
+GUIAS["gestao-web"] += " A navegação de Vendas e Serviços não depende de preencher CNPJ. O perfil autenticado e as permissões determinam o acesso; conclua o cadastro fiscal para emissão, sem usar dados de outra empresa.";

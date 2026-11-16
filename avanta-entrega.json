@@ -1,11 +1,6 @@
 {
-  "baseDeploymentId": "dpl_o9o3ctM2XxwZCGE4LB3MufmPsY92",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261116120000_vendas_liberacao_empresas.sql",
-      "sha256": "5bf5ea3a28a5313ab4ab08826251825cc279f986e90e25bfbd3f075a85efcdef"
-    }
-  ],
-  "version": "3.2.0.437",
-  "scope": "Vendas e Serviços: liberação geral empresarial com instalação e permissões preservadas"
+  "baseDeploymentId": "dpl_DqkzrNQJfwUVh6WjjgeUEzxpyWfs",
+  "migrations": [],
+  "version": "3.2.0.438",
+  "scope": "Vendas e Serviços: navegação pelo perfil autenticado sem exigir CNPJ para abrir"
 }

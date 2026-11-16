@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.437 -->
+<!-- ava-version: 3.2.0.438 -->
+
+> Revisão 3.2.0.438: Vendas e Serviços abre para o usuário autorizado mesmo sem CNPJ preenchido, usando o identificador do perfil. Complete o cadastro fiscal e o A1 próprio antes de emitir nota.
 
 > Revisão 3.2.0.437: Vendas e Serviços disponível a todos os perfis empresariais, conforme plano e permissões; instale Custos e Precificação antes de instalar Vendas. Emissão exige configuração fiscal, A1 do próprio CNPJ e numeração da empresa. Não herda certificado ou série de outro perfil.
 

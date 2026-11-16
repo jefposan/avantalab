@@ -83,7 +83,7 @@ import {
   accessDecisionMessage,
   coreProfileByModuleRole,
   evaluateAccessDecision,
-  normalizeAccessBoundary,
+  createCommercialUiAccessBoundary,
 } from '../lib/access-control.mjs';
 import { buildQuotePdf, quotePdfFileName, type QuotePdfInput } from '../lib/quote-pdf.mjs';
 import { buildServiceOrderPdf, serviceOrderPdfFileName, type ServiceOrderPdfInput } from '../lib/service-order-pdf.mjs';
@@ -5735,10 +5735,10 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     if (fiscalCertificateBridgeState.certificate?.certificateInstalled) return { title: 'Certificado em validação', detail: 'Produção bloqueada com segurança' };
     return { title: 'Fiscal não conectado', detail: 'Produção bloqueada com segurança' };
   }, [currentFiscalConfig.certificateValid, fiscalCertificateBridgeState.certificate?.certificateInstalled, fiscalCertificateBridgeState.execution?.statusServiceReady, fiscalCertificateBridgeState.execution?.transmissionAllowed, fiscalCertificateBridgeState.loading]);
-  const activeUser = moduleSettings.access.users.find((user) => user.id === activeUserId) ?? moduleSettings.access.users[0] ?? null;
+  const activeUser = moduleSettings.access.users.find((user) => user.id === activeUserId) ?? (integratedManagementRuntime ? null : moduleSettings.access.users[0] ?? null);
   const activeRole = moduleSettings.access.roles.find((role) => role.id === activeUser?.roleId) ?? null;
   const effectivePermissions = useMemo(() => resolveEffectivePermissions({ rolePermissions: activeRole?.permissions ?? [], overrides: activeUser?.overrides ?? {}, permissionIds: allPermissionIds }), [activeRole, activeUser]);
-  const accessBoundary = useMemo(() => normalizeAccessBoundary({ source: 'demo', userId: activeUser?.id ?? '', companyId: moduleSettings.company.document, moduleId: SALES_MODULE_ID, userActive: Boolean(activeUser?.active), membershipActive: Boolean(activeUser?.active), companyActive: true, moduleActive: true }), [activeUser, moduleSettings.company.document]);
+  const accessBoundary = useMemo(() => createCommercialUiAccessBoundary({ integrated: integratedManagementRuntime, companyId: managementCatalogBridge?.companyId || '', companyDocument: moduleSettings.company.document, user: activeUser, accessReady: managementContextReady }), [activeUser, integratedManagementRuntime, managementCatalogBridge?.companyId, moduleSettings.company.document, managementContextReady]);
   const accessDecision = (permission: string) => evaluateAccessDecision({ boundary: accessBoundary, effectivePermissions, permission });
   const can = (permission: string) => accessDecision(permission).allowed;
   const deny = (action: string, reason: Parameters<typeof accessDecisionMessage>[0]) => { setToast(`${activeUser?.name ?? 'Este usuário'} não pode ${action}. ${accessDecisionMessage(reason)}`); };

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.437 -->
+<!-- ava-version: 3.2.0.438 -->
+
+> Revisão 3.2.0.438: Sem impacto operacional neste ambiente; correção no acesso da Gestão Web.
 
 > Revisão 3.2.0.437: Sem impacto operacional: disponibilidade alterada somente no módulo Vendas e Serviços da Gestão Web.
 

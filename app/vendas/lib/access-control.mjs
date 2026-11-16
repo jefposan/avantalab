@@ -48,3 +48,14 @@ export function accessDecisionMessage(reason) {
   };
   return messages[reason] ?? 'Não foi possível confirmar o acesso para esta ação.';
 }
+
+// A identidade do perfil vem da Gestão; documento fiscal não é chave de acesso.
+export function createCommercialUiAccessBoundary({ integrated = false, companyId = '', companyDocument = '', user = null, accessReady = false } = {}) {
+  return normalizeAccessBoundary({
+    source: integrated ? 'authenticated' : 'demo', authenticated: integrated && accessReady,
+    userId: user?.id || '', companyId: integrated ? companyId : companyDocument,
+    moduleId: SALES_MODULE_ID, userActive: Boolean(user?.active),
+    membershipActive: Boolean(user?.active), companyActive: integrated ? accessReady : true,
+    moduleActive: integrated ? accessReady : true,
+  });
+}
