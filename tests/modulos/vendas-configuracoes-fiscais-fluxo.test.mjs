@@ -21,11 +21,11 @@ test('abrir numeração suspende o card pai sem limpar sua seção nem perder o 
  assert.match(source,/numberingOpen=\{fiscalNumberingOpen\}/);
 });
 test('ação real de salvar preferências chega ao salvamento sem validar a matriz fiscal',async()=>{
- const start=source.indexOf('  const save = async () => {',source.indexOf('function SettingsDialog('));const end=source.indexOf('  return <Dialog',start);
+ const start=source.indexOf('  const save = async () => {',source.indexOf('function SettingsDialog('));const end=source.indexOf('  return <>',start);
  const action=source.slice(start,end).replace(' as ModuleSettings','');let saved=0,error;
- const run=new Function('saving','draft','defaultModuleSettings','normalizeModuleSettings','section','validateCompanyProfile','validateFiscalSettingsForm','validateModuleSettings','setError','onSaveCompany','onSave',action+';return save();');
- await run(false,draft,{},x=>x,'fiscal',()=>assert.fail('cadastro da empresa fora de escopo'),validateFiscalSettingsForm,()=>assert.fail('não deve validar matriz fiscal'),e=>error=e,undefined,()=>saved++);
- assert.equal(saved,1);assert.equal(error,undefined);
+ const run=new Function('saving','draft','defaultModuleSettings','normalizeModuleSettings','section','validateCompanyProfile','validateFiscalSettingsForm','validateModuleSettings','setError','onSaveCompany','onSave','setSaving','onClose',action+';return save();');
+ await run(false,draft,{},x=>x,'fiscal',()=>assert.fail('cadastro da empresa fora de escopo'),validateFiscalSettingsForm,()=>assert.fail('não deve validar matriz fiscal'),e=>error=e,undefined,()=>{saved++;return true;},()=>{},()=>{});
+ assert.equal(saved,1);assert.equal(error,'');
 });
 test('ação real de salvar numeração só fecha após confirmação; falha mantém a edição',async()=>{
  const start=source.indexOf('  const saveRemote = async () => {',source.indexOf('function FiscalNumberingDialog('));const end=source.indexOf('  const [voidOpen',start);const action=source.slice(start,end);

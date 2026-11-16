@@ -1,3 +1,4 @@
+// Revisão 3.2.0.448: popup central Salvando configurações permanece até confirmação e devolve erro ao formulário preservado; salvar configurações aguarda confirmação, conserva edição em falha e não inclui regras gerais nos novos modelos; regras gerais renomeadas para operações não previstas; consumidor final com destino Qualquer inclui fora da UF.
 // Revisão 3.2.0.447: regras fiscais com nomes completos e tooltip padrão; sem alteração de procedimento fiscal.
 // Revisão local 3.2.0.425: continuar pesquisa em outras lojas após descarte, com duas rodadas limitadas. Publicação pela main autorizada, em preparação.
 // Revisão local 3.2.0.424: ML primeiro; complemento web com IA apenas abaixo de três vendedores, validado na origem. Migração aplicada; publicação pela main autorizada, em preparação.

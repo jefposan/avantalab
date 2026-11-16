@@ -1,3 +1,11 @@
+## 3.2.0.448 — Vendas e Serviços: persistir tipos de nota e remover modelos gerais
+
+- Remove regras gerais dos novos modelos. Regras existentes são preservadas e seus nomes originais passam a Regra para operações não previstas.
+- Corrige atualização SQL de perfis fiscais existentes, mantendo versão concorrente e isolamento por empresa. Teste PostgreSQL cobre desativação e releitura.
+- Popup central oficial “Salvando configurações” bloqueia interação durante envio, preserva o card de preenchimento e fecha apenas ao concluir; falha apresenta o erro no card.
+- Salvamento aguarda confirmação da Gestão antes de fechar ou persistir localmente. Não definido passa a um documento habilitado no pedido protegido; falha mantém o formulário e as escolhas.
+- Confirma por teste que consumidor final com destino Qualquer atende dentro e fora da UF. Nenhuma mudança de condições, CFOP, prioridade, revisão ou ativação.
+
 ## 3.2.0.447 — Vendas e Serviços: nomes completos nas regras fiscais
 
 - Amplia a lista à esquerda e ajusta o editor à direita, com títulos em múltiplas linhas sem reticências.

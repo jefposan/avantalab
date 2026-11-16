@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.447 -->
+<!-- ava-version: 3.2.0.448 -->
+
+> Revisão 3.2.0.448: Popup central Salvando configurações mantém o preenchimento ao fundo durante gravação; erro retorna ao card com os dados. Configurações fiscais aguardam confirmação da Gestão para fechar; falhas mantêm a edição. Desativar NFC-e/NFS-e preserva a escolha. Novos modelos não incluem regras gerais; regras existentes permanecem e seus nomes originais passam a Regra para operações não previstas. Consumidor final com destino Qualquer já abrange dentro e fora da UF; regras específicas prevalecem. Sem alteração de tributação ou procedimento.
 
 > Revisão 3.2.0.447: Sem impacto operacional: lista de regras fiscais mais larga, nomes completos e tooltip padrão acessível pelo teclado.
 

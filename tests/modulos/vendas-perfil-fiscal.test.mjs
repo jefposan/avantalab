@@ -81,3 +81,24 @@ test('AvantaVendas e Conteúdo AvantaVendas permanecem fora da emissão fiscal',
   assert.match(manual, /Este aplicativo\s+> não emite NF-e, NFC-e nem NFS-e/i);
   assert.match(manual, /Vendas e Serviços da Gestão Web/i);
 });
+
+test('repositório real atualiza perfil existente e relê NFC-e e NFS-e desativadas, recusando versão antiga',async()=>{
+ const {PGlite}=await import('@electric-sql/pglite');
+ const {createPostgresCommercialFiscalProfileRepository}=await import('../../app/vendas/lib/server/commercial-fiscal-profile.mjs');
+ const db=new PGlite();
+ try{
+  await db.exec(`create table public.vendas_fiscal_perfis(empresa_id uuid primary key,documentos_habilitados text[],documento_padrao text,ambiente_fiscal text,versao int,atualizado_por uuid,atualizado_em timestamptz default now());
+  create function bump_profile_version() returns trigger language plpgsql as $$begin new.versao=old.versao+1;return new;end$$;
+  create trigger bump before update on public.vendas_fiscal_perfis for each row execute function bump_profile_version();`);
+  const repository=createPostgresCommercialFiscalProfileRepository({pool:db});
+  const service=createCommercialFiscalProfileService({repository});
+  const initial=await service.save({context,expectedVersion:0,input:{documentScope:['nfe','nfce','nfse'],defaultDocument:'nfe',environment:'homologacao'}});
+  assert.equal(initial.ok,true);
+  const saved=await service.save({context,expectedVersion:initial.profile.version,input:{documentScope:['nfe'],defaultDocument:'nfe',environment:'homologacao'}});
+  assert.equal(saved.ok,true);assert.equal(saved.profile.version,2);
+  assert.deepEqual((await service.get({context})).profile.documentScope,['nfe']);
+  const stale=await service.save({context,expectedVersion:1,input:{documentScope:['nfe','nfce','nfse'],defaultDocument:'nfe',environment:'homologacao'}});
+  assert.equal(stale.ok,false);assert.equal(stale.errors[0].code,'AV-FISCAL-PROFILE-CONFLICT');
+  assert.deepEqual((await service.get({context})).profile.documentScope,['nfe']);
+ }finally{await db.close();}
+});

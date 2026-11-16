@@ -13,9 +13,7 @@ const baselineRules = [
   { id: 'nfe-venda-interna-contribuinte', name: 'NF-e · venda interna para contribuinte', documentType: 'nfe', priority: 10, operation: 'Venda', destination: 'Dentro da UF', recipientProfile: 'Contribuinte ICMS', consumerFinal: 'Qualquer', presence: 'Qualquer', issuePurpose: 'Normal', operationNature: 'Venda de mercadoria dentro da UF', cfopOverride: '', serviceIncidenceMode: 'Não aplicável', requiresStateRegistration: true, requiresMunicipalIncidence: false, active: true, reviewed: false },
   { id: 'nfe-venda-interestadual-contribuinte', name: 'NF-e · venda interestadual para contribuinte', documentType: 'nfe', priority: 20, operation: 'Venda', destination: 'Fora da UF', recipientProfile: 'Contribuinte ICMS', consumerFinal: 'Qualquer', presence: 'Qualquer', issuePurpose: 'Normal', operationNature: 'Venda de mercadoria para outra UF', cfopOverride: '', serviceIncidenceMode: 'Não aplicável', requiresStateRegistration: true, requiresMunicipalIncidence: false, active: true, reviewed: false },
   { id: 'nfe-venda-consumidor-final', name: 'NF-e · venda para consumidor final', documentType: 'nfe', priority: 30, operation: 'Venda', destination: 'Qualquer', recipientProfile: 'Qualquer', consumerFinal: 'Sim', presence: 'Qualquer', issuePurpose: 'Normal', operationNature: 'Venda de mercadoria para consumidor final', cfopOverride: '', serviceIncidenceMode: 'Não aplicável', requiresStateRegistration: false, requiresMunicipalIncidence: false, active: true, reviewed: false },
-  { id: 'nfe-regra-geral', name: 'NF-e · regra geral de segurança', documentType: 'nfe', priority: 900, operation: 'Qualquer', destination: 'Qualquer', recipientProfile: 'Qualquer', consumerFinal: 'Qualquer', presence: 'Qualquer', issuePurpose: 'Normal', operationNature: 'Operação de saída a revisar', cfopOverride: '', serviceIncidenceMode: 'Não aplicável', requiresStateRegistration: false, requiresMunicipalIncidence: false, active: true, reviewed: false },
   { id: 'nfce-venda-presencial', name: 'NFC-e · venda presencial ao consumidor', documentType: 'nfce', priority: 10, operation: 'Venda', destination: 'Dentro da UF', recipientProfile: 'Qualquer', consumerFinal: 'Sim', presence: 'Presencial', issuePurpose: 'Normal', operationNature: 'Venda presencial ao consumidor', cfopOverride: '', serviceIncidenceMode: 'Não aplicável', requiresStateRegistration: false, requiresMunicipalIncidence: false, active: true, reviewed: false },
-  { id: 'nfce-regra-geral', name: 'NFC-e · regra geral de segurança', documentType: 'nfce', priority: 900, operation: 'Qualquer', destination: 'Qualquer', recipientProfile: 'Qualquer', consumerFinal: 'Sim', presence: 'Qualquer', issuePurpose: 'Normal', operationNature: 'Venda ao consumidor a revisar', cfopOverride: '', serviceIncidenceMode: 'Não aplicável', requiresStateRegistration: false, requiresMunicipalIncidence: false, active: true, reviewed: false },
   { id: 'nfse-prestacao-servico', name: 'NFS-e · prestação de serviço', documentType: 'nfse', priority: 10, operation: 'Prestação de serviço', destination: 'Não aplicável', recipientProfile: 'Não aplicável', consumerFinal: 'Não aplicável', presence: 'Não aplicável', issuePurpose: 'Normal', operationNature: 'Prestação de serviço', cfopOverride: '', serviceIncidenceMode: 'Herdar do serviço', requiresStateRegistration: false, requiresMunicipalIncidence: true, active: true, reviewed: false },
 ];
 
@@ -32,7 +30,9 @@ function normalizeRule(rule, index) {
     ...fallback,
     ...source,
     id: String(source.id || `${documentType}-regra-${index + 1}`).trim(),
-    name: String(source.name || '').trim(),
+    name: ['nfe-regra-geral', 'nfce-regra-geral'].includes(source.id)
+      && String(source.name || '').trim() === `${source.documentType === 'nfce' ? 'NFC-e' : 'NF-e'} · regra geral de segurança`
+      ? `${source.documentType === 'nfce' ? 'NFC-e' : 'NF-e'} · regra para operações não previstas` : String(source.name || '').trim(),
     documentType,
     priority: Math.max(1, Math.min(999, Number(source.priority) || fallback.priority || 100)),
     operation: String(source.operation || 'Qualquer'),

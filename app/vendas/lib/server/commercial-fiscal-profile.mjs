@@ -44,13 +44,19 @@ export function createPostgresCommercialFiscalProfileRepository({ pool } = {}) {
     },
     async save({ companyId, actorId, expectedVersion, profile }) {
       const result = await pool.query(`
-        insert into public.vendas_fiscal_perfis(empresa_id,documentos_habilitados,documento_padrao,ambiente_fiscal,versao,atualizado_por)
-        select $1,$2::text[],$3,$4,1,$5 where $6=0
-        on conflict (empresa_id) do update set
-          documentos_habilitados=excluded.documentos_habilitados,documento_padrao=excluded.documento_padrao,
-          ambiente_fiscal=excluded.ambiente_fiscal,atualizado_por=excluded.atualizado_por
-        where public.vendas_fiscal_perfis.versao=$6
-        returning *
+        with updated as (
+          update public.vendas_fiscal_perfis set
+            documentos_habilitados=$2::text[],documento_padrao=$3,
+            ambiente_fiscal=$4,atualizado_por=$5
+          where empresa_id=$1 and versao=$6 and $6>0
+          returning *
+        ), inserted as (
+          insert into public.vendas_fiscal_perfis(empresa_id,documentos_habilitados,documento_padrao,ambiente_fiscal,versao,atualizado_por)
+          select $1,$2::text[],$3,$4,1,$5 where $6=0
+          on conflict (empresa_id) do nothing
+          returning *
+        )
+        select * from updated union all select * from inserted
       `, [companyId, profile.documentScope, profile.defaultDocument, profile.environment, actorId, expectedVersion]);
       if (!result.rows[0]) throw coded('AV-FISCAL-PROFILE-CONFLICT');
       return mapRow(result.rows[0]);

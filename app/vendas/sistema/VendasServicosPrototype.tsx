@@ -4988,7 +4988,7 @@ function splitTeam(value: string) {
   return [...new Set(value.split(/[\n,;]/).map((item) => item.trim()).filter(Boolean))];
 }
 
-function SettingsDialog({ section, settings, onClose, onSave, onSaveCompany, onOpenNumbering, suspended = false }: { section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => void; onSaveCompany?: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onOpenNumbering?: () => void; suspended?: boolean }) {
+function SettingsDialog({ section, settings, onClose, onSave, onSaveCompany, onOpenNumbering, suspended = false }: { section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany?: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onOpenNumbering?: () => void; suspended?: boolean }) {
   const [draft, setDraft] = useState(settings);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -4998,6 +4998,7 @@ function SettingsDialog({ section, settings, onClose, onSave, onSaveCompany, onO
   const cnpjRequest = useRef(0);
   useEffect(() => { cnpjRequest.current += 1; setSearching(null); setLookup(null); return () => { cnpjRequest.current += 1; }; }, [section, settings]);
   useEffect(() => {
+    if (saving) return;
     if (suspended || preserveDraftRef.current) {
       preserveDraftRef.current = suspended;
       setDraft(current => mergeSettingsNumbering(current, settings));
@@ -5106,9 +5107,14 @@ function SettingsDialog({ section, settings, onClose, onSave, onSaveCompany, onO
       finally { setSaving(false); }
       return;
     }
-    onSave(normalized);
+    setSaving(true); setError('');
+    try {
+      if (await onSave(normalized)) onClose();
+      else setError('Não foi possível confirmar a gravação. Confira e tente novamente.');
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível salvar as configurações.'); }
+    finally { setSaving(false); }
   };
-  return <Dialog open={!suspended} title={titles[section][0]} description={titles[section][1]} onClose={() => { if (!saving) onClose(); }}>
+  return <><div inert={saving} aria-hidden={saving || undefined}><Dialog open={!suspended} title={titles[section][0]} description={titles[section][1]} onClose={() => { if (!saving) onClose(); }}>
     <div className="dialog-body settings-dialog-body" inert={saving} aria-busy={saving}>
       {section === 'empresa' && <div className="settings-form-stack">
         <section className="settings-form-section"><div className="client-section-heading"><h3>Identificação da empresa</h3><p>O CNPJ inicia o cadastro e pode preencher os demais dados disponíveis.</p></div><div className="form-grid">
@@ -5193,7 +5199,9 @@ function SettingsDialog({ section, settings, onClose, onSave, onSaveCompany, onO
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>
     <footer className="dialog-footer"><BotaoAcaoCompacto type="button" variante="secundario" onClick={onClose} disabled={saving}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto type="button" variante="primario" onClick={save} disabled={saving}>{saving ? 'Salvando…' : 'Salvar configurações'}</BotaoAcaoCompacto></footer>
-  </Dialog>;
+  </Dialog></div>
+    <ModalConfirmacao aberto={saving} titulo="Salvando configurações" rotuloCabecalho="Configurações" mensagem="" variante="primaria" carregando mostrarProgresso centralizarTexto ocultarCancelar corPrimaria="var(--av-profile-primary, #003E73)" textoSobreCorPrimaria="var(--av-profile-on-primary, #fff)" aoCancelar={() => {}} aoConfirmar={() => {}}/>
+  </>;
 }
 
 const fiscalDocumentLabels: Record<FiscalMatrixRule['documentType'], string> = { nfe: 'NF-e', nfce: 'NFC-e', nfse: 'NFS-e' };
@@ -5611,7 +5619,7 @@ type SettingsTarget = SettingsSection | 'acessos' | 'matriz' | 'certificado' | n
 type SettingsGroupId = 'empresa-notas' | 'operacao' | 'equipe-acessos' | 'integracoes';
 type SettingsItem = { title: string; description: string; icon: IconName; status: string; target: SettingsTarget };
 
-function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveCompany, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate, onOpenNumbering, numberingOpen = false }: { settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => void; onSaveCompany: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void; onOpenNumbering?: () => void; numberingOpen?: boolean }) {
+function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveCompany, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate, onOpenNumbering, numberingOpen = false }: { settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void; onOpenNumbering?: () => void; numberingOpen?: boolean }) {
   const [section, setSection] = useState<SettingsSection | null>(null);
   const [accessOpen, setAccessOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
@@ -5669,7 +5677,7 @@ function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAc
         return <button type="button" key={title} onClick={() => openTarget(target)} disabled={unavailable} title={!target ? 'Disponível quando a integração for conectada' : unavailable ? 'Seu perfil não permite alterar este ajuste' : undefined}><span><Icon name={icon}/></span><div><strong>{title}</strong><small>{description}</small><Badge tone={unavailable ? 'neutral' : attention ? 'warning' : 'neutral'}>{unavailable && target ? 'Sem acesso' : status}</Badge></div><Icon name={!unavailable ? 'chevron' : 'clock'} size={17}/></button>;
       })}</div>
     </section>
-    <SettingsDialog onSaveCompany={onSaveCompany} suspended={numberingOpen} onOpenNumbering={onOpenNumbering} section={section} settings={settings} onClose={() => setSection(null)} onSave={(next) => { onSave(next); setSection(null); }}/>
+    <SettingsDialog onSaveCompany={onSaveCompany} suspended={numberingOpen} onOpenNumbering={onOpenNumbering} section={section} settings={settings} onClose={() => setSection(null)} onSave={onSave}/>
     <FiscalMatrixDialog open={matrixOpen} matrix={settings.fiscal.matrix} documentScope={settings.fiscal.documentScope} taxReviewConfirmed={settings.fiscal.taxReviewConfirmed} taxReformReviewConfirmed={settings.fiscal.taxReformReviewConfirmed} bridge={fiscalRulesBridge} readOnly={!canConfigureFiscal || (fiscalRulesBridge.integrated && !fiscalRulesBridge.writable)} onClose={() => setMatrixOpen(false)} onSave={onSaveFiscalMatrix}/>
     <AccessSettingsDialog open={accessOpen} settings={settings} bridge={accessBridge} readOnly={!canManageAccess || (accessBridge.integrated && !accessBridge.writable)} onClose={() => setAccessOpen(false)} onSave={(next) => { onSaveAccess(next); setAccessOpen(false); }}/>
   </>;
@@ -5755,7 +5763,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const pendingOperationSaveRef = useRef(new Map<string, { recordId: string; timer: number; previous?: CreatedRecord }>());
   const pendingAccessSaveRef = useRef(new Map<string, number>());
   const pendingFiscalRulesSaveRef = useRef(new Map<string, number>());
-  const pendingFiscalProfileSaveRef = useRef(new Map<string, number>());
+  const pendingFiscalProfileSaveRef = useRef(new Map<string, { timer: number; resolve: (ok: boolean) => void; reject: (cause: Error) => void }>());
   const stockAttentionCount = catalogRecords.filter((item) => item.category !== 'Serviço' && item.trackStock && stockStatus(item.available, item.minimum) !== 'normal').length;
   const receivableOpenCount = receivableRecords.filter((item) => receivableBalance(item) > 0).length;
   const salesRecordCount = created.filter((item) => ['orcamento', 'pedido', 'venda'].includes(item.type)).length;
@@ -6010,15 +6018,16 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       }
       const fiscalProfileSave = parseFiscalProfileSaveResponse(event.data);
       if (fiscalProfileSave) {
-        const timer = pendingFiscalProfileSaveRef.current.get(fiscalProfileSave.requestId);
-        if (!timer) return;
-        window.clearTimeout(timer);
+        const pending = pendingFiscalProfileSaveRef.current.get(fiscalProfileSave.requestId);
+        if (!pending) return;
+        window.clearTimeout(pending.timer);
         pendingFiscalProfileSaveRef.current.delete(fiscalProfileSave.requestId);
         if (fiscalProfileSave.ok && fiscalProfileSave.profile) {
           setFiscalProfileBridgeState((current) => ({ ...current, available: true, writable: true, loading: false, message: fiscalProfileSave.message, profile: fiscalProfileSave.profile }));
           setModuleSettings((current) => normalizeModuleSettings({ ...current, commercial: { ...current.commercial, defaultFiscalDocument: fiscalProfileSave.profile?.defaultDocument || 'nenhum' }, fiscal: { ...current.fiscal, documentScope: fiscalProfileSave.profile?.documentScope || current.fiscal.documentScope } }, defaultModuleSettings) as ModuleSettings);
         } else setFiscalProfileBridgeState((current) => ({ ...current, loading: false, message: fiscalProfileSave.message }));
-        if (!fiscalProfileSave.ok) setToast(fiscalProfileSave.message);
+        if (!fiscalProfileSave.ok) { setToast(fiscalProfileSave.message); pending.reject(new Error(fiscalProfileSave.message)); }
+        else pending.resolve(true);
         return;
       }
       const fiscalRulesSnapshot = parseFiscalRulesSnapshot(event.data);
@@ -6392,7 +6401,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     pendingAccessSaveRef.current.clear();
     pendingFiscalRulesSaveRef.current.forEach((timer) => window.clearTimeout(timer));
     pendingFiscalRulesSaveRef.current.clear();
-    pendingFiscalProfileSaveRef.current.forEach((timer) => window.clearTimeout(timer));
+    pendingFiscalProfileSaveRef.current.forEach((pending) => { window.clearTimeout(pending.timer); pending.resolve(false); });
     pendingFiscalProfileSaveRef.current.clear();
   }, []);
 
@@ -6595,7 +6604,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       window.parent.postMessage({type:COMPANY_PROFILE_SAVE_REQUEST,requestId,company},managementBridgeOrigin,[channel.port2]);
     });
   };
-  const saveModuleSettings = (next: ModuleSettings) => {
+  const saveModuleSettings = async (next: ModuleSettings): Promise<boolean> => {
     if (!authorize('settings.edit', 'editar as configurações do sistema')) return false;
     const candidate = normalizeModuleSettings(next, defaultModuleSettings) as ModuleSettings;
     // No acesso integrado, o cadastro do perfil é a única fonte do emitente.
@@ -6603,8 +6612,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const normalized = managementBridgeOrigin
       ? { ...candidate, company: moduleSettings.company }
       : candidate;
-    setModuleSettings(normalized);
-    writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: normalized.company.document.replace(/\D/g, ''), module: 'vendas-servicos', settings: normalized }));
     if (managementBridgeOrigin && window.parent !== window) {
       if (!fiscalProfileBridgeState.available || !fiscalProfileBridgeState.writable) {
         setToast(fiscalProfileBridgeState.message || 'A configuração fiscal protegida ainda não está disponível.');
@@ -6615,21 +6622,27 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         requestId,
         expectedVersion: fiscalProfileBridgeState.profile?.version ?? 0,
         documentScope: normalized.fiscal.documentScope,
-        defaultDocument: normalized.commercial.defaultFiscalDocument,
+        defaultDocument: normalized.fiscal.documentScope.includes(normalized.commercial.defaultFiscalDocument as FiscalDocumentType) ? normalized.commercial.defaultFiscalDocument : normalized.fiscal.documentScope[0],
         environment: normalized.fiscal.environment,
       });
       if (!request) { setToast('Revise os tipos de nota utilizados pela empresa.'); return false; }
+      const confirmed = await new Promise<boolean>((resolve, reject) => {
       const timer = window.setTimeout(() => {
         pendingFiscalProfileSaveRef.current.delete(requestId);
         setFiscalProfileBridgeState((current) => ({ ...current, loading: false, message: 'A Gestão não confirmou a configuração no tempo esperado.' }));
         setToast('A Gestão não confirmou a configuração fiscal no tempo esperado.');
+        reject(new Error('A Gestão não confirmou a gravação. Confira e tente novamente.'));
       }, 20_000);
-      pendingFiscalProfileSaveRef.current.set(requestId, timer);
+      pendingFiscalProfileSaveRef.current.set(requestId, {timer, resolve, reject});
       setFiscalProfileBridgeState((current) => ({ ...current, loading: true, message: 'Salvando os documentos fiscais no perfil…' }));
       window.parent.postMessage(request, managementBridgeOrigin);
       setToast('Salvando os documentos fiscais no perfil empresarial…');
-      return true;
+      });
+      if (!confirmed) return false;
+      normalized.commercial.defaultFiscalDocument = request.defaultDocument;
     }
+    setModuleSettings(normalized);
+    writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: normalized.company.document.replace(/\D/g, ''), module: 'vendas-servicos', settings: normalized }));
     setToast('Configurações do módulo salvas e aplicadas aos novos lançamentos.');
     return true;
   };
@@ -8093,7 +8106,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     <CertificateDigitalDialog open={certificateOpen} company={moduleSettings.company} bridge={fiscalCertificateBridgeState} onClose={() => setCertificateOpen(false)} onRequestCompanyRegistration={() => { setCertificateOpen(false); setCompanyRegistrationOpen(true); }} onInstall={installProtectedCertificate} onActivate={activateProtectedCertificate} productionStatusAvailable={Boolean(managementCatalogBridge?.companyId)}/>
     <ClientFormDialog priceTables={realFiscalEditor?.priceTables} open={clientCreateOpen} client={null} clientRecords={clientRecords} sellers={moduleSettings.commercial.sellers} defaultSeller={moduleSettings.commercial.defaultSeller} connected={Boolean(managementCatalogBridge)} onClose={() => setClientCreateOpen(false)} onSave={saveClient}/>
     <SupplierFormDialog open={supplierCreateOpen} suppliers={supplierRecords} onClose={() => setSupplierCreateOpen(false)} onSave={saveSupplier}/>
-    <SettingsDialog onSaveCompany={saveCompanyRegistration} section={companyRegistrationOpen ? 'empresa' : null} settings={moduleSettings} onClose={() => { setCompanyRegistrationOpen(false); setCertificateOpen(true); }} onSave={(next) => { if (!saveModuleSettings(next)) return; setCompanyRegistrationOpen(false); setCertificateOpen(true); }}/>
+    <SettingsDialog onSaveCompany={saveCompanyRegistration} section={companyRegistrationOpen ? 'empresa' : null} settings={moduleSettings} onClose={() => { setCompanyRegistrationOpen(false); setCertificateOpen(true); }} onSave={saveModuleSettings}/>
     {toast && <div className={`toast ${toastTone}`} role={toastTone === 'error' ? 'alert' : 'status'}><Icon name={toastTone === 'error' ? 'warning' : 'document'} size={18}/><span>{toast}</span><button type="button" onClick={() => setToast('')} aria-label="Fechar mensagem"><Icon name="close" size={16}/></button></div>}
   </div></PermissionContext.Provider>;
 }
