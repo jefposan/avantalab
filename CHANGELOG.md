@@ -14964,3 +14964,9 @@ Publicação confirmada das revisões 3.2.0.110–112: READY/PROMOTED nos domín
 - Seletor azul suave com ícone, identificação, seta e X independente, adaptado aos temas claro/escuro. Nome não é repetido fora do seletor.
 - X limpa somente cliente/pesquisa/mês da tela, preserva o ano e oculta os relatórios; lista fica recolhida até novo acionamento ou busca. Nenhum cadastro ou lançamento é excluído.
 
+## 3.2.0.434-av208 - AvantaVendas: rolagem do ranking e PDF real
+
+- Ranking de produtos limitado à viewport: primeiro alinha o card abaixo do header, depois rola a lista; título e recolher permanecem acessíveis. Mede header, área central e rodapé, trata resize/teclado e limpa eventos ao sair.
+- Substitui impressão em popup por geração local de PDF real paginado. Biblioteca pdf-lib já utilizada no projeto é disponibilizada com licença e carregada apenas ao gerar. Compartilhar usa arquivo preparado e gesto direto, com ponte nativa existente ou Web Share; download separado.
+- Previne clique duplicado, cancela exibição se o contexto mudar e preserva cancelamento do compartilhamento. Sem dados externos, alteração financeira ou backend. Publicação autorizada, com promoção condicionada ao build completo aprovado.
+

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.433 -->
+<!-- ava-version: 3.2.0.434 -->
+
+> Revisão 3.2.0.434-av208: Produtos mais comprados tem área limitada à altura disponível. Ao rolar sobre a lista, a página sobe primeiro até o card chegar abaixo do header; depois a lista rola internamente mantendo o título/recolher acessível. Pode recolher sem voltar a lista ao início. Gerar PDF cria arquivo application/pdf no dispositivo, com paginação, compras/pagamentos mensais, resumo anual, produtos e bonificações. Após gerar, Compartilhar PDF reutiliza a ponte nativa quando disponível ou o compartilhamento Web; Baixar PDF inicia download no navegador. Não depende de window.print ou de janela em branco. Disponibilidade de salvar/compartilhar depende do navegador/binário instalado; cancelamento não baixa outro arquivo. Sem mudança de dados ou backend. Publicação autorizada, condicionada ao build completo aprovado.
 
 > Revisão 3.2.0.433-av207: seletor do Relatório do cliente destacado em azul suave. A seta abre a lista. O X à direita limpa seleção e pesquisa e oculta gráficos/totais, sem excluir o cadastro ou lançamentos. Ano permanece escolhido; buscar/selecionar novamente abre outro relatório.
 
@@ -1014,7 +1016,7 @@ Revisão 3.2.0.98: correção do extrator de preços do Web/AvantaPreços; sem i
 > Revisão 3.1.0.45: card compacto de Produtos e estoque no Marketplaces Web; sem impacto operacional no AvantaVendas. Menu av188, dados e preferências preservados. Local, não publicado.
 
 > Revisão 3.1.0.44: configurações, referência editável e sugestões do Marketplaces/AvantaPreços; sem impacto operacional no AvantaVendas independente. Menu av188 e suas preferências permanecem intactos. Local, não publicado.
-<!-- avantavendas-asset-revision: 207 -->
+<!-- avantavendas-asset-revision: 208 -->
 
 > Revisão 3.1.0.43-av188: o topo do menu inferior tem linha fina azul-ciano que desliza até o botão acionado, no padrão da Gestão Mobile (2 px, 300 ms). O indicador acompanha atalhos personalizados, Início, Configurações, mudança de tema e Lançar, sem atrasar ações. Ao navegar por outras áreas, volta a indicar o destino representado no menu, ou Início quando não houver atalho correspondente. A preferência de movimento reduzido desativa o deslizamento. Círculo continua removido e resposta tátil opcional preservada. Sem alteração de dados, permissões ou fluxo da Gestão. Testado em Chrome isolado, não em aparelhos físicos. Local, não publicado.
 

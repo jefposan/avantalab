@@ -2054,6 +2054,7 @@ function podePreservarSalaBotoes(assinatura) {
 }
 
 function render() {
+  limparRolagemProdutosRelatorio?.(); limparRolagemProdutosRelatorio = null;
   const areaPrincipalAnterior = app.querySelector('.main-area');
   const preservarRolagemConteudo = Boolean(
     window.matchMedia('(max-width: 850px)').matches
@@ -2165,6 +2166,7 @@ function render() {
   }
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
+  prepararRolagemProdutosRelatorio();
 }
 
 function abrirAssinaturaGestaoVendas() {
@@ -5393,17 +5395,148 @@ function abrirInformacoesDoRelatorio() {
   sheet(`<div class="sheet-header"><div><h2>Informações do aplicativo</h2></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar informações">${svgIcon('x')}</button></div>${renderInformacoesVendas()}`, 'sheet-backdrop-centered relatorio-bonus-backdrop');
 }
 
-function imprimirRelatorioCliente() {
-  const dados = dadosRelatorioCliente(relatorioClienteUI.id, relatorioClienteUI.ano);
+let bibliotecaPdfRelatorioPendente = null;
+let gerandoRelatorioPdf = false;
+
+function carregarBibliotecaPdfRelatorio() {
+  if (window.PDFLib) return Promise.resolve(window.PDFLib);
+  if (bibliotecaPdfRelatorioPendente) return bibliotecaPdfRelatorioPendente;
+  bibliotecaPdfRelatorioPendente = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    const falhar = () => { script.remove(); bibliotecaPdfRelatorioPendente = null; reject(new Error('Não foi possível preparar o PDF. Tente novamente.')); };
+    const timer = setTimeout(falhar, 30000);
+    script.src = './vendor/pdf-lib.min.js';
+    script.onload = () => { clearTimeout(timer); if (window.PDFLib) resolve(window.PDFLib); else falhar(); };
+    script.onerror = () => { clearTimeout(timer); falhar(); };
+    document.head.appendChild(script);
+  });
+  return bibliotecaPdfRelatorioPendente;
+}
+
+async function gerarBytesPdfRelatorioCliente(dados, ano, biblioteca) {
+  const { PDFDocument, StandardFonts, rgb } = biblioteca;
+  const doc = await PDFDocument.create();
+  const fonte = await doc.embedFont(StandardFonts.Helvetica);
+  const negrito = await doc.embedFont(StandardFonts.HelveticaBold);
+  const cor = rgb(.04,.12,.27);
+  let pagina, y;
+  const textoSeguro = v => Array.from(String(v ?? '')).map(c => { try { fonte.encodeText(c); return c; } catch { return '?'; } }).join('');
+  const novaPagina = () => { pagina = doc.addPage(); y = 790; pagina.drawText('AVANTAVENDAS - Relatório do cliente', { x:40,y,size:17,font:negrito,color:cor }); y -= 25; };
+  novaPagina();
+  const linha = (texto, forte = false) => {
+    const f = forte ? negrito : fonte;
+    let parte = '';
+    for (const c of textoSeguro(texto)) {
+      if (f.widthOfTextAtSize(parte + c, 10) > 510) { if (y < 55) novaPagina(); pagina.drawText(parte, {x:40,y,size:10,font:f,color:cor}); y -= 16; parte = ''; }
+      parte += c;
+    }
+    if (y < 55) novaPagina();
+    pagina.drawText(parte || ' ', {x:40,y,size:10,font:f,color:cor}); y -= 16;
+  };
+  const secao = titulo => { if (y < 95) novaPagina(); y -= 10; linha(titulo,true); };
+  linha(`${dados.cliente.nome} - Ano ${ano}`,true);
+  linha(`Compras: ${moeda(dados.compras / 100)} | Pagamentos: ${moeda(dados.pagamentos / 100)}`);
+  linha(`${dados.pedidos} pedidos | ${dados.numeroPagamentos} pagamentos | ${dados.unidades} unidades compradas`);
+  secao('Compras e pagamentos por mês');
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  dados.meses.forEach(m => linha(`${meses[m.mes]} | Compras ${moeda(m.compras / 100)} | Pagamentos ${moeda(m.pagamentos / 100)} | ${m.pedidos} pedidos`));
+  secao('Resumo por ano');
+  dados.anos.forEach(a => linha(`${a.ano} | Compras ${moeda(a.compras / 100)} | Pagamentos ${moeda(a.pagamentos / 100)}`));
+  secao('Produtos mais comprados');
+  if (!dados.produtos.length) linha('Nenhum produto comprado neste ano.');
+  dados.produtos.forEach(p => linha(`${p.nome} | ${p.quantidade} un. | Itens ${moeda(p.valor / 100)}`));
+  secao('Bonificações - por lançamento');
+  if (!dados.bonificacoes.length) linha('Nenhuma bonificação neste ano.');
+  dados.bonificacoes.forEach(b => linha(`${dataBR(b.data)} | ${b.produto} | ${b.quantidade} un. | ${b.valor === null ? 'Referência não registrada' : moeda(b.valor / 100)}`));
+  secao('Critérios');
+  linha('Bonificações, cancelamentos e consignados ativos não compõem as compras.');
+  linha('Valores dos itens antes do desconto geral. Pagamentos não incluem descontos como dinheiro.');
+  if (dados.referenciasAusentes) linha('Há bonificações sem valor de referência histórico registrado.');
+  doc.getPages().forEach((p,i) => p.drawText(`${i + 1} / ${doc.getPageCount()}`,{x:520,y:25,size:9,font:fonte,color:cor}));
+  return doc.save();
+}
+
+async function imprimirRelatorioCliente(botao = null) {
+  if (gerandoRelatorioPdf) return;
+  const idCliente = relatorioClienteUI.id, ano = relatorioClienteUI.ano, contexto = relatorioClienteUI.contexto;
+  const contaOrigem = `${state.usuario?.id || ''}:${state.contaVendasAtiva?.id || ''}`;
+  const dados = dadosRelatorioCliente(idCliente, ano);
   if (!dados.cliente) return;
-  const janela = window.open('', '_blank');
-  if (!janela) { toast('Não foi possível abrir o relatório para impressão. Tente pelo navegador.', { tipo: 'erro' }); return; }
-  const tabela = (titulo, cabecalho, linhas) => `<h2>${titulo}</h2><table><thead><tr>${cabecalho.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${linhas}</tbody></table>`;
-  const html = `<h1>Relatório do cliente</h1><p>${escapeHtml(dados.cliente.nome)} · ${relatorioClienteUI.ano}</p><p>Compras: ${moeda(dados.compras / 100)} · Pagamentos: ${moeda(dados.pagamentos / 100)} · ${dados.pedidos} pedidos</p>${tabela('Produtos mais comprados', ['Produto','Quantidade','Valor dos itens'], dados.produtos.map(p => `<tr><td>${escapeHtml(p.nome)}</td><td>${p.quantidade}</td><td>${moeda(p.valor / 100)}</td></tr>`).join(''))}${tabela('Bonificações', ['Produto','Data','Quantidade','Referência'], dados.bonificacoes.map(b => `<tr><td>${escapeHtml(b.produto)}</td><td>${escapeHtml(dataBR(b.data))}</td><td>${b.quantidade}</td><td>${b.valor === null ? 'Não registrado' : moeda(b.valor / 100)}</td></tr>`).join(''))}${tabela('Resumo por ano', ['Ano','Compras','Pagamentos'], dados.anos.map(a => `<tr><td>${a.ano}</td><td>${moeda(a.compras / 100)}</td><td>${moeda(a.pagamentos / 100)}</td></tr>`).join(''))}<p>Bonificações e consignados ativos não compõem as compras. Valores de itens antes do desconto geral do pedido. Impressão: escolha Salvar como PDF quando disponível.</p>`;
-  janela.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório do cliente</title><style>body{font:14px Arial;color:#0a1f44;padding:24px}h1{font-size:24px}h2{font-size:18px;margin-top:24px}table{width:100%;border-collapse:collapse}th,td{padding:8px;text-align:left;border-bottom:1px solid #ddd}p{line-height:1.5}@media print{tr{break-inside:avoid}thead{display:table-header-group}}</style></head><body>${html}</body></html>`);
-  janela.document.close();
-  janela.focus();
-  if (typeof janela.print === 'function') janela.print();
+  gerandoRelatorioPdf = true;
+  if (botao) { botao.disabled = true; botao.textContent = 'Gerando PDF…'; }
+  try {
+    const lib = await carregarBibliotecaPdfRelatorio();
+    const bytes = await gerarBytesPdfRelatorioCliente(dados,ano,lib);
+    if (relatorioClienteUI.id !== idCliente || relatorioClienteUI.ano !== ano || relatorioClienteUI.contexto !== contexto || contaOrigem !== `${state.usuario?.id || ''}:${state.contaVendasAtiva?.id || ''}`) return;
+    const nome = `relatorio-${nomeSeguroArquivoVendas(dados.cliente.nome)}-${ano}.pdf`;
+    const arquivo = new File([bytes],nome,{type:'application/pdf'});
+    sheet(`<div class="sheet-header"><div><h2>PDF pronto</h2><p class="muted small">${escapeHtml(dados.cliente.nome)} · ${ano}</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar PDF">${svgIcon('x')}</button></div><p>O relatório foi gerado em PDF.</p><div class="actions"><button type="button" class="primary" onclick="compartilharPdfRelatorioCliente(this)">Compartilhar PDF</button><button type="button" class="secondary" onclick="baixarPdfRelatorioCliente()">Baixar PDF</button></div>`, 'sheet-backdrop-centered');
+    document.getElementById('sheetBackdrop').__arquivoRelatorioPdf = arquivo;
+  } catch { toast('Não foi possível gerar o PDF. Tente novamente.', {tipo:'erro'}); }
+  finally { gerandoRelatorioPdf = false; if (botao?.isConnected) { botao.disabled = false; botao.textContent = 'Gerar PDF'; } }
+}
+
+async function compartilharPdfRelatorioCliente(botao) {
+  const arquivo = document.getElementById('sheetBackdrop')?.__arquivoRelatorioPdf;
+  if (!arquivo || botao.disabled) return;
+  botao.disabled = true;
+  try {
+    if (typeof window.__avantavendasCompartilharArquivos === 'function') await window.__avantavendasCompartilharArquivos({arquivos:[arquivo],titulo:'Relatório do cliente',tituloDialogo:'Compartilhar PDF'});
+    else if (navigator.share && (!navigator.canShare || navigator.canShare({files:[arquivo]}))) await navigator.share({files:[arquivo],title:'Relatório do cliente'});
+    else toast('Use Baixar PDF para salvar o relatório neste navegador.',{tipo:'informacao'});
+  } catch (error) { if (!compartilhamentoCanceladoDivulgacao(error)) toast('Não foi possível compartilhar o PDF. Tente baixar o arquivo.',{tipo:'erro'}); }
+  finally { if (botao.isConnected) botao.disabled = false; }
+}
+
+function baixarPdfRelatorioCliente() {
+  const arquivo = document.getElementById('sheetBackdrop')?.__arquivoRelatorioPdf;
+  if (arquivo) baixarArquivoGeradoVendas(arquivo,arquivo.name);
+}
+
+let limparRolagemProdutosRelatorio = null;
+
+function prepararRolagemProdutosRelatorio() {
+  limparRolagemProdutosRelatorio?.(); limparRolagemProdutosRelatorio = null;
+  const card = app.querySelector('.relatorio-produtos');
+  if (!card) return;
+  const lista = card.querySelector('.relatorio-conteudo');
+  const summary = card.querySelector('summary');
+  const area = card.closest('.content-area');
+  const controlador = new AbortController();
+  const opcoes = { signal: controlador.signal };
+  const scroller = () => area && getComputedStyle(area).overflowY === 'auto' ? area : document.scrollingElement;
+  const topo = () => {
+    const header = document.querySelector('.system-header')?.getBoundingClientRect().bottom || 0;
+    const teto = scroller() === area ? area.getBoundingClientRect().top : 0;
+    return Math.max(header,teto) + 8;
+  };
+  const medir = () => {
+    const altura = window.visualViewport?.height || window.innerHeight;
+    const fundoArea = scroller() === area ? area.getBoundingClientRect().bottom : altura;
+    const nav = document.querySelector('.vendas-bottom-nav')?.getBoundingClientRect();
+    const fundo = nav && nav.top > topo() ? Math.min(altura,fundoArea,nav.top) : Math.min(altura,fundoArea);
+    card.style.setProperty('--relatorio-produtos-altura', `${Math.max(summary.offsetHeight + 100, fundo - topo() - 12)}px`);
+    card.style.setProperty('--relatorio-produtos-header', `${summary.offsetHeight}px`);
+  };
+  const mover = delta => {
+    const externo = scroller();
+    if (!externo || !card.open) return false;
+    const distancia = card.getBoundingClientRect().top - topo();
+    if (delta > 0 && distancia > 1) { externo.scrollTop += Math.min(delta,distancia); return true; }
+    if (delta < 0 && lista.scrollTop <= 0) { externo.scrollTop += delta; return true; }
+    return false;
+  };
+  lista.addEventListener('wheel', e => { if (mover(e.deltaY)) e.preventDefault(); }, {...opcoes,passive:false});
+  let toque = null;
+  lista.addEventListener('touchstart', e => { toque = e.touches.length === 1 ? e.touches[0].clientY : null; }, {...opcoes,passive:true});
+  lista.addEventListener('touchmove', e => { if (toque === null || e.touches.length !== 1) return; const y = e.touches[0].clientY,delta = toque - y; toque = y; if (mover(delta) && e.cancelable) e.preventDefault(); }, {...opcoes,passive:false});
+  lista.addEventListener('touchend', () => { toque = null; }, opcoes);
+  lista.addEventListener('keydown', e => { if (['ArrowDown','PageDown','End'].includes(e.key)) { const distancia = card.getBoundingClientRect().top - topo(); if (distancia > 1) { scroller().scrollTop += distancia; e.preventDefault(); } } }, opcoes);
+  window.addEventListener('resize', medir, opcoes);
+  window.visualViewport?.addEventListener('resize',medir,opcoes);
+  card.addEventListener('toggle',medir,opcoes);
+  medir();
+  limparRolagemProdutosRelatorio = () => controlador.abort();
 }
 
 function renderRelatorioCliente() {
@@ -5421,13 +5554,13 @@ function renderRelatorioCliente() {
   const nomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const maximo = Math.max(1, ...dados.meses.map(m => m.compras));
   const selecionado = dados.meses[mes];
-  const bloco = (titulo, conteudo) => `<details class="dashboard-annual-report relatorio-bloco" open><summary>${titulo}${svgIcon('chevron-down')}</summary><div class="relatorio-conteudo">${conteudo}</div></details>`;
+  const bloco = (titulo, conteudo) => `<details class="dashboard-annual-report relatorio-bloco${titulo === 'Produtos mais comprados' ? ' relatorio-produtos' : ''}" open><summary>${titulo}${svgIcon('chevron-down')}</summary><div class="relatorio-conteudo" ${titulo === 'Produtos mais comprados' ? 'tabindex="0" role="region" aria-label="Lista de produtos mais comprados"' : ''}>${conteudo}</div></details>`;
   return `<section class="module-page relatorio-cliente-page">${topo}${seletor}<label class="relatorio-ano">Ano do relatório<select onchange="selecionarAnoClienteRelatorio(this.value)">${anos.map(a => `<option ${a === ano ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
     <section class="dashboard-kpis">${kpi('Compras no ano', moeda(dados.compras / 100))}${kpi('Pagamentos no ano', moeda(dados.pagamentos / 100))}${kpi('Ticket médio', moeda(dados.pedidos ? dados.compras / 100 / dados.pedidos : 0))}${kpi('Produtos comprados', `${dados.unidades.toLocaleString('pt-BR')} un.`)}</section><p class="muted small">${dados.pedidos} pedidos · ${dados.numeroPagamentos} pagamentos no ano</p>
     <section class="dashboard-sales-evolution-card"><header><h3>Evolução das compras</h3><strong>${moeda(selecionado.compras / 100)}</strong></header><div class="dashboard-sales-evolution-bars">${dados.meses.map(m => `<button type="button" class="dashboard-sales-evolution-bar ${m.mes === mes ? 'is-selected' : ''}" onclick="selecionarMesClienteRelatorio(${m.mes})" aria-pressed="${m.mes === mes}" aria-label="${nomes[m.mes]}: ${escapeAttr(moeda(m.compras / 100))}"><span><i style="height:${m.compras ? Math.max(4, Math.round(m.compras / maximo * 100)) : 0}%"></i></span><b>${nomes[m.mes]}</b></button>`).join('')}</div><p class="relatorio-mes">${nomes[mes]} · ${selecionado.pedidos} pedidos · Pagamentos: ${moeda(selecionado.pagamentos / 100)}</p></section>
     ${bloco('Resumo por ano', `<table><thead><tr><th>Ano</th><th>Compras</th><th>Pagamentos</th></tr></thead><tbody>${dados.anos.map(a => `<tr><td>${a.ano}<small>${a.pedidos} pedidos</small></td><td>${moeda(a.compras / 100)}</td><td>${moeda(a.pagamentos / 100)}</td></tr>`).join('')}</tbody></table>`)}
     ${bloco('Bonificações', `<div class="relatorio-bonus-kpis"><button type="button" onclick="abrirBonificacoesClienteRelatorio()" aria-haspopup="dialog"><span>Itens bonificados</span><b>${dados.bonificacoes.reduce((s,b) => s + b.quantidade, 0).toLocaleString('pt-BR')} un.</b></button><button type="button" onclick="abrirBonificacoesClienteRelatorio()" aria-haspopup="dialog"><span>Valor de referência</span><b>${moeda(dados.valorBonificado / 100)}</b></button></div><p class="muted small">${dados.referenciasAusentes ? 'Há itens sem valor de referência registrado. ' : ''}Bonificações não entram nas compras.</p>`)}
-    ${bloco('Produtos mais comprados', `<table><thead><tr><th>Produto</th><th>Quantidade</th></tr></thead><tbody>${dados.produtos.map(p => `<tr><td><b>${escapeHtml(p.nome)}</b><small>${moeda(p.valor / 100)} em itens, antes do desconto geral</small></td><td>${p.quantidade.toLocaleString('pt-BR')} un.</td></tr>`).join('') || '<tr><td colspan="2">Nenhum produto comprado no ano.</td></tr>'}</tbody></table>`)}<button class="primary" type="button" onclick="imprimirRelatorioCliente()">Imprimir / salvar PDF</button><button class="ghost" type="button" onclick="abrirInformacoesDoRelatorio()">Informações do aplicativo</button></section>`;
+    ${bloco('Produtos mais comprados', `<table><thead><tr><th>Produto</th><th>Quantidade</th></tr></thead><tbody>${dados.produtos.map(p => `<tr><td><b>${escapeHtml(p.nome)}</b><small>${moeda(p.valor / 100)} em itens, antes do desconto geral</small></td><td>${p.quantidade.toLocaleString('pt-BR')} un.</td></tr>`).join('') || '<tr><td colspan="2">Nenhum produto comprado no ano.</td></tr>'}</tbody></table>`)}<button class="primary" type="button" onclick="imprimirRelatorioCliente(this)">Gerar PDF</button><button class="ghost" type="button" onclick="abrirInformacoesDoRelatorio()">Informações do aplicativo</button></section>`;
 }
 
 function renderModuloEmBreve() {

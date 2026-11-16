@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_Fo5UPnpxKerpXe8tof99DPbCUQ45",
+  "baseDeploymentId": "dpl_8LCUJSpuq1YYvsEqc1VkoDoH1dZf",
   "migrations": [],
-  "version": "3.2.0.433",
-  "scope": "AvantaVendas: seletor de cliente azul com limpeza da seleção e ocultação do relatório"
+  "version": "3.2.0.434",
+  "scope": "AvantaVendas: rolagem do ranking com cabeçalho acessível e geração de PDF real"
 }

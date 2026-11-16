@@ -281,7 +281,7 @@ exigir(
     && aplicacao.includes("document.documentElement.style.removeProperty('--vendas-preparing-height')")
     && aplicacao.includes('sessionStorage.removeItem(PREPARING_VIEWPORT_HEIGHT_KEY_LEGACY)')
     && !aplicacao.includes("style.setProperty('--vendas-preparing-height'")
-    && !aplicacao.includes('window.visualViewport?.height || window.innerHeight')
+    && !aplicacao.slice(aplicacao.indexOf('function prepararAlturaPreparacao()'), aplicacao.indexOf('function cancelarLoginSocialVendas()')).includes('window.visualViewport?.height')
     && estilos.includes('.login-screen.preparing-access-screen {\n  --access-scene-height: var(--vendas-viewport-height);\n  position: fixed;\n  inset: 0;')
     && estilos.includes('height: auto;\n  min-height: 0;\n  flex: none;'),
   'Preparando acesso deve cobrir toda a viewport e nunca congelar a altura reduzida pelo teclado.',
