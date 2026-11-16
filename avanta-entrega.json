@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_8LCUJSpuq1YYvsEqc1VkoDoH1dZf",
+  "baseDeploymentId": "dpl_HtmuCoKKHtBFmTnoWTSMvpQWuNWD",
   "migrations": [],
-  "version": "3.2.0.434",
-  "scope": "AvantaVendas: rolagem do ranking com cabeçalho acessível e geração de PDF real"
+  "version": "3.2.0.435",
+  "scope": "AvantaVendas: modelo aprovado de PDF com logo, setores, barras verdes e paginação"
 }

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.434 -->
+<!-- ava-version: 3.2.0.435 -->
+
+> Revisão 3.2.0.435: sem impacto operacional; modelo visual do PDF exclusivo do relatório AvantaVendas.
 
 > Revisão 3.2.0.434: sem impacto operacional; rolagem e geração de PDF exclusivas do relatório AvantaVendas.
 

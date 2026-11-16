@@ -14970,3 +14970,10 @@ Publicação confirmada das revisões 3.2.0.110–112: READY/PROMOTED nos domín
 - Substitui impressão em popup por geração local de PDF real paginado. Biblioteca pdf-lib já utilizada no projeto é disponibilizada com licença e carregada apenas ao gerar. Compartilhar usa arquivo preparado e gesto direto, com ponte nativa existente ou Web Share; download separado.
 - Previne clique duplicado, cancela exibição se o contexto mudar e preserva cancelamento do compartilhamento. Sem dados externos, alteração financeira ou backend. Publicação autorizada, com promoção condicionada ao build completo aprovado.
 
+## 3.2.0.435-av209 - AvantaVendas: modelo visual aprovado do PDF do cliente
+
+- Cabeçalho azul institucional com logo AvantaLab e identificação, cards de resumo, totais por ano e barras horizontais verdes dos últimos 12 meses, com valor na ponta e escala comum.
+- Ranking de produtos e bonificações em setores próprios, com tabelas, referência histórica, indicador de total parcial quando ausente, paginação, repetição de cabeçalho/colunas e quebra de nomes longos sem truncar dados.
+- Ano corrente encerra a janela móvel no mês atual de São Paulo; demais anos mostram janeiro a dezembro. Ranking e bonificações mantêm o ano selecionado explicitamente. Reutiliza os cálculos existentes, sem escrever em dados ou alterar compartilhamento/download, autenticação, Gestão ou binários nativos.
+- Logo oficial convertido de WebP para PNG transparente compatível com pdf-lib, carregado somente na geração. Testes de PDF vazio, listas longas, modelo de duas páginas, timezone, imutabilidade e compartilhamento mantidos; build completo obrigatório na Vercel.
+

@@ -5413,46 +5413,173 @@ function carregarBibliotecaPdfRelatorio() {
   return bibliotecaPdfRelatorioPendente;
 }
 
-async function gerarBytesPdfRelatorioCliente(dados, ano, biblioteca) {
+function prepararDadosPdfRelatorioCliente(clienteId, ano, agora = new Date()) {
+  const dados = dadosRelatorioCliente(clienteId, ano);
+  const partes = new Intl.DateTimeFormat('en-CA', { timeZone:'America/Sao_Paulo', year:'numeric', month:'numeric' }).formatToParts(agora);
+  const anoAtual = Number(partes.find(p => p.type === 'year').value);
+  const mesFinal = ano === anoAtual ? Number(partes.find(p => p.type === 'month').value) - 1 : 11;
+  const anterior = mesFinal < 11 ? dadosRelatorioCliente(clienteId, ano - 1) : null;
+  const mesesPdf = Array.from({length:12}, (_,i) => {
+    const deslocamento = mesFinal - 11 + i;
+    const anoMes = deslocamento < 0 ? ano - 1 : ano;
+    const mes = (deslocamento + 12) % 12;
+    return { ...(anoMes === ano ? dados : anterior).meses[mes], ano:anoMes };
+  });
+  return { ...dados, mesesPdf };
+}
+
+async function carregarLogoPdfRelatorio() {
+  const controle = new AbortController();
+  const timer = setTimeout(() => controle.abort(), 15000);
+  try {
+    const resposta = await fetch('./assets/logo-avantalab-relatorio.png', {signal:controle.signal});
+    if (!resposta.ok) throw new Error('Não foi possível carregar o logo do relatório.');
+    return await resposta.arrayBuffer();
+  } finally { clearTimeout(timer); }
+}
+
+async function gerarBytesPdfRelatorioCliente(dados, ano, biblioteca, logoBytes) {
   const { PDFDocument, StandardFonts, rgb } = biblioteca;
   const doc = await PDFDocument.create();
   const fonte = await doc.embedFont(StandardFonts.Helvetica);
   const negrito = await doc.embedFont(StandardFonts.HelveticaBold);
-  const cor = rgb(.04,.12,.27);
-  let pagina, y;
-  const textoSeguro = v => Array.from(String(v ?? '')).map(c => { try { fonte.encodeText(c); return c; } catch { return '?'; } }).join('');
-  const novaPagina = () => { pagina = doc.addPage(); y = 790; pagina.drawText('AVANTAVENDAS - Relatório do cliente', { x:40,y,size:17,font:negrito,color:cor }); y -= 25; };
-  novaPagina();
-  const linha = (texto, forte = false) => {
-    const f = forte ? negrito : fonte;
-    let parte = '';
-    for (const c of textoSeguro(texto)) {
-      if (f.widthOfTextAtSize(parte + c, 10) > 510) { if (y < 55) novaPagina(); pagina.drawText(parte, {x:40,y,size:10,font:f,color:cor}); y -= 16; parte = ''; }
-      parte += c;
-    }
-    if (y < 55) novaPagina();
-    pagina.drawText(parte || ' ', {x:40,y,size:10,font:f,color:cor}); y -= 16;
+  const logo = await doc.embedPng(logoBytes);
+  doc.setTitle(`Relatório do cliente - ${dados.cliente.nome} - ${ano}`);
+  doc.setAuthor('AvantaLab');
+  const hex = v => rgb(...v.match(/\w\w/g).map(n => parseInt(n,16)/255));
+  const cores = {azul:hex('003E73'),texto:hex('102A4C'),suave:hex('65788D'),verde:hex('00BC89'),verdeEscuro:hex('00865F'),pista:hex('E5F1EC'),verdeClaro:hex('E8F8F2'),fundo:hex('F8FAFC'),setor:hex('EFF5FA'),linha:hex('DAE5EE'),branco:rgb(1,1,1)};
+  const largura = 595.28, altura = 841.89, margem = 32, util = largura - margem*2;
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const mensal = dados.mesesPdf || dados.meses.map(m => ({...m,ano}));
+  const rotuloMes = m => `${meses[m.mes]}/${m.ano}`;
+  const periodo = `${rotuloMes(mensal[0])} a ${rotuloMes(mensal[mensal.length-1])}`;
+  let pagina, y, assunto = 'Visão financeira e evolução das compras';
+  const seguro = v => Array.from(String(v ?? '').replace(/\s+/g,' ').trim()).map(c => { try { fonte.encodeText(c); return c; } catch { return '?'; } }).join('');
+  const texto = (x,top,v,tamanho=10,cor=cores.texto,forte=false,direita=false) => {
+    const f = forte ? negrito : fonte, s = seguro(v);
+    pagina.drawText(s,{x:direita ? x-f.widthOfTextAtSize(s,tamanho) : x,y:altura-top-tamanho,size:tamanho,font:f,color:cor});
   };
-  const secao = titulo => { if (y < 95) novaPagina(); y -= 10; linha(titulo,true); };
-  linha(`${dados.cliente.nome} - Ano ${ano}`,true);
-  linha(`Compras: ${moeda(dados.compras / 100)} | Pagamentos: ${moeda(dados.pagamentos / 100)}`);
-  linha(`${dados.pedidos} pedidos | ${dados.numeroPagamentos} pagamentos | ${dados.unidades} unidades compradas`);
-  secao('Compras e pagamentos por mês');
-  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  dados.meses.forEach(m => linha(`${meses[m.mes]} | Compras ${moeda(m.compras / 100)} | Pagamentos ${moeda(m.pagamentos / 100)} | ${m.pedidos} pedidos`));
-  secao('Resumo por ano');
-  dados.anos.forEach(a => linha(`${a.ano} | Compras ${moeda(a.compras / 100)} | Pagamentos ${moeda(a.pagamentos / 100)}`));
-  secao('Produtos mais comprados');
-  if (!dados.produtos.length) linha('Nenhum produto comprado neste ano.');
-  dados.produtos.forEach(p => linha(`${p.nome} | ${p.quantidade} un. | Itens ${moeda(p.valor / 100)}`));
-  secao('Bonificações - por lançamento');
-  if (!dados.bonificacoes.length) linha('Nenhuma bonificação neste ano.');
-  dados.bonificacoes.forEach(b => linha(`${dataBR(b.data)} | ${b.produto} | ${b.quantidade} un. | ${b.valor === null ? 'Referência não registrada' : moeda(b.valor / 100)}`));
-  secao('Critérios');
-  linha('Bonificações, cancelamentos e consignados ativos não compõem as compras.');
-  linha('Valores dos itens antes do desconto geral. Pagamentos não incluem descontos como dinheiro.');
-  if (dados.referenciasAusentes) linha('Há bonificações sem valor de referência histórico registrado.');
-  doc.getPages().forEach((p,i) => p.drawText(`${i + 1} / ${doc.getPageCount()}`,{x:520,y:25,size:9,font:fonte,color:cor}));
+  const caixa = (x,top,w,h,cor,raio=6,borda=null) => {
+    // Retângulos com cantos arredondados vetoriais, sem rasterizar o relatório.
+    const r = Math.min(raio,w/2,h/2), k = .5522847498;
+    const caminho = `M ${r} 0 L ${w-r} 0 C ${w-r+k*r} 0 ${w} ${r-k*r} ${w} ${r} L ${w} ${h-r} C ${w} ${h-r+k*r} ${w-r+k*r} ${h} ${w-r} ${h} L ${r} ${h} C ${r-k*r} ${h} 0 ${h-r+k*r} 0 ${h-r} L 0 ${r} C 0 ${r-k*r} ${r-k*r} 0 ${r} 0 Z`;
+    pagina.drawSvgPath(caminho,{x,y:altura-top,color:cor,borderColor:borda || cor,borderWidth:borda ? .7 : 0});
+  };
+  const quebrar = (v,w,tamanho=10,forte=false) => {
+    const f = forte ? negrito : fonte, linhas = []; let linha = '';
+    for (const palavra of seguro(v).split(' ')) {
+      if (linha && f.widthOfTextAtSize(`${linha} ${palavra}`,tamanho) > w) { linhas.push(linha); linha=''; }
+      for (const letra of palavra) {
+        if (f.widthOfTextAtSize(linha+letra,tamanho) > w) { linhas.push(linha); linha=''; }
+        linha += letra;
+      }
+      linha += ' ';
+    }
+    if (linha.trim()) linhas.push(linha.trim());
+    return linhas.length ? linhas : ['-'];
+  };
+  const novaPagina = () => {
+    pagina = doc.addPage(); y=126;
+    caixa(0,0,largura,altura,cores.fundo,0);
+    caixa(0,0,largura,104,cores.azul,0);
+    pagina.drawImage(logo,{x:margem,y:altura-49,width:160,height:160*logo.height/logo.width});
+    texto(largura-margem,24,'RELATÓRIO DO CLIENTE',10,cores.branco,true,true);
+    texto(largura-margem,42,assunto,8,hex('C7E6F7'),false,true);
+    const nome = seguro(dados.cliente.nome);
+    const tamanho = Math.max(10,Math.min(19,util / Math.max(1,negrito.widthOfTextAtSize(nome,1))));
+    const linhasNome = quebrar(nome,util,tamanho,true);
+    // Nome completo, mesmo quando muito longo, continua em bloco próprio abaixo do cabeçalho.
+    texto(margem,65,linhasNome[0],tamanho,cores.branco,true);
+    texto(margem,89,`Ano selecionado: ${ano}  |  Últimos 12 meses: ${periodo}`,8,hex('D9E9F3'));
+    if (linhasNome.length > 1) {
+      linhasNome.slice(1).forEach(l => { texto(margem,y,l,10,cores.texto,true); y+=14; }); y+=10;
+    }
+  };
+  const garantir = h => { if (y+h > altura-55) novaPagina(); };
+  const paragrafo = (v,cor=cores.suave,x=margem) => quebrar(v,util-(x-margem)*2,8).forEach(l => { garantir(13); texto(x,y,l,8,cor); y+=13; });
+  const secao = (numero,titulo,sub='') => {
+    garantir(85); caixa(margem,y,util,28,cores.setor);
+    texto(margem+12,y+8,numero,9,cores.azul,true);
+    texto(margem+33,y+7,titulo,11,cores.azul,true); y+=38;
+    if (sub) { paragrafo(sub); y+=6; }
+  };
+  const tabela = (cabecalhos,linhas,numero,titulo) => {
+    const desenharTitulos = () => {
+      cabecalhos.forEach(c => texto(c.x,y,c.nome,7.5,cores.suave,true,c.direita)); y+=23;
+    };
+    desenharTitulos();
+    linhas.forEach((valores,indice) => {
+      let colunas = valores.map((v,i) => quebrar(v,cabecalhos[i].w,9,i===0));
+      const totalLinhas = Math.max(...colunas.map(v=>v.length));
+      // Também pagina um único nome excepcionalmente longo, sem truncar os dados.
+      for (let inicio=0;inicio<totalLinhas;inicio+=32) {
+        const n = Math.min(32,totalLinhas-inicio), h=numero==='01' ? Math.max(24,n*13+8) : Math.max(numero==='03'?34:30,n*13+14);
+        if (y+h > altura-55) { novaPagina(); secao(numero,`${titulo} (continuação)`); desenharTitulos(); }
+        if (indice%2===0) caixa(margem,y-6,util,h,cores.branco,4);
+        colunas.forEach((ls,j) => ls.slice(inicio,inicio+32).forEach((l,k) => texto(cabecalhos[j].x,y+3+k*13,l,9,j===valores.length-1 && numero==='01' ? cores.verdeEscuro : cores.texto,j===0,cabecalhos[j].direita)));
+        if (numero==='03' && inicio===0) {
+          const maiorQuantidade=Math.max(1,...dados.produtos.map(p=>p.quantidade));
+          const proporcao=Number(valores[1])/maiorQuantidade;
+          if (proporcao>0) caixa(44,y+h-12,220*proporcao,3,cores.verde,1);
+        }
+        y+=h;
+      }
+    }); y+=12;
+  };
+  novaPagina();
+  texto(margem,y,'ÚLTIMOS 12 MESES',8,cores.suave,true); y+=22;
+  const soma = campo => mensal.reduce((s,m)=>s+Number(m[campo]||0),0);
+  const cards = [['TOTAL EM COMPRAS',moeda(soma('compras')/100)],['TOTAL EM PAGAMENTOS',moeda(soma('pagamentos')/100)],['PEDIDOS NO PERÍODO',`${soma('pedidos')} pedidos`]];
+  const w=(util-16)/3;
+  cards.forEach(([label,valor],i) => {
+    const x=margem+i*(w+8); caixa(x,y,w,65,cores.branco,9,cores.linha);
+    texto(x+12,y+12,label,7.4,cores.suave,true);
+    const size=Math.min(16,(w-24)/negrito.widthOfTextAtSize(seguro(valor),1));
+    texto(x+12,y+35,valor,size,cores.texto,true);
+  }); y+=83;
+  secao('01','Resumo por ano','Compras e pagamentos independentes, pela data de cada lançamento.');
+  tabela([{nome:'ANO',x:44,w:90},{nome:'COMPRAS',x:342,w:150,direita:true},{nome:'PAGAMENTOS',x:largura-44,w:150,direita:true}],dados.anos.map(a=>[a.ano,moeda(a.compras/100),moeda(a.pagamentos/100)]),'01','Resumo por ano');
+  garantir(390);
+  secao('02','Compras nos últimos 12 meses','Barras proporcionais ao maior mês do período. Valores em reais.');
+  const maior = Math.max(1,...mensal.map(m=>m.compras));
+  const valorMax = Math.max(...mensal.map(m=>negrito.widthOfTextAtSize(seguro(moeda(m.compras/100)),9)));
+  const inicioBarra = 97, pista = Math.max(60,largura-margem-inicioBarra-valorMax-12);
+  mensal.forEach(m => {
+    texto(margem,y,rotuloMes(m),9,cores.suave);
+    caixa(inicioBarra,y+1,pista,11,cores.pista,5);
+    const comprimento=Math.max(0,m.compras/maior*pista);
+    if (comprimento>0) caixa(inicioBarra,y+1,comprimento,11,cores.verde,5);
+    texto(inicioBarra+comprimento+9,y,moeda(m.compras/100),9,cores.texto,true); y+=24;
+  });
+  y+=8; caixa(margem,y,util,30,cores.verdeClaro);
+  texto(44,y+9,'Total de compras no período',10,cores.texto,true);
+  texto(largura-44,y+7,moeda(soma('compras')/100),12,cores.verdeEscuro,true,true);
+  assunto = 'Produtos e bonificações'; novaPagina();
+  secao('03',`Produtos mais comprados - ${ano}`,'Itens vendidos no ano selecionado. Bonificações não entram neste ranking.');
+  const colunasProdutos = [{nome:'PRODUTO',x:44,w:305},{nome:'QTD.',x:425,w:55,direita:true},{nome:'VALOR DOS ITENS',x:largura-44,w:115,direita:true}];
+  tabela(colunasProdutos,dados.produtos.map(p=>[p.nome,p.quantidade,moeda(p.valor/100)]),'03','Produtos mais comprados');
+  if (!dados.produtos.length) paragrafo('Nenhum produto comprado neste ano.');
+  paragrafo('Valores dos itens antes dos descontos gerais do pedido.'); y+=16;
+  garantir(180); secao('04',`Bonificações no período - ${ano}`);
+  caixa(margem,y,util,53,cores.verdeClaro,8);
+  texto(46,y+10,'QUANTIDADE BONIFICADA',8,cores.verdeEscuro,true);
+  texto(46,y+29,`${dados.bonificacoes.reduce((s,b)=>s+b.quantidade,0)} unidades`,16,cores.texto,true);
+  texto(335,y+10,'VALOR DE REFERÊNCIA',8,cores.verdeEscuro,true);
+  texto(335,y+29,moeda((dados.valorBonificado || 0)/100),16,cores.texto,true); y+=70;
+  if (dados.referenciasAusentes) { paragrafo('Total parcial: há bonificações sem referência histórica registrada.'); y+=6; }
+  tabela([{nome:'DATA',x:44,w:67},{nome:'PRODUTO',x:120,w:240},{nome:'QTD.',x:425,w:50,direita:true},{nome:'REFERÊNCIA',x:largura-44,w:105,direita:true}],dados.bonificacoes.map(b=>[dataBR(b.data),b.produto,b.quantidade,b.valor===null?'Não registrada':moeda(b.valor/100)]),'04','Bonificações');
+  if (!dados.bonificacoes.length) paragrafo('Nenhuma bonificação neste ano.');
+  y+=8; garantir(90); caixa(margem,y,util,80,cores.setor);
+  texto(44,y+10,'SOBRE ESTE RELATÓRIO',8,cores.azul,true); y+=29;
+  paragrafo('Bonificações, cancelamentos e consignados ativos não compõem as compras.',cores.suave,44);
+  paragrafo('Pagamentos não incluem descontos como dinheiro. Bonificações usam referência histórica.',cores.suave,44);
+  paragrafo('Resumo por ano: histórico disponível. Produtos e bonificações: ano selecionado.',cores.suave,44);
+  doc.getPages().forEach((p,i) => {
+    pagina=p;
+    p.drawRectangle({x:margem,y:38,width:util,height:.7,color:cores.linha});
+    texto(margem,altura-29,`AvantaLab | Relatório do cliente | ${ano}`,7,cores.suave);
+    texto(largura-margem,altura-29,`${i+1} / ${doc.getPageCount()}`,8,cores.suave,false,true);
+  });
   return doc.save();
 }
 
@@ -5460,13 +5587,13 @@ async function imprimirRelatorioCliente(botao = null) {
   if (gerandoRelatorioPdf) return;
   const idCliente = relatorioClienteUI.id, ano = relatorioClienteUI.ano, contexto = relatorioClienteUI.contexto;
   const contaOrigem = `${state.usuario?.id || ''}:${state.contaVendasAtiva?.id || ''}`;
-  const dados = dadosRelatorioCliente(idCliente, ano);
+  const dados = prepararDadosPdfRelatorioCliente(idCliente, ano);
   if (!dados.cliente) return;
   gerandoRelatorioPdf = true;
   if (botao) { botao.disabled = true; botao.textContent = 'Gerando PDF…'; }
   try {
-    const lib = await carregarBibliotecaPdfRelatorio();
-    const bytes = await gerarBytesPdfRelatorioCliente(dados,ano,lib);
+    const [lib,logoBytes] = await Promise.all([carregarBibliotecaPdfRelatorio(),carregarLogoPdfRelatorio()]);
+    const bytes = await gerarBytesPdfRelatorioCliente(dados,ano,lib,logoBytes);
     if (relatorioClienteUI.id !== idCliente || relatorioClienteUI.ano !== ano || relatorioClienteUI.contexto !== contexto || contaOrigem !== `${state.usuario?.id || ''}:${state.contaVendasAtiva?.id || ''}`) return;
     const nome = `relatorio-${nomeSeguroArquivoVendas(dados.cliente.nome)}-${ano}.pdf`;
     const arquivo = new File([bytes],nome,{type:'application/pdf'});
