@@ -80,14 +80,14 @@ test('produto do catálogo tem cancelamento e não abre depois de cancelar',asyn
  const f=fixture(),pending=f.open({id:'local'});assert.equal(f.states.searchCancelable,true);f.cancel();
  f.calls[0].resolve({result:{status:'found',product:{name:'Antigo'}}});await pending;assert.notEqual(f.states.resultDetailsOpen,true);
 });
-test('abrir histórico preserva preços, amostra e data salvos ao conferir cadastro, sem pesquisa externa',async()=>{
+test('abrir histórico mostra referência atual após conferir cadastro, sem pesquisa externa',async()=>{
  const f=fixture(),prices={market:200},sample={count:3,source:'openai_web_search'};
  f.history({id:'saved',local_product_id:'local',product_name:'Salvo',prices,sample,consultedAt:'2026-10-20'});await flush();
  assert.equal(f.states.result.prices.market,200);
  assert.match(f.calls[0].path,/precos\/produto$/);assert.equal(f.calls[0].options.method,'POST');
  assert.equal(JSON.parse(f.calls[0].options.body).action,undefined);
- f.calls[0].resolve({result:{localProductId:'local',localProductRevision:4,prices:{market:999},sample:{count:1}}});await flush();
- assert.equal(f.states.result.prices.market,200);assert.equal(f.states.result.sample.count,3);assert.equal(f.states.result.consultedAt,'2026-10-20');assert.equal(f.states.result.historyId,'saved');assert.equal(f.states.result.localProductRevision,4);assert.equal(f.calls.length,1);
+ f.calls[0].resolve({result:{localProductId:'local',localProductRevision:4,historyId:'current',prices:{market:999},sample:{count:1}}});await flush();
+ assert.equal(f.states.result.prices.market,999);assert.equal(f.states.result.sample.count,1);assert.equal(f.states.result.consultedAt,undefined);assert.equal(f.states.result.historyId,'current');assert.equal(f.states.result.localProductRevision,4);assert.equal(f.calls.length,1);
 });
 test('atualização explícita de histórico autoriza nova pesquisa',async()=>{
  const f=fixture(),pending=f.consult({historyId:'saved'});await flush();
