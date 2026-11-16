@@ -2946,3 +2946,6 @@ GUIAS["gestao-web"] += " A navegação de Vendas e Serviços não depende de pre
 
 // Revisão 3.2.0.440: consulta real de CNPJ nos cadastros fiscais da Gestão Web.
 GUIAS["gestao-web"] += " Em Vendas e Serviços, Buscar CNPJ em Dados da empresa e Estabelecimentos fiscais consulta a Central de Consultas real, sem base de demonstração. Confira os dados e salve explicitamente. Em falha, o formulário é preservado para tentar novamente ou preencher manualmente.";
+
+// Revisão 3.2.0.441: separar cadastro e prontidão fiscal.
+GUIAS["gestao-web"] += " Salvar Dados da empresa em Vendas e Serviços valida somente os campos cadastrais. CFOP é configurado nas regras fiscais e conferido na emissão; sua ausência não impede salvar o cadastro da empresa.";

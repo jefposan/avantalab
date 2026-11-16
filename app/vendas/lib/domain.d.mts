@@ -103,6 +103,7 @@ export function resolveEffectivePermissions(input: {
   permissionIds: string[];
 }): Record<string, boolean>;
 export function canAccessPermission(input: { active: boolean; effectivePermissions: Record<string, boolean>; permission: string }): boolean;
+export function validateCompanyProfile(company: Record<string, any>): { ready: boolean; errors: string[]; warnings: string[] };
 export function validateModuleSettings(settings: Record<string, any>): { ready: boolean; errors: string[]; warnings: string[] };
 export function validateFiscalDraft(input: {
   documentType: 'nfe' | 'nfce' | 'nfse';

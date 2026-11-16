@@ -73,6 +73,7 @@ import {
   stockStatus,
   validateFiscalDraft,
   validateModuleSettings,
+  validateCompanyProfile,
   validateOrder,
   validateServiceExecution,
   validateServiceOrder,
@@ -5079,7 +5080,7 @@ function SettingsDialog({ section, settings, onClose, onSave, onOpenNumbering }:
   });
   const save = () => {
     const normalized = normalizeModuleSettings(draft, defaultModuleSettings) as ModuleSettings;
-    const validation = validateModuleSettings(normalized);
+    const validation = section === 'empresa' ? validateCompanyProfile(normalized.company) : validateModuleSettings(normalized);
     if (!validation.ready) { setError(validation.errors[0]); return; }
     onSave(normalized);
   };

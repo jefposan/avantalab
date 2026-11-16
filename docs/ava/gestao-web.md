@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.440 -->
+<!-- ava-version: 3.2.0.441 -->
+
+> Revisão 3.2.0.441: Dados da empresa em Vendas e Serviços valida somente o cadastro; CFOP continua obrigatório nas regras fiscais e na emissão.
 
 > Revisão 3.2.0.440: Dados da empresa e estabelecimentos fiscais em Vendas e Serviços usam Buscar CNPJ com consulta real. Conferir os dados e salvar explicitamente; falhas preservam o formulário.
 

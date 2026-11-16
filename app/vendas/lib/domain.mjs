@@ -301,20 +301,27 @@ export function canAccessPermission({ active, effectivePermissions, permission }
   return Boolean(active && permission && effectivePermissions?.[permission]);
 }
 
-export function validateModuleSettings(settings) {
+export function validateCompanyProfile(company) {
   const errors = [];
   const warnings = [];
   const digits = (value) => String(value || '').replace(/\D/g, '');
-  if (!settings?.company?.name?.trim()) errors.push('Informe o nome de exibição da empresa.');
-  if (!settings?.company?.legalName?.trim()) errors.push('Informe a razão social.');
-  if (digits(settings?.company?.document).length !== 14) errors.push('Informe um CNPJ com 14 dígitos.');
-  if (!settings?.company?.city?.trim()) errors.push('Informe o município da empresa.');
-  if (digits(settings?.company?.cityCode).length !== 7) errors.push('Não foi possível identificar o município fiscal. Revise o CEP e informe município/UF.');
-  if (digits(settings?.company?.cep).length !== 8) errors.push('Informe o CEP fiscal da empresa com 8 dígitos.');
-  if (!settings?.company?.street?.trim()) errors.push('Informe o logradouro fiscal da empresa.');
-  if (!settings?.company?.number?.trim()) errors.push('Informe o número do endereço fiscal da empresa.');
-  if (!settings?.company?.district?.trim()) errors.push('Informe o bairro fiscal da empresa.');
-  if (!settings?.company?.taxRegime?.trim()) errors.push('Informe o regime tributário.');
+  if (!company?.name?.trim()) errors.push('Informe o nome de exibição da empresa.');
+  if (!company?.legalName?.trim()) errors.push('Informe a razão social.');
+  if (digits(company?.document).length !== 14) errors.push('Informe um CNPJ com 14 dígitos.');
+  if (!company?.city?.trim()) errors.push('Informe o município da empresa.');
+  if (digits(company?.cityCode).length !== 7) errors.push('Não foi possível identificar o município fiscal. Revise o CEP e informe município/UF.');
+  if (digits(company?.cep).length !== 8) errors.push('Informe o CEP fiscal da empresa com 8 dígitos.');
+  if (!company?.street?.trim()) errors.push('Informe o logradouro fiscal da empresa.');
+  if (!company?.number?.trim()) errors.push('Informe o número do endereço fiscal da empresa.');
+  if (!company?.district?.trim()) errors.push('Informe o bairro fiscal da empresa.');
+  if (!company?.taxRegime?.trim()) errors.push('Informe o regime tributário.');
+  return { ready: errors.length === 0, errors, warnings };
+}
+
+export function validateModuleSettings(settings) {
+  const company = validateCompanyProfile(settings?.company);
+  const errors = [...company.errors];
+  const warnings = [...company.warnings];
   if (!Array.isArray(settings?.fiscal?.documentScope) || !settings.fiscal.documentScope.length) errors.push('Selecione ao menos um tipo de nota fiscal utilizado pela empresa.');
   if (settings?.commercial?.defaultFiscalDocument && settings.commercial.defaultFiscalDocument !== 'nenhum' && !settings?.fiscal?.documentScope?.includes(settings.commercial.defaultFiscalDocument)) errors.push('O documento fiscal padrão precisa estar entre as notas utilizadas pela empresa.');
   if (!Array.isArray(settings?.commercial?.sellers) || !settings.commercial.sellers.length) errors.push('Cadastre ao menos um vendedor.');

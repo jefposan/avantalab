@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_58ub3wtdc2pmCnvEw9XBr87sdc9D",
+  "baseDeploymentId": "dpl_29cyQRPNkhydNPibB3P7wvdyDBon",
   "migrations": [],
-  "version": "3.2.0.440",
-  "scope": "Vendas e Serviços: consulta real de CNPJ na empresa e nos estabelecimentos fiscais"
+  "version": "3.2.0.441",
+  "scope": "Vendas e Serviços: separar validação do cadastro da empresa e CFOP fiscal"
 }

@@ -1,3 +1,8 @@
+## 3.2.0.441 — Vendas e Serviços: cadastro sem exigência de CFOP
+
+- Salvar Dados da empresa valida somente seus campos; pendências da matriz fiscal não bloqueiam esse cadastro.
+- Validação integral da matriz, CFOP, publicação de regras e emissão preservadas.
+
 ## 3.2.0.440 — Vendas e Serviços: consulta real de CNPJ
 
 - Dados da empresa e estabelecimentos fiscais usam a Central de Consultas CNPJ.ws, com preenchimento dos dados disponíveis, erros recuperáveis e descarte de respostas de contexto anterior.
