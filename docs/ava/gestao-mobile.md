@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.443 -->
+<!-- ava-version: 3.2.0.444 -->
+
+> Revisão 3.2.0.444: Sem impacto operacional: revisão visual dos selos de Vendas e Serviços. Ícones e textos auxiliares não impõem dimensões aos selos; rótulos longos permanecem dentro do fundo, inclusive em telas pequenas.
 
 > Revisão 3.2.0.443: Consulta de CNPJ mantém o foco durante digitação e aguarda até 30 segundos; fonte externa tem limite de 20 segundos. Em falha, permite tentar novamente e mantém os dados.
 

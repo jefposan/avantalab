@@ -1,3 +1,9 @@
+## 3.2.0.444 — Vendas e Serviços: selos com fundo ajustado ao texto
+
+- Auditoria dos 122 usos de Badge: 152 regras genéricas de span foram isoladas dos selos, incluindo breakpoints, sem alterar a geometria dos ícones.
+- Selos crescem com o conteúdo e podem quebrar rótulos longos sem corte. Verificação visual em 320, 390, 768 e 1280 px.
+- Sem alteração de dados, permissões, textos de situação ou emissão fiscal.
+
 ## 3.2.0.443 — Vendas e Serviços: foco no CNPJ e identificação de publicação
 
 - Pop-ups deixam de reiniciar o foco em cada alteração; Escape usa a ação atual e o foco retorna ao fechar.

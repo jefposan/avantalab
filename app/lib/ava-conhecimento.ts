@@ -2956,3 +2956,5 @@ GUIAS["gestao-web"] += " Dados da empresa em Vendas e Serviços é salvo no cada
 // Revisão 3.2.0.443: foco do cadastro e espera da consulta.
 GUIAS["gestao-web"] += " O campo CNPJ mantém o foco ao digitar em Vendas e Serviços. A consulta cadastral pode levar até 30 segundos; aguarde Buscando antes de tentar novamente. Falha não apaga os campos. Publicações de produção devem identificar main, SHA e resumo na Vercel.";
 GUIAS["gestao-mobile"] += " A consulta cadastral de CNPJ aguarda até 30 segundos, preservando os campos se houver falha.";
+
+// Revisão 3.2.0.444: sem impacto operacional; correção visual dos selos de Vendas e Serviços, preservando seus textos, estados e ações.

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.443 -->
+<!-- ava-version: 3.2.0.444 -->
+
+> Revisão 3.2.0.444: Sem impacto operacional: revisão visual dos selos de Vendas e Serviços. Ícones e textos auxiliares não impõem dimensões aos selos; rótulos longos permanecem dentro do fundo, inclusive em telas pequenas.
 
 > Revisão 3.2.0.443: Sem impacto operacional direto no AvantaVendas; foco e espera da consulta corrigidos na Gestão.
 

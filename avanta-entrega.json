@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_C8Ft2343YPCVGNf873NbuSi9bTcq",
+  "baseDeploymentId": "dpl_BaqVLhHX8FQgTE2TrsW5zCZbm9cS",
   "migrations": [],
-  "version": "3.2.0.443",
-  "scope": "Vendas e Serviços: foco do CNPJ, espera da consulta e identificação main na Vercel"
+  "version": "3.2.0.444",
+  "scope": "Vendas e Serviços: corrigir dimensões e fundos dos selos em todo o módulo"
 }
