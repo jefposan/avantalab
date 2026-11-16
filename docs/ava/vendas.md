@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.436 -->
+<!-- ava-version: 3.2.0.437 -->
+
+> Revisão 3.2.0.437: Sem impacto operacional: disponibilidade alterada somente no módulo Vendas e Serviços da Gestão Web.
 
 > Revisão 3.2.0.436-av210: Produtos mais comprados sempre inicia recolhido no relatório do cliente, inclusive ao selecionar outro cliente/ano ou reabrir a tela. Clique no título expande; rolagem limitada e recolher continuam iguais. Demais blocos e PDF inalterados.
 

@@ -1,0 +1,602 @@
+[
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "events",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "operations",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "certificates",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "certificate_events",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "recovery_jobs",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "artifact_retention_events",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "artifact_access_events",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "emission_corrections",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "SELECT",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(EXISTS ( SELECT 1\n   FROM vendas_mobile_catalogos catalogo\n  WHERE ((catalogo.id = vendas_mobile_catalogo_produtos.catalogo_id) AND (catalogo.empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid))))",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_mobile_catalogo_produtos",
+    "with_check": null
+  },
+  {
+    "cmd": "SELECT",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(EXISTS ( SELECT 1\n   FROM custos_tabelas_preco tabela\n  WHERE ((tabela.id = custos_tabela_preco_itens.tabela_preco_id) AND (tabela.empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid))))",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "custos_tabela_preco_itens",
+    "with_check": null
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_fiscal_configuracoes_revisoes",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_fiscal_perfis",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_fornecedores",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_fiscal_rascunho_cancelamentos",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "empresas",
+    "with_check": "(id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "usuarios_empresa",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "empresa_modulos",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "module_role_permission_overrides",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "module_user_permission_overrides",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_mobile_catalogos",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "custos_tabelas_preco",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "cadastros_perfil",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_clientes",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_cliente_contatos",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_sequencias",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_operacoes",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_operacao_itens",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_ordens_servico",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_os_materiais",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_os_checklist",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_os_anexos",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_estoque_locais",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_estoque_saldos",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_estoque_reservas",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_estoque_movimentos",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_inventarios",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_inventario_itens",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_contas_receber",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_contas_receber_eventos",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_fiscal_configuracoes",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_fiscal_rascunhos",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_eventos",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "emissions",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "number_sequences",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "number_voids",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "number_reservations",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "artifacts",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "vendas_runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "transmission_attempts",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "runtime_tridium",
+    "qual": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "fiscal_private",
+    "tablename": "draft_deletions",
+    "with_check": "(company_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  },
+  {
+    "cmd": "ALL",
+    "permissive": "PERMISSIVE",
+    "policyname": "runtime_tridium",
+    "qual": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)",
+    "roles": [
+      "avanta_vendas_runtime"
+    ],
+    "schemaname": "public",
+    "tablename": "vendas_fiscal_mensagens",
+    "with_check": "(empresa_id = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'::uuid)"
+  }
+]

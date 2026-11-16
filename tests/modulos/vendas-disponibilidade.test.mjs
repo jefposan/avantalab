@@ -4,22 +4,21 @@ import test from 'node:test';
 import {
   filtrarModulosDisponiveisParaEmpresa,
   moduloDisponivelParaEmpresa,
-  VENDAS_PILOTO_EMPRESA_ID,
 } from '../../app/lib/modulos-disponibilidade.ts';
 
-test('o piloto de Vendas pertence à empresa Tridium, nunca a um login', () => {
-  assert.equal(moduloDisponivelParaEmpresa('vendas', VENDAS_PILOTO_EMPRESA_ID), true);
-  assert.equal(moduloDisponivelParaEmpresa('vendas', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), false);
+test('Vendas fica disponível para todos os perfis empresariais, sem lista piloto', () => {
+  assert.equal(moduloDisponivelParaEmpresa('vendas', 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'), true);
+  assert.equal(moduloDisponivelParaEmpresa('vendas', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), true);
   assert.equal(moduloDisponivelParaEmpresa('custos', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), true);
 });
 
-test('o catálogo remove somente Vendas fora da empresa piloto', () => {
+test('o catálogo mantém Vendas para empresas diferentes', () => {
   const catalogo = [{ id: 'custos' }, { id: 'vendas' }];
-  assert.deepEqual(filtrarModulosDisponiveisParaEmpresa(catalogo, VENDAS_PILOTO_EMPRESA_ID), catalogo);
-  assert.deepEqual(filtrarModulosDisponiveisParaEmpresa(catalogo, 'outra-empresa'), [{ id: 'custos' }]);
+  assert.deepEqual(filtrarModulosDisponiveisParaEmpresa(catalogo, 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e'), catalogo);
+  assert.deepEqual(filtrarModulosDisponiveisParaEmpresa(catalogo, 'outra-empresa'), catalogo);
 });
 
-test('listar, instalar e assinar repetem a trava no servidor', () => {
+test('listar, instalar e assinar usam a disponibilidade central sem remover controles comerciais', () => {
   const listar = readFileSync('app/api/cobranca/modulos/listar/route.ts', 'utf8');
   const ativar = readFileSync('app/api/cobranca/modulos/ativar/route.ts', 'utf8');
   const assinar = readFileSync('app/api/cobranca/modulos/assinar/route.ts', 'utf8');
@@ -57,7 +56,7 @@ test('o runtime fiscal exige validação TLS e aceita a CA oficial por variável
   assert.doesNotMatch(runtime, /FISCAL_DATABASE_TLS_VERIFY/);
 });
 
-test('a trava do piloto é composta no runtime de acesso, fora do construtor do certificado', () => {
+test('runtime geral mantém o resolvedor autenticado fora do construtor do certificado', () => {
   const runtime = readFileSync('app/vendas/lib/server/fiscal-status-runtime.mjs', 'utf8');
   const certificateFactory = runtime.slice(
     runtime.indexOf('function createCertificateRuntime'),
@@ -65,5 +64,6 @@ test('a trava do piloto é composta no runtime de acesso, fora do construtor do 
   );
   assert.doesNotMatch(certificateFactory, /authClient|accessRepository|baseAccessResolver/);
   assert.match(runtime, /const baseAccessResolver = createAvantaLabAccessResolver\(\{ authClient, accessRepository \}\)/);
-  assert.match(runtime, /boundary\?\.companyId\) !== VENDAS_PILOTO_EMPRESA_ID/);
+  assert.match(runtime, /const accessResolver = baseAccessResolver;/);
+  assert.doesNotMatch(runtime, /VENDAS_PILOTO_EMPRESA_ID/);
 });

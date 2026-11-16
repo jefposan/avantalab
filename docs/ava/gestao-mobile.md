@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.436 -->
+<!-- ava-version: 3.2.0.437 -->
+
+> Revisão 3.2.0.437: Sem impacto operacional: disponibilidade alterada somente no módulo Vendas e Serviços da Gestão Web.
 
 > Revisão 3.2.0.436: sem impacto operacional; abertura recolhida do ranking exclusiva do AvantaVendas.
 

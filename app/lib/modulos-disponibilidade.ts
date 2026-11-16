@@ -1,11 +1,9 @@
 export const VENDAS_MODULO_ID = 'vendas';
 
-// Piloto de finalização: a liberação é vinculada ao perfil empresarial, nunca
-// ao login que o acessa. Remover esta exceção quando o módulo for publicado.
-export const VENDAS_PILOTO_EMPRESA_ID = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e';
-
-export function moduloDisponivelParaEmpresa(moduloId: string, empresaId: string) {
-  return moduloId !== VENDAS_MODULO_ID || empresaId === VENDAS_PILOTO_EMPRESA_ID;
+// Disponibilidade geral. Instalação, plano, vínculo e permissões continuam
+// validados pelos consumidores antes de permitir operações no módulo.
+export function moduloDisponivelParaEmpresa(_moduloId: string, _empresaId: string) {
+  return true;
 }
 
 export function filtrarModulosDisponiveisParaEmpresa<T extends { id: unknown }>(
@@ -15,4 +13,4 @@ export function filtrarModulosDisponiveisParaEmpresa<T extends { id: unknown }>(
   return modulos.filter((modulo) => moduloDisponivelParaEmpresa(String(modulo.id), empresaId));
 }
 
-export const MENSAGEM_MODULO_EM_FINALIZACAO = 'Este módulo ainda está restrito ao perfil empresarial piloto.';
+export const MENSAGEM_MODULO_EM_FINALIZACAO = 'Este módulo não está disponível para este perfil.';

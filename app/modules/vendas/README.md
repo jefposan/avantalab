@@ -7,23 +7,30 @@ O manifesto define rota, dependências, integrações e a matriz granular de
 permissões. A página `/vendas` está incorporada à Gestão e aparece no menu após
 a instalação oficial no perfil empresarial.
 
-## Estado do piloto
+## Disponibilidade geral — 3.2.0.437
 
-Na versão 1.13.0.85, a disponibilidade é restrita no servidor à empresa
-Tridium (`ec9604fd-38f2-429b-9c00-c4bc6c642b0e`). A trava usa a empresa e é
-repetida no catálogo, na instalação, na assinatura e no runtime do módulo; não
-há liberação por e-mail ou usuário. O contrato definitivo continua sendo:
-incluído no Business Pro, avulso no Business e inexistente no perfil pessoal.
+Vendas e Serviços está disponível para todos os perfis empresariais, sem lista
+piloto. Continua incluído no Business Pro/Premium e avulso no Business; perfis
+pessoais não recebem este módulo. O gestor instala o módulo após Custos e
+Precificação. Não há instalação automática nem nova cobrança nesta entrega.
+
+O backend valida sessão, vínculo ativo, instalação vigente e permissões granulares
+antes de acessar os repositórios, que filtram por empresa. O papel dedicado
+continua sem superusuário e sem bypass de RLS; suas políticas admitem somente
+empresas com Vendas instalado e vigente. Não há acesso anônimo aos dados fiscais.
 
 Todo registro comercial e fiscal possui `empresa_id`/`company_id`. O emissor é
 resolvido exclusivamente em `cadastros_perfil`; certificado, eventos e
 referências de XML/DANFE ficam no schema fiscal privado da mesma empresa. IDs de
 usuário existem somente para autorização e trilha de auditoria.
 
-O piloto mantém emissão, numeração, assinatura, transmissão e cancelamento
-desligados. Somente a custódia/validação protegida do certificado A1 e o
-`NfeStatusServico` da SEFAZ-SP em homologação podem ser ativados pelas travas de
-ambiente documentadas no runtime.
+A emissão mantém as travas de ambiente existentes, as permissões fiscais e o
+certificado A1 vinculado ao CNPJ de cada empresa. A configuração fiscal e a
+numeração são próprias de cada perfil; esta entrega não copia os dados da
+Tridium, não configura série e não transmite nenhuma nota. O executor atual
+atende NF-e de São Paulo; NFC-e/NFS-e continuam sem executor. As variáveis de
+confirmação conservam seus valores históricos para compatibilidade, sem funcionar
+como lista de empresas autorizadas.
 
 As seções seguintes preservam o histórico das validações realizadas antes da
 incorporação ao sistema principal.

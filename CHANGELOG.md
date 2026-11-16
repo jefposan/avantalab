@@ -1,3 +1,8 @@
+## 3.2.0.437
+
+- Vendas e Serviços: disponibilidade geral para perfis empresariais; removida a lista piloto do catálogo e do backend. Mantidos plano, dependência Custos, instalação e permissões por usuário.
+- RLS do papel dedicado passa a exigir empresa com módulo ativo e vigente, sem conceder privilégios novos às contas públicas. Numeração preserva as guardas existentes. Certificados, série e documentos não são copiados nem emitidos.
+
 ## 3.2.0.430 — AvantaPreços: respeitar referência manual ao reabrir produto
 
 - Histórico não repõe os preços antigos sobre a referência atual do cadastro; conserva os cálculos atuais mesmo quando o preço de referência coincide.

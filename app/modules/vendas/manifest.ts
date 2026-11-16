@@ -30,5 +30,5 @@ export const MANIFESTO_VENDAS = {
     financeiro: 'gestao',
     fiscal: 'backend_exclusivo',
   },
-  estado: 'piloto_tridium_instalavel' as const,
+  estado: 'disponivel' as const,
 } as const;

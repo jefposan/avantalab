@@ -22,7 +22,7 @@ test('contrato distingue Vendas da Gestão do Vendas Mobile', async () => {
   assert.match(manifesto, /VENDAS_MODULE_ID = 'vendas'/);
   assert.match(manifesto, /rota: '\/vendas'/);
   assert.match(manifesto, /dependencias: \['custos'\]/);
-  assert.match(manifesto, /estado: 'piloto_tridium_instalavel'/);
+  assert.match(manifesto, /estado: 'disponivel'/);
 });
 
 test('cabeçalho integrado mantém somente Início, marca e Ajustes', async () => {
@@ -214,7 +214,7 @@ test('catálogo de Custos entrega ao Vendas somente itens publicados e DTO míni
   assert.equal(dto.itens[0].preco, 44.9);
 });
 
-test('catálogo oficial exige sessão, empresa piloto e módulo instalado', async () => {
+test('catálogo oficial exige sessão, perfil empresarial e módulo instalado', async () => {
   const [rota, servico, pagina, cliente] = await Promise.all([
     readFile('app/api/modulos/vendas/catalogo/route.ts', 'utf8'),
     readFile('app/modules/vendas/services/catalogo-servidor.ts', 'utf8'),

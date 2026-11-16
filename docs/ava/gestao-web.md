@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.436 -->
+<!-- ava-version: 3.2.0.437 -->
+
+> Revisão 3.2.0.437: Vendas e Serviços disponível a todos os perfis empresariais, conforme plano e permissões; instale Custos e Precificação antes de instalar Vendas. Emissão exige configuração fiscal, A1 do próprio CNPJ e numeração da empresa. Não herda certificado ou série de outro perfil.
 
 > Revisão 3.2.0.436: sem impacto operacional; abertura recolhida do ranking exclusiva do AvantaVendas.
 

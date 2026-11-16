@@ -11,7 +11,6 @@ import { resolveFiscalDatabaseConnectionString } from './fiscal-database-connect
 
 const { Pool } = pg;
 const HTTPS_URL = /^https:\/\//i;
-const VENDAS_PILOTO_EMPRESA_ID = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e';
 const NFE_HOMOLOGATION_RELEASE = 'TRIDIUM_NFE_SP_HOMOLOGACAO_CONTROLADA';
 
 function text(value) { return typeof value === 'string' ? value.trim() : String(value ?? '').trim(); }
@@ -50,12 +49,7 @@ export async function createFiscalDownloadRuntimeFromEnvironment(environment = p
     const storageClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
     const accessRepository = createPostgresAvantaLabModuleAccessRepository({ pool });
     const baseAccessResolver = createAvantaLabAccessResolver({ authClient, accessRepository });
-    const accessResolver = {
-      async resolve(request, boundary) {
-        if (text(boundary?.companyId) !== VENDAS_PILOTO_EMPRESA_ID) return { authenticated: false, boundary: null, effectivePermissions: {} };
-        return baseAccessResolver.resolve(request, boundary);
-      },
-    };
+    const accessResolver = baseAccessResolver;
     const fiscalRepository = createPostgresFiscalRepository({ pool });
     const storageProvider = createSupabaseFiscalArtifactStorage({ client: storageClient, bucket, environment: homologation ? 'homologacao' : 'production', productionReadiness: policy });
     const actualStorage = await storageProvider.inspectReadiness();

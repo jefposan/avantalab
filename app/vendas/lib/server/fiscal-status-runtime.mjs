@@ -67,7 +67,6 @@ import { resolveFiscalDatabaseConnectionString } from './fiscal-database-connect
 
 const { Pool } = pg;
 const HTTPS_URL = /^https:\/\//i;
-const VENDAS_PILOTO_EMPRESA_ID = 'ec9604fd-38f2-429b-9c00-c4bc6c642b0e';
 const NFE_HOMOLOGATION_RELEASE = 'TRIDIUM_NFE_SP_HOMOLOGACAO_CONTROLADA';
 function text(value) { return typeof value === 'string' ? value.trim() : String(value ?? '').trim(); }
 function disabled(reason) { return Object.freeze({ configured: false, reason, accessResolver: null, catalogService: null, statusService: null, centerService: null, emissionBridge: null, fiscalProfileService: null, fiscalRulesQueryService: null, fiscalRulesPublicationService: null, certificateInstallationService: null, nfePreparationService: null, nfeRejectionCorrectionService: null, nfeCancellationService: null, nfeNumberReservationService: null, nfeSigningPreparationService: null, nfeSigningService: null, nfeStatusServiceAdapter: null, nfeAuthorizationAdapter: null, nfeReturnAdapter: null, nfeIssuanceOrchestrator: null, nfeAutomaticIssuanceService: null, fiscalExecution: null, orderWorkflow: null, serviceWorkflow: null, operationService: null, serviceOrderService: null, customerService: null, receivableService: null, stockService: null, supplierService: null }); }
@@ -117,7 +116,6 @@ function createCertificateRuntime({ environment, pool, issuerResolver, databaseU
       allowProductionSpStatus: true,
     });
     const checkProductionStatus = async ({ companyId }) => {
-      if (companyId !== VENDAS_PILOTO_EMPRESA_ID) return null;
       const issuer = await issuerResolver({ companyId });
       const binding = await repository.getActiveBinding({ companyId });
       if (issuer?.state !== 'SP' || !issuer.document || !binding) return null;
@@ -354,14 +352,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
     const accessRepository = createPostgresAvantaLabModuleAccessRepository({ pool });
     const baseAccessResolver = createAvantaLabAccessResolver({ authClient, accessRepository });
-    const accessResolver = {
-      async resolve(request, boundary) {
-        if (text(boundary?.companyId) !== VENDAS_PILOTO_EMPRESA_ID) {
-          return { authenticated: false, boundary: null, effectivePermissions: {} };
-        }
-        return baseAccessResolver.resolve(request, boundary);
-      },
-    };
+    const accessResolver = baseAccessResolver;
     const fiscalRepository = createPostgresFiscalRepository({ pool });
     const fiscalLifecycle = createFiscalEmissionLifecycleService({ repository: fiscalRepository });
     const fiscalRulesRepository = createPostgresCommercialFiscalRulesRepository({ pool });
@@ -400,7 +391,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     const nfeIssuanceOrchestrator = fiscalWorkflowEnabled ? createIssuanceOrchestrator({ environment, databaseUrl, pool, certificateRuntime, issuerResolver, fiscalRepository, fiscalLifecycle, artifactStorage, nfeSigningPreparationService, nfeSigningService, nfeAuthorizationAdapter, nfeReturnAdapter }) : null;
     const orchestratorToken = text(environment.FISCAL_NFE_ORCHESTRATOR_TOKEN);
     const reconcileFiscalEmission = async ({ companyId, emissionId }) => {
-      if (!nfeIssuanceOrchestrator?.configured || companyId !== VENDAS_PILOTO_EMPRESA_ID || !emissionId) return;
+      if (!nfeIssuanceOrchestrator?.configured || !companyId || !emissionId) return;
       const workerId = `consulta:${randomUUID()}`;
       for (let step = 0; step < 3; step += 1) {
         const recovered = await nfeIssuanceOrchestrator.runRecoveryOnceProtected({ activationToken: orchestratorToken, workerId, companyId, emissionId, limit: 4 });

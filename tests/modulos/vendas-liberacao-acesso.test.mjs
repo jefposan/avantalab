@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { handleCommercialCustomerRequest } from '../../app/vendas/lib/server/commercial-customer-http.mjs';
+import { createCommercialCustomerService } from '../../app/vendas/lib/server/commercial-customer-service.mjs';
+import { createAvantaLabAccessResolver, createPostgresAvantaLabModuleAccessRepository } from '../../app/vendas/lib/server/avantalab-module-access.mjs';
+const companyA='00000000-0000-4000-8000-000000000001',companyB='00000000-0000-4000-8000-000000000002',userA='00000000-0000-4000-8000-000000000011',userB='00000000-0000-4000-8000-000000000022';
+test('liberação geral continua exigindo sessão, vínculo da empresa e módulo vigente',async()=>{
+ let ativo=true,expira=null;const consultas=[];
+ const pool={async query(sql,params){consultas.push(params);if(sql.includes('from public.empresas'))return{rows:[{company_id:params[0],perfil:'administrador',membership_status:((params[0]===companyA&&params[1]===userA)||(params[0]===companyB&&params[1]===userB))?'ativo':null,module_enabled:ativo,expira_em:expira}]};return{rows:[]};}};
+ const authClient={auth:{async getUser(token){return token==='a.a.a'?{data:{user:{id:userA}},error:null}:token==='b.b.b'?{data:{user:{id:userB}},error:null}:{data:{user:null},error:{message:'inválido'}};}}};
+ const resolver=createAvantaLabAccessResolver({authClient,accessRepository:createPostgresAvantaLabModuleAccessRepository({pool})});
+ const req=t=>new Request('https://avantalab.com.br/api/modulos/vendas/commercial/customers',{headers:t?{Authorization:`Bearer ${t}`}:{}});
+ const a=await resolver.resolve(req('a.a.a'),{companyId:companyA});assert.equal(a.authenticated,true);assert.equal(a.boundary.moduleActive,true);assert.equal(a.effectivePermissions['clients.edit'],true);
+ const b=await resolver.resolve(req('b.b.b'),{companyId:companyB});assert.equal(b.authenticated,true);assert.equal(b.boundary.companyId,companyB);
+ const invasao=await resolver.resolve(req('a.a.a'),{companyId:companyB});assert.equal(invasao.boundary.membershipActive,false);
+ assert.equal((await resolver.resolve(req('invalido'),{companyId:companyA})).authenticated,false);
+ const antes=consultas.length;assert.equal((await resolver.resolve(req(),{companyId:companyA})).authenticated,false);assert.equal(consultas.length,antes);
+ let leituras=0;const customerService=createCommercialCustomerService({repository:{async list(){leituras++;return[];},async get(){return null;},async create(){throw Error('não deve gravar');},async update(){throw Error('não deve gravar');}}});
+ const runtime={configured:true,accessResolver:resolver,customerService};
+ assert.equal((await handleCommercialCustomerRequest({request:req('a.a.a'),runtime,companyId:companyB})).status,403);assert.equal(leituras,0);
+ assert.equal((await handleCommercialCustomerRequest({request:req('b.b.b'),runtime,companyId:companyB})).status,200);assert.equal(leituras,1);
+ ativo=false;const semModulo=await resolver.resolve(req('a.a.a'),{companyId:companyA});assert.equal(semModulo.boundary.moduleActive,false);assert.equal(semModulo.effectivePermissions['clients.edit'],true);assert.equal((await handleCommercialCustomerRequest({request:req('a.a.a'),runtime,companyId:companyA})).status,403);assert.equal(leituras,1);
+ ativo=true;expira='2020-01-01T00:00:00Z';assert.equal((await resolver.resolve(req('b.b.b'),{companyId:companyB})).boundary.moduleActive,false);
+});
