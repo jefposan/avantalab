@@ -1,4 +1,4 @@
-<!-- ava-version: 3.2.0.426 -->
+<!-- ava-version: 3.2.0.430 -->
 
 > Revisão 3.2.0.426: Cadastro do perfil pessoal exibe Nome do perfil, Nome completo e CPF; CPF usa máscara e validação e deve ser preenchido para concluir o cadastro.
 
@@ -6363,3 +6363,5 @@ As solicitações ficam registradas ao recarregar o pedido. Se houver demora, re
 No popup Nova venda ou Venda pendente do módulo Marketplaces, **Entendi** fecha somente o pedido exibido e **Ver venda no AvantaLab** abre seus detalhes. **Fechar todos**, abaixo dessas ações, marca os avisos de venda existentes da empresa como lidos apenas para o usuário atual, inclusive os que não cabem na primeira página. A leitura fica salva após atualizar ou reabrir o módulo. Vendas que gerarem novos avisos depois do início da operação continuam aparecendo. Não cancela pedidos, não resolve pendências de sincronização e não movimenta estoque. Em falha, a mensagem permite tentar novamente; não informar sucesso antes da confirmação.
 
 Revisão técnica 3.2.0.358 da página inicial: sem impacto operacional; conteúdo, aparência, acesso e navegação pública preservados.
+
+> Revisão local 3.2.0.430 — AvantaPreços: abrir pelo histórico respeita a referência atual do cadastro e seus cálculos; edição manual aguarda a conferência terminar. Atualizar cálculos salva a referência sem pesquisar, alterar saldo ou preços dos anúncios.

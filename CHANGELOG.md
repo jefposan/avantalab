@@ -1,3 +1,9 @@
+## 3.2.0.430 — AvantaPreços: respeitar referência manual ao reabrir produto
+
+- Histórico não repõe os preços antigos sobre a referência atual do cadastro; conserva os cálculos atuais mesmo quando o preço de referência coincide.
+- Campo e botão de cálculo aguardam terminar a conferência do produto, evitando clique habilitado sem ação.
+- Regressão da abertura pelo histórico e teste da API de gravação, sugestões e reabertura. Sem pesquisa externa, migração ou publicação.
+
 ## 3.2.0.426
 
 - Cadastro do perfil pessoal: CPF visível na mesma linha de Nome do perfil e Nome completo, com máscara e validação existentes; empilha em telas estreitas.

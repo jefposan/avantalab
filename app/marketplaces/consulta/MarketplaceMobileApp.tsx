@@ -458,7 +458,7 @@ export default function MarketplaceMobileApp() {
     const controller = new AbortController(); consultationAbortRef.current = controller;
     consultationBusyRef.current = true; setLoading(true); setSearchCancelable(true);
     void request('/api/modulos/marketplaces/precos/produto', { method: 'POST', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(25_000)]), body: JSON.stringify({ empresaId: company.id, ...(row.local_product_id ? { productId: row.local_product_id } : { ean: row.ean }) }) })
-      .then(body => { if (run === consultationRunRef.current && body.result) setResult({ ...body.result, historyId: saved.historyId, prices: saved.prices, sample: saved.sample, consultedAt: saved.consultedAt }); })
+      .then(body => { if (run === consultationRunRef.current && body.result) setResult(body.result.prices?.market === saved.prices?.market ? { ...body.result, historyId: saved.historyId, sample: saved.sample, consultedAt: saved.consultedAt } : body.result); })
       .catch(reason => { if (run === consultationRunRef.current) setResultError(reason instanceof Error ? reason.message : 'Não foi possível conferir o cadastro atual.'); })
       .finally(() => { if (run === consultationRunRef.current) { setLoading(false); setSearchCancelable(false); consultationBusyRef.current=false; consultationAbortRef.current=null; } });
   }, [company, request, stockBusy, cancelPriceSearch]);
@@ -773,7 +773,7 @@ export default function MarketplaceMobileApp() {
         {((result.prices && result.historyId) || result.localProductId) && <form className={styles.manualPriceEdit} onSubmit={updateHistoryPrice}>
           <label htmlFor="history-market-price">Ajustar preço médio</label>
           <p>Altere a referência e atualize os três preços sugeridos.</p>
-          <div><CampoMoeda id="history-market-price" value={marketPriceDraft} onChange={setMarketPriceDraft} placeholder="0,00" disabled={savingPrice || stockBusy} /><button type="submit" disabled={savingPrice || stockBusy}>{savingPrice ? 'Atualizando…' : 'Atualizar cálculos'}</button></div>
+          <div><CampoMoeda id="history-market-price" value={marketPriceDraft} onChange={setMarketPriceDraft} placeholder="0,00" disabled={loading || savingPrice || stockBusy} /><button type="submit" disabled={loading || savingPrice || stockBusy}>{savingPrice ? 'Atualizando…' : 'Atualizar cálculos'}</button></div>
         </form>}
         <div className={styles.productResultActions}>
          {(result.localProductId || result.historyId) && <BotaoAcaoCompacto ref={searchTriggerRef} disabled={loading || savingPrice || stockBusy || (Boolean(result.localProductId) && !result.localProductRevision)} onClick={() => result.localProductId ? void refreshProductPrice() : void consult({ historyId: result.historyId })} aria-label={loading ? 'Calculando, aguarde' : 'Atualizar preço'}>{loading ? <><span className={styles.refreshingIcon} aria-hidden="true"><Icon name="refresh" /></span><span role="status" aria-live="polite">Calculando, aguarde…</span></> : <><Icon name="refresh" />Atualizar preço</>}</BotaoAcaoCompacto>}

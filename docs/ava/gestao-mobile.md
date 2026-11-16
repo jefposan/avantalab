@@ -1,4 +1,4 @@
-<!-- ava-version: 3.2.0.426 -->
+<!-- ava-version: 3.2.0.430 -->
 
 > Revisão 3.2.0.426: sem impacto operacional neste ambiente.
 
@@ -5616,3 +5616,5 @@ Revisão 3.2.0.355: sem impacto operacional neste manual. O novo atendimento de 
 Revisão 3.2.0.358: sem impacto operacional neste manual. A opção Fechar todos pertence aos popups de venda de Marketplaces na Gestão Web; não altera as telas deste ambiente.
 
 Revisão técnica 3.2.0.358 da página inicial: sem impacto operacional; conteúdo, aparência, acesso e navegação pública preservados.
+
+> Revisão local 3.2.0.430 — AvantaPreços: abrir pelo histórico respeita a referência atual do cadastro e seus cálculos; edição manual aguarda a conferência terminar. Atualizar cálculos salva a referência sem pesquisar, alterar saldo ou preços dos anúncios. Sem impacto operacional adicional neste manual.

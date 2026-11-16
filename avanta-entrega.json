@@ -1,6 +1,6 @@
 {
   "baseDeploymentId": "dpl_FPCsr7mmLSZJiqvUkE4qSAAPCt91",
   "migrations": [],
-  "version": "3.2.0.426",
-  "scope": "Cadastro pessoal: exibir CPF com máscara e validação na mesma linha dos nomes"
+  "version": "3.2.0.430",
+  "scope": "AvantaPreços: preservar referência manual e aguardar conferência antes do cálculo"
 }
