@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.442 -->
+<!-- ava-version: 3.2.0.443 -->
+
+> Revisão 3.2.0.443: Consulta de CNPJ mantém o foco durante digitação e aguarda até 30 segundos; fonte externa tem limite de 20 segundos. Em falha, permite tentar novamente e mantém os dados.
 
 > Revisão 3.2.0.442: Dados da empresa em Vendas e Serviços grava no cadastro central com a sessão da Gestão e só fecha após confirmação por releitura. Em falha, conserva o formulário para nova tentativa. Os demais campos do perfil são preservados.
 

@@ -11,6 +11,15 @@ const projeto = 'prj_AiYSXppfsqysQ4z0khaxb7EOFJP3';
 const equipe = 'team_4AGRJbnDI1pfFrCMbqZM0U6U';
 const scope = 'jeff-projetos';
 
+export function metadadosGitProducao({ mensagem, hash }) {
+  return { githubCommitMessage: mensagem, githubCommitSha: hash, githubCommitRef: 'main',
+    githubCommitOrg: 'jefposan', githubCommitRepo: 'avantalab', githubOrg: 'jefposan', githubRepo: 'avantalab',
+    githubDeployment: '1', githubCommitAuthorName: 'Jeff', githubCommitAuthorEmail: 'jefposan@hotmail.com' };
+}
+export function conferirMetadadosGitProducao(meta, expected) {
+  return Object.entries(metadadosGitProducao(expected)).every(([key, value]) => meta?.[key] === value);
+}
+
 export function conferirFila(resposta) {
   if (!resposta || !Array.isArray(resposta.deployments)) throw new Error('Não foi possível conferir a fila; envio bloqueado.');
   const pendentes = resposta.deployments.filter(d => ['BUILDING', 'QUEUED', 'INITIALIZING'].includes(d.readyState ?? d.state));
@@ -124,7 +133,10 @@ export async function publicar({ pasta, producao = false, cli = process.env.AVAN
     const args = ['deploy', '--yes', '--no-wait', '--scope', scope,
       '--meta', `githubCommitMessage=${mensagem}`, '--meta', `githubCommitSha=${hash}`,
       '--meta', `avantaVersion=${versao}`, '--meta', `avantaSummary=${mensagem}`];
-    if (producao) args.push('--prod', '--meta', 'githubCommitRef=main');
+    if (producao) {
+      args.push('--prod');
+      for (const [key, value] of Object.entries(metadadosGitProducao({mensagem, hash}))) args.push('--meta', `${key}=${value}`);
+    }
     const saida = await vc(args);
     const url = saida.match(/https:\/\/[^\s]+\.vercel\.app\b/)?.[0];
     if (!url) throw new Error('Vercel não devolveu URL; confira o histórico antes de repetir o envio.');
@@ -132,7 +144,7 @@ export async function publicar({ pasta, producao = false, cli = process.env.AVAN
     const recibo = { versao, resumo: mensagem, hash, url, id: detalhe.id, destino: producao ? 'production' : 'preview',
       estado: detalhe.readyState, branch: detalhe.meta?.githubCommitRef ?? null,
       identificacaoConferida: detalhe.meta?.githubCommitMessage === mensagem &&
-        (!producao || (detalhe.meta?.githubCommitRef === 'main' && detalhe.meta?.githubCommitSha === hash)),
+        (!producao || conferirMetadadosGitProducao(detalhe.meta, {mensagem, hash})),
       inicio, enviadoEm: Date.now(), promocao: producao ? 'automatica-apos-build-aprovado' : 'nao-autorizada-por-este-comando' };
     await writeFile(resolve(estado, `publicacao-${hash.slice(0, 12)}.json`), JSON.stringify(recibo, null, 2) + '\n');
     if (!recibo.identificacaoConferida) throw new Error(`Envio recebido (${url}), mas identificação não confirmada. Não repetir; confira a Vercel.`);

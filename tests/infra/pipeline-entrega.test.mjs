@@ -173,3 +173,13 @@ test('upload simulado conserva build remoto, identificação visível e preview 
   assert.ok(envio.includes('--no-wait'));
   assert.ok(envio.includes('githubCommitMessage=' + resumo));
 }));
+
+test('produção identifica main e GitHub completos, recusa metadados parciais de CLI', async()=>{
+ const {metadadosGitProducao,conferirMetadadosGitProducao}=await import('../../scripts/publicar-vercel.mjs');
+ const expected={mensagem:'3.2.0.443 — Vendas e Serviços: foco e consulta',hash:'a'.repeat(40)};
+ const meta=metadadosGitProducao(expected);
+ assert.equal(meta.githubCommitRef,'main');assert.equal(meta.githubDeployment,'1');assert.equal(meta.githubCommitRepo,'avantalab');
+ assert.equal(conferirMetadadosGitProducao(meta,expected),true);
+ for(const key of Object.keys(meta)){const partial={...meta};delete partial[key];assert.equal(conferirMetadadosGitProducao(partial,expected),false,key);}
+ assert.equal(conferirMetadadosGitProducao({...meta,githubCommitRef:'codex/rascunho'},expected),false);
+});

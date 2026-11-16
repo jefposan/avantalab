@@ -25,7 +25,7 @@ type ConsultarCnpjWsOptions = {
 };
 
 const CNPJ_WS_BASE_URL = 'https://publica.cnpj.ws/cnpj';
-const TIMEOUT_PADRAO_MS = 8_000;
+const TIMEOUT_PADRAO_MS = 20_000;
 
 export async function consultarCnpjWs(
   documento: string,

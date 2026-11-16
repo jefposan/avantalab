@@ -2952,3 +2952,7 @@ GUIAS["gestao-web"] += " Salvar Dados da empresa em Vendas e Serviços valida so
 
 // Revisão 3.2.0.442: confirmação da persistência cadastral.
 GUIAS["gestao-web"] += " Dados da empresa em Vendas e Serviços é salvo no cadastro central do perfil. A ação mostra Salvando e só fecha após confirmação do servidor e releitura. Em erro ou timeout, mantém o formulário. Não basta um aviso local para confirmar gravação; pode reabrir o cadastro para conferir endereço. A gravação mantém os campos do perfil que não aparecem nesse formulário e requer gestor ou administrador conforme autorização central.";
+
+// Revisão 3.2.0.443: foco do cadastro e espera da consulta.
+GUIAS["gestao-web"] += " O campo CNPJ mantém o foco ao digitar em Vendas e Serviços. A consulta cadastral pode levar até 30 segundos; aguarde Buscando antes de tentar novamente. Falha não apaga os campos. Publicações de produção devem identificar main, SHA e resumo na Vercel.";
+GUIAS["gestao-mobile"] += " A consulta cadastral de CNPJ aguarda até 30 segundos, preservando os campos se houver falha.";

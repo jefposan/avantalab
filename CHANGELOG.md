@@ -1,3 +1,9 @@
+## 3.2.0.443 — Vendas e Serviços: foco no CNPJ e identificação de publicação
+
+- Pop-ups deixam de reiniciar o foco em cada alteração; Escape usa a ação atual e o foco retorna ao fechar.
+- Consulta CNPJ.ws aguarda até 20 segundos; clientes CNPJ aguardam 30 segundos, preservando validações e erros.
+- Pipeline exige identificação GitHub completa, main e SHA no provedor, mantendo fila, origem oficial e build obrigatório.
+
 ## 3.2.0.442 — Vendas e Serviços: persistir dados da empresa
 
 - Conecta a edição de empresa ao cadastro central autenticado; endereço e identificação deixam de ser descartados pelo salvamento de configurações fiscais.

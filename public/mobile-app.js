@@ -1785,7 +1785,7 @@
     }
 
     var controller = new AbortController();
-    var timeout = window.setTimeout(function () { controller.abort(); }, 12000);
+    var timeout = window.setTimeout(function () { controller.abort(); }, 30000);
     state.cadastroPerfilConsultandoCnpj = true;
     if (botao) {
       botao.disabled = true;

@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_CQC7pKW73YjDGvjZ8snA2S1bVG9m",
+  "baseDeploymentId": "dpl_C8Ft2343YPCVGNf873NbuSi9bTcq",
   "migrations": [],
-  "version": "3.2.0.442",
-  "scope": "Vendas e Serviços: persistir endereço e dados da empresa no cadastro central"
+  "version": "3.2.0.443",
+  "scope": "Vendas e Serviços: foco do CNPJ, espera da consulta e identificação main na Vercel"
 }

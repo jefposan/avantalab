@@ -161,7 +161,7 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
     }
 
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 12_000);
+    const timeout = window.setTimeout(() => controller.abort(), 30_000);
     setConsultandoCnpj(true);
     setConsultaCnpj(null);
     setConsultaCnpjErro('');

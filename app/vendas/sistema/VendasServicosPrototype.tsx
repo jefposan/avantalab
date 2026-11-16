@@ -1028,12 +1028,14 @@ function SearchToolbar({ value, onChange, children, placeholder = 'Buscar por cl
 function Dialog({ open, title, description, onClose, children, eyebrow = 'Vendas e serviços', titleExtra }: { open: boolean; title: string; description: string; onClose: () => void; children: ReactNode; eyebrow?: string; titleExtra?: ReactNode }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => {
     if (!open) return;
     openerRef.current = document.activeElement as HTMLElement | null;
     const timer = window.setTimeout(() => dialogRef.current?.querySelector<HTMLElement>('input,select,textarea,button')?.focus(), 0);
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { onClose(); return; }
+      if (event.key === 'Escape') { onCloseRef.current(); return; }
       if (event.key !== 'Tab') return;
       const focusable = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex="-1"])') ?? []);
       if (!focusable.length) return;
@@ -1048,7 +1050,7 @@ function Dialog({ open, title, description, onClose, children, eyebrow = 'Vendas
       window.removeEventListener('keydown', handleKey);
       openerRef.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
   if (!open) return null;
   return <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><div ref={dialogRef} className="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header><div><span>{eyebrow}</span>{titleExtra ? <div className="dialog-title-line"><h2 id="dialog-title">{title}</h2>{titleExtra}</div> : <h2 id="dialog-title">{title}</h2>}<p>{description}</p></div><button type="button" className="icon-button" onClick={onClose} aria-label="Fechar"><Icon name="close"/></button></header>{children}</div></div>;
 }
@@ -2663,7 +2665,7 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
       return;
     }
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 12_000);
+    const timeout = window.setTimeout(() => controller.abort(), 30_000);
     try {
       const response = await fetch('/api/consultas/cnpj', {
         method: 'POST',

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.442 -->
+<!-- ava-version: 3.2.0.443 -->
+
+> Revisão 3.2.0.443: Sem impacto operacional direto no AvantaVendas; foco e espera da consulta corrigidos na Gestão.
 
 > Revisão 3.2.0.442: Sem impacto operacional adicional neste ambiente; persistência do cadastro corrigida na Gestão Web.
 

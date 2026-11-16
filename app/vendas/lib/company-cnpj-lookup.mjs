@@ -6,7 +6,7 @@ export async function lookupCompanyCnpj(document, { fetcher = fetch, signal } = 
   const abort = () => controller.abort();
   if (signal?.aborted) controller.abort();
   signal?.addEventListener('abort', abort, { once: true });
-  const timeout = setTimeout(abort, 12000);
+  const timeout = setTimeout(abort, 30000);
   try {
     const response = await fetcher('/api/consultas/cnpj', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

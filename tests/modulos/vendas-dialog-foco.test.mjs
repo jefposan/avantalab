@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import ts from 'typescript';
+test('Dialog não reinicia foco ao editar; Escape usa callback atual e fechar restaura uma vez',async()=>{
+ const source=await readFile(new URL('../../app/vendas/sistema/VendasServicosPrototype.tsx',import.meta.url),'utf8');
+ const start=source.indexOf('function Dialog(');const code=source.slice(source.indexOf('  const dialogRef',start),source.indexOf('  if (!open) return null;',start));
+ const js=ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;
+ const slots=[];let cursor=0,pending=[],focus=0,restore=0,listener,close=0;
+ const field={focus:()=>focus++};const opener={focus:()=>restore++};
+ const doc={activeElement:opener};const win={setTimeout:fn=>{pending.push(fn);return 1},clearTimeout(){},addEventListener:(name,fn)=>listener=fn,removeEventListener:()=>listener=null};
+ const useRef=initial=>{const i=cursor++;return slots[i]??= {current:initial===null&&i===0?{querySelector:()=>field}:initial};};
+ const useEffect=(fn,deps)=>{const i=cursor++;const prev=slots[i];if(!prev||deps.some((v,j)=>v!==prev.deps[j])){prev?.cleanup?.();slots[i]={deps,fn};pending.push(()=>{slots[i].cleanup=fn()});}};
+ const render=new Function('useRef','useEffect','window','document','open','onClose',js);
+ const run=(open,onClose)=>{cursor=0;render(useRef,useEffect,win,doc,open,onClose);while(pending.length)pending.shift()();};
+ run(true,()=>close++);assert.equal(focus,1);
+ for(let i=0;i<14;i++)run(true,()=>{close+=10});
+ assert.equal(focus,1);assert.equal(restore,0);
+ listener({key:'Escape'});assert.equal(close,10);
+ run(false,()=>{});assert.equal(restore,1);
+});
