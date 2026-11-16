@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.435 -->
+<!-- ava-version: 3.2.0.436 -->
+
+> Revisão 3.2.0.436: sem impacto operacional; abertura recolhida do ranking exclusiva do AvantaVendas.
 
 > Revisão 3.2.0.435: sem impacto operacional; modelo visual do PDF exclusivo do relatório AvantaVendas.
 

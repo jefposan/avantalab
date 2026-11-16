@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_HtmuCoKKHtBFmTnoWTSMvpQWuNWD",
+  "baseDeploymentId": "dpl_8FhZuqxytfSUBQNvp4eoCHAVP82X",
   "migrations": [],
-  "version": "3.2.0.435",
-  "scope": "AvantaVendas: modelo aprovado de PDF com logo, setores, barras verdes e paginação"
+  "version": "3.2.0.436",
+  "scope": "AvantaVendas: ranking de produtos do relatório inicia recolhido"
 }

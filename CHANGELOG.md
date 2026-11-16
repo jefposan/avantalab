@@ -14977,3 +14977,8 @@ Publicação confirmada das revisões 3.2.0.110–112: READY/PROMOTED nos domín
 - Ano corrente encerra a janela móvel no mês atual de São Paulo; demais anos mostram janeiro a dezembro. Ranking e bonificações mantêm o ano selecionado explicitamente. Reutiliza os cálculos existentes, sem escrever em dados ou alterar compartilhamento/download, autenticação, Gestão ou binários nativos.
 - Logo oficial convertido de WebP para PNG transparente compatível com pdf-lib, carregado somente na geração. Testes de PDF vazio, listas longas, modelo de duas páginas, timezone, imutabilidade e compartilhamento mantidos; build completo obrigatório na Vercel.
 
+## 3.2.0.436-av210 - AvantaVendas: ranking do cliente recolhido ao abrir
+
+- Remove abertura automática somente de Produtos mais comprados no relatório. Título continua expandindo/recolhendo pelo controle nativo; rolagem, demais blocos, dados e PDF preservados.
+- Teste executa o renderizador do bloco e garante abertura recolhida repetida do ranking, mantendo Resumo por ano e Bonificações abertos.
+
