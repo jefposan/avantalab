@@ -4189,6 +4189,7 @@ function traduzErro(error) {
   if (error?.persistenciaPendente) return 'Sem confirmação do servidor. A alteração ficou protegida neste aparelho e será reenviada automaticamente quando a conexão estabilizar.';
   if (error?.persistenciaLocalIndisponivel) return 'Não foi possível confirmar no servidor nem proteger a alteração no aparelho. Mantenha esta tela aberta e tente novamente.';
   const texto = String(error?.message || error || 'Erro inesperado.');
+  if (error?.code === 'AVANTAVENDAS_SKU_REPETIDO' || (error?.code === '23505' && /vendas_mobile_produtos_conta_sku_unico/.test(texto))) return 'Já existe um produto com este SKU nesta conta. Use outro SKU ou edite o produto existente.';
   const nome = String(error?.name || '');
   if (/invalid login credentials/i.test(texto)) return 'E-mail ou senha incorretos.';
   if (ehErroContaJaCadastradaVendas(texto)) return 'Este e-mail já está vinculado a uma conta.';
@@ -4967,11 +4968,40 @@ function rankingClientesDashboard(vendas) {
   return [...mapa.values()].sort((a, b) => b.total - a.total);
 }
 
+function criarAgrupadorProdutosRelatorio(adicionais = []) {
+  // Somente leitura: une retratos históricos por SKU OU nome, sem regravar itens.
+  const contaAtual = String(state.contaVendasAtiva?.id || 'local');
+  const pais = [], chaves = [], aliases = new Map(), semIdentificacao = new WeakMap();
+  const normalizarNome = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
+  const tokens = (item,conta) => [
+    item.produto_id ? `id:${item.produto_id}` : '',
+    String(item.produto_sku || '').trim() ? `sku:${String(item.produto_sku).trim().toUpperCase()}` : '',
+    normalizarNome(item.produto_nome) ? `nome:${normalizarNome(item.produto_nome)}` : '',
+  ].filter(Boolean).map(t => JSON.stringify([String(conta || contaAtual),t]));
+  const raiz = n => { while (pais[n] !== n) { pais[n] = pais[pais[n]]; n = pais[n]; } return n; };
+  const registrar = (item,conta) => {
+    const n=pais.length, ts=tokens(item,conta); pais.push(n);
+    const sku=String(item.produto_sku || '').trim().toUpperCase();
+    const chave=String(item.produto_id || (sku ? `sku:${sku}` : `nome:${normalizarNome(item.produto_nome) || `sem-identificacao-${n}`}`));
+    chaves.push(String(conta || contaAtual)===contaAtual ? chave : JSON.stringify([conta,chave]));
+    if (!ts.length) semIdentificacao.set(item,n);
+    ts.forEach(t => { if (aliases.has(t)) { const a=raiz(n),b=raiz(aliases.get(t)); pais[Math.max(a,b)]=Math.min(a,b); } else aliases.set(t,n); });
+  };
+  (state.produtos || []).forEach(p => registrar({produto_id:p.id,produto_sku:p.sku,produto_nome:p.nome},p.conta_id));
+  [...(state.vendas || []),...adicionais].forEach(v => (v.itens || []).forEach(i => registrar(i,v.conta_id)));
+  return (item,conta=contaAtual) => {
+    const token=tokens(item,conta).find(t=>aliases.has(t));
+    const n=token ? aliases.get(token) : semIdentificacao.get(item);
+    return n===undefined ? String(item.produto_id || item.produto_sku || item.produto_nome || '') : chaves[raiz(n)];
+  };
+}
+
 function rankingProdutosDashboard(vendas) {
   const mapa = new Map();
+  const chaveAgrupada = criarAgrupadorProdutosRelatorio(vendas);
   vendas.forEach((venda) => (venda.itens || []).forEach((item) => {
     if (itemPedidoBonificado(item)) return;
-    const chaveProduto = item.produto_id || item.produto_sku || item.produto_nome;
+    const chaveProduto = chaveAgrupada(item,venda.conta_id);
     const atual = mapa.get(chaveProduto) || { nome: item.produto_nome || 'Produto', qtd: 0, total: 0 };
     atual.qtd += Number(item.quantidade || 0);
     atual.total += Number(item.total ?? Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0));
@@ -4983,9 +5013,10 @@ function rankingProdutosDashboard(vendas) {
 function resumoConsignadosDashboard() {
   const pedidos = state.vendas.filter(pedidoConsignadoAtivo);
   const produtos = new Map();
+  const chaveAgrupada = criarAgrupadorProdutosRelatorio();
   pedidos.forEach((pedido) => (pedido.itens || []).forEach((item) => {
     if (itemPedidoBonificado(item)) return;
-    const chave = item.produto_id || item.produto_sku || item.produto_nome;
+    const chave = chaveAgrupada(item,pedido.conta_id);
     const atual = produtos.get(chave) || { chave: String(chave || ''), nome: item.produto_nome || 'Produto', quantidade: 0 };
     atual.quantidade += Number(item.quantidade || 0);
     produtos.set(chave, atual);
@@ -5008,9 +5039,10 @@ let distribuicaoConsignadoDashboard = null;
 
 function clientesDoProdutoConsignadoDashboard(chave, ordem = 'quantidade-desc') {
   const clientes = new Map();
+  const chaveAgrupada = criarAgrupadorProdutosRelatorio();
   for (const pedido of state.vendas.filter(pedidoConsignadoAtivo)) {
     for (const item of pedido.itens || []) {
-      if (itemPedidoBonificado(item) || String(item.produto_id || item.produto_sku || item.produto_nome || '') !== String(chave)) continue;
+      if (itemPedidoBonificado(item) || chaveAgrupada(item,pedido.conta_id) !== String(chave)) continue;
       const quantidade = Number(item.quantidade || 0);
       if (!Number.isFinite(quantidade) || quantidade <= 0) continue;
       const idCliente = String(pedido.cliente_id || '');
@@ -5310,6 +5342,7 @@ function dadosRelatorioCliente(clienteId, ano) {
   const bonificacoes = [];
   let unidades = 0;
   if (!cliente) return { cliente: null, meses, anos: [], produtos: [], bonificacoes, compras: 0, pagamentos: 0, pedidos: 0, unidades, valorBonificado: 0, referenciasAusentes: false };
+  const chaveAgrupada = criarAgrupadorProdutosRelatorio();
   const resumoAno = a => { if (!anos.has(a)) anos.set(a, { ano: a, compras: 0, pagamentos: 0, pedidos: 0, numeroPagamentos: 0 }); return anos.get(a); };
   (state.vendas || []).filter(v => v.cliente_id === clienteId && v.status !== 'cancelada' && !pedidoEhConsignado(v)).forEach(v => {
     const periodo = periodoRegistroRelatorio(v.criado_em);
@@ -5330,7 +5363,7 @@ function dadosRelatorioCliente(clienteId, ano) {
         return;
       }
       unidades += quantidade;
-      const chave = item.produto_id || item.produto_sku || item.produto_nome;
+      const chave = chaveAgrupada(item,v.conta_id);
       const produto = produtos.get(chave) || { nome: item.produto_nome || 'Produto', quantidade: 0, valor: 0 };
       produto.quantidade += quantidade;
       produto.valor += Math.round(Number(item.total ?? quantidade * (Number.isFinite(preco) ? preco : 0)) * 100);
@@ -10922,10 +10955,39 @@ async function importarLinkPacote(nomeCodificado, numeroCodificado) {
     if (!resposta.ok) throw new Error('Não foi possível baixar o arquivo informado.');
     const resultado = produtosDaPlanilha(await resposta.arrayBuffer());
     await salvarPacoteImportado({ nome, numero, origem: 'link', ...resultado });
-  } catch (error) { toast(`${traduzErro(error)} Verifique se o link é público e permite acesso ao arquivo.`); }
+  } catch (error) { toast(`${traduzErro(error)} Verifique se o link é público e permite acesso ao arquivo.`,{tipo:'erro'}); }
+}
+
+function validarSkusProdutosVendas(produtos, existentes = state.produtos || [], ignorarId = null) {
+  const conta=state.contaVendasAtiva?.id;
+  const normalizarSku = v => String(v || '').trim().toUpperCase();
+  const usados=new Set(existentes.filter(p => (!conta || !p.conta_id || p.conta_id===conta) && (!ignorarId || p.id!==ignorarId)).map(p=>normalizarSku(p.sku)).filter(Boolean));
+  for (const p of produtos) {
+    const sku=normalizarSku(p.sku);
+    if (!sku) continue;
+    if (usados.has(sku)) {
+      const erro=new Error('Já existe um produto com este SKU nesta conta. Use outro SKU ou edite o produto existente.');
+      erro.code='AVANTAVENDAS_SKU_REPETIDO'; throw erro;
+    }
+    usados.add(sku);
+  }
+}
+
+function mostrarErroSkuProdutoVendas(erro) {
+  if (!(erro?.code==='AVANTAVENDAS_SKU_REPETIDO' || (erro?.code==='23505' && /vendas_mobile_produtos_conta_sku_unico/.test(erro.message || '')))) return;
+  const campo=document.getElementById('prodSku');
+  if (!campo) return;
+  const mensagem=traduzErro(erro);
+  let ajuda=document.getElementById('prodSkuErro');
+  if (!ajuda) { ajuda=document.createElement('small'); ajuda.id='prodSkuErro'; ajuda.setAttribute('role','alert'); campo.parentElement.appendChild(ajuda); }
+  ajuda.textContent=mensagem;
+  campo.setAttribute('aria-invalid','true'); campo.setAttribute('aria-describedby','prodSkuErro');
+  campo.focus();
+  campo.addEventListener('input',()=>{ campo.removeAttribute('aria-invalid'); campo.removeAttribute('aria-describedby'); ajuda.remove(); },{once:true});
 }
 
 async function salvarPacoteImportado({ nome, numero, origem, produtos, invalidos = [] }) {
+  validarSkusProdutosVendas(produtos);
   let pacote;
   try {
     if (backendAtivo) {
@@ -11206,6 +11268,8 @@ async function salvarProduto(produtoId) {
     toast('Informe nome e preço do produto.');
     return;
   }
+  try { validarSkusProdutosVendas([dados],state.produtos,produtoId); }
+  catch (erro) { mostrarErroSkuProdutoVendas(erro); toast(traduzErro(erro),{tipo:'erro'}); return; }
   try {
     if (produtoImagemUploadPendente?.blob) {
       dados.imagem_url = backendAtivo
@@ -11221,7 +11285,7 @@ async function salvarProduto(produtoId) {
     if (produtoImagemUploadPendente?.previewUrl) URL.revokeObjectURL(produtoImagemUploadPendente.previewUrl);
     produtoImagemUploadPendente = null;
     fecharSheet(); toast('Produto salvo.'); render();
-  } catch (error) { toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
+  } catch (error) { mostrarErroSkuProdutoVendas(error); toast(traduzErro(error), { tipo: error?.persistenciaPendente ? "informacao" : "erro" }); }
 }
 
 function removerProduto(produtoId) {

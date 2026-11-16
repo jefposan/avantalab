@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.445 -->
+<!-- ava-version: 3.2.0.446 -->
+
+> Revisão 3.2.0.446-av211: AvantaVendas impede repetir SKU preenchido na mesma conta em cadastro, edição e importação; maiúsculas/minúsculas e espaços externos não diferenciam o código, mas zeros e pontuação são preservados. SKU vazio continua opcional. Proteção no banco abrange inclusive inativos e gravações concorrentes; outra conta pode usar o mesmo SKU. Não bloqueia nomes iguais. Nos rankings do dashboard, relatório por cliente e seu PDF, produtos são reunidos por SKU OU nome repetido, mesmo com IDs distintos ou cadastro excluído. Nomes são comparados sem diferença de caixa, acentos ou espaços repetidos, sem aproximação por trecho. Identidades ligadas transitivamente formam um grupo só; contas permanecem separadas. Estoque consignado e detalhamento por cliente usam a mesma chave agrupada. Apenas soma na leitura: preserva itens, datas, preços, descontos, vendas e comprovantes originais. Bonificações continuam discriminadas por lançamento. Erro de SKU fica no campo, com possibilidade de corrigir sem perder o formulário.
 
 > Revisão 3.2.0.445: Sem impacto operacional neste ambiente; correção do fluxo de configurações fiscais na Gestão Web.
 
@@ -1038,7 +1040,7 @@ Revisão 3.2.0.98: correção do extrator de preços do Web/AvantaPreços; sem i
 > Revisão 3.1.0.45: card compacto de Produtos e estoque no Marketplaces Web; sem impacto operacional no AvantaVendas. Menu av188, dados e preferências preservados. Local, não publicado.
 
 > Revisão 3.1.0.44: configurações, referência editável e sugestões do Marketplaces/AvantaPreços; sem impacto operacional no AvantaVendas independente. Menu av188 e suas preferências permanecem intactos. Local, não publicado.
-<!-- avantavendas-asset-revision: 210 -->
+<!-- avantavendas-asset-revision: 211 -->
 
 > Revisão 3.1.0.43-av188: o topo do menu inferior tem linha fina azul-ciano que desliza até o botão acionado, no padrão da Gestão Mobile (2 px, 300 ms). O indicador acompanha atalhos personalizados, Início, Configurações, mudança de tema e Lançar, sem atrasar ações. Ao navegar por outras áreas, volta a indicar o destino representado no menu, ou Início quando não houver atalho correspondente. A preferência de movimento reduzido desativa o deslizamento. Círculo continua removido e resposta tátil opcional preservada. Sem alteração de dados, permissões ou fluxo da Gestão. Testado em Chrome isolado, não em aparelhos físicos. Local, não publicado.
 

@@ -15029,3 +15029,10 @@ Publicação confirmada das revisões 3.2.0.110–112: READY/PROMOTED nos domín
 - Remove abertura automática somente de Produtos mais comprados no relatório. Título continua expandindo/recolhendo pelo controle nativo; rolagem, demais blocos, dados e PDF preservados.
 - Teste executa o renderizador do bloco e garante abertura recolhida repetida do ranking, mantendo Resumo por ano e Bonificações abertos.
 
+## 3.2.0.446-av211 - AvantaVendas: SKU único por conta e identidade dos produtos nos relatórios
+
+- Cadastro/edição/importação validam SKU repetido e mantêm formulário corrigível. Índice único por conta garante proteção atômica em qualquer escrita, inclusive simultânea e com produto inativo. SKU vazio permitido, código sem diferença de caixa/espaços externos, zeros e pontuação preservados; nomes repetidos não são proibidos.
+- Rankings do dashboard/cliente/PDF e estoque consignado com distribuição por cliente agrupam por SKU OU nome igual normalizado. União transitiva considera cadastro atual e retratos históricos, inclusive IDs excluídos. Contas continuam separadas; sem aproximação por trecho nem alteração dos itens originais.
+- Nenhuma exclusão, remapeamento ou atualização de vendas/comprovantes. Valores, descontos, datas e bonificações por lançamento preservados. Migração 20261116220000 aplicada isoladamente e registrada em produção, índice válido confirmado; pré-verificação encontrou zero grupos de SKU preenchido repetido.
+- Testes executam agrupamento, isolamento, preservação de dados e índice SQL real (cadastro, edição, lote atômico, vazios, zeros, inativos e conflito legado). Validação no navegador mantém relatório/PDF/rolagem; build completo obrigatório na Vercel.
+

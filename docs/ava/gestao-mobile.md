@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.445 -->
+<!-- ava-version: 3.2.0.446 -->
+
+> Revisão 3.2.0.446: sem impacto operacional na Gestão; validação de SKU e agrupamento dos relatórios exclusivos do AvantaVendas.
 
 > Revisão 3.2.0.445: Sem impacto operacional neste ambiente; correção do fluxo de configurações fiscais na Gestão Web.
 

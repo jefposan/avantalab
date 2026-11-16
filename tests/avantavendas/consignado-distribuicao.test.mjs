@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 const source = readFileSync(new URL('../../app/avantavendas/sistema/app.js', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('app.js', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
-const names = ['resumoConsignadosDashboard', 'clientesDoProdutoConsignadoDashboard', 'conteudoDistribuicaoConsignadoDashboard', 'abrirDistribuicaoConsignadoDashboard', 'ordenarDistribuicaoConsignadoDashboard', 'abrirClienteDashboard', 'sheet', 'fecharSheet', 'escapeHtml', 'escapeAttr'];
+const names = ['criarAgrupadorProdutosRelatorio', 'resumoConsignadosDashboard', 'clientesDoProdutoConsignadoDashboard', 'conteudoDistribuicaoConsignadoDashboard', 'abrirDistribuicaoConsignadoDashboard', 'ordenarDistribuicaoConsignadoDashboard', 'abrirClienteDashboard', 'sheet', 'fecharSheet', 'escapeHtml', 'escapeAttr'];
 function ambiente() {
   class Elemento {
     constructor(classes = '') { this.classList = { contains: c => classes.split(' ').includes(c), add() {}, remove() {} }; this.style = {}; this.isConnected = false; this.attrs = {}; this.scrollTop = 0; this.handlers = {}; }

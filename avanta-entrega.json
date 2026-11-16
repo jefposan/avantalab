@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_9Q7iGBFK1mgi6bjYq85Eb1yfaRJD",
-  "migrations": [],
-  "version": "3.2.0.445",
-  "scope": "Vendas e Serviços: preservar card fiscal ao salvar numeração e separar validação de CFOP"
+  "baseDeploymentId": "dpl_41CT4WNdE9fXJ5D1T3Dm7CFkW2u1",
+  "migrations": [{"path":"supabase/migrations/20261116220000_avantavendas_sku_unico_conta.sql","sha256":"05c4e72ad756b1515e2b0cf7d81d93e9d13039ac836f529aa002aef1c6600be6"}],
+  "version": "3.2.0.446",
+  "scope": "AvantaVendas: bloquear SKU repetido por conta e reunir produtos por SKU ou nome nos relatórios"
 }

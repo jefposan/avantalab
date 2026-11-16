@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.445 -->
+<!-- ava-version: 3.2.0.446 -->
+
+> Revisão 3.2.0.446: sem impacto operacional na Gestão; validação de SKU e agrupamento dos relatórios exclusivos do AvantaVendas.
 
 > Revisão 3.2.0.445: Em Dados para emissão, Configurar série e numeração suspende o card fiscal e retorna a ele após salvar ou cancelar, preservando responsável e marcações ainda não salvos. Salvar configurações fiscais valida somente as preferências; CFOP continua obrigatório na publicação de regras e na emissão.
 

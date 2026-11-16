@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 const source=readFileSync(new URL('../../app/avantavendas/sistema/app.js',import.meta.url),'utf8');
 const ast=ts.createSourceFile('app.js',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
-const names=['normalizar','itemPedidoBonificado','pedidoSomenteBonificado','periodoRegistroRelatorio','dadosRelatorioCliente','renderRelatorioCliente','limparClienteRelatorio','escapeHtml','escapeAttr'];
+const names=['criarAgrupadorProdutosRelatorio','normalizar','itemPedidoBonificado','pedidoSomenteBonificado','periodoRegistroRelatorio','dadosRelatorioCliente','renderRelatorioCliente','limparClienteRelatorio','escapeHtml','escapeAttr'];
 const code=ast.statements.filter(n=>ts.isFunctionDeclaration(n)&&names.includes(n.name?.text)).map(n=>n.getText(ast)).join('\n');
 function contexto(){
  const ctx=vm.createContext({state:{usuario:{id:'u'},contaVendasAtiva:{id:'p'},clientes:[{id:'a',nome:'<Ana>'},{id:'b',nome:'Bia'}],vendas:[
