@@ -1,3 +1,14 @@
+## 3.2.0.462 — Vendas e Marketplaces: ordem das ações e rolagem de Novo anúncio
+
+- Adicionar item à esquerda e Novo produto à direita no seletor, preservando ações, cores e ordem de teclado.
+- Novo anúncio permite encadear a rolagem para a página ao chegar ao limite da área interna, inclusive quando não há conteúdo interno para rolar. Preserva cabeçalho sticky, edição, resumo e bloqueios de popups/foco.
+
+- CNPJ da instituição de pagamento e do intermediador recebem máscara durante digitação e colagem; valores existentes também são formatados na exibição, mantendo somente dígitos no estado e na transmissão.
+
+- Validação do intermediador separa CNPJ e identificação: a ausência da identificação destaca seu próprio campo, sem marcar um CNPJ preenchido como incorreto.
+
+- Identificação no intermediador recebe tooltip padrão: “Informe seu usuário ou identificador na plataforma da venda.”, disponível ao passar o mouse ou focar o rótulo por teclado.
+
 ## 3.2.0.461 — Conteúdo AvantaVendas: aviso de rede e recuperação do catálogo
 
 - Catálogo não consultado deixa de aparecer como 0 produtos, nenhum catálogo ativo ou nenhum produto cadastrado. Estados vazios só são apresentados após resposta válida de produtos e catálogos.

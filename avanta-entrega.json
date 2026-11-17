@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_4t95jmmQxns5AFSWSZWfgemjp5uK",
+  "baseDeploymentId": "dpl_BgJSM5kw2gkMFEaSC7RscdAt9gqS",
   "migrations": [],
-  "version": "3.2.0.461",
-  "scope": "Conteúdo AvantaVendas: distinguir falta de rede de catálogo vazio"
+  "version": "3.2.0.462",
+  "scope": "Vendas e Marketplaces: máscara e orientação de CNPJ, validação do intermediador, ordem das ações e rolagem de Novo anúncio"
 }

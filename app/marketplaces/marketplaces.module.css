@@ -1191,6 +1191,8 @@
 .preparationScroll .preparationSearch { position: sticky; top: var(--preparation-heading-height, 80px); z-index: 3; padding-block: 12px; background: #fff; }
 .dark .preparationScroll .preparationSearch { background: #182235; }
 .preparationScroll { scroll-padding-block-start: calc(var(--preparation-heading-height, 80px) + var(--preparation-search-height, 0px) + 12px); }
+/* Ao chegar ao limite do formulário, a rolagem segue para a página. */
+.preparationScroll[data-product-scroll] { overscroll-behavior-y: auto; }
 @media (max-height: 500px), print { .preparationScroll .preparationSearch { position: static; } }
 
 /* Vendas: ao atingir a borda dos detalhes, continuar a rolagem na página. */
