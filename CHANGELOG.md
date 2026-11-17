@@ -1,3 +1,7 @@
+# 3.2.0.473 — Fiscal: recuperar rolagem das configurações
+
+Configurações fiscais recupera a rolagem interna para alcançar todos os campos, com cabeçalho e rodapé fixos. Listas flutuantes continuam acima do card. Sem alteração de dados ou regras fiscais.
+
 # 3.2.0.472 — Fiscal: listas sobrepostas e CFOP editável
 
 CFOP editável com fundo branco e borda visível. Listas pesquisáveis de tributos e CFOP usam camada flutuante sobre cards e rodapés, com reposicionamento na rolagem e limites da tela. Escape fecha primeiro a lista; seleção e regras fiscais preservadas.

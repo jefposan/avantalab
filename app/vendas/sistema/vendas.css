@@ -2488,7 +2488,7 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 .fiscal-defaults-panel .client-section-heading{margin-bottom:14px;}
 .fiscal-defaults-panel .client-section-heading h4{margin-top:18px;}
 .fiscal-defaults-panel .heading-actions{justify-content:flex-end;margin-top:16px;}
-.settings-dialog-body:has(.fiscal-defaults-panel){overflow:visible;}
+.settings-dialog-body:has(.fiscal-defaults-panel){min-height:0;overflow:auto;}
 
 /* Ajustes exclusivos do item: corpo usa a rolagem e o rodapé do Dialog oficial. */
 .note-item-editor .note-item-explanation { display:block; margin:0 0 16px; color:var(--av-text-muted); line-height:1.5; }

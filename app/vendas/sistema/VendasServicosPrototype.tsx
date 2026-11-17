@@ -1038,7 +1038,7 @@ function SearchToolbar({ value, onChange, children, placeholder = 'Buscar por cl
   return <div className="toolbar"><label className="search-field"><span className="sr-only">Buscar</span><Icon name="search" size={18}/><input type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder}/>{value && <button type="button" className="search-field-clear" onClick={() => onChange('')} aria-label="Limpar pesquisa">×</button>}</label>{children}</div>;
 }
 
-function Dialog({ open, title, description, onClose, children, eyebrow = 'Vendas e serviços', titleExtra }: { open: boolean; title: string; description: string; onClose: () => void; children: ReactNode; eyebrow?: string; titleExtra?: ReactNode }) {
+export function Dialog({ open, title, description, onClose, children, eyebrow = 'Vendas e serviços', titleExtra }: { open: boolean; title: string; description: string; onClose: () => void; children: ReactNode; eyebrow?: string; titleExtra?: ReactNode }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
