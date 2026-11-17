@@ -1,4 +1,5 @@
 import 'server-only';
+import {readMlPurchaseConditions} from '../purchase-conditions';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MarketplaceError } from './management-access';
 import { loadConnection, mlBinaryRequest, mlRequest, type SellerConnection } from './mercadolivre-management';
@@ -219,7 +220,7 @@ export async function postSaleForSale(db: SupabaseClient, companyId: string, con
   const order = objectValue(await mlRequest(db, connection, `/orders/${saved.provider_order_id}`));
   if (orderId(order.id) !== saved.provider_order_id || orderId(objectValue(order.seller).id) !== connection.seller_reference) throw new MarketplaceError(503, 'invalid_order', 'O Mercado Livre não confirmou o pedido desta conta.');
   const shippingId = shipmentId(objectValue(order.shipping).id);
-  const [postSale, shipmentResult] = await Promise.all([
+  const [postSale, shipmentResult, purchaseConditions] = await Promise.all([
     readPostSale(order, connection.seller_reference, (path) => mlRequest(db, connection, path)),
     (async () => {
       if (!shippingId) return { shipment: null, complete: true };
@@ -229,7 +230,9 @@ export async function postSaleForSale(db: SupabaseClient, companyId: string, con
         return { shipment, complete: true };
       } catch { return { shipment: null, complete: false }; }
     })(),
+    readMlPurchaseConditions(order,connection.seller_reference,path=>mlRequest(db,connection,path)),
   ]);
+  postSale.purchaseConditions=purchaseConditions;
   const snapshot = saleSnapshot(order, shipmentResult.shipment);
   Object.assign(snapshot, { dceEmission: objectValue(saved.snapshot).dceEmission });
   await reconcileFiscal(db, connection, saved, shippingId);

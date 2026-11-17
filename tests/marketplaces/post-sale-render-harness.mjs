@@ -9,6 +9,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 const componentPath = resolve(import.meta.dirname, '../../app/marketplaces/SalePostSale.tsx');
 const hooks = registerHooks({
   resolve(specifier, context, next) {
+    if(specifier==='./SalePurchaseConditions')return {url:pathToFileURL(resolve(import.meta.dirname,'../../app/marketplaces/SalePurchaseConditions.tsx')).href,shortCircuit:true};
+    if(specifier==='@/app/lib/formatters')return {url:pathToFileURL(resolve(import.meta.dirname,'../../app/lib/formatters.ts')).href,shortCircuit:true};
     if (context.parentURL === pathToFileURL(componentPath).href && specifier === './SaleServiceWorkspace') return { url: 'data:text/javascript,export default function Fixture(){return null}', shortCircuit: true };
     if (specifier === '@/app/components/BotaoAcaoCompacto') return { url: pathToFileURL(resolve(import.meta.dirname, '../../app/components/BotaoAcaoCompacto.tsx')).href, shortCircuit: true };
     if (specifier === '@/app/projetos/components/Icon') return { url: pathToFileURL(resolve(import.meta.dirname, '../../app/projetos/components/Icon.tsx')).href, shortCircuit: true };

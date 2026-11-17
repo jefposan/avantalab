@@ -1158,6 +1158,10 @@ function CatalogSearch({ id, items, onAdd, onNewProduct, selectionRequest, kind 
         <input
           id={id}
           type="search"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={open}

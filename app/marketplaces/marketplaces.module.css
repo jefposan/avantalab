@@ -1200,3 +1200,33 @@
 .disconnectedAccountsTitle:focus-visible { outline:2px solid var(--brand);outline-offset:4px; }
 
 .productPublicationRibbon[data-publication="reserved"] {background:#875900;}
+
+/* Busca no início da mesma linha dos três seletores e resumo legível recolhido. */
+.salesFiltersWithSearch { grid-template-columns: minmax(250px,1.35fr) repeat(3,minmax(0,1fr)); max-width: none; align-items:end; }
+.salesFiltersWithSearch.salesDirectFilters { grid-template-columns:minmax(250px,1.35fr) repeat(2,minmax(0,1fr)); }
+.salesSearchField { display:grid; min-width:0; gap:6px; color:var(--text, #334155); font-size:12px; font-weight:500; }
+.salesSearchField input { width:100%; min-width:0; min-height:44px; border:1px solid #dbe3ee; border-radius:12px; padding:10px 36px 10px 12px; color:#26384e; background:white; font:inherit; font-size:14px; }
+.saleSummary { grid-template-columns:90px minmax(0,1fr) auto auto; }
+.saleSummaryValue { display:grid; gap:4px; justify-items:end; margin-inline:12px 24px; white-space:nowrap; }
+.saleSummaryValue > small { color:#64748b; font-size:12px; }
+.saleSummaryValue > strong { font-size:19px; }
+.saleOrderInfo .salePinnedProduct { margin:0; font-size:13px; font-weight:500; }
+.dark .salesSearchField { color:#cbd5e1; }
+.dark .salesSearchField input { border-color:#475569; color:#f8fafc; background:#182235; }
+.dark .saleSummaryValue > small { color:#b8c5d7; }
+@media(max-width:1100px) { .salesFiltersWithSearch,.salesFiltersWithSearch.salesDirectFilters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:760px) {
+ .salesFiltersWithSearch,.salesFiltersWithSearch.salesDirectFilters { grid-template-columns:minmax(0,1fr); }
+ .saleSummary { grid-template-columns:90px minmax(0,1fr); }
+ .saleSummaryValue { grid-column:2; justify-items:start; margin:0; }
+ .saleSummary .saleStatusAction { grid-column:1 / -1; }
+}
+
+.purchaseConditions { margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #dbe3ee; }
+.purchaseConditions h3 { margin:0 0 14px; }
+.purchaseConditions dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 24px; }
+.purchaseConditions dl > div { display:grid; grid-template-columns:1fr; gap:4px; padding:0; }
+.purchaseConditions dd { margin:0; }
+.purchaseConditions dd p { margin:0 0 4px; }
+.dark .purchaseConditions { border-color:#334155; }
+@media(max-width:760px) { .purchaseConditions dl {grid-template-columns:minmax(0,1fr);} }

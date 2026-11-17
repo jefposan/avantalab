@@ -1,4 +1,5 @@
 import 'server-only';
+import {readMlPurchaseConditions} from '../purchase-conditions';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {MarketplaceError} from './management-access';
 import {loadConnection,mlRequest} from './mercadolivre-management';
@@ -6,7 +7,7 @@ import {loadMagaluConnection,magaluRequest} from './magalu-request';
 import {magaluPage} from '../magalu-sales-model';
 import {objectValue,uuidIsValid} from './listing-model';
 import {reportPeriod,type ReportFilters} from '../sales-report';
-import {allocateFreight,emptyFinancialMonths,magaluFinancial,mlFees,mlSellerFreight,toCents,type FinancialValue,type FinancialEntry} from '../sales-financial';
+import {emptyFinancialMonths,magaluFinancial,toCents,type FinancialValue,type FinancialEntry} from '../sales-financial';
 
 type FinancialRow = Record<string, unknown>;
 type StoredFinancial = { revision: string; value: FinancialValue; nextAttemptAt: number };
@@ -46,26 +47,8 @@ async function mlFinancial(db:SupabaseClient,companyId:string,row:Record<string,
   const order=objectValue(await mlRequest(db,connection,`/orders/${row.provider_order_id}`)),snapshot=objectValue(row.snapshot);
   if(String(order.id)!==String(row.provider_order_id)||String(objectValue(order.seller).id)!==connection.seller_reference||order.status!=='paid'||order.currency_id!=='BRL'||toCents(order.total_amount)!==toCents(snapshot.total))throw Error('order_changed');
   const gross=toCents(order.total_amount);if(gross===null)throw Error('invalid_gross');
-  const fees=mlFees(order),shippingId=String(objectValue(order.shipping).id||'');
-  let freight:number|null=null,issue:string|undefined;
-  try{
-    if(!/^\d{1,24}$/.test(shippingId)||Date.now()>deadline-9000)throw Error('shipping_pending');
-    const [costs,items]=await Promise.all([mlRequest(db,connection,`/shipments/${shippingId}/costs`),mlRequest(db,connection,`/shipments/${shippingId}/items`)]);
-    const cost=mlSellerFreight(costs,connection.seller_reference);
-    if(cost===null||!Array.isArray(items)||!items.length)throw Error('shipping_pending');
-    const ids=[...new Set(items.map(objectValue).map(item=>String(item.order_id||'')))];
-    if(!ids.includes(String(order.id))||ids.some(id=>!/^\d{1,24}$/.test(id))||ids.length>8)throw Error('shared_shipping');
-    const orders=[{id:String(order.id),gross}];
-    for(const id of ids.filter(id=>id!==String(order.id))){
-      if(Date.now()>deadline-9000)throw Error('shared_shipping');
-      const other=objectValue(await mlRequest(db,connection,`/orders/${id}`));
-      if(String(other.id)!==id||String(objectValue(other.seller).id)!==connection.seller_reference||String(objectValue(other.shipping).id)!==shippingId||other.currency_id!=='BRL'||other.status!=='paid'||toCents(other.total_amount)===null)throw Error('shared_shipping');
-      orders.push({id,gross:toCents(other.total_amount)!});
-    }
-    freight=allocateFreight(cost,orders).get(String(order.id))??null;
-  }catch{issue='Frete ainda não confirmado; envios compartilhados exigem rateio entre os pedidos.';}
-  const net=fees!==null&&freight!==null?gross-fees-freight:null;
-  return {fees,freight,net,adjustments:0,...(net===null?{issue:issue||'Comissão ainda não informada no pedido.'}:{})};
+  const conditions=await readMlPurchaseConditions(order,connection.seller_reference,path=>mlRequest(db,connection,path),deadline);
+  return {fees:conditions.fees,freight:conditions.sellerFreight,net:conditions.net,adjustments:0,...(conditions.net===null?{issue:conditions.issues[0]||'Comissão ainda não informada no pedido.'}:{})};
 }
 async function readFinancial(db:SupabaseClient,companyId:string,row:Record<string,unknown>,deadline:number):Promise<FinancialValue>{
   if(row.provider==='mercado_livre')return mlFinancial(db,companyId,row,deadline);

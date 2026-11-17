@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, type ReactNode } from 'react';
 import SaleServiceWorkspace from './SaleServiceWorkspace';
+import SalePurchaseConditions from './SalePurchaseConditions';
 import type { PostSaleDetails } from '@/app/modules/marketplaces/post-sale';
 import type { MarketplaceSale } from '@/app/modules/marketplaces/services/mercadolivre-sales';
 import { marketplaceClientRequest } from './Anunciados';
@@ -45,6 +46,7 @@ export function SalePostSaleView({ details, loading, error, onRefresh, provider,
   const name = magalu ? 'Magalu' : 'Mercado Livre';
   const platformLink = magalu ? 'https://seller.magalu.com' : 'https://www.mercadolivre.com.br/vendas';
   return <div className={`${styles.postSale} ${saleLayout.postSale}`}>
+    {!magalu && <SalePurchaseConditions value={details?.purchaseConditions} loading={loading} error={error}/>}
     <div className={`${styles.postSaleHeading} ${saleLayout.postSaleHeading}`}><h3>Pós-venda · {name}</h3><BotaoAcaoCompacto aria-label="Atualizar pós-venda" disabled={loading} onClick={onRefresh}><Icon name="refresh" size={16} />{loading ? 'Consultando…' : 'Atualizar'}</BotaoAcaoCompacto></div>
     {atendimento}
     {loading && <p className={styles.salesScopeHelp} role="status">Consultando cancelamento, reclamações, devolução e reembolso no {name}…</p>}

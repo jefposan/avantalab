@@ -1,6 +1,8 @@
 'use client';
 
 import LabelNativePrint from './LabelNativePrint';
+import CampoBusca from '@/app/components/CampoBusca';
+import {saleMatchesSearch} from '@/app/modules/marketplaces/sales-search';
 import {shippingLabelFilename} from '@/app/modules/marketplaces/label-download';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -75,12 +77,14 @@ export default function Vendas({ companyId, accountId, onAccountChange, group, o
   const [copiedOrder, setCopiedOrder] = useState('');
   const [copyError, setCopyError] = useState('');
   const [order, setOrder] = useState<DateOrder>('desc');
+  const [search,setSearch]=useState('');
+  useEffect(()=>setSearch(''),[companyId,view]);
   const [nativePrintBusy,setNativePrintBusy]=useState(false);
   const alertScrollDone = useRef(false);
-  const orderedSales = useMemo(() => sortSalesByDate(sales, order), [sales, order]);
+  const orderedSales = useMemo(() => sortSalesByDate(sales.filter(sale=>saleMatchesSearch(sale,search)), order), [sales, search, order]);
   const directRequest=useCallback<LotsRequest>((path,options)=>request?request(path,options):marketplaceClientRequest(path.replace('/api/modulos/marketplaces/',''),options?.body?JSON.parse(String(options.body)):undefined,options?.signal||undefined,options?.method),[request]);
   const directAccounts=[...new Map(sales.filter(s=>s.directSale).map(s=>[s.connectionId,{value:s.connectionId,label:`${s.directSale!.warehouseName} · Venda direta`}])).values()];
-  const confirmedTotal=sales.filter(s=>['paid','confirmed'].includes(s.status)).reduce((sum,s)=>sum+(s.total??0),0);
+  const confirmedTotal=orderedSales.filter(s=>['paid','confirmed'].includes(s.status)).reduce((sum,s)=>sum+(s.total??0),0);
 
   async function printLabel(sale: Sale, selectedFormat?: 'pdf' | 'zpl2', downloadOnly = false) {
     if (labelRequest.current || printing || !canManage || !canPrintSaleLabel(sale)) return;
@@ -140,9 +144,10 @@ export default function Vendas({ companyId, accountId, onAccountChange, group, o
   }
 
   return <section className={`${styles.panel} ${styles.salesPanel}`} aria-labelledby="sales-title">
-    <div className={`${styles.panelHeading} ${!expanded ? styles.panelHeadingCollapsed : ''}`}><div className={styles.salesTitleAndView}><h2 id="sales-title">Vendas · {sales.length}</h2>{onViewChange && <div className={styles.salesViewSwitch} role="group" aria-label="Origem das vendas"><BotaoAcaoCompacto aria-pressed={view==='online'} onClick={()=>onViewChange('online')}>Online</BotaoAcaoCompacto><BotaoAcaoCompacto aria-pressed={view==='direct'} onClick={()=>onViewChange('direct')}>Saldão</BotaoAcaoCompacto></div>}</div><div className={styles.panelHeadingActions}>{reorderHandle}<DateOrderButton context="Vendas" order={order} onChange={setOrder} disabled={loading} /><Tooltip texto="Atualizar vendas e envios"><BotaoAcaoCompacto onClick={onRefresh} disabled={loading}>{loading ? 'Atualizando…' : 'Atualizar'}</BotaoAcaoCompacto></Tooltip><BotaoExpandirCard variante="painel" somenteIcone modo="lista" contexto="Vendas" controlsId="sales-content" expandido={expanded} onClick={() => onExpandedChange(!expanded)} corPrimaria={brand} darkMode={dark} /></div></div>
+    <div className={`${styles.panelHeading} ${!expanded ? styles.panelHeadingCollapsed : ''}`}><div className={styles.salesTitleAndView}><h2 id="sales-title">Vendas · {orderedSales.length}{search.trim()?` de ${sales.length}`:''}</h2>{onViewChange && <div className={styles.salesViewSwitch} role="group" aria-label="Origem das vendas"><BotaoAcaoCompacto aria-pressed={view==='online'} onClick={()=>onViewChange('online')}>Online</BotaoAcaoCompacto><BotaoAcaoCompacto aria-pressed={view==='direct'} onClick={()=>onViewChange('direct')}>Saldão</BotaoAcaoCompacto></div>}</div><div className={styles.panelHeadingActions}>{reorderHandle}<DateOrderButton context="Vendas" order={order} onChange={setOrder} disabled={loading} /><Tooltip texto="Atualizar vendas e envios"><BotaoAcaoCompacto onClick={onRefresh} disabled={loading}>{loading ? 'Atualizando…' : 'Atualizar'}</BotaoAcaoCompacto></Tooltip><BotaoExpandirCard variante="painel" somenteIcone modo="lista" contexto="Vendas" controlsId="sales-content" expandido={expanded} onClick={() => onExpandedChange(!expanded)} corPrimaria={brand} darkMode={dark} /></div></div>
     <div id="sales-content" hidden={!expanded} aria-busy={loading}>
-    <div className={view==='direct'?`${styles.salesListFilters} ${styles.salesDirectFilters}`:styles.salesListFilters}>
+    <div className={`${styles.salesListFilters} ${styles.salesFiltersWithSearch} ${view==='direct'?styles.salesDirectFilters:''}`}>
+      <label className={styles.salesSearchField}><span>Buscar venda</span><CampoBusca value={search} onChange={setSearch} aria-label="Buscar por produto, pedido ou valor" placeholder="Produto, pedido ou valor" autoComplete="off" autoCorrect="off" spellCheck={false}/></label>
       {view === 'online' && <MarketplaceSelect label="Conta das vendas" value={accountId} placeholder="Todas as contas" onChange={onAccountChange} options={[{ value: '', label: 'Todas as contas' }, ...accounts.map((account) => ({ value: account.id, label: accountDisplayName(account) })),...directAccounts]} className={styles.salesAccountFilter} />}
       <MarketplaceSelect label="Situação" value={group} placeholder="Todas as situações" leadingIcon={<Icon name="filter" size={16} />} detailAsBadge onChange={value => onGroupChange(value as SaleGroup | '')} options={[
         { value: '', label: 'Todas', detail: String(total) },
@@ -151,11 +156,11 @@ export default function Vendas({ companyId, accountId, onAccountChange, group, o
       <MarketplaceSelect label={view==='direct'?'Estoque de origem':'Canal de venda'} values={selectedMarketplaces} placeholder={view==='direct'?'Todos os estoques':'Todos os canais'} disabled={!marketplaceOptions.length} onValuesChange={values => onMarketplacesChange(values as SalesMarketplace[])} options={[{ value: '', label: view==='direct'?'Todos os estoques':'Todos os canais' }, ...marketplaceOptions]} />
     </div>
     <p className={styles.salesScopeHelp}>{view==='direct'?'Vendas manuais do período selecionado, identificadas pelo estoque de origem.':'Vale a última situação escolhida, aqui ou no cabeçalho. O período é o mesmo. A seleção de canais filtra esta lista de vendas.'}</p>
-    {!loading&&!error&&<p className={styles.salesScopeHelp}>Total confirmado nos filtros: <strong>{money.format(confirmedTotal)}</strong> · Canceladas e pagamentos pendentes não entram neste total.</p>}
+    {!loading&&!error&&<p className={styles.salesScopeHelp}>Total confirmado {search.trim()?'na busca':'nos filtros'}: <strong>{money.format(confirmedTotal)}</strong> · Canceladas e pagamentos pendentes não entram neste total.</p>}
     {awaitingUpdates > 0 && <p className={styles.salesScopeHelp} role="status">Há atualizações de vendas em processamento. Use Atualizar para conferir novamente.</p>}
     {printError && <p className={styles.salesError} role="alert">{printError}</p>}
     {warnings.map(warning => <p key={warning} className={styles.salesError} role="status">{warning}</p>)}
-    {loading ? <CarregamentoDadosModulo ativo variante="local" esqueletos titulo="Vendas" mensagem="Carregando vendas…" corPrimaria={brand} temaEscuro={dark} /> : error ? <p className={styles.salesError} role="alert">{error}</p> : !sales.length ? <p className={styles.salesEmpty}>Nenhuma venda encontrada nos filtros selecionados.</p> : <div className={styles.salesList}>{orderedSales.map((sale) => { if(sale.directSale)return <div className={styles.saleCard} key={sale.id}><DirectSaleRow sale={sale.directSale} companyId={companyId} request={directRequest} dark={dark} brand={brand} canSell={canManage} onUpdated={onRefresh}/></div>; const provider = providerBrand(sale.provider); return <article key={sale.id} className={styles.saleCard} ref={sale.id === saleToOpen && open === sale.id ? row => { if (row && !alertScrollDone.current) { alertScrollDone.current = true; requestAnimationFrame(() => { if (row.isConnected) scrollMarketplaceRow(row); }); } } : undefined}>
+    {loading ? <CarregamentoDadosModulo ativo variante="local" esqueletos titulo="Vendas" mensagem="Carregando vendas…" corPrimaria={brand} temaEscuro={dark} /> : error ? <p className={styles.salesError} role="alert">{error}</p> : !orderedSales.length ? <p className={styles.salesEmpty}>{search.trim()?'Nenhuma venda encontrada para esta busca nos filtros selecionados.':'Nenhuma venda encontrada nos filtros selecionados.'}</p> : <div className={styles.salesList}>{orderedSales.map((sale) => { if(sale.directSale)return <div className={styles.saleCard} key={sale.id}><DirectSaleRow sale={sale.directSale} companyId={companyId} request={directRequest} dark={dark} brand={brand} canSell={canManage} onUpdated={onRefresh}/></div>; const provider = providerBrand(sale.provider); return <article key={sale.id} className={styles.saleCard} ref={sale.id === saleToOpen && open === sale.id ? row => { if (row && !alertScrollDone.current) { alertScrollDone.current = true; requestAnimationFrame(() => { if (row.isConnected) scrollMarketplaceRow(row); }); } } : undefined}>
       <div id={`sale-header-${sale.id}`} className={`${styles.saleSummary} ${open === sale.id ? styles.saleSummaryExpanded : ''}`} onClick={event => {
         const row = event.currentTarget;
         const opening = open !== sale.id;
@@ -171,9 +176,11 @@ export default function Vendas({ companyId, accountId, onAccountChange, group, o
             <button type="button" className={styles.copySaleOrder} aria-label={copiedOrder === sale.id ? `Pedido #${sale.orderId} copiado` : `Copiar Pedido #${sale.orderId}`} title={copiedOrder === sale.id ? 'Copiado' : 'Copiar pedido'} onClick={event => { event.stopPropagation(); void copyOrder(sale); }}><Icon name={copiedOrder === sale.id ? 'check' : 'copy'} size={15} /></button>
             <span className={styles.srOnly} role="status">{copiedOrder === sale.id ? 'Número do pedido copiado.' : ''}</span>
           </div>
+          <p className={styles.salePinnedProduct}>{sale.items[0]?.title || 'Itens da venda'}{sale.items.length>1&&<small> +{sale.items.length-1} outro(s) item(ns)</small>}</p>
           <small>{accountDisplayName(accounts.find((account) => account.id === sale.connectionId))} · {date.format(new Date(sale.soldAt))}{sale.buyer ? ` · ${sale.buyer}` : ''}</small>
-          {open === sale.id && <p className={styles.salePinnedProduct}>{sale.items[0]?.title || 'Itens da venda'}{sale.items.length>1&&<small> +{sale.items.length-1} outro(s) item(ns)</small>}</p>}
+
         </div>
+        <div className={styles.saleSummaryValue}><small>Valor da venda</small><strong>{sale.total == null ? 'Indisponível' : money.format(sale.total)}</strong></div>
         <span className={styles.saleStatusAction} title={saleStatusText(sale)}><b data-status={sale.status === 'cancelled' ? 'cancelled' : sale.labelStatus}>{saleStatusText(sale)}</b><Icon name="chevron" size={16} className={styles.saleDisclosure} aria-hidden="true" /></span>
       </div>
       {copyError === sale.id && <p className={styles.saleCopyError} role="alert">Não foi possível copiar o número do pedido.</p>}

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.457 -->
+<!-- ava-version: 3.2.0.458 -->
+
+> Revisão 3.2.0.458: Marketplaces: pedidos recolhidos mostram produto e valor; busca por nome, pedido ou valor fica à esquerda de Conta, Situação e Canal. Ao expandir pedido do Mercado Livre, Condições da compra consulta pagamento, parcelas, frete do comprador, frete do vendedor, taxas e líquido após esses descontos. Dados ausentes ficam Não informado; líquido não confirma repasse nem altera nota fiscal. Rateio de frete compartilhado segue o financeiro. Atualizar pós-venda refaz a consulta. Histórico do navegador desativado no seletor de produtos da nota.
 
 > Revisão 3.2.0.457: Todo produto novo começa disponível no catálogo interno, inclusive cadastro pela nota, cadastro direto, insumo fiscal e importação. O usuário pode desmarcar Disponível no catálogo. Importação de edição com indicador vazio preserva a escolha existente. Preço zero não oculta o item; informe o preço correto ao vender ou emitir. Isso não ativa a publicação do catálogo no AvantaVendas. Na nota, salvar atualiza o catálogo e seleciona o item para Adicionar item.
 

@@ -53,3 +53,9 @@ test('Magalu reutiliza o painel, sem orientação do ML, com mensagens escapadas
   assert.match(html,/&lt;img/);assert.doesNotMatch(html,/<img/);assert.match(html,/recebimento físico ainda não foi confirmado/);assert.match(html,/Histórico do protocolo/);assert.match(html,/Mensagens do protocolo/);
   assert.match(renderPostSale({details:null,provider:'magalu',loading:true}),/no Magalu/);
 });
+
+test('condições da compra apresentam pagamentos, parcelas, custos distintos e ausência sem fabricar zero',()=>{
+ const html=renderPostSale({details:{...fixtureDetails,purchaseConditions:{currency:'BRL',payments:[{method:'PIX',installments:1,amount:10000,status:'Aprovado'}],buyerFreight:0,sellerFreight:1200,fees:1000,net:7800,issues:[]}}});
+ for(const expected of ['Condições da compra','PIX','1 parcela','Frete pago pelo comprador','Frete descontado do vendedor','Taxas do Mercado Livre','Líquido após taxas e frete','12,00','10,00','78,00'])assert.ok(html.includes(expected),expected);
+ const missing=renderPostSale({details:{...fixtureDetails,purchaseConditions:{currency:'BRL',payments:[],buyerFreight:null,sellerFreight:null,fees:null,net:null,issues:[]}}});assert.ok(missing.includes('Não informado'));assert.ok(!missing.includes('R$ 0,00'));
+});

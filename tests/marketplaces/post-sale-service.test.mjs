@@ -59,6 +59,7 @@ function database(overrides = {}) {
 test('detalhes revalidam pedido/conta e salvam somente o retrato atual da venda', async () => {
   const db = database();
   const result = await postSaleForSale(db, company, connectionId, saleId);
+  assert.ok(result.postSale.purchaseConditions);
   assert.equal(result.sale.status, 'cancelled');
   assert.equal(result.sale.shipmentStatus, 'delivered');
   assert.equal(result.sale.soldAt, '2026-09-01T12:00:00Z');

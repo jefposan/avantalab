@@ -1,11 +1,6 @@
 {
-  "baseDeploymentId": "dpl_9trQHF4p44W7rJEyGG4zN1orMXhQ",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261117033000_produtos_disponiveis_por_padrao.sql",
-      "sha256": "6940329962cf8c551f0062e5ce56461458cdb6ff14db9884bd54af00ea13a83b"
-    }
-  ],
-  "version": "3.2.0.457",
-  "scope": "Custos e Vendas: produtos disponíveis no catálogo interno por padrão"
+  "baseDeploymentId": "dpl_3cn4SydxRGpRszLV3FowYZdjK8n2",
+  "migrations": [],
+  "version": "3.2.0.458",
+  "scope": "Marketplaces: busca, resumo e condições da compra; nota sem histórico de produtos"
 }

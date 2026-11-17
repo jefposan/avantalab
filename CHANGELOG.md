@@ -1,3 +1,11 @@
+## 3.2.0.458 — Marketplaces: busca, resumo e condições da compra
+
+- Produto e valor visíveis no pedido recolhido. Busca à esquerda das três listas por produto/comprador, número do pedido ou valor, respeitando o período e os filtros atuais.
+- Pedido expandido do Mercado Livre exibe pagamento, parcelas, frete pago pelo comprador, frete do vendedor, taxas e líquido calculado. Campos ausentes não viram zero; não expõe dados do cartão/pagador nem altera nota fiscal.
+- Consulta pelo endpoint autenticado existente, com empresa/conta/pedido revalidados. Rateio do envio compartilhado reutilizado pelo relatório financeiro; preserva cache, autorização e validações.
+- Inclui retirada do histórico do navegador na busca de produtos da nota. Prévia demonstrativa restrita ao desenvolvimento; sem mudança de banco.
+- Preserva a main 3.2.0.457 e as correções anteriores.
+
 ## 3.2.0.457 — Custos e Vendas: produtos disponíveis por padrão
 
 - Novos produtos e serviços começam disponíveis internamente em cadastro, popup da nota e importações. Indisponibilidade exige escolha explícita; edição com indicador vazio preserva o estado já salvo.

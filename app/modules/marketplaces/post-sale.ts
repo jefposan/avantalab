@@ -1,3 +1,4 @@
+import type {PurchaseConditions} from './purchase-conditions';
 /** Contratos oficiais: /post-purchase/v1/claims e /post-purchase/v2/claims/{id}/returns.
  * O retorno do produto e o reembolso nunca são inferidos do cancelamento do pedido.
  * Apenas campos permitidos chegam à tela; anexos e endereços brutos não.
@@ -22,6 +23,7 @@ export type ClaimDetails = {
   returnDetails: ReturnDetails | null;
 };
 export type PostSaleDetails = {
+  purchaseConditions?: PurchaseConditions;
   provider?: 'mercado_livre' | 'magalu';
   financialEntries?: Array<{ text: string; value: number | null; statusText: string; date: string | null }>;
   processState?: 'open' | 'closed' | 'unknown';

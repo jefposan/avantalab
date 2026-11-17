@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import ts from 'typescript';
 import * as model from '../../app/modules/marketplaces/sales-financial.ts';
+import {readMlPurchaseConditions} from '../../app/modules/marketplaces/purchase-conditions.ts';
 import {reportPeriod} from '../../app/modules/marketplaces/sales-report.ts';
 class MarketplaceError extends Error{constructor(status,code,message){super(message);this.status=status;this.code=code;}}
 const objectValue=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
@@ -27,6 +28,7 @@ function fixture({seller='123',orderSeller='123',cost=12,missingCost=false,rowsC
  new Function('require','module','exports',compiled)(name=>{
   if(name==='server-only')return{};
   if(name==='../sales-financial')return model;
+  if(name==='../purchase-conditions')return {readMlPurchaseConditions};
   if(name==='../sales-report')return{reportPeriod};
   if(name==='./management-access')return{MarketplaceError};
   if(name==='./listing-model')return{objectValue,uuidIsValid:v=>/^[a-f0-9-]{36}$/.test(v)};
