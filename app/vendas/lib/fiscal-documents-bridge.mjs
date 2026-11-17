@@ -42,7 +42,7 @@ function document(value) {
   const state = text(rawEmission.state, 40);
   const emission = emissionId && rawEmission.id === emissionId && EMISSION_STATES.has(state) ? Object.freeze({
     id: emissionId,
-    environment: rawEmission.environment === 'homologacao' ? 'homologacao' : '',
+    environment: ['homologacao','producao'].includes(rawEmission.environment) ? rawEmission.environment : '',
     state,
     version: Math.max(1, Number.parseInt(String(rawEmission.version), 10) || 1),
     series: text(rawEmission.series, 3),

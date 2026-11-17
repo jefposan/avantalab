@@ -439,6 +439,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
         fiscalRuleResolver,
       }) : null,
       nfeRejectionCorrectionService: fiscalWorkflowEnabled ? createCommercialNfeRejectionCorrectionService({
+        environment: fiscalEnvironment,
         repository: createPostgresCommercialNfeRejectionCorrectionRepository({ pool }),
         emissionLifecycle: fiscalLifecycle,
         fiscalRuleResolver,

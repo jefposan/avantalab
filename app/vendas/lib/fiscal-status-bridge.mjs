@@ -462,7 +462,7 @@ export function parseFiscalCorrectionResponse(data) {
   const version = Number(data.emission?.version);
   const series = text(data.emission?.series);
   const number = Number(data.emission?.number);
-  if(data.emission?.savedOnly===true&&[emissionId,draftId,orderId].every(value=>UUID_PATTERN.test(value))&&emissionId===draftId&&Number.isSafeInteger(version)&&version>0&&['prepared','number_reserved','rejected'].includes(data.emission.state)&&data.emission.transmitted===false&&data.emission.signed===false)return Object.freeze({requestId:id,ok:true,emission:Object.freeze({...data.emission,emissionId,draftId,orderId,version})});
+  if(data.emission?.savedOnly===true&&[emissionId,draftId,orderId].every(value=>UUID_PATTERN.test(value))&&emissionId===draftId&&Number.isSafeInteger(version)&&version>0&&(['prepared','number_reserved','rejected'].includes(data.emission.state)||(data.emission.state==='draft'&&number===0&&!series&&!data.emission.reservationId))&&data.emission.transmitted===false&&data.emission.signed===false)return Object.freeze({requestId:id,ok:true,emission:Object.freeze({...data.emission,emissionId,draftId,orderId,version})});
   if (![emissionId, draftId, orderId].every((value) => UUID_PATTERN.test(value))
     || emissionId !== draftId || text(data.emission?.state) !== 'number_reserved'
     || !Number.isSafeInteger(version) || version < 2 || !series || !Number.isSafeInteger(number) || number < 1

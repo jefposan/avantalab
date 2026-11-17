@@ -32,7 +32,7 @@ test('217, processamento e rejeição permanecem na conferência; tentativa assi
  const authorized=setup({state:'signed',checkout:{ok:true,emission:{state:'authorized'}}});await authorized.save({},true);assert.equal(authorized.closed.length,2);
  const editable=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='FiscalView').body.statements.find(n=>ts.isVariableStatement(n)&&n.declarationList.declarations.some(d=>d.name.getText(ast)==='editableDraft')).declarationList.declarations[0].initializer;
  const issue=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='FiscalView').body.statements.find(n=>ts.isVariableStatement(n)&&n.declarationList.declarations.some(d=>d.name.getText(ast)==='rejectedDraft')).declarationList.declarations[0].initializer;
- for(const state of ['signed','submitted','processing','rejected']){const scope={editingDraft:{id:'a',emissionId:'e'},editingStatus:{state},drafts:[],issueDraft:null,remoteStatuses:{}};assert.ok(vm.runInNewContext(editable.getText(ast),scope));const scopeIssue={editableDraft:null,drafts:[],issueDraft:{id:'a',emissionId:'e'},remoteStatuses:{e:{state}}};assert.ok(vm.runInNewContext(issue.getText(ast),scopeIssue));}
+ for(const state of ['draft','signed','submitted','processing','rejected']){const scope={editingDraft:{id:'a',emissionId:'e'},editingStatus:{state},drafts:[],issueDraft:null,remoteStatuses:{}};assert.ok(vm.runInNewContext(editable.getText(ast),scope));const scopeIssue={editableDraft:null,drafts:[],issueDraft:{id:'a',emissionId:'e'},remoteStatuses:{e:{state}}};assert.ok(vm.runInNewContext(issue.getText(ast),scopeIssue));}
 });
 
 test('ausência confirmada 217 permite salvar alterações; tentativa incerta continua preservada',async()=>{

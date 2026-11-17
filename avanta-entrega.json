@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_FsKpzVdjw7eFWsj1JYUmrb1qNdX1",
+  "baseDeploymentId": "dpl_BXbV5Uqzwt5dDcA6y8ahu2FT6KfS",
   "migrations": [],
-  "version": "3.2.0.465",
-  "scope": "Emissão fiscal: alinhar ambiente dos serviços e aplicar o aviso aprovado dentro das ações, sem mensagens duplicadas"
+  "version": "3.2.0.466",
+  "scope": "Emissão fiscal: restaurar o editor completo do rascunho, salvar revisões antes da reserva e exibir o ambiente real, preservando validações de UF e histórico"
 }

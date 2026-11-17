@@ -145,7 +145,7 @@ test('certificado ativo alimenta a prontidão fiscal sem simular conexão com o 
   assert.match(source, /providerConnected: execution \? execution\.transmissionAllowed === true : certificate\?\.fiscalConnectionAvailable === true/);
   assert.match(source, /fiscalConfigForIssuer\(moduleSettings, issuer, fiscalCertificateBridgeState\.certificate, fiscalCertificateBridgeState\.execution\)/);
   assert.match(source, /Certificado fiscal ativo/);
-  assert.match(source, /Consulta ativa; envio de homologação ainda bloqueado/);
+  assert.match(source, /Consulta ativa; envio ainda bloqueado/);
   assert.doesNotMatch(source, /<strong>Fiscal não conectado<\/strong><small>Produção bloqueada com segurança<\/small>/);
 });
 

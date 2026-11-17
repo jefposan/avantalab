@@ -1,3 +1,8 @@
+## 3.2.0.466 — Emissão fiscal: restaurar editor do rascunho e identificar o ambiente real
+
+- Notas persistidas no estado inicial reabrem no editor completo, com resumo e ações laterais, pelo comando Editar nota. Revisões antes da reserva são gravadas com versão e histórico, sem recriar a nota nem consumir número; a preparação usa a revisão mais recente. Produção/homologação são preservadas pela ponte e exibidas conforme o ambiente real. Nota assinada, enviada, autorizada ou de outro ambiente continua protegida. Divergência entre destino e natureza fiscal não é suprimida: o usuário pode conferir e corrigir no editor.
+- Leitura e gravação de revisão sem reserva testadas em PostgreSQL local; preserva retrato original e numeração. Não altera cadastros ou dados fiscais de produção automaticamente.
+
 ## 3.2.0.465 — Emissão fiscal: corrigir ambiente e padronizar o aviso nas ações
 
 - Correção interna da criação da emissão: o ciclo fiscal recebe o mesmo ambiente configurado no servidor e usado pela preparação. Produção não é mais comparada ao padrão implícito de homologação. Não exige alteração no cadastro do usuário; não muda ambientes existentes, reservas, números, notas emitidas, credenciais ou liberações de transmissão.

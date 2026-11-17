@@ -61,12 +61,12 @@ function mapDraft(row) {
     originType: row.origem_tipo,
     documentType: row.documento_tipo,
     status: row.situacao,
-    issuerSnapshot: row.emitente_retrato || {},
-    customerSnapshot: row.destinatario_retrato || {},
-    itemsSnapshot: row.itens_retrato || [],
-    totalsSnapshot: row.totais_retrato || {},
-    paymentSnapshot: row.pagamento_retrato || {},
-    contentDigest: row.conteudo_hash,
+    issuerSnapshot: row.effective_issuer || row.emitente_retrato || {},
+    customerSnapshot: row.effective_customer || row.destinatario_retrato || {},
+    itemsSnapshot: row.effective_items || row.itens_retrato || [],
+    totalsSnapshot: row.effective_totals || row.totais_retrato || {},
+    paymentSnapshot: row.effective_payment || row.pagamento_retrato || {},
+    contentDigest: row.effective_digest || row.conteudo_hash,
     operationStatus: row.operacao_situacao,
     operationFiscalStatus: row.operacao_situacao_fiscal,
   };
@@ -275,12 +275,18 @@ export function createPostgresCommercialNfePreparationRepository({ pool } = {}) 
     },
     async load({ companyId, draftId }) {
       const draftResult = await pool.query(`
-        select r.*,o.situacao as operacao_situacao,o.situacao_fiscal as operacao_situacao_fiscal,
+        select r.*,coalesce(c.issuer_snapshot,r.emitente_retrato) as effective_issuer,
+          coalesce(c.recipient_snapshot,r.destinatario_retrato) as effective_customer,
+          coalesce(c.items_snapshot,r.itens_retrato) as effective_items,
+          coalesce(c.totals_snapshot,r.totais_retrato) as effective_totals,
+          coalesce(c.payment_snapshot,r.pagamento_retrato) as effective_payment,
+          coalesce(c.correction_digest,r.conteudo_hash) as effective_digest,o.situacao as operacao_situacao,o.situacao_fiscal as operacao_situacao_fiscal,
           e.id as emissao_id,e.establishment_id,e.draft_id,e.origin_id,
           e.document_type as emissao_documento_tipo,e.model,e.environment,e.state,e.version
         from public.vendas_fiscal_rascunhos r
         left join public.vendas_operacoes o on o.empresa_id=r.empresa_id and o.id=r.operacao_id
-        join fiscal_private.emissions e on e.company_id=r.empresa_id and e.draft_id=r.id::text
+        join fiscal_private.emissions e on e.company_id=r.empresa_id and e.id=r.id and e.draft_id=r.id::text
+        left join lateral (select x.* from fiscal_private.emission_corrections x where x.company_id=e.company_id and x.emission_id=e.id order by x.revision desc limit 1) c on true
         where r.empresa_id=$1 and r.id=$2
       `, [companyId, draftId]);
       const row = draftResult.rows?.[0];

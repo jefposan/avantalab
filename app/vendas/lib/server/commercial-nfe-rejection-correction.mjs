@@ -108,15 +108,17 @@ function normalizedCorrection(data, input, statusCode) {
   return { draft, correctionDigest };
 }
 
-function validateSource(data, expectedVersion, statusCode) {
-  if (!data?.draft || !data?.emission || !data?.reservation) return issue('AV-NFE-CORRECTION-NOT-FOUND', 'emission', 'A NF-e rejeitada não foi localizada nesta empresa.');
+function validateSource(data, expectedVersion, statusCode, environment) {
+  if (!data?.draft || !data?.emission) return issue('AV-NFE-CORRECTION-NOT-FOUND', 'emission', 'A NF-e rejeitada não foi localizada nesta empresa.');
   const { draft, emission, reservation } = data;
   if (emission.version !== expectedVersion) return issue('AV-NFE-CORRECTION-CONFLICT', 'expectedVersion', 'A emissão foi alterada; atualize a Central Fiscal antes de continuar.');
-  if (!['rejected','prepared','number_reserved'].includes(emission.state) || emission.documentType !== 'nfe' || emission.model !== '55' || emission.environment !== 'homologacao') return issue('AV-NFE-CORRECTION-STATE', 'state', 'Somente uma NF-e ainda não enviada ou rejeitada em homologação pode ser editada.');
+  if (!['draft','rejected','prepared','number_reserved'].includes(emission.state) || emission.documentType !== 'nfe' || emission.model !== '55' || !['homologacao','producao'].includes(environment) || emission.environment !== environment) return issue('AV-NFE-CORRECTION-STATE', 'state', 'Somente uma NF-e ainda não enviada ou rejeitada no ambiente configurado pode ser editada.');
   if(emission.state!=='rejected' && [emission.signedChecksum,emission.submittedAt,emission.receiptNumber,emission.protocolNumber,emission.authorizedAt].some(Boolean)) return issue('AV-NFE-CORRECTION-STATE','state','O envio desta nota precisa ser confirmado antes de qualquer edição.');
   if ((emission.state === 'rejected' ? emission.statusCode : '000') !== statusCode) return issue('AV-NFE-CORRECTION-STATUS', 'statusCode', 'A rejeição informada não corresponde ao último retorno registrado.');
   if (draft.documentType !== 'nfe' || draft.status !== 'pronto' || !fiscalDraftOriginReady(draft, { requireFiscalStatus: false })) return issue('AV-NFE-CORRECTION-ORIGIN', 'draft', 'A origem não mantém um rascunho fiscal apto para revisão.');
   if (emission.id !== draft.id || emission.draftId !== draft.id || emission.originId !== draft.operationId || emission.companyId !== draft.companyId || emission.establishmentId !== draft.issuerSnapshot?.establishmentId) return issue('AV-NFE-CORRECTION-LINK', 'draft', 'O vínculo entre pedido, rascunho, emissor e emissão não pôde ser confirmado.');
+  if(emission.state==='draft'&&!emission.reservationId&&!emission.number&&!emission.series&&!reservation)return null;
+  if (!reservation) return issue('AV-NFE-CORRECTION-NUMBER','numbering','A reserva fiscal da nota não foi localizada.');
   if (reservation.id !== emission.reservationId || reservation.emissionId !== emission.id || reservation.companyId !== emission.companyId || reservation.establishmentId !== emission.establishmentId || reservation.documentType !== 'nfe' || reservation.status !== 'reserved' || reservation.series !== emission.series || reservation.number !== emission.number) return issue('AV-NFE-CORRECTION-NUMBER', 'numbering', 'A reserva original não corresponde à série e ao número rejeitados.');
   return null;
 }
@@ -204,7 +206,7 @@ export function createPostgresCommercialNfeRejectionCorrectionRepository({ pool 
           from fiscal_private.emissions e
           join public.vendas_fiscal_rascunhos r on r.empresa_id=e.company_id and r.id::text=e.draft_id
           left join public.vendas_operacoes o on o.empresa_id=r.empresa_id and o.id=r.operacao_id
-          join fiscal_private.number_reservations nr on nr.company_id=e.company_id and nr.id=e.reservation_id and nr.emission_id=e.id
+          left join fiscal_private.number_reservations nr on nr.company_id=e.company_id and nr.id=e.reservation_id and nr.emission_id=e.id
           left join lateral (select x.* from fiscal_private.emission_corrections x where x.company_id=e.company_id and x.emission_id=e.id order by x.revision desc limit 1) c on true
           where e.company_id=$1 and e.id=$2
         `, [companyId, emissionId]);
@@ -212,15 +214,15 @@ export function createPostgresCommercialNfeRejectionCorrectionRepository({ pool 
         if (!row) return null;
         const emission = mapEmission(row);
         const [sequences, reservations, voids] = await Promise.all([
-          client.query(`select * from fiscal_private.number_sequences where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment='homologacao' order by active desc,series`, [companyId, emission.establishmentId]),
-          client.query(`select * from fiscal_private.number_reservations where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment='homologacao' and status<>'released'`, [companyId, emission.establishmentId]),
-          client.query(`select * from fiscal_private.number_voids where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment='homologacao'`, [companyId, emission.establishmentId]),
+          client.query(`select * from fiscal_private.number_sequences where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment=$3 order by active desc,series`, [companyId, emission.establishmentId, emission.environment]),
+          client.query(`select * from fiscal_private.number_reservations where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment=$3 and status<>'released'`, [companyId, emission.establishmentId, emission.environment]),
+          client.query(`select * from fiscal_private.number_voids where company_id=$1 and establishment_id=$2 and document_type='nfe' and environment=$3`, [companyId, emission.establishmentId, emission.environment]),
         ]);
         return {
           baseIssuerDocument: row.base_issuer?.document || '',
           draft: { id: row.base_id, companyId: row.company_id, operationId: row.operacao_id, originType: row.origem_tipo, documentType: row.documento_tipo, status: row.draft_status, issuerSnapshot: row.issuer_snapshot || {}, customerSnapshot: row.recipient_snapshot || {}, itemsSnapshot: row.items_snapshot || [], totalsSnapshot: row.totals_snapshot || {}, paymentSnapshot: row.payment_snapshot || {}, contentDigest: row.content_digest, operationStatus: row.operation_status, operationFiscalStatus: row.operation_fiscal_status },
           emission,
-          reservation: { id: row.number_reservation_id, companyId: row.number_company_id, establishmentId: row.number_establishment_id, emissionId: row.number_emission_id, documentType: row.number_document_type, series: row.number_series, number: Number(row.number_value), status: row.number_status },
+          reservation: row.number_reservation_id ? { id: row.number_reservation_id, companyId: row.number_company_id, establishmentId: row.number_establishment_id, emissionId: row.number_emission_id, documentType: row.number_document_type, series: row.number_series, number: Number(row.number_value), status: row.number_status } : null,
           numberingLedger: { version: 1, sequences: sequences.rows.map((entry) => ({ documentType: entry.document_type, series: entry.series, nextNumber: Number(entry.next_number), lastReservedNumber: Number(entry.last_reserved_number), active: entry.active, updatedAt: entry.updated_at })), reservations: reservations.rows.map((entry) => ({ id: entry.id, idempotencyKey: entry.idempotency_key, draftId: emission.draftId, originId: emission.originId, documentType: entry.document_type, series: entry.series, number: Number(entry.number), status: entry.status, reservedAt: entry.reserved_at, updatedAt: entry.updated_at })), voidRequests: voids.rows.map((entry) => ({ id: entry.id, documentType: entry.document_type, series: entry.series, startNumber: Number(entry.start_number), endNumber: Number(entry.end_number), reason: entry.reason, status: entry.status, protocol: entry.protocol_number || '', requestedAt: entry.created_at, updatedAt: entry.updated_at })), audit: [] },
         };
       });
@@ -238,9 +240,10 @@ export function createPostgresCommercialNfeRejectionCorrectionRepository({ pool 
             await client.query('commit');
             return { id: row.id, revision: Number(row.revision), correctionDigest: row.correction_digest, preparationPayload: row.preparation_payload || {}, reused: true };
           }
-          const locked = await client.query('select state,version,status_code from fiscal_private.emissions where company_id=$1 and id=$2 for update', [companyId, emissionId]);
+          const locked = await client.query('select state,version,status_code,reservation_id,number,series,signed_checksum,submitted_at,receipt_number,protocol_number,authorized_at from fiscal_private.emissions where company_id=$1 and id=$2 for update', [companyId, emissionId]);
           const emission = locked.rows?.[0];
-          if (!emission || !['rejected','prepared','number_reserved'].includes(emission.state) || Number(emission.version) !== expectedVersion || (emission.state==='rejected'?emission.status_code:'000') !== sourceStatusCode) throw Object.assign(new Error('A emissão rejeitada mudou durante a correção.'), { code: 'AV-NFE-CORRECTION-CONFLICT' });
+          if (!emission || !['draft','rejected','prepared','number_reserved'].includes(emission.state) || Number(emission.version) !== expectedVersion || (emission.state==='rejected'?emission.status_code:'000') !== sourceStatusCode) throw Object.assign(new Error('A emissão rejeitada mudou durante a correção.'), { code: 'AV-NFE-CORRECTION-CONFLICT' });
+          if(emission.state==='draft'&&[emission.reservation_id,emission.number,emission.series,emission.signed_checksum,emission.submitted_at,emission.receipt_number,emission.protocol_number,emission.authorized_at].some(Boolean))throw Object.assign(new Error('A tentativa fiscal foi alterada.'),{code:'AV-NFE-CORRECTION-CONFLICT'});
           const next = await client.query('select coalesce(max(revision),0)::int + 1 as revision from fiscal_private.emission_corrections where company_id=$1 and emission_id=$2', [companyId, emissionId]);
           const revision = Number(next.rows?.[0]?.revision || 1);
           const inserted = await client.query(`insert into fiscal_private.emission_corrections(company_id,emission_id,revision,operation_key,source_status_code,issuer_snapshot,recipient_snapshot,items_snapshot,totals_snapshot,payment_snapshot,correction_digest,preparation_payload,created_by,created_at) values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8::jsonb,$9::jsonb,$10::jsonb,$11,$12::jsonb,$13,$14) returning id`, [companyId, emissionId, revision, operationKey, sourceStatusCode, JSON.stringify(draft.issuerSnapshot), JSON.stringify(draft.customerSnapshot), JSON.stringify(draft.itemsSnapshot), JSON.stringify(draft.totalsSnapshot), JSON.stringify(draft.paymentSnapshot), correctionDigest, JSON.stringify(preparationPayload), actorId, createdAt]);
@@ -257,7 +260,7 @@ export function createPostgresCommercialNfeRejectionCorrectionRepository({ pool 
   });
 }
 
-export function createCommercialNfeRejectionCorrectionService({ repository, emissionLifecycle, fiscalRuleResolver, preparationBuilder = buildNfeIssuancePreparation, clock = () => saoPauloFiscalTimestamp() } = {}) {
+export function createCommercialNfeRejectionCorrectionService({ repository, emissionLifecycle, fiscalRuleResolver, preparationBuilder = buildNfeIssuancePreparation, clock = () => saoPauloFiscalTimestamp(), environment = 'homologacao' } = {}) {
   if (!repository?.load || !repository?.save || !repository?.findByOperation) throw new TypeError('Informe o repositório server-side da correção de rejeição.');
   if (!emissionLifecycle?.transition) throw new TypeError('Informe o ciclo transacional privado de emissão.');
   if (typeof fiscalRuleResolver !== 'function' || typeof preparationBuilder !== 'function') throw new TypeError('Informe os validadores fiscais da correção.');
@@ -277,7 +280,7 @@ export function createCommercialNfeRejectionCorrectionService({ repository, emis
           data.revisionCatalogItems=resolved.catalogItems;
           data.revisionCustomer=resolved.customer;
         }
-        const form=changes?.note?.fiscalForm;if(form&&((form.number&&Number(form.number)!==data.emission.number)||(form.series&&Number(form.series)!==Number(data.emission.series))))return{ok:false,errors:[issue('AV-NFE-CORRECTION-NUMBER','numbering','A edição não pode alterar a série ou o número já reservado.')]};
+        const form=changes?.note?.fiscalForm;if((data.emission.reservationId||data.emission.number)&&form&&((form.number&&Number(form.number)!==data.emission.number)||(form.series&&Number(form.series)!==Number(data.emission.series))))return{ok:false,errors:[issue('AV-NFE-CORRECTION-NUMBER','numbering','A edição não pode alterar a série ou o número já reservado.')]};
         const normalized = normalizedCorrection(data, { correctedDraft, changes,saveOnly }, statusCode);
         if (normalized.error) return { ok: false, errors: [normalized.error] };
         const prior = await repository.findByOperation({ companyId: context.companyId, operationKey: normalizedKey });
@@ -289,16 +292,16 @@ export function createCommercialNfeRejectionCorrectionService({ repository, emis
           if(!reopened?.ok)return {ok:false,errors:reopened?.errors||[issue('AV-NFE-CORRECTION-STATE','state','Confirme o retorno da SEFAZ antes de editar esta nota.')]};
           data.emission={...data.emission,...reopened.emission};expectedVersion=reopened.emission.version;
         }
-        const invalid = validateSource(data, expectedVersion, statusCode);
+        const invalid = validateSource(data, expectedVersion, statusCode, environment);
         if (invalid && !prior) return { ok: false, errors: [invalid] };
-        if(saveOnly===true){
+        if(saveOnly===true||data.emission.state==='draft'){
           const correction=prior||await repository.save({companyId:context.companyId,emissionId:normalizedEmissionId,expectedVersion,operationKey:normalizedKey,sourceStatusCode:statusCode,draft:normalized.draft,correctionDigest:normalized.correctionDigest,preparationPayload:{source:'saved_pending_revision',schemaValid:false,signatureAttempted:false,transmissionAttempted:false},actorId:context.actorId,createdAt:clock()});
           return {ok:true,result:{...publicResult({...data.emission,version:correction.version||data.emission.version},correction,Boolean(prior)),savedOnly:true,correctionPrepared:false},errors:[]};
         }
         const rules = await fiscalRuleResolver({ companyId: context.companyId, actorId: context.actorId, documentType: 'nfe', issuer: structuredClone(normalized.draft.issuerSnapshot), customer: structuredClone(normalized.draft.customerSnapshot), items: structuredClone(normalized.draft.itemsSnapshot),operationNature:normalized.draft.totalsSnapshot?.fiscalForm?normalized.draft.totalsSnapshot.operationNature:undefined,fiscalForm:normalized.draft.totalsSnapshot?.fiscalForm });
         if (!rules?.valid) return { ok: false, errors: Array.isArray(rules?.errors) && rules.errors.length ? rules.errors : [issue('AV-NFE-CORRECTION-RULES', 'fiscal', 'Conclua a revisão tributária antes de preparar novamente a NF-e.')] };
         const issuedAt = prior?.preparationPayload?.issuedAt || clock();
-        const preparation = prior?.preparationPayload ? null : await preparationBuilder(buildCommercialNfePreparationInput({ ...data, draft: normalized.draft }, rules, normalizedKey, issuedAt));
+        const preparation = prior?.preparationPayload ? null : await preparationBuilder(({...buildCommercialNfePreparationInput({ ...data, draft: normalized.draft }, rules, normalizedKey, issuedAt),environment}));
         if (!prior && (!preparation?.valid || !preparation?.schemaValid || preparation.numberPreviouslyReserved !== true || preparation.series !== data.emission.series || Number(preparation.candidateNumber) !== data.emission.number)) return { ok: false, errors: Array.isArray(preparation?.errors) && preparation.errors.length ? preparation.errors : [issue('AV-NFE-CORRECTION-VALIDATION', 'fiscal', 'A correção não preservou a numeração original ou não passou pela validação fiscal.')] };
         const preparationPayload = prior?.preparationPayload || { source: 'rejected_nfe_correction', preparationId: preparation.preparationId, schemaPackage: 'PL_010e_v1.02', schemaVersion: '4.00', documentGeneratorReference: NFE_SP_XML_REFERENCE, issuancePreparationReference: NFE_ISSUANCE_PREPARATION_REFERENCE, schemaValid: true, candidateSeries: preparation.series, candidateNumber: preparation.candidateNumber, issuedAt, technicalNumericCode: preparation.technicalNumericCode, fiscalSnapshotDigest: commercialNfeFiscalSnapshotDigest({ ...data, draft: normalized.draft }, rules, issuedAt), candidateAccessKeyDigest: sha256(preparation.accessKeyPreview), taxRuleId: clean(rules.ruleId, 100), taxRuleVersion: clean(rules.ruleVersion, 40), correctionDigest: normalized.correctionDigest, rejectedStatusCode: statusCode, numberPreviouslyReserved: true, signatureAttempted: false, transmissionAttempted: false };
         const correction = prior || await repository.save({ companyId: context.companyId, emissionId: normalizedEmissionId, expectedVersion, operationKey: normalizedKey, sourceStatusCode: statusCode, draft: normalized.draft, correctionDigest: normalized.correctionDigest, preparationPayload, actorId: context.actorId, createdAt: issuedAt });
