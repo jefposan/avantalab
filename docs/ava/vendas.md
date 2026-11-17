@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.453 -->
+<!-- ava-version: 3.2.0.454 -->
+
+> Revisão 3.2.0.454: Salvar nota avulsa permite rascunho sem itens ou pagamento completo, mantendo cliente obrigatório. Reabra na Central Fiscal para continuar. Somente Salvar e emitir exige os dados completos. Rascunho não reserva número nem movimenta estoque ou financeiro. Adicionar item habilita após selecionar um produto; avisos não deslocam a busca.
 
 > Revisão 3.2.0.453: Telefone e e-mail do cliente são opcionais; preencher somente quando disponíveis. Buscar CEP no cliente confirma o resultado. Quando a base não informa logradouro/bairro, avisa quais campos conferir ou preencher manualmente; município e UF continuam preenchidos. Falhas preservam os dados e permitem repetir; retorno de um CEP anterior é descartado.
 

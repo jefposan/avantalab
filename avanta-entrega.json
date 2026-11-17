@@ -1,6 +1,11 @@
 {
-  "baseDeploymentId": "dpl_LRRFSUQ7QWcmpmexgU9nN5WEeuCG",
-  "migrations": [],
-  "version": "3.2.0.453",
-  "scope": "Vendas e Serviços: retorno da consulta de CEP e contato opcional do cliente"
+  "baseDeploymentId": "dpl_49659G1qRd3zb46kGAvtLVtfFShw",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261117013000_vendas_preenchimento_fiscal.sql",
+      "sha256": "8d2b39779934e1142edf4a86ad93f1a8ffcbbaa7c5092a5f57ba31a84315b86e"
+    }
+  ],
+  "version": "3.2.0.454",
+  "scope": "Vendas e Serviços: salvar e retomar nota incompleta sem deslocar busca"
 }

@@ -1,3 +1,4 @@
+import {createPendingFiscalDraftRepository} from './pending-fiscal-draft.mjs';
 import { createSupabaseFiscalBackup } from './supabase-fiscal-backup.mjs';
 import { NFE_PRODUCTION_SCOPE, NFE_PRODUCTION_CONFIRMATION } from './nfe-issuance-orchestrator.mjs';
 import { validateFiscalDurableStorageConfiguration } from './fiscal-durable-storage-policy.mjs';
@@ -359,7 +360,8 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     const fiscalProfileRepository = createPostgresCommercialFiscalProfileRepository({ pool });
     const issuerResolver = createPostgresCommercialIssuerResolver({ pool });
     const fiscalRuleResolver = createCommercialFiscalRuleResolver({ repository: fiscalRulesRepository, issuerResolver });
-    const centerRepository = createPostgresCommercialFiscalCenterRepository({ pool });
+    const pendingFiscalRepository=createPendingFiscalDraftRepository({pool});
+    const centerRepository = createPostgresCommercialFiscalCenterRepository({ pool, pendingRepository:pendingFiscalRepository });
     const commercialDraftRepository = createPostgresCommercialFiscalDraftRepository({ pool });
     const customerRepository = createPostgresCommercialCustomerRepository({ pool });
     const operationRepository = createPostgresCommercialOperationRepository({ pool });
@@ -487,7 +489,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
         catalogResolver: serviceCatalogResolver,
         issuerResolver,
       }),
-      standaloneFiscalService: createStandaloneFiscalService({
+      standaloneFiscalService: createStandaloneFiscalService({ pendingRepository:pendingFiscalRepository,
         repository: createPostgresStandaloneFiscalRepository({ pool }),
         customerResolver: ({ companyId, customerId }) => customerRepository.get({ companyId, customerId }),
         catalogResolver: serviceCatalogResolver,

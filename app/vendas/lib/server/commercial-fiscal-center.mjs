@@ -98,7 +98,7 @@ function mapDocument(row) {
   });
 }
 
-export function createPostgresCommercialFiscalCenterRepository({ pool } = {}) {
+export function createPostgresCommercialFiscalCenterRepository({ pool, pendingRepository } = {}) {
   if (!pool || (typeof pool.query !== 'function' && typeof pool.connect !== 'function')) {
     throw new TypeError('Informe o pool PostgreSQL server-side da Central Fiscal.');
   }
@@ -129,7 +129,8 @@ export function createPostgresCommercialFiscalCenterRepository({ pool } = {}) {
           order by r.criado_em desc,r.id desc
           limit $2
         `, [text(companyId, 80), safeLimit]);
-        return Object.freeze((result.rows || []).map(mapDocument));
+        const pending=pendingRepository?await pendingRepository.list({companyId,limit:safeLimit}):[];
+        return Object.freeze([...pending,...(result.rows || []).map(mapDocument)].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).slice(0,safeLimit));
       });
     },
   });

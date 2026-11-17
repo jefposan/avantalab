@@ -1,3 +1,4 @@
+// Revisão 3.2.0.454: Salvar nota avulsa permite rascunho sem itens ou pagamento completo, mantendo cliente obrigatório. Reabra na Central Fiscal para continuar. Somente Salvar e emitir exige os dados completos. Rascunho não reserva número nem movimenta estoque ou financeiro. Adicionar item habilita após selecionar um produto; avisos não deslocam a busca.
 // Revisão 3.2.0.453: telefone e e-mail do cliente opcionais; consulta CEP do cliente informa sucesso e endereço parcial, orienta preenchimento manual e descarta resposta antiga.
 // Revisão 3.2.0.452: destinatário sem seleção oferece Novo cliente em popup; selecionado oferece lápis Editar, preservando a nota.
 // Revisão 3.2.0.451: aviso fiscal compacto junto ao título; resumo fiscal centralizado na coluna lateral acompanha rolagem; telas de uma coluna mantêm fluxo normal.

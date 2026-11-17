@@ -60,6 +60,7 @@ function document(value) {
     originType,
     documentType,
     draftStatus,
+    pendingVersion: Number.isSafeInteger(source.pendingVersion)&&source.pendingVersion>0?source.pendingVersion:undefined,
     client: text(source.client, 180),
     clientDocument: text(source.clientDocument, 20),
     clientCity: text(source.clientCity, 120),

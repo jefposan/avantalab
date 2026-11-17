@@ -1,3 +1,10 @@
+## 3.2.0.454 — Vendas e Serviços: salvar e retomar nota incompleta
+
+- Rascunho editável separado do documento fiscal imutável; permite salvar sem itens e completar depois na Central Fiscal, com controle de versão e isolamento por empresa.
+- Emissão mantém validações completas. Rascunho não gera pedido, reserva de número, estoque ou financeiro.
+- Aviso de itens fora do campo de busca preserva alinhamento com Adicionar item.
+- Preserva contato opcional, consulta de CEP e demais correções da main 3.2.0.453.
+
 ## 3.2.0.453 — Vendas e Serviços: consulta de CEP e contato opcional do cliente
 
 - Telefone e e-mail opcionais no cadastro do cliente. Valores preenchidos continuam validados, sem bloquear cadastro com ambos vazios.

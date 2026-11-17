@@ -2462,3 +2462,6 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 
 .order-customer-control .order-customer-action { flex: 0 0 44px; width: 44px; }
 .order-customer-control .order-customer-new { flex-basis: 88px; width: 88px; }
+
+.note-items-error-anchor:empty { display:none; }
+.note-items-error-anchor:not(:empty) { margin-top:10px; }

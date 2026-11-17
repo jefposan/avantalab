@@ -1,3 +1,4 @@
+import {createPendingFiscalDraftRepository} from '../../app/vendas/lib/server/pending-fiscal-draft.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -24,21 +25,23 @@ const product = { id: productId, sku: 'T01', name: 'Produto', type: 'produto', u
 test('PostgreSQL: nota avulsa usa somente registro fiscal e chega à preparação sem faturar ou baixar estoque', async () => {
   const db = new PGlite();
   try {
-    await db.exec(`create schema auth; create role anon; create role authenticated; create role service_role;
+    await db.exec(`create schema auth; create role anon; create role authenticated; create role service_role;create role avanta_vendas_runtime;
       create table auth.users(id uuid primary key); create table empresas(id uuid primary key);
       create table custos_tabelas_preco(id uuid primary key,empresa_id uuid);
       create table vendas_mobile_catalogos(id uuid primary key,empresa_id uuid);
       create table vendas_mobile_catalogo_produtos(id uuid primary key,catalogo_id uuid);`);
     await db.exec(readFileSync('supabase/migrations/20260905152000_vendas_comercial.sql', 'utf8'));
     await db.exec(readFileSync('supabase/migrations/20261105160000_vendas_fiscal_avulsa.sql', 'utf8'));
+    await db.exec(readFileSync('supabase/migrations/20261117013000_vendas_preenchimento_fiscal.sql','utf8'));
     await db.exec(`create schema fiscal_private; create table fiscal_private.draft_deletions(company_id uuid,draft_id uuid);
       create table fiscal_private.emissions(id uuid primary key,company_id uuid,establishment_id uuid,draft_id text,origin_id text,document_type text,model text,environment text,state text,version int,series text,number int,access_key text,updated_at timestamptz,status_code text,status_reason text);
       create table fiscal_private.emission_corrections(company_id uuid,emission_id uuid,revision int,issuer_snapshot jsonb,recipient_snapshot jsonb,items_snapshot jsonb,totals_snapshot jsonb,payment_snapshot jsonb);
       create table vendas_fiscal_rascunho_cancelamentos(empresa_id uuid,rascunho_id uuid,criado_em timestamptz);`);
     await db.query('insert into empresas values($1)', [companyId]);
     await db.query('insert into auth.users values($1)', [actorId]);
-    const pool = { query: (...args) => db.query(...args) };
-    const service = createStandaloneFiscalService({ repository: createPostgresStandaloneFiscalRepository({ pool }), customerResolver: async args => args.companyId === companyId ? customer : null,
+    const pool = { query: (...args) => args[0].includes('pg_advisory_xact_lock')?Promise.resolve({rows:[]}):db.query(...args) };
+    const pendingRepository=createPendingFiscalDraftRepository({pool});
+    const service = createStandaloneFiscalService({ pendingRepository, repository: createPostgresStandaloneFiscalRepository({ pool }), customerResolver: async args => args.companyId === companyId ? customer : null,
       catalogResolver: async () => ({ items: [product] }), issuerResolver: async () => issuer });
     assert.equal((await service.create({ context: { ...context, effectivePermissions: {} }, input })).ok, false);
     const saved = await service.create({ context, input: { ...input, reserveStock: true, issuer: { document: 'fraude' } } });
@@ -86,6 +89,20 @@ test('PostgreSQL: nota avulsa usa somente registro fiscal e chega à preparaçã
     await db.query(`insert into fiscal_private.emissions(id,company_id,establishment_id,draft_id,origin_id,document_type,model,environment,state,version,series,number) values($1::uuid,$2::uuid,$2::uuid,($1::uuid)::text,($1::uuid)::text,'nfe','55','homologacao','number_reserved',3,'1',1)`,[draftId,companyId]);
     await db.query(`insert into fiscal_private.emission_corrections(company_id,emission_id,revision,totals_snapshot,payment_snapshot) values($1,$2,1,$3::jsonb,$4::jsonb)`,[companyId,draftId,JSON.stringify({...row.totais_retrato,total:200}),JSON.stringify({method:'PIX estático',amount:200})]);
     const revisedList=await center.listDocuments({companyId});assert.equal(revisedList[0].total,200);assert.equal(revisedList[0].paymentMethod,'PIX estático');assert.equal(Number((await db.query('select totais_retrato from vendas_fiscal_rascunhos where id=$1',[draftId])).rows[0].totais_retrato.total),198);
+    const pendingId='55555555-5555-4555-8555-555555555555';
+    const partial={...input,draftId:pendingId,items:[],saveOnly:true,payment:{method:'',installments:1,firstDueDate:''},operationNature:''};
+    const pending=await service.create({context,input:partial});assert.equal(pending.ok,true,JSON.stringify(pending.errors));assert.equal(pending.document.version,1);
+    assert.equal((await service.create({context,input:partial})).document.reused,true);
+    const pendingCenter=createPostgresCommercialFiscalCenterRepository({pool,pendingRepository});
+    const pendingList=await pendingCenter.listDocuments({companyId});assert.equal(pendingList.length,2);const incomplete=pendingList.find(r=>r.draftId===pendingId);assert.equal(incomplete.pendingVersion,1);assert.equal(incomplete.items.length,0);
+    const bridged=parseFiscalDocumentsMessage({type:FISCAL_DOCUMENTS_MESSAGE_TYPE,companyId,documents:pendingList});assert.equal(bridged.documents.find(r=>r.draftId===pendingId).pendingVersion,1);
+    assert.equal((await pendingRepository.list({companyId:actorId})).length,0);
+    const changed=await service.create({context,input:{...partial,additionalInfo:'Continuar depois',expectedVersion:1}});assert.equal(changed.ok,true);assert.equal(changed.document.version,2);
+    assert.equal((await service.create({context,input:{...partial,additionalInfo:'Concorrente',expectedVersion:1}})).ok,false);
+    assert.equal((await service.create({context,input:{...partial,saveOnly:false,expectedVersion:2}})).ok,false,'emissão continua recusando ausência de itens');
+    assert.equal((await service.create({context,input:{...input,draftId:pendingId,expectedVersion:1}})).ok,false,'conclusão usa versão atual');
+    const completed=await service.create({context,input:{...input,draftId:pendingId,expectedVersion:2}});assert.equal(completed.ok,true,JSON.stringify(completed.errors));assert.equal((await pendingRepository.list({companyId})).length,0);
+    assert.equal((await service.create({context,input:partial})).ok,false,'não reabre preenchimento após conclusão fiscal');
     for (const table of ['vendas_operacoes','vendas_operacao_itens','vendas_contas_receber','vendas_contas_receber_eventos','vendas_estoque_reservas','vendas_estoque_movimentos','vendas_eventos']) {
       assert.equal(Number((await db.query(`select count(*) n from ${table}`)).rows[0].n), 0, `nota avulsa não escreve em ${table}`);
     }

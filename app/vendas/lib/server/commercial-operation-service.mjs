@@ -149,7 +149,7 @@ function repositoryError(cause) {
   return known ? error(cause.code, known[0], known[1]) : error('AV-COMMERCIAL-OPERATION-STORAGE', 'storage', 'Não foi possível concluir a operação comercial. Tente novamente.');
 }
 
-export async function prepareOperation({ input, context, customerResolver, catalogResolver }) {
+export async function prepareOperation({ input, context, customerResolver, catalogResolver, allowIncompleteDraft = false }) {
   const errors = [];
   const warnings = [];
   const type = text(input?.type, 30).toLowerCase();
@@ -167,7 +167,7 @@ export async function prepareOperation({ input, context, customerResolver, catal
   const idempotencyKey = text(input?.idempotencyKey, 160);
   if (!IDEMPOTENCY_KEY.test(idempotencyKey)) errors.push(error('AV-COMMERCIAL-IDEMPOTENCY', 'idempotencyKey', 'Atualize a página para gerar uma solicitação válida.'));
   const requestedItems = Array.isArray(input?.items) ? input.items : [];
-  if (!requestedItems.length) errors.push(error('AV-COMMERCIAL-ITEMS', 'items', 'Adicione ao menos um produto ou serviço.'));
+  if (!allowIncompleteDraft && !requestedItems.length) errors.push(error('AV-COMMERCIAL-ITEMS', 'items', 'Adicione ao menos um produto ou serviço.'));
   if (requestedItems.length > 200) errors.push(error('AV-COMMERCIAL-ITEM-LIMIT', 'items', 'Cada documento pode possuir até 200 itens.'));
   if (errors.length) return { errors, warnings };
 
@@ -251,8 +251,8 @@ export async function prepareOperation({ input, context, customerResolver, catal
   const validityDate = text(input.validityDate, 10);
   if (type === 'orcamento' && validityDate && !validDate(validityDate)) return { errors: [error('AV-COMMERCIAL-VALIDITY', 'validityDate', 'Informe uma validade válida para o orçamento.')], warnings };
   const payment = normalizePayment(input.payment);
-  if (!payment.method) return { errors: [error('AV-COMMERCIAL-PAYMENT', 'payment.method', 'Selecione a forma ou condição de pagamento.')], warnings };
-  if (!payment.firstDueDate) return { errors: [error('AV-COMMERCIAL-DUE-DATE', 'payment.firstDueDate', 'Informe uma data válida para o primeiro vencimento.')], warnings };
+  if (!allowIncompleteDraft && !payment.method) return { errors: [error('AV-COMMERCIAL-PAYMENT', 'payment.method', 'Selecione a forma ou condição de pagamento.')], warnings };
+  if (!allowIncompleteDraft && !payment.firstDueDate) return { errors: [error('AV-COMMERCIAL-DUE-DATE', 'payment.firstDueDate', 'Informe uma data válida para o primeiro vencimento.')], warnings };
   const delivery = normalizeDelivery(input.delivery);
   if (input?.delivery?.expectedDate && !delivery.expectedDate) return { errors: [error('AV-COMMERCIAL-DELIVERY-DATE', 'delivery.expectedDate', 'Informe uma data de entrega válida.')], warnings };
   if (delivery.expectedDate && delivery.expectedDate < payment.firstDueDate && input?.delivery?.requireBeforePayment === true) return { errors: [error('AV-COMMERCIAL-DATE-SEQUENCE', 'delivery.expectedDate', 'Revise a sequência entre entrega e primeiro vencimento.')], warnings };
