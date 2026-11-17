@@ -166,7 +166,7 @@ test('cards são identificados por título, sem numeração decorativa', () => {
   assert.doesNotMatch(css, /\.step\s*\{/);
   assert.match(client, /<h2 className=\{styles.srOnly\}>Marketplace<\/h2>/);
   assert.match(client, /<h2 id="new-listing-title" tabIndex=\{-1\}>Novo anúncio<\/h2>/);
-  assert.match(sales, /<h2 id="sales-title">Vendas · \{sales\.length\}<\/h2>/);
+  assert.match(sales, /<h2 id="sales-title">Vendas · \{orderedSales\.length\}\{search\.trim\(\)\?/);
 });
 
 test('referências de preço ficam no cabeçalho do Novo anúncio', () => {

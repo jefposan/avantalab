@@ -269,7 +269,9 @@ test('Vendas recolhe só o conteúdo e mantém título, total, atualizar e filtr
 
 test('Vendas agrupa conta, situação e canais no mesmo trecho, com layout responsivo', () => {
   const html = render(Vendas, { ...salesProps, expanded: true, group: 'delivered', counts: { ...salesProps.counts, delivered: 6 }, total: 10 });
-  assert.match(html, /class="salesListFilters"/);
+  assert.match(html, /class="salesListFilters salesFiltersWithSearch/);
+  assert.ok(html.indexOf('Buscar venda') < html.indexOf('Conta das vendas'));
+  assert.match(html,/Buscar por produto, pedido ou valor/);
   assert.match(html, /Conta das vendas/); assert.match(html, /Situação/); assert.match(html, /Canal de venda/);
   assert.match(html, /Entregues/); assert.match(html, />6<\/small>/);
   assert.match(html, /Vale a última situação escolhida/);
@@ -277,7 +279,7 @@ test('Vendas agrupa conta, situação e canais no mesmo trecho, com layout respo
   assert.ok(html.indexOf('Situação') < html.indexOf('Canal de venda'));
   assert.ok(html.indexOf('Canal de venda') < html.indexOf('Vale a última situação escolhida'));
   const css = readFileSync(resolve(root, 'app/marketplaces/marketplaces.module.css'), 'utf8');
-  assert.match(css, /\.salesListFilters \{ display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.salesFiltersWithSearch \{ grid-template-columns: minmax\(250px,1\.35fr\) repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css, /@media \(max-width: 760px\) \{ \.salesListFilters \{ grid-template-columns: minmax\(0, 1fr\)/);
 });
 

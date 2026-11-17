@@ -8,6 +8,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {emptyFiscal} from '../../app/modules/marketplaces/fiscal-state.ts';
 import * as statuses from '../../app/modules/marketplaces/sales-status.ts';
+import {saleMatchesSearch} from '../../app/modules/marketplaces/sales-search.ts';
 const file=readFileSync('app/marketplaces/Vendas.tsx','utf8'),ast=ts.createSourceFile('Vendas.tsx',file,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
 const fn=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='Vendas');
 const id='33333333-3333-4333-8333-333333333333';
@@ -16,10 +17,10 @@ function render(overrides={},canManage=true,labelFormat='zpl2'){
   const queue=['',id,'',null,labelFormat,null,'',null,false,'','','desc'];let index=0;
   const exports={},require=createRequire(import.meta.url),Pass=({children})=>React.createElement('div',{},children),Button=({children,onClick,disabled,'aria-label':ariaLabel})=>React.createElement('button',{onClick,disabled,'aria-label':ariaLabel},children);
   vm.runInNewContext(ts.transpileModule(fn.getText(ast).replace('export default','export'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{
-    exports,require,...statuses,useState:()=>[queue[index++],()=>{}],useRef:()=>({current:false}),useMemo:f=>f(),useCallback:f=>f,useEffect(){},
+    exports,require,...statuses,saleMatchesSearch,useState:initial=>[index<queue.length?queue[index++]:typeof initial==='function'?initial():initial,()=>{}],useRef:()=>({current:false}),useMemo:f=>f(),useCallback:f=>f,useEffect(){},
     styles:new Proxy({},{get:(_,k)=>String(k)}),saleLayout:new Proxy({},{get:(_,k)=>String(k)}),money:new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}),date:new Intl.DateTimeFormat('pt-BR'),
     sortSalesByDate:s=>s,providerBrand:()=>({name:'Mercado Livre',logo:'/images/marketplaces/mercado-livre.png'}),accountDisplayName:()=> 'JEFF',
-    Icon:()=>null,BotaoExpandirCard:()=>null,BotaoAcaoCompacto:Button,DetalhesRolaveis:Pass,Tooltip:Pass,DateOrderButton:()=>null,MarketplaceSelect:()=>null,CarregamentoDadosModulo:()=>null,
+    CampoBusca:({value,...props})=>React.createElement('input',{...props,value,type:'search'}),Icon:()=>null,BotaoExpandirCard:()=>null,BotaoAcaoCompacto:Button,DetalhesRolaveis:Pass,Tooltip:Pass,DateOrderButton:()=>null,MarketplaceSelect:()=>null,CarregamentoDadosModulo:()=>null,
     SaleFiscalDocuments:()=>null,SaleItems:()=>React.createElement('span',{},'Calculadora Elgin'),SalePostSale:()=>React.createElement('h3',{},'Pós-venda · Mercado Livre'),ModalConfirmacao:()=>null,
   });
   return renderToStaticMarkup(React.createElement(exports.Vendas,{companyId:'company',accountId:'',onAccountChange(){},group:'',onGroupChange(){},counts:{},total:1,accounts:[],marketplaceOptions:[],selectedMarketplaces:[],onMarketplacesChange(){},sales:[sale],canManage,loading:false,error:'',awaitingUpdates:0,onRefresh(){},onSaleUpdated(){},expanded:true,onExpandedChange(){},saleToOpen:id,dark:false,brand:'#cf0201'}));
