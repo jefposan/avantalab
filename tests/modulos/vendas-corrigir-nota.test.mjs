@@ -26,6 +26,19 @@ test('correção usa a página real de emissão, sem Dialog e sem gravar pedido;
  const props={companyId:'10000000-0000-4000-8000-000000000001',fiscalOnly:true,connected:true,clientRecords:[{id:'client',name:'Cliente',document:'11144477735'}],catalogRecords:[{catalogItemId:'40000000-0000-4000-8000-000000000001',sku:'A',name:'Produto',unit:'UN',ncm:'33059000',cfopInternal:'5102',icmsCode:'102',pisCst:'49',cofinsCst:'49',icmsRate:0}],settings:{company:{taxRegime:'Simples Nacional'},commercial:{defaultSeller:'Vendedor'},payments:{enabledMethods:['pix'],defaultMethod:'pix',defaultInstallments:1,firstDueDays:0},fiscal:{documentScope:['nfe'],matrix:{rules:[]}}},issuerRegistry:{defaultEstablishmentId:'issuer'},initialRecord:{id:'1',client:'Cliente',status:'Rascunho',order:{lines:[{sku:'A',name:'Produto',quantity:1,unitPrice:10,unitDiscount:0,kind:'produto',unit:'UN',cost:0}],commercialTotals:{freight:0,orderDiscount:0,insurance:0,other:0},installments:1,firstDueDate:'2026-11-07',operationNature:'Venda de mercadoria'}},correction:{draft:{paymentMethod:'PIX',clientDocument:'11144477735',items:[{sku:'A',ncm:'33059000',cfopInternal:'5102'}]},status:{state:'rejected',number:1,series:'1',statusCode:'391',statusReason:'Pagamento'},onSave:async(note,issue)=>{saved={note,issue};return {ok:false,message:'Falha sintética de validação'};}},onCancel:()=>{},onCreated:()=>commercialWrites++};
  const render=()=>{cursor=0;return nodes(scope.exports.render(props));};let tree=render();assert.equal(tree.some(n=>n.type==='Dialog'),false);assert.ok(tree.some(n=>n.type==='CatalogSearch'));assert.ok(tree.some(n=>n.type==='CampoMoeda'));assert.ok(!tree.some(n=>n.type==='input'&&n.props?.maxLength===8));assert.ok(tree.some(n=>n.type==='textarea'));assert.ok(tree.some(n=>n.type==='h1'&&String(n.props.children).includes('Corrigir NF-e')));
  tree.find(n=>n.type==='button'&&n.props['aria-label']==='Editar cadastro de Produto').props.onClick();tree=render();const popup=tree.find(n=>n.type==='ProductRegistration');assert.ok(popup);assert.equal(popup.props.companyId,props.companyId);assert.equal(popup.props.initialProductId,props.catalogRecords[0].catalogItemId);assert.equal(popup.props.embeddedProduct,true);popup.props.onProductSaved({id:props.catalogRecords[0].catalogItemId,sku:'A',nome:'Produto atualizado',unidade:'UN',ncm:'33051000',usar_fiscal_empresa:true});tree=render();assert.equal(tree.some(n=>n.type==='Dialog'),false);assert.ok(tree.some(n=>n.props?.['aria-label']==='Quantidade de Produto atualizado'&&n.props.value==='1'));assert.ok(tree.some(n=>n.type==='CampoMoeda'&&n.props.value==='10'));
+ // Cadastro novo só seleciona após confirmação e publicação no catálogo, sem adicionar à nota.
+ tree.find(n=>n.type==='CatalogSearch').props.onNewProduct();tree=render();
+ let newPopup=tree.find(n=>n.type==='ProductRegistration');assert.equal(newPopup.props.initialNewType,'produto');assert.equal(newPopup.props.initialProductId,undefined);
+ newPopup.props.onProductCancel();tree=render();assert.equal(tree.some(n=>n.type==='Dialog'),false);
+ tree.find(n=>n.type==='CatalogSearch').props.onNewProduct();tree=render();newPopup=tree.find(n=>n.type==='ProductRegistration');
+ newPopup.props.onProductSaved({id:'new-product'});tree=render();assert.equal(tree.some(n=>n.type==='Dialog'),false);
+ assert.ok(tree.some(n=>n.props?.['aria-label']==='Quantidade de Produto atualizado'&&n.props.value==='1'));
+ assert.equal(tree.find(n=>n.type==='CatalogSearch').props.selectionRequest,null);
+ const newItem={...props.catalogRecords[0],catalogItemId:'new-product',sku:'B',name:'Produto novo',saleStatus:'Ativo'};
+ props.catalogRecords=[...props.catalogRecords,newItem];let pendingEffect;
+ scope.useEffect=(fn,deps)=>{if(deps?.[1]===props.catalogRecords)pendingEffect=fn;};tree=render();assert.ok(pendingEffect);pendingEffect();tree=render();
+ assert.equal(tree.find(n=>n.type==='CatalogSearch').props.selectionRequest,newItem);
+ assert.ok(tree.some(n=>n.props?.name==='customerId'&&n.props.value==='Cliente'));scope.useEffect=()=>{};
  props.onSaveClient=async client=>{props.clientRecords=[client];return {ok:true};};
  tree.find(n=>n.props?.['aria-label']==='Editar cliente selecionado').props.onClick();tree=render();let customerPopup=tree.find(n=>n.type==='ClientFormDialog');assert.ok(customerPopup);assert.equal(customerPopup.props.client.id,'client');
  customerPopup.props.onClose();tree=render();assert.equal(tree.some(n=>n.type==='ClientFormDialog'),false);assert.ok(tree.some(n=>n.props?.name==='customerId'&&n.props.value==='Cliente'));
@@ -60,4 +73,21 @@ test('CFOP alterado na nota prevalece sobre padrão publicado e continua validad
  const before=await resolve(original.itemsSnapshot);assert.equal(before.valid,true,JSON.stringify(before.errors));assert.equal(before.items.A.cfop,'5102');
  const after=await resolve(source.itemsSnapshot);assert.equal(after.valid,true,JSON.stringify(after.errors));assert.equal(after.items.A.cfop,'5101');assert.equal(after.items.A.icmsCode,before.items.A.icmsCode);assert.equal(after.items.A.pisCst,before.items.A.pisCst);assert.equal(matrix.rules[0].cfopOverride,'5102');assert.equal(original.itemsSnapshot[0].fiscal.noteCfopOverride,undefined);
  assert.equal((await resolve([{...source.itemsSnapshot[0],fiscal:{...source.itemsSnapshot[0].fiscal,noteCfopOverride:'6102'}}])).valid,false);
+});
+
+test('busca seleciona o cadastro confirmado, habilita Adicionar e preserva o preço da lista atual',()=>{
+ const source=readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx','utf8'),ast=ts.createSourceFile('source.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
+ const fn=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='CatalogSearch');
+ const slots=[];let cursor=0,effects=[],added;const node=(type,props)=>({type,props});
+ const scope={exports:{},require:()=>({jsx:node,jsxs:node}),useState:initial=>{const i=cursor++;if(!(i in slots))slots[i]=initial;return[slots[i],value=>slots[i]=typeof value==='function'?value(slots[i]):value];},useRef:()=>({current:null}),useMemo:fn=>fn(),useEffect:(fn,deps)=>{if(deps.length===1)effects.push(fn);},normalizeSearch:value=>value.toLowerCase(),Icon:'Icon',money:String,window:{setTimeout:()=>0,clearTimeout:()=>{}},document:{addEventListener:()=>{},removeEventListener:()=>{}}};
+ vm.runInNewContext(ts.transpileModule(fn.getText(ast)+'\nexports.render=CatalogSearch;',{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,scope);
+ const product={catalogItemId:'id-new',sku:'NEW',name:'Produto novo',saleStatus:'Ativo',category:'Produto acabado',price:25,unit:'UN',available:0};
+ const props={id:'search',items:[product],onNewProduct:()=>{},onAdd:item=>added=item,selectionRequest:null};
+ const nodes=n=>!n||typeof n!=='object'?[]:[n,...[n.props?.children].flat(Infinity).flatMap(nodes)];
+ const render=()=>{cursor=0;effects=[];return nodes(scope.exports.render(props));};
+ let tree=render();assert.equal(tree.find(n=>n.props?.className?.includes('catalog-add-button')).props.disabled,true);
+ props.selectionRequest=product;tree=render();effects[0]();tree=render();
+ assert.equal(tree.find(n=>n.props?.role==='combobox').props.value,'NEW · Produto novo');
+ const add=tree.find(n=>n.props?.className?.includes('catalog-add-button'));assert.equal(add.props.disabled,false);assert.equal(added,undefined);add.props.onClick();assert.equal(added.price,25);assert.equal(added.catalogItemId,'id-new');
+ tree=render();assert.equal(tree.find(n=>n.props?.role==='combobox').props.value,'');
 });

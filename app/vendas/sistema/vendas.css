@@ -2465,3 +2465,14 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 
 .note-items-error-anchor:empty { display:none; }
 .note-items-error-anchor:not(:empty) { margin-top:10px; }
+
+/* Cadastro na nota reutiliza o formulário oficial sem sair do preenchimento. */
+.catalog-picker-with-new { grid-template-columns: minmax(0,1fr) auto auto; }
+.catalog-new-button { white-space: nowrap; min-height: 44px; }
+.product-registration-notice { margin-top: 10px; color: var(--text-muted, #536879); font-size: 13px; }
+.product-registration-notice .button { margin-left: 8px; }
+@media(max-width: 760px) {
+  .catalog-picker-with-new { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .catalog-picker-with-new .catalog-picker-field { grid-column: 1 / -1; }
+  .catalog-picker-with-new .catalog-new-button, .catalog-picker-with-new .catalog-add-button { width: 100%; min-height: 48px; padding-inline: 8px; }
+}

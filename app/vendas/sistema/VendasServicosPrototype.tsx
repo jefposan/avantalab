@@ -1109,12 +1109,19 @@ function NewRecordDialog({ type, fiscalOrigin, fiscalConfig, settings, onClose, 
   </Dialog>;
 }
 
-function CatalogSearch({ id, items, onAdd, kind = 'todos' }: { id: string; items: CatalogItem[]; onAdd: (item: CatalogItem) => void; kind?: 'todos' | 'servico' }) {
+function CatalogSearch({ id, items, onAdd, onNewProduct, selectionRequest, kind = 'todos' }: { id: string; items: CatalogItem[]; onAdd: (item: CatalogItem) => void; onNewProduct?: () => void; selectionRequest?: CatalogItem | null; kind?: 'todos' | 'servico' }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [selectedSku, setSelectedSku] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
   const optionsId = `${id}-options`;
+  const addButtonRef=useRef<HTMLButtonElement>(null);
+  useEffect(()=>{
+    if(!selectionRequest)return;
+    setSelectedSku(selectionRequest.sku);setQuery(`${selectionRequest.sku} · ${selectionRequest.name}`);setOpen(false);
+    const timer=window.setTimeout(()=>addButtonRef.current?.focus(),0);
+    return()=>window.clearTimeout(timer);
+  },[selectionRequest]);
   const availableItems = useMemo(() => items.filter((item) => item.saleStatus === 'Ativo' && (kind === 'todos' || item.category === 'Serviço')), [items, kind]);
   const results = useMemo(() => {
     const normalized = normalizeSearch(query);
@@ -1143,7 +1150,7 @@ function CatalogSearch({ id, items, onAdd, kind = 'todos' }: { id: string; items
     setOpen(false);
   };
 
-  return <div className="catalog-picker" ref={rootRef}>
+  return <div className={`catalog-picker${onNewProduct ? ' catalog-picker-with-new' : ''}`} ref={rootRef}>
     <label className="catalog-picker-field" htmlFor={id}>
       <span>{kind === 'servico' ? 'Serviço' : 'Produto ou serviço'}</span>
       <div className="catalog-search-control">
@@ -1168,7 +1175,8 @@ function CatalogSearch({ id, items, onAdd, kind = 'todos' }: { id: string; items
         <button type="button" className="catalog-list-toggle" aria-label={open ? 'Fechar lista do catálogo' : 'Exibir lista completa do catálogo'} aria-expanded={open} onClick={() => { setQuery(''); setSelectedSku(''); setOpen((value) => !value); }}><Icon name="menu" size={18}/></button>
       </div>
     </label>
-    <button type="button" className="button secondary catalog-add-button" onClick={add} disabled={!selectedSku}><Icon name="plus" size={17}/> Adicionar item</button>
+    {onNewProduct && <button type="button" className="button primary catalog-new-button" onClick={()=>{setOpen(false);onNewProduct();}}><Icon name="plus" size={17}/> Novo produto</button>}
+    <button ref={addButtonRef} type="button" className="button secondary catalog-add-button" onClick={add} disabled={!selectedSku}><Icon name="plus" size={17}/> Adicionar item</button>
     {open && <div className="catalog-options" id={optionsId} role="listbox" aria-label="Itens disponíveis">
       <div className="catalog-options-head"><strong>{query ? 'Resultados da busca' : 'Lista completa'}</strong><span>{results.length} {results.length === 1 ? 'item' : 'itens'}</span></div>
       {results.map((item) => <button type="button" role="option" aria-selected={selectedSku === item.sku} key={item.sku} onClick={() => select(item)}>
@@ -1293,10 +1301,22 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const [editingCustomer, setEditingCustomer] = useState<ClientRecord | null>(null);
   const [customerFormOpen,setCustomerFormOpen]=useState(false);
   const [editingProduct, setEditingProduct] = useState<CatalogItem | null>(null);
+  const [creatingProduct,setCreatingProduct]=useState(false);
+  const [pendingNewProduct,setPendingNewProduct]=useState('');
+  const [newProductSelection,setNewProductSelection]=useState<CatalogItem|null>(null);
+  const [productRegistrationNotice,setProductRegistrationNotice]=useState('');
+  const refreshProductCatalog=()=>{if(window.parent!==window)window.parent.postMessage({type:'AVANTALAB_VENDAS_CATALOG_REFRESH_V1',companyId},window.location.origin);};
+  useEffect(()=>{
+    if(!pendingNewProduct)return;
+    const product=catalogRecords.find(item=>item.catalogItemId===pendingNewProduct&&item.saleStatus==='Ativo');
+    if(product){setNewProductSelection(product);setPendingNewProduct('');setProductRegistrationNotice('Produto cadastrado e selecionado. Clique em Adicionar item para incluí-lo.');return;}
+    const timer=window.setTimeout(()=>setProductRegistrationNotice('Produto salvo. Ainda não está disponível na lista. Confira se o catálogo está ativo em Vendas e Serviços e atualize a lista.'),12000);
+    return()=>window.clearTimeout(timer);
+  },[pendingNewProduct,catalogRecords]);
   const [productDirty, setProductDirty] = useState(false);
   const [productBusy, setProductBusy] = useState(false);
   const [confirmProductClose, setConfirmProductClose] = useState(false);
-  const closeProduct=()=>{if(productBusy)return;if(productDirty){setConfirmProductClose(true);return;}setEditingProduct(null);};
+  const closeProduct=()=>{if(productBusy)return;if(productDirty){setConfirmProductClose(true);return;}setEditingProduct(null);setCreatingProduct(false);};
   const [registeredProducts, setRegisteredProducts] = useState<Record<string,CatalogItem>>({});
   useEffect(()=>setRegisteredProducts({}),[catalogRecords]);
   const initialOrder = initialRecord?.order;
@@ -1348,6 +1368,10 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const selectedNatureRules=fiscalEditor?settings.fiscal.matrix.rules.filter(rule=>rule.active&&rule.operationNature===operationNature):settings.fiscal.matrix.rules;
   const operationCfop = resolveFiscalMatrixRule({matrix:{...settings.fiscal.matrix,rules:selectedNatureRules},documentType:fiscalDocument==='nenhum'?'nfe':fiscalDocument,...operationContext,...(fiscalEditor?{operation:selectedNatureRules.find(rule=>rule.operation!=='Qualquer')?.operation||operationContext.operation,issuePurpose:({'1':'Normal','2':'Complementar','3':'Ajuste','4':'Devolução'} as Record<string,string>)[noteFields.purpose],presence:noteFields.presence==='1'||noteFields.presence==='5'?'Presencial':noteFields.presence==='2'?'Internet':noteFields.presence==='0'?'Não aplicável':'Não presencial'}:{})}).rule?.cfopOverride || '';
   const savedProduct = (product: ProdutoCustos) => {
+    if(creatingProduct){
+      setProductDirty(false);setProductBusy(false);setCreatingProduct(false);setPendingNewProduct(product.id);
+      setProductRegistrationNotice('Produto salvo. Atualizando catálogo…');refreshProductCatalog();return;
+    }
     const previous=editingProduct;if(!previous || product.id!==previous.catalogItemId)return;
     const inherited=usaFiscalEmpresa(product);
     const updated={...previous,sku:product.sku,name:product.nome,unit:product.unidade,ncm:product.ncm,cfopInternal:product.cfop_padrao,cfopInterstate:product.cfop_interestadual,icmsCode:inherited?(previous.useCompanyFiscal?previous.icmsCode:''):product.csosn || product.cst,pisCst:inherited?(previous.useCompanyFiscal?previous.pisCst:''):product.cst_pis,cofinsCst:inherited?(previous.useCompanyFiscal?previous.cofinsCst:''):product.cst_cofins,useCompanyFiscal:inherited} as CatalogItem;
@@ -1487,8 +1511,8 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
       if (result.ok) { setClientName(client.name); setSubmitted(false); setValidationFocus(null); setFiscalSaveError(''); setFiscalSaveIssue(null); }
       return result;
     }}/>}
-    {editingProduct && companyId && <Dialog open title={`Cadastro de ${editingProduct.name}`} description="" onClose={closeProduct}><div className="dialog-body order-product-registration"><ProductRegistration companyId={companyId} initialProductId={editingProduct.catalogItemId} embeddedProduct onProductSaved={savedProduct} onProductCancel={()=>{setProductDirty(false);setEditingProduct(null);}} onProductDirtyChange={setProductDirty} onProductBusyChange={setProductBusy}/></div></Dialog>}
-    <ModalConfirmacao aberto={confirmProductClose} titulo="Descartar alterações do cadastro?" mensagem="As alterações não salvas deste produto serão descartadas. O pedido ou a nota permanecerá aberto." textoCancelar="Continuar editando" textoConfirmar="Descartar" variante="alerta" aoCancelar={()=>setConfirmProductClose(false)} aoConfirmar={()=>{setConfirmProductClose(false);setProductDirty(false);setEditingProduct(null);}}/>
+    {(editingProduct || creatingProduct) && companyId && <Dialog open title={creatingProduct ? 'Novo produto' : `Cadastro de ${editingProduct!.name}`} description="" onClose={closeProduct}><div className="dialog-body order-product-registration"><ProductRegistration companyId={companyId} initialNewType={creatingProduct?'produto':undefined} initialProductId={editingProduct?.catalogItemId} embeddedProduct onProductSaved={savedProduct} onProductCancel={()=>{setProductDirty(false);setEditingProduct(null);setCreatingProduct(false);}} onProductDirtyChange={setProductDirty} onProductBusyChange={setProductBusy}/></div></Dialog>}
+    <ModalConfirmacao aberto={confirmProductClose} titulo="Descartar alterações do cadastro?" mensagem="As alterações não salvas deste produto serão descartadas. O pedido ou a nota permanecerá aberto." textoCancelar="Continuar editando" textoConfirmar="Descartar" variante="alerta" aoCancelar={()=>setConfirmProductClose(false)} aoConfirmar={()=>{setConfirmProductClose(false);setProductDirty(false);setEditingProduct(null);setCreatingProduct(false);}}/>
     <div className={`order-page-heading${fiscalOnly ? ' note-page-heading' : ''}`}>
       <div><span>{fiscalOnly ? 'Documento fiscal' : 'Pedido comercial'}</span><h1>{correction ? `${correction.status.state==='rejected'?'Corrigir':'Editar'} NF-e ${correction.status.number} · série ${correction.status.series}` : fiscalOnly ? 'Nova nota fiscal avulsa' : editing ? `Continuar pedido ${initialRecord?.id}` : 'Novo pedido'}</h1><p>{correction ? correction.status.state==='rejected'?`Rejeição ${correction.status.statusCode}: ${correction.status.statusReason}`:'Revise os dados da nota. Salvar não transmite o documento.' : fiscalOnly ? 'Preencha destinatário, produtos e valores para preparar a NF-e.' : editing ? 'Revise o rascunho salvo e continue do ponto em que parou.' : 'O pedido concentra condições comerciais, reserva de estoque, recebimento e preparação fiscal.'}</p></div>
       {fiscalOnly && <div className="order-safety note-heading-safety"><Icon name="check" size={18}/><p><strong>Somente emissão fiscal.</strong> Preparar ou emitir esta nota não cria pedido, não gera contas a receber, não entra nas receitas e não movimenta estoque.</p></div>}
@@ -1517,7 +1541,8 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
         <section className="order-card" aria-labelledby="order-items-title">
           <header><div><h2 id="order-items-title">{fiscalOnly ? 'Itens da nota' : 'Itens do pedido'}</h2><p>Preços e custos são retratos do catálogo no momento da inclusão.</p></div><Badge tone="info">{lines.length} {lines.length === 1 ? 'item' : 'itens'}</Badge></header>
           <div className="order-card-body">
-            <CatalogSearch id="order-catalog-search" items={pricedCatalog} onAdd={addItem}/>
+            <CatalogSearch id="order-catalog-search" items={pricedCatalog} onAdd={addItem} selectionRequest={newProductSelection} onNewProduct={companyId && can('catalog.create') && !savingFiscal && !fiscalAttemptLocked ? ()=>{setEditingProduct(null);setProductDirty(false);setProductBusy(false);setCreatingProduct(true);} : undefined}/>
+            {productRegistrationNotice && <div className="product-registration-notice" role="status">{productRegistrationNotice}{pendingNewProduct && <button type="button" className="button ghost" onClick={refreshProductCatalog}>Atualizar lista</button>}</div>}
             <div data-note-items-error data-validation-field="items" tabIndex={-1} className="note-items-error-anchor"/>
             {lines.length === 0 ? <EmptyState title="Nenhum item adicionado" description={fiscalOnly ? 'Selecione os produtos para compor a nota fiscal.' : 'Selecione um produto ou serviço do catálogo para começar o pedido.'}/> : <div className="order-items order-items-compact">
               {lines.map((line,index) => {

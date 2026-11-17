@@ -101,7 +101,7 @@ export default function CustosClient({ companyId, initialNewType, initialProduct
   };
 
   if (embeddedProduct) return <main className={`${styles.root} ${styles.embeddedProduct} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{'--custos-brand':access.empresa.corPrimaria} as React.CSSProperties}>
-    <CustosWorkspace companyId={companyId} access={access} initialProductId={initialProductId} embeddedProduct onProductSaved={onProductSaved} onProductCancel={onProductCancel} onProductDirtyChange={onProductDirtyChange} onProductBusyChange={onProductBusyChange}/>
+    <CustosWorkspace companyId={companyId} access={access} initialNewType={initialNewType} initialProductId={initialProductId} embeddedProduct onProductSaved={onProductSaved} onProductCancel={onProductCancel} onProductDirtyChange={onProductDirtyChange} onProductBusyChange={onProductBusyChange}/>
   </main>;
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{ '--custos-brand': access.empresa.corPrimaria } as React.CSSProperties}>

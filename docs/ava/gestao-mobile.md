@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.454 -->
+<!-- ava-version: 3.2.0.455 -->
+
+> Revisão 3.2.0.455: Na nota, + Novo produto abre o cadastro oficial de Custos e Precificação em popup. Após salvar e confirmar a atualização do catálogo, o produto fica selecionado; use Adicionar item para incluí-lo. Cancelar preserva a nota; alterações não salvas pedem confirmação. O acesso respeita catalog.create e as permissões de Custos. Se o produto não estiver publicado no catálogo de Vendas, a tela avisa e oferece Atualizar lista.
 
 > Revisão 3.2.0.454: Salvar nota avulsa permite rascunho sem itens ou pagamento completo, mantendo cliente obrigatório. Reabra na Central Fiscal para continuar. Somente Salvar e emitir exige os dados completos. Rascunho não reserva número nem movimenta estoque ou financeiro. Adicionar item habilita após selecionar um produto; avisos não deslocam a busca.
 

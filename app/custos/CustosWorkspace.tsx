@@ -144,7 +144,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType, ini
     setAbaPendente(null);
   };
 
-  if (embeddedProduct && !carregando && !produtosDisponiveis.some(produto=>produto.id===initialProductId)) return <div role="alert" className={styles.error}>Produto não localizado neste perfil ou indisponível para edição.</div>;
+  if (embeddedProduct && !initialNewType && !carregando && !produtosDisponiveis.some(produto=>produto.id===initialProductId)) return <div role="alert" className={styles.error}>Produto não localizado neste perfil ou indisponível para edição.</div>;
   return <div className={`${styles.workspace} ${embeddedProduct ? styles.embeddedWorkspace : ''}`}>
     <div className={styles.workspaceContent} aria-hidden={carregando || undefined} inert={carregando || undefined}>
     {!embeddedProduct && <aside className={styles.sidebar} aria-label="Áreas de Custos e Precificação">
@@ -379,7 +379,7 @@ function ProdutosView({ perfilFiscal, companyId, catalogoId, catalogos, produtos
   const [menuAcao, setMenuAcao] = useState<{ produtoId: string; top: number; left: number } | null>(null);
   const [precosDoProduto, setPrecosDoProduto] = useState<ProdutoCustos | null>(null);
   const [valoresTabela, setValoresTabela] = useState<Record<string, number>>({});
-  const [rascunho, setRascunho] = useState<ProdutoCustos>(() => produtoSelecionado || novoProduto('produto', catalogoId));
+  const [rascunho, setRascunho] = useState<ProdutoCustos>(() => embeddedProduct && initialNewType ? novoProduto(initialNewType, catalogoId) : produtoSelecionado || novoProduto('produto', catalogoId));
   const fiscalHerdado = usaFiscalEmpresa(rascunho);
   const fiscalEfetivo = resolverFiscalProduto(rascunho, perfilFiscal);
   const [composicao, setComposicao] = useState<ComposicaoCusto>(() => produtoSelecionado ? documento.composicoes[produtoSelecionado.id] || composicaoVazia() : composicaoVazia());
@@ -458,7 +458,7 @@ function ProdutosView({ perfilFiscal, companyId, catalogoId, catalogos, produtos
   useEffect(() => {
     const mudouProduto = produtoAtivoAnteriorRef.current !== produtoAtivoId;
     produtoAtivoAnteriorRef.current = produtoAtivoId;
-    if (!mudouProduto || modo !== 'cadastro' || !produtoSelecionado) return;
+    if ((embeddedProduct && initialNewType) || !mudouProduto || modo !== 'cadastro' || !produtoSelecionado) return;
     setRascunho(produtoSelecionado);
     const proximaComposicao = documento.composicoes[produtoSelecionado.id] || composicaoVazia();
     setComposicao(proximaComposicao);

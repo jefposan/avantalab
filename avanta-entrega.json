@@ -1,11 +1,6 @@
 {
-  "baseDeploymentId": "dpl_FhuxGV3fC2tPfgjfVDZeswUxdr4U",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261117013000_vendas_preenchimento_fiscal.sql",
-      "sha256": "3c44287b056012759890c275067487911bf9df94b1a39158edb230261455a36a"
-    }
-  ],
-  "version": "3.2.0.454",
-  "scope": "Vendas e Serviços: salvar e retomar nota incompleta sem deslocar busca"
+  "baseDeploymentId": "dpl_6jrSe6PHnTvjF83vrXFRkjAnZNdz",
+  "migrations": [],
+  "version": "3.2.0.455",
+  "scope": "Vendas e Serviços: cadastrar produto em popup e selecionar na nota"
 }

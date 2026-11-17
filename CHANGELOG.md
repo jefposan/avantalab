@@ -1,3 +1,9 @@
+## 3.2.0.455 — Vendas e Serviços: novo produto no preenchimento da nota
+
+- Botão + Novo produto junto à busca abre cadastro oficial em popup, respeitando permissões. Após confirmação e atualização do catálogo, seleciona o produto para Adicionar item, sem inclusão automática.
+- Preserva cliente, itens, preços e campos da nota; confirmação para descartar alterações e bloqueio de fechamento durante gravação. Mantém cadastro aberto em erro.
+- Reutiliza criação e edição de Custos, com layout responsivo. Nenhuma alteração de banco, emissão ou estoque. Preserva a main 3.2.0.454.
+
 ## 3.2.0.454 — Vendas e Serviços: salvar e retomar nota incompleta
 
 - Rascunho editável separado do documento fiscal imutável; permite salvar sem itens e completar depois na Central Fiscal, com controle de versão e isolamento por empresa.
