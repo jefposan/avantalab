@@ -1,3 +1,4 @@
+import {officialCfop,cfopNature,cfopOperation,cfopPrefix} from '../fiscal-cfop.mjs';
 import { createHash } from 'node:crypto';
 import { resolverFiscalProduto } from '../../../lib/fiscal-produto.mjs';
 import { resolveFiscalMatrixRule, validateFiscalMatrixPublication } from '../fiscal-matrix.mjs';
@@ -266,13 +267,14 @@ function consumerFinal(customer = {}) {
   return ['isento', 'contribuinte_isento'].includes(clean(customer.stateRegistrationIndicator).toLowerCase()) ? 'Sim' : 'Não';
 }
 
-function itemRule(item, rule, issuer, destination, direction='1') {
+function itemRule(item, rule, issuer, destination, direction='1',date) {
   const fiscal = item?.fiscal && typeof item.fiscal === 'object' ? item.fiscal : {};
   const resolved = resolverFiscalProduto({ ...fiscal, unit: item.unit }, issuer, { destination, cfop: rule.cfopOverride });
   const applied = Object.fromEntries(Object.entries(resolved).filter(([key]) => key !== 'useCompanyFiscal'));
   // Revisão explícita da nota não altera a herança fiscal do produto nem da empresa.
   if (typeof fiscal.noteCfopOverride === 'string' && /^\d{4}$/.test(fiscal.noteCfopOverride)) applied.cfop = fiscal.noteCfopOverride;
   const missing = [];
+  if (fiscal.noteCfopOverride && !officialCfop(fiscal.noteCfopOverride,date)) missing.push('CFOP vigente');
   if (!/^\d{8}$/.test(applied.ncm)) missing.push('NCM');
   const cfopPrefix = destination === 'Dentro da UF' ? (direction==='0'?'1':'5') : destination === 'Fora da UF' ? (direction==='0'?'2':'6') : (direction==='0'?'3':'7');
   if (!/^\d{4}$/.test(applied.cfop) || !cfopPrefix || !applied.cfop.startsWith(cfopPrefix)) missing.push('CFOP compatível com a UF de destino');
@@ -316,24 +318,27 @@ export function createCommercialFiscalRuleResolver({ repository, issuerResolver 
       issuePurpose: 'Normal',
     };
     let matrix=configuration.matrix;
+    const selectedCfop=fiscalForm?officialCfop(operationNature,fiscalForm.issueDate||undefined):null;
     if(fiscalForm){
       context.issuePurpose=({'1':'Normal','2':'Complementar','3':'Ajuste','4':'Devolução'})[fiscalForm.purpose]||'Normal';
       context.presence=fiscalForm.presence==='1'||fiscalForm.presence==='5'?'Presencial':fiscalForm.presence==='2'?'Internet':fiscalForm.presence==='0'?'Não aplicável':'Não presencial';
       const wanted=clean(operationNature,60);const named=matrix.rules.filter(rule=>rule.active&&rule.documentType==='nfe'&&clean(rule.operationNature,60)===wanted);
-      if(!wanted||!named.length)return{valid:false,errors:[issue('AV-FISCAL-RULES-NATURE','operationNature','Selecione uma natureza com regra fiscal ativa e publicada neste perfil.')]};
+      if(!wanted||(!selectedCfop&&!named.length))return{valid:false,errors:[issue('AV-FISCAL-RULES-NATURE','operationNature','Selecione uma natureza com regra fiscal ativa e publicada neste perfil.')]};
       const operations=[...new Set(named.filter(rule=>rule.operation!=='Qualquer').map(rule=>rule.operation))];
       if(operations.length>1)return{valid:false,errors:[issue('AV-FISCAL-RULES-NATURE','operationNature','Diferencie o nome das naturezas que possuem operações fiscais diferentes.')]};
-      context.operation=operations[0]||context.operation;matrix={...matrix,rules:named};
+      context.operation=selectedCfop?cfopOperation(selectedCfop):operations[0]||context.operation;matrix={...matrix,rules:selectedCfop?matrix.rules:named};
       const destinationCode=context.destination==='Dentro da UF'?'1':context.destination==='Fora da UF'?'2':'3';
       if(fiscalForm.destination!=='auto'&&fiscalForm.destination!==destinationCode)return{valid:false,errors:[issue('AV-FISCAL-RULES-DESTINATION','destination','O destino selecionado não corresponde ao endereço do destinatário.')]};
     }
+    if(selectedCfop&&(!cfopPrefix(context.destination,fiscalForm.direction)||!selectedCfop.code.startsWith(cfopPrefix(context.destination,fiscalForm.direction))))return{valid:false,errors:[issue('AV-FISCAL-RULES-CFOP-DESTINATION','operationNature','O CFOP selecionado na Natureza da operação não corresponde ao destino ou ao tipo de operação. Selecione um código compatível.')]};
     const resolution = resolveFiscalMatrixRule({ matrix, documentType: 'nfe', ...context });
     if (!resolution.matched || !resolution.reviewed || !resolution.rule) {
       const dimensions=[['presence','presence','Atendimento'],['issuePurpose','purpose','Finalidade'],['destination','destination','Destino'],['recipientProfile','customerId','Perfil fiscal do destinatário'],['consumerFinal','customerId','Consumidor final'],['operation','operationNature','Operação']];
       const candidates=matrix.rules.filter(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe').map(rule=>({rule,differences:dimensions.filter(([key])=>rule[key]&&rule[key]!=='Qualquer'&&rule[key]!==context[key])})).sort((a,b)=>a.differences.length-b.differences.length);
       const closest=candidates[0];const difference=closest?.differences[0];
-      const message=difference?`${difference[2]} informado: ${context[difference[0]]}. A regra ${closest.rule.name||closest.rule.operationNature} exige ${closest.rule[difference[0]]}. Corrija esse campo ou selecione uma natureza compatível.`:'A natureza selecionada não possui regra fiscal revisada. Revise e publique a regra nos ajustes fiscais antes de emitir.';
-      return { valid:false,errors:[issue('AV-FISCAL-RULES-NO-MATCH',difference?.[1]||'operationNature',message)] };
+      const natureDestinationMismatch=Boolean(fiscalForm && difference?.[0]==='destination');
+      const message=natureDestinationMismatch?`A natureza da operação selecionada está vinculada à regra ${closest.rule.name||closest.rule.operationNature}, que exige ${closest.rule.destination}. Para o destino ${context.destination}, selecione uma natureza compatível no campo Natureza da operação.`:difference?`${difference[2]} informado: ${context[difference[0]]}. A regra ${closest.rule.name||closest.rule.operationNature} exige ${closest.rule[difference[0]]}. Corrija esse campo ou selecione uma natureza compatível.`:'A natureza selecionada não possui regra fiscal revisada. Revise e publique a regra nos ajustes fiscais antes de emitir.';
+      return { valid:false,errors:[issue('AV-FISCAL-RULES-NO-MATCH',natureDestinationMismatch?'operationNature':difference?.[1]||'operationNature',message)] };
     }
     const customerStateRegistration = clean(customer.stateRegistration, 40);
     if (resolution.rule.requiresStateRegistration && (!customerStateRegistration || customerStateRegistration.toLocaleLowerCase('pt-BR') === 'isento')) {
@@ -342,7 +347,7 @@ export function createCommercialFiscalRuleResolver({ repository, issuerResolver 
     const itemEntries = [];
     const errors = [];
     for (const item of Array.isArray(items) ? items : []) {
-      const { applied, missing } = itemRule(item, resolution.rule, issuer, context.destination, fiscalForm?.direction);
+      const { applied, missing } = itemRule(item, selectedCfop?{...resolution.rule,cfopOverride:selectedCfop.code}:resolution.rule, issuer, context.destination, fiscalForm?.direction,fiscalForm?.issueDate||undefined);
       if (missing.length) errors.push(issue('AV-FISCAL-RULES-ITEM', 'items', `${clean(item.name, 100) || 'Item'}: revise ${missing.join(', ')} antes da emissão. NCM e unidade tributável ficam no produto; CFOP e tributos seguem os padrões da empresa e as exceções salvas no produto.`));
       const key = UUID.test(clean(item.productId)) ? clean(item.productId) : clean(item.sku, 80);
       if (key) itemEntries.push([key, applied]);
@@ -353,7 +358,7 @@ export function createCommercialFiscalRuleResolver({ repository, issuerResolver 
       valid: true,
       ruleId: clean(resolution.rule.id, 100),
       ruleVersion: `${configuration.version}:${clean(configuration.matrixVersion, 30)}:${clean(configuration.contentDigest, 12)}`,
-      operationNature: clean(resolution.rule.operationNature, 60),
+      operationNature: selectedCfop?cfopNature(selectedCfop):clean(resolution.rule.operationNature, 60),
       presence: context.presence,
       matrixReviewConfirmed: true,
       taxReviewConfirmed: true,

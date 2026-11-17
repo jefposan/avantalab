@@ -6,6 +6,7 @@ import {focarCampoComErro} from '@/app/lib/foco-validacao.mjs';
 import {fiscalValidationIssue,fiscalValidationTarget} from '../lib/fiscal-validation.mjs';
 import dynamic from 'next/dynamic';
 import {requestFiscalEditor} from '../lib/fiscal-editor-bridge.mjs';
+import {officialCfop,cfopNature,cfopOperation,configuredNoteCfop,noteItemCfop} from '../lib/fiscal-cfop.mjs';
 import { NoteOperationFields, NoteTransportFields, NoteDetailsFields, NoteObservationsFields, NoteWithholdingFields, type NoteFields, type FiscalNoteEditorOptions } from '../components/FiscalNoteBlocks';
 import {syncFiscalNoteNumbering,newFiscalNoteFields,updateFiscalNoteFields,priceFromTable,repriceNoteLines,previewInstallments,validateFiscalNoteFields} from '../lib/fiscal-note-editor.mjs';
 import { usaFiscalEmpresa } from '../../lib/fiscal-produto.mjs';
@@ -199,7 +200,7 @@ type CreatedRecord = {
   quote?: QuotePdfInput & { source: 'vendas' | 'servicos' };
   fiscalOriginId?: string;
   order?: {
-    lines: Array<{ catalogItemId?: string; sku: string; name: string; kind: 'produto' | 'servico'; unit: string; quantity: number; unitPrice: number; unitDiscount: number; cost: number }>;
+    lines: Array<{ catalogItemId?: string; sku: string; name: string; kind: 'produto' | 'servico'; unit: string; quantity: number; unitPrice: number; unitDiscount: number; cost: number; cfop?: string }>;
     commercialTotals: CommercialTotals;
     reserveStock: boolean;
     stockState: 'Sem movimentação' | 'Reservado' | 'Em separação' | 'Baixado' | 'Liberado' | 'Devolvido';
@@ -312,6 +313,7 @@ type FiscalDraftItem = {
   issRate: number;
   serviceIncidenceMode: string;
   fiscalOriginCode: string;
+  noteCfopOverride?: string;
   cfopInternal: string;
   cfopInterstate: string;
   icmsCode: string;
@@ -401,6 +403,7 @@ function persistedFiscalItem(item: Record<string, any>): FiscalDraftItem {
     nbs: String(fiscal.nbs || ''), issRate: Number(fiscal.issRate || fiscal.aliquotaIss || 0),
     serviceIncidenceMode: String(fiscal.serviceIncidenceMode || fiscal.municipioPrestacao || ''),
     fiscalOriginCode: String(fiscal.fiscalOriginCode || fiscal.originCode || fiscal.origemMercadoria || ''),
+    noteCfopOverride: String(fiscal.noteCfopOverride || ''),
     cfopInternal: String(fiscal.cfopInternal || fiscal.cfop || fiscal.cfopPadrao || ''),
     cfopInterstate: String(fiscal.cfopInterstate || ''),
     icmsCode: String(fiscal.icmsCode || fiscal.csosn || fiscal.cst || ''),
@@ -1343,7 +1346,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const [insurance, setInsurance] = useState(formatLineNumber(initialOrder?.commercialTotals.insurance ?? 0,true));
   const [otherExpenses, setOtherExpenses] = useState(formatLineNumber(initialOrder?.commercialTotals.other ?? 0,true));
   const [quantityDrafts,setQuantityDrafts]=useState<Record<string,string>>({});
-  const [itemTax, setItemTax] = useState<Record<string,{ncm:string;cfop:string}>>(() => Object.fromEntries((correction?.draft.items || []).map(item=>[item.sku,{ncm:item.ncm,cfop:correction?.draft.operationContext?.destination==='Fora da UF'?item.cfopInterstate:item.cfopInternal||item.cfopInterstate||''}])));
+  const [itemTax, setItemTax] = useState<Record<string,{ncm:string;cfop?:string}>>(() => Object.fromEntries([...(initialRecord?.order?.lines||[]).filter(line=>line.cfop!==undefined).map(line=>[line.sku,{ncm:catalogRecords.find(item=>item.sku===line.sku)?.ncm||'',cfop:line.cfop}]),...(correction?.draft.items || []).map(item=>[item.sku,{ncm:item.ncm,cfop:fiscalOnly?item.noteCfopOverride||undefined:correction?.draft.operationContext?.destination==='Fora da UF'?item.cfopInterstate:item.cfopInternal||item.cfopInterstate||''}])]));
   const [installments, setInstallments] = useState(String(initialOrder?.installments || settings.payments.defaultInstallments));
   const [firstDueDate, setFirstDueDate] = useState(() => initialOrder?.firstDueDate || isoAfterDays(settings.payments.firstDueDays));
   const [freight, setFreight] = useState(() => formatLineNumber(initialOrder?.commercialTotals.freight ?? 0, true));
@@ -1363,7 +1366,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const [fiscalDocument, setFiscalDocument] = useState<'nenhum' | 'nfe' | 'nfce' | 'nfse'>(fiscalOnly ? 'nfe' : initialOrder?.fiscalDocument ?? initialFiscalDocument);
   const [fiscalIssuerId, setFiscalIssuerId] = useState(initialOrder?.fiscalIssuer?.establishmentId || issuerRegistry.defaultEstablishmentId);
   const natureEditedRef=useRef(Boolean(initialOrder?.operationNature));
-  const suggestedNature=(name:string)=>{const client=clientRecords.find(item=>item.name===name);if(!client)return '';const context=fiscalOperationContext({id:'suggestion',client:name,item:'',total:0,documentType:'nfe',sourceLabel:'Nota avulsa'},client,settings.company);const resolution=resolveFiscalMatrixRule({matrix:settings.fiscal.matrix,documentType:'nfe',...context});return resolution.reviewed?resolution.rule?.operationNature||'':'';};
+  const suggestedNature=(name:string)=>{const client=clientRecords.find(item=>item.name===name);if(!client)return '';const context=fiscalOperationContext({id:'suggestion',client:name,item:'',total:0,documentType:'nfe',sourceLabel:'Nota avulsa'},client,settings.company);const code=configuredNoteCfop({matrix:settings.fiscal.matrix,context});const entry=officialCfop(code);if(entry)return cfopNature(entry);const resolution=resolveFiscalMatrixRule({matrix:settings.fiscal.matrix,documentType:'nfe',...context});return resolution.reviewed?resolution.rule?.operationNature||'':'';};
   const [operationNature, setOperationNature] = useState(()=>initialOrder?.operationNature || (fiscalEditor?suggestedNature(initialRecord?.client||initialClient):'Venda de mercadoria'));
   const [notes, setNotes] = useState(initialOrder?.notes || '');
   const [submitted, setSubmitted] = useState(false);
@@ -1373,8 +1376,10 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const applyPriceTable=(reprice:boolean)=>{if(!pendingTable||!fiscalEditor)return;if(reprice)setLines(current=>repriceNoteLines(current,catalogRecords,fiscalEditor.priceTables.find(table=>table.id===pendingTable)));patchNoteFields({priceTableId:pendingTable});setPendingTable(null);};
   const totals = calculateOrder(lines.map((line) => ({ quantity: line.quantity, unitPrice: Math.max(0, line.unitPrice - line.unitDiscount) })), commercialNumber(globalDiscount), commercialNumber(freight) + ((correction || fiscalEditor) ? commercialNumber(insurance) + commercialNumber(otherExpenses) : 0));
   const operationContext = fiscalOperationContext({id:initialRecord?.id || 'preview',client:clientName,item:'',total:totals.total,documentType:fiscalDocument==='nenhum'?'nfe':fiscalDocument,sourceLabel:'Pedido'},selectedClient,settings.company);
-  const selectedNatureRules=fiscalEditor?settings.fiscal.matrix.rules.filter(rule=>rule.active&&rule.operationNature===operationNature):settings.fiscal.matrix.rules;
-  const operationCfop = resolveFiscalMatrixRule({matrix:{...settings.fiscal.matrix,rules:selectedNatureRules},documentType:fiscalDocument==='nenhum'?'nfe':fiscalDocument,...operationContext,...(fiscalEditor?{operation:selectedNatureRules.find(rule=>rule.operation!=='Qualquer')?.operation||operationContext.operation,issuePurpose:({'1':'Normal','2':'Complementar','3':'Ajuste','4':'Devolução'} as Record<string,string>)[noteFields.purpose],presence:noteFields.presence==='1'||noteFields.presence==='5'?'Presencial':noteFields.presence==='2'?'Internet':noteFields.presence==='0'?'Não aplicável':'Não presencial'}:{})}).rule?.cfopOverride || '';
+  const effectiveDestination=noteFields.destination==='auto'?operationContext.destination:({'1':'Dentro da UF','2':'Fora da UF','3':'Exterior'} as Record<string,string>)[noteFields.destination]||operationContext.destination;
+  const officialNature=officialCfop(operationNature,noteFields.issueDate||undefined);
+  const noteContext={...operationContext,destination:effectiveDestination,operation:officialNature?cfopOperation(officialNature):operationContext.operation,issuePurpose:({'1':'Normal','2':'Complementar','3':'Ajuste','4':'Devolução'} as Record<string,string>)[noteFields.purpose],presence:noteFields.presence==='1'||noteFields.presence==='5'?'Presencial':noteFields.presence==='2'?'Internet':noteFields.presence==='0'?'Não aplicável':'Não presencial'};
+  const operationCfop=fiscalEditor?configuredNoteCfop({matrix:settings.fiscal.matrix,context:noteContext,nature:operationNature,direction:noteFields.direction,date:noteFields.issueDate||undefined}):resolveFiscalMatrixRule({matrix:settings.fiscal.matrix,documentType:fiscalDocument==='nenhum'?'nfe':fiscalDocument,...operationContext}).rule?.cfopOverride||'';
   const savedProduct = (product: ProdutoCustos) => {
     if(creatingProduct){
       setProductDirty(false);setProductBusy(false);setCreatingProduct(false);setPendingNewProduct(product.id);
@@ -1385,7 +1390,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
     const updated={...previous,sku:product.sku,name:product.nome,unit:product.unidade,ncm:product.ncm,cfopInternal:product.cfop_padrao,cfopInterstate:product.cfop_interestadual,icmsCode:inherited?(previous.useCompanyFiscal?previous.icmsCode:''):product.csosn || product.cst,pisCst:inherited?(previous.useCompanyFiscal?previous.pisCst:''):product.cst_pis,cofinsCst:inherited?(previous.useCompanyFiscal?previous.cofinsCst:''):product.cst_cofins,useCompanyFiscal:inherited} as CatalogItem;
     setRegisteredProducts(current=>({...current,[product.id]:updated}));
     setLines(current=>current.map(line=>line.catalogItemId===product.id?{...line,sku:product.sku,name:product.nome,unit:product.unidade}:line));
-    setItemTax(current=>({...current,[product.sku]:{ncm:product.ncm,cfop:operationCfop || (operationContext.destination==='Fora da UF'?product.cfop_interestadual:product.cfop_padrao) || current[previous.sku]?.cfop || ''}}));
+    setItemTax(current=>({...current,[product.sku]:{ncm:product.ncm,cfop:fiscalOnly?current[previous.sku]?.cfop:operationCfop || (operationContext.destination==='Fora da UF'?product.cfop_interestadual:product.cfop_padrao) || current[previous.sku]?.cfop || ''}}));
     setProductDirty(false);setProductBusy(false);setEditingProduct(null);
     if(window.parent!==window)window.parent.postMessage({type:'AVANTALAB_VENDAS_CATALOG_REFRESH_V1',companyId},window.location.origin);
   };
@@ -1442,7 +1447,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
       const index=indexMatch?Number(indexMatch[1]):Math.max(0,namedIndex);
       const row=root.querySelector<HTMLElement>(`[data-item-index="${index}"]`);
       const message=validationFocus.message.toLocaleLowerCase('pt-BR');
-      const itemField=/quantidade/.test(message)?'itemQuantity':/preço|preco|valor unit/.test(message)?'itemPrice':/desconto/.test(message)?'itemDiscount':'';
+      const itemField=/cfop/.test(message)?'itemCfop':/quantidade/.test(message)?'itemQuantity':/preço|preco|valor unit/.test(message)?'itemPrice':/desconto/.test(message)?'itemDiscount':'';
       target=row?.querySelector<HTMLElement>(itemField?`[name="${itemField}"]`:'button.order-product-edit:not([disabled])')||row?.querySelector<HTMLElement>('input:not([disabled])')||root.querySelector<HTMLElement>('#order-catalog-search');
     }else if(key)target=root.querySelector<HTMLElement>(`[name="${key}"]:not([disabled])`);
     if(target)return focarCampoComErro(target,{message:validationFocus.message,id:'note-field-validation-error',messageElement:root.querySelector<HTMLElement>('#note-save-validation-message')});
@@ -1456,7 +1461,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const finish = async (status: 'Rascunho' | 'Confirmado', issue = false) => {
     if (savingFiscal) return;
     setFiscalSaveTitle(issue ? 'Não foi possível emitir' : 'Não foi possível salvar');
-    if(issue&&!fiscalAttemptLocked&&fiscalEditor&&(!operationNature.trim()||!settings.fiscal.matrix.rules.some(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe'&&rule.operationNature===operationNature))){setSubmitted(true);showIssue({ok:false,field:'operationNature',message:'Selecione uma natureza com regra fiscal ativa e publicada neste perfil.'});return;}
+    if(issue&&!fiscalAttemptLocked&&fiscalEditor&&(!operationNature.trim()||(!officialCfop(operationNature,noteFields.issueDate||undefined)&&!settings.fiscal.matrix.rules.some(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe'&&rule.operationNature===operationNature)))){setSubmitted(true);showIssue({ok:false,field:'operationNature',message:'Selecione uma natureza com regra fiscal ativa e publicada neste perfil.'});return;}
     if(issue&&!fiscalAttemptLocked&&fiscalEditor&&previewIssues.length){setSubmitted(true);showIssue({ok:false,message:previewIssues[0]});return;}
     if (status === 'Confirmado' && !orderReady && !fiscalAttemptLocked && (!fiscalOnly||issue)) {
       setSubmitted(true);
@@ -1482,7 +1487,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
       createdAt: initialRecord?.createdAt || now,
       status,
       order: {
-        lines: lines.map((line) => ({ catalogItemId: line.catalogItemId, sku: line.sku, name: line.name, kind: line.kind, unit: line.unit, quantity: line.quantity, unitPrice: line.unitPrice, unitDiscount: Math.min(line.unitPrice, Math.max(0, line.unitDiscount)), cost: line.cost })),
+        lines: lines.map((line) => ({ catalogItemId: line.catalogItemId, sku: line.sku, name: line.name, kind: line.kind, unit: line.unit, quantity: line.quantity, unitPrice: line.unitPrice, unitDiscount: Math.min(line.unitPrice, Math.max(0, line.unitDiscount)), cost: line.cost,...(fiscalEditor&&itemTax[line.sku]?.cfop!==undefined?{cfop:itemTax[line.sku].cfop}:{}) })),
         commercialTotals,
         reserveStock,
         stockState: status === 'Confirmado' && reserveStock && lines.some((line) => line.kind === 'produto') ? 'Reservado' : 'Sem movimentação',
@@ -1564,7 +1569,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
                 const product=registeredProducts[line.catalogItemId || ''] || catalogRecords.find(item=>item.catalogItemId===line.catalogItemId || item.sku===line.sku);
                 const frozen=correction?.draft.items.find(item=>item.sku===line.sku);
                 const tax=product || frozen;
-                const cfop=itemTax[line.sku]?.cfop || operationCfop || (operationContext.destination==='Fora da UF'?tax?.cfopInterstate:tax?.cfopInternal) || '';
+                const cfop=fiscalEditor?noteItemCfop({manual:itemTax[line.sku]?.cfop,product:tax,operationCfop,destination:effectiveDestination}):itemTax[line.sku]?.cfop || operationCfop || (operationContext.destination==='Fora da UF'?tax?.cfopInterstate:tax?.cfopInternal) || '';
                 const details=[['CFOP',cfop],['NCM',itemTax[line.sku]?.ncm || tax?.ncm],['ICMS %',product && product.icmsRate>0?formatLineNumber(product.icmsRate,true):'—'],[settings.company.taxRegime.toLowerCase().includes('simples')?'CSOSN':'CST ICMS',tax?.icmsCode],['CST PIS',tax?.pisCst],['CST COFINS',tax?.cofinsCst]];
                 return <div className="order-item order-item-compact order-item-two-line" key={line.id} data-item-index={index}>
                   <div className="order-item-commercial">
@@ -1575,7 +1580,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
                     <div className="order-inline-field order-inline-subtotal"><span>Subtotal (R$)</span><div className="order-inline-control"><output aria-label={`Subtotal de ${line.name}`} style={{fontSize:`${fittedNumericFontSize(formatLineNumber(lineTotal,true),100,12,11)}px`}}>{formatLineNumber(lineTotal,true)}</output></div></div>
                     <div className="order-item-actions"><button type="button" className="icon-button order-product-edit" disabled={!companyId || !product?.catalogItemId || !can('catalog.edit')} onClick={()=>product&&setEditingProduct(product)} aria-label={`Editar cadastro de ${line.name}`} title="Editar cadastro"><Icon name="edit" size={16}/></button><button type="button" className="icon-button" onClick={()=>removeLine(line.id)} aria-label={`Remover ${line.name}`} title="Excluir item"><Icon name="close" size={16}/></button></div>
                   </div>
-                  {line.kind==='produto'&&<dl className="order-item-tax-summary">{details.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value || '—'}</dd></div>)}</dl>}
+                  {line.kind==='produto'&&<dl className="order-item-tax-summary">{details.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{label==='CFOP'&&fiscalEditor?<input name="itemCfop" aria-label={`CFOP de ${line.name}`} inputMode="numeric" maxLength={4} value={cfop} autoComplete="off" onChange={event=>{const value=event.target.value.replace(/\D/g,'').slice(0,4);setItemTax(current=>({...current,[line.sku]:{ncm:current[line.sku]?.ncm||tax?.ncm||'',cfop:value}}));}}/>:value || '—'}</dd></div>)}</dl>}
                 </div>;
               })}
             </div>}
@@ -7663,7 +7668,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       generalDiscount: record.order.commercialTotals.orderDiscount, freight: record.order.commercialTotals.freight,
       insurance: record.order.commercialTotals.insurance, otherExpenses: record.order.commercialTotals.other,
       payment: { method: record.order.paymentMethod, details:record.order.paymentDetails,installments: record.order.installments, firstDueDate: record.order.firstDueDate },
-      items: record.order.lines.map((line) => ({ catalogItemId: line.catalogItemId || catalogRecords.find((item) => item.sku === line.sku)?.catalogItemId || '', quantity: line.quantity, unitPrice: line.unitPrice, discountUnit: line.unitDiscount })),
+      items: record.order.lines.map((line) => ({ catalogItemId: line.catalogItemId || catalogRecords.find((item) => item.sku === line.sku)?.catalogItemId || '', quantity: line.quantity, unitPrice: line.unitPrice, discountUnit: line.unitDiscount,...(line.cfop!==undefined?{cfop:line.cfop}:{}) })),
     };
     const fingerprint = JSON.stringify(document);
     if (standaloneSubmissionRef.current?.fingerprint !== fingerprint) standaloneSubmissionRef.current = { fingerprint, draftId: crypto.randomUUID() };
@@ -8160,7 +8165,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           onNewFiscal={() => {standaloneResumeRef.current=null;openNew('nfe');}}
           onResumeStandalone={draft=>{
             standaloneResumeRef.current={id:draft.id,version:draft.pendingVersion!};
-            setEditingOrder({id:draft.id,type:'nfe',client:draft.client,total:draft.total,status:'Rascunho',createdAt:draft.createdAt,order:{lines:draft.items.map(item=>({catalogItemId:item.catalogItemId||catalogRecords.find(product=>product.sku===item.sku)?.catalogItemId,sku:item.sku,name:item.name,kind:item.kind,unit:item.unit,quantity:item.quantity,unitPrice:item.unitPrice,unitDiscount:item.unitDiscount,cost:0})),commercialTotals:draft.commercialTotals,reserveStock:false,stockState:'Sem movimentação',seller:'',fiscalDocument:'nfe',paymentMethod:draft.paymentMethod,paymentDetails:draft.paymentDetails,installments:draft.paymentInstallments||1,firstDueDate:draft.paymentFirstDueDate||'',operationNature:draft.operationNature||'',notes:draft.additionalInfo||'',fiscalForm:draft.fiscalForm} } as CreatedRecord);
+            setEditingOrder({id:draft.id,type:'nfe',client:draft.client,total:draft.total,status:'Rascunho',createdAt:draft.createdAt,order:{lines:draft.items.map(item=>({catalogItemId:item.catalogItemId||catalogRecords.find(product=>product.sku===item.sku)?.catalogItemId,sku:item.sku,name:item.name,kind:item.kind,unit:item.unit,quantity:item.quantity,unitPrice:item.unitPrice,unitDiscount:item.unitDiscount,cost:0,...(item.noteCfopOverride?{cfop:item.noteCfopOverride}:{})})),commercialTotals:draft.commercialTotals,reserveStock:false,stockState:'Sem movimentação',seller:'',fiscalDocument:'nfe',paymentMethod:draft.paymentMethod,paymentDetails:draft.paymentDetails,installments:draft.paymentInstallments||1,firstDueDate:draft.paymentFirstDueDate||'',operationNature:draft.operationNature||'',notes:draft.additionalInfo||'',fiscalForm:draft.fiscalForm} } as CreatedRecord);
             setStandaloneFiscal(true);setCommercialReturnView('fiscal');setView('novo_pedido');
           }}
         />}

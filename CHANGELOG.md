@@ -1,3 +1,8 @@
+## 3.2.0.469 — Emissão fiscal: busca oficial de CFOP, herança e edição na nota
+
+- Emissão: Natureza da operação permite buscar CFOP por código ou descrição na tabela oficial IT 2023.002 v2.10; o perfil e Consumidor final continuam vindo do cliente. Itens herdam o CFOP configurado para o destino e permitem exceção editável somente na nota. Regras publicadas, permissões, série, número bloqueado e reservas permanecem protegidos. Aviso de natureza incompatível destaca Natureza; destino diferente do endereço continua destacando Destino.
+- Tabela oficial: 619 códigos do Portal NF-e, com vigência e indicador de uso na NF-e; consulta local sem envio de dados a terceiros. Códigos não vigentes/não aplicáveis não são oferecidos. Operação sem regra revisada continua bloqueada. Nenhuma migração ou alteração automática de notas/cadastros existentes. Publicação condicionada à conferência final; identificada pendência nos padrões tributários da empresa, sem preenchimento por suposição.
+
 ## 3.2.0.468 — Emissão fiscal: corrigir abertura direta e preenchimento da numeração
 
 - Correção restrita à retomada da tela: notas ainda não concluídas abrem diretamente o editor completo, sem passar pela prévia antiga enquanto o status é consultado. Série e número em prévia vêm da configuração existente quando não há reserva; número já reservado permanece preservado. Nenhuma mudança de regras fiscais, banco, dados gravados ou serviços de emissão.

@@ -1,3 +1,4 @@
+import {officialCfop} from '../fiscal-cfop.mjs';
 import {normalizeElectronicPayment} from './fiscal-payment.mjs';
 import {normalizeFiscalNoteFields} from './fiscal-note-fields.mjs';
 import { createHash } from 'node:crypto';
@@ -45,6 +46,10 @@ export function createStandaloneFiscalService({ repository, customerResolver, ca
       if(!form.valid&&(!saveOnly||!form.fields||Object.values(input.fiscalForm||{}).some(v=>typeof v!=='string'||v.length>2000)))return{ok:false,errors:form.errors.map(message=>issue('AV-FISCAL-FORM',message))};
       if(input.operationNature!==undefined&&(typeof input.operationNature!=='string'||(!saveOnly&&!input.operationNature.trim())||input.operationNature.length>60))return{ok:false,errors:[issue('AV-FISCAL-NATURE','Selecione uma natureza de operação válida.')]};
       if(input.additionalInfo!==undefined&&(typeof input.additionalInfo!=='string'||input.additionalInfo.length>5000))return{ok:false,errors:[issue('AV-FISCAL-NOTES','As observações da nota devem ter até 5000 caracteres.')]};
+      const cfopItems=Array.isArray(input.items)?input.items:[];
+      for(const [index,item] of cfopItems.entries()){
+        if(Object.hasOwn(item||{},'cfop')&&(typeof item.cfop!=='string'||!(saveOnly?/^\d{0,4}$/:/^(?:\d{4})?$/).test(item.cfop)||(!saveOnly&&item.cfop&&!officialCfop(item.cfop,form.fields?.issueDate||undefined))))return{ok:false,errors:[{code:'AV-FISCAL-ITEM-CFOP',field:`items.${index}`,message:'Informe um CFOP vigente de quatro dígitos no item da nota.'}]};
+      }
       try {
         const key = `fiscal-avulsa:${input.draftId}`;
         const prepared = await prepareOperation({ context, customerResolver, catalogResolver, allowIncompleteDraft:saveOnly,
@@ -56,7 +61,7 @@ export function createStandaloneFiscalService({ repository, customerResolver, ca
         const items = op.items.map((item, index) => ({ position: index + 1, productId: item.productId, itemType: item.itemType,
           sku: item.sku, name: item.name, description: item.description, unit: item.unit, quantity: item.quantity,
           unitPrice: item.unitPrice, unitDiscount: item.discountUnit, gross: item.gross, discount: item.discount, net: item.net,
-          fiscal: item.fiscalSnapshot, fiscalReady: item.fiscalReady }));
+          fiscal: {...item.fiscalSnapshot,...(cfopItems.find(row=>row.catalogItemId===item.productId)?.cfop?{noteCfopOverride:cfopItems.find(row=>row.catalogItemId===item.productId).cfop}:{})}, fiscalReady: item.fiscalReady }));
         const totals = { subtotalGross: op.subtotalGross, itemDiscount: op.itemDiscount, generalDiscount: op.generalDiscount,
           freight: op.freight, insurance: op.insurance, otherExpenses: op.otherExpenses, total: op.total, currency: 'BRL',
           additionalInfo: String(input.additionalInfo || '').trim(),...(input.operationNature?{operationNature:input.operationNature}:{}),...(form.fields?{fiscalForm:form.fields}:{}) };

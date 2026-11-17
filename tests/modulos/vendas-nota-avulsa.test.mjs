@@ -144,3 +144,13 @@ test('nota avulsa permite cartão externo sem código de autorização',async()=
  const result=await service.create({context,input:{...input,fiscalForm:newFiscalNoteFields(),payment:{...input.payment,method:'Cartão de crédito',details:{integrationType:'2',institutionDocument:'10573521000191',authorizationCode:''}}}});
  assert.equal(result.ok,true,JSON.stringify(result.errors));assert.equal(snapshot.payment.details.authorizationCode,'');assert.equal(snapshot.payment.method,'Cartão de crédito');
 });
+
+test('CFOP editado fica somente na nota; inválido é recusado sem gravar',async()=>{
+ const {newFiscalNoteFields}=await import('../../app/vendas/lib/fiscal-note-editor.mjs');
+ let snapshot,writes=0;const before=JSON.stringify(product);
+ const service=createStandaloneFiscalService({repository:{create:async args=>{writes++;snapshot=args;return{draftId};}},customerResolver:async()=>customer,catalogResolver:async()=>({items:[product]}),issuerResolver:async()=>issuer});
+ const request={...input,fiscalForm:newFiscalNoteFields(),payment:{...input.payment,method:'Dinheiro'},items:input.items.map(item=>({...item,cfop:'5102'}))};
+ assert.equal((await service.create({context,input:request})).ok,true);assert.equal(snapshot.items[0].fiscal.noteCfopOverride,'5102');assert.equal(JSON.stringify(product),before);assert.equal(writes,1);
+ for(const cfop of ['9999','51x2','51020',5102]){const result=await service.create({context,input:{...request,items:request.items.map(item=>({...item,cfop}))}});assert.equal(result.ok,false);assert.equal(result.errors[0].field,'items.0');}
+ assert.equal(writes,1);
+});

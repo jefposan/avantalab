@@ -40,7 +40,7 @@ test('editor consulta sequência do perfil/estabelecimento/ambiente sem escrever
 test('campos reais conservam série editável e número somente leitura, sem autocomplete',()=>{
  const source=readFileSync('app/vendas/components/FiscalNoteBlocks.tsx','utf8');const ast=ts.createSourceFile('fields.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
  const fn=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='NoteOperationFields').getText(ast);
- const jsx=(type,props)=>({type,props});const scope={exports:{},require:()=>({jsx,jsxs:jsx,Fragment:'fragment'}),Block:'Block',Field:'Field',Options:'Options',NOTE_PURPOSES:[]};
+ const jsx=(type,props)=>({type,props});const scope={exports:{},require:()=>({jsx,jsxs:jsx,Fragment:'fragment'}),NatureSearch:'NatureSearch',Block:'Block',Field:'Field',Options:'Options',NOTE_PURPOSES:[]};
  vm.runInNewContext(ts.transpileModule(fn+'\nexports.render=NoteOperationFields;',{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS}}).outputText,scope);
  const tree=scope.exports.render({value:{series:'1',number:'45',purpose:'1'},onChange:()=>{},nature:'Venda',natures:['Venda'],onNature:()=>{}});
  const nodes=t=>!t||typeof t!=='object'?[]:Array.isArray(t)?t.flatMap(nodes):[t,...nodes(t.props?.children)];

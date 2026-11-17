@@ -2479,3 +2479,12 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
   .catalog-picker-with-new .catalog-picker-field { grid-column: 1 / -1; }
   .catalog-picker-with-new .catalog-new-button, .catalog-picker-with-new .catalog-add-button { width: 100%; min-height: 48px; padding-inline: 8px; }
 }
+
+/* Busca fiscal oficial e exceção de CFOP somente na nota em edição. */
+.note-nature-search {display:block;position:relative;min-width:0;}
+.note-nature-options {position:absolute;z-index:30;top:calc(100% + 4px);left:0;right:0;display:grid;max-height:300px;overflow-y:auto;background:var(--av-surface);border:1px solid var(--av-border);border-radius:12px;box-shadow:0 8px 24px #0002;}
+.note-nature-options>button {text-align:left;min-height:44px;padding:10px 12px;border:0;background:transparent;color:var(--av-text-strong);font:inherit;white-space:normal;cursor:pointer;}
+.note-nature-options>button:hover,.note-nature-options>button[aria-selected=true] {background:color-mix(in srgb,var(--brand) 10%,var(--av-surface));}
+.note-nature-options>[role=status] {padding:12px;}
+.order-item-tax-summary dd:has(input[name=itemCfop]) {width:100%;}
+.order-item-tax-summary input[name=itemCfop] {width:100%;max-width:90px;min-height:44px;padding:6px;text-align:center;font-size:12px;}

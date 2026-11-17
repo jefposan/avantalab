@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.468 -->
+<!-- ava-version: 3.2.0.469 -->
+
+> Revisão 3.2.0.469: Emissão: Natureza da operação permite buscar CFOP por código ou descrição na tabela oficial IT 2023.002 v2.10; o perfil e Consumidor final continuam vindo do cliente. Itens herdam o CFOP configurado para o destino e permitem exceção editável somente na nota. Regras publicadas, permissões, série, número bloqueado e reservas permanecem protegidos. Aviso de natureza incompatível destaca Natureza; destino diferente do endereço continua destacando Destino.
 
 > Revisão 3.2.0.468: Correção restrita à retomada da tela: notas ainda não concluídas abrem diretamente o editor completo, sem passar pela prévia antiga enquanto o status é consultado. Série e número em prévia vêm da configuração existente quando não há reserva; número já reservado permanece preservado. Nenhuma mudança de regras fiscais, banco, dados gravados ou serviços de emissão.
 
@@ -6133,3 +6135,9 @@ Revisão técnica 3.2.0.358 da página inicial: sem impacto operacional; conteú
 > Revisão local 3.2.0.430 — AvantaPreços: abrir pelo histórico respeita a referência atual do cadastro e seus cálculos; edição manual aguarda a conferência terminar. Atualizar cálculos salva a referência sem pesquisar, alterar saldo ou preços dos anúncios. Sem impacto operacional adicional neste manual.
 
 Na edição fiscal, o cadeado do número indica somente leitura; série e próximo número vêm das configurações fiscais, sem valores fixos no editor.
+
+### CFOP na emissão — revisão 3.2.0.469
+
+No cadastro do cliente, informe Consumidor final e a situação da inscrição estadual conforme a situação real. A emissão reutiliza esses dados. Em Natureza da operação, busque pelo número do CFOP ou pela descrição; a lista usa a tabela oficial do Portal NF-e e mantém as naturezas já configuradas. A seleção não cria nem publica uma nova regra fiscal: operações sem regra compatível/revisada precisam ser configuradas. O destino é comparado aos endereços, e CFOP/tipo de operação continuam validados.
+
+Nos itens, o CFOP vem da operação e dos valores configurados para dentro/fora da UF; uma exceção específica do produto é preservada. O campo CFOP permite alterar somente a nota, sem modificar o catálogo. Uma edição manual não é sobrescrita silenciosamente ao trocar outro campo; revise-a se mudar o destino. Valores incompletos/indevidos continuam impedindo emissão. Série e número seguem as configurações, e o número continua somente leitura com cadeado.

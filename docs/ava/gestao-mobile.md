@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.468 -->
+<!-- ava-version: 3.2.0.469 -->
+
+> Revisão 3.2.0.469: Sem impacto operacional neste manual; revisão do aviso fiscal documentada em vendas.
 
 > Revisão 3.2.0.468: Correção restrita à retomada da tela: notas ainda não concluídas abrem diretamente o editor completo, sem passar pela prévia antiga enquanto o status é consultado. Série e número em prévia vêm da configuração existente quando não há reserva; número já reservado permanece preservado. Nenhuma mudança de regras fiscais, banco, dados gravados ou serviços de emissão.
 

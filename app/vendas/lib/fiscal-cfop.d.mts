@@ -1,0 +1,10 @@
+export type OfficialCfop={code:string;title:string;start:string;end:string;nfe:boolean;return:boolean;devolution:boolean;remittance:boolean};
+export const CFOP_SOURCE:Readonly<{url:string;reference:string;sha256:string}>;
+export const CFOP_TABLE:OfficialCfop[];
+export function officialCfop(value?:string,date?:string):OfficialCfop|null;
+export function cfopNature(entry:OfficialCfop):string;
+export function searchCfop(query?:string,date?:string):OfficialCfop[];
+export function cfopOperation(entry:OfficialCfop|null):string;
+export function cfopPrefix(destination:string,direction?:string):string;
+export function configuredNoteCfop(input:{matrix:any;context:any;nature?:string;direction?:string;date?:string}):string;
+export function noteItemCfop(input:{manual?:string;product?:{useCompanyFiscal?:boolean;cfopInternal?:string;cfopInterstate?:string};operationCfop:string;destination:string}):string;
