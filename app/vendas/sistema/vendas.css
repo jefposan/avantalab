@@ -2497,3 +2497,5 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 .note-item-editor .heading-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
 .note-item-editor .field-message { grid-column:1/-1; }
 @media(max-width:480px) { .note-item-editor .segmented { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+.order-item-tax-summary input[name=itemCfop]:not(:disabled):not([readonly]) { background:#fff; color:#172839; border:1px solid var(--av-border,#dce5ed); border-radius:10px; }

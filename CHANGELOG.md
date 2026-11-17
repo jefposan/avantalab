@@ -1,3 +1,7 @@
+# 3.2.0.472 — Fiscal: listas sobrepostas e CFOP editável
+
+CFOP editável com fundo branco e borda visível. Listas pesquisáveis de tributos e CFOP usam camada flutuante sobre cards e rodapés, com reposicionamento na rolagem e limites da tela. Escape fecha primeiro a lista; seleção e regras fiscais preservadas.
+
 # 3.2.0.471 — Emissão: edição do item somente nesta nota
 
 Emissão: lápis do item abre ajustes exclusivos desta nota, com abas Dados, ICMS, IPI sem destaque, PIS e COFINS e listas pesquisáveis. Aplicar grava o retrato da nota; Cancelar descarta o popup. Cadastro permanente permanece em ação separada. Regras fiscais, permissões, série e número preservados; sem publicação ou alteração de dados de produção.

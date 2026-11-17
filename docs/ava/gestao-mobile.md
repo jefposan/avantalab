@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.471 -->
+<!-- ava-version: 3.2.0.472 -->
+
+> Revisão 3.2.0.472: CFOP editável com fundo branco e borda visível. Listas pesquisáveis de tributos e CFOP usam camada flutuante sobre cards e rodapés, com reposicionamento na rolagem e limites da tela. Escape fecha primeiro a lista; seleção e regras fiscais preservadas. Sem nova operação de negócio.
 
 > Revisão 3.2.0.471: Emissão: lápis do item abre ajustes exclusivos desta nota, com abas Dados, ICMS, IPI sem destaque, PIS e COFINS e listas pesquisáveis. Aplicar grava o retrato da nota; Cancelar descarta o popup. Cadastro permanente permanece em ação separada. Regras fiscais, permissões, série e número preservados; sem publicação ou alteração de dados de produção.
 
