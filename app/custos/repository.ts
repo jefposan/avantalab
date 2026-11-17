@@ -59,6 +59,14 @@ export async function carregarCustos(empresaId: string, podeEditar: boolean) {
     .order('padrao', { ascending: false }).order('ativo', { ascending: false }).order('nome');
   if (catalogosResultado.error) throw new Error('Não foi possível carregar os catálogos desta empresa.');
   const todosCatalogos = ((catalogosResultado.data || []) as unknown as Record<string, unknown>[]);
+  if (podeEditar && !todosCatalogos.some((item) => !item.excluido_em)) {
+    const inicial = await supabase.rpc('custos_garantir_catalogo_inicial_rpc', { p_empresa_id: empresaId });
+    const catalogo = inicial.data as unknown as Record<string, unknown> | null;
+    if (inicial.error || !catalogo?.id || catalogo.empresa_id !== empresaId || catalogo.excluido_em) {
+      throw new Error('Não foi possível iniciar o catálogo local. Tente atualizar o cadastro.');
+    }
+    todosCatalogos.push(catalogo);
+  }
   const catalogos = todosCatalogos.filter((item) => !item.excluido_em).map(mapearCatalogo);
 
   // O catálogo administrativo atual não depende de estar publicado em nenhum

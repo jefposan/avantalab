@@ -1,6 +1,11 @@
 {
-  "baseDeploymentId": "dpl_6jrSe6PHnTvjF83vrXFRkjAnZNdz",
-  "migrations": [],
-  "version": "3.2.0.455",
-  "scope": "Vendas e Serviços: cadastrar produto em popup e selecionar na nota"
+  "baseDeploymentId": "dpl_DL6EkpfxJtXcxTeZ5gdxrQFxtoJL",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261117020000_catalogo_local_inicial_custos.sql",
+      "sha256": "cce5b120f9abeb8d3622a033045263c74ab8167288e7a7bed8f62cc41128d67c"
+    }
+  ],
+  "version": "3.2.0.456",
+  "scope": "Custos: criar e selecionar catálogo local inicial sem publicar no AvantaVendas"
 }

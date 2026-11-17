@@ -1,3 +1,9 @@
+## 3.2.0.456 — Custos: catálogo local inicial no cadastro de produto
+
+- Quando não há catálogo disponível no perfil, cria Catálogo local e já o seleciona no cadastro, inclusive no popup da nota.
+- Função autenticada verifica permissão de edição e serializa por empresa; repetições retornam o mesmo catálogo. Não altera catálogos existentes ou reativa excluídos.
+- Novo catálogo interno começa com AvantaVendas desligado. Sem alteração de produtos, pedidos ou estoque existentes. Preserva a main 3.2.0.455.
+
 ## 3.2.0.455 — Vendas e Serviços: novo produto no preenchimento da nota
 
 - Botão + Novo produto junto à busca abre cadastro oficial em popup, respeitando permissões. Após confirmação e atualização do catálogo, seleciona o produto para Adicionar item, sem inclusão automática.

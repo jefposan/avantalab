@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.455 -->
+<!-- ava-version: 3.2.0.456 -->
+
+> Revisão 3.2.0.456: Ao abrir Custos ou cadastrar produto na nota, um perfil sem catálogo recebe Catálogo local, já selecionado, ativo somente em Vendas e Serviços e sem publicação no AvantaVendas. Catálogos existentes, inclusive desativados, não são modificados; excluídos não são reativados. Somente usuários com permissão de edição podem iniciar o catálogo.
 
 > Revisão 3.2.0.455: Na nota, + Novo produto abre o cadastro oficial de Custos e Precificação em popup. Após salvar e confirmar a atualização do catálogo, o produto fica selecionado; use Adicionar item para incluí-lo. Cancelar preserva a nota; alterações não salvas pedem confirmação. O acesso respeita catalog.create e as permissões de Custos. Se o produto não estiver publicado no catálogo de Vendas, a tela avisa e oferece Atualizar lista.
 
