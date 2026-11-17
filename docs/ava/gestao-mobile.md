@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.452 -->
+<!-- ava-version: 3.2.0.453 -->
+
+> Revisão 3.2.0.453: Telefone e e-mail do cliente são opcionais; preencher somente quando disponíveis. Buscar CEP no cliente confirma o resultado. Quando a base não informa logradouro/bairro, avisa quais campos conferir ou preencher manualmente; município e UF continuam preenchidos. Falhas preservam os dados e permitem repetir; retorno de um CEP anterior é descartado.
 
 > Revisão 3.2.0.452: No destinatário da nota/pedido, sem cliente selecionado o botão Novo abre o cadastro em popup. Com seleção, o lápis abre a edição. Após salvar, cliente fica selecionado; cancelar preserva a nota. Respeita permissões distintas de criar e editar.
 

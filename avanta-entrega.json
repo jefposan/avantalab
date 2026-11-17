@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_Ff4onTam7Z61psBxf2tFQ4AasqAc",
+  "baseDeploymentId": "dpl_LRRFSUQ7QWcmpmexgU9nN5WEeuCG",
   "migrations": [],
-  "version": "3.2.0.452",
-  "scope": "Vendas e Serviços: botão + Novo e cadastro de cliente em popup no destinatário"
+  "version": "3.2.0.453",
+  "scope": "Vendas e Serviços: retorno da consulta de CEP e contato opcional do cliente"
 }

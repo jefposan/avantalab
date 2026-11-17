@@ -2608,6 +2608,7 @@ function formatName(value: string) {
 }
 
 function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers, defaultSeller, connected, onClose, onSave }: { priceTables?:FiscalNoteEditorOptions['priceTables'];open: boolean; client: ClientRecord | null; clientRecords: ClientRecord[]; sellers: string[]; defaultSeller: string; connected: boolean; onClose: () => void; onSave: (client: ClientRecord) => Promise<ConfirmedSave> }) {
+  const cepLookupRequestRef=useRef(0);
   const [form, setForm] = useState<ClientRecord>(() => client ? { ...client } : emptyClient(defaultSeller));
   const [error, setError] = useState('');
   const [lookup, setLookup] = useState<{ kind: 'cnpj' | 'cep'; message: string; tone: 'success' | 'error' } | null>(null);
@@ -2626,8 +2627,11 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
     setProfilePickerOpen(false);
   }, [client, defaultSeller, open]);
 
+  useEffect(()=>()=>{cepLookupRequestRef.current+=1;},[client,open]);
+
   const update = <K extends keyof ClientRecord>(key: K, value: ClientRecord[K]) => setForm((current) => ({ ...current, [key]: value }));
   const updateMunicipality = (patch: Partial<Pick<ClientRecord, 'cityName' | 'state' | 'cep'>>) => {
+    if (patch.cep !== undefined) { cepLookupRequestRef.current+=1; setSearching(current=>current==='cep'?null:current); }
     setForm((current) => {
       const next = { ...current, ...patch };
       return {
@@ -2756,6 +2760,8 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
   const searchCep = async () => {
     const digits = form.cep.replace(/\D/g, '');
     if (digits.length !== 8) { setLookup({ kind: 'cep', message: 'Informe os 8 dígitos do CEP.', tone: 'error' }); return; }
+    if(searching==='cep')return;
+    const request=++cepLookupRequestRef.current;
     setSearching('cep');
     setLookup(null);
     if (!connected) {
@@ -2763,6 +2769,7 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
       setSearching(null);
       if (!found) { setLookup({ kind: 'cep', message: 'CEP não encontrado nos dados locais da demonstração.', tone: 'error' }); return; }
       setForm((current) => ({ ...current, cep: formatCep(found.cep), street: found.street, district: found.district, cityName: found.cityName, cityCode: found.cityCode, state: found.state, city: found.city }));
+      setLookup({kind:'cep',tone:'success',message:found.street?.trim()?'Endereço localizado. Confira os dados e informe o número.':'CEP localizado. A base não informa o logradouro; confira ou preencha o logradouro e o número manualmente.'});
       return;
     }
     const controller = new AbortController();
@@ -2770,15 +2777,20 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
     try {
       const response = await fetch(`/api/cep?cep=${digits}`, { cache: 'no-store', signal: controller.signal });
       const payload = await response.json().catch(() => null) as null | { mensagem?: string; cep?: string; rua?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; codigoIbge?: string };
+      if(request!==cepLookupRequestRef.current)return;
       if (!response.ok || !payload) throw new Error(payload?.mensagem || 'CEP não encontrado.');
       const state = String(payload.estado ?? '').toLocaleUpperCase('pt-BR');
       const cityName = String(payload.cidade ?? '').trim();
+      if(!cityName||! /^[A-Z]{2}$/.test(state))throw new Error('A consulta retornou dados incompletos. Tente novamente ou preencha o endereço manualmente.');
       setForm((current) => ({ ...current, cep: formatCep(payload.cep || digits), street: payload.rua?.trim() || current.street, complement: current.complement || payload.complemento?.trim() || '', district: payload.bairro?.trim() || current.district, cityName: cityName || current.cityName, cityCode: String(payload.codigoIbge ?? '').replace(/\D/g, '').slice(0, 7), state: state || current.state, city: cityName && state ? `${cityName}/${state}` : current.city }));
+      const missing=[!payload.rua?.trim()?'logradouro':'',!payload.bairro?.trim()?'bairro':''].filter(Boolean);
+      setLookup({kind:'cep',tone:'success',message:missing.length?`CEP localizado. A base não informa ${missing.join(' e ')}; confira ou preencha esses campos e o número manualmente.`:'Endereço localizado. Confira os dados e informe o número.'});
     } catch (cause) {
+      if(request!==cepLookupRequestRef.current)return;
       setLookup({ kind: 'cep', message: controller.signal.aborted ? 'A consulta demorou mais que o esperado. Tente novamente.' : cause instanceof Error ? cause.message : 'Não foi possível consultar o CEP.', tone: 'error' });
     } finally {
       window.clearTimeout(timeout);
-      setSearching(null);
+      if(request===cepLookupRequestRef.current)setSearching(null);
     }
   };
   const save = async () => {
@@ -2789,8 +2801,8 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
     const cityCode = resolveMunicipalityCode({ city: form.cityName, uf: form.state, cep: form.cep, currentCode: form.cityCode });
     if (isIndividual ? !isValidCpf(documentDigits) : !isValidCnpj(documentDigits)) { setError(`Informe um ${isIndividual ? 'CPF' : 'CNPJ'} válido.`); return; }
     if (!form.legalName.trim()) { setError(isIndividual ? 'Informe o nome completo.' : 'Informe a razão social.'); return; }
-    if (!isValidEmail(form.email)) { setError('Informe um e-mail válido para o contato comercial.'); return; }
-    if (![10, 11].includes(form.phone.replace(/\D/g, '').length)) { setError('Informe um telefone com DDD válido.'); return; }
+    if (form.email.trim() && !isValidEmail(form.email)) { setError('Informe um e-mail válido ou deixe o campo em branco.'); return; }
+    if (form.phone.trim() && ![10, 11].includes(form.phone.replace(/\D/g, '').length)) { setError('Informe um telefone com DDD válido ou deixe o campo em branco.'); return; }
     if (form.fiscal === 'Contribuinte ICMS' && !form.stateRegistration.trim()) { setError('Informe a inscrição estadual do contribuinte de ICMS.'); return; }
     if (cepDigits.length !== 8 || !form.street.trim() || !form.number.trim() || !form.district.trim() || !form.cityName.trim() || form.state.trim().length !== 2) { setError('Complete o CEP, logradouro, número, bairro, cidade e UF.'); return; }
     if (!municipalityIsResolved(cityCode)) { setError('Não foi possível identificar o município fiscal. Use Buscar CEP ou revise cidade e UF.'); return; }
@@ -2838,8 +2850,8 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
         <div className="client-section-heading"><h3 id="client-contact-title">Contato e relacionamento</h3></div>
         <div className="form-grid">
           {!isIndividual && <label className="field field-wide"><span>Contato principal</span><input value={form.contactName} onChange={(event) => update('contactName', formatName(event.target.value))} placeholder="Nome do contato"/></label>}
-          <label className="field"><span>Telefone *</span><input inputMode="tel" value={form.phone} onChange={(event) => update('phone', formatPhone(event.target.value))} placeholder="(00) 00000-0000"/></label>
-          <label className="field"><span>E-mail *</span><input type="email" value={form.email} onChange={(event) => update('email', normalizarEmail(event.target.value))} placeholder="financeiro@empresa.com.br"/></label>
+          <label className="field"><span>Telefone</span><input inputMode="tel" value={form.phone} onChange={(event) => update('phone', formatPhone(event.target.value))} placeholder="(00) 00000-0000"/></label>
+          <label className="field"><span>E-mail</span><input type="email" value={form.email} onChange={(event) => update('email', normalizarEmail(event.target.value))} placeholder="financeiro@empresa.com.br"/></label>
         </div>
       </section>
       <section className="client-form-section" aria-labelledby="client-address-title">

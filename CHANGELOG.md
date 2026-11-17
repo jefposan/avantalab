@@ -1,3 +1,10 @@
+## 3.2.0.453 — Vendas e Serviços: consulta de CEP e contato opcional do cliente
+
+- Telefone e e-mail opcionais no cadastro do cliente. Valores preenchidos continuam validados, sem bloquear cadastro com ambos vazios.
+- Confirma resultado de Buscar CEP e informa quando a base não fornece logradouro ou bairro, preservando os campos já preenchidos.
+- Recusa resposta sem município/UF e mantém avisos de erro; descarta resposta antiga ao alterar CEP ou fechar o cadastro.
+- Verificado CEP 28140-000 na API de produção: retorna bairro, município, UF e IBGE, sem logradouro. Sem alteração de provedor, cadastro ou banco.
+
 ## 3.2.0.452 — Vendas e Serviços: cadastrar cliente no destinatário
 
 - Botão contextual oferece Novo sem seleção e lápis Editar com cliente selecionado. Reutiliza cadastro existente em popup e seleciona o cliente salvo.
