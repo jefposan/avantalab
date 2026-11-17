@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_2JQXPWEkt8LxoUZpf839EgKwkGeF",
+  "baseDeploymentId": "dpl_4t95jmmQxns5AFSWSZWfgemjp5uK",
   "migrations": [],
-  "version": "3.2.0.460",
-  "scope": "Conteúdo AvantaVendas: chave de status e conclusão da edição"
+  "version": "3.2.0.461",
+  "scope": "Conteúdo AvantaVendas: distinguir falta de rede de catálogo vazio"
 }

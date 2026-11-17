@@ -216,7 +216,7 @@ test('empresa organiza múltiplos catálogos e Produtos e serviços segue o dest
   assert.match(catalogoConteudoVendas, /p_ativo: true/);
   assert.match(catalogoConteudoVendas, /Ativo no AvantaVendas/);
   assert.match(catalogoConteudoVendas, /Nenhum catálogo está ativo no AvantaVendas/);
-  assert.match(catalogoConteudoVendas, /disabled=\{carregando \|\| salvando \|\| !haCatalogoPublicado\}/);
+  assert.match(catalogoConteudoVendas, /disabled=\{carregando \|\| salvando \|\| !haCatalogoPublicado \|\| Boolean\(falhaCarga\)\}/);
 });
 
 test('destinos do catálogo são independentes no banco e na interface', () => {

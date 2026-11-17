@@ -28,6 +28,11 @@ const formatarMoedaDigitada = (valor: string) => {
   return (Number(digitos) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 const rotuloOrigemCatalogo = (origem: Catalogo['origem']) => origem === 'custos_local' ? 'Custos e Precificação' : origem === 'manual' ? 'Catálogo próprio' : 'Fonte externa';
+const semInternet = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+const falhaDeConexao = (erro: unknown) => {
+  const detalhe = erro && typeof erro === 'object' ? erro as { message?: unknown; details?: unknown } : {};
+  return /failed to fetch|fetch failed|load failed|network(?:error| request failed)|network error|connection (?:refused|reset)|catalogo_conexao_tempo/i.test(String(detalhe.message || erro || '') + ' ' + String(detalhe.details || ''));
+};
 const nomeArquivoCatalogo = (codigo: string) => codigo.toLocaleLowerCase('pt-BR').replace(/[^a-z0-9_-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'catalogo';
 
 export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimaria }: Props) {
@@ -36,6 +41,12 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const [formulario, setFormulario] = useState<Record<string, string | boolean>>(vazio);
   const [formularioAberto, setFormularioAberto] = useState(false);
   const [carregando, setCarregando] = useState(true);
+  const [empresaConsultada, setEmpresaConsultada] = useState('');
+  const [falhaCarga, setFalhaCarga] = useState<'offline' | 'conexao' | 'consulta' | null>(null);
+  const sequenciaCargaRef = useRef(0);
+  const abortarCargaRef = useRef<AbortController | null>(null);
+  const empresaAtualRef = useRef(empresaId);
+  empresaAtualRef.current = empresaId;
   const [salvando, setSalvando] = useState(false);
   const revisaoFormularioRef = useRef(0);
   const [exportando, setExportando] = useState(false);
@@ -54,8 +65,9 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
   const campos = [['nome', 'Nome'], ['marca', 'Marca'], ['categoria', 'Categoria'], ['sku', 'SKU'], ['codigo_barras', 'EAN / GTIN'], ['ncm', 'NCM']];
-  const produtosVisiveis = produtos.filter((produto) => correspondeBusca([produto.nome, produto.marca, produto.categoria, produto.sku, produto.codigo_barras].filter(Boolean).join(' '), busca));
-  const haCatalogoPublicado = catalogos.some((catalogo) => catalogo.publicado_avantavendas);
+  const dadosCatalogoProntos = empresaConsultada === empresaId;
+  const produtosVisiveis = (dadosCatalogoProntos ? produtos : []).filter((produto) => correspondeBusca([produto.nome, produto.marca, produto.categoria, produto.sku, produto.codigo_barras].filter(Boolean).join(' '), busca));
+  const haCatalogoPublicado = dadosCatalogoProntos && catalogos.some((catalogo) => catalogo.publicado_avantavendas);
 
   const solicitarIndiceVoz = useCallback(async (productId = '') => {
     try {
@@ -71,31 +83,80 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     } catch { /* O índice determinístico já está disponível; a IA tentará novamente depois. */ }
   }, [empresaId]);
 
-  const carregar = useCallback(async (emSegundoPlano = false) => {
+  const carregar = useCallback(async (_emSegundoPlano = false) => {
     if (!empresaId) return;
-    if (!emSegundoPlano) setCarregando(true);
-    setErro('');
-    const [{ data, error }, catalogosResultado] = await Promise.all([
-      supabase.rpc('listar_produtos_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId }),
-      supabase.rpc('listar_catalogos_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId }),
-    ]);
-    const resultado = data as { produtos?: Produto[] } | null;
-    const catalogosDisponiveis = catalogosResultado.data as { catalogos?: Catalogo[] } | null;
-    if (error || !resultado || catalogosResultado.error || !catalogosDisponiveis) {
-      setErro('Não foi possível preparar o catálogo desta empresa.');
+    const sequencia = ++sequenciaCargaRef.current;
+    abortarCargaRef.current?.abort();
+    const vigente = () => sequencia === sequenciaCargaRef.current && empresaAtualRef.current === empresaId;
+    if (semInternet()) {
+      setFalhaCarga('offline');
       setCarregando(false);
       return;
     }
-    setProdutos(Array.isArray(resultado.produtos) ? resultado.produtos : []);
-    setCatalogos(Array.isArray(catalogosDisponiveis.catalogos) ? catalogosDisponiveis.catalogos : []);
-    setCarregando(false);
-    if (indiceVozSolicitadoRef.current !== empresaId) {
-      indiceVozSolicitadoRef.current = empresaId;
-      void solicitarIndiceVoz();
+    const controlador = new AbortController();
+    abortarCargaRef.current = controlador;
+    let timer: number | undefined;
+    setCarregando(true);
+    setFalhaCarga(null);
+    try {
+      const prazo = new Promise<never>((_resolver, rejeitar) => {
+        timer = window.setTimeout(() => {
+          controlador.abort();
+          rejeitar(new Error('catalogo_conexao_tempo'));
+        }, 15000);
+      });
+      const [{ data, error }, catalogosResultado] = await Promise.race([
+        Promise.all([
+          supabase.rpc('listar_produtos_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId }).abortSignal(controlador.signal),
+          supabase.rpc('listar_catalogos_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId }).abortSignal(controlador.signal),
+        ]), prazo,
+      ]);
+      if (!vigente()) return;
+      const resultado = data as { produtos?: Produto[] } | null;
+      const catalogosDisponiveis = catalogosResultado.data as { catalogos?: Catalogo[] } | null;
+      if (error || catalogosResultado.error) throw error || catalogosResultado.error;
+      if (!Array.isArray(resultado?.produtos) || !Array.isArray(catalogosDisponiveis?.catalogos)) throw new Error('catalogo_resposta_invalida');
+      setProdutos(resultado.produtos);
+      setCatalogos(catalogosDisponiveis.catalogos);
+      setEmpresaConsultada(empresaId);
+      setFalhaCarga(semInternet() ? 'offline' : null);
+      if (indiceVozSolicitadoRef.current !== empresaId) {
+        indiceVozSolicitadoRef.current = empresaId;
+        void solicitarIndiceVoz();
+      }
+    } catch (erroCarga) {
+      if (vigente()) setFalhaCarga(semInternet() ? 'offline' : controlador.signal.aborted || falhaDeConexao(erroCarga) ? 'conexao' : 'consulta');
+    } finally {
+      if (timer !== undefined) window.clearTimeout(timer);
+      if (vigente()) {
+        setCarregando(false);
+        abortarCargaRef.current = null;
+      }
     }
   }, [empresaId, solicitarIndiceVoz]);
 
-  useEffect(() => { const timer = window.setTimeout(() => void carregar(), 0); return () => window.clearTimeout(timer); }, [carregar]);
+  useEffect(() => {
+    setFormularioAberto(false);
+    setFormulario(vazio);
+    setErro('');
+    const timer = window.setTimeout(() => void carregar(), 0);
+    const aoDesconectar = () => {
+      sequenciaCargaRef.current += 1;
+      abortarCargaRef.current?.abort();
+      setFalhaCarga('offline');
+      setCarregando(false);
+    };
+    const aoReconectar = () => void carregar(true);
+    window.addEventListener('offline', aoDesconectar);
+    window.addEventListener('online', aoReconectar);
+    return () => {
+      window.clearTimeout(timer);
+      sequenciaCargaRef.current += 1;
+      abortarCargaRef.current?.abort();
+      window.removeEventListener('offline', aoDesconectar);
+      window.removeEventListener('online', aoReconectar);
+    };
+  }, [carregar]);
   const mudar = (nome: string, valor: string | boolean) => {
     if (formulario[nome] === valor) return;
     revisaoFormularioRef.current += 1;
@@ -320,18 +381,22 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     <div className={`${formularioAberto ? 'mb-2' : 'mb-4'} shrink-0 sm:flex sm:items-start sm:justify-between sm:gap-5`}>
       <div className="min-w-0"><h3 className="text-base font-black">Pacote de produtos</h3>{!formularioAberto && <p className={`mt-1 max-w-xl text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Somente catálogos ativos no AvantaVendas alimentam as contas vinculadas. O estado em Vendas e Serviços é independente.</p>}</div>
       <div className={`${formularioAberto ? 'hidden' : 'grid'} mt-3 w-full grid-cols-2 gap-2 sm:mt-0 sm:w-[min(100%,42rem)] sm:shrink-0`} aria-label="Ações do catálogo">
-        <span className="flex h-9 items-center justify-center rounded-lg bg-cyan-500/10 px-2 text-[10px] font-black uppercase text-cyan-700">{produtos.length} produtos</span>
-        <button type="button" onClick={abrirExportacao} disabled={exportando} className="h-9 rounded-lg border border-cyan-300 px-2 text-[10px] font-black uppercase text-cyan-700 disabled:opacity-60">{exportando ? 'Gerando...' : 'Gerar ZIP'}</button>
-        <button type="button" onClick={abrirGerenciadorCatalogos} className="col-span-2 h-9 rounded-lg border border-cyan-300 px-3 text-[10px] font-black uppercase text-cyan-700">Gerenciar catálogos</button>
+        <span className="flex h-9 items-center justify-center rounded-lg bg-cyan-500/10 px-2 text-[10px] font-black uppercase text-cyan-700">{dadosCatalogoProntos ? produtos.length + ' produtos' : 'Produtos'}</span>
+        <button type="button" onClick={abrirExportacao} disabled={exportando || !dadosCatalogoProntos || carregando || Boolean(falhaCarga)} className="h-9 rounded-lg border border-cyan-300 px-2 text-[10px] font-black uppercase text-cyan-700 disabled:opacity-60">{exportando ? 'Gerando...' : 'Gerar ZIP'}</button>
+        <button type="button" onClick={abrirGerenciadorCatalogos} disabled={!dadosCatalogoProntos || carregando || Boolean(falhaCarga)} className="col-span-2 h-9 rounded-lg border border-cyan-300 px-3 text-[10px] font-black uppercase text-cyan-700 disabled:opacity-50">Gerenciar catálogos</button>
         <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
           <CampoBusca aria-label="Pesquisar produtos" placeholder="Pesquisar produtos" value={busca} onChange={setBusca} className={`h-11 w-full min-w-0 rounded-lg border px-3 text-sm ${campo}`} />
-        <button type="button" onClick={abrirNovoCatalogo} disabled={carregando || salvandoCatalogo} className="h-11 rounded-lg border border-cyan-300 px-2 text-[10px] font-black uppercase text-cyan-700 disabled:opacity-60">Novo catálogo</button>
-        <button ref={botaoNovoRef} type="button" onClick={iniciarNovoProduto} disabled={carregando || salvando || !haCatalogoPublicado} title={!haCatalogoPublicado ? 'Ative um catálogo no AvantaVendas em Gerenciar catálogos.' : undefined} className="h-11 rounded-lg px-2 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>Novo produto</button>
+        <button type="button" onClick={abrirNovoCatalogo} disabled={carregando || salvandoCatalogo || !dadosCatalogoProntos || Boolean(falhaCarga)} className="h-11 rounded-lg border border-cyan-300 px-2 text-[10px] font-black uppercase text-cyan-700 disabled:opacity-60">Novo catálogo</button>
+        <button ref={botaoNovoRef} type="button" onClick={iniciarNovoProduto} disabled={carregando || salvando || !haCatalogoPublicado || Boolean(falhaCarga)} title={dadosCatalogoProntos && !falhaCarga && !haCatalogoPublicado ? 'Ative um catálogo no AvantaVendas em Gerenciar catálogos.' : undefined} className="h-11 rounded-lg px-2 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>Novo produto</button>
         </div>
       </div>
     </div>
-    {!carregando && !haCatalogoPublicado && !formularioAberto && <p role="status" className={`mb-3 rounded-lg border px-3 py-2 text-xs font-bold ${darkMode ? 'border-amber-500/40 bg-amber-500/10 text-amber-200' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>Nenhum catálogo está ativo no AvantaVendas. Use Gerenciar catálogos para ativar o desejado.</p>}
-    <div className={`grid min-h-0 flex-1 gap-4 ${formularioAberto ? 'grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]' : 'grid-rows-[minmax(0,1fr)]'}`}>
+    {falhaCarga && <div role="alert" className={`mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${darkMode ? 'border-amber-500/40 bg-amber-500/10 text-amber-200' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
+      <p className="min-w-0 flex-1">{falhaCarga === 'offline' ? 'Sem conexão com a internet. Conecte-se para carregar o catálogo.' : falhaCarga === 'conexao' ? 'Não foi possível conectar para carregar o catálogo. Verifique sua conexão e tente novamente.' : 'Não foi possível carregar o catálogo. Tente novamente; se continuar, confira seu acesso com o responsável.'}{dadosCatalogoProntos ? ' Os dados da última consulta continuam visíveis.' : ' A consulta ainda não foi concluída.'}</p>
+      <BotaoAcaoCompacto onClick={() => void carregar()} disabled={carregando}>Tentar novamente</BotaoAcaoCompacto>
+    </div>}
+    {dadosCatalogoProntos && !falhaCarga && !carregando && !haCatalogoPublicado && !formularioAberto && <p role="status" className={`mb-3 rounded-lg border px-3 py-2 text-xs font-bold ${darkMode ? 'border-amber-500/40 bg-amber-500/10 text-amber-200' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>Nenhum catálogo está ativo no AvantaVendas. Use Gerenciar catálogos para ativar o desejado.</p>}
+    <div aria-busy={carregando} className={`grid min-h-0 flex-1 gap-4 ${formularioAberto ? 'grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]' : 'grid-rows-[minmax(0,1fr)]'}`}>
       {formularioAberto && <div className="flex min-h-0">
       <section ref={formularioRef} tabIndex={-1} className={`h-full min-h-0 w-full overflow-y-auto rounded-xl border p-3 focus:outline-none md:overflow-visible ${painel}`}>
         <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full px-3 py-1 text-sm font-black text-white" style={{ backgroundColor: corPrimaria }}>{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: nome e preço sugerido de revenda.</p></div>
@@ -383,7 +448,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
               </tr>
             </thead>
             <tbody>
-              {carregando ? <tr><td colSpan={6} className="px-3 py-10 text-center">Carregando...</td></tr> : produtosVisiveis.length ? produtosVisiveis.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              {!dadosCatalogoProntos ? <tr><td colSpan={6} className="px-3 py-10 text-center">{carregando ? 'Carregando...' : 'Consulta não concluída.'}</td></tr> : produtosVisiveis.length ? produtosVisiveis.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
                 <td className="min-w-48 px-3 py-2"><button type="button" aria-label={`Editar produto ${produto.nome}`} onClick={() => editar(produto)} disabled={salvando} className="block min-h-11 w-full rounded-md text-left transition hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current disabled:cursor-wait"><b className="block">{produto.nome}</b><small className="text-slate-500">{catalogos.find((catalogo) => catalogo.id === produto.catalogo_id)?.nome || 'Catálogo'} · {produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></button></td>
                 <td className="px-3 py-2 text-center"><span className={`inline-flex min-w-16 items-center justify-center rounded-full px-2.5 py-1 text-[11px] font-medium ${produto.ativo ? darkMode ? 'bg-green-500/15 text-green-300' : 'bg-green-100 text-green-800' : darkMode ? 'bg-red-500/15 text-red-300' : 'bg-red-100 text-red-800'}`}>{produto.ativo ? 'Ativo' : 'Inativo'}</span></td>
                 <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{produto.preco_representante == null ? '—' : formatarMoeda(Number(produto.preco_representante))}</td>

@@ -1,3 +1,9 @@
+## 3.2.0.461 — Conteúdo AvantaVendas: aviso de rede e recuperação do catálogo
+
+- Catálogo não consultado deixa de aparecer como 0 produtos, nenhum catálogo ativo ou nenhum produto cadastrado. Estados vazios só são apresentados após resposta válida de produtos e catálogos.
+- Abertura sem internet mostra aviso de rede e Tentar novamente. Reconexão refaz a leitura sem reenviar alterações; perda de rede conserva dados já carregados e rascunhos desta abertura. Falhas de acesso/consulta continuam distintas de falhas de transporte.
+- Prazo de 15 segundos interrompe leitura sem resposta; consultas antigas, de outro contexto ou de uma tela fechada não substituem a consulta vigente. Sem cache financeiro, migração ou mudança de permissões. Publicação autorizada pelo responsável.
+
 ## 3.2.0.460 — Conteúdo AvantaVendas: chave de status e conclusão da edição
 
 - Uma única chave Ativo/Inativo substitui Produto ativo e Inativar; altera apenas o rascunho até salvar. A chave e Excluir, Cancelar e Salvar alterações ficam na mesma linha, com controles oficiais, teclado e tema escuro.

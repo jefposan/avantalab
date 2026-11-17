@@ -6,28 +6,37 @@ import ts from 'typescript';
 import * as jsxRuntime from 'react/jsx-runtime';
 
 // Executa os handlers reais do componente; somente React hooks/rede são controlados.
-function montar({ produtosExtras = [], darkMode = false } = {}) {
+function montar({ produtosExtras = [], darkMode = false, online = true } = {}) {
   const estados = [], refs = [], efeitos = [], chamadas = [];
   let cursor = 0, cursorRef = 0, primeira = true, falhar = false, pendente = null, rejeitar = false, semId = false;
+  const rede={onLine:online},eventos=new Map(),timers=new Map();let proximoTimer=0,falhaConsulta=null,esperaConsulta=null,produtosConsulta,catalogosConsulta;
   const produto = { id:'p1', nome:'Produto um', sku:'T1', preco_divulgacao:31, preco_representante:20, unidade:'un', ativo:true };
   const catalogo = { id:'c1', publicado_avantavendas:true, nome:'Principal' };
+  produtosConsulta=[produto,...produtosExtras];catalogosConsulta=[catalogo];
   const react = {
     useState(inicial) { const i=cursor++; if (!(i in estados)) estados[i]=inicial; return [estados[i],v=>{estados[i]=typeof v==='function'?v(estados[i]):v;}]; },
     useRef(inicial) { const i=cursorRef++; return refs[i] ||= {current:inicial}; },
     useCallback(fn) { return fn; },
     useEffect(fn) { if(primeira) efeitos.push(fn); },
   };
-  const supabase = { auth:{getSession:async()=>({data:{session:null}})}, rpc:async(nome,args)=>{
+  const supabase = { auth:{getSession:async()=>({data:{session:null}})}, rpc:(nome,args)=>{
+    const tarefa=(async()=>{
     chamadas.push({nome,args});
-    if(nome==='listar_produtos_conteudo_vendas_mobile_rpc') return {data:{produtos:[produto,...produtosExtras]}};
-    if(nome==='listar_catalogos_conteudo_vendas_mobile_rpc') return {data:{catalogos:[catalogo]}};
+    if(nome.startsWith('listar_')) {
+      const falha=falhaConsulta,aguardar=esperaConsulta;
+      const data=nome==='listar_produtos_conteudo_vendas_mobile_rpc'?{produtos:produtosConsulta}:{catalogos:catalogosConsulta};
+      if(aguardar)await aguardar;
+      if(falha?.rejeitar)throw falha.rejeitar;
+      return falha?{error:falha}:{data};
+    }
     if(pendente) await pendente;
     if(rejeitar) throw new Error('Offline');
     return falhar ? {error:{message:'Falha de rede'}} : {data:semId?{}:{id:args.p_produto_id||'novo-id'}};
+    })();tarefa.abortSignal=()=>tarefa;return tarefa;
   }};
   const modulo={exports:{}};
   const codigo=ts.transpileModule(fs.readFileSync('app/components/CatalogoProdutosVendas.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-  vm.runInNewContext(codigo,{exports:modulo.exports,module:modulo,require:n=>n==='react'?react:n==='react/jsx-runtime'?jsxRuntime:n.endsWith('/supabase')?{supabase}:n.endsWith('/formatters')?{formatarDescricao:s=>s.trim(),formatarMoeda:v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),correspondeBusca:(texto,busca)=>String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(String(busca).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase())}:n.endsWith('/cores-avanta')?{corTextoSobreFundo:()=> '#000'}:{default:()=>null},window:{setTimeout:fn=>{fn();return 1;},clearTimeout(){},requestAnimationFrame:fn=>fn()},console});
+  vm.runInNewContext(codigo,{exports:modulo.exports,module:modulo,require:n=>n==='react'?react:n==='react/jsx-runtime'?jsxRuntime:n.endsWith('/supabase')?{supabase}:n.endsWith('/formatters')?{formatarDescricao:s=>s.trim(),formatarMoeda:v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),correspondeBusca:(texto,busca)=>String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(String(busca).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase())}:n.endsWith('/cores-avanta')?{corTextoSobreFundo:()=> '#000'}:{default:()=>null},navigator:rede,AbortController,window:{setTimeout:(fn,ms)=>{const id=++proximoTimer;if(!ms)fn();else timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>fn(),addEventListener:(nome,fn)=>eventos.set(nome,fn),removeEventListener:(nome)=>eventos.delete(nome)},console});
   const render=()=>{cursor=0;cursorRef=0;const t=modulo.exports.default({empresaId:'empresa',darkMode,corPrimaria:'#00aaaa'});primeira=false;return t;};
   function nos(t) { if(!t||typeof t!=='object') return []; if(Array.isArray(t))return t.flatMap(nos);return [t,...nos(t.props?.children)]; }
   const texto=t=>typeof t==='string'?t:Array.isArray(t)?t.map(texto).join(''):t?.props?texto(t.props.children):'';
@@ -36,7 +45,7 @@ function montar({ produtosExtras = [], darkMode = false } = {}) {
   const input=nome=>nos(campo(nome)).find(n=>n.type==='input');
   const flush=()=>new Promise(resolve=>setImmediate(resolve));
   const iniciar=async()=>{render();efeitos.forEach(fn=>fn());await flush();};
-  return {render,nos,texto,botao,input,flush,iniciar,chamadas,produto,setFalhar:v=>{falhar=v;},setRejeitar:v=>{rejeitar=v;},setSemId:v=>{semId=v;},esperar:p=>{pendente=p;}};
+  return {render,nos,texto,botao,input,flush,iniciar,chamadas,produto,rede,emitir:async(nome)=>{rede.onLine=nome==='online';eventos.get(nome)?.();await flush();},falharConsulta:v=>{falhaConsulta=v;},esperarConsulta:v=>{esperaConsulta=v;},definirListas:(p,c)=>{produtosConsulta=p;catalogosConsulta=c;},timeout:()=>{for(const t of [...timers.values()])if(t.ms===15000)t.fn();},setFalhar:v=>{falhar=v;},setRejeitar:v=>{rejeitar=v;},setSemId:v=>{semId=v;},esperar:p=>{pendente=p;}};
 }
 
 test('salvar fecha somente após confirmação; falha preserva campos e Cancelar retorna à lista',async()=>{
@@ -145,4 +154,55 @@ test('salvamento e exclusão sem confirmação ou com exceção preservam editor
   await c.flush();assert.equal(c.input('Marca').props.value,'Rascunho');assert.ok(c.botao('Salvar alterações'));assert.equal(c.botao('Salvar alterações').props.disabled,false);
   assert.ok(c.nos(c.render()).some(n=>n.props?.role==='alert'));
  }
+});
+
+
+test('abertura offline informa rede, não consulta nem declara catálogo/produtos ausentes',async()=>{
+ for(const darkMode of [false,true]) {
+  const c=montar({online:false,darkMode});await c.iniciar();const texto=c.texto(c.render());
+  assert.match(texto,/Sem conexão com a internet/);assert.doesNotMatch(texto,/Nenhum catálogo está ativo|Nenhum produto cadastrado|0 produtos/);
+  assert.equal(c.chamadas.length,0);assert.ok(c.botao('Tentar novamente'));assert.equal(c.botao('Novo produto').props.disabled,true);
+ }
+});
+
+test('falha de transporte com navegador online não vira vazio e permite repetir consulta',async()=>{
+ const c=montar();c.falharConsulta({message:'TypeError: Load failed',details:'Failed to fetch'});await c.iniciar();
+ assert.match(c.texto(c.render()),/Verifique sua conexão/);assert.doesNotMatch(c.texto(c.render()),/Nenhum catálogo está ativo|Nenhum produto cadastrado/);
+ c.falharConsulta(null);c.botao('Tentar novamente').props.onClick();await c.flush();assert.ok(c.botao('Editar'));assert.equal(c.botao('Novo produto').props.disabled,false);
+});
+
+test('erro de autorização ou resposta inválida não é confundido com rede nem ausência de produtos',async()=>{
+ for(const modo of ['permissao','resposta']) {
+  const c=montar();if(modo==='permissao')c.falharConsulta({code:'42501',message:'permission denied'});else c.definirListas(null,null);
+  await c.iniciar();const texto=c.texto(c.render());assert.match(texto,/Não foi possível carregar o catálogo/);assert.doesNotMatch(texto,/Sem conexão com a internet|Nenhum catálogo está ativo|Nenhum produto cadastrado/);
+ }
+});
+
+test('somente consulta bem-sucedida pode declarar cadastro vazio',async()=>{
+ const c=montar();c.definirListas([],[]);await c.iniciar();const texto=c.texto(c.render());assert.match(texto,/Nenhum catálogo está ativo/);assert.match(texto,/Nenhum produto cadastrado/);
+});
+
+test('rede volta e refaz apenas a leitura sem reabrir tela ou repetir gravação',async()=>{
+ const c=montar({online:false});await c.iniciar();await c.emitir('online');assert.ok(c.botao('Editar'));assert.doesNotMatch(c.texto(c.render()),/Sem conexão com a internet/);
+ assert.ok(c.chamadas.every(x=>x.nome.startsWith('listar_')));
+});
+
+test('perda de rede preserva lista já consultada e rascunho durante recuperação',async()=>{
+ const c=montar();await c.iniciar();c.botao('Editar').props.onClick();c.input('Marca').props.onChange({target:{value:'Rascunho local'}});
+ await c.emitir('offline');assert.match(c.texto(c.render()),/Sem conexão com a internet/);assert.equal(c.input('Marca').props.value,'Rascunho local');
+ await c.emitir('online');assert.equal(c.input('Marca').props.value,'Rascunho local');assert.ok(c.botao('Salvar alterações'));assert.equal(c.chamadas.some(x=>x.nome.startsWith('salvar_')),false);
+});
+
+test('exceção e conexão sem resposta liberam carregamento e mostram tentativa de conexão',async()=>{
+ for(const modo of ['excecao','timeout']) {
+  const c=montar();if(modo==='excecao')c.falharConsulta({rejeitar:new TypeError('Failed to fetch')});else c.esperarConsulta(new Promise(()=>{}));
+  await c.iniciar();if(modo==='timeout'){c.timeout();await c.flush();}
+  assert.match(c.texto(c.render()),/Verifique sua conexão/);assert.ok(c.botao('Tentar novamente'));assert.doesNotMatch(c.texto(c.render()),/Nenhum produto cadastrado|Nenhum catálogo está ativo/);
+ }
+});
+
+test('resposta antiga após reconexão não sobrescreve consulta atual',async()=>{
+ const c=montar();let liberar;c.esperarConsulta(new Promise(r=>liberar=r));await c.iniciar();
+ await c.emitir('offline');c.esperarConsulta(null);c.definirListas([{...c.produto,nome:'Produto atualizado'}],[{id:'c1',publicado_avantavendas:true}]);await c.emitir('online');
+ liberar();await c.flush();assert.match(c.texto(c.render()),/Produto atualizado/);assert.doesNotMatch(c.texto(c.render()),/Produto um/);
 });
