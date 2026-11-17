@@ -2488,3 +2488,4 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 .note-nature-options>[role=status] {padding:12px;}
 .order-item-tax-summary dd:has(input[name=itemCfop]) {width:100%;}
 .order-item-tax-summary input[name=itemCfop] {width:100%;max-width:90px;min-height:44px;padding:6px;text-align:center;font-size:12px;}
+.note-editor-block:has(#note-operation-heading) {overflow:visible;}
