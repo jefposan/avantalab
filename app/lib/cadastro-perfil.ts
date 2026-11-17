@@ -29,6 +29,8 @@ export const ESTADOS_BRASIL = [
 export { validarNomeCompleto } from './nome-pessoa';
 
 export type ConfiguracaoFiscalEmpresa = {
+  cfop_venda_interna?: string;
+  cfop_venda_interestadual?: string;
   origem_mercadoria_padrao: string;
   cst_icms: string;
   csosn: string;

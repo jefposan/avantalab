@@ -154,3 +154,10 @@ test('CFOP editado fica somente na nota; inválido é recusado sem gravar',async
  for(const cfop of ['9999','51x2','51020',5102]){const result=await service.create({context,input:{...request,items:request.items.map(item=>({...item,cfop}))}});assert.equal(result.ok,false);assert.equal(result.errors[0].field,'items.0');}
  assert.equal(writes,1);
 });
+
+test('produto com NCM corrigido apenas na nota prepara sem alterar o cadastro original',async()=>{
+ const {newFiscalNoteFields}=await import('../../app/vendas/lib/fiscal-note-editor.mjs');let snapshot;const original={...product,fiscalReady:false,fiscal:{...product.fiscal,ncm:''}};const before=structuredClone(original);
+ const service=createStandaloneFiscalService({repository:{create:async args=>{snapshot=args;return{draftId};}},customerResolver:async()=>customer,catalogResolver:async()=>({items:[original]}),issuerResolver:async()=>issuer});
+ const noteItem={name:'Descrição exclusiva',unit:'UN',ncm:'96032900',taxableUnit:'UN',pisCst:'08',cofinsCst:'08'};
+ const result=await service.create({context,input:{...input,fiscalForm:newFiscalNoteFields(),payment:{...input.payment,method:'Dinheiro'},items:input.items.map(item=>({...item,noteItem}))}});assert.equal(result.ok,true,JSON.stringify(result.errors));assert.equal(snapshot.items[0].name,'Descrição exclusiva');assert.equal(snapshot.items[0].fiscal.noteItemOverrides.pisCst,'08');assert.equal(snapshot.items[0].fiscal.ncm,'96032900');assert.deepEqual(original,before);
+});

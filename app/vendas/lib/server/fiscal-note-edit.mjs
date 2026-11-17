@@ -1,3 +1,4 @@
+import {validateNoteItem} from '../fiscal-note-item.mjs';
 import {normalizeElectronicPayment} from './fiscal-payment.mjs';
 import {normalizeFiscalNoteFields} from './fiscal-note-fields.mjs';
 const fail = message => ({ error: {code:'AV-NFE-CORRECTION-NOTE',field:'note',message} });
@@ -20,7 +21,8 @@ export function applyFiscalNoteEdit(draft, note, {catalogItems = [], customer,al
  if (!Array.isArray(note.items) || !note.items.length || note.items.length>200) return fail('Revise os itens da nota.');
  const seen=new Set();
  for(const row of note.items){
-  if(!row || Object.keys(row).some(k=>!['sku','productId','quantity','unitPrice','unitDiscount','ncm','cfop'].includes(k)))return fail('A revisão contém dados de item não permitidos.');
+  if(!row || Object.keys(row).some(k=>!['sku','productId','quantity','unitPrice','unitDiscount','ncm','cfop','noteItem'].includes(k)))return fail('A revisão contém dados de item não permitidos.');
+  const itemError=validateNoteItem(row.noteItem);if(itemError)return fail(itemError);
   const original=originals.find(item=>item.sku===row.sku);
   const added=!original && catalogItems.find(item=>item.id===row.productId && item.sku===row.sku && item.type==='produto');
   const source=original || (added ? {productId:added.id,itemType:added.type,sku:added.sku,name:added.name,description:added.description,unit:added.unit,fiscal:added.fiscal,fiscalReady:added.fiscalReady}:null);
@@ -29,7 +31,7 @@ export function applyFiscalNoteEdit(draft, note, {catalogItems = [], customer,al
   if(![row.quantity,row.unitPrice,row.unitDiscount].every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1e9)||row.quantity<=0||row.unitDiscount>row.unitPrice)return fail('Revise quantidade, valor e desconto dos itens.');
   const priorFiscal=source.fiscal || {};const priorCfop=priorFiscal.cfopInternal || priorFiscal.cfopInterstate || priorFiscal.cfop || '';
   const noteCfopOverride=row.cfop && row.cfop!==priorCfop ? row.cfop : priorFiscal.noteCfopOverride;
-  items.push({...source,quantity:row.quantity,unitPrice:row.unitPrice,unitDiscount:row.unitDiscount,fiscal:{...source.fiscal,ncm:row.ncm,cfop:row.cfop||source.fiscal?.cfop,...(noteCfopOverride?{noteCfopOverride}:{})}});
+  items.push({...source,...(row.noteItem?{name:row.noteItem.name||source.name,unit:row.noteItem.unit||source.unit}:{}),quantity:row.quantity,unitPrice:row.unitPrice,unitDiscount:row.unitDiscount,fiscal:{...source.fiscal,...(row.noteItem?{noteItemOverrides:structuredClone(row.noteItem)}:{}),ncm:row.ncm,cfop:row.cfop||source.fiscal?.cfop,...(noteCfopOverride?{noteCfopOverride}:{})}});
  }
  if(!['freight','insurance','otherExpenses','generalDiscount'].every(k=>typeof note[k]==='number'&&Number.isFinite(note[k])&&note[k]>=0&&note[k]<=1e9)||(note.additionalInfo!==undefined&&(typeof note.additionalInfo!=='string'||note.additionalInfo.length>5000)))return fail('Revise os totais e as informações adicionais.');
  if(note.operationNature!==undefined && (typeof note.operationNature!=='string'||(!allowPending&&!note.operationNature.trim())||note.operationNature.length>60||/[\r\n\t]/.test(note.operationNature)))return fail('Revise a natureza da operação.');

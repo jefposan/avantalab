@@ -1,3 +1,12 @@
+# 3.2.0.471 — Emissão: edição do item somente nesta nota
+
+Emissão: lápis do item abre ajustes exclusivos desta nota, com abas Dados, ICMS, IPI sem destaque, PIS e COFINS e listas pesquisáveis. Aplicar grava o retrato da nota; Cancelar descarta o popup. Cadastro permanente permanece em ação separada. Regras fiscais, permissões, série e número preservados; sem publicação ou alteração de dados de produção.
+
+## 3.2.0.470 — Configurações fiscais: padrões da empresa e listas pesquisáveis
+
+- Configurações fiscais centraliza Padrões da empresa com listas pesquisáveis de origem, CSOSN/CST, PIS, COFINS e CFOP de venda dentro/fora da UF. Usa o mesmo cadastro fiscal, com confirmação de gravação e controle de concorrência; produtos herdam os valores e exceções existentes permanecem protegidas. Consulta e edição de regras fiscais avançadas mantidas. Sem migração ou alteração de dados fiscais de produção durante a implementação.
+- Nova prévia local de Configurações fiscais para teste, sem gravação remota. Preserva integralmente o pacote 3.2.0.469 ainda não publicado.
+
 ## 3.2.0.469 — Emissão fiscal: busca oficial de CFOP, herança e edição na nota
 
 - Emissão: Natureza da operação permite buscar CFOP por código ou descrição na tabela oficial IT 2023.002 v2.10; o perfil e Consumidor final continuam vindo do cliente. Itens herdam o CFOP configurado para o destino e permitem exceção editável somente na nota. Regras publicadas, permissões, série, número bloqueado e reservas permanecem protegidos. Aviso de natureza incompatível destaca Natureza; destino diferente do endereço continua destacando Destino.

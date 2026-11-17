@@ -25,12 +25,16 @@ export function cfopPrefix(destination,direction='1'){
  return destination==='Dentro da UF'?(direction==='0'?'1':'5'):destination==='Fora da UF'?(direction==='0'?'2':'6'):destination==='Exterior'?(direction==='0'?'3':'7'):'';
 }
 /** Only published company values; no hardcoded 5102/6102 or mutation of the matrix. */
-export function configuredNoteCfop({matrix,context,nature='',direction='1',date}={}){
+export function configuredNoteCfop({matrix,context,nature='',direction='1',date,defaults}={}){
  const official=officialCfop(nature,date);if(official)return official.code;
  const named=matrix.rules.filter(rule=>rule.active&&rule.operationNature===nature);
  const resolution=resolveFiscalMatrixRule({matrix:{...matrix,rules:named.length?named:matrix.rules},documentType:'nfe',...context});
  const prefix=cfopPrefix(context.destination,direction);
  if(!prefix)return '';
+ const baseline=['nfe-venda-interna-contribuinte','nfe-venda-interestadual-contribuinte','nfe-venda-consumidor-final'];
+ if(resolution.reviewed&&resolution.rule?.cfopOverride?.startsWith(prefix)&&!baseline.includes(resolution.rule.id))return resolution.rule.cfopOverride;
+ const companyCode=context.destination==='Dentro da UF'?defaults?.internal:context.destination==='Fora da UF'?defaults?.interstate:'';
+ if(context.operation==='Venda'&&officialCfop(companyCode,date)&&companyCode.startsWith(prefix))return companyCode;
  if(resolution.reviewed&&resolution.rule?.cfopOverride?.startsWith(prefix))return resolution.rule.cfopOverride;
  if(!matrix.reviewedBy||!matrix.reviewedAt)return '';
  const values=[...new Set(matrix.rules.filter(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe'&&rule.operation===context.operation&&rule.destination===context.destination&&rule.cfopOverride?.startsWith(prefix)).map(rule=>rule.cfopOverride))];

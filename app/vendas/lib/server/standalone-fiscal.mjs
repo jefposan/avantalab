@@ -1,3 +1,4 @@
+import {validateNoteItem} from '../fiscal-note-item.mjs';
 import {officialCfop} from '../fiscal-cfop.mjs';
 import {normalizeElectronicPayment} from './fiscal-payment.mjs';
 import {normalizeFiscalNoteFields} from './fiscal-note-fields.mjs';
@@ -48,20 +49,21 @@ export function createStandaloneFiscalService({ repository, customerResolver, ca
       if(input.additionalInfo!==undefined&&(typeof input.additionalInfo!=='string'||input.additionalInfo.length>5000))return{ok:false,errors:[issue('AV-FISCAL-NOTES','As observações da nota devem ter até 5000 caracteres.')]};
       const cfopItems=Array.isArray(input.items)?input.items:[];
       for(const [index,item] of cfopItems.entries()){
+        const itemError=validateNoteItem(item?.noteItem);if(itemError)return{ok:false,errors:[{code:'AV-FISCAL-NOTE-ITEM',field:`items.${index}`,message:itemError}]};
         if(Object.hasOwn(item||{},'cfop')&&(typeof item.cfop!=='string'||!(saveOnly?/^\d{0,4}$/:/^(?:\d{4})?$/).test(item.cfop)||(!saveOnly&&item.cfop&&!officialCfop(item.cfop,form.fields?.issueDate||undefined))))return{ok:false,errors:[{code:'AV-FISCAL-ITEM-CFOP',field:`items.${index}`,message:'Informe um CFOP vigente de quatro dígitos no item da nota.'}]};
       }
       try {
         const key = `fiscal-avulsa:${input.draftId}`;
-        const prepared = await prepareOperation({ context, customerResolver, catalogResolver, allowIncompleteDraft:saveOnly,
+        const prepared = await prepareOperation({ context, customerResolver, catalogResolver:async request=>{const resolved=await catalogResolver(request);return{...resolved,items:(resolved?.items||[]).map(source=>{const override=cfopItems.find(row=>row.catalogItemId===source.id)?.noteItem;if(!override)return source;const ncm=Object.hasOwn(override,'ncm')?override.ncm:source.fiscal?.ncm;const unit=Object.hasOwn(override,'unit')?override.unit:source.unit;const taxableUnit=Object.hasOwn(override,'taxableUnit')?override.taxableUnit:source.fiscal?.taxableUnit;return{...source,unit,fiscal:{...source.fiscal,ncm,taxableUnit},fiscalReady:source.type==='servico'||Boolean(/^\d{8}$/.test(ncm||'')&&(taxableUnit||unit))};})};}, allowIncompleteDraft:saveOnly,
           input: { ...input, type: 'pedido', channel: 'vendas', fiscalDocument: 'nfe', reserveStock: false, idempotencyKey: key } });
         if (prepared.errors.length) return { ok: false, errors: prepared.errors, warnings: prepared.warnings };
         const op = prepared.operation;
         const issuer = normalizeIssuer(await issuerResolver({ companyId: context.companyId }) || {});
         if (!saveOnly && (!issuer.ready || op.fiscalStatus !== 'pronto' || op.items.some(item => !item.fiscalReady || item.itemType !== 'produto'))) return { ok: false, errors: [issue('AV-FISCAL-STANDALONE-REGISTRATION', 'Revise o cadastro fiscal da empresa, do cliente e dos produtos antes de preparar a NF-e.')] };
         const items = op.items.map((item, index) => ({ position: index + 1, productId: item.productId, itemType: item.itemType,
-          sku: item.sku, name: item.name, description: item.description, unit: item.unit, quantity: item.quantity,
+          sku: item.sku, name: cfopItems.find(row=>row.catalogItemId===item.productId)?.noteItem?.name||item.name, description: item.description, unit: cfopItems.find(row=>row.catalogItemId===item.productId)?.noteItem?.unit||item.unit, quantity: item.quantity,
           unitPrice: item.unitPrice, unitDiscount: item.discountUnit, gross: item.gross, discount: item.discount, net: item.net,
-          fiscal: {...item.fiscalSnapshot,...(cfopItems.find(row=>row.catalogItemId===item.productId)?.cfop?{noteCfopOverride:cfopItems.find(row=>row.catalogItemId===item.productId).cfop}:{})}, fiscalReady: item.fiscalReady }));
+          fiscal: {...item.fiscalSnapshot,...(cfopItems.find(row=>row.catalogItemId===item.productId)?.noteItem?{noteItemOverrides:structuredClone(cfopItems.find(row=>row.catalogItemId===item.productId).noteItem)}:{}),...(cfopItems.find(row=>row.catalogItemId===item.productId)?.cfop?{noteCfopOverride:cfopItems.find(row=>row.catalogItemId===item.productId).cfop}:{})}, fiscalReady: item.fiscalReady }));
         const totals = { subtotalGross: op.subtotalGross, itemDiscount: op.itemDiscount, generalDiscount: op.generalDiscount,
           freight: op.freight, insurance: op.insurance, otherExpenses: op.otherExpenses, total: op.total, currency: 'BRL',
           additionalInfo: String(input.additionalInfo || '').trim(),...(input.operationNature?{operationNature:input.operationNature}:{}),...(form.fields?{fiscalForm:form.fields}:{}) };

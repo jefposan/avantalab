@@ -6,6 +6,9 @@ import {focarCampoComErro} from '@/app/lib/foco-validacao.mjs';
 import {fiscalValidationIssue,fiscalValidationTarget} from '../lib/fiscal-validation.mjs';
 import dynamic from 'next/dynamic';
 import {requestFiscalEditor} from '../lib/fiscal-editor-bridge.mjs';
+import NoteItemEditor,{type NoteItemDraft} from '../components/NoteItemEditor';
+import {type NoteItemOverrides} from '../lib/fiscal-note-item.mjs';
+import FiscalDefaultsPanel from '../components/FiscalDefaultsPanel';
 import {officialCfop,cfopNature,cfopOperation,configuredNoteCfop,noteItemCfop} from '../lib/fiscal-cfop.mjs';
 import { NoteOperationFields, NoteTransportFields, NoteDetailsFields, NoteObservationsFields, NoteWithholdingFields, type NoteFields, type FiscalNoteEditorOptions } from '../components/FiscalNoteBlocks';
 import {syncFiscalNoteNumbering,newFiscalNoteFields,updateFiscalNoteFields,priceFromTable,repriceNoteLines,previewInstallments,validateFiscalNoteFields} from '../lib/fiscal-note-editor.mjs';
@@ -200,7 +203,7 @@ type CreatedRecord = {
   quote?: QuotePdfInput & { source: 'vendas' | 'servicos' };
   fiscalOriginId?: string;
   order?: {
-    lines: Array<{ catalogItemId?: string; sku: string; name: string; kind: 'produto' | 'servico'; unit: string; quantity: number; unitPrice: number; unitDiscount: number; cost: number; cfop?: string }>;
+    lines: Array<{ catalogItemId?: string; sku: string; name: string; kind: 'produto' | 'servico'; unit: string; quantity: number; unitPrice: number; unitDiscount: number; cost: number; cfop?: string; noteItem?:NoteItemOverrides }>;
     commercialTotals: CommercialTotals;
     reserveStock: boolean;
     stockState: 'Sem movimentação' | 'Reservado' | 'Em separação' | 'Baixado' | 'Liberado' | 'Devolvido';
@@ -313,6 +316,7 @@ type FiscalDraftItem = {
   issRate: number;
   serviceIncidenceMode: string;
   fiscalOriginCode: string;
+  noteItemOverrides?:NoteItemOverrides;
   noteCfopOverride?: string;
   cfopInternal: string;
   cfopInterstate: string;
@@ -403,6 +407,7 @@ function persistedFiscalItem(item: Record<string, any>): FiscalDraftItem {
     nbs: String(fiscal.nbs || ''), issRate: Number(fiscal.issRate || fiscal.aliquotaIss || 0),
     serviceIncidenceMode: String(fiscal.serviceIncidenceMode || fiscal.municipioPrestacao || ''),
     fiscalOriginCode: String(fiscal.fiscalOriginCode || fiscal.originCode || fiscal.origemMercadoria || ''),
+    noteItemOverrides: fiscal.noteItemOverrides,
     noteCfopOverride: String(fiscal.noteCfopOverride || ''),
     cfopInternal: String(fiscal.cfopInternal || fiscal.cfop || fiscal.cfopPadrao || ''),
     cfopInterstate: String(fiscal.cfopInterstate || ''),
@@ -1311,6 +1316,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const [editingCustomer, setEditingCustomer] = useState<ClientRecord | null>(null);
   const [customerFormOpen,setCustomerFormOpen]=useState(false);
   const [editingProduct, setEditingProduct] = useState<CatalogItem | null>(null);
+  const [editingNoteItemId,setEditingNoteItemId]=useState<string|null>(null);
   const [creatingProduct,setCreatingProduct]=useState(false);
   const [pendingNewProduct,setPendingNewProduct]=useState('');
   const [newProductSelection,setNewProductSelection]=useState<CatalogItem|null>(null);
@@ -1346,7 +1352,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const [insurance, setInsurance] = useState(formatLineNumber(initialOrder?.commercialTotals.insurance ?? 0,true));
   const [otherExpenses, setOtherExpenses] = useState(formatLineNumber(initialOrder?.commercialTotals.other ?? 0,true));
   const [quantityDrafts,setQuantityDrafts]=useState<Record<string,string>>({});
-  const [itemTax, setItemTax] = useState<Record<string,{ncm:string;cfop?:string}>>(() => Object.fromEntries([...(initialRecord?.order?.lines||[]).filter(line=>line.cfop!==undefined).map(line=>[line.sku,{ncm:catalogRecords.find(item=>item.sku===line.sku)?.ncm||'',cfop:line.cfop}]),...(correction?.draft.items || []).map(item=>[item.sku,{ncm:item.ncm,cfop:fiscalOnly?item.noteCfopOverride||undefined:correction?.draft.operationContext?.destination==='Fora da UF'?item.cfopInterstate:item.cfopInternal||item.cfopInterstate||''}])]));
+  const [itemTax, setItemTax] = useState<Record<string,{ncm:string;cfop?:string;noteItem?:NoteItemOverrides}>>(() => Object.fromEntries([...(initialRecord?.order?.lines||[]).filter(line=>line.cfop!==undefined||line.noteItem).map(line=>[line.sku,{ncm:line.noteItem?.ncm??catalogRecords.find(item=>item.sku===line.sku)?.ncm??'',cfop:line.cfop??line.noteItem?.cfop,noteItem:line.noteItem}]),...(correction?.draft.items || []).map(item=>[item.sku,{ncm:item.ncm,noteItem:item.noteItemOverrides,cfop:fiscalOnly?item.noteCfopOverride||undefined:correction?.draft.operationContext?.destination==='Fora da UF'?item.cfopInterstate:item.cfopInternal||item.cfopInterstate||''}])]));
   const [installments, setInstallments] = useState(String(initialOrder?.installments || settings.payments.defaultInstallments));
   const [firstDueDate, setFirstDueDate] = useState(() => initialOrder?.firstDueDate || isoAfterDays(settings.payments.firstDueDays));
   const [freight, setFreight] = useState(() => formatLineNumber(initialOrder?.commercialTotals.freight ?? 0, true));
@@ -1366,7 +1372,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const [fiscalDocument, setFiscalDocument] = useState<'nenhum' | 'nfe' | 'nfce' | 'nfse'>(fiscalOnly ? 'nfe' : initialOrder?.fiscalDocument ?? initialFiscalDocument);
   const [fiscalIssuerId, setFiscalIssuerId] = useState(initialOrder?.fiscalIssuer?.establishmentId || issuerRegistry.defaultEstablishmentId);
   const natureEditedRef=useRef(Boolean(initialOrder?.operationNature));
-  const suggestedNature=(name:string)=>{const client=clientRecords.find(item=>item.name===name);if(!client)return '';const context=fiscalOperationContext({id:'suggestion',client:name,item:'',total:0,documentType:'nfe',sourceLabel:'Nota avulsa'},client,settings.company);const code=configuredNoteCfop({matrix:settings.fiscal.matrix,context});const entry=officialCfop(code);if(entry)return cfopNature(entry);const resolution=resolveFiscalMatrixRule({matrix:settings.fiscal.matrix,documentType:'nfe',...context});return resolution.reviewed?resolution.rule?.operationNature||'':'';};
+  const suggestedNature=(name:string)=>{const client=clientRecords.find(item=>item.name===name);if(!client)return '';const context=fiscalOperationContext({id:'suggestion',client:name,item:'',total:0,documentType:'nfe',sourceLabel:'Nota avulsa'},client,settings.company);const code=configuredNoteCfop({matrix:settings.fiscal.matrix,context,defaults:fiscalEditor?.companyCfops});const entry=officialCfop(code);if(entry)return cfopNature(entry);const resolution=resolveFiscalMatrixRule({matrix:settings.fiscal.matrix,documentType:'nfe',...context});return resolution.reviewed?resolution.rule?.operationNature||'':'';};
   const [operationNature, setOperationNature] = useState(()=>initialOrder?.operationNature || (fiscalEditor?suggestedNature(initialRecord?.client||initialClient):'Venda de mercadoria'));
   const [notes, setNotes] = useState(initialOrder?.notes || '');
   const [submitted, setSubmitted] = useState(false);
@@ -1379,7 +1385,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const effectiveDestination=noteFields.destination==='auto'?operationContext.destination:({'1':'Dentro da UF','2':'Fora da UF','3':'Exterior'} as Record<string,string>)[noteFields.destination]||operationContext.destination;
   const officialNature=officialCfop(operationNature,noteFields.issueDate||undefined);
   const noteContext={...operationContext,destination:effectiveDestination,operation:officialNature?cfopOperation(officialNature):operationContext.operation,issuePurpose:({'1':'Normal','2':'Complementar','3':'Ajuste','4':'Devolução'} as Record<string,string>)[noteFields.purpose],presence:noteFields.presence==='1'||noteFields.presence==='5'?'Presencial':noteFields.presence==='2'?'Internet':noteFields.presence==='0'?'Não aplicável':'Não presencial'};
-  const operationCfop=fiscalEditor?configuredNoteCfop({matrix:settings.fiscal.matrix,context:noteContext,nature:operationNature,direction:noteFields.direction,date:noteFields.issueDate||undefined}):resolveFiscalMatrixRule({matrix:settings.fiscal.matrix,documentType:fiscalDocument==='nenhum'?'nfe':fiscalDocument,...operationContext}).rule?.cfopOverride||'';
+  const operationCfop=fiscalEditor?configuredNoteCfop({matrix:settings.fiscal.matrix,context:noteContext,nature:operationNature,direction:noteFields.direction,date:noteFields.issueDate||undefined,defaults:fiscalEditor?.companyCfops}):resolveFiscalMatrixRule({matrix:settings.fiscal.matrix,documentType:fiscalDocument==='nenhum'?'nfe':fiscalDocument,...operationContext}).rule?.cfopOverride||'';
   const savedProduct = (product: ProdutoCustos) => {
     if(creatingProduct){
       setProductDirty(false);setProductBusy(false);setCreatingProduct(false);setPendingNewProduct(product.id);
@@ -1471,7 +1477,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
     if (correction) {
       setSavingFiscal(true); setFiscalSaveError(''); setFiscalSaveIssue(null);
       try {
-        const result = await correction.onSave({customerName:clientName,customerDocument:(selectedClient?.document || correction.draft.clientDocument).replace(/\D/g,''),paymentMethod,paymentDetails: ['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(paymentMethod)?paymentDetails:undefined,items:lines.map(line=>({sku:line.sku,productId:line.catalogItemId,quantity:line.quantity,unitPrice:line.unitPrice,unitDiscount:line.unitDiscount,ncm:itemTax[line.sku]?.ncm || catalogRecords.find(item=>item.sku===line.sku)?.ncm || '',cfop:itemTax[line.sku]?.cfop || ''})),freight:commercialNumber(freight),insurance:commercialNumber(insurance),otherExpenses:commercialNumber(otherExpenses),generalDiscount:commercialNumber(globalDiscount),additionalInfo:notes,...(fiscalEditor?{fiscalForm:noteFields}:{}),operationNature,installments:Number(installments),firstDueDate},issue);
+        const result = await correction.onSave({customerName:clientName,customerDocument:(selectedClient?.document || correction.draft.clientDocument).replace(/\D/g,''),paymentMethod,paymentDetails: ['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(paymentMethod)?paymentDetails:undefined,items:lines.map(line=>({sku:line.sku,productId:line.catalogItemId,quantity:line.quantity,unitPrice:line.unitPrice,unitDiscount:line.unitDiscount,ncm:itemTax[line.sku]?.ncm || catalogRecords.find(item=>item.sku===line.sku)?.ncm || '',cfop:itemTax[line.sku]?.cfop || '',...(itemTax[line.sku]?.noteItem?{noteItem:itemTax[line.sku].noteItem}:{})})),freight:commercialNumber(freight),insurance:commercialNumber(insurance),otherExpenses:commercialNumber(otherExpenses),generalDiscount:commercialNumber(globalDiscount),additionalInfo:notes,...(fiscalEditor?{fiscalForm:noteFields}:{}),operationNature,installments:Number(installments),firstDueDate},issue);
         if (!result.ok) showIssue({...result,message:result.message || 'Não foi possível salvar a nota.'});
       } catch { showIssue({ok:false,message:'A conexão foi interrompida. Os dados permanecem nesta página.'}); }
       finally {setSavingFiscal(false);}
@@ -1487,7 +1493,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
       createdAt: initialRecord?.createdAt || now,
       status,
       order: {
-        lines: lines.map((line) => ({ catalogItemId: line.catalogItemId, sku: line.sku, name: line.name, kind: line.kind, unit: line.unit, quantity: line.quantity, unitPrice: line.unitPrice, unitDiscount: Math.min(line.unitPrice, Math.max(0, line.unitDiscount)), cost: line.cost,...(fiscalEditor&&itemTax[line.sku]?.cfop!==undefined?{cfop:itemTax[line.sku].cfop}:{}) })),
+        lines: lines.map((line) => ({ catalogItemId: line.catalogItemId, sku: line.sku, name: line.name, kind: line.kind, unit: line.unit, quantity: line.quantity, unitPrice: line.unitPrice, unitDiscount: Math.min(line.unitPrice, Math.max(0, line.unitDiscount)), cost: line.cost,...(itemTax[line.sku]?.noteItem?{noteItem:itemTax[line.sku].noteItem}:{}),...(fiscalEditor&&itemTax[line.sku]?.cfop!==undefined?{cfop:itemTax[line.sku].cfop}:{}) })),
         commercialTotals,
         reserveStock,
         stockState: status === 'Confirmado' && reserveStock && lines.some((line) => line.kind === 'produto') ? 'Reservado' : 'Sem movimentação',
@@ -1529,6 +1535,15 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
       if (result.ok) { setClientName(client.name); setSubmitted(false); setValidationFocus(null); setFiscalSaveError(''); setFiscalSaveIssue(null); }
       return result;
     }}/>}
+    {editingNoteItemId&&(()=>{
+      const line=lines.find(item=>item.id===editingNoteItemId);if(!line)return null;
+      const product=registeredProducts[line.catalogItemId||'']||catalogRecords.find(item=>item.catalogItemId===line.catalogItemId||item.sku===line.sku);
+      const base=product||correction?.draft.items.find(item=>item.sku===line.sku);
+      const taxCode=(key:'icmsCode'|'pisCst'|'cofinsCst')=>base?.useCompanyFiscal===true?fiscalEditor?.companyTaxes?.[key]||base?.[key]||'':base?.[key]||fiscalEditor?.companyTaxes?.[key]||'';
+      const defaults:NoteItemOverrides={name:line.name,unit:base?.unit||line.unit,ncm:base?.ncm||'',cfop:noteItemCfop({product:base,operationCfop,destination:effectiveDestination}),taxableUnit:base?.taxableUnit||line.unit,originCode:base?.fiscalOriginCode||fiscalEditor?.companyTaxes?.originCode||'',icmsCode:taxCode('icmsCode'),pisCst:taxCode('pisCst'),cofinsCst:taxCode('cofinsCst'),ipiCst:base?.ipiCst||'',ipiLegalCode:base?.ipiLegalCode||''};
+      const initial:NoteItemDraft={...defaults,...itemTax[line.sku]?.noteItem,name:line.name,unit:line.unit,ncm:itemTax[line.sku]?.ncm||defaults.ncm,cfop:itemTax[line.sku]?.cfop??defaults.cfop,quantity:line.quantity,unitPrice:line.unitPrice,unitDiscount:line.unitDiscount};
+      return <Dialog open title={`Item nesta nota: ${line.name}`} description="Ajustes exclusivos desta nota fiscal." onClose={()=>setEditingNoteItemId(null)}><NoteItemEditor key={line.id} initial={initial} defaults={defaults} sku={line.sku} simples={settings.company.taxRegime.toLowerCase().includes('simples')} onApply={value=>{const {quantity,unitPrice,unitDiscount,...noteItem}=value;updateLine(line.id,{name:value.name,unit:value.unit,quantity,unitPrice,unitDiscount});setItemTax(current=>({...current,[line.sku]:{ncm:value.ncm,cfop:value.cfop,noteItem}}));setEditingNoteItemId(null);}} onCancel={()=>setEditingNoteItemId(null)} onCatalog={companyId&&product?.catalogItemId&&can('catalog.edit')?()=>{setEditingNoteItemId(null);setEditingProduct(product);}:undefined}/></Dialog>;
+    })()}
     {(editingProduct || creatingProduct) && companyId && <Dialog open title={creatingProduct ? 'Novo produto' : `Cadastro de ${editingProduct!.name}`} description="" onClose={closeProduct}><div className="dialog-body order-product-registration"><ProductRegistration companyId={companyId} initialNewType={creatingProduct?'produto':undefined} initialProductId={editingProduct?.catalogItemId} embeddedProduct onProductSaved={savedProduct} onProductCancel={()=>{setProductDirty(false);setEditingProduct(null);setCreatingProduct(false);}} onProductDirtyChange={setProductDirty} onProductBusyChange={setProductBusy}/></div></Dialog>}
     <ModalConfirmacao aberto={confirmProductClose} titulo="Descartar alterações do cadastro?" mensagem="As alterações não salvas deste produto serão descartadas. O pedido ou a nota permanecerá aberto." textoCancelar="Continuar editando" textoConfirmar="Descartar" variante="alerta" aoCancelar={()=>setConfirmProductClose(false)} aoConfirmar={()=>{setConfirmProductClose(false);setProductDirty(false);setEditingProduct(null);setCreatingProduct(false);}}/>
     <div className={`order-page-heading${fiscalOnly ? ' note-page-heading' : ''}`}>
@@ -1570,7 +1585,8 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
                 const frozen=correction?.draft.items.find(item=>item.sku===line.sku);
                 const tax=product || frozen;
                 const cfop=fiscalEditor?noteItemCfop({manual:itemTax[line.sku]?.cfop,product:tax,operationCfop,destination:effectiveDestination}):itemTax[line.sku]?.cfop || operationCfop || (operationContext.destination==='Fora da UF'?tax?.cfopInterstate:tax?.cfopInternal) || '';
-                const details=[['CFOP',cfop],['NCM',itemTax[line.sku]?.ncm || tax?.ncm],['ICMS %',product && product.icmsRate>0?formatLineNumber(product.icmsRate,true):'—'],[settings.company.taxRegime.toLowerCase().includes('simples')?'CSOSN':'CST ICMS',tax?.icmsCode],['CST PIS',tax?.pisCst],['CST COFINS',tax?.cofinsCst]];
+                const code=(key:'icmsCode'|'pisCst'|'cofinsCst')=>itemTax[line.sku]?.noteItem&&Object.hasOwn(itemTax[line.sku].noteItem!,key)?itemTax[line.sku].noteItem![key]:tax?.useCompanyFiscal===true?fiscalEditor?.companyTaxes?.[key]||tax?.[key]:tax?.[key]||fiscalEditor?.companyTaxes?.[key];
+                const details=[['CFOP',cfop],['NCM',itemTax[line.sku]?.ncm || tax?.ncm],['ICMS %',product && product.icmsRate>0?formatLineNumber(product.icmsRate,true):'—'],[settings.company.taxRegime.toLowerCase().includes('simples')?'CSOSN':'CST ICMS',code('icmsCode')],['CST PIS',code('pisCst')],['CST COFINS',code('cofinsCst')]];
                 return <div className="order-item order-item-compact order-item-two-line" key={line.id} data-item-index={index}>
                   <div className="order-item-commercial">
                     <div className="order-item-name"><strong>{line.name}</strong><small>{line.sku} · {line.unit}</small>{insufficient&&<span className="field-error">Saldo insuficiente</span>}</div>
@@ -1578,9 +1594,9 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
                     <label className="order-inline-field"><span>Valor unit. (R$)</span><div className="order-inline-control"><CampoMoeda name="itemPrice" aria-label={`Preço de ${line.name}`} value={formatLineNumber(line.unitPrice,true)} onChange={value=>updateLine(line.id,{unitPrice:commercialNumber(value)})}/></div></label>
                     <label className="order-inline-field"><span>Desconto (R$)</span><div className="order-inline-control"><CampoMoeda name="itemDiscount" aria-label={`Desconto de ${line.name}`} value={formatLineNumber(line.unitDiscount,true)} onChange={value=>updateLine(line.id,{unitDiscount:commercialNumber(value)})}/></div></label>
                     <div className="order-inline-field order-inline-subtotal"><span>Subtotal (R$)</span><div className="order-inline-control"><output aria-label={`Subtotal de ${line.name}`} style={{fontSize:`${fittedNumericFontSize(formatLineNumber(lineTotal,true),100,12,11)}px`}}>{formatLineNumber(lineTotal,true)}</output></div></div>
-                    <div className="order-item-actions"><button type="button" className="icon-button order-product-edit" disabled={!companyId || !product?.catalogItemId || !can('catalog.edit')} onClick={()=>product&&setEditingProduct(product)} aria-label={`Editar cadastro de ${line.name}`} title="Editar cadastro"><Icon name="edit" size={16}/></button><button type="button" className="icon-button" onClick={()=>removeLine(line.id)} aria-label={`Remover ${line.name}`} title="Excluir item"><Icon name="close" size={16}/></button></div>
+                    <div className="order-item-actions"><button type="button" className="icon-button order-product-edit" disabled={fiscalOnly?fiscalAttemptLocked||!can('fiscal.prepare'):!companyId || !product?.catalogItemId || !can('catalog.edit')} onClick={()=>fiscalOnly?setEditingNoteItemId(line.id):product&&setEditingProduct(product)} aria-label={fiscalOnly?`Editar item de ${line.name} nesta nota`:`Editar cadastro de ${line.name}`} title={fiscalOnly?"Editar somente nesta nota":"Editar cadastro"}><Icon name="edit" size={16}/></button><button type="button" className="icon-button" onClick={()=>removeLine(line.id)} aria-label={`Remover ${line.name}`} title="Excluir item"><Icon name="close" size={16}/></button></div>
                   </div>
-                  {line.kind==='produto'&&<dl className="order-item-tax-summary">{details.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{label==='CFOP'&&fiscalEditor?<input name="itemCfop" aria-label={`CFOP de ${line.name}`} inputMode="numeric" maxLength={4} value={cfop} autoComplete="off" onChange={event=>{const value=event.target.value.replace(/\D/g,'').slice(0,4);setItemTax(current=>({...current,[line.sku]:{ncm:current[line.sku]?.ncm||tax?.ncm||'',cfop:value}}));}}/>:value || '—'}</dd></div>)}</dl>}
+                  {line.kind==='produto'&&<dl className="order-item-tax-summary">{details.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{label==='CFOP'&&fiscalEditor?<input name="itemCfop" aria-label={`CFOP de ${line.name}`} inputMode="numeric" maxLength={4} value={cfop} autoComplete="off" onChange={event=>{const value=event.target.value.replace(/\D/g,'').slice(0,4);setItemTax(current=>({...current,[line.sku]:{ncm:current[line.sku]?.ncm||tax?.ncm||'',cfop:value,...(current[line.sku]?.noteItem?{noteItem:{...current[line.sku].noteItem!,cfop:value}}:{})}}));}}/>:value || '—'}</dd></div>)}</dl>}
                 </div>;
               })}
             </div>}
@@ -4852,8 +4868,9 @@ function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,comp
     <PageHeading view="fiscal" action={<div className="heading-actions"><button type="button" className="button secondary" onClick={() => setFiscalSetupOpen(true)}><Icon name="settings" size={17}/> Configurações fiscais</button><button type="button" className="button primary" disabled={!can('fiscal.prepare')} onClick={onNewFiscal}><Icon name="plus" size={18}/> Nova nota fiscal</button></div>}/>
     {origin && (() => { const originStatus = selectedOriginDraft ? fiscalDraftUserStatus(selectedOriginDraft) : null; return <div className="fiscal-origin-banner" role="status"><span><Icon name="fiscal" size={20}/></span><div><strong>{selectedOriginDraft ? `Documento de ${origin.id} localizado` : `Preparação iniciada a partir de ${origin.id}`}</strong><p>{origin.sourceLabel} de {origin.client} · {money(origin.total)}. A origem permanece vinculada e uma nova seleção não cria duplicidade.</p></div><Badge tone={originStatus?.tone ?? 'info'}>{originStatus?.label ?? documentLabel(origin.documentType)}</Badge><button type="button" className="button secondary" onClick={onClearOrigin}>Limpar seleção</button></div>; })()}
     <div className="metric-grid compact"><Metric label="Documentos" value={String(drafts.length)} note="Notas e rascunhos do perfil"/><Metric label="Para revisar" value={String(pendingCount)} note="Dados ou rejeições" tone="warning"/><Metric label="Para emitir" value={String(readyCount)} note="Aguardando emissão" tone="cyan"/><Metric label="Cancelados" value={String(canceledCount)} note="Histórico preservado"/></div>
-    <Dialog open={fiscalSetupOpen} title="Configurações fiscais" description="Cadastro, certificado e numeração do perfil empresarial." onClose={() => setFiscalSetupOpen(false)}>
+    <Dialog open={fiscalSetupOpen} title="Configurações fiscais" description="Padrões tributários, certificado e numeração do perfil empresarial." onClose={() => setFiscalSetupOpen(false)}>
     <div className="dialog-body">
+    <FiscalDefaultsPanel companyId={companyId} origin={fiscalBridgeOrigin||''} onSaved={onReloadEditor}/>
     {!readyForIssue && <div className="fiscal-warning fiscal-operational-warning"><div><Icon name="warning" size={22}/></div><span><strong>Emissão fiscal ainda não liberada</strong><p>{readinessGuidance}</p></span><button type="button" className="button secondary" onClick={() => { setFiscalSetupOpen(false); onNavigate('configuracoes'); }} disabled={!can('settings.view')}>Revisar ajustes</button></div>}
     {readyForIssue && execution?.environment==='homologacao' && <div className="fiscal-status-message" role="status"><Icon name="check" size={17}/><span>Homologação — sem valor fiscal.</span></div>}
     <div className="fiscal-layout fiscal-user-overview">
@@ -5078,7 +5095,9 @@ function splitTeam(value: string) {
   return [...new Set(value.split(/[\n,;]/).map((item) => item.trim()).filter(Boolean))];
 }
 
-function SettingsDialog({ section, settings, onClose, onSave, onSaveCompany, onOpenNumbering, suspended = false }: { section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany?: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onOpenNumbering?: () => void; suspended?: boolean }) {
+type FiscalDefaultsContext={companyId:string;origin:string;onSaved?:()=>void};
+
+function SettingsDialog({ fiscalDefaultsContext,section, settings, onClose, onSave, onSaveCompany, onOpenNumbering, suspended = false }: { fiscalDefaultsContext?:FiscalDefaultsContext;section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany?: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onOpenNumbering?: () => void; suspended?: boolean }) {
   const [draft, setDraft] = useState(settings);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -5103,7 +5122,7 @@ function SettingsDialog({ section, settings, onClose, onSave, onSaveCompany, onO
     pagamentos: ['Pagamentos', 'Escolha as condições apresentadas por padrão nos novos lançamentos.'],
     equipe: ['Equipe comercial e de serviços', 'Organize vendedores e responsáveis disponíveis nos formulários.'],
     estoque: ['Estoque e movimentações', 'Defina locais, bloqueios operacionais e motivos usados nos registros de estoque.'],
-    fiscal: ['Configurações fiscais', 'Informe o responsável, as séries e as revisões aplicadas à empresa ativa.'],
+    fiscal: ['Configurações fiscais', 'Padrões da empresa, tipos de nota, séries e conferência fiscal.'],
   };
   const updateCompany = (key: keyof CompanyProfile, value: string) => setDraft((current) => {
     const company = { ...current.company, [key]: value };
@@ -5269,6 +5288,7 @@ function SettingsDialog({ section, settings, onClose, onSave, onSaveCompany, onO
         </div></section>
       </div>}
       {section === 'fiscal' && <div className="settings-form-stack">
+        <FiscalDefaultsPanel companyId={fiscalDefaultsContext?.companyId} origin={fiscalDefaultsContext?.origin} onSaved={fiscalDefaultsContext?.onSaved}/>
         <div className="stock-settings-note"><Icon name="fiscal" size={19}/><p><strong>Informe somente o que a empresa utiliza.</strong><small>Conexões com governo, autorizadores e demais parâmetros técnicos são administrados internamente pelo sistema.</small></p></div>
         <section className="settings-form-section"><div className="client-section-heading"><h3>Notas utilizadas pela empresa</h3><p>As opções escolhidas aparecem nos pedidos, serviços, no menu Novo e na Central Fiscal.</p></div><div className="fiscal-document-picker">{fiscalDocumentOptions.map((option) => {
           const checked = draft.fiscal.documentScope.includes(option.type);
@@ -5709,7 +5729,7 @@ type SettingsTarget = SettingsSection | 'acessos' | 'matriz' | 'certificado' | n
 type SettingsGroupId = 'empresa-notas' | 'operacao' | 'equipe-acessos' | 'integracoes';
 type SettingsItem = { title: string; description: string; icon: IconName; status: string; target: SettingsTarget };
 
-function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveCompany, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate, onOpenNumbering, numberingOpen = false }: { settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void; onOpenNumbering?: () => void; numberingOpen?: boolean }) {
+function SettingsView({ fiscalDefaultsContext,settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveCompany, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate, onOpenNumbering, numberingOpen = false }: { fiscalDefaultsContext?:FiscalDefaultsContext;settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void; onOpenNumbering?: () => void; numberingOpen?: boolean }) {
   const [section, setSection] = useState<SettingsSection | null>(null);
   const [accessOpen, setAccessOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
@@ -5729,7 +5749,7 @@ function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAc
       { title: 'Dados da empresa', description: 'CNPJ, endereço, inscrições e dados do emitente', icon: 'settings', status: companyRegistration.ready ? 'Completo' : `${companyRegistration.missing.length} pendentes`, target: 'empresa' },
       { title: 'Certificado digital', description: 'Certificado A1 e situação da emissão fiscal', icon: 'document', status: certificateBridge.loading ? 'Consultando' : certificateBridge.certificate?.certificateActive && certificateBridge.execution?.transmissionAllowed ? (certificateBridge.execution.productionTransmissionAllowed ? 'Produção disponível' : 'Homologação disponível') : certificateBridge.certificate?.certificateActive && certificateBridge.execution?.statusServiceReady ? 'Consulta ativa' : certificateBridge.certificate?.certificateActive ? 'Executor pendente' : certificateBridge.certificate?.certificateInstalled ? 'Instalado' : 'Não configurado', target: 'certificado' },
       { title: 'Dados para emissão', description: `${settings.fiscal.documentScope.length} ${settings.fiscal.documentScope.length === 1 ? 'tipo de nota' : 'tipos de nota'}, responsável e séries`, icon: 'fiscal', status: fiscalPendingCount ? `${fiscalPendingCount} ${fiscalPendingCount === 1 ? 'pendência' : 'pendências'}` : 'Completo', target: 'fiscal' },
-      { title: 'Regras fiscais', description: 'Regras dos tipos de nota ativados', icon: 'document', status: fiscalRulesBridge.integrated ? fiscalRulesBridge.loading ? 'Consultando' : fiscalRulesBridge.configuration ? `Publicada · v${fiscalRulesBridge.configuration.version}` : fiscalRulesBridge.available ? 'Não publicada' : 'Indisponível' : matrixValidation.activeCount > 0 && matrixValidation.reviewedCount === matrixValidation.activeCount ? 'Revisadas localmente' : `${matrixValidation.reviewedCount}/${matrixValidation.activeCount} revisadas`, target: 'matriz' },
+      { title: 'Regras fiscais avançadas', description: 'Exceções e condições específicas por operação', icon: 'document', status: fiscalRulesBridge.integrated ? fiscalRulesBridge.loading ? 'Consultando' : fiscalRulesBridge.configuration ? `Publicada · v${fiscalRulesBridge.configuration.version}` : fiscalRulesBridge.available ? 'Não publicada' : 'Indisponível' : matrixValidation.activeCount > 0 && matrixValidation.reviewedCount === matrixValidation.activeCount ? 'Revisadas localmente' : `${matrixValidation.reviewedCount}/${matrixValidation.activeCount} revisadas`, target: 'matriz' },
     ] },
     { id: 'operacao', label: 'Vendas e serviços', title: 'Rotina comercial', description: 'Padrões para registrar vendas, serviços, cobranças e movimentações.', items: [
       { title: 'Regras comerciais', description: 'Pedidos, orçamentos, descontos e aprovações', icon: 'sale', status: 'Ativo', target: 'comercial' },
@@ -5767,7 +5787,7 @@ function SettingsView({ settings, connected, canEdit, canViewAccess, canManageAc
         return <button type="button" key={title} onClick={() => openTarget(target)} disabled={unavailable} title={!target ? 'Disponível quando a integração for conectada' : unavailable ? 'Seu perfil não permite alterar este ajuste' : undefined}><span><Icon name={icon}/></span><div><strong>{title}</strong><small>{description}</small><Badge tone={unavailable ? 'neutral' : attention ? 'warning' : 'neutral'}>{unavailable && target ? 'Sem acesso' : status}</Badge></div><Icon name={!unavailable ? 'chevron' : 'clock'} size={17}/></button>;
       })}</div>
     </section>
-    <SettingsDialog onSaveCompany={onSaveCompany} suspended={numberingOpen} onOpenNumbering={onOpenNumbering} section={section} settings={settings} onClose={() => setSection(null)} onSave={onSave}/>
+    <SettingsDialog fiscalDefaultsContext={fiscalDefaultsContext} onSaveCompany={onSaveCompany} suspended={numberingOpen} onOpenNumbering={onOpenNumbering} section={section} settings={settings} onClose={() => setSection(null)} onSave={onSave}/>
     <FiscalMatrixDialog open={matrixOpen} matrix={settings.fiscal.matrix} documentScope={settings.fiscal.documentScope} taxReviewConfirmed={settings.fiscal.taxReviewConfirmed} taxReformReviewConfirmed={settings.fiscal.taxReformReviewConfirmed} bridge={fiscalRulesBridge} readOnly={!canConfigureFiscal || (fiscalRulesBridge.integrated && !fiscalRulesBridge.writable)} onClose={() => setMatrixOpen(false)} onSave={onSaveFiscalMatrix}/>
     <AccessSettingsDialog open={accessOpen} settings={settings} bridge={accessBridge} readOnly={!canManageAccess || (accessBridge.integrated && !accessBridge.writable)} onClose={() => setAccessOpen(false)} onSave={(next) => { onSaveAccess(next); setAccessOpen(false); }}/>
   </>;
@@ -7668,7 +7688,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       generalDiscount: record.order.commercialTotals.orderDiscount, freight: record.order.commercialTotals.freight,
       insurance: record.order.commercialTotals.insurance, otherExpenses: record.order.commercialTotals.other,
       payment: { method: record.order.paymentMethod, details:record.order.paymentDetails,installments: record.order.installments, firstDueDate: record.order.firstDueDate },
-      items: record.order.lines.map((line) => ({ catalogItemId: line.catalogItemId || catalogRecords.find((item) => item.sku === line.sku)?.catalogItemId || '', quantity: line.quantity, unitPrice: line.unitPrice, discountUnit: line.unitDiscount,...(line.cfop!==undefined?{cfop:line.cfop}:{}) })),
+      items: record.order.lines.map((line) => ({ catalogItemId: line.catalogItemId || catalogRecords.find((item) => item.sku === line.sku)?.catalogItemId || '', quantity: line.quantity, unitPrice: line.unitPrice, discountUnit: line.unitDiscount,...(line.cfop!==undefined?{cfop:line.cfop}:{}),...(line.noteItem?{noteItem:line.noteItem}:{}) })),
     };
     const fingerprint = JSON.stringify(document);
     if (standaloneSubmissionRef.current?.fingerprint !== fingerprint) standaloneSubmissionRef.current = { fingerprint, draftId: crypto.randomUUID() };
@@ -8165,14 +8185,14 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           onNewFiscal={() => {standaloneResumeRef.current=null;openNew('nfe');}}
           onResumeStandalone={draft=>{
             standaloneResumeRef.current={id:draft.id,version:draft.pendingVersion!};
-            setEditingOrder({id:draft.id,type:'nfe',client:draft.client,total:draft.total,status:'Rascunho',createdAt:draft.createdAt,order:{lines:draft.items.map(item=>({catalogItemId:item.catalogItemId||catalogRecords.find(product=>product.sku===item.sku)?.catalogItemId,sku:item.sku,name:item.name,kind:item.kind,unit:item.unit,quantity:item.quantity,unitPrice:item.unitPrice,unitDiscount:item.unitDiscount,cost:0,...(item.noteCfopOverride?{cfop:item.noteCfopOverride}:{})})),commercialTotals:draft.commercialTotals,reserveStock:false,stockState:'Sem movimentação',seller:'',fiscalDocument:'nfe',paymentMethod:draft.paymentMethod,paymentDetails:draft.paymentDetails,installments:draft.paymentInstallments||1,firstDueDate:draft.paymentFirstDueDate||'',operationNature:draft.operationNature||'',notes:draft.additionalInfo||'',fiscalForm:draft.fiscalForm} } as CreatedRecord);
+            setEditingOrder({id:draft.id,type:'nfe',client:draft.client,total:draft.total,status:'Rascunho',createdAt:draft.createdAt,order:{lines:draft.items.map(item=>({catalogItemId:item.catalogItemId||catalogRecords.find(product=>product.sku===item.sku)?.catalogItemId,sku:item.sku,name:item.name,kind:item.kind,unit:item.unit,quantity:item.quantity,unitPrice:item.unitPrice,unitDiscount:item.unitDiscount,cost:0,...(item.noteItemOverrides?{noteItem:item.noteItemOverrides}:{}),...(item.noteCfopOverride?{cfop:item.noteCfopOverride}:{})})),commercialTotals:draft.commercialTotals,reserveStock:false,stockState:'Sem movimentação',seller:'',fiscalDocument:'nfe',paymentMethod:draft.paymentMethod,paymentDetails:draft.paymentDetails,installments:draft.paymentInstallments||1,firstDueDate:draft.paymentFirstDueDate||'',operationNature:draft.operationNature||'',notes:draft.additionalInfo||'',fiscalForm:draft.fiscalForm} } as CreatedRecord);
             setStandaloneFiscal(true);setCommercialReturnView('fiscal');setView('novo_pedido');
           }}
         />}
         {view === 'recebimentos' && <ReceivablesView records={receivableRecords} initialOrigin={receivableOrigin} connected={Boolean(managementCatalogBridge)} onReceive={receiveInstallment} onRefund={refundInstallment}/>}
         {view === 'relatorios' && <ReportsView created={created} catalogRecords={catalogRecords} movementRecords={stockMovementRecords} receivableRecords={receivableRecords} fiscalDrafts={fiscalDraftRecords}/>}
         {view === 'configuracoes' && (
-          <SettingsView
+          <SettingsView fiscalDefaultsContext={{companyId:managementCatalogBridge?.companyId||'',origin:managementBridgeOrigin||'',onSaved:()=>void loadRealFiscalEditor()}}
             settings={moduleSettings}
             connected={managementCatalogBridge?.catalogAvailable === true}
             canEdit={can('settings.edit')}

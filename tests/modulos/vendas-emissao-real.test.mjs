@@ -124,3 +124,10 @@ test('pagamento externo sem autorização gera XML válido sem tag cAut vazia',a
  const checked=await validateNfeXmlAgainstXsd(built.xml);
  assert.equal(checked.executed,true);assert.equal(checked.valid,true,JSON.stringify(checked.errors));
 });
+
+test('classificações do item geram PISNT/COFINSNT e IPI não tributado válidos no XSD',async()=>{
+ const source=input(newFiscalNoteFields());source.items[0]={...source.items[0],pisCst:'08',cofinsCst:'08',ipiCst:'53',ipiLegalCode:'999'};
+ const built=buildUnsignedNfeSpXml(source);assert.equal(built.valid,true,JSON.stringify(built.errors));assert.match(built.xml,/<PISNT><CST>08<\/CST><\/PISNT>/);assert.match(built.xml,/<COFINSNT><CST>08<\/CST><\/COFINSNT>/);assert.match(built.xml,/<IPI><cEnq>999<\/cEnq><IPINT><CST>53<\/CST><\/IPINT><\/IPI>/);
+ const xsd=await validateNfeXmlAgainstXsd(built.xml);assert.equal(xsd.valid,true,JSON.stringify(xsd));
+ source.items[0].ipiCst='50';assert.equal(buildUnsignedNfeSpXml(source).valid,false);
+});

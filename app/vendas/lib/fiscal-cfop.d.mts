@@ -6,5 +6,5 @@ export function cfopNature(entry:OfficialCfop):string;
 export function searchCfop(query?:string,date?:string):OfficialCfop[];
 export function cfopOperation(entry:OfficialCfop|null):string;
 export function cfopPrefix(destination:string,direction?:string):string;
-export function configuredNoteCfop(input:{matrix:any;context:any;nature?:string;direction?:string;date?:string}):string;
+export function configuredNoteCfop(input:{matrix:any;context:any;nature?:string;direction?:string;date?:string;defaults?:{internal?:string;interstate?:string}}):string;
 export function noteItemCfop(input:{manual?:string;product?:{useCompanyFiscal?:boolean;cfopInternal?:string;cfopInterstate?:string};operationCfop:string;destination:string}):string;

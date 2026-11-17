@@ -118,6 +118,7 @@ function normalizeItem(value = {}, index = 0) {
     icmsCode: digits(value.icmsCode, 3),
     pisCst: digits(value.pisCst, 2),
     cofinsCst: digits(value.cofinsCst, 2),
+    ipiCst:digits(value.ipiCst,2),ipiLegalCode:digits(value.ipiLegalCode,3),
   };
 }
 
@@ -276,6 +277,8 @@ export function validateNfeSpXmlInput(inputValue, options) {
     if (!(item.unitValue >= 0)) errors.push(validationError('NFE-I10a', `${prefix}.unitValue`, `Item ${index + 1}: o valor unitário não pode ser negativo.`));
     if (!item.origin) errors.push(validationError('NFE-N11', `${prefix}.origin`, `Item ${index + 1}: informe a origem fiscal da mercadoria.`));
     if (item.icmsCode !== '102') errors.push(validationError('AV-NFE-ICMS', `${prefix}.icmsCode`, `Item ${index + 1}: o primeiro gerador suporta somente CSOSN 102; outros regimes permanecem bloqueados.`));
+    if(item.ipiCst&&(!['01','02','03','04','05','51','52','53','54','55'].includes(item.ipiCst)||!/^\d{3}$/.test(item.ipiLegalCode)))errors.push(validationError('AV-NFE-IPI',`${prefix}.ipiCst`,`Item ${index+1}: revise o IPI. Apuração com destaque exige suporte específico e não será omitida silenciosamente.`));
+    if (['01','02','03'].includes(item.pisCst)||['01','02','03'].includes(item.cofinsCst)) errors.push(validationError('AV-NFE-CONTRIBUTION-RATE',prefix,`Item ${index+1}: PIS/COFINS tributados exigem base e alíquota apuradas; este gerador não assume valores zero.`));
     if (!item.pisCst || !item.cofinsCst) errors.push(validationError('AV-NFE-PIS-COFINS', prefix, `Item ${index + 1}: informe os CST de PIS e COFINS.`));
   });
 
@@ -300,6 +303,12 @@ export function validateNfeSpXmlInput(inputValue, options) {
   return { input, valid: errors.length === 0, errors, warnings, accessKey, schemaValidationExecuted: false, schemaPackage: NFE_SP_SCHEMA_PACKAGE };
 }
 
+function contributionXml(name,cst){
+ if(['04','05','06','07','08','09'].includes(cst))return `<${name}><${name}NT>${xmlTag('CST',cst,0)}</${name}NT></${name}>`;
+ if(['01','02'].includes(cst))return `<${name}><${name}Aliq>${xmlTag('CST',cst,0)}<vBC>0.00</vBC><p${name}>0.0000</p${name}><v${name}>0.00</v${name}></${name}Aliq></${name}>`;
+ if(cst==='03')return `<${name}><${name}Qtde>${xmlTag('CST',cst,0)}<qBCProd>0.0000</qBCProd><vAliqProd>0.0000</vAliqProd><v${name}>0.00</v${name}></${name}Qtde></${name}>`;
+ return `<${name}><${name}Outr>${xmlTag('CST',cst,0)}<vBC>0.00</vBC><p${name}>0.0000</p${name}><v${name}>0.00</v${name}></${name}Outr></${name}>`;
+}
 function itemXml(item, index, crt) {
   const icms = crt === '1'
     ? [`          <ICMSSN102>`, xmlTag('orig', item.origin, 6), xmlTag('CSOSN', item.icmsCode, 6), `          </ICMSSN102>`].join('\n')
@@ -328,22 +337,9 @@ function itemXml(item, index, crt) {
     '        <ICMS>',
     icms,
     '        </ICMS>',
-    '        <PIS>',
-    '          <PISOutr>',
-    xmlTag('CST', item.pisCst, 6),
-    xmlTag('vBC', '0.00', 6),
-    xmlTag('pPIS', '0.0000', 6),
-    xmlTag('vPIS', '0.00', 6),
-    '          </PISOutr>',
-    '        </PIS>',
-    '        <COFINS>',
-    '          <COFINSOutr>',
-    xmlTag('CST', item.cofinsCst, 6),
-    xmlTag('vBC', '0.00', 6),
-    xmlTag('pCOFINS', '0.0000', 6),
-    xmlTag('vCOFINS', '0.00', 6),
-    '          </COFINSOutr>',
-    '        </COFINS>',
+    item.ipiCst?`<IPI>${xmlTag('cEnq',item.ipiLegalCode,0)}<IPINT>${xmlTag('CST',item.ipiCst,0)}</IPINT></IPI>`:'',
+    contributionXml('PIS',item.pisCst),
+    contributionXml('COFINS',item.cofinsCst),
     '      </imposto>',
     '    </det>',
   ].filter(Boolean).join('').replace(/>[ \r\n\t]+</g, '><');
@@ -520,7 +516,7 @@ export function prototypeDraftToNfeSpXmlInput({ draft, client, config, issuedAt 
       email: client?.email,
       address: { street: client?.street, number: client?.number, complement: client?.complement, district: client?.district, cityCode: client?.cityCode, city: client?.cityName, uf: client?.state, cep: client?.cep, phone: client?.phone },
     },
-    items: items.map((item, index) => ({ number: index + 1, code: item.sku, description: item.name, gtin: item.gtin, ncm: item.ncm, cest: item.cest, cfop: item.cfopInternal, commercialUnit: item.unit, quantity: item.quantity, unitValue: item.unitPrice, totalValue: decimal(item.quantity) * decimal(item.unitPrice), discountValue: itemDiscounts[index], taxableUnit: item.taxableUnit || item.unit, taxableQuantity: item.quantity, taxableUnitValue: item.unitPrice, origin: item.fiscalOriginCode, icmsCode: item.icmsCode, pisCst: item.pisCst, cofinsCst: item.cofinsCst })),
+    items: items.map((item, index) => ({ number: index + 1, code: item.sku, description: item.name, gtin: item.gtin, ncm: item.ncm, cest: item.cest, cfop: item.cfopInternal, commercialUnit: item.unit, quantity: item.quantity, unitValue: item.unitPrice, totalValue: decimal(item.quantity) * decimal(item.unitPrice), discountValue: itemDiscounts[index], taxableUnit: item.taxableUnit || item.unit, taxableQuantity: item.quantity, taxableUnitValue: item.unitPrice, origin: item.fiscalOriginCode, icmsCode: item.icmsCode, pisCst: item.pisCst, cofinsCst: item.cofinsCst,ipiCst:item.ipiCst,ipiLegalCode:item.ipiLegalCode })),
     totals: { products: normalizedProducts, freight: normalizedFreight, insurance: normalizedInsurance, discount: discountTotal, other: normalizedOther, invoice: normalizedInvoice },
     payment: { method: draft?.paymentMethod || 'Outros', amount: draft?.total, details: draft?.paymentDetails, installments:draft?.paymentInstallments },
     additionalInfo: draft?.fiscalForm?text(draft?.additionalInfo,5000):[text(draft?.additionalInfo, 2000), `Rascunho ${draft?.id || 'não identificado'} · origem ${draft?.originId || 'não identificada'}`].filter(Boolean).join(' · '),

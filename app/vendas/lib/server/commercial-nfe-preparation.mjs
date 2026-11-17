@@ -150,6 +150,7 @@ export function buildCommercialNfePreparationInput(data, rules, idempotencyKey, 
       icmsCode: applied.icmsCode || fiscal.csosn || fiscal.cst,
       pisCst: applied.pisCst || fiscal.pisCst,
       cofinsCst: applied.cofinsCst || fiscal.cofinsCst,
+      ipiCst: applied.ipiCst || fiscal.ipiCst || '',ipiLegalCode:applied.ipiLegalCode || fiscal.ipiLegalCode || '',
     };
   });
   return {

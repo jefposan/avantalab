@@ -30,6 +30,8 @@ function normalizarConfiguracaoFiscal(valor: unknown) {
     origem_mercadoria_padrao: origemMercadoria,
     cst_icms: campoNumerico('cst_icms', 3),
     csosn: campoNumerico('csosn', 3),
+    cfop_venda_interna: campoNumerico('cfop_venda_interna',4),
+    cfop_venda_interestadual: campoNumerico('cfop_venda_interestadual',4),
     cst_pis: campoNumerico('cst_pis', 2),
     cst_cofins: campoNumerico('cst_cofins', 2),
     cst_ibs_cbs: texto(valor && typeof valor === 'object' ? (valor as Record<string, unknown>).cst_ibs_cbs : '', 12),

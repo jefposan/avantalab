@@ -7,6 +7,7 @@ const number = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
 function fiscalConfiguration(value) {
   const source = value && typeof value === 'object' ? value : {};
   return {
+    cfopInternal: clean(source.cfop_venda_interna),cfopInterstate:clean(source.cfop_venda_interestadual),
     originCode: /^[0-8]$/.test(clean(source.origem_mercadoria_padrao)) ? clean(source.origem_mercadoria_padrao) : '',
     cstIcms: clean(source.cst_icms), csosn: clean(source.csosn),
     pisCst: clean(source.cst_pis), cofinsCst: clean(source.cst_cofins),

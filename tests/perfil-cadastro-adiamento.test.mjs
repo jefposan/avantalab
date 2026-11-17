@@ -63,7 +63,7 @@ test('empresa fornece padrões fiscais e produto só aplica exceções quando pe
   assert.match(modal, /Parâmetros tributários padrão/);
   assert.match(modal, /CFOP e natureza da operação são definidos na regra da própria emissão/);
   assert.match(rules, /resolverFiscalProduto/);
-  assert.match(rules, /cfop: rule\.cfopOverride/);
+  assert.match(rules, /cfop.*rule\.cfopOverride/);
   const company = {taxRegime:'simples_nacional',fiscalConfiguration:{originCode:'0',csosn:'102',pisCst:'49',cofinsCst:'49'}};
   const item = {usar_fiscal_empresa:true,ncm:'33059000',unit:'UN',cst_pis:'04'};
   assert.equal(resolverFiscalProduto(item,company,{destination:'Dentro da UF',cfop:'5102'}).pisCst,'49');

@@ -1,3 +1,4 @@
+import {applyNoteItemFiscal,validateNoteItem} from '../fiscal-note-item.mjs';
 import {officialCfop,cfopNature,cfopOperation,cfopPrefix} from '../fiscal-cfop.mjs';
 import { createHash } from 'node:crypto';
 import { resolverFiscalProduto } from '../../../lib/fiscal-produto.mjs';
@@ -269,15 +270,19 @@ function consumerFinal(customer = {}) {
 
 function itemRule(item, rule, issuer, destination, direction='1',date) {
   const fiscal = item?.fiscal && typeof item.fiscal === 'object' ? item.fiscal : {};
-  const resolved = resolverFiscalProduto({ ...fiscal, unit: item.unit }, issuer, { destination, cfop: rule.cfopOverride });
-  const applied = Object.fromEntries(Object.entries(resolved).filter(([key]) => key !== 'useCompanyFiscal'));
+  const companyCfop=destination==='Dentro da UF'?issuer.fiscalConfiguration?.cfopInternal:destination==='Fora da UF'?issuer.fiscalConfiguration?.cfopInterstate:'';
+  const baseline=['nfe-venda-interna-contribuinte','nfe-venda-interestadual-contribuinte','nfe-venda-consumidor-final'].includes(rule.id);
+  const cfop=!rule.noteCfopSelected&&baseline&&companyCfop?.startsWith(cfopPrefix(destination,direction))?companyCfop:rule.cfopOverride;
+  const resolved = resolverFiscalProduto({ ...fiscal, unit: item.unit }, issuer, { destination, cfop });
+  const applied = applyNoteItemFiscal(Object.fromEntries(Object.entries(resolved).filter(([key]) => key !== 'useCompanyFiscal')),fiscal.noteItemOverrides);
   // Revisão explícita da nota não altera a herança fiscal do produto nem da empresa.
   if (typeof fiscal.noteCfopOverride === 'string' && /^\d{4}$/.test(fiscal.noteCfopOverride)) applied.cfop = fiscal.noteCfopOverride;
   const missing = [];
+  if(validateNoteItem(fiscal.noteItemOverrides))missing.push('ajustes válidos do item nesta nota');
   if (fiscal.noteCfopOverride && !officialCfop(fiscal.noteCfopOverride,date)) missing.push('CFOP vigente');
   if (!/^\d{8}$/.test(applied.ncm)) missing.push('NCM');
-  const cfopPrefix = destination === 'Dentro da UF' ? (direction==='0'?'1':'5') : destination === 'Fora da UF' ? (direction==='0'?'2':'6') : (direction==='0'?'3':'7');
-  if (!/^\d{4}$/.test(applied.cfop) || !cfopPrefix || !applied.cfop.startsWith(cfopPrefix)) missing.push('CFOP compatível com a UF de destino');
+  const expectedPrefix = destination === 'Dentro da UF' ? (direction==='0'?'1':'5') : destination === 'Fora da UF' ? (direction==='0'?'2':'6') : (direction==='0'?'3':'7');
+  if (!/^\d{4}$/.test(applied.cfop) || !expectedPrefix || !applied.cfop.startsWith(expectedPrefix)) missing.push('CFOP compatível com a UF de destino');
   if (!/^\d$/.test(applied.originCode)) missing.push('origem da mercadoria');
   if (!/^\d{2,3}$/.test(applied.icmsCode)) missing.push('CST/CSOSN');
   if (!/^\d{2}$/.test(applied.pisCst)) missing.push('CST do PIS');
@@ -347,7 +352,7 @@ export function createCommercialFiscalRuleResolver({ repository, issuerResolver 
     const itemEntries = [];
     const errors = [];
     for (const item of Array.isArray(items) ? items : []) {
-      const { applied, missing } = itemRule(item, selectedCfop?{...resolution.rule,cfopOverride:selectedCfop.code}:resolution.rule, issuer, context.destination, fiscalForm?.direction,fiscalForm?.issueDate||undefined);
+      const { applied, missing } = itemRule(item, selectedCfop?{...resolution.rule,cfopOverride:selectedCfop.code,noteCfopSelected:true}:resolution.rule, issuer, context.destination, fiscalForm?.direction,fiscalForm?.issueDate||undefined);
       if (missing.length) errors.push(issue('AV-FISCAL-RULES-ITEM', 'items', `${clean(item.name, 100) || 'Item'}: revise ${missing.join(', ')} antes da emissão. NCM e unidade tributável ficam no produto; CFOP e tributos seguem os padrões da empresa e as exceções salvas no produto.`));
       const key = UUID.test(clean(item.productId)) ? clean(item.productId) : clean(item.sku, 80);
       if (key) itemEntries.push([key, applied]);
