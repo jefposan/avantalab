@@ -1260,6 +1260,24 @@ type NoteCorrection = { draft: FiscalDraftRecord; status: FiscalEmissionStatus; 
 
 function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, clientPriceTables, clientRecords, catalogRecords, settings, issuerRegistry, connected, initialClient = '', initialSku = '', initialRecord = null, fiscalOnly = false, onFiscalCreated, onFiscalCorrection, onCancel, onCreated }: { companyId?: string; fiscalEditor?: FiscalNoteEditorOptions; correction?: NoteCorrection; onSaveClient?: (client: ClientRecord) => Promise<ConfirmedSave>; clientPriceTables?: FiscalNoteEditorOptions['priceTables']; clientRecords: ClientRecord[]; catalogRecords: CatalogItem[]; settings: ModuleSettings; issuerRegistry: FiscalIssuerRegistry; connected: boolean; initialClient?: string; initialSku?: string; initialRecord?: CreatedRecord | null; fiscalOnly?: boolean; onFiscalCreated?: (record: CreatedRecord, issue?: boolean) => Promise<ConfirmedSave>; onFiscalCorrection?: (result: ConfirmedSave) => void; onCancel: () => void; onCreated: (record: CreatedRecord) => void }) {
   const [noteFields,setNoteFields]=useState<NoteFields>(()=>updateFiscalNoteFields({...newFiscalNoteFields(),series:fiscalEditor?.series??'',number:fiscalEditor?.number??'',priceTableId:fiscalEditor?.clientPriceTables[clientRecords.find(client=>client.name===(initialRecord?.client||initialClient))?.id||'']||fiscalEditor?.defaultPriceTableId||'standard',...initialRecord?.order?.fiscalForm,...(correction?{series:String(correction.status.series),number:String(correction.status.number)}:{})}));
+  const noteSummaryRef=useRef<HTMLElement>(null);
+  useEffect(()=>{
+    const summary=noteSummaryRef.current;
+    if(!fiscalOnly||!summary)return;
+    const header=summary.closest('.commercial-app')?.querySelector<HTMLElement>('.topbar');
+    const update=()=>{
+      const viewport=window.innerHeight;
+      const headerHeight=header?.getBoundingClientRect().height||0;
+      const available=Math.max(120,viewport-headerHeight-32);
+      const height=Math.min(summary.scrollHeight,available);
+      summary.style.setProperty('--note-summary-top',`${Math.max(headerHeight+16,(viewport+headerHeight-height)/2)}px`);
+      summary.style.setProperty('--note-summary-max-height',`${available}px`);
+    };
+    const observer=new ResizeObserver(update);
+    observer.observe(summary);if(header)observer.observe(header);
+    window.addEventListener('resize',update);update();
+    return()=>{observer.disconnect();window.removeEventListener('resize',update);};
+  },[fiscalOnly]);
   const [pendingTable,setPendingTable]=useState<string|null>(null);
   const seriesEditedRef=useRef(Boolean(initialRecord?.order?.fiscalForm?.series));
   useEffect(()=>{setNoteFields(current=>syncFiscalNoteNumbering(current,fiscalEditor,{seriesEdited:seriesEditedRef.current,reserved:Boolean(correction)}));},[fiscalEditor?.series,fiscalEditor?.number,correction]);
@@ -1467,11 +1485,12 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
     }}/>}
     {editingProduct && companyId && <Dialog open title={`Cadastro de ${editingProduct.name}`} description="" onClose={closeProduct}><div className="dialog-body order-product-registration"><ProductRegistration companyId={companyId} initialProductId={editingProduct.catalogItemId} embeddedProduct onProductSaved={savedProduct} onProductCancel={()=>{setProductDirty(false);setEditingProduct(null);}} onProductDirtyChange={setProductDirty} onProductBusyChange={setProductBusy}/></div></Dialog>}
     <ModalConfirmacao aberto={confirmProductClose} titulo="Descartar alterações do cadastro?" mensagem="As alterações não salvas deste produto serão descartadas. O pedido ou a nota permanecerá aberto." textoCancelar="Continuar editando" textoConfirmar="Descartar" variante="alerta" aoCancelar={()=>setConfirmProductClose(false)} aoConfirmar={()=>{setConfirmProductClose(false);setProductDirty(false);setEditingProduct(null);}}/>
-    <div className="order-page-heading">
+    <div className={`order-page-heading${fiscalOnly ? ' note-page-heading' : ''}`}>
       <div><span>{fiscalOnly ? 'Documento fiscal' : 'Pedido comercial'}</span><h1>{correction ? `${correction.status.state==='rejected'?'Corrigir':'Editar'} NF-e ${correction.status.number} · série ${correction.status.series}` : fiscalOnly ? 'Nova nota fiscal avulsa' : editing ? `Continuar pedido ${initialRecord?.id}` : 'Novo pedido'}</h1><p>{correction ? correction.status.state==='rejected'?`Rejeição ${correction.status.statusCode}: ${correction.status.statusReason}`:'Revise os dados da nota. Salvar não transmite o documento.' : fiscalOnly ? 'Preencha destinatário, produtos e valores para preparar a NF-e.' : editing ? 'Revise o rascunho salvo e continue do ponto em que parou.' : 'O pedido concentra condições comerciais, reserva de estoque, recebimento e preparação fiscal.'}</p></div>
+      {fiscalOnly && <div className="order-safety note-heading-safety"><Icon name="check" size={18}/><p><strong>Somente emissão fiscal.</strong> Preparar ou emitir esta nota não cria pedido, não gera contas a receber, não entra nas receitas e não movimenta estoque.</p></div>}
       <Badge tone={connected ? 'info' : 'warning'}>{connected ? 'Perfil empresarial' : 'Rascunho local'}</Badge>
     </div>
-    <div className="order-safety"><Icon name={connected ? 'check' : 'warning'} size={18}/><p><strong>{fiscalOnly ? 'Somente emissão fiscal.' : connected ? 'Operação vinculada ao perfil.' : 'Ambiente de demonstração.'}</strong> {fiscalOnly ? 'Preparar ou emitir esta nota não cria pedido, não gera contas a receber, não entra nas receitas e não movimenta estoque.' : connected ? 'Ao confirmar, o pedido será gravado para a empresa ativa. Estoque só será movimentado se o controle estiver ligado neste pedido. A nota fiscal continua sujeita às validações da Central Fiscal.' : 'Confirmar pode reservar o estoque local deste protótipo; nenhuma cobrança ou nota fiscal será transmitida.'}</p></div>
+    {!fiscalOnly && <div className="order-safety"><Icon name={connected ? 'check' : 'warning'} size={18}/><p><strong>{fiscalOnly ? 'Somente emissão fiscal.' : connected ? 'Operação vinculada ao perfil.' : 'Ambiente de demonstração.'}</strong> {fiscalOnly ? 'Preparar ou emitir esta nota não cria pedido, não gera contas a receber, não entra nas receitas e não movimenta estoque.' : connected ? 'Ao confirmar, o pedido será gravado para a empresa ativa. Estoque só será movimentado se o controle estiver ligado neste pedido. A nota fiscal continua sujeita às validações da Central Fiscal.' : 'Confirmar pode reservar o estoque local deste protótipo; nenhuma cobrança ou nota fiscal será transmitida.'}</p></div>}
     <div ref={formRef} className="order-layout" aria-busy={savingFiscal} inert={savingFiscal}>
       <div className="order-main" inert={fiscalAttemptLocked}>
         {fiscalEditor&&<NoteOperationFields value={noteFields} onChange={patchNoteFields} nature={operationNature} onNature={value=>{natureEditedRef.current=true;setOperationNature(value);}} natures={[...new Set(settings.fiscal.matrix.rules.filter(rule=>rule.documentType==='nfe'&&rule.active&&rule.reviewed).map(rule=>rule.operationNature))]}/>}
@@ -1549,7 +1568,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
         </section>}
       </div>
 
-      <aside className="order-summary" aria-label={fiscalOnly ? 'Resumo da nota' : 'Resumo do pedido'}>
+      <aside ref={noteSummaryRef} className={`order-summary${fiscalOnly ? ' note-summary-floating' : ''}`} aria-label={fiscalOnly ? 'Resumo da nota' : 'Resumo do pedido'}>
         {fiscalAttemptLocked && correction && <div className="order-validation" role="status"><strong>Nota ainda não autorizada.</strong><p>{fiscalStatusPresentation(correction.status).detail}</p></div>}
         <section>
           <header><span>{fiscalOnly ? 'Resumo da nota' : 'Resumo do pedido'}</span><Badge tone={orderReady ? 'success' : 'warning'}>{orderReady ? 'Pronto para confirmar' : fiscalOnly ? 'Revisar nota' : 'Revisar pedido'}</Badge></header>

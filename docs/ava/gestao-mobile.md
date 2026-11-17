@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.450 -->
+<!-- ava-version: 3.2.0.451 -->
+
+> Revisão 3.2.0.451: Aviso Somente emissão fiscal ocupa um card compacto junto ao título no desktop, preservando texto. Resumo da nota e ações acompanham a rolagem no centro vertical da coluna lateral. Telas baixas permitem rolar o conjunto; em uma coluna, o resumo permanece no fluxo para não cobrir campos. Sem mudança de emissão.
 
 > Revisão 3.2.0.450: No preenchimento da NF-e, Série carrega a sequência do perfil/estabelecimento/ambiente e permanece editável. Número é somente leitura: prévia do próximo disponível, sem reserva ao abrir; correções preservam o número já reservado. A reserva definitiva permanece na confirmação da emissão.
 

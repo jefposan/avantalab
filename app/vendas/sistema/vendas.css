@@ -2436,3 +2436,26 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 .order-customer-control{display:flex;align-items:center;gap:8px;min-width:0}
 .order-customer-control select{flex:1;min-width:0;width:0}
 .order-customer-control .order-customer-edit{flex:0 0 44px;width:44px;height:44px;color:var(--brand)}
+
+/* Resumo fiscal acompanha a coluna sem sobrepor o preenchimento. */
+@media (min-width: 921px) {
+  .order-summary.note-summary-floating { position: sticky; top: var(--note-summary-top,96px); max-height: var(--note-summary-max-height,calc(100dvh - 112px)); overflow-y: auto; scrollbar-width: thin; }
+}
+@media (max-width: 1050px) {
+  .note-local-page .order-summary.note-summary-floating { position: static; max-height: none; overflow: visible; }
+}
+@media print {
+  .order-summary.note-summary-floating { position: static; max-height: none; overflow: visible; }
+}
+
+.note-page-heading { grid-template-columns: minmax(240px,1fr) minmax(280px,1.2fr) auto; gap: 14px; }
+.note-page-heading .note-heading-safety { margin: 0; padding: 9px 12px; }
+.note-page-heading .note-heading-safety p { color: inherit; font-size: 10.5px; line-height: 1.45; }
+@media (max-width: 1100px) {
+  .note-page-heading { grid-template-columns: minmax(0,1fr) auto; }
+  .note-page-heading .note-heading-safety { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 640px) {
+  .note-page-heading { grid-template-columns: minmax(0,1fr); }
+  .note-page-heading .note-heading-safety { grid-row: auto; }
+}

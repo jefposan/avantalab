@@ -1,3 +1,9 @@
+## 3.2.0.451 — Vendas e Serviços: resumo fiscal flutuante centralizado
+
+- Resumo e ações acompanham rolagem no centro vertical da coluna, respeitando cabeçalho e altura disponível. Mede mudanças de conteúdo e janela, com limpeza ao sair.
+- Aviso Somente emissão fiscal preserva texto e cores, com largura compacta ao lado do título; telas estreitas quebram para baixo sem corte.
+- Telas baixas mantêm ações alcançáveis por rolagem; mobile em uma coluna e impressão preservam fluxo normal. Demais resumos não mudam.
+
 ## 3.2.0.450 — Vendas e Serviços: série cadastrada e número somente leitura
 
 - Editor recebe série e próximo número disponível do estabelecimento e ambiente fiscal corretos, incluindo números liberados válidos. Consulta somente de leitura.

@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_dwwUPmahjwVbdPvqFKUEsYDynfaM",
+  "baseDeploymentId": "dpl_3BuobnAZdL8oKBE3jQ2rDGeabstD",
   "migrations": [],
-  "version": "3.2.0.450",
-  "scope": "Vendas e Serviços: preencher série cadastrada e exibir número somente leitura"
+  "version": "3.2.0.451",
+  "scope": "Vendas e Serviços: aviso compacto e resumo fiscal flutuante centralizado"
 }

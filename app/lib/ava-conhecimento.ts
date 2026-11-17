@@ -1,3 +1,4 @@
+// Revisão 3.2.0.451: aviso fiscal compacto junto ao título; resumo fiscal centralizado na coluna lateral acompanha rolagem; telas de uma coluna mantêm fluxo normal.
 // Revisão 3.2.0.450: série da NF-e carregada do cadastro; número protegido em leitura, prévia até a reserva definitiva na emissão.
 // Revisão 3.2.0.449: em Conteúdo AvantaVendas, tocar no nome do produto abre a edição também no mobile e na busca.
 // Revisão 3.2.0.448: popup central Salvando configurações permanece até confirmação e devolve erro ao formulário preservado; salvar configurações aguarda confirmação, conserva edição em falha e não inclui regras gerais nos novos modelos; regras gerais renomeadas para operações não previstas; consumidor final com destino Qualquer inclui fora da UF.
