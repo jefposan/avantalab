@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.451 -->
+<!-- ava-version: 3.2.0.452 -->
+
+> Revisão 3.2.0.452: No destinatário da nota/pedido, sem cliente selecionado o botão Novo abre o cadastro em popup. Com seleção, o lápis abre a edição. Após salvar, cliente fica selecionado; cancelar preserva a nota. Respeita permissões distintas de criar e editar.
 
 > Revisão 3.2.0.451: Aviso Somente emissão fiscal ocupa um card compacto junto ao título no desktop, preservando texto. Resumo da nota e ações acompanham a rolagem no centro vertical da coluna lateral. Telas baixas permitem rolar o conjunto; em uma coluna, o resumo permanece no fluxo para não cobrir campos. Sem mudança de emissão.
 

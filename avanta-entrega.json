@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_3BuobnAZdL8oKBE3jQ2rDGeabstD",
+  "baseDeploymentId": "dpl_Ff4onTam7Z61psBxf2tFQ4AasqAc",
   "migrations": [],
-  "version": "3.2.0.451",
-  "scope": "Vendas e Serviços: aviso compacto e resumo fiscal flutuante centralizado"
+  "version": "3.2.0.452",
+  "scope": "Vendas e Serviços: botão + Novo e cadastro de cliente em popup no destinatário"
 }

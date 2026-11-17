@@ -1,3 +1,8 @@
+## 3.2.0.452 — Vendas e Serviços: cadastrar cliente no destinatário
+
+- Botão contextual oferece Novo sem seleção e lápis Editar com cliente selecionado. Reutiliza cadastro existente em popup e seleciona o cliente salvo.
+- Preserva campos/itens da nota ao salvar ou cancelar; usa permissão clients.create ou clients.edit conforme a ação e bloqueia durante emissão. Sem alteração de banco.
+
 ## 3.2.0.451 — Vendas e Serviços: resumo fiscal flutuante centralizado
 
 - Resumo e ações acompanham rolagem no centro vertical da coluna, respeitando cabeçalho e altura disponível. Mede mudanças de conteúdo e janela, com limpeza ao sair.

@@ -1,3 +1,4 @@
+// Revisão 3.2.0.452: destinatário sem seleção oferece Novo cliente em popup; selecionado oferece lápis Editar, preservando a nota.
 // Revisão 3.2.0.451: aviso fiscal compacto junto ao título; resumo fiscal centralizado na coluna lateral acompanha rolagem; telas de uma coluna mantêm fluxo normal.
 // Revisão 3.2.0.450: série da NF-e carregada do cadastro; número protegido em leitura, prévia até a reserva definitiva na emissão.
 // Revisão 3.2.0.449: em Conteúdo AvantaVendas, tocar no nome do produto abre a edição também no mobile e na busca.

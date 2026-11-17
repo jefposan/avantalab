@@ -2459,3 +2459,6 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
   .note-page-heading { grid-template-columns: minmax(0,1fr); }
   .note-page-heading .note-heading-safety { grid-row: auto; }
 }
+
+.order-customer-control .order-customer-action { flex: 0 0 44px; width: 44px; }
+.order-customer-control .order-customer-new { flex-basis: 88px; width: 88px; }
