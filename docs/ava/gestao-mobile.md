@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.458 -->
+<!-- ava-version: 3.2.0.459 -->
+
+> Revisão 3.2.0.459: Meus perfis: a linha do perfil aberto e o consolidado acompanham imediatamente o estado do financeiro, como o gráfico, ao incluir/editar/excluir receitas ou despesas e nas releituras por Realtime. Não é necessário reabrir a tela para atualizar os valores. O comparativo usa o perfil inteiro mesmo quando o gráfico está filtrado por centro de custo. Ao trocar mês, consulta os demais perfis em segundo plano e descarta respostas do período anterior. A atualização visual local não confirma envio ao servidor: pendências, conflitos e confirmação da fila continuam visíveis pelas regras existentes.
 
 > Revisão 3.2.0.458: Marketplaces: pedidos recolhidos mostram produto e valor; busca por nome, pedido ou valor fica à esquerda de Conta, Situação e Canal. Ao expandir pedido do Mercado Livre, Condições da compra consulta pagamento, parcelas, frete do comprador, frete do vendedor, taxas e líquido após esses descontos. Dados ausentes ficam Não informado; líquido não confirma repasse nem altera nota fiscal. Rateio de frete compartilhado segue o financeiro. Atualizar pós-venda refaz a consulta. Histórico do navegador desativado no seletor de produtos da nota.
 

@@ -1,3 +1,9 @@
+## 3.2.0.459 — Gestão Mobile: atualização imediata de Meus perfis
+
+- A linha do perfil aberto e o consolidado de Meus perfis passam a acompanhar o mesmo estado financeiro usado pelo gráfico, inclusive após inclusão, edição, exclusão, confirmação e releitura por Realtime, sem consulta adicional a cada render.
+- Comparativo mantém o total do perfil inteiro ao selecionar um centro de custo. Trocar mês atualiza o resumo dos perfis em segundo plano, descarta respostas antigas e não mostra valores do período anterior como atuais.
+- Sem mudança em lançamentos, banco, permissões ou envio da fila; operação local pendente continua sujeita à confirmação existente. Correção preparada em branch isolada da main oficial; publicação autorizada pelo responsável.
+
 ## 3.2.0.458 — Marketplaces: busca, resumo e condições da compra
 
 - Produto e valor visíveis no pedido recolhido. Busca à esquerda das três listas por produto/comprador, número do pedido ou valor, respeitando o período e os filtros atuais.

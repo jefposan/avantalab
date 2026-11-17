@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_3cn4SydxRGpRszLV3FowYZdjK8n2",
+  "baseDeploymentId": "dpl_HHAy5HH6eJBrrvAzS8BXfkimcrob",
   "migrations": [],
-  "version": "3.2.0.458",
-  "scope": "Marketplaces: busca, resumo e condições da compra; nota sem histórico de produtos"
+  "version": "3.2.0.459",
+  "scope": "Gestão Mobile: sincronizar Meus perfis com o financeiro"
 }

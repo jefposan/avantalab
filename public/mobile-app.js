@@ -4671,12 +4671,12 @@
     }).join('');
   }
 
-  function dadosMes(mes) {
+  function dadosMes(mes, todosCentros) {
     var complemento = ehLojaNativaMobile() && state.complementosDashboard && state.complementosDashboard[mes];
-    var lancamentos = (complemento ? complemento.lancamentos.filter(itemPertenceAoCentroCustoAtualMobile) : lancamentosDoCentroCustoAtualMobile()).filter(function (item) {
+    var lancamentos = (todosCentros ? (complemento ? complemento.lancamentos : state.lancamentos) : (complemento ? complemento.lancamentos.filter(itemPertenceAoCentroCustoAtualMobile) : lancamentosDoCentroCustoAtualMobile())).filter(function (item) {
       return item.mes === mes && item.status !== 'cancelada';
     });
-    var entradas = (complemento ? complemento.entradas.filter(itemPertenceAoCentroCustoAtualMobile) : entradasDoCentroCustoAtualMobile()).filter(function (item) { return item.mes === mes; });
+    var entradas = (todosCentros ? (complemento ? complemento.entradas : state.entradas) : (complemento ? complemento.entradas.filter(itemPertenceAoCentroCustoAtualMobile) : entradasDoCentroCustoAtualMobile())).filter(function (item) { return item.mes === mes; });
     var mesIndice = indiceMes(mes);
     var despesasRealizadas = 0;
     var despesasFuturas = 0;
@@ -4704,7 +4704,7 @@
     });
     // `faturamentos` é o consolidado do perfil. No contexto de um centro,
     // a receita efetivada vem apenas das entradas daquele centro.
-    var receitasBase = state.centrosCustoAtivo ? receitasNaoPrevistas : (temTotalDefinido ? (complemento ? complemento.faturamento : state.faturamentos[mes]) : receitasNaoPrevistas);
+    var receitasBase = state.centrosCustoAtivo && !todosCentros ? receitasNaoPrevistas : (temTotalDefinido ? (complemento ? complemento.faturamento : state.faturamentos[mes]) : receitasNaoPrevistas);
     var receitas = receitasBase + receitasPrevistasPassadas;
     var receitasPrevistas = receitasPrevistasFuturas;
 
@@ -8040,6 +8040,8 @@
       db.from('lancamentos').select('empresa_id, mes, ano, dia, valor, status').in('empresa_id', ids).eq('ano', ano).eq('mes', mes),
     ]);
 
+    if (solicitacao !== state.resumoPerfisSolicitacao || Number(state.ano) !== ano || state.mes !== mes) return false;
+
     if (respostas[0].error || respostas[1].error) {
       console.error('Erro ao carregar resumo dos perfis mobile:', respostas[0].error || respostas[1].error);
       if (solicitacao !== state.resumoPerfisSolicitacao) return false;
@@ -8262,6 +8264,11 @@
     var epoca = Number(state.financeiroCacheEpoca || 0);
     var navegacao = state.financeiroNavegacao = Number(state.financeiroNavegacao || 0) + 1;
     var vigente = function () { return financeiroCacheVigenteMobile(empresaId, usuarioId, epoca) && state.financeiroNavegacao === navegacao && Number(state.ano) === ano && state.mes === mes; };
+    if (state.financeiroPeriodoPronto !== financeiroPeriodoChaveMobile(ano, mes)) {
+      state.resumoPerfisSolicitacao += 1;
+      state.resumoPerfis = [];
+      state.resumoPerfisCarregando = cardsDashboardVisiveis().indexOf('meusPerfis') >= 0;
+    }
     state.financeiroPeriodoErro = '';
     state.complementosDashboardTentativa = ''; state.complementosDashboardEmAndamento = false;
     state.complementosDashboard = {}; state.complementosDashboardErros = {}; state.historicoDezembroAnterior = null;
@@ -8273,6 +8280,11 @@
       if (!vigente()) return;
       aplicarFinanceiroPeriodoMobile(dados, mes);
       state.financeiroPeriodoPronto = financeiroPeriodoChaveMobile(ano, mes);
+      if (cardsDashboardVisiveis().indexOf('meusPerfis') >= 0) {
+        void carregarResumoPerfisMobile().then(function () {
+          if (vigente()) agendarRenderSegundoPlanoMobile(empresaId);
+        }).catch(function () { /* mantém a atualização do mês e permite nova tentativa */ });
+      }
       render();
       agendarPreCargaFinanceiroMobile();
     } catch (erro) {
@@ -13016,9 +13028,22 @@
     '</section>';
   }
 
+  // A linha do perfil aberto usa a mesma fotografia financeira do gráfico,
+  // incluindo operações locais ainda em confirmação. Os demais perfis mantêm
+  // a leitura autorizada do comparativo, sem uma nova consulta a cada render.
+  function resumoPerfisAtuaisMobile() {
+    var perfis = state.resumoPerfis || [];
+    if (!state.empresa || !state.dadosCriticosProntos || !financeiroMesProntoMobile()) return perfis;
+    var atual = dadosMes(state.mes, true);
+    return perfis.map(function (perfil) {
+      if (perfil.id !== state.empresa.id) return perfil;
+      return Object.assign({}, perfil, { receitas: atual.receitas, despesas: atual.despesas, resultado: atual.receitas - atual.despesas });
+    }).sort(function (a, b) { return b.resultado - a.resultado; });
+  }
+
   function meusPerfisCardHtml() {
     if (somenteModulosNoAppNativo()) return '';
-    var perfis = state.resumoPerfis || [];
+    var perfis = resumoPerfisAtuaisMobile();
     var cardId = 'meusPerfis';
     var totalReceitas = perfis.reduce(function (total, perfil) { return total + Number(perfil.receitas || 0); }, 0);
     var totalDespesas = perfis.reduce(function (total, perfil) { return total + Number(perfil.despesas || 0); }, 0);
@@ -13032,7 +13057,7 @@
     var valorPerfilHtml = function (valor, perfilId) {
       var revelarIndividual = !!(perfilId && state.resumoPerfilExibidoId === perfilId);
       return valoresCardVisiveis(cardId) || revelarIndividual
-        ? dinheiro(valor)
+        ? (state.resumoPerfisCarregando && !perfis.length ? 'R$ —' : dinheiro(valor))
         : 'R$ &bull;&bull;&bull;&bull;&bull;&bull;';
     };
 

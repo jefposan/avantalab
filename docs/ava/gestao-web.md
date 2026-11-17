@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.458 -->
+<!-- ava-version: 3.2.0.459 -->
+
+> Revisão 3.2.0.459: sem impacto operacional na Gestão Web React; correção da atualização do card Meus perfis restrita ao app/PWA Gestão Mobile.
 
 > Revisão 3.2.0.458: Marketplaces: pedidos recolhidos mostram produto e valor; busca por nome, pedido ou valor fica à esquerda de Conta, Situação e Canal. Ao expandir pedido do Mercado Livre, Condições da compra consulta pagamento, parcelas, frete do comprador, frete do vendedor, taxas e líquido após esses descontos. Dados ausentes ficam Não informado; líquido não confirma repasse nem altera nota fiscal. Rateio de frete compartilhado segue o financeiro. Atualizar pós-venda refaz a consulta. Histórico do navegador desativado no seletor de produtos da nota.
 
