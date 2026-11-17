@@ -150,9 +150,11 @@ test('Cabeçalho de Custos segue Projetos, retorna ao início autorizado e alter
   assert.doesNotMatch(estilos, /box-shadow:inset 3px 0/);
 });
 
-test('Catálogo e Custos usam o mesmo cadastro mestre e a mesma inativação', () => {
+test('Catálogo e Custos usam o cadastro mestre; chave só persiste ao salvar', () => {
   assert.match(repositorio, /from\('vendas_mobile_catalogo_produtos'\)/);
-  assert.match(catalogo, /inativar_produto_conteudo_vendas_mobile_rpc/);
+  assert.match(catalogo, /salvar_produto_conteudo_vendas_mobile_rpc/);
+  assert.match(catalogo, /ativo: formulario\.ativo !== false/);
+  assert.doesNotMatch(catalogo, /inativar_produto_conteudo_vendas_mobile_rpc/);
   assert.match(migracaoConteudoCatalogo, /update public\.vendas_mobile_catalogo_produtos produto\s+set ativo = false/);
   assert.doesNotMatch(catalogo, /from\('vendas_mobile_catalogo_produtos'\)\.delete\(\)/);
   assert.match(migracaoConteudoCatalogo, /disponivel_catalogo = true/);

@@ -1,0 +1,5 @@
+.acoes { display:grid;grid-template-columns:minmax(44px,1fr) minmax(50px,1fr) minmax(64px,1.1fr) minmax(78px,1.5fr);align-items:center;gap:4px;margin:20px -10px 0; }
+.acoes > button { min-width:0;width:100%; }
+.acoes > button > span { padding-inline:4px; }
+.salvar > span { min-height:44px;line-height:1.1;white-space:normal; }
+@media (min-width:400px) { .acoes { margin-inline:0;gap:8px; } }

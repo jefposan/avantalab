@@ -4,6 +4,8 @@ import Image from 'next/image';
 import CampoMoeda from './CampoMoeda';
 import CampoBusca from './CampoBusca';
 import BotaoAcaoCompacto from './BotaoAcaoCompacto';
+import ChaveAtivacao from './ChaveAtivacao';
+import styles from './CatalogoProdutosVendas.module.css';
 import { corTextoSobreFundo } from '../lib/cores-avanta';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
@@ -33,15 +35,13 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const [catalogos, setCatalogos] = useState<Catalogo[]>([]);
   const [formulario, setFormulario] = useState<Record<string, string | boolean>>(vazio);
   const [formularioAberto, setFormularioAberto] = useState(false);
-  const [aguardandoSelecao, setAguardandoSelecao] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  const [alteracaoSalva, setAlteracaoSalva] = useState(false);
   const revisaoFormularioRef = useRef(0);
   const [exportando, setExportando] = useState(false);
   const [erro, setErro] = useState('');
   const [busca, setBusca] = useState('');
-  const [produtoExclusao, setProdutoExclusao] = useState<{ id: string; nome: string; excluir: boolean } | null>(null);
+  const [produtoExclusao, setProdutoExclusao] = useState<{ id: string; nome: string } | null>(null);
   const [catalogosAbertos, setCatalogosAbertos] = useState(false);
   const [catalogoEmEdicao, setCatalogoEmEdicao] = useState<Pick<Catalogo, 'id' | 'nome' | 'codigo' | 'origem'> | null>(null);
   const [salvandoCatalogo, setSalvandoCatalogo] = useState(false);
@@ -99,7 +99,6 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const mudar = (nome: string, valor: string | boolean) => {
     if (formulario[nome] === valor) return;
     revisaoFormularioRef.current += 1;
-    setAlteracaoSalva(false);
     setFormulario((atual) => ({ ...atual, [nome]: valor }));
   };
   const levarAoFormulario = () => {
@@ -107,8 +106,6 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   };
   const iniciarNovoProduto = () => {
     if (salvando) return;
-    setAguardandoSelecao(false);
-    setAlteracaoSalva(false);
     if (!haCatalogoPublicado) {
       setErro('Ative um catálogo no AvantaVendas antes de cadastrar produtos.');
       return;
@@ -118,19 +115,17 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     setFormularioAberto(true);
     levarAoFormulario();
   };
-  const cancelarFormulario = () => {
-    if (salvando) return;
-    setAguardandoSelecao(false);
-    setAlteracaoSalva(false);
+  const retornarLista = () => {
     setErro('');
     setFormulario(vazio);
     setFormularioAberto(false);
     window.requestAnimationFrame(() => botaoNovoRef.current?.focus());
   };
+  const cancelarFormulario = () => {
+    if (!salvando) retornarLista();
+  };
   const editar = (produto: Produto) => {
     if (salvando) return;
-    setAguardandoSelecao(false);
-    setAlteracaoSalva(false);
     setErro('');
     setFormulario({ ...vazio, ...produto, preco_representante: produto.preco_representante == null ? '' : Number(produto.preco_representante).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), preco_divulgacao: Number(produto.preco_divulgacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), imagem_url: produto.imagem_url || '', sku: /^LEGADO-[0-9A-F]{32}$/i.test(produto.sku || '') ? '' : produto.sku || '', descricao: produto.descricao || '', marca: produto.marca || '', categoria: produto.categoria || '', ncm: produto.ncm || '', codigo_barras: produto.codigo_barras || '' });
     setFormularioAberto(true);
@@ -188,7 +183,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   };
 
   const salvar = async () => {
-    if (salvando || alteracaoSalva) return;
+    if (salvando) return;
     const revisaoSalva = revisaoFormularioRef.current;
     const nome = formatarDescricao(String(formulario.nome || ''));
     const revenda = textoNumero(String(formulario.preco_divulgacao || ''));
@@ -207,22 +202,26 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     setErro('');
     const payload = { sku, codigo_barras: String(formulario.codigo_barras || '').trim() || null, marca: String(formulario.marca || '').trim() || null, categoria: String(formulario.categoria || '').trim() || null, nome, descricao: String(formulario.descricao || '').trim() || null, preco_divulgacao: revenda, preco_representante: custo, unidade: String(formulario.unidade || 'un').trim() || 'un', imagem_url: String(formulario.imagem_url || '').trim() || null, ncm: String(formulario.ncm || '').trim() || null, ativo: formulario.ativo !== false };
     // A rotina protegida separa o preço cobrado do representante dos custos internos da empresa.
-    const { data, error } = await supabase.rpc('salvar_produto_conteudo_vendas_mobile_rpc', {
-      p_empresa_id: empresaId,
-      p_produto_id: formulario.id ? String(formulario.id) : null,
-      p_dados: payload,
-    });
-    const produtoSalvo = data as { id?: string } | null;
-    setSalvando(false);
-    if (error || !produtoSalvo?.id) {
-      setErro(error?.message.toLowerCase().includes('sku') ? 'Este SKU já existe neste pacote.' : error?.message.includes('Ative um catálogo') ? 'Ative um catálogo no AvantaVendas antes de cadastrar produtos.' : 'Não foi possível salvar o produto.');
-      return;
-    }
-    void solicitarIndiceVoz(produtoSalvo.id);
-    const semNovasAlteracoes = revisaoFormularioRef.current === revisaoSalva;
-    setFormulario((atual) => ({ ...atual, id: produtoSalvo.id!, ...(semNovasAlteracoes ? { nome, sku } : {}) }));
-    setAlteracaoSalva(semNovasAlteracoes);
-    await carregar(true);
+    try {
+      const { data, error } = await supabase.rpc('salvar_produto_conteudo_vendas_mobile_rpc', {
+        p_empresa_id: empresaId,
+        p_produto_id: formulario.id ? String(formulario.id) : null,
+        p_dados: payload,
+      });
+      const produtoSalvo = data as { id?: string } | null;
+      if (error || !produtoSalvo?.id) {
+        setErro(error?.message.toLowerCase().includes('sku') ? 'Este SKU já existe neste pacote.' : error?.message.includes('Ative um catálogo') ? 'Ative um catálogo no AvantaVendas antes de cadastrar produtos.' : 'Não foi possível salvar o produto.');
+        return;
+      }
+      void solicitarIndiceVoz(produtoSalvo.id);
+      const semNovasAlteracoes = revisaoFormularioRef.current === revisaoSalva;
+      setFormulario((atual) => ({ ...atual, id: produtoSalvo.id!, ...(semNovasAlteracoes ? { nome, sku } : {}) }));
+      if (semNovasAlteracoes) retornarLista();
+      void carregar(true).catch(() => setErro('Produto salvo, mas não foi possível atualizar a lista. Confira a conexão.'));
+      if (!semNovasAlteracoes) setErro('Produto salvo. Há alterações posteriores ainda não salvas.');
+    } catch {
+      setErro('Não foi possível confirmar o salvamento. Confira a conexão e tente novamente.');
+    } finally { setSalvando(false); }
   };
 
   const enviarImagem = async (arquivo: File | undefined) => {
@@ -288,30 +287,33 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     finally { setExportando(false); setExportacaoAberta(false); }
   };
 
-  const solicitarExclusaoProduto = (excluir = false) => {
+  const solicitarExclusaoProduto = () => {
+    if (salvando) return;
     const id = String(formulario.id || '');
     if (!id) return;
-    setProdutoExclusao({ id, nome: String(formulario.nome || 'selecionado'), excluir });
+    setProdutoExclusao({ id, nome: String(formulario.nome || 'selecionado') });
   };
 
   const excluirProduto = async () => {
-    if (!produtoExclusao) return;
-    const { id, excluir } = produtoExclusao;
+    if (salvando || !produtoExclusao) return;
+    const { id } = produtoExclusao;
     setSalvando(true);
     setErro('');
-    const { data, error } = await supabase.rpc(excluir ? 'excluir_produto_conteudo_vendas_mobile_rpc' : 'inativar_produto_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId, p_produto_id: id, ...(excluir ? { p_confirmado: true } : {}) });
-    const produtoInativado = data as { id?: string } | null;
-    setSalvando(false);
-    setProdutoExclusao(null);
-    if (error || !produtoInativado?.id) {
-      setErro(excluir ? 'Não foi possível excluir o produto. O cadastro foi preservado; tente novamente.' : 'Não foi possível inativar o produto.');
-      return;
+    try {
+      const { data, error } = await supabase.rpc('excluir_produto_conteudo_vendas_mobile_rpc', { p_empresa_id: empresaId, p_produto_id: id, p_confirmado: true });
+      const produtoExcluido = data as { id?: string } | null;
+      if (error || !produtoExcluido?.id) {
+        setErro('Não foi possível confirmar a exclusão. O editor permanece aberto; confira a conexão e tente novamente.');
+        return;
+      }
+      setProdutos((atuais) => atuais.filter((produto) => produto.id !== id));
+      retornarLista();
+    } catch {
+      setErro('Não foi possível confirmar a exclusão. O editor permanece aberto; confira a conexão e tente novamente.');
+    } finally {
+      setSalvando(false);
+      setProdutoExclusao(null);
     }
-    setProdutos((atuais) => excluir ? atuais.filter((produto) => produto.id !== id) : atuais.map((produto) => produto.id === id ? { ...produto, ativo: false } : produto));
-    setFormulario(vazio);
-    setAlteracaoSalva(false);
-    setAguardandoSelecao(excluir);
-    setFormularioAberto(excluir);
   };
 
   return <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
@@ -332,10 +334,6 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     <div className={`grid min-h-0 flex-1 gap-4 ${formularioAberto ? 'grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]' : 'grid-rows-[minmax(0,1fr)]'}`}>
       {formularioAberto && <div className="flex min-h-0">
       <section ref={formularioRef} tabIndex={-1} className={`h-full min-h-0 w-full overflow-y-auto rounded-xl border p-3 focus:outline-none md:overflow-visible ${painel}`}>
-        {aguardandoSelecao ? <div className="flex h-full flex-col items-start gap-4">
-          <p role="status" className="text-sm">Produto excluído. Selecione outro produto na lista para editar.</p>
-          <BotaoAcaoCompacto onClick={cancelarFormulario}>Cancelar</BotaoAcaoCompacto>
-        </div> : <>
         <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full px-3 py-1 text-sm font-black text-white" style={{ backgroundColor: corPrimaria }}>{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: nome e preço sugerido de revenda.</p></div>
         {erro && <p role="alert" className="mt-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
         <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
@@ -362,18 +360,12 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
           {formulario.imagem_url && <a href={String(formulario.imagem_url)} target="_blank" rel="noreferrer" title="Abrir pré-visualização"><Image src={String(formulario.imagem_url)} alt="Pré-visualização do produto" width={32} height={32} unoptimized className="h-8 w-8 shrink-0 rounded-md border border-cyan-300 object-cover" /></a>}
           <button type="button" onClick={() => arquivoRef.current?.click()} disabled={salvando} className="h-8 shrink-0 rounded-md border border-cyan-300 px-3 text-[10px] font-black uppercase text-cyan-700">Enviar imagem</button>
         </div>
-        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <label className="mr-auto flex min-h-11 items-center gap-2 text-xs font-medium">
-            <input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo
-          </label>
-          <div className="flex flex-wrap items-center gap-2" style={{ '--brand': corPrimaria, '--av-action-on-brand': corTextoSobreFundo(corPrimaria) } as React.CSSProperties}>
-            {formulario.id && formulario.ativo !== false && <BotaoAcaoCompacto onClick={() => solicitarExclusaoProduto()} disabled={salvando} className={darkMode ? 'text-amber-300' : 'text-amber-800'}>Inativar</BotaoAcaoCompacto>}
-            {formulario.id && <BotaoAcaoCompacto variante="destrutivo" onClick={() => solicitarExclusaoProduto(true)} disabled={salvando}>Excluir produto</BotaoAcaoCompacto>}
-            <BotaoAcaoCompacto variante="primario" onClick={() => void salvar()} disabled={salvando || alteracaoSalva} aria-live="polite">{salvando ? 'Salvando...' : alteracaoSalva ? 'Alteração salva' : 'Salvar alterações'}</BotaoAcaoCompacto>
-            <BotaoAcaoCompacto onClick={cancelarFormulario} disabled={salvando} className={darkMode ? 'text-slate-200' : 'text-slate-600'}>Cancelar</BotaoAcaoCompacto>
-          </div>
+        <div className={styles.acoes} aria-label="Ações do produto" style={{ '--brand': corPrimaria, '--av-action-on-brand': corTextoSobreFundo(corPrimaria), '--av-action-danger': darkMode ? '#fca5a5' : '#b42318' } as React.CSSProperties}>
+          <ChaveAtivacao checked={formulario.ativo !== false} onChange={(ativo) => mudar('ativo', ativo)} disabled={salvando} aria-label="Produto ativo" />
+          {formulario.id ? <BotaoAcaoCompacto variante="destrutivo" onClick={solicitarExclusaoProduto} disabled={salvando} aria-label="Excluir produto">Excluir</BotaoAcaoCompacto> : <span />}
+          <BotaoAcaoCompacto onClick={cancelarFormulario} disabled={salvando}>Cancelar</BotaoAcaoCompacto>
+          <BotaoAcaoCompacto variante="primario" onClick={() => void salvar()} disabled={salvando} aria-live="polite" className={styles.salvar}>{salvando ? 'Salvando...' : 'Salvar alterações'}</BotaoAcaoCompacto>
         </div>
-        </>}
       </section>
       </div>}
       <section className={`min-h-0 flex-col ${formularioAberto ? 'hidden xl:flex' : 'flex lg:col-span-2'}`}>
@@ -407,11 +399,11 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     {erro && !formularioAberto && !catalogosAbertos && <p role="alert" className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
     <ModalConfirmacao
       aberto={Boolean(produtoExclusao)}
-      titulo={produtoExclusao?.excluir ? "Excluir produto" : "Inativar produto"}
-      mensagem={produtoExclusao?.excluir ? `Excluir “${produtoExclusao.nome}” dos catálogos, de Custos e Precificação, de Vendas e Serviços e das contas vinculadas do AvantaVendas? Pedidos, lançamentos e históricos anteriores serão preservados.` : `O produto “${produtoExclusao?.nome || 'selecionado'}” ficará inativo no Catálogo e em Custos. O cadastro e o histórico serão preservados.`}
+      titulo="Excluir produto"
+      mensagem={`Excluir “${produtoExclusao?.nome || 'selecionado'}” dos catálogos, de Custos e Precificação, de Vendas e Serviços e das contas vinculadas do AvantaVendas? Pedidos, lançamentos e históricos anteriores serão preservados.`}
       textoCancelar="Manter produto"
-      textoConfirmar={produtoExclusao?.excluir ? "Confirmar exclusão" : "Inativar produto"}
-      variante={produtoExclusao?.excluir ? "destrutiva" : "alerta"}
+      textoConfirmar="Confirmar exclusão"
+      variante="destrutiva"
       carregando={salvando}
       corPrimaria={corPrimaria}
       darkMode={darkMode}

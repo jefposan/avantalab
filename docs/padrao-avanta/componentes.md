@@ -52,6 +52,11 @@ divisor ou agrupamento sem identidade própria.
 - Ícones usam SVG em bloco, centrado por flex na face quadrada, sem depender da linha de base do caractere ×. Com `somenteIcone`, fornecer nome acessível. Preservar foco visível, teclado, disabled e aria-pressed; rótulo de espera continua no próprio botão.
 - Cabeçalhos coloridos de cards gerais podem usar a cor do perfil e o texto de contraste; não substitui AvantaShell nem muda todos os módulos automaticamente. Primeira aplicação: Configurações do AvantaPreços Web. Não alterar globalmente botões existentes ou reduzir campos de formulário para 32px.
 
+### Chave de ativação
+
+- Reutilizar `app/components/ChaveAtivacao.tsx` em alternância Ativo/Inativo. O input nativo com `role="switch"` mantém teclado, `checked`, `disabled`, nome acessível e foco visível; texto acompanha o estado sem depender apenas de cor. Alvo mínimo 44 × 44px. O consumidor decide quando persistir; a chave não grava nem fecha formulários.
+- Primeira aplicação: editor de produtos do Conteúdo AvantaVendas. Ações do produto ficam em uma linha por solicitação do responsável, com Salvar alterações à direita e rótulo em duas linhas quando necessário. Excluir usa a confirmação oficial. Não altera os demais rodapés do sistema.
+
 ### Seleção de áreas autorizadas
 
 - Reutilizar `app/components/SelecaoModulos.tsx` para apresentar os módulos concedidos ao usuário. A seleção usa fundo institucional, painel central, identificação do perfil, blocos responsivos e saída separada.

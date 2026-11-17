@@ -1,3 +1,9 @@
+## 3.2.0.460 — Conteúdo AvantaVendas: chave de status e conclusão da edição
+
+- Uma única chave Ativo/Inativo substitui Produto ativo e Inativar; altera apenas o rascunho até salvar. A chave e Excluir, Cancelar e Salvar alterações ficam na mesma linha, com controles oficiais, teclado e tema escuro.
+- Salvar alterações retorna à lista após confirmação de sucesso. Edição de campos, status e imagem não fecha o editor; falhas ou alterações posteriores ao envio mantêm o rascunho. Excluir usa a confirmação oficial e retorna à lista somente após exclusão confirmada.
+- Componente compartilhado da Gestão Mobile e Web; sem mudança em banco, permissões ou pedidos/históricos. Publicação autorizada pelo responsável, pelo pipeline oficial.
+
 ## 3.2.0.459 — Gestão Mobile: atualização imediata de Meus perfis
 
 - A linha do perfil aberto e o consolidado de Meus perfis passam a acompanhar o mesmo estado financeiro usado pelo gráfico, inclusive após inclusão, edição, exclusão, confirmação e releitura por Realtime, sem consulta adicional a cada render.

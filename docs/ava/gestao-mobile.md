@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.459 -->
+<!-- ava-version: 3.2.0.460 -->
+
+> Revisão 3.2.0.460: Conteúdo AvantaVendas → Produtos: uma única chave Ativo/Inativo altera somente o rascunho. Chave, Excluir, Cancelar e Salvar alterações ficam na mesma linha. Alterar campos ou enviar imagem não fecha a edição. Salvar alterações retorna à lista somente após confirmação de sucesso; falha mantém os dados. Se houver edição durante o envio, preserva o rascunho posterior para salvar novamente. Excluir exige confirmação e retorna diretamente à lista após sucesso, preservando pedidos e históricos. Cancelar descarta o rascunho e retorna à lista.
 
 > Revisão 3.2.0.459: Meus perfis: a linha do perfil aberto e o consolidado acompanham imediatamente o estado do financeiro, como o gráfico, ao incluir/editar/excluir receitas ou despesas e nas releituras por Realtime. Não é necessário reabrir a tela para atualizar os valores. O comparativo usa o perfil inteiro mesmo quando o gráfico está filtrado por centro de custo. Ao trocar mês, consulta os demais perfis em segundo plano e descarta respostas do período anterior. A atualização visual local não confirma envio ao servidor: pendências, conflitos e confirmação da fila continuam visíveis pelas regras existentes.
 

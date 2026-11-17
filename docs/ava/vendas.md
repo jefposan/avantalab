@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.459 -->
+<!-- ava-version: 3.2.0.460 -->
+
+> Revisão 3.2.0.460: Conteúdo AvantaVendas → Produtos: uma única chave Ativo/Inativo altera somente o rascunho. Chave, Excluir, Cancelar e Salvar alterações ficam na mesma linha. Alterar campos ou enviar imagem não fecha a edição. Salvar alterações retorna à lista somente após confirmação de sucesso; falha mantém os dados. Se houver edição durante o envio, preserva o rascunho posterior para salvar novamente. Excluir exige confirmação e retorna diretamente à lista após sucesso, preservando pedidos e históricos. Cancelar descarta o rascunho e retorna à lista.
 
 > Revisão 3.2.0.459: sem impacto operacional no AvantaVendas; correção visual de dados do card Meus perfis pertence à Gestão Mobile.
 
@@ -101,13 +103,13 @@
 
 > Revisão 3.2.0.406: Conteúdo AvantaVendas → Produtos: SKU pode permanecer vazio para preenchimento manual posterior; não é mais gerado LEGADO automaticamente. A limpeza solicitada retira os códigos técnicos do perfil Tridium e suas cópias vinculadas, preservando SKUs reais, pedidos e históricos.
 
-> Revisão 3.2.0.405: Conteúdo AvantaVendas → Produtos: após confirmar a exclusão, a área de edição permanece aberta, com pesquisa e lista disponíveis para selecionar o próximo produto. O painel esquerdo informa Produto excluído e aguarda a seleção; Cancelar fecha a área.
+> Revisão 3.2.0.405: Conteúdo AvantaVendas → Produtos: após confirmar e concluir a exclusão, retorna diretamente à lista de produtos (revisão 3.2.0.460).
 
-> Revisão 3.2.0.404: Conteúdo AvantaVendas → Produtos: pesquisa ao lado de Novo catálogo e Novo produto, ou acima da lista durante edição. Busca ignora acentos e caixa e considera nome, marca, categoria, SKU e EAN. Excluir produto exige Confirmar exclusão e retira o cadastro das operações de Conteúdo, Custos e Precificação, Vendas e Serviços e contas vinculadas do AvantaVendas. Preserva pedidos, lançamentos e históricos; Inativar continua disponível e permite reativação.
+> Revisão 3.2.0.404: Conteúdo AvantaVendas → Produtos: pesquisa ao lado de Novo catálogo e Novo produto, ou acima da lista durante edição. Busca ignora acentos e caixa e considera nome, marca, categoria, SKU e EAN. Excluir produto exige Confirmar exclusão e retira o cadastro das operações de Conteúdo, Custos e Precificação, Vendas e Serviços e contas vinculadas do AvantaVendas. Preserva pedidos, lançamentos e históricos; a chave Ativo/Inativo permite reativação após salvar (revisão 3.2.0.460).
 
 > Revisão 3.2.0.403: Conteúdo AvantaVendas → Produtos: a lista mostra Status (Ativo verde, Inativo vermelho), Preço custo do representante e Preço revenda. Travessão no custo indica valor não informado, diferente de R$ 0,00. Editar e salvar mantêm o fluxo anterior.
 
-> Revisão 3.2.0.402: Conteúdo AvantaVendas → Produtos: Salvar alterações mantém a edição aberta e a lista ao lado; indica Salvando... e depois Alteração salva. Editar um campo reabilita Salvar alterações. Cancelar fecha a área de edição.
+> Revisão 3.2.0.402: Conteúdo AvantaVendas → Produtos: Regra substituída pela revisão 3.2.0.460: salvar com sucesso fecha a edição e retorna à lista; falha preserva o rascunho.
 
 > Revisão 3.2.0.401: Conteúdo AvantaVendas → Produtos oferece Preço custo (valor cobrado do representante) e Preço revenda na linha de Unidade. O preço custo é distribuído para o custo do produto na conta do representante e alimenta a rentabilidade. Alterações da empresa substituem o respectivo preço nas contas vinculadas. Edições posteriores do representante permanecem até a próxima alteração daquele preço pela empresa. Pedidos anteriores mantêm os valores registrados.
 
