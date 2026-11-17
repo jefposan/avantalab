@@ -1,6 +1,6 @@
 # PADRÃO AVANTA
 
-Versão oficial: **1.23.1**
+Versão oficial: **1.24.0**
 Identificador: `PADRAO-AVANTA`
 Manifesto: `docs/padrao-avanta/manifest.json`
 

@@ -12,6 +12,7 @@ import { usaFiscalEmpresa } from '../../lib/fiscal-produto.mjs';
 import ModalConfirmacao from '@/app/components/ModalConfirmacao';
 import type { ProdutoCustos } from '../../custos/types';
 import CampoMoeda from '@/app/components/CampoMoeda';
+import AvisoFormulario from '@/app/components/AvisoFormulario';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { AdaptiveModuleLogo } from '@/app/components/ModuloHeader';
@@ -1353,6 +1354,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
   const formRef=useRef<HTMLDivElement>(null);
   const [validationFocus,setValidationFocus]=useState<{message:string;field?:string;code?:string;attempt:number}|null>(null);
   const [fiscalSaveError, setFiscalSaveError] = useState('');
+  const [fiscalSaveTitle, setFiscalSaveTitle] = useState('Não foi possível concluir');
   const [fiscalSaveIssue, setFiscalSaveIssue] = useState<ConfirmedSave | null>(null);
   const fiscalSaveCorrection = fiscalCheckoutCorrection(fiscalSaveIssue || {});
   const enabledFiscalDocuments = settings.fiscal.documentScope;
@@ -1442,12 +1444,17 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
       const itemField=/quantidade/.test(message)?'itemQuantity':/preço|preco|valor unit/.test(message)?'itemPrice':/desconto/.test(message)?'itemDiscount':'';
       target=row?.querySelector<HTMLElement>(itemField?`[name="${itemField}"]`:'button.order-product-edit:not([disabled])')||row?.querySelector<HTMLElement>('input:not([disabled])')||root.querySelector<HTMLElement>('#order-catalog-search');
     }else if(key)target=root.querySelector<HTMLElement>(`[name="${key}"]:not([disabled])`);
-    target=target||root.querySelector<HTMLElement>('[data-fiscal-correction-action] button:not([disabled])')||root.querySelector<HTMLElement>('[data-validation-summary]');
-    if((validationFocus.field==='items'||/ao menos.*produto|itens da nota/i.test(validationFocus.message))&&lines.length===0){target=root.querySelector<HTMLElement>('[data-note-items-error]');}
-    return focarCampoComErro(target,{message:validationFocus.message,id:'note-field-validation-error'});
+    if(target)return focarCampoComErro(target,{message:validationFocus.message,id:'note-field-validation-error',messageElement:root.querySelector<HTMLElement>('#note-save-validation-message')});
+    // Aviso geral já está renderizado: apenas direciona o foco, sem inserir outra mensagem.
+    const summary=root.querySelector<HTMLElement>('[data-validation-summary]');
+    const action=root.querySelector<HTMLElement>('[data-fiscal-correction-action] button:not([disabled])');
+    const destination=action||summary;
+    destination?.focus({preventScroll:true});
+    destination?.scrollIntoView({block:'center',inline:'nearest',behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
   },[validationFocus,savingFiscal]);
   const finish = async (status: 'Rascunho' | 'Confirmado', issue = false) => {
     if (savingFiscal) return;
+    setFiscalSaveTitle(issue ? 'Não foi possível emitir' : 'Não foi possível salvar');
     if(issue&&!fiscalAttemptLocked&&fiscalEditor&&(!operationNature.trim()||!settings.fiscal.matrix.rules.some(rule=>rule.active&&rule.reviewed&&rule.documentType==='nfe'&&rule.operationNature===operationNature))){setSubmitted(true);showIssue({ok:false,field:'operationNature',message:'Selecione uma natureza com regra fiscal ativa e publicada neste perfil.'});return;}
     if(issue&&!fiscalAttemptLocked&&fiscalEditor&&previewIssues.length){setSubmitted(true);showIssue({ok:false,message:previewIssues[0]});return;}
     if (status === 'Confirmado' && !orderReady && !fiscalAttemptLocked && (!fiscalOnly||issue)) {
@@ -1611,10 +1618,10 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
           {!fiscalOnly && <div className="order-margin"><span>Margem bruta estimada</span><strong>{percent(estimatedMargin)}</strong><small>Custo publicado: {money(totalCost)}</small></div>}
           <div className="order-effects"><div><Icon name="stock" size={16}/><span><strong>{reserveStock ? 'Reserva prevista' : 'Sem reserva'}</strong><small>{physicalProductCount} {physicalProductCount === 1 ? 'produto físico' : 'produtos físicos'}</small></span></div><div><Icon name="money" size={16}/><span><strong>{installments} {installments === '1' ? 'parcela' : 'parcelas'}</strong><small>{paymentMethod.toLocaleUpperCase('pt-BR')}</small></span></div><div><Icon name="fiscal" size={16}/><span><strong>{fiscalDocument === 'nenhum' ? 'Fiscal não definido' : fiscalDocument.toLocaleUpperCase('pt-BR')}</strong><small>{fiscalDocument === 'nenhum' ? operationNature : issuerError || 'Empresa ativa aplicada automaticamente'}</small></span></div></div>
         </section>
-        {submitted&&previewIssues.length>0&&<section role="alert" className="order-validation">{previewIssues.map(issue=><p className="error" key={issue}>{issue}</p>)}</section>}
-        {(submitted || validation.warnings.length > 0) && <section className="order-validation" aria-live="polite"><h3>Validação</h3>{submitted && [...validation.errors, ...(issuerError ? [issuerError] : [])].map((message) => <p className="error" key={message}><Icon name="warning" size={15}/>{message}</p>)}{validation.warnings.map((message) => <p className="warning" key={message}><Icon name="warning" size={15}/>{message}</p>)}</section>}
-        {fiscalSaveError && <div role="alert" tabIndex={-1} data-validation-summary><p className="field-error">{fiscalSaveError}</p>{fiscalSaveCorrection&&fiscalSaveIssue&&onFiscalCorrection&&<span data-fiscal-correction-action><BotaoAcaoCompacto disabled={!can(fiscalCorrectionAction(fiscalSaveCorrection).permission)} onClick={()=>onFiscalCorrection(fiscalSaveIssue)}>{fiscalCorrectionAction(fiscalSaveCorrection).label}</BotaoAcaoCompacto></span>}</div>}
-        <div className={`order-actions${fiscalOnly ? ' fiscal-checkout-actions' : ''}`}>{fiscalOnly ? <><BotaoAcaoCompacto variante="secundario" disabled={savingFiscal||fiscalAttemptLocked||!can('fiscal.prepare')||!connected} onClick={()=>void finish('Confirmado',false)}>{savingFiscal?'Salvando…':'Salvar'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" disabled={savingFiscal||!can('fiscal.prepare')||!can('fiscal.issue')||!connected} onClick={()=>void finish('Confirmado',true)}>{savingFiscal?'Aguarde…':'Salvar e emitir'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="secundario" disabled={savingFiscal} onClick={onCancel}>Cancelar</BotaoAcaoCompacto></> : <><button type="button" className="button secondary" onClick={onCancel}>Cancelar</button><button type="button" className="button secondary" onClick={()=>void finish('Rascunho')}>{editing?'Salvar alterações':'Salvar rascunho'}</button><button type="button" className="button primary" disabled={!can('sales.edit')||!can('stock.exit')} onClick={()=>void finish('Confirmado')}><Icon name="check" size={17}/>Confirmar pedido</button></>}</div>
+        {submitted&&!fiscalSaveError&&previewIssues.length>0&&<section role="alert" className="order-validation">{previewIssues.map(issue=><p className="error" key={issue}>{issue}</p>)}</section>}
+        {((submitted&&!fiscalSaveError) || validation.warnings.length > 0) && <section className="order-validation" aria-live="polite"><h3>Validação</h3>{submitted && !fiscalSaveError && [...validation.errors, ...(issuerError ? [issuerError] : [])].map((message) => <p className="error" key={message}><Icon name="warning" size={15}/>{message}</p>)}{validation.warnings.map((message) => <p className="warning" key={message}><Icon name="warning" size={15}/>{message}</p>)}</section>}
+
+        <div className={`order-actions${fiscalOnly ? ' fiscal-checkout-actions' : ''}`}>{fiscalSaveError && <AvisoFormulario data-validation-summary titulo={fiscalSaveTitle} mensagem={fiscalSaveError} idMensagem="note-save-validation-message">{fiscalSaveCorrection&&fiscalSaveIssue&&onFiscalCorrection&&<span data-fiscal-correction-action><BotaoAcaoCompacto disabled={!can(fiscalCorrectionAction(fiscalSaveCorrection).permission)} onClick={()=>onFiscalCorrection(fiscalSaveIssue)}>{fiscalCorrectionAction(fiscalSaveCorrection).label}</BotaoAcaoCompacto></span>}</AvisoFormulario>}{fiscalOnly ? <><BotaoAcaoCompacto variante="secundario" disabled={savingFiscal||fiscalAttemptLocked||!can('fiscal.prepare')||!connected} onClick={()=>void finish('Confirmado',false)}>{savingFiscal?'Salvando…':'Salvar'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" disabled={savingFiscal||!can('fiscal.prepare')||!can('fiscal.issue')||!connected} onClick={()=>void finish('Confirmado',true)}>{savingFiscal?'Aguarde…':'Salvar e emitir'}</BotaoAcaoCompacto><BotaoAcaoCompacto variante="secundario" disabled={savingFiscal} onClick={onCancel}>Cancelar</BotaoAcaoCompacto></> : <><button type="button" className="button secondary" onClick={onCancel}>Cancelar</button><button type="button" className="button secondary" onClick={()=>void finish('Rascunho')}>{editing?'Salvar alterações':'Salvar rascunho'}</button><button type="button" className="button primary" disabled={!can('sales.edit')||!can('stock.exit')} onClick={()=>void finish('Confirmado')}><Icon name="check" size={17}/>Confirmar pedido</button></>}</div>
       </aside>
     </div>
   </>;

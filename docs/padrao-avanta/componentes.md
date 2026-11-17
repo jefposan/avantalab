@@ -219,6 +219,13 @@ testes. Esta seção resume apenas a face dos controles.
   validada, separada por usuário/empresa e gravada apenas após concluir.
   Preferência inválida retorna à ordem padrão; falha ao salvar é informada.
 
+### Aviso de falha em formulário
+
+- Reutilizar `app/components/AvisoFormulario.tsx` para o padrão aprovado de erro junto às ações. Faixa sem sombra própria, fundo suave, borda discreta, raio de 12px, ícone de atenção, título de 16px e mensagem de 14px com quebra livre. Cores semânticas derivam dos tokens da superfície e do texto, inclusive no tema escuro.
+- Posicionar uma única instância dentro do card de ações, antes dos botões. Não usar linhas soltas, toast duplicado ou cópia abaixo do card. Não altera automaticamente avisos de outros fluxos.
+- `titulo`, `mensagem` e `idMensagem` definem conteúdo e associação. `children` preserva ações corretivas existentes; não adicionar ação sem destino real. `role="alert"` anuncia a falha; resumo focalizável não é campo inválido.
+- `focarCampoComErro` aceita `messageElement` para o campo referenciar o aviso existente, sem inserir outra mensagem ou removê-la na limpeza. Sem a opção, mantém o comportamento anterior. Erros gerais focam o resumo ou a ação de correção, sem borda de campo inválido.
+
 ## Estados assíncronos
 
 - LoadingPontos compartilhado: dez pontos em onda, cor contextual, 140 × 50px ou compacto 48 × 20px; permanece animado inclusive com reduzir movimentos ativado por solicitação expressa do responsável. Exceção restrita ao loading. Sem vídeo, rede ou temporizador por quadro. Aplicação inicial no acesso Web e CarregamentoDadosModulo, sem conversão automática de outras famílias.

@@ -1,5 +1,10 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.24.0 - 2026-11-17
+
+- AvisoFormulario compartilhado para falhas em formulários: faixa compacta com ícone, título e mensagem, dentro do card de ações e sem cópia acima/abaixo. Estilo aprovado na emissão fiscal, foco e associação acessível preservados.
+- Foco compartilhado pode referenciar mensagem existente sem criar ou remover outra cópia; comportamento anterior permanece padrão.
+
 ## 1.23.1 - 2026-10-26
 
 - LoadingPontos permanece animado com reduzir movimentos ativado por solicitação expressa do responsável. Exceção restrita ao indicador compartilhado de espera, sem mudar outros efeitos ou acrescentar recursos pesados.

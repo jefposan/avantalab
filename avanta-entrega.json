@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_2rUbXajky4fuzeTfZUxip8tbrhjv",
+  "baseDeploymentId": "dpl_FsKpzVdjw7eFWsj1JYUmrb1qNdX1",
   "migrations": [],
-  "version": "3.2.0.464",
-  "scope": "Emissão fiscal: Origem legível e código de autorização opcional no pagamento externo, preservando cartão integrado e vínculos fiscais"
+  "version": "3.2.0.465",
+  "scope": "Emissão fiscal: alinhar ambiente dos serviços e aplicar o aviso aprovado dentro das ações, sem mensagens duplicadas"
 }
