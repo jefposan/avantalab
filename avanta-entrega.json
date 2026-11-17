@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_4PH6S5dxjWqyPefNXDekWUKeoTEe",
+  "baseDeploymentId": "dpl_AEhPNpDPKDWNQ5sGKfNaMrakwCvF",
   "migrations": [],
-  "version": "3.2.0.467",
-  "scope": "Emissão fiscal: mostrar identificação de ambiente somente em homologação e retirar avisos de produção, preservando o editor e as guardas fiscais"
+  "version": "3.2.0.468",
+  "scope": "Emissão fiscal: somente abertura direta no editor e preenchimento da série/número a partir da configuração existente, com cadeado no número somente leitura, sem alterar regras ou dados fiscais"
 }

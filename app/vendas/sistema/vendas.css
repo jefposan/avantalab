@@ -2377,6 +2377,9 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 .note-editor-grid input,.note-editor-grid select,.note-editor-grid textarea {width:100%;box-sizing:border-box;}
 .note-number-fields {grid-column:1/-1;display:grid;grid-template-columns:90px 150px;gap:12px;}
 .note-centered {text-align:center;}
+.note-number-readonly {position:relative;display:block;min-width:0;}
+.note-number-readonly input {width:100%;padding-right:36px;}
+.note-number-readonly svg {position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.65;}
 .note-volume-fields {grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 12px;}
 .note-vehicle-fields {grid-column:1/-1;display:grid;grid-template-columns:1fr 76px 1fr;gap:12px;}
 .note-message-picker {display:flex;align-items:flex-end;gap:12px;}

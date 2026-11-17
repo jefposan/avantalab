@@ -119,3 +119,17 @@ test('consulta pública usa ambiente oficial e não transfere a chave em URL nem
  }
  assert.equal(nfePublicConsultationUrl('outro'), '');
 });
+
+test('rascunho sem status abre diretamente o editor pendente, sem montar a prévia antiga',()=>{
+ const source=readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx','utf8'),ast=ts.createSourceFile('view.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
+ const fn=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='FiscalView');
+ const declaration=fn.body.statements.find(n=>ts.isVariableStatement(n)&&n.declarationList.declarations.some(d=>d.name.getText(ast)==='openFiscalResult'));
+ let editor,preview='previous',requests=0;
+ const scope={exports:{},remoteStatuses:{},setResultDraft(){},setDetailDraft(){},setFiscalBridgeMessage(){},setIssueDraft:value=>preview=value,setEditingDraft:value=>editor=value,requestFiscalStatus:()=>requests++};
+ vm.runInNewContext(ts.transpileModule(declaration.getText(ast)+'\nexports.open=openFiscalResult;',{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,scope);
+ const draft={id:'draft',emissionId,remoteState:'draft'};scope.exports.open(draft);
+ assert.equal(editor,draft);assert.equal(preview,null);assert.equal(requests,1);
+ const waiting=fn.body.statements.find(n=>ts.isIfStatement(n)&&n.getText(ast).includes('data-note-editor-loading'));
+ assert.ok(waiting);assert.ok(fn.body.statements.indexOf(waiting)<fn.body.statements.findIndex(n=>ts.isVariableStatement(n)&&n.declarationList.declarations.some(d=>d.name.getText(ast)==='editableDraft')));
+ assert.doesNotMatch(waiting.getText(ast),/FiscalIssueReviewDialog/);
+});

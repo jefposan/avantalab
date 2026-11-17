@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.467 -->
+<!-- ava-version: 3.2.0.468 -->
+
+> Revisão 3.2.0.468: Correção restrita à retomada da tela: notas ainda não concluídas abrem diretamente o editor completo, sem passar pela prévia antiga enquanto o status é consultado. Série e número em prévia vêm da configuração existente quando não há reserva; número já reservado permanece preservado. Nenhuma mudança de regras fiscais, banco, dados gravados ou serviços de emissão.
 
 > Revisão 3.2.0.467: O aviso de ambiente aparece somente em homologação, com a indicação sem valor fiscal. Produção não mostra selo ou texto de ambiente na conferência, detalhes, serviço e liberação fiscal. Os valores internos de ambiente e todas as guardas de emissão permanecem inalterados.
 
