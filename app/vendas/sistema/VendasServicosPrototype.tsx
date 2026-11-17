@@ -360,7 +360,7 @@ type FiscalDraftRecord = {
   total: number;
   commercialTotals: CommercialTotals;
   paymentMethod: string;
-  environment: 'Homologação local';
+  environment: 'Homologação local' | 'Homologação' | 'Produção' | 'Ambiente não informado';
   series: string;
   number: string;
   key: string;
