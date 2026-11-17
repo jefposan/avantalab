@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_BXbV5Uqzwt5dDcA6y8ahu2FT6KfS",
+  "baseDeploymentId": "dpl_4PH6S5dxjWqyPefNXDekWUKeoTEe",
   "migrations": [],
-  "version": "3.2.0.466",
-  "scope": "Emissão fiscal: restaurar o editor completo do rascunho, salvar revisões antes da reserva e exibir o ambiente real, preservando validações de UF e histórico"
+  "version": "3.2.0.467",
+  "scope": "Emissão fiscal: mostrar identificação de ambiente somente em homologação e retirar avisos de produção, preservando o editor e as guardas fiscais"
 }

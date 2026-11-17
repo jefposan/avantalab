@@ -1,3 +1,7 @@
+## 3.2.0.467 — Emissão fiscal: mostrar aviso somente em homologação
+
+- O aviso de ambiente aparece somente em homologação, com a indicação sem valor fiscal. Produção não mostra selo ou texto de ambiente na conferência, detalhes, serviço e liberação fiscal. Os valores internos de ambiente e todas as guardas de emissão permanecem inalterados.
+
 ## 3.2.0.466 — Emissão fiscal: restaurar editor do rascunho e identificar o ambiente real
 
 - Notas persistidas no estado inicial reabrem no editor completo, com resumo e ações laterais, pelo comando Editar nota. Revisões antes da reserva são gravadas com versão e histórico, sem recriar a nota nem consumir número; a preparação usa a revisão mais recente. Produção/homologação são preservadas pela ponte e exibidas conforme o ambiente real. Nota assinada, enviada, autorizada ou de outro ambiente continua protegida. Divergência entre destino e natureza fiscal não é suprimida: o usuário pode conferir e corrigir no editor.
