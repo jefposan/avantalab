@@ -63,7 +63,7 @@ export function validarPlanilhaCatalogo(linhas: unknown[][], fornecedores: Array
       try {
         produto[campo] = campo === 'preco_custo' || campo === 'preco_venda' ? dinheiro(entrada[campo])
           : campo === 'ativo' || campo === 'disponivel_catalogo' || campo === 'habilitado_fiscal'
-            ? booleano(entrada[campo], campo === 'ativo') : valorTexto(entrada[campo]);
+            ? booleano(entrada[campo], campo !== 'habilitado_fiscal') : valorTexto(entrada[campo]);
       } catch (falha) { erros.push(`Linha ${numero}, ${campo}: ${(falha as Error).message}.`); }
     }
     if (valorTexto(produto.cest) && !/^\d{2}[.\s-]?\d{3}[.\s-]?\d{2}$/.test(valorTexto(produto.cest))) erros.push(`Linha ${numero}: CEST deve ter 7 dígitos.`);
@@ -74,8 +74,7 @@ export function validarPlanilhaCatalogo(linhas: unknown[][], fornecedores: Array
     if (valorTexto(produto.fornecedor_codigo) && !fornecedores.some((fornecedor) => fornecedor.codigo === valorTexto(produto.fornecedor_codigo))) erros.push(`Linha ${numero}: fornecedor ${produto.fornecedor_codigo} não está ativo neste perfil.`);
     if (valorTexto(produto.imagem_url) && !/^https:\/\//i.test(valorTexto(produto.imagem_url))) erros.push(`Linha ${numero}: URL da imagem deve começar com https://.`);
     if (produto.disponivel_catalogo && Number(produto.preco_venda) <= 0) {
-      produto.disponivel_catalogo = false;
-      avisos.push(`Linha ${numero}: sem preço de venda positivo; ficará fora do Vendas até a revisão.`);
+      avisos.push(`Linha ${numero}: sem preço de venda positivo; informe o valor antes de concluir uma venda ou emissão.`);
     }
     if (produto.habilitado_fiscal && (!ncm || !unidadeTributavel)) {
       produto.habilitado_fiscal = false;

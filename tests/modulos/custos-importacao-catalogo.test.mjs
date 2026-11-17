@@ -44,7 +44,7 @@ test('nome é o único campo obrigatório e colunas opcionais podem faltar', () 
   assert.equal(resultado.produtos[0].sku, '');
   assert.equal(resultado.produtos[1].sku, '');
   assert.equal(resultado.produtos[0].preco_venda, 0);
-  assert.equal(resultado.produtos[0].disponivel_catalogo, false);
+  assert.equal(resultado.produtos[0].disponivel_catalogo, true);
   assert.equal(resultado.produtos[0].habilitado_fiscal, false);
 });
 
@@ -61,13 +61,13 @@ test('fornecedor informado precisa pertencer ao perfil', () => {
   assert.ok(erros.some((erro) => erro.includes('fornecedor 77')));
 });
 
-test('publicação e uso fiscal pedidos sem dados completos são adiados com aviso', () => {
+test('disponibilidade interna não depende de preço e uso fiscal incompleto continua adiado', () => {
   const { produtos, erros, avisos } = validarPlanilhaCatalogo([cabecalhos, produto({
     'Preço de venda (R$)': '', NCM: '', 'Unidade tributável': '',
     'Disponível no catálogo': 'Sim', 'Habilitado fiscal': 'Sim',
   })]);
   assert.deepEqual(erros, []);
-  assert.equal(produtos[0].disponivel_catalogo, false);
+  assert.equal(produtos[0].disponivel_catalogo, true);
   assert.equal(produtos[0].habilitado_fiscal, false);
   assert.equal(avisos.length, 2);
 });

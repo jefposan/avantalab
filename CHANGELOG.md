@@ -1,3 +1,10 @@
+## 3.2.0.457 — Custos e Vendas: produtos disponíveis por padrão
+
+- Novos produtos e serviços começam disponíveis internamente em cadastro, popup da nota e importações. Indisponibilidade exige escolha explícita; edição com indicador vazio preserva o estado já salvo.
+- Preço zero não retira o produto do catálogo; as validações da venda e emissão permanecem. Novos insumos fiscais seguem o mesmo padrão.
+- Preserva destinos de publicação, preços e estados existentes. Corrigida somente a disponibilidade do Ventilador de Mesa Mondial Super Power II no Saldão Aline, conforme autorização, com AvantaVendas desligado.
+- Funções de importação preservadas da definição remota vigente, alterando somente os padrões de disponibilidade. Preserva a main 3.2.0.456.
+
 ## 3.2.0.456 — Custos: catálogo local inicial no cadastro de produto
 
 - Quando não há catálogo disponível no perfil, cria Catálogo local e já o seleciona no cadastro, inclusive no popup da nota.

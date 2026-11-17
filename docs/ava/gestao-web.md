@@ -1,4 +1,7 @@
-<!-- ava-version: 3.2.0.456 -->
+<!-- ava-version: 3.2.0.457 -->
+
+> Revisão 3.2.0.457: Todo produto novo começa disponível no catálogo interno, inclusive cadastro pela nota, cadastro direto, insumo fiscal e importação. O usuário pode desmarcar Disponível no catálogo. Importação de edição com indicador vazio preserva a escolha existente. Preço zero não oculta o item; informe o preço correto ao vender ou emitir. Isso não ativa a publicação do catálogo no AvantaVendas. Na nota, salvar atualiza o catálogo e seleciona o item para Adicionar item.
+
 
 > Revisão 3.2.0.456: Ao abrir Custos ou cadastrar produto na nota, um perfil sem catálogo recebe Catálogo local, já selecionado, ativo somente em Vendas e Serviços e sem publicação no AvantaVendas. Catálogos existentes, inclusive desativados, não são modificados; excluídos não são reativados. Somente usuários com permissão de edição podem iniciar o catálogo.
 

@@ -240,7 +240,7 @@ export function novoProduto(tipo: TipoItem, catalogoId: string): ProdutoCustos {
   return {
     id: '', catalogo_id: catalogoId, sku: '', tipo_item: tipo, nome: '', marca: '', categoria: '', descricao: '',
     preco_custo: 0, preco_venda: 0, unidade: tipo === 'produto' ? 'un' : 'serviço', imagem_url: '', codigo_barras: '',
-    ativo: true, disponivel_catalogo: false, habilitado_fiscal: false, fornecedor_id: '', ncm: '', cest: '', origem_mercadoria: '',
+    ativo: true, disponivel_catalogo: true, habilitado_fiscal: false, fornecedor_id: '', ncm: '', cest: '', origem_mercadoria: '',
     usar_fiscal_empresa: true, cfop_interestadual: '',
     unidade_tributavel: tipo === 'produto' ? 'un' : 'serviço', cfop_padrao: '', cst: '', csosn: '', cst_pis: '',
     cst_cofins: '', cst_ibs_cbs: '', classificacao_ibs_cbs: '', codigo_tributacao_nacional: '',

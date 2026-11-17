@@ -256,7 +256,7 @@ export default function TabelasPrecosView({
         preco_custo: numeroPlanilha(valorLinha(linha, 'Custo')), preco_venda: numeroPlanilha(valorLinha(linha, 'Preço padrão')),
         unidade: String(valorLinha(linha, 'Unidade') || '').trim(), codigo_barras: String(valorLinha(linha, 'Código de barras') || '').trim(),
         ativo: booleanoPlanilha(valorLinha(linha, 'Ativo'), true),
-        disponivel_catalogo: booleanoPlanilha(valorLinha(linha, 'Disponível no catálogo'), false),
+        disponivel_catalogo: String(valorLinha(linha, 'Disponível no catálogo') ?? '').trim() ? booleanoPlanilha(valorLinha(linha, 'Disponível no catálogo'), true) : undefined,
         ncm: String(valorLinha(linha, 'NCM') || '').trim(), cest: String(valorLinha(linha, 'CEST') || '').trim(),
         origem_mercadoria: String(valorLinha(linha, 'Origem') || '').trim(), unidade_tributavel: String(valorLinha(linha, 'Unidade tributável') || '').trim(),
         cfop_padrao: String(valorLinha(linha, 'CFOP padrão') || '').trim(), cst: String(valorLinha(linha, 'CST') || '').trim(),

@@ -516,7 +516,6 @@ function ProdutosView({ perfilFiscal, companyId, catalogoId, catalogos, produtos
       if (rascunho.cfop_padrao && !/^5\d{3}$/.test(rascunho.cfop_padrao)) return 'O CFOP dentro da UF deve ter 4 dígitos e começar com 5.';
       if (rascunho.cfop_interestadual && !/^6\d{3}$/.test(rascunho.cfop_interestadual)) return 'O CFOP fora da UF deve ter 4 dígitos e começar com 6.';
     }
-    if (rascunho.disponivel_catalogo && rascunho.preco_venda <= 0) return 'Informe um preço de venda positivo antes de disponibilizar o item no catálogo.';
     return '';
   };
   const salvar = async () => {
@@ -828,8 +827,8 @@ function RecursosView({ catalogoId, documento, produtos, fornecedores, setProdut
           unidade_tributavel: pronto.unidade_tributavel || '',
           cfop_padrao: '',
           ativo: true,
-          // Um insumo fiscal não vira produto divulgado automaticamente.
-          disponivel_catalogo: base.id ? base.disponivel_catalogo : false,
+          // Novos cadastros ficam disponíveis internamente; edições preservam a escolha.
+          disponivel_catalogo: base.id ? base.disponivel_catalogo : true,
           habilitado_fiscal: true,
         });
         pronto = { ...pronto, produto_fiscal_id: produtoFiscal.id };

@@ -368,7 +368,7 @@ test('insumo fiscal preserva uma identidade com composição, estoque e emissão
   assert.match(workspace, /Habilitar como item fiscal/);
   assert.match(workspace, /Dados do item para NF-e/);
   assert.match(workspace, /CFOP e natureza pertencem à emissão/);
-  assert.match(workspace, /disponivel_catalogo: base\.id \? base\.disponivel_catalogo : false/);
+  assert.match(workspace, /disponivel_catalogo: base\.id \? base\.disponivel_catalogo : true/);
   assert.match(workspace, /habilitado_fiscal: true/);
   assert.match(tiposCustos, /produto_fiscal_id/);
   assert.match(tiposCustos, /habilitado_fiscal/);
