@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.462 -->
+<!-- ava-version: 3.2.0.463 -->
+
+> Revisão 3.2.0.463: A validação de pagamento eletrônico aponta separadamente integração, CNPJ da instituição e autorização/EndToEndId; a forma selecionada não recebe o erro de outro campo. CNPJ com máscara é normalizado no servidor. Salvar rascunho continua permitindo pagamento incompleto; emissão mantém as exigências anteriores.
 
 > Revisão 3.2.0.462: Identificação no intermediador recebe tooltip padrão: “Informe seu usuário ou identificador na plataforma da venda.”, disponível ao passar o mouse ou focar o rótulo por teclado.  Validação do intermediador separa CNPJ e identificação: a ausência da identificação destaca seu próprio campo, sem marcar um CNPJ preenchido como incorreto.  CNPJ da instituição de pagamento e do intermediador recebem máscara durante digitação e colagem; valores existentes também são formatados na exibição, mantendo somente dígitos no estado e na transmissão.  Novo anúncio mantém rolagem interna e permite continuar a rolagem da página ao atingir o início/fim do formulário; não exige mover o ponteiro às laterais. Não altera bloqueios de popups ou de foco. No seletor de produto da nota, Adicionar item fica à esquerda e Novo produto à direita, com ações e cores preservadas.
 

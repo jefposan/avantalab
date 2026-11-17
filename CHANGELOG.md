@@ -1,3 +1,8 @@
+## 3.2.0.463 — Emissão fiscal: identificar corretamente pendências do pagamento
+
+- A validação de pagamento eletrônico aponta separadamente integração, CNPJ da instituição e autorização/EndToEndId; a forma selecionada não recebe o erro de outro campo. CNPJ com máscara é normalizado no servidor. Salvar rascunho continua permitindo pagamento incompleto; emissão mantém as exigências anteriores.
+- Testes cobrem emissão avulsa, correção, foco de validação, CNPJ formatado e ausência de cada dado eletrônico.
+
 ## 3.2.0.462 — Vendas e Marketplaces: ordem das ações e rolagem de Novo anúncio
 
 - Adicionar item à esquerda e Novo produto à direita no seletor, preservando ações, cores e ordem de teclado.

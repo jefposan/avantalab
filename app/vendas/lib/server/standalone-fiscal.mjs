@@ -1,3 +1,4 @@
+import {normalizeElectronicPayment} from './fiscal-payment.mjs';
 import {normalizeFiscalNoteFields} from './fiscal-note-fields.mjs';
 import { createHash } from 'node:crypto';
 import { prepareOperation } from './commercial-operation-service.mjs';
@@ -59,7 +60,7 @@ export function createStandaloneFiscalService({ repository, customerResolver, ca
         const totals = { subtotalGross: op.subtotalGross, itemDiscount: op.itemDiscount, generalDiscount: op.generalDiscount,
           freight: op.freight, insurance: op.insurance, otherExpenses: op.otherExpenses, total: op.total, currency: 'BRL',
           additionalInfo: String(input.additionalInfo || '').trim(),...(input.operationNature?{operationNature:input.operationNature}:{}),...(form.fields?{fiscalForm:form.fields}:{}) };
-        if(!saveOnly&&form.fields){const method=String(input.payment?.method||'');const electronic=['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(method);if(!['PIX estático','PIX dinâmico','Dinheiro','Boleto','Transferência bancária','Cartão de crédito','Cartão de débito','Sem pagamento'].includes(method))return{ok:false,errors:[issue('AV-FISCAL-PAYMENT','Selecione o meio real de pagamento.') ]};if(electronic){const detail=input.payment?.details;if(!detail||!['1','2'].includes(detail.integrationType)||!/^\d{14}$/.test(detail.institutionDocument||'')||typeof detail.authorizationCode!=='string'||!detail.authorizationCode.trim()||detail.authorizationCode.length>128)return{ok:false,errors:[issue('AV-FISCAL-PAYMENT','Complete os dados do pagamento eletrônico.')]};op.paymentSnapshot.details={integrationType:detail.integrationType,institutionDocument:detail.institutionDocument,authorizationCode:detail.authorizationCode.trim()};}op.paymentSnapshot.method=method;}
+        if(!saveOnly&&form.fields){const method=String(input.payment?.method||'');const electronic=['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(method);if(!['PIX estático','PIX dinâmico','Dinheiro','Boleto','Transferência bancária','Cartão de crédito','Cartão de débito','Sem pagamento'].includes(method))return{ok:false,errors:[issue('AV-FISCAL-PAYMENT','Selecione o meio real de pagamento.') ]};if(electronic){const payment=normalizeElectronicPayment(method,input.payment?.details);if(payment.error)return{ok:false,errors:[{code:'AV-FISCAL-PAYMENT',...payment.error}]};op.paymentSnapshot.details=payment.details;}op.paymentSnapshot.method=method;}
         const content = { companyId: context.companyId, orderId: input.draftId, documentType: 'nfe', issuer, customer: op.customerSnapshot, items, totals, payment: op.paymentSnapshot };
         const hash = createHash('sha256').update(JSON.stringify(stable(content))).digest('hex');
         if(saveOnly){

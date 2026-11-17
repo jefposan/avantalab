@@ -120,3 +120,19 @@ test('API de nota avulsa recusa sessão, perfil divergente e corpo acima do limi
   assert.equal((await handleStandaloneFiscalRequest({ request: request(), runtime: { ...runtime, accessResolver: { resolve: async () => ({ authenticated: false }) } } })).status, 401);
   assert.equal(saves, 1);
 });
+
+test('emissão avulsa mantém o meio selecionado e identifica integração, CNPJ ou autorização pendentes',async()=>{
+ const {newFiscalNoteFields}=await import('../../app/vendas/lib/fiscal-note-editor.mjs');
+ let snapshot;
+ const service=createStandaloneFiscalService({repository:{create:async args=>{snapshot=args;return {draftId};}},customerResolver:async()=>customer,catalogResolver:async()=>({items:[product]}),issuerResolver:async()=>issuer});
+ const details={integrationType:'2',institutionDocument:'10.573.521/0001-91',authorizationCode:'ABC123'};
+ const request={...input,fiscalForm:newFiscalNoteFields(),payment:{...input.payment,method:'Cartão de crédito',details}};
+ const saved=await service.create({context,input:request});
+ assert.equal(saved.ok,true,JSON.stringify(saved.errors));
+ assert.equal(snapshot.payment.method,'Cartão de crédito');
+ assert.equal(snapshot.payment.details.institutionDocument,'10573521000191');
+ for(const [field,value] of [['integrationType',''],['institutionDocument','1057'],['authorizationCode','']]){
+  const result=await service.create({context,input:{...request,payment:{...request.payment,details:{...details,[field]:value}}}});
+  assert.equal(result.ok,false);assert.equal(result.errors[0].field,field);
+ }
+});

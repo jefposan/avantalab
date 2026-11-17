@@ -1,3 +1,4 @@
+import {normalizeElectronicPayment} from './fiscal-payment.mjs';
 import {normalizeFiscalNoteFields} from './fiscal-note-fields.mjs';
 const fail = message => ({ error: {code:'AV-NFE-CORRECTION-NOTE',field:'note',message} });
 const methods = new Set(['PIX estático','PIX dinâmico','Dinheiro','Boleto','Transferência bancária','Cartão de crédito','Cartão de débito','Sem pagamento']);
@@ -7,9 +8,9 @@ export function applyFiscalNoteEdit(draft, note, {catalogItems = [], customer,al
  let paymentDetails;
  if(allowPending&&note.paymentDetails!==undefined){const detail=note.paymentDetails;if(!detail||typeof detail!=='object'||Array.isArray(detail)||Object.keys(detail).some(key=>!['integrationType','institutionDocument','authorizationCode'].includes(key))||Object.values(detail).some(value=>typeof value!=='string'||value.length>128))return fail('Revise os dados do pagamento.');paymentDetails={...detail};}
  if (!allowPending&&['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(note.paymentMethod)) {
-  const detail=note.paymentDetails;
-  if(!detail || typeof detail!=='object' || Object.keys(detail).some(k=>!['integrationType','institutionDocument','authorizationCode'].includes(k)) || !['1','2'].includes(detail.integrationType) || !/^\d{14}$/.test(detail.institutionDocument||'') || typeof detail.authorizationCode!=='string' || !detail.authorizationCode.trim() || detail.authorizationCode.length>128 || /[\r\n\t]/.test(detail.authorizationCode)) return fail('Informe o tipo de integração, CNPJ da instituição e identificador ou autorização do pagamento eletrônico.');
-  paymentDetails={integrationType:detail.integrationType,institutionDocument:detail.institutionDocument,authorizationCode:detail.authorizationCode.trim()};
+  const payment=normalizeElectronicPayment(note.paymentMethod,note.paymentDetails);
+  if(payment.error)return {error:{code:'AV-NFE-CORRECTION-NOTE',...payment.error}};
+  paymentDetails=payment.details;
  }
 
  if (typeof note.customerName !== 'string' || !note.customerName.trim() || note.customerName.length>180 || !/^\d{11}(?:\d{3})?$/.test(note.customerDocument || '')) return fail('Revise o nome e o CPF/CNPJ do destinatário.');

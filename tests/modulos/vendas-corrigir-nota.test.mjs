@@ -91,3 +91,18 @@ test('busca seleciona o cadastro confirmado, habilita Adicionar e preserva o pre
  const add=tree.find(n=>n.props?.className?.includes('catalog-add-button'));assert.equal(add.props.disabled,false);assert.equal(added,undefined);add.props.onClick();assert.equal(added.price,25);assert.equal(added.catalogItemId,'id-new');
  tree=render();assert.equal(tree.find(n=>n.props?.role==='combobox').props.value,'');
 });
+
+test('pagamento eletrônico aceita CNPJ com máscara e aponta a pendência no campo correto',()=>{
+ const detail={integrationType:'2',institutionDocument:'10.573.521/0001-91',authorizationCode:'ABC123'};
+ const electronic={...note,paymentMethod:'Cartão de crédito',paymentDetails:detail};
+ const before=structuredClone(electronic);
+ const result=applyFiscalNoteEdit(draft,electronic);
+ assert.equal(result.source.paymentSnapshot.details.institutionDocument,'10573521000191');
+ assert.deepEqual(electronic,before);
+ for(const [field,value] of [['integrationType',''],['institutionDocument','1057'],['authorizationCode','']]){
+  const failure=applyFiscalNoteEdit(draft,{...electronic,paymentDetails:{...detail,[field]:value}});
+  assert.equal(failure.error.field,field);
+  assert.equal(fiscalValidationIssue(failure.error).field,field);
+ }
+ assert.ok(applyFiscalNoteEdit(draft,{...electronic,paymentDetails:{...detail,authorizationCode:''}},{allowPending:true}).source);
+});
