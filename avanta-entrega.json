@@ -3,7 +3,7 @@
   "migrations": [
     {
       "path": "supabase/migrations/20261117013000_vendas_preenchimento_fiscal.sql",
-      "sha256": "8d2b39779934e1142edf4a86ad93f1a8ffcbbaa7c5092a5f57ba31a84315b86e"
+      "sha256": "3c44287b056012759890c275067487911bf9df94b1a39158edb230261455a36a"
     }
   ],
   "version": "3.2.0.454",
