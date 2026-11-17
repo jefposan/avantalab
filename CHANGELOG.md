@@ -1,3 +1,9 @@
+## 3.2.0.464 — Emissão fiscal: origem legível e autorização opcional no pagamento externo
+
+- Origem nas listas fiscais mostra Nota avulsa, Pedido nº …, Venda rápida ou OS nº …; sem número comercial, mostra apenas o tipo. UUIDs e vínculos continuam intactos e disponíveis nos detalhes. Em pagamento externo (integração 2), código de autorização/EndToEndId pode ficar vazio e a tag cAut é omitida. Cartão integrado mantém a exigência fiscal; valores informados continuam validados.
+- Testes de criação, edição e XML/XSD sem código de autorização, além das duas colunas de Origem. Sem alteração de banco, numeração, permissões ou históricos.
+- Referência: MOC YA07 (cAut 0–1) e YA05-10 para cartão integrado: https://moc.sped.fazenda.pr.gov.br/NFe_NFCe/NFe_NFCe/Leiaute.html e https://www.nfe.fazenda.gov.br/Portal/exibirArquivo.aspx?conteudo=tQNDQOeNeyI%3D
+
 ## 3.2.0.463 — Emissão fiscal: identificar corretamente pendências do pagamento
 
 - A validação de pagamento eletrônico aponta separadamente integração, CNPJ da instituição e autorização/EndToEndId; a forma selecionada não recebe o erro de outro campo. CNPJ com máscara é normalizado no servidor. Salvar rascunho continua permitindo pagamento incompleto; emissão mantém as exigências anteriores.

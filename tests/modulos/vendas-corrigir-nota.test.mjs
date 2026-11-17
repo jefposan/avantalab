@@ -99,10 +99,18 @@ test('pagamento eletrônico aceita CNPJ com máscara e aponta a pendência no ca
  const result=applyFiscalNoteEdit(draft,electronic);
  assert.equal(result.source.paymentSnapshot.details.institutionDocument,'10573521000191');
  assert.deepEqual(electronic,before);
- for(const [field,value] of [['integrationType',''],['institutionDocument','1057'],['authorizationCode','']]){
+ for(const [field,value] of [['integrationType',''],['institutionDocument','1057']]){
   const failure=applyFiscalNoteEdit(draft,{...electronic,paymentDetails:{...detail,[field]:value}});
   assert.equal(failure.error.field,field);
   assert.equal(fiscalValidationIssue(failure.error).field,field);
  }
  assert.ok(applyFiscalNoteEdit(draft,{...electronic,paymentDetails:{...detail,authorizationCode:''}},{allowPending:true}).source);
+});
+
+test('correção com cartão externo sem autorização conserva forma, valores e dados do pagamento',()=>{
+ const result=applyFiscalNoteEdit(draft,{...note,paymentMethod:'Cartão de crédito',paymentDetails:{integrationType:'2',institutionDocument:'10573521000191',authorizationCode:''}});
+ assert.ok(result.source,JSON.stringify(result.error));
+ assert.equal(result.source.paymentSnapshot.details.authorizationCode,'');
+ assert.equal(result.source.paymentSnapshot.method,'Cartão de crédito');
+ assert.equal(result.source.paymentSnapshot.amount,19);
 });

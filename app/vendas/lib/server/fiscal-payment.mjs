@@ -7,9 +7,10 @@ export function normalizeElectronicPayment(method, detail) {
  const document=typeof detail.institutionDocument==='string'?detail.institutionDocument:'';
  const digits=document.replace(/\D/g,'');
  if (!/^[\d.\s/-]*$/.test(document) || !/^\d{14}$/.test(digits)) return fail('institutionDocument','Informe o CNPJ da instituição de pagamento com 14 dígitos.');
- const authorization=detail.authorizationCode;
+ const authorization=detail.authorizationCode??'';
  const label=method==='PIX dinâmico'?'identificador da transação PIX (EndToEndId)':'código de autorização do pagamento';
- if (typeof authorization!=='string' || !authorization.trim()) return fail('authorizationCode',`Informe o ${label}.`);
+ if (typeof authorization!=='string') return fail('authorizationCode',`Revise o ${label}.`);
+ if (detail.integrationType==='1' && ['Cartão de crédito','Cartão de débito'].includes(method) && !authorization.trim()) return fail('authorizationCode','Informe o código de autorização do pagamento integrado.');
  if (authorization.length>128 || /[\r\n\t]/.test(authorization)) return fail('authorizationCode',`Revise o ${label}: use até 128 caracteres, sem quebras de linha.`);
  return {details:{integrationType:detail.integrationType,institutionDocument:digits,authorizationCode:authorization.trim()}};
 }

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.463 -->
+<!-- ava-version: 3.2.0.464 -->
+
+> Revisão 3.2.0.464: Origem nas listas fiscais mostra Nota avulsa, Pedido nº …, Venda rápida ou OS nº …; sem número comercial, mostra apenas o tipo. UUIDs e vínculos continuam intactos e disponíveis nos detalhes. Em pagamento externo (integração 2), código de autorização/EndToEndId pode ficar vazio e a tag cAut é omitida. Cartão integrado mantém a exigência fiscal; valores informados continuam validados.
 
 > Revisão 3.2.0.463: A validação de pagamento eletrônico aponta separadamente integração, CNPJ da instituição e autorização/EndToEndId; a forma selecionada não recebe o erro de outro campo. CNPJ com máscara é normalizado no servidor. Salvar rascunho continua permitindo pagamento incompleto; emissão mantém as exigências anteriores.
 

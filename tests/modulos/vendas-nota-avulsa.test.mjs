@@ -131,8 +131,16 @@ test('emissão avulsa mantém o meio selecionado e identifica integração, CNPJ
  assert.equal(saved.ok,true,JSON.stringify(saved.errors));
  assert.equal(snapshot.payment.method,'Cartão de crédito');
  assert.equal(snapshot.payment.details.institutionDocument,'10573521000191');
- for(const [field,value] of [['integrationType',''],['institutionDocument','1057'],['authorizationCode','']]){
+ for(const [field,value] of [['integrationType',''],['institutionDocument','1057']]){
   const result=await service.create({context,input:{...request,payment:{...request.payment,details:{...details,[field]:value}}}});
   assert.equal(result.ok,false);assert.equal(result.errors[0].field,field);
  }
+});
+
+test('nota avulsa permite cartão externo sem código de autorização',async()=>{
+ const {newFiscalNoteFields}=await import('../../app/vendas/lib/fiscal-note-editor.mjs');
+ let snapshot;
+ const service=createStandaloneFiscalService({repository:{create:async args=>{snapshot=args;return {draftId};}},customerResolver:async()=>customer,catalogResolver:async()=>({items:[product]}),issuerResolver:async()=>issuer});
+ const result=await service.create({context,input:{...input,fiscalForm:newFiscalNoteFields(),payment:{...input.payment,method:'Cartão de crédito',details:{integrationType:'2',institutionDocument:'10573521000191',authorizationCode:''}}}});
+ assert.equal(result.ok,true,JSON.stringify(result.errors));assert.equal(snapshot.payment.details.authorizationCode,'');assert.equal(snapshot.payment.method,'Cartão de crédito');
 });

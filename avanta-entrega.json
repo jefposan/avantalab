@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_2jz9zxXu2vdWVLh1KrpQYd2uQz7w",
+  "baseDeploymentId": "dpl_2rUbXajky4fuzeTfZUxip8tbrhjv",
   "migrations": [],
-  "version": "3.2.0.463",
-  "scope": "Emissão fiscal: identificar a pendência correta do pagamento eletrônico e normalizar o CNPJ da instituição"
+  "version": "3.2.0.464",
+  "scope": "Emissão fiscal: Origem legível e código de autorização opcional no pagamento externo, preservando cartão integrado e vínculos fiscais"
 }

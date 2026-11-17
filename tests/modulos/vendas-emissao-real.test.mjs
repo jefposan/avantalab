@@ -111,3 +111,16 @@ test('protocolo simulado de produção gera procNFe e DANFE e recusa cruzamento 
   assert.equal(danfe.environment, 'producao');
   assert.equal(buildNfeDanfe({ processedXml: processed.processedXml, expectedEnvironment: 'homologacao' }).valid, false);
 });
+
+test('pagamento externo sem autorização gera XML válido sem tag cAut vazia',async()=>{
+ const {normalizeElectronicPayment}=await import('../../app/vendas/lib/server/fiscal-payment.mjs');
+ const source=input(newFiscalNoteFields());
+ source.payment={method:'Cartão de crédito',amount:10,details:normalizeElectronicPayment('Cartão de crédito',{integrationType:'2',institutionDocument:'10573521000191',authorizationCode:''}).details};
+ const built=buildUnsignedNfeSpXml(source);
+ assert.equal(built.valid,true,JSON.stringify(built.errors));
+ assert.match(built.xml,/<tPag>03<\/tPag>/);
+ assert.match(built.xml,/<card><tpIntegra>2<\/tpIntegra><CNPJ>10573521000191<\/CNPJ><\/card>/);
+ assert.doesNotMatch(built.xml,/<cAut\b/);
+ const checked=await validateNfeXmlAgainstXsd(built.xml);
+ assert.equal(checked.executed,true);assert.equal(checked.valid,true,JSON.stringify(checked.errors));
+});
