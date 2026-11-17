@@ -1,5 +1,5 @@
 {
-  "baseDeploymentId": "dpl_49659G1qRd3zb46kGAvtLVtfFShw",
+  "baseDeploymentId": "dpl_FhuxGV3fC2tPfgjfVDZeswUxdr4U",
   "migrations": [
     {
       "path": "supabase/migrations/20261117013000_vendas_preenchimento_fiscal.sql",
