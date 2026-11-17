@@ -38,3 +38,10 @@ da fila. Atualização visual local não significa confirmação de persistênci
 Escopo: Gestão Mobile/PWA. Não altera o dashboard React Web.
 Publicação autorizada pelo responsável. Base de produção conferida pelo domínio:
 `dpl_HHAy5HH6eJBrrvAzS8BXfkimcrob`. Integração e envio pelo pipeline oficial.
+
+Primeiro build remoto bloqueado por uma asserção textual anterior em
+`centros-custo-mobile.test.mjs`, que exigia a expressão sem a nova opção de
+perfil inteiro. O gate executou 2.982 testes e apontou somente essa falha.
+A asserção foi atualizada para exigir explicitamente a condição do centro
+selecionado junto à exceção de perfil inteiro; a cobertura funcional do
+comparativo permanece em `meus-perfis-atualizacao.test.mjs`. Sem dispensa de gate.

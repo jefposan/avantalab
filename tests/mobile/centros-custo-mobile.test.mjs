@@ -45,7 +45,7 @@ test('o centro escolhido na pílula de perfil define o contexto financeiro mobil
   assert.match(mobile, /function lancamentosDoCentroCustoAtualMobile\(\)/);
   assert.match(mobile, /function entradasDoCentroCustoAtualMobile\(\)/);
   assert.match(mobile, /centroCustoId: item\.centro_custo_id/);
-  assert.match(mobile, /state\.centrosCustoAtivo \? receitasNaoPrevistas/);
+  assert.match(mobile, /state\.centrosCustoAtivo && !todosCentros \? receitasNaoPrevistas/);
 });
 
 test('Todos exibe o consolidado e novos registros continuam exigindo um centro específico', () => {
