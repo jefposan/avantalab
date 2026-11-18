@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_6NDBm1xoYdzjAiQ3GLQr45vBVfA7",
-  "migrations": [{ "path": "supabase/migrations/20261118180000_reajuste_somente_catalogos_locais_ativos.sql", "sha256": "5c3cd3ac9498a2eba2843d6d6709f94b28ef14a81612a3904a72f06e06acf3ea" }],
-  "version": "3.2.0.486",
-  "scope": "Custos e Precificação: chaves por destino, gerenciamento de produtos por catálogo e tabelas restritas aos catálogos ativos em Vendas e Serviços."
+  "baseDeploymentId": "dpl_7P7DquAziyqH1DUd1SuMraDnfQsY",
+  "migrations": [],
+  "version": "3.2.0.488",
+  "scope": "Custos e Precificação: Voltar aos Catálogos antes de Novo serviço, topo e filtros fixos com rolagem somente na lista sem barra visível. Sem mudanças de banco; adequação fiscal local 487 do outro chat não incluída."
 }

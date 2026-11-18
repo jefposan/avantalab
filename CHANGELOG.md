@@ -1,4 +1,4 @@
-# 3.2.0.487 — Custos e Precificação: retorno aos catálogos e lista com topo fixo
+# 3.2.0.488 — Custos e Precificação: retorno aos catálogos e lista com topo fixo
 
 - Voltar antes de Novo serviço retorna à área Catálogos sem alterar o filtro ou os cadastros.
 - Cabeçalho, filtros e ações de seleção permanecem fora da rolagem; somente a lista usa DetalhesRolaveis oficial, sem barra visível.
