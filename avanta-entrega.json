@@ -2,5 +2,5 @@
   "baseDeploymentId": "dpl_7Gtaoxf8y1AfNfoSQRnPRd9BsdFH",
   "migrations": [],
   "version": "3.2.0.474",
-  "scope": "Resumo da nota mantém posicionamento flutuante centralizado, sem limite de altura nem barra de rolagem interna. Em tela baixa, o conteúdo acompanha a rolagem da página para manter as ações alcançáveis. Correção restrita ao resumo, preservando campos, cálculos e regras fiscais. Inclui os ajustes locais pendentes 472 e 473."
+  "scope": "CFOP editável com fundo branco; listas de tributos flutuantes sobre cards e rodapés; rolagem interna de Configurações fiscais restaurada; resumo da nota flutuante centralizado sem scroll interno. Sem alteração de cálculos, dados ou regras fiscais."
 }
