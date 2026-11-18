@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../lib/consultas/validators/cnpj.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
@@ -83,6 +84,7 @@ test('cadastro GET/PUT mantém distintos os erros 401, 403, 409 e 503', async ()
   class NextResponse extends Response { static json(data, opcoes) { return new NextResponse(JSON.stringify(data), opcoes); } }
   for (const [status, codigo] of [[401,'sessao_expirada'],[403,'perfil_nao_autorizado'],[409,'perfil_em_outro_dispositivo'],[503,'servico_indisponivel']]) {
     const cadastro = carregar('app/api/perfil-cadastro/route.ts', {
+      '../../../lib/consultas/validators/cnpj.ts': {sanitizarCnpj},
       'next/server': { NextResponse },
       '../../lib/cobranca-servidor': { autenticarPerfilCobrancaDetalhado: async () => ({ acesso: null, erro: { status, codigo, mensagem: 'Orientação' } }) },
       '../../lib/conta-revisao': {},

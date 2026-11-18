@@ -15,3 +15,5 @@ Validação: 688 testes de módulos/consultas/perfis aprovados; nove regressões
 Preservações: DANFE, backup e histórico, edição de cliente/produto, herança tributária, exceções por nota, série/número e ambientes. Venda rápida, build por módulo e demais itens da auditoria continuam fora do escopo.
 
 Fechamento da implementação: migração aplicada em transação única e registrada no histórico em 18/11/2026. Leitura posterior confirmou RLS ativa e ausência de SELECT para authenticated na política. Respostas paginadas de perfil anterior são descartadas e operações integradas não voltam a cortar o histórico durante atualizações. Os 19 testes finais de regressão dirigida passaram; nenhum documento fiscal real foi transmitido pelos testes.
+
+Suíte completa local após corrigir a dependência simulada do teste de autorização do cadastro: 3.065 testes, 3.059 aprovados, zero falhas e seis pulados pelo próprio conjunto. Nenhuma asserção de sessão/permissão foi removida: a simulação agora recebe o mesmo normalizador compartilhado importado pela rota real. O primeiro build foi corretamente recusado por essa dependência ausente e não substituiu a produção.
