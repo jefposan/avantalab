@@ -514,6 +514,12 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
         })();
         return;
       }
+      if(event.data?.type==='AVANTALAB_VENDAS_FISCAL_BACKUP_V1'){
+        const port=event.ports?.[0],requestId=String(event.data.requestId||'');
+        if(!port||!UUID_PATTERN.test(requestId)||event.data.companyId!==empresaId||!['list','preview','create','step','download'].includes(event.data.action))return;
+        const {action,start,end,client,id,operationId,offset}=event.data;
+        void(async()=>{try{const {data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token)throw Error('Confirme novamente sua sessão.');const params=new URLSearchParams({companyId:empresaId,offset:String(Number.isSafeInteger(offset)&&offset>=0?offset:0)});const reading=action==='list';const response=await fetch(`/api/modulos/vendas/fiscal/backup-notas?${params}`,{method:reading?'GET':'POST',headers:{Authorization:`Bearer ${token}`,...(reading?{}:{'Content-Type':'application/json'})},...(reading?{}:{body:JSON.stringify({action,start,end,client,id,requestId:operationId})}),cache:'no-store'});const result=await response.json().catch(()=>({}));port.postMessage({...result,ok:response.ok&&result.ok===true,companyId:empresaId,requestId});}catch(error){port.postMessage({ok:false,message:error instanceof Error?error.message:'Não foi possível consultar o backup.',companyId:empresaId,requestId});}finally{port.close();}})();return;
+      }
       if(event.data?.type==='AVANTALAB_VENDAS_FISCAL_EDITOR_V1'){
         const port=event.ports?.[0],requestId=String(event.data.requestId||'');
         if(!port||!UUID_PATTERN.test(requestId)||event.data.companyId!==empresaId||!['load','create-message','load-defaults','save-defaults'].includes(event.data.action))return;

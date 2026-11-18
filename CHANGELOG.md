@@ -1,3 +1,11 @@
+# 3.2.0.483 — Vendas e Serviços: backup de notas com histórico
+
+- Popup em Notas fiscais, ao lado de Configurações fiscais, com cliente pesquisável e período de emissão.
+- ZIP salvo privadamente com pastas XML e PDF, nome por razão social e mês/ano; inclui eventos de cancelamento e preserva originais.
+- Histórico paginado, novo download, geração em etapas com retomada, idempotência e isolamento por empresa/permissões.
+- Arquivos ausentes ou falhas impedem pacote parcial; limite de 500 notas e 200 MB por pacote.
+- Migrações aditivas `20261118120000_vendas_backups_notas.sql` e `20261118121000_vendas_backups_autor.sql`: histórico privado com RLS e bucket ZIP privado, sem alterar notas, regras, números ou cadastros.
+
 # 3.2.0.482 — DANFE: validar link após a geração do PDF
 
 O prazo restante do link temporário passa a ser conferido no momento atual, após gerar o DANFE. A demora de renderização não invalida um link recém-criado; TTL máximo, links vencidos, auditoria e permissões seguem protegidos.

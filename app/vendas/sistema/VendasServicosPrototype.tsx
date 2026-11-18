@@ -9,6 +9,7 @@ import {requestFiscalEditor} from '../lib/fiscal-editor-bridge.mjs';
 import NoteItemEditor,{type NoteItemDraft} from '../components/NoteItemEditor';
 import {type NoteItemOverrides} from '../lib/fiscal-note-item.mjs';
 import FiscalDefaultsPanel from '../components/FiscalDefaultsPanel';
+import FiscalBackupDialog from '../components/FiscalBackupDialog';
 import {officialCfop,cfopNature,cfopOperation,configuredNoteCfop,noteItemCfop} from '../lib/fiscal-cfop.mjs';
 import { NoteOperationFields, NoteTransportFields, NoteDetailsFields, NoteObservationsFields, NoteWithholdingFields, type NoteFields, type FiscalNoteEditorOptions } from '../components/FiscalNoteBlocks';
 import {syncFiscalNoteNumbering,newFiscalNoteFields,updateFiscalNoteFields,priceFromTable,repriceNoteLines,previewInstallments,validateFiscalNoteFields} from '../lib/fiscal-note-editor.mjs';
@@ -4492,6 +4493,7 @@ function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,comp
   const [cancelDraft, setCancelDraft] = useState<FiscalDraftRecord | null>(null);
   const [numberingOpen, setNumberingOpen] = useState(false);
   const [fiscalSetupOpen, setFiscalSetupOpen] = useState(false);
+  const [fiscalBackupOpen,setFiscalBackupOpen]=useState(false);
   const [documentFilter, setDocumentFilter] = useState('todos');
   const resumedDraftRef = useRef('');
   useEffect(() => { if (!resumeDraftId || resumedDraftRef.current === resumeDraftId) return; const draft = drafts.find((record) => record.id === resumeDraftId); if (draft) { resumedDraftRef.current = resumeDraftId; setIssueDraft(draft); } }, [resumeDraftId, drafts]);
@@ -4865,9 +4867,10 @@ function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,comp
   }
 
   return <>
-    <PageHeading view="fiscal" action={<div className="heading-actions"><button type="button" className="button secondary" onClick={() => setFiscalSetupOpen(true)}><Icon name="settings" size={17}/> Configurações fiscais</button><button type="button" className="button primary" disabled={!can('fiscal.prepare')} onClick={onNewFiscal}><Icon name="plus" size={18}/> Nova nota fiscal</button></div>}/>
+    <PageHeading view="fiscal" action={<div className="heading-actions">{can('fiscal.documents.xml.download')&&can('fiscal.documents.danfe.download')&&<button type="button" className="button secondary" onClick={()=>setFiscalBackupOpen(true)}>Backup de notas</button>}<button type="button" className="button secondary" onClick={() => setFiscalSetupOpen(true)}><Icon name="settings" size={17}/> Configurações fiscais</button><button type="button" className="button primary" disabled={!can('fiscal.prepare')} onClick={onNewFiscal}><Icon name="plus" size={18}/> Nova nota fiscal</button></div>}/>
     {origin && (() => { const originStatus = selectedOriginDraft ? fiscalDraftUserStatus(selectedOriginDraft) : null; return <div className="fiscal-origin-banner" role="status"><span><Icon name="fiscal" size={20}/></span><div><strong>{selectedOriginDraft ? `Documento de ${origin.id} localizado` : `Preparação iniciada a partir de ${origin.id}`}</strong><p>{origin.sourceLabel} de {origin.client} · {money(origin.total)}. A origem permanece vinculada e uma nova seleção não cria duplicidade.</p></div><Badge tone={originStatus?.tone ?? 'info'}>{originStatus?.label ?? documentLabel(origin.documentType)}</Badge><button type="button" className="button secondary" onClick={onClearOrigin}>Limpar seleção</button></div>; })()}
     <div className="metric-grid compact"><Metric label="Documentos" value={String(drafts.length)} note="Notas e rascunhos do perfil"/><Metric label="Para revisar" value={String(pendingCount)} note="Dados ou rejeições" tone="warning"/><Metric label="Para emitir" value={String(readyCount)} note="Aguardando emissão" tone="cyan"/><Metric label="Cancelados" value={String(canceledCount)} note="Histórico preservado"/></div>
+    {fiscalBackupOpen&&<FiscalBackupDialog companyId={companyId} origin={fiscalBridgeOrigin} onClose={()=>setFiscalBackupOpen(false)}/>}
     <Dialog open={fiscalSetupOpen} title="Configurações fiscais" description="Padrões tributários, certificado e numeração do perfil empresarial." onClose={() => setFiscalSetupOpen(false)}>
     <div className="dialog-body">
     <FiscalDefaultsPanel companyId={companyId} origin={fiscalBridgeOrigin||''} onSaved={onReloadEditor}/>

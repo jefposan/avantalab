@@ -1,6 +1,15 @@
 {
-  "baseDeploymentId": "dpl_GyJbohNyEEmA3FntTA14LaTAHz72",
-  "migrations": [],
-  "version": "3.2.0.482",
-  "scope": "DANFE: validar o prazo restante do link temporário depois da geração do PDF, sem contar a renderização como duração do acesso. Preserva limite de 60s, bloqueio de links vencidos ou excessivos, auditoria, nota autorizada e arquivos originais."
+  "baseDeploymentId": "dpl_768MtsS53R4DJYT3qTweDA1AEPdr",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261118120000_vendas_backups_notas.sql",
+      "sha256": "49c1a1f374e1ec1f211a69c649bd2f388cbfa27de04e7724197fdd14c799ecc8"
+    },
+    {
+      "path": "supabase/migrations/20261118121000_vendas_backups_autor.sql",
+      "sha256": "0fefae25aee0978a3f46ec9eb7f5607fc247d6a17417067b56d4d8a8f3eb3f25"
+    }
+  ],
+  "version": "3.2.0.483",
+  "scope": "Vendas e Serviços: backup privado de notas por cliente e período, ZIP com XML/PDF, histórico e retomada; preserva notas e regras fiscais."
 }
