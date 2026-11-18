@@ -199,6 +199,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('vendas'));
   const [empresaId, setEmpresaId] = useState(() => contextoInicial?.empresaId || '');
+  const activeCompanyRef=useRef(empresaId);
+  activeCompanyRef.current=empresaId;
   const [catalogo, setCatalogo] = useState<CatalogoVendasDTO | null>(null);
   const [perfilCadastro, setPerfilCadastro] = useState<Record<string, unknown> | null>(null);
   const [logoUrl, setLogoUrl] = useState('');
@@ -253,9 +255,9 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
     if (!UUID_PATTERN.test(perfilId)) { setDocumentosFiscais([]); return; }
     try {
       const documents=await fetchCommercialPages({url:`/api/modulos/vendas/fiscal/documents?companyId=${perfilId}`,key:'documents',token});
-      setDocumentosFiscais(documents);
+      if(activeCompanyRef.current===perfilId)setDocumentosFiscais(documents);
     } catch {
-      setDocumentosFiscais([]);
+      if(activeCompanyRef.current===perfilId)setDocumentosFiscais([]);
     }
   }, []);
 
@@ -331,7 +333,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   const carregarRecebimentos = useCallback(async (perfilId: string) => {
     const destination=iframeRef.current?.contentWindow;
     if(!destination||!UUID_PATTERN.test(perfilId))return false;
-    const send=(ok:boolean,records:unknown[],message='')=>destination.postMessage({type:RECEIVABLE_SNAPSHOT_TYPE,ok,records,message},origemPrototipo);
+    const send=(ok:boolean,records:unknown[],message='')=>activeCompanyRef.current===perfilId&&destination.postMessage({type:RECEIVABLE_SNAPSHOT_TYPE,ok,records,message},origemPrototipo);
     try{
       const {data}=await supabase.auth.getSession();const token=data.session?.access_token;
       if(!token){send(false,[],'Confirme novamente sua sessão na Gestão.');return false;}
@@ -341,14 +343,14 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   },[origemPrototipo]);
 
   const carregarEstoque = useCallback(async (perfilId:string)=>{
-    const destination=iframeRef.current?.contentWindow;if(!destination||!UUID_PATTERN.test(perfilId))return false;const send=(ok:boolean,movements:unknown[],message='')=>destination.postMessage({type:STOCK_SNAPSHOT_TYPE,ok,movements,message},origemPrototipo);
+    const destination=iframeRef.current?.contentWindow;if(!destination||!UUID_PATTERN.test(perfilId))return false;const send=(ok:boolean,movements:unknown[],message='')=>activeCompanyRef.current===perfilId&&destination.postMessage({type:STOCK_SNAPSHOT_TYPE,ok,movements,message},origemPrototipo);
     try{const {data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token){send(false,[],'Confirme novamente sua sessão na Gestão.');return false;}const records=await fetchCommercialPages({url:`/api/modulos/vendas/commercial/stock?companyId=${perfilId}`,key:'movements',token});send(true,records);return true;}catch{send(false,[],'A conexão com o estoque está indisponível.');return false;}
   },[origemPrototipo]);
 
   const carregarClientes = useCallback(async (perfilId: string) => {
     const destination = iframeRef.current?.contentWindow;
     if (!destination || !UUID_PATTERN.test(perfilId)) return false;
-    const send = (ok: boolean, customers: unknown[], message = '') => destination.postMessage({ type: CUSTOMER_SNAPSHOT_TYPE, ok, customers, message }, origemPrototipo);
+    const send = (ok: boolean, customers: unknown[], message = '') => activeCompanyRef.current===perfilId && destination.postMessage({ type: CUSTOMER_SNAPSHOT_TYPE, ok, customers, message }, origemPrototipo);
     try {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
@@ -363,7 +365,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   const carregarFornecedores = useCallback(async (perfilId: string) => {
     const destination = iframeRef.current?.contentWindow;
     if (!destination || !UUID_PATTERN.test(perfilId)) return false;
-    const send = (ok: boolean, suppliers: unknown[], message = '') => destination.postMessage({ type: SUPPLIER_SNAPSHOT_TYPE, ok, suppliers, message }, origemPrototipo);
+    const send = (ok: boolean, suppliers: unknown[], message = '') => activeCompanyRef.current===perfilId && destination.postMessage({ type: SUPPLIER_SNAPSHOT_TYPE, ok, suppliers, message }, origemPrototipo);
     try {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
@@ -378,7 +380,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   const carregarOperacoes = useCallback(async (perfilId: string) => {
     const destination = iframeRef.current?.contentWindow;
     if (!destination || !UUID_PATTERN.test(perfilId)) return false;
-    const send = (ok: boolean, operations: unknown[], message = '') => destination.postMessage({ type: OPERATION_SNAPSHOT_TYPE, ok, operations, message }, origemPrototipo);
+    const send = (ok: boolean, operations: unknown[], message = '') => activeCompanyRef.current===perfilId && destination.postMessage({ type: OPERATION_SNAPSHOT_TYPE, ok, operations, message }, origemPrototipo);
     try {
       const { data } = await supabase.auth.getSession(); const token = data.session?.access_token;
       if (!token) { send(false, [], 'Confirme novamente sua sessão na Gestão.'); return false; }

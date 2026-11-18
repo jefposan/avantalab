@@ -6673,7 +6673,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   }, [newMenu]);
 
   const persistFiscalDrafts = (next: FiscalDraftRecord[]) => {
-    const limited = next.slice(0, 100);
+    const limited = managementCatalogBridge ? next : next.slice(0, 100);
     setFiscalDraftRecords(limited);
     writeCompanyStorage(FISCAL_DRAFT_STORAGE_KEY, JSON.stringify({ version: 4, drafts: limited }));
     return limited;
@@ -7482,7 +7482,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     return { ok: true, message };
   };
   const persistReceivables = (next: ReceivableRecord[]) => {
-    const limited = next.slice(0, 200);
+    const limited = managementCatalogBridge ? next : next.slice(0, 200);
     setReceivableRecords(limited);
     writeCompanyStorage(RECEIVABLE_STORAGE_KEY, JSON.stringify({ version: 1, receivables: limited }));
     return limited;
