@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.475 -->
+<!-- ava-version: 3.2.0.476 -->
+
+> Revisão 3.2.0.476: Preserva o nome do destinatário na normalização repetida entre o mapeamento e a geração do XML de produção. Mantém a validação de nome realmente ausente e o texto obrigatório de homologação. Regressão cobre mapeamento, XML/XSD, assinatura e DANFE com dados sintéticos, sem transmissão. Sem alteração do cadastro, layout ou regras fiscais.
 
 > Revisão 3.2.0.475: Classificações obrigatórias vazias em ajustes antigos da nota deixam de apagar os padrões fiscais atuais da empresa. Exceções preenchidas continuam exclusivas da nota. Editor e validação usam a mesma herança; erro de CST não destaca CFOP por causa do texto de orientação. Sem alterar códigos cadastrados, cálculos ou dados de produção.
 

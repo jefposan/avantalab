@@ -131,3 +131,20 @@ test('classificações do item geram PISNT/COFINSNT e IPI não tributado válido
  const xsd=await validateNfeXmlAgainstXsd(built.xml);assert.equal(xsd.valid,true,JSON.stringify(xsd));
  source.items[0].ipiCst='50';assert.equal(buildUnsignedNfeSpXml(source).valid,false);
 });
+
+test('produção preserva destinatário entre mapeamento, normalização repetida, XML e assinatura',async()=>{
+ const {normalizeNfeSpXmlInput}=await import('../../app/vendas/lib/nfe-sp-xml.mjs');
+ const {createEphemeralLabSignedNfeXml}=await import('../../app/vendas/lib/server/nfe-signature-lab.mjs');
+ const source=input(newFiscalNoteFields());const before=structuredClone(source);
+ const options={environment:'producao'};const normalized=normalizeNfeSpXmlInput(source,options);assert.equal(normalized.recipient.originalName,'Cliente Sintetico');assert.deepEqual(normalizeNfeSpXmlInput(normalized,options),normalized);
+ const built=buildUnsignedNfeSpXml(normalized,options);assert.equal(built.valid,true,JSON.stringify(built.errors));assert.match(built.xml,/<tpAmb>1<\/tpAmb>/);assert.match(built.xml,/<xNome>Cliente Sintetico<\/xNome>/);assert.doesNotMatch(built.xml,/SEM VALOR FISCAL/);
+ const {prototypeDraftToNfeSpXmlInput}=await import('../../app/vendas/lib/nfe-sp-xml.mjs');
+ const mapped=prototypeDraftToNfeSpXmlInput({issuedAt:source.issuedAt,config:{documentStage:'signature',testDocumentNumber:'7',testNumericCode:'12345678',matrixReviewConfirmed:true,taxReviewConfirmed:true,taxReformReviewConfirmed:true},client:{...source.recipient,legalName:source.recipient.name,fiscal:'Contribuinte ICMS',street:source.recipient.address.street,number:source.recipient.address.number,district:source.recipient.address.district,cityName:source.recipient.address.city,cityCode:source.recipient.address.cityCode,state:source.recipient.address.uf,cep:source.recipient.address.cep},draft:{id:'nota-sintetica',operationNature:source.operationNature,series:'1',total:10,paymentMethod:'PIX estático',fiscalForm:source.fiscalForm,issuer:{...source.issuer,...source.issuer.address},items:source.items.map(item=>({sku:item.code,name:item.description,unit:item.commercialUnit,quantity:item.quantity,unitPrice:item.unitValue,ncm:item.ncm,cfopInternal:item.cfop,fiscalOriginCode:item.origin,icmsCode:item.icmsCode,pisCst:item.pisCst,cofinsCst:item.cofinsCst}))}});
+ const mappedBuilt=buildUnsignedNfeSpXml(mapped,options);assert.equal(mappedBuilt.valid,true,JSON.stringify(mappedBuilt.errors));assert.match(mappedBuilt.xml,/<xNome>Cliente Sintetico<\/xNome>/);
+ const signed=await createEphemeralLabSignedNfeXml(mappedBuilt.xml);assert.ok(signed.signedXml);const checked=await validateNfeXmlAgainstXsd(signed.signedXml,{allowSignature:true});assert.equal(checked.valid,true,JSON.stringify(checked));assert.deepEqual(source,before);
+ const {buildProcessedNfeArtifact}=await import('../../app/vendas/lib/server/nfe-processed-artifact.mjs');const {buildNfeDanfe}=await import('../../app/vendas/lib/server/nfe-danfe.mjs');
+ const protocolXml=`<protNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><infProt><tpAmb>1</tpAmb><verAplic>TESTE</verAplic><chNFe>${mappedBuilt.accessKey}</chNFe><dhRecbto>2026-11-06T12:00:01-03:00</dhRecbto><nProt>135260000000001</nProt><digVal>SINTETICO</digVal><cStat>100</cStat><xMotivo>Autorização sintética sem transmissão</xMotivo></infProt></protNFe>`;
+ const processed=buildProcessedNfeArtifact({signedXml:signed.signedXml,protocolXml,expectedEnvironment:'producao'});assert.equal(processed.valid,true,JSON.stringify(processed.errors));const danfe=buildNfeDanfe({processedXml:processed.processedXml,expectedEnvironment:'producao'});assert.equal(danfe.valid,true,JSON.stringify(danfe.errors));
+ const missing=buildUnsignedNfeSpXml({...source,recipient:{...source.recipient,name:''}},options);assert.equal(missing.valid,false);assert.ok(missing.errors.some(e=>e.code==='NFE-E04'));
+ const homolog=buildUnsignedNfeSpXml(normalizeNfeSpXmlInput(source));assert.equal(homolog.valid,true);assert.match(homolog.xml,/SEM VALOR FISCAL/);
+});

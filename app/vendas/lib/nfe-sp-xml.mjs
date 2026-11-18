@@ -159,7 +159,7 @@ export function normalizeNfeSpXmlInput(value, { environment = 'homologacao' } = 
     },
     recipient: {
       document: digits(recipient.document, 14),
-      originalName: text(recipient.name, 60),
+      originalName: text(recipient.name ?? recipient.originalName, 60),
       stateRegistration: text(recipient.stateRegistration, 14).replace(/[^\dIiSsEeNnTtOo]/g, ''),
       stateRegistrationIndicator: digits(recipient.stateRegistrationIndicator, 1),
       email: text(recipient.email, 60).toLocaleLowerCase('pt-BR'),
