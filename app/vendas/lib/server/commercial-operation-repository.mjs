@@ -191,7 +191,7 @@ export function createPostgresCommercialOperationRepository({ pool } = {}) {
           companyId: operation.companyId, operationId, event: `${operation.type}_criado`,
           summary: `${operation.type === 'orcamento' ? 'Orçamento' : 'Pedido'} ${created.year}/${created.number} salvo.`,
           actorId: operation.actorId,
-          metadata: { type: created.type, channel: created.channel, year: created.year, number: created.number, total: created.total, version: created.version },
+          metadata: { type: created.type, channel: created.channel, year: created.year, number: created.number, total: created.total, version: created.version, ...(operation.discountApproval?{discountApproval:operation.discountApproval}:{}) },
         });
         return { operation: created, reused: false };
       });
@@ -231,7 +231,7 @@ export function createPostgresCommercialOperationRepository({ pool } = {}) {
           companyId: operation.companyId, operationId, event: `${operation.type}_atualizado`,
           summary: `${operation.type === 'orcamento' ? 'Orçamento' : 'Pedido'} ${saved.year}/${saved.number} atualizado.`,
           actorId: operation.actorId,
-          metadata: { previousVersion: expectedVersion, version: saved.version, total: saved.total },
+          metadata: { previousVersion: expectedVersion, version: saved.version, total: saved.total, ...(operation.discountApproval?{discountApproval:operation.discountApproval}:{}) },
         });
         return saved;
       });

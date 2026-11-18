@@ -19,7 +19,7 @@ export async function handleCommercialFiscalCenterRequest({ request, runtime } =
     return reply(401, { ok: false, code: 'AV-FISCAL-CENTER-SESSION', message: 'Sua sessão precisa ser confirmada novamente.' });
   }
   let result;
-  try { result = await runtime.centerService.list({ boundary: access.boundary, effectivePermissions: access.effectivePermissions }); }
+  try { result = await runtime.centerService.list({ boundary: access.boundary, effectivePermissions: access.effectivePermissions,limit:Number(new URL(request.url).searchParams.get('limit')||100),offset:Number(new URL(request.url).searchParams.get('offset')||0) }); }
   catch { return reply(503, { ok: false, code: 'AV-FISCAL-CENTER-UNAVAILABLE', message: 'Não foi possível consultar a Central Fiscal neste momento.' }); }
   if (!result?.ok) {
     const unavailable = result?.reason === 'repository_unavailable';

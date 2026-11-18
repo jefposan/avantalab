@@ -1,6 +1,11 @@
 {
-  "baseDeploymentId": "dpl_2jwbeiRwmXT5T89AzUaHGPgRCqJR",
-  "migrations": [],
-  "version": "3.2.0.484",
-  "scope": "Backup de notas: confirmar a tentativa retomada para permitir gerar outro pacote após concluir; sem alterações fiscais."
+  "baseDeploymentId": "dpl_BE3UrWpA5EPkwvQVbwqNJS3S6mjC",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261118160000_vendas_prioridades_auditoria.sql",
+      "sha256": "70cf9c2c97b927db1efdc78e385f80f5d8ccf556993de99aeacb29163323e0d3"
+    }
+  ],
+  "version": "3.2.0.484.01",
+  "scope": "Vendas e Serviços: proteger custos e descontos, completar carga de listas, indicar capacidade fiscal e aceitar CNPJ alfanumérico nos cadastros e consultas; sem alterar tributos ou documentos existentes."
 }

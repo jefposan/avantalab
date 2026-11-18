@@ -1,3 +1,4 @@
+import {sanitizarCnpj,validarCnpj,formatarCnpjParaExibicao} from '../../../lib/consultas/validators/cnpj.ts';
 import { fiscalOperationCfop, fiscalIbsCbsRequired } from './fiscal-item-presentation.mjs';
 import { normalizeFiscalMatrix, validateFiscalMatrix } from './fiscal-matrix.mjs';
 import { resolveMunicipalityCode } from './municipality.mjs';
@@ -42,13 +43,7 @@ function brazilianDocumentDigit(base, weights) {
   return remainder < 2 ? 0 : 11 - remainder;
 }
 
-export function isValidCnpj(value) {
-  const normalized = String(value ?? '').replace(/\D/g, '');
-  if (normalized.length !== 14 || /^(\d)\1{13}$/.test(normalized)) return false;
-  const first = brazilianDocumentDigit(normalized, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
-  const second = brazilianDocumentDigit(`${normalized.slice(0, 12)}${first}`, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
-  return normalized.endsWith(`${first}${second}`);
-}
+export function isValidCnpj(value) { return validarCnpj(String(value??'')).valido; }
 
 export function isValidCpf(value) {
   const normalized = String(value ?? '').replace(/\D/g, '');
@@ -61,14 +56,7 @@ export function isValidCpf(value) {
   return Number(normalized[9]) === digit(9) && Number(normalized[10]) === digit(10);
 }
 
-export function formatCnpj(value) {
-  const digits = String(value ?? '').replace(/\D/g, '').slice(0, 14);
-  return digits
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2');
-}
+export function formatCnpj(value) { return formatarCnpjParaExibicao(String(value??'')); }
 
 export function formatCpf(value) {
   const digits = String(value ?? '').replace(/\D/g, '').slice(0, 11);
@@ -85,7 +73,7 @@ export function evaluateCertificateCompanyRegistration(company) {
   const checks = [
     { id: 'display-name', label: 'Nome de exibição', ready: Boolean(company?.name?.trim()) },
     { id: 'legal-name', label: 'Razão social', ready: Boolean(company?.legalName?.trim()) },
-    { id: 'document', label: 'CNPJ com 14 dígitos', ready: digits(company?.document).length === 14 },
+    { id: 'document', label: 'CNPJ com 14 dígitos', ready: isValidCnpj(company?.document) },
     { id: 'tax-regime', label: 'Regime tributário', ready: Boolean(company?.taxRegime?.trim()) },
     { id: 'city', label: 'Município e UF', ready: Boolean(company?.city?.trim()) },
     { id: 'city-code', label: 'Município fiscal identificado', ready: digits(company?.cityCode).length === 7 },
@@ -97,7 +85,7 @@ export function evaluateCertificateCompanyRegistration(company) {
   const missing = checks.filter((check) => !check.ready);
   return {
     ready: missing.length === 0,
-    document: digits(company?.document),
+    document: sanitizarCnpj(String(company?.document||'')),
     checks,
     missing,
   };
@@ -307,7 +295,7 @@ export function validateCompanyProfile(company) {
   const digits = (value) => String(value || '').replace(/\D/g, '');
   if (!company?.name?.trim()) errors.push('Informe o nome de exibição da empresa.');
   if (!company?.legalName?.trim()) errors.push('Informe a razão social.');
-  if (digits(company?.document).length !== 14) errors.push('Informe um CNPJ com 14 dígitos.');
+  if (!isValidCnpj(company?.document)) errors.push('Informe um CNPJ válido com 14 posições.');
   if (!company?.city?.trim()) errors.push('Informe o município da empresa.');
   if (digits(company?.cityCode).length !== 7) errors.push('Não foi possível identificar o município fiscal. Revise o CEP e informe município/UF.');
   if (digits(company?.cep).length !== 8) errors.push('Informe o CEP fiscal da empresa com 8 dígitos.');

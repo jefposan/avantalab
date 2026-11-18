@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../../../lib/consultas/validators/cnpj.ts';
 import { createHash, randomUUID } from 'node:crypto';
 
 export const COMMERCIAL_SERVICE_WORKFLOW_REFERENCE = '2026-09-06';
@@ -48,7 +49,7 @@ function normalizeIssuer(input = {}) {
   const digits = (value, max) => clean(value).replace(/\D/g, '').slice(0, max);
   const issuer = {
     establishmentId: UUID.test(clean(input.establishmentId)) ? clean(input.establishmentId) : '',
-    document: digits(input.document, 14), legalName: clean(input.legalName, 180), tradeName: clean(input.tradeName, 180),
+    document: sanitizarCnpj(String(input.document||'')), legalName: clean(input.legalName, 180), tradeName: clean(input.tradeName, 180),
     stateRegistration: clean(input.stateRegistration, 40), municipalRegistration: clean(input.municipalRegistration, 40),
     taxRegime: clean(input.taxRegime, 80), postalCode: digits(address.postalCode || address.cep, 8),
     street: clean(address.street || address.logradouro, 180), number: clean(address.number || address.numero, 30),

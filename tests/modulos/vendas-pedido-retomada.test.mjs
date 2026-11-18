@@ -35,7 +35,7 @@ test('menu real oferece edição e faturamento para confirmados e cancelamento t
 test('recarga do servidor trata pedido salvo como rascunho e preserva estados posteriores', async () => {
   const source = await readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
   const start = source.indexOf('const statusLabel =', source.indexOf('if (event.data?.type === OPERATION_SNAPSHOT_TYPE'));
-  const end = source.indexOf('setCreated(records.slice(0, 200));', start) + 'setCreated(records.slice(0, 200));'.length;
+  const end = source.indexOf('setCreated(records);', start) + 'setCreated(records);'.length;
   let records;
   vm.runInNewContext(ts.transpileModule(source.slice(start, end), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, {
     event: { data: { operations: ['salvo', 'rascunho', 'confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido'].map((status, index) => ({

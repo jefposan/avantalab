@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 import { NextResponse } from 'next/server';
 import {
   ESTADOS_BRASIL,
@@ -50,7 +51,7 @@ function normalizarCadastro(cadastro: Record<string, unknown>) {
     nome_responsavel: texto(cadastro.nome_responsavel),
     razao_social: texto(cadastro.razao_social),
     tipo_documento: cadastro.tipo_documento === 'cpf' ? 'cpf' : 'cnpj',
-    documento: somenteDigitos(cadastro.documento, 14),
+    documento: cadastro.tipo_documento==='cpf'?somenteDigitos(cadastro.documento,11):sanitizarCnpj(String(cadastro.documento||'')),
     tipo_empresa: texto(cadastro.tipo_empresa, 30),
     cep: somenteDigitos(cadastro.cep, 8),
     rua: texto(cadastro.rua),
@@ -212,7 +213,7 @@ export async function PUT(request: Request) {
   const tipoEmpresaInformado = texto(dados.tipo_empresa, 30);
   const tipoEmpresa = pessoal ? 'outro' : (TIPOS_EMPRESA_VALIDOS.has(tipoEmpresaInformado) ? tipoEmpresaInformado : '');
   const tipoDocumento = pessoal || tipoEmpresa === 'autonomo' ? 'cpf' : 'cnpj';
-  const documento = somenteDigitos(dados.documento, tipoDocumento === 'cpf' ? 11 : 14);
+  const documento = tipoDocumento==='cpf'?somenteDigitos(dados.documento,11):sanitizarCnpj(String(dados.documento||''));
   const concluir = corpo.concluir === true;
 
   const regimeInformado = texto(dados.regime_tributario, 40);

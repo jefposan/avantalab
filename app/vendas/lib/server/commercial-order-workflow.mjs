@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../../../lib/consultas/validators/cnpj.ts';
 export const COMMERCIAL_ORDER_WORKFLOW_REFERENCE = '2026-09-04';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -66,7 +67,7 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
           current = updated.operation;
         }
       } else {
-        const document = digits(customer?.document);
+        const document = sanitizarCnpj(String(customer?.document||''));
         if (![11, 14].includes(document.length)) return { ok: false, errors: [issue('AV-COMMERCIAL-WORKFLOW-CUSTOMER', 'customer', 'Selecione um cliente com CPF ou CNPJ válido.')] };
         customerRecord = await customerRepository.findByDocument({ companyId: context.companyId, document });
         if (customerRecord?.status === 'inativo') return { ok: false, errors: [issue('AV-COMMERCIAL-WORKFLOW-CUSTOMER', 'customer', 'O cliente está inativo nesta empresa.')] };

@@ -1,3 +1,4 @@
+import { protectCommercialService } from './commercial-visibility.mjs';
 import { createHash } from 'node:crypto';
 
 export const COMMERCIAL_SERVICE_ORDER_REFERENCE = '2026-09-03';
@@ -128,7 +129,7 @@ export function createPostgresCommercialServiceOrderRepository({ pool } = {}) {
 export function createCommercialServiceOrderService({ repository, materialResolver } = {}) {
   if(!repository?.convert||!repository?.start||!repository?.complete) throw new TypeError('Informe o repositório de ordens de serviço.');
   if(typeof materialResolver!=='function') throw new TypeError('Informe o resolvedor server-side de materiais.');
-  return Object.freeze({
+  return protectCommercialService({
     async get({context,orderId}={}){const no=denied(context,'services.view');if(no)return{ok:false,errors:[no]};if(!UUID.test(clean(orderId)))return{ok:false,errors:[fail('AV-SERVICE-ORDER-INPUT','operation','Selecione uma ordem de serviço válida.')]};try{const order=await repository.get({companyId:context.companyId,orderId});return order?{ok:true,order,errors:[]}:{ok:false,errors:[publicError(appError('AV-SERVICE-ORDER-NOT-FOUND'))]};}catch(cause){return{ok:false,errors:[publicError(cause)]};}},
     async convert({context,quoteId,expectedVersion,idempotencyKey,input={}}={}) {
       const no=denied(context,'services.create')||denied(context,'services.edit'); if(no)return{ok:false,errors:[no]};

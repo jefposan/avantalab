@@ -274,3 +274,5 @@ testes. Esta seção resume apenas a face dos controles.
 - Reutilizar `app/components/CampoSelecaoPesquisavel.tsx` para listas de códigos com descrição. Consome CampoBusca e normalizarTexto; aceita valor controlado, opções, nome acessível e disabled. Oferece seleção por setas/Enter, Escape, clique externo e limpeza. Texto digitado pesquisa; somente uma opção selecionada altera o valor. Ao sair sem selecionar, volta ao valor confirmado. Não carrega dados nem os persiste por conta própria. Primeira aplicação: Natureza/CFOP e padrões tributários da empresa.
 
 - A lista pesquisável é renderizada por portal sobre cards/rodapés, com limites da viewport e reposicionamento na rolagem. Conserva tokens do campo, seleção por teclado e clique externo. Escape fecha a lista antes de alcançar o modal.
+
+- CampoSelecaoPesquisavel aceita `disabled` opcional por opção. Opções indisponíveis mantêm descrição e valor já selecionado, mas não podem ser escolhidas por mouse ou teclado. Consumidores anteriores permanecem inalterados.

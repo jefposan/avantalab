@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 import {validateIpiClassification} from './fiscal-ipi.mjs';
 import {newFiscalNoteFields,deliveryForecastAllowed} from './fiscal-note-editor.mjs';
 export const NFE_SP_XML_REFERENCE = '2026-09-05';
@@ -151,7 +152,7 @@ export function normalizeNfeSpXmlInput(value, { environment = 'homologacao' } = 
     consumerFinal: source.consumerFinal === true,
     presence: text(source.presence),
     issuer: {
-      document: digits(issuer.document, 14),
+      document: sanitizarCnpj(String(issuer.document||'')).slice(0,14),
       legalName: text(issuer.legalName, 60),
       tradeName: text(issuer.tradeName, 60),
       stateRegistration: text(issuer.stateRegistration, 14).replace(/\D/g, ''),
@@ -159,7 +160,7 @@ export function normalizeNfeSpXmlInput(value, { environment = 'homologacao' } = 
       address: normalizeAddress(issuer.address),
     },
     recipient: {
-      document: digits(recipient.document, 14),
+      document: sanitizarCnpj(String(recipient.document||'')).slice(0,14),
       originalName: text(recipient.name ?? recipient.originalName, 60),
       stateRegistration: text(recipient.stateRegistration, 14).replace(/[^\dIiSsEeNnTtOo]/g, ''),
       stateRegistrationIndicator: digits(recipient.stateRegistrationIndicator, 1),
@@ -179,7 +180,7 @@ export function normalizeNfeSpXmlInput(value, { environment = 'homologacao' } = 
       method: text(payment.method),
       installments:Math.max(1,Math.min(120,Math.trunc(Number(payment.installments)||1))),
       amount:paymentCode(payment.method)==='90'?0:decimal(payment.amount),
-      details: payment.details && typeof payment.details === 'object' ? { integrationType: text(payment.details.integrationType), institutionDocument: digits(payment.details.institutionDocument), authorizationCode: text(payment.details.authorizationCode,128) } : null,
+      details: payment.details && typeof payment.details === 'object' ? { integrationType: text(payment.details.integrationType), institutionDocument: sanitizarCnpj(String(payment.details.institutionDocument||'')), authorizationCode: text(payment.details.authorizationCode,128) } : null,
     },
     additionalInfo: text(source.additionalInfo, 5000),
     matrixReviewConfirmed: source.matrixReviewConfirmed === true,
@@ -251,6 +252,7 @@ export function validateNfeSpXmlInput(inputValue, options) {
   if (!input.number || Number(input.number) < 1) errors.push(validationError('NFE-B08', 'number', 'Informe um número de teste entre 1 e 999999999.'));
   if (input.numericCode.length !== 8) errors.push(validationError('NFE-B03', 'numericCode', 'Informe o código numérico cNF com exatamente oito dígitos.'));
 
+  if (/[A-Z]/.test(input.issuer.document)) errors.push(validationError('AV-NFE-ISSUER-ALPHA','issuer.document','O cadastro aceita CNPJ alfanumérico; a emissão por emitente com letras exige a atualização do ciclo de chave e assinatura. Nenhuma letra será removida.'));
   if (input.issuer.document.length !== 14) errors.push(validationError('NFE-C02', 'issuer.document', 'O CNPJ do emitente deve possuir 14 dígitos nesta fase do piloto.'));
   requiredText(input.issuer.legalName, 'NFE-C03', 'issuer.legalName', 'Informe a razão social do emitente.');
   requiredText(input.issuer.stateRegistration, 'NFE-C17', 'issuer.stateRegistration', 'Informe a inscrição estadual do emitente.');

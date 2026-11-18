@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../../../lib/consultas/validators/cnpj.ts';
 export const COMMERCIAL_CUSTOMER_REPOSITORY_REFERENCE = '2026-09-03';
 
 const RETRYABLE_TRANSACTION_CODES = new Set(['40001', '40P01']);
@@ -246,7 +247,7 @@ export function createPostgresCommercialCustomerRepository({ pool } = {}) {
       return withClient(pool, async (client) => {
         const result = await client.query(
           'select * from public.vendas_clientes where empresa_id=$1 and documento=$2 limit 1',
-          [companyId, digits(document)],
+          [companyId, sanitizarCnpj(String(document))],
         );
         return mapCustomer(result.rows?.[0]);
       });
@@ -262,7 +263,7 @@ export function createPostgresCommercialCustomerRepository({ pool } = {}) {
             and ($3='' or nome_exibicao ilike '%' || $3 || '%' or razao_social ilike '%' || $3 || '%'
               or ($4<>'' and documento like '%' || $4 || '%') or coalesce(email,'') ilike '%' || $3 || '%')
           order by nome_exibicao,id limit $5 offset $6
-        `, [companyId, text(status), search, digits(search), limit, offset]);
+        `, [companyId, text(status), search, sanitizarCnpj(String(search)), limit, offset]);
         return (result.rows || []).map(mapCustomer);
       });
     },

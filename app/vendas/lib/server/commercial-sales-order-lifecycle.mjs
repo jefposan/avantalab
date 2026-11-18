@@ -1,3 +1,4 @@
+import {protectCommercialService} from './commercial-visibility.mjs';
 export const COMMERCIAL_SALES_ORDER_LIFECYCLE_REFERENCE = '2026-09-03';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -410,7 +411,7 @@ export function createCommercialSalesOrderLifecycleService({ repository } = {}) 
       return { ok: false, errors: [publicError(error)] };
     }
   };
-  return Object.freeze({
+  return protectCommercialService({
     confirm: run('confirm', ['sales.edit', 'stock.exit']),
     startSeparation: run('startSeparation', ['sales.edit', 'stock.exit']),
     cancel: run('cancel', ['sales.cancel', 'stock.exit']),

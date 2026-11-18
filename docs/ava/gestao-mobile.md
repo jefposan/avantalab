@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.484 -->
+<!-- ava-version: 3.2.0.484.01 -->
+
+> Revisão 3.2.0.484.01: Vendas e Serviços: custos são omitidos no servidor sem Visualizar custos; limite de desconto da empresa fica protegido no servidor (padrão 15%), e somente usuários com Aprovar desconto podem ultrapassá-lo. Listas percorrem todas as páginas antes de alimentar buscas e totais, sem publicar carga parcial como completa. Códigos tributários sem suporte no gerador aparecem indisponíveis, sem substituir valores gravados nem alterar regras fiscais. Cadastros e consulta preservam CNPJ alfanumérico, com máscara e validação compartilhadas; CPF e CNPJ numéricos continuam compatíveis. Emitente com letras permanece explicitamente bloqueado até homologar o ciclo completo de chave/assinatura; não prometer essa emissão.
 
 > Revisão 3.2.0.484: após retomar um backup confirmado, uma nova geração recebe identificação nova, inclusive se a resposta da criação anterior tiver sido perdida. Sem mudança nas notas ou regras fiscais.
 

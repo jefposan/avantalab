@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 import { mapCompanyProfile } from './management-catalog-bridge.mjs';
 export const COMPANY_PROFILE_SAVE_REQUEST = 'AVANTALAB_VENDAS_COMPANY_SAVE_V1';
 export const COMPANY_PROFILE_SAVE_RESPONSE = 'AVANTALAB_VENDAS_COMPANY_SAVED_V1';
@@ -8,7 +9,7 @@ export function companyProfilePatch(company) {
   const digits = value => String(value || '').replace(/\D/g,'');
   return {
     nome_fantasia:String(company.name || '').trim(), razao_social:String(company.legalName || '').trim(),
-    documento:digits(company.document), cep:digits(company.cep), rua:String(company.street || '').trim(),
+    documento:sanitizarCnpj(String(company.document||'')), cep:digits(company.cep), rua:String(company.street || '').trim(),
     numero:String(company.number || '').trim(), complemento:String(company.complement || '').trim(),
     bairro:String(company.district || '').trim(), cidade:city[1].trim(), estado:city[2].toUpperCase(),
     telefone:digits(company.phone), email_empresa:String(company.email || '').trim().toLowerCase(),

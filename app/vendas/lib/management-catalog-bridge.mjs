@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 import { resolverFiscalProduto, usaFiscalEmpresa } from '../../lib/fiscal-produto.mjs';
 import { resolveMunicipalityCode } from './municipality.mjs';
 
@@ -30,7 +31,7 @@ export function mapCompanyProfile(profile, companyId) {
   return {
     name: text(profile.nome_fantasia),
     legalName: text(profile.razao_social),
-    document: text(profile.documento).replace(/\D/g, ''),
+    document: sanitizarCnpj(text(profile.documento)),
     stateRegistration: profile.inscricao_estadual_isento === true ? 'ISENTO' : text(profile.inscricao_estadual),
     municipalRegistration: profile.inscricao_municipal_isento === true ? 'ISENTO' : text(profile.inscricao_municipal),
     taxRegime: text(profile.regime_tributario),

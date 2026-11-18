@@ -1,4 +1,5 @@
 'use client';
+import {sanitizarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 import { validateFiscalSettingsForm, mergeSettingsNumbering } from '../lib/fiscal-settings-form.mjs';
 import { COMPANY_PROFILE_SAVE_REQUEST, COMPANY_PROFILE_SAVE_RESPONSE } from '../lib/company-profile-save.mjs';
 import { lookupCompanyCnpj } from '../lib/company-cnpj-lookup.mjs';
@@ -1478,7 +1479,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
     if (correction) {
       setSavingFiscal(true); setFiscalSaveError(''); setFiscalSaveIssue(null);
       try {
-        const result = await correction.onSave({customerName:clientName,customerDocument:(selectedClient?.document || correction.draft.clientDocument).replace(/\D/g,''),paymentMethod,paymentDetails: ['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(paymentMethod)?paymentDetails:undefined,items:lines.map(line=>({sku:line.sku,productId:line.catalogItemId,quantity:line.quantity,unitPrice:line.unitPrice,unitDiscount:line.unitDiscount,ncm:itemTax[line.sku]?.ncm || catalogRecords.find(item=>item.sku===line.sku)?.ncm || '',cfop:itemTax[line.sku]?.cfop || '',...(itemTax[line.sku]?.noteItem?{noteItem:itemTax[line.sku].noteItem}:{})})),freight:commercialNumber(freight),insurance:commercialNumber(insurance),otherExpenses:commercialNumber(otherExpenses),generalDiscount:commercialNumber(globalDiscount),additionalInfo:notes,...(fiscalEditor?{fiscalForm:noteFields}:{}),operationNature,installments:Number(installments),firstDueDate},issue);
+        const result = await correction.onSave({customerName:clientName,customerDocument:sanitizarCnpj(selectedClient?.document || correction.draft.clientDocument),paymentMethod,paymentDetails: ['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(paymentMethod)?paymentDetails:undefined,items:lines.map(line=>({sku:line.sku,productId:line.catalogItemId,quantity:line.quantity,unitPrice:line.unitPrice,unitDiscount:line.unitDiscount,ncm:itemTax[line.sku]?.ncm || catalogRecords.find(item=>item.sku===line.sku)?.ncm || '',cfop:itemTax[line.sku]?.cfop || '',...(itemTax[line.sku]?.noteItem?{noteItem:itemTax[line.sku].noteItem}:{})})),freight:commercialNumber(freight),insurance:commercialNumber(insurance),otherExpenses:commercialNumber(otherExpenses),generalDiscount:commercialNumber(globalDiscount),additionalInfo:notes,...(fiscalEditor?{fiscalForm:noteFields}:{}),operationNature,installments:Number(installments),firstDueDate},issue);
         if (!result.ok) showIssue({...result,message:result.message || 'Não foi possível salvar a nota.'});
       } catch { showIssue({ok:false,message:'A conexão foi interrompida. Os dados permanecem nesta página.'}); }
       finally {setSavingFiscal(false);}
@@ -1609,7 +1610,7 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
           <div className="order-card-body order-form-grid">
             {fiscalEditor&&<label className="field"><span>Condição de pagamento</span><select value={installments==='1'?'cash':'installments'} onChange={event=>setInstallments(event.target.value==='cash'?'1':'2')}><option value="cash">À vista</option><option value="installments">Parcelado</option></select></label>}
             <label className="field"><span>Forma de pagamento *</span><select name="paymentMethod" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}>{(correction || fiscalEditor) ? <><option value="">Selecione o meio utilizado</option>{['PIX estático','PIX dinâmico','Dinheiro','Boleto','Transferência bancária','Cartão de crédito','Cartão de débito','Sem pagamento'].map(method=><option value={method} key={method}>{method==='PIX estático'?'PIX — chave ou QR Code fixo':method==='PIX dinâmico'?'PIX — cobrança com QR Code dinâmico':method}</option>)}</> : settings.payments.enabledMethods.map((method) => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}</select></label>
-            {(correction || fiscalEditor) && ['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(paymentMethod) && <><label className="field"><span>Integração do pagamento</span><select name="integrationType" value={paymentDetails.integrationType} onChange={event=>setPaymentDetails(current=>({...current,integrationType:event.target.value}))}><option value="">Selecione</option><option value="1">Integrado ao sistema da empresa</option><option value="2">Pagamento externo, sem integração</option></select></label><label className="field"><span>CNPJ da instituição de pagamento</span><input name="institutionDocument" value={formatCnpj(paymentDetails.institutionDocument)} inputMode="numeric" maxLength={18} placeholder="00.000.000/0000-00" onChange={event=>setPaymentDetails(current=>({...current,institutionDocument:event.target.value.replace(/\D/g,'').slice(0,14)}))}/></label><label className="field"><span>{paymentMethod==='PIX dinâmico'?'Identificador da transação PIX (EndToEndId)':'Código de autorização do pagamento'}</span><input name="authorizationCode" value={paymentDetails.authorizationCode} placeholder={paymentDetails.integrationType==='2'?'Opcional':undefined} maxLength={128} onChange={event=>setPaymentDetails(current=>({...current,authorizationCode:event.target.value}))}/></label></>}
+            {(correction || fiscalEditor) && ['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(paymentMethod) && <><label className="field"><span>Integração do pagamento</span><select name="integrationType" value={paymentDetails.integrationType} onChange={event=>setPaymentDetails(current=>({...current,integrationType:event.target.value}))}><option value="">Selecione</option><option value="1">Integrado ao sistema da empresa</option><option value="2">Pagamento externo, sem integração</option></select></label><label className="field"><span>CNPJ da instituição de pagamento</span><input name="institutionDocument" value={formatCnpj(paymentDetails.institutionDocument)} inputMode="text" autoCapitalize="characters" maxLength={18} placeholder="00.000.000/0000-00" onChange={event=>setPaymentDetails(current=>({...current,institutionDocument:sanitizarCnpj(event.target.value).slice(0,14)}))}/></label><label className="field"><span>{paymentMethod==='PIX dinâmico'?'Identificador da transação PIX (EndToEndId)':'Código de autorização do pagamento'}</span><input name="authorizationCode" value={paymentDetails.authorizationCode} placeholder={paymentDetails.integrationType==='2'?'Opcional':undefined} maxLength={128} onChange={event=>setPaymentDetails(current=>({...current,authorizationCode:event.target.value}))}/></label></>}
             <label className="field"><span>Parcelas</span><select name="installments" value={installments} onChange={(event) => setInstallments(event.target.value)}><option value="1">1 parcela</option><option value="2">2 parcelas</option><option value="3">3 parcelas</option><option value="6">6 parcelas</option>{![1,2,3,6].includes(Number(installments))&&<option value={installments}>{installments} parcelas</option>}</select></label>
             <label className="field"><span>Primeiro vencimento</span><input type="date" name="firstDueDate" value={firstDueDate} onChange={(event) => setFirstDueDate(event.target.value)}/></label>
             {!fiscalOnly && <label className="field"><span>Entrega ou retirada</span><select value={fulfillment} onChange={(event) => setFulfillment(event.target.value)}><option>Entrega</option><option>Retirada</option><option>Serviço no local</option></select></label>}
@@ -2463,13 +2464,14 @@ function QuoteView({ source, clientRecords, catalogRecords, settings, connected,
 }
 
 function Dashboard({ onNew, onNavigate, connected, created, receivableRecords, catalogRecords }: { onNew: (type: NewActionType) => void; onNavigate: (view: View) => void; connected: boolean; created: CreatedRecord[]; receivableRecords: ReceivableRecord[]; catalogRecords: CatalogItem[] }) {
+  const {can}=useContext(PermissionContext);
   if (connected) {
     const snapshot = calculateCommercialReport({ operations: created, receivables: receivableRecords, catalog: catalogRecords, movements: [], fiscalDrafts: [], todayIso: new Date().toISOString().slice(0, 10) });
     const integratedQuickActions = dashboardNewOptions.filter((option) => option.type !== 'venda');
     return <>
       <PageHeading view="painel" action={<button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button>}/>
       <div className="demo-banner"><span>Perfil conectado</span><p>Os indicadores abaixo usam somente os registros do perfil empresarial acessado.</p></div>
-      <div className="metric-grid"><Metric label="Receita recebida" value={money(snapshot.receivedNet)} note="Recebimentos líquidos"/><Metric label="A receber" value={money(snapshot.openReceivables)} note={`${snapshot.overdueReceivables ? money(snapshot.overdueReceivables) : 'Sem valores'} em atraso`} tone="cyan"/><Metric label="Margem estimada" value={percent(snapshot.marginPercent)} note="Custos publicados no catálogo" tone="success"/><Metric label="Atenções de estoque" value={String(snapshot.stockLowItems)} note="Itens abaixo do mínimo" tone="warning"/></div>
+      <div className="metric-grid"><Metric label="Receita recebida" value={money(snapshot.receivedNet)} note="Recebimentos líquidos"/><Metric label="A receber" value={money(snapshot.openReceivables)} note={`${snapshot.overdueReceivables ? money(snapshot.overdueReceivables) : 'Sem valores'} em atraso`} tone="cyan"/>{can('catalog.view_cost')&&<Metric label="Margem estimada" value={percent(snapshot.marginPercent)} note="Custos publicados no catálogo" tone="success"/>}<Metric label="Atenções de estoque" value={String(snapshot.stockLowItems)} note="Itens abaixo do mínimo" tone="warning"/></div>
       <section className="quick-actions" aria-label="Ações rápidas">{integratedQuickActions.map((option) => <button type="button" key={option.type} onClick={() => onNew(option.type)}><span><Icon name={option.icon}/></span><div><strong>Novo {option.title.toLocaleLowerCase('pt-BR')}</strong><small>{option.description}</small></div><Icon name="chevron" size={17}/></button>)}</section>
       <div className="dashboard-grid"><Panel title="Operação comercial" subtitle="Registros persistidos no perfil"><div className="pipeline">{[['Orçamentos', created.filter((item) => item.type === 'orcamento').length], ['Pedidos', created.filter((item) => item.type === 'pedido').length], ['Serviços', created.filter((item) => item.type === 'ordem_servico').length], ['Faturados', created.filter((item) => item.status === 'Faturado').length]].map(([label, count], index) => <div key={String(label)}><span className={`pipeline-icon pipeline-${index}`}><Icon name={index === 0 ? 'document' : index === 2 ? 'service' : 'sale'} size={18}/></span><div><strong>{label}</strong><small>Perfil empresarial</small></div><b>{count}</b></div>)}</div></Panel><Panel title="Atenção necessária" subtitle="Prioridades atuais"><div className="attention-list"><button type="button" onClick={() => onNavigate('estoque')}><i className="dot warning"/><span><strong>{snapshot.stockLowItems} itens com atenção</strong><small>Saldo disponível e estoque mínimo</small></span><Badge tone="warning">Estoque</Badge></button><button type="button" onClick={() => onNavigate('recebimentos')}><i className="dot warning"/><span><strong>{money(snapshot.overdueReceivables)} em atraso</strong><small>Parcelas vencidas do perfil</small></span><Badge tone="warning">Cobrança</Badge></button></div></Panel></div>
     </>;
@@ -2478,7 +2480,7 @@ function Dashboard({ onNew, onNavigate, connected, created, receivableRecords, c
   return <>
     <PageHeading view="painel" action={<button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button>}/>
     <div className="demo-banner"><span>Demonstração</span><p>Dados fictícios. Emissão fiscal, estoque e financeiro não estão conectados.</p></div>
-    <div className="metric-grid"><Metric label="Faturamento no mês" value={money(48640)} note="+8,4% sobre julho"/><Metric label="A receber" value={money(7970)} note="3 parcelas em aberto" tone="cyan"/><Metric label="Margem estimada" value={percent(34.8)} note="Baseada no custo publicado" tone="success"/><Metric label="Atenções" value="7" note="Fiscal, estoque e cobrança" tone="warning"/></div>
+    <div className="metric-grid"><Metric label="Faturamento no mês" value={money(48640)} note="+8,4% sobre julho"/><Metric label="A receber" value={money(7970)} note="3 parcelas em aberto" tone="cyan"/>{can('catalog.view_cost')&&<Metric label="Margem estimada" value={percent(34.8)} note="Baseada no custo publicado" tone="success"/>}<Metric label="Atenções" value="7" note="Fiscal, estoque e cobrança" tone="warning"/></div>
     <section className="quick-actions" aria-label="Ações rápidas">{dashboardNewOptions.map((option) => <button type="button" key={option.type} onClick={() => onNew(option.type)}><span><Icon name={option.icon}/></span><div><strong>Novo {option.title.toLocaleLowerCase('pt-BR')}</strong><small>{option.description}</small></div><Icon name="chevron" size={17}/></button>)}</section>
     <div className="dashboard-grid">
       <Panel title="Ciclo das vendas" subtitle="6 operações recentes" action={<button className="text-button" type="button" onClick={() => onNavigate('vendas')}>Ver vendas <Icon name="arrow" size={15}/></button>}>
@@ -2728,12 +2730,12 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
     };
   }, [profilePickerOpen]);
   const searchCnpj = async () => {
-    const digits = form.document.replace(/\D/g, '');
+    const digits = sanitizarCnpj(form.document);
     if (!isValidCnpj(digits)) { setLookup({ kind: 'cnpj', message: 'Informe um CNPJ válido para consultar.', tone: 'error' }); return; }
     setSearching('cnpj');
     setLookup(null);
     if (!connected) {
-      const found = demoCnpjDirectory[digits] ?? clientRecords.find((item) => item.document.replace(/\D/g, '') === digits);
+      const found = demoCnpjDirectory[digits] ?? clientRecords.find((item) => item.document.replace(/[.\/\-\s]/g, '').toUpperCase() === digits);
       setSearching(null);
       if (!found) { setLookup({ kind: 'cnpj', message: 'CNPJ não encontrado nos dados locais da demonstração.', tone: 'error' }); return; }
       setForm((current) => ({
@@ -2859,8 +2861,8 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
   };
   const save = async () => {
     if (saving) return;
-    const documentDigits = form.document.replace(/\D/g, '');
     const isIndividual = form.profile === 'Pessoa física';
+    const documentDigits = isIndividual ? form.document.replace(/\D/g, '') : sanitizarCnpj(form.document);
     const cepDigits = form.cep.replace(/\D/g, '');
     const cityCode = resolveMunicipalityCode({ city: form.cityName, uf: form.state, cep: form.cep, currentCode: form.cityCode });
     if (isIndividual ? !isValidCpf(documentDigits) : !isValidCnpj(documentDigits)) { setError(`Informe um ${isIndividual ? 'CPF' : 'CNPJ'} válido.`); return; }
@@ -2870,7 +2872,7 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
     if (form.fiscal === 'Contribuinte ICMS' && !form.stateRegistration.trim()) { setError('Informe a inscrição estadual do contribuinte de ICMS.'); return; }
     if (cepDigits.length !== 8 || !form.street.trim() || !form.number.trim() || !form.district.trim() || !form.cityName.trim() || form.state.trim().length !== 2) { setError('Complete o CEP, logradouro, número, bairro, cidade e UF.'); return; }
     if (!municipalityIsResolved(cityCode)) { setError('Não foi possível identificar o município fiscal. Use Buscar CEP ou revise cidade e UF.'); return; }
-    const duplicate = clientRecords.some((item) => item.id !== form.id && item.document.replace(/\D/g, '') === documentDigits);
+    const duplicate = clientRecords.some((item) => item.id !== form.id && item.document.replace(/[.\/\-\s]/g, '').toUpperCase() === documentDigits);
     if (duplicate) { setError('Já existe um cliente cadastrado com este CNPJ.'); return; }
     const saved: ClientRecord = {
       ...form,
@@ -2901,7 +2903,7 @@ function ClientFormDialog({ priceTables=[],open, client, clientRecords, sellers,
         <div className="client-section-heading"><h3 id="client-identification-title">Identificação fiscal</h3></div>
         <div className={`form-grid${!isIndividual ? ' client-fiscal-grid' : ''}`}>
           <div className="field client-profile-field"><span id="client-profile-label">Tipo de pessoa *</span><div className="client-profile-picker" ref={profilePickerRef}><button type="button" className="client-profile-trigger" aria-labelledby="client-profile-label" aria-haspopup="listbox" aria-expanded={profilePickerOpen} aria-controls="client-profile-options" onClick={() => setProfilePickerOpen((open) => !open)} onKeyDown={(event) => { if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); setProfilePickerOpen(true); } }}><span>{form.profile}</span><Icon name="chevron" size={18}/></button>{profilePickerOpen && <div className="client-profile-options" id="client-profile-options" role="listbox" aria-labelledby="client-profile-label"><button type="button" role="option" aria-selected={form.profile === 'Pessoa jurídica'} onClick={() => changeProfile('Pessoa jurídica')}>{form.profile === 'Pessoa jurídica' && <Icon name="check" size={17}/>}<span>Pessoa jurídica</span></button><button type="button" role="option" aria-selected={form.profile === 'Pessoa física'} onClick={() => changeProfile('Pessoa física')}>{form.profile === 'Pessoa física' && <Icon name="check" size={17}/>}<span>Pessoa física</span></button></div>}</div></div>
-          <label className="field"><span>{isIndividual ? 'CPF' : 'CNPJ'} *</span><div className="lookup-control"><input inputMode="numeric" maxLength={isIndividual ? 14 : 18} value={form.document} onChange={(event) => { update('document', isIndividual ? formatCpf(event.target.value) : formatCnpj(event.target.value)); setLookup(null); }} placeholder={isIndividual ? '000.000.000-00' : '00.000.000/0000-00'}/>{!isIndividual && <button type="button" onClick={searchCnpj} disabled={searching === 'cnpj'}>{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button>}</div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
+          <label className="field"><span>{isIndividual ? 'CPF' : 'CNPJ'} *</span><div className="lookup-control"><input inputMode={isIndividual ? "numeric" : "text"} autoCapitalize="characters" maxLength={isIndividual ? 14 : 18} value={form.document} onChange={(event) => { update('document', isIndividual ? formatCpf(event.target.value) : formatCnpj(event.target.value)); setLookup(null); }} placeholder={isIndividual ? '000.000.000-00' : '00.000.000/0000-00'}/>{!isIndividual && <button type="button" onClick={searchCnpj} disabled={searching === 'cnpj'}>{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button>}</div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
           <label className={`field${isIndividual ? ' client-individual-name' : ' field-wide'}`}><span>{isIndividual ? 'Nome completo' : 'Razão social'} *</span><input value={form.legalName} onChange={(event) => update('legalName', formatName(event.target.value))} placeholder={isIndividual ? 'Nome civil completo' : 'Nome empresarial registrado'}/></label>
           {!isIndividual && <label className="field"><span>Nome fantasia</span><input value={form.tradeName} onChange={(event) => update('tradeName', formatName(event.target.value))} placeholder="Nome usado comercialmente"/></label>}
           {!isIndividual && <label className="field"><span>Situação da inscrição estadual *</span><select value={form.fiscal} onChange={(event) => update('fiscal', event.target.value as ClientRecord['fiscal'])}><option>Contribuinte ICMS</option><option>Contribuinte isento</option><option>Não contribuinte</option></select></label>}
@@ -2960,10 +2962,10 @@ function SupplierFormDialog({ open, suppliers, onClose, onSave }: { open: boolea
   const update = (field: keyof typeof form, value: string) => { setForm((current) => ({ ...current, [field]: value })); setError(''); };
   const save = async () => {
     if (saving) return;
-    const documentDigits = form.document.replace(/\D/g, '');
+    const documentDigits = sanitizarCnpj(form.document);
     if (!form.name.trim()) { setError('Informe a razão social ou o nome do fornecedor.'); return; }
     if (documentDigits && !isValidCnpj(documentDigits)) { setError('Informe um CNPJ válido ou deixe o campo em branco.'); return; }
-    if (documentDigits && suppliers.some((supplier) => supplier.document.replace(/\D/g, '') === documentDigits)) { setError('Já existe um fornecedor cadastrado com este CNPJ.'); return; }
+    if (documentDigits && suppliers.some((supplier) => sanitizarCnpj(supplier.document) === documentDigits)) { setError('Já existe um fornecedor cadastrado com este CNPJ.'); return; }
     if (form.email.trim() && !isValidEmail(form.email)) { setError('Informe um e-mail válido ou deixe o campo em branco.'); return; }
     if (form.phone.trim() && ![10, 11].includes(form.phone.replace(/\D/g, '').length)) { setError('Informe um telefone com DDD válido ou deixe o campo em branco.'); return; }
     setSaving(true);
@@ -2981,7 +2983,7 @@ function SupplierFormDialog({ open, suppliers, onClose, onSave }: { open: boolea
         <div className="client-section-heading"><h3 id="supplier-identification-title">Identificação e contato</h3><p>O cadastro fica vinculado exclusivamente ao perfil empresarial acessado.</p></div>
         <div className="form-grid">
           <label className="field field-wide"><span>Razão social ou nome *</span><input autoFocus value={form.name} onChange={(event) => update('name', event.target.value)} placeholder="Nome usado para identificar o fornecedor"/></label>
-          <label className="field"><span>CNPJ</span><input inputMode="numeric" maxLength={18} value={form.document} onChange={(event) => update('document', formatCnpj(event.target.value))} placeholder="00.000.000/0000-00"/></label>
+          <label className="field"><span>CNPJ</span><input inputMode="text" autoCapitalize="characters" maxLength={18} value={form.document} onChange={(event) => update('document', formatCnpj(event.target.value))} placeholder="00.000.000/0000-00"/></label>
           <label className="field"><span>Contato principal</span><input value={form.contactName} onChange={(event) => update('contactName', event.target.value)} placeholder="Nome do contato"/></label>
           <label className="field"><span>Telefone</span><input inputMode="tel" value={form.phone} onChange={(event) => update('phone', formatPhone(event.target.value))} placeholder="(00) 00000-0000"/></label>
           <label className="field"><span>E-mail</span><input type="email" value={form.email} onChange={(event) => update('email', normalizarEmail(event.target.value))} placeholder="compras@fornecedor.com.br"/></label>
@@ -3903,7 +3905,7 @@ function FiscalIssuerRegistryDialog({ open, registry, company, readOnly, onClose
   };
   const searchEstablishmentCnpj = async () => {
     if (!selected) return;
-    const document = selected.document.replace(/\D/g, '');
+    const document = selected.document.replace(/[.\/\-\s]/g, '').toUpperCase();
     if (document.length !== 14) { setLookup({ kind: 'cnpj', message: 'Informe os 14 dígitos do CNPJ.', tone: 'error' }); return; }
     setSearching('cnpj');
     setLookup(null);
@@ -4068,7 +4070,7 @@ function NfeSpHomologationDialog({ open, config, issuerRegistry, drafts, clients
   };
   const runPreXmlDiagnostic = async () => {
     const selectedDraft = drafts.find((item) => item.id === draft.selectedDraftId);
-    const selectedClient = clients.find((item) => item.document.replace(/\D/g, '') === selectedDraft?.clientDocument.replace(/\D/g, '')) ?? clients.find((item) => item.name === selectedDraft?.client);
+    const selectedClient = clients.find((item) => item.document.replace(/[.\/\-\s]/g, '').toUpperCase() === selectedDraft?.clientDocument.replace(/\D/g, '')) ?? clients.find((item) => item.name === selectedDraft?.client);
     if (!selectedDraft || !selectedClient) {
       setPreXmlDiagnostic({ ok: false, valid: false, mode: 'pre-xml-sem-assinatura', environment: 'homologacao', transmissionAttempted: false, schemaValidationExecuted: false, schemaValid: false, schemaPackage: '', schemaRoot: '', accessKey: '', errors: [{ code: 'AV-NFE-ORIGIN', field: 'draft', message: !selectedDraft ? 'Selecione um rascunho NF-e ativo.' : 'O cadastro completo do destinatário não foi localizado.' }], warnings: [], xml: '' });
       return;
@@ -4146,7 +4148,7 @@ function NfeSpHomologationDialog({ open, config, issuerRegistry, drafts, clients
   };
   const runSignatureLab = async () => {
     const selectedDraft = drafts.find((item) => item.id === draft.selectedDraftId);
-    const selectedClient = clients.find((item) => item.document.replace(/\D/g, '') === selectedDraft?.clientDocument.replace(/\D/g, '')) ?? clients.find((item) => item.name === selectedDraft?.client);
+    const selectedClient = clients.find((item) => item.document.replace(/[.\/\-\s]/g, '').toUpperCase() === selectedDraft?.clientDocument.replace(/\D/g, '')) ?? clients.find((item) => item.name === selectedDraft?.client);
     if (!preXmlDiagnostic?.valid || !selectedDraft || !selectedClient) {
       setSignatureLabDiagnostic(signatureLabFailure('AV-NFE-SIG-ORIGIN', 'draft', 'Valide primeiro o pré-XML e mantenha o rascunho e o destinatário selecionados.'));
       return;
@@ -5064,7 +5066,7 @@ function ReportsView({ created, catalogRecords, movementRecords, receivableRecor
     fiscal: [{ tone: snapshot.fiscalBlocked ? 'warning' : 'success', icon: snapshot.fiscalBlocked ? 'warning' : 'check', title: `${snapshot.fiscalBlocked} rascunhos com pendências`, description: 'A transmissão continua bloqueada até cadastro e conector estarem prontos.' }, { tone: 'info', icon: 'fiscal', title: `${snapshot.fiscalReady} prontos para homologação`, description: 'Pronto local não significa documento autorizado pelo fisco.' }, { tone: 'success', icon: 'money', title: `${money(snapshot.fiscalValue)} vinculados`, description: 'Valor comercial relacionado aos rascunhos do período.' }],
     financeiro: [{ tone: snapshot.overdueReceivables ? 'warning' : 'success', icon: snapshot.overdueReceivables ? 'warning' : 'check', title: `${money(snapshot.overdueReceivables)} em atraso`, description: 'Saldo vencido e ainda aberto nos registros comerciais.' }, { tone: 'info', icon: 'clock', title: snapshot.averageDueDays > 0 ? `Prazo médio de ${snapshot.averageDueDays} dias` : 'Prazo médio ainda não apurado', description: snapshot.averageDueDays > 0 ? 'Intervalo médio entre geração da parcela e vencimento.' : 'Os registros demonstrativos não preservam a data original de geração.' }, { tone: 'success', icon: 'money', title: `${money(snapshot.receivedNet)} recebidos`, description: 'Valor líquido após estornos, ainda sem conciliação bancária.' }],
   };
-  const activeRows = rowsByReport[report];
+  const activeRows = rowsByReport[report].map(row=>can('catalog.view_cost')?row:{...row,secondary:/custo|margem|lucro/i.test(row.secondary||'')?'Custos restritos':row.secondary,...(report==='estoque'?{primary:'—',value:0}:{})});
   const maxValue = Math.max(0, ...activeRows.map((row) => row.value));
   const exportCsv = () => {
     if (!activeRows.length) return;
@@ -5083,10 +5085,10 @@ function ReportsView({ created, catalogRecords, movementRecords, receivableRecor
     <PageHeading view="relatorios" action={<div className="period-control"><label>Período<select value={period} onChange={(event) => setPeriod(event.target.value as ReportPeriod)}><option value="all">Todo o histórico</option><option value="2026-08">Agosto de 2026</option><option value="2026-07">Julho de 2026</option></select></label><button type="button" className="button secondary" onClick={exportCsv} disabled={!activeRows.length || !can('reports.export')}><Icon name="document" size={16}/> Exportar CSV</button></div>}/>
     <div className="report-data-source"><span><Icon name="chart" size={18}/></span><p><strong>Indicadores calculados com os registros disponíveis neste navegador.</strong><small>O período filtra operações, parcelas, movimentações e rascunhos; a posição de estoque sempre representa o saldo atual.</small></p><Badge tone="info">{periodLabel}</Badge></div>
     <div className="report-selector" role="group" aria-label="Tipo de relatório">{reports.map(([id, title, description, icon]) => <button key={id} type="button" className={report === id ? 'active' : ''} aria-pressed={report === id} onClick={() => setReport(id)}><span><Icon name={icon}/></span><div><strong>{title}</strong><small>{description}</small></div></button>)}</div>
-    <div className="metric-grid compact">{metricsByReport[report].map((metric) => <Metric key={metric.label} {...metric}/>)}</div>
+    <div className="metric-grid compact">{metricsByReport[report].filter(metric=>can('catalog.view_cost')||!/custo|margem|lucro|valor.*estoque/i.test(metric.label)).map((metric) => <Metric key={metric.label} {...metric}/>)}</div>
     <div className="content-grid reports">
       <Panel title={reports.find(([id]) => id === report)?.[1] ?? 'Relatório'} subtitle={`${activeRows.length} indicadores · ${periodLabel.toLocaleLowerCase('pt-BR')}`} action={activeRows.length ? <Badge tone="info">Atualizado</Badge> : undefined}>{activeRows.length ? <div className="report-data-list">{activeRows.map((row) => <article key={row.label}><div><strong>{row.label}</strong><small>{row.detail}</small></div><div className="report-row-values"><strong>{row.primary}</strong><small>{row.secondary}</small></div>{row.badge && <Badge tone={row.tone}>{row.badge}</Badge>}<span aria-hidden="true"><i style={{ width: `${maxValue > 0 ? Math.max(3, row.value / maxValue * 100) : 0}%` }}/></span></article>)}</div> : <EmptyState title="Sem dados para este relatório" description="Selecione outro período ou conclua operações do módulo para formar os indicadores."/>}</Panel>
-      <Panel title="Leitura do período" subtitle="Sinais calculados, sem comparação fictícia"><div className="insight-list">{insightsByReport[report].map((insight) => <div key={insight.title}><span className={insight.tone}><Icon name={insight.icon} size={17}/></span><p><strong>{insight.title}</strong><small>{insight.description}</small></p></div>)}</div></Panel>
+      <Panel title="Leitura do período" subtitle="Sinais calculados, sem comparação fictícia"><div className="insight-list">{insightsByReport[report].filter(insight=>can('catalog.view_cost')||!/custo|margem|lucro/i.test(insight.title+' '+insight.description)).map((insight) => <div key={insight.title}><span className={insight.tone}><Icon name={insight.icon} size={17}/></span><p><strong>{insight.title}</strong><small>{insight.description}</small></p></div>)}</div></Panel>
     </div>
     <div className="report-boundary"><Icon name="chart"/><p><strong>Relatórios financeiros completos permanecem na Gestão.</strong> Este módulo mostra somente indicadores com origem comercial; caixa realizado, bancos, conciliação, impostos efetivos e DRE usam o livro financeiro central.</p></div>
   </>;
@@ -5135,7 +5137,7 @@ function SettingsDialog({ fiscalDefaultsContext,section, settings, onClose, onSa
     return { ...current, company };
   });
   const searchCompanyCnpj = async () => {
-    const document = draft.company.document.replace(/\D/g, '');
+    const document = draft.company.document.replace(/[.\/\-\s]/g, '').toUpperCase();
     if (document.length !== 14) { setLookup({ kind: 'cnpj', message: 'Informe os 14 dígitos do CNPJ.', tone: 'error' }); return; }
     setSearching('cnpj');
     setLookup(null);
@@ -5230,7 +5232,7 @@ function SettingsDialog({ fiscalDefaultsContext,section, settings, onClose, onSa
     <div className="dialog-body settings-dialog-body" inert={saving} aria-busy={saving}>
       {section === 'empresa' && <div className="settings-form-stack">
         <section className="settings-form-section"><div className="client-section-heading"><h3>Identificação da empresa</h3><p>O CNPJ inicia o cadastro e pode preencher os demais dados disponíveis.</p></div><div className="form-grid">
-          <label className="field"><span>CNPJ *</span><div className="lookup-control"><input inputMode="numeric" value={draft.company.document} onChange={(event) => { cnpjRequest.current += 1; setSearching(null); updateCompany('document', formatCnpj(event.target.value)); setLookup(null); }} maxLength={18} placeholder="00.000.000/0000-00"/><button type="button" onClick={searchCompanyCnpj} disabled={searching === 'cnpj'} aria-label="Buscar dados da empresa pelo CNPJ">{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button></div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
+          <label className="field"><span>CNPJ *</span><div className="lookup-control"><input inputMode="text" autoCapitalize="characters" value={draft.company.document} onChange={(event) => { cnpjRequest.current += 1; setSearching(null); updateCompany('document', formatCnpj(event.target.value)); setLookup(null); }} maxLength={18} placeholder="00.000.000/0000-00"/><button type="button" onClick={searchCompanyCnpj} disabled={searching === 'cnpj'} aria-label="Buscar dados da empresa pelo CNPJ">{searching === 'cnpj' ? 'Buscando…' : 'Buscar'}</button></div>{lookup?.kind === 'cnpj' && <small className={`lookup-message ${lookup.tone}`} role="status">{lookup.message}</small>}</label>
           <label className="field field-wide"><span>Razão social *</span><input value={draft.company.legalName} onChange={(event) => updateCompany('legalName', event.target.value)} maxLength={120}/></label>
           <label className="field"><span>Nome de exibição *</span><input value={draft.company.name} onChange={(event) => updateCompany('name', event.target.value)} maxLength={80}/></label>
           <label className="field"><span>Iniciais do perfil</span><input value={draft.company.logoInitials} onChange={(event) => updateCompany('logoInitials', event.target.value.toLocaleUpperCase('pt-BR').slice(0, 4))} maxLength={4}/></label>
@@ -6351,7 +6353,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           const scheduled = String(service.scheduledAt || '');
           return [{ ...base, serviceOrder: { lines: items.filter((line: any) => line.itemType === 'servico').map((line: any) => ({ sku: line.sku, name: line.name, kind: 'servico', unit: line.unit, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice), cost: Number(line.costUnitSnapshot || 0), municipalServiceCode: String(line.fiscalSnapshot?.municipalServiceCode || ''), fiscalStatus: line.fiscalReady ? 'Completo' : 'Revisar' })), scheduledDate: scheduled.slice(0, 10), scheduledTime: scheduled.slice(11, 16), durationMinutes: Number(service.expectedDurationMinutes || 60), technician: String(service.technicianName || ''), location: String(service.executionLocation || ''), contactName: String(service.onSiteContact || ''), paymentMethod: String(operation.paymentSnapshot?.method || ''), installments: Number(operation.paymentSnapshot?.installments || 1), firstDueDate: String(operation.paymentSnapshot?.firstDueDate || ''), fiscalDocument: operation.fiscalDocument === 'nfse' ? 'nfse' : 'nenhum', internalNotes: String(operation.internalNotes || ''), customerNotes: String(operation.customerNotes || ''), completionNotes: String(service.completionNotes || ''), startedAt: String(service.startedAt || ''), completedAt: String(service.completedAt || ''), actualDurationMinutes: Number(service.actualDurationMinutes || 0), materials: (Array.isArray(service.materials) ? service.materials : []).map((material: any) => ({ id: String(material.id), catalogItemId: String(material.productId || ''), sku: String(material.sku || ''), name: String(material.name || ''), quantity: Number(material.usedQuantity || material.plannedQuantity || 0), unit: String(material.unit || 'un'), source: material.origin === 'catalogo' ? 'Catálogo' : material.origin === 'cliente' ? 'Cliente' : 'Externo', cost: Number(material.costUnitSnapshot || 0) })), checklist: (Array.isArray(service.checklist) ? service.checklist : []).map((item: any) => ({ id: String(item.id), label: String(item.description || ''), complete: item.completed === true })), attachments: (Array.isArray(service.attachments) ? service.attachments : []).map((item: any) => ({ id: String(item.id), name: String(item.name || ''), type: String(item.type || 'application/octet-stream'), size: Number(item.size || 0), checksum: String(item.checksum || ''), addedAt: String(item.addedAt || '') })), acceptance: { status: service.acceptanceStatus === 'aceito' ? 'Aceito' : service.acceptanceStatus === 'recusado' ? 'Recusado' : 'Pendente', acceptedBy: String(service.acceptedBy || ''), acceptedAt: String(service.acceptedAt || ''), notes: String(service.acceptanceNotes || '') }, materialStockState: operation.stockStatus === 'baixado' ? 'Baixado' : operation.stockStatus === 'devolvido' ? 'Estornado' : operation.stockStatus === 'reservado' ? 'Pendente' : 'Não aplicável', laborCostTotal: Number(service.laborCost || 0), materialCostTotal: Number(service.materialCost || 0), actualCostTotal: Number(service.actualCost || 0) } }];
         });
-        setCreated(records.slice(0, 200));
+        setCreated(records);
         return;
       }
       const prepared = parseFiscalPrepareResponse(event.data);
@@ -6451,7 +6453,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       const fiscalDocuments = parseFiscalDocumentsMessage(event.data);
       if (fiscalDocuments) {
         const persisted = fiscalDocuments.documents.map(mapPersistedFiscalDocument);
-        setFiscalDraftRecords((current) => [...persisted, ...current.filter((draft) => draft.persistenceSource !== 'server' && !persisted.some((record) => record.originId === draft.originId && record.documentType === draft.documentType && record.sourceLabel === draft.sourceLabel))].slice(0, 100));
+        setFiscalDraftRecords((current) => [...persisted, ...current.filter((draft) => draft.persistenceSource !== 'server' && !persisted.some((record) => record.originId === draft.originId && record.documentType === draft.documentType && record.sourceLabel === draft.sourceLabel))]);
         return;
       }
       const connected = parseManagementCatalogMessage(event.data);
@@ -6610,7 +6612,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       if (parsed.version === 1 || parsed.version === 2) {
         const migrated = normalizeFiscalIssuerRegistry(parsed.registry, defaultModuleSettings.company);
         setFiscalIssuerRegistry(migrated);
-        if (parsed.version !== 2) writeCompanyStorage(FISCAL_ISSUER_REGISTRY_STORAGE_KEY, JSON.stringify({ version: 2, companyId: defaultModuleSettings.company.document.replace(/\D/g, ''), module: 'vendas-servicos', registry: migrated }));
+        if (parsed.version !== 2) writeCompanyStorage(FISCAL_ISSUER_REGISTRY_STORAGE_KEY, JSON.stringify({ version: 2, companyId: defaultModuleSettings.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', registry: migrated }));
       }
     } catch { /* cadastro fiscal inválido volta ao estabelecimento demonstrativo */ }
   }, []);
@@ -6623,7 +6625,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       if (parsed.version === 1 || parsed.version === 2) {
         const migrated = normalizeNfeSpHomologationConfig(parsed.config);
         setNfeSpHomologationConfig(migrated);
-        if (parsed.version !== 2) writeCompanyStorage(NFE_SP_HOMOLOGATION_STORAGE_KEY, JSON.stringify({ version: 2, companyId: defaultModuleSettings.company.document.replace(/\D/g, ''), module: 'vendas-servicos', config: migrated }));
+        if (parsed.version !== 2) writeCompanyStorage(NFE_SP_HOMOLOGATION_STORAGE_KEY, JSON.stringify({ version: 2, companyId: defaultModuleSettings.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', config: migrated }));
       }
     } catch { /* bancada inválida volta ao contrato seguro sem transmissão */ }
   }, []);
@@ -6637,7 +6639,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         const savedSettings = parsed.settings && typeof parsed.settings === 'object' ? parsed.settings as { access?: { permissionSchemaVersion?: number } } : {};
         const migrated = normalizeModuleSettings(parsed.settings, defaultModuleSettings) as ModuleSettings;
         setModuleSettings(migrated);
-        if (parsed.version !== 8 || Number(savedSettings.access?.permissionSchemaVersion) < 3) writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: migrated.company.document.replace(/\D/g, ''), module: 'vendas-servicos', settings: migrated }));
+        if (parsed.version !== 8 || Number(savedSettings.access?.permissionSchemaVersion) < 3) writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: migrated.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', settings: migrated }));
       }
     } catch { /* configurações inválidas voltam ao padrão seguro */ }
   }, []);
@@ -6652,7 +6654,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       const parsed = saved ? JSON.parse(saved) as { version?: number; ledger?: unknown } : null;
       const migrated = normalizeFiscalNumberingLedger(parsed?.version === 1 ? parsed.ledger : null, series);
       setFiscalNumberingLedger(migrated);
-      if (!saved) writeCompanyStorage(FISCAL_NUMBERING_STORAGE_KEY, JSON.stringify({ version: 1, companyId: settings.company.document.replace(/\D/g, ''), module: 'vendas-servicos', ledger: migrated }));
+      if (!saved) writeCompanyStorage(FISCAL_NUMBERING_STORAGE_KEY, JSON.stringify({ version: 1, companyId: settings.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', ledger: migrated }));
     } catch { /* numeração inválida volta a uma sequência nova, sem reservas inventadas */ }
   }, []);
 
@@ -6689,8 +6691,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const nextSettings = normalizeModuleSettings({ ...moduleSettings, fiscal: { ...moduleSettings.fiscal, nfeSeries: seriesByType.nfe, nfceSeries: seriesByType.nfce, nfseSeries: seriesByType.nfse } }, defaultModuleSettings) as ModuleSettings;
     setFiscalNumberingLedger(normalized);
     setModuleSettings(nextSettings);
-    writeCompanyStorage(FISCAL_NUMBERING_STORAGE_KEY, JSON.stringify({ version: 1, companyId: nextSettings.company.document.replace(/\D/g, ''), module: 'vendas-servicos', ledger: normalized }));
-    writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: nextSettings.company.document.replace(/\D/g, ''), module: 'vendas-servicos', settings: nextSettings }));
+    writeCompanyStorage(FISCAL_NUMBERING_STORAGE_KEY, JSON.stringify({ version: 1, companyId: nextSettings.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', ledger: normalized }));
+    writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: nextSettings.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', settings: nextSettings }));
     setToast(message);
     return true;
   };
@@ -6718,8 +6720,17 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       window.parent.postMessage({type:COMPANY_PROFILE_SAVE_REQUEST,requestId,company},managementBridgeOrigin,[channel.port2]);
     });
   };
+  const commercialPolicyVersion=useRef(0);
+  useEffect(()=>{if(!managementBridgeOrigin||!managementCatalogBridge?.companyId)return;let active=true;commercialPolicyVersion.current=0;
+    void requestFiscalEditor({companyId:managementCatalogBridge.companyId,origin:managementBridgeOrigin,action:'load-policy'}).then(result=>{if(active){commercialPolicyVersion.current=result.policy.version;setModuleSettings(current=>({...current,commercial:{...current.commercial,maxDiscountPercent:result.policy.maxDiscountPercent}}));}}).catch(()=>{});
+    return()=>{active=false;};
+  },[managementBridgeOrigin,managementCatalogBridge?.companyId]);
   const saveModuleSettings = async (next: ModuleSettings): Promise<boolean> => {
     if (!authorize('settings.edit', 'editar as configurações do sistema')) return false;
+    if(next.commercial.maxDiscountPercent!==moduleSettings.commercial.maxDiscountPercent&&managementBridgeOrigin&&managementCatalogBridge?.companyId){
+      try{const saved=await requestFiscalEditor({companyId:managementCatalogBridge.companyId,origin:managementBridgeOrigin,action:'save-policy',policy:{maxDiscountPercent:next.commercial.maxDiscountPercent,version:commercialPolicyVersion.current}});commercialPolicyVersion.current=saved.policy.version;}
+      catch(cause){setToast(cause instanceof Error?cause.message:'Não foi possível salvar o limite comercial.');return false;}
+    }
     const candidate = normalizeModuleSettings(next, defaultModuleSettings) as ModuleSettings;
     // No acesso integrado, o cadastro do perfil é a única fonte do emitente.
     // Alterações locais jamais podem substituir razão social, CNPJ ou endereço.
@@ -6756,7 +6767,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       normalized.commercial.defaultFiscalDocument = request.defaultDocument;
     }
     setModuleSettings(normalized);
-    writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: normalized.company.document.replace(/\D/g, ''), module: 'vendas-servicos', settings: normalized }));
+    writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: normalized.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', settings: normalized }));
     setToast('Configurações do módulo salvas e aplicadas aos novos lançamentos.');
     return true;
   };
@@ -6792,7 +6803,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     }
     const next = normalizeModuleSettings({ ...moduleSettings, fiscal: { ...moduleSettings.fiscal, matrix: normalizedMatrix, taxReviewConfirmed, taxReformReviewConfirmed } }, defaultModuleSettings) as ModuleSettings;
     setModuleSettings(next);
-    writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: next.company.document.replace(/\D/g, ''), module: 'vendas-servicos', settings: next }));
+    writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: next.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', settings: next }));
     setToast('Matriz fiscal salva somente neste navegador demonstrativo.');
   };
   const saveFiscalHomologation = (plan: FiscalHomologationPlan) => {
@@ -6801,7 +6812,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const validation = validateFiscalHomologationPlan(normalized);
     if (!validation.valid) { setToast(validation.errors[0] ?? 'Revise os bloqueios do plano de homologação.'); return; }
     setFiscalHomologationPlan(normalized);
-    writeCompanyStorage(FISCAL_HOMOLOGATION_STORAGE_KEY, JSON.stringify({ version: 1, companyId: moduleSettings.company.document.replace(/\D/g, ''), module: 'vendas-servicos', plan: normalized }));
+    writeCompanyStorage(FISCAL_HOMOLOGATION_STORAGE_KEY, JSON.stringify({ version: 1, companyId: moduleSettings.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', plan: normalized }));
     setToast(validation.externallyValidated ? 'Ciclo de homologação registrado com todas as evidências obrigatórias.' : 'Plano de homologação salvo localmente. Nenhum dado foi transmitido.');
   };
   const saveFiscalIntegrationEvaluation = (evaluation: FiscalIntegrationEvaluation) => {
@@ -6810,7 +6821,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const validation = validateFiscalIntegrationEvaluation(normalized);
     if (!validation.valid) { setToast(validation.errors[0] ?? 'Revise os bloqueios da avaliação fiscal.'); return; }
     setFiscalIntegrationEvaluation(normalized);
-    writeCompanyStorage(FISCAL_INTEGRATION_EVALUATION_STORAGE_KEY, JSON.stringify({ version: 1, companyId: moduleSettings.company.document.replace(/\D/g, ''), module: 'vendas-servicos', evaluation: normalized }));
+    writeCompanyStorage(FISCAL_INTEGRATION_EVALUATION_STORAGE_KEY, JSON.stringify({ version: 1, companyId: moduleSettings.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', evaluation: normalized }));
     setToast(validation.approvedForHomologation ? 'Alternativa aprovada somente para a fase de homologação.' : 'Avaliação fiscal salva localmente. Nenhuma contratação foi realizada.');
   };
   const saveFiscalIssuerRegistry = (registry: FiscalIssuerRegistry) => {
@@ -6819,14 +6830,14 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const validation = validateFiscalIssuerRegistry(normalized, moduleSettings.company);
     if (!validation.valid) { setToast(validation.errors[0] ?? 'Revise o cadastro dos estabelecimentos emissores.'); return; }
     setFiscalIssuerRegistry(normalized);
-    writeCompanyStorage(FISCAL_ISSUER_REGISTRY_STORAGE_KEY, JSON.stringify({ version: 2, companyId: moduleSettings.company.document.replace(/\D/g, ''), module: 'vendas-servicos', registry: normalized }));
+    writeCompanyStorage(FISCAL_ISSUER_REGISTRY_STORAGE_KEY, JSON.stringify({ version: 2, companyId: moduleSettings.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', registry: normalized }));
     setToast('Estabelecimentos e rotas salvos localmente. Nenhuma conexão fiscal foi realizada.');
   };
   const saveNfeSpHomologationConfig = (config: NfeSpHomologationConfig) => {
     if (!authorize('fiscal.homologate', 'gerenciar a bancada de homologação da NF-e de São Paulo')) return;
     const normalized = normalizeNfeSpHomologationConfig(config);
     setNfeSpHomologationConfig(normalized);
-    writeCompanyStorage(NFE_SP_HOMOLOGATION_STORAGE_KEY, JSON.stringify({ version: 2, companyId: moduleSettings.company.document.replace(/\D/g, ''), module: 'vendas-servicos', config: normalized }));
+    writeCompanyStorage(NFE_SP_HOMOLOGATION_STORAGE_KEY, JSON.stringify({ version: 2, companyId: moduleSettings.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', config: normalized }));
     const nfeRules = moduleSettings.fiscal.matrix.rules.filter((rule) => rule.active && rule.documentType === 'nfe');
     const matrixReady = Boolean(moduleSettings.fiscal.matrix.reviewedBy && moduleSettings.fiscal.matrix.reviewedAt && nfeRules.length && nfeRules.every((rule) => rule.reviewed));
     const evaluation = evaluateNfeSpHomologationConfig(normalized, { issuerRegistry: fiscalIssuerRegistry, company: moduleSettings.company, drafts: fiscalDraftRecords, fiscalResponsible: moduleSettings.fiscal.fiscalResponsible, taxReviewConfirmed: moduleSettings.fiscal.taxReviewConfirmed, taxReformReviewConfirmed: moduleSettings.fiscal.taxReformReviewConfirmed, matrixReady });
@@ -6855,7 +6866,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       return;
     }
     setModuleSettings(normalized);
-    writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: normalized.company.document.replace(/\D/g, ''), module: 'vendas-servicos', settings: normalized }));
+    writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: normalized.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', settings: normalized }));
     setToast('Controle de acesso salvo somente neste navegador demonstrativo.');
   };
   const fiscalItemsForOrigin = (origin: FiscalOrigin, localRecord?: CreatedRecord) => {

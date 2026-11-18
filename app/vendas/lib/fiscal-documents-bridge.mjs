@@ -93,6 +93,6 @@ export function parseFiscalDocumentsMessage(data) {
   if (!data || data.type !== FISCAL_DOCUMENTS_MESSAGE_TYPE || !UUID.test(text(data.companyId, 80)) || !Array.isArray(data.documents)) return null;
   return Object.freeze({
     companyId: text(data.companyId, 80),
-    documents: Object.freeze(data.documents.slice(0, 100).map(document).filter(Boolean)),
+    documents: Object.freeze(data.documents.map(document).filter(Boolean)),
   });
 }

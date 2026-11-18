@@ -1,3 +1,4 @@
+import {sanitizarCnpj,validarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 import { resolveMunicipalityCode } from './municipality.mjs';
 
 export const FISCAL_ISSUER_ROUTING_REFERENCE = '2026.08';
@@ -40,7 +41,7 @@ function registration(enabled = true, series = '1') {
 }
 
 export function createFiscalEstablishmentFromCompany(company = {}, index = 0) {
-  const document = digits(company.document);
+  const document = sanitizarCnpj(String(company.document||''));
   const taxRegime = text(company.taxRegime) || 'Não definido';
   const uf = companyUf(company);
   const city = companyCity(company);
@@ -95,7 +96,7 @@ export function normalizeFiscalIssuerRegistry(value, company = {}) {
   const sourceEstablishments = Array.isArray(value.establishments) && value.establishments.length ? value.establishments : fallback.establishments;
   const establishments = sourceEstablishments.map((source, index) => {
     const base = index === 0 ? fallback.establishments[0] : createFiscalEstablishmentFromCompany({}, index);
-    const document = digits(source?.document || base.document);
+    const document = sanitizarCnpj(String(source?.document || base.document));
     const id = text(source?.id) || `establishment-${document || index + 1}`;
     const sourceDocuments = source?.documents && typeof source.documents === 'object' ? source.documents : {};
     const uf = UF_CODES.includes(text(source?.uf).toUpperCase()) ? text(source.uf).toUpperCase() : base.uf;
@@ -148,7 +149,7 @@ export function resolveFiscalIssuerRoute(establishment, documentType) {
   const blockers = [];
   if (!establishment?.active) blockers.push('O estabelecimento está inativo.');
   if (!registrationData.enabled) blockers.push('O documento não está habilitado para este estabelecimento.');
-  if (digits(establishment?.document).length !== 14) blockers.push('O CNPJ do estabelecimento está incompleto.');
+  if (!validarCnpj(String(establishment?.document||'')).valido) blockers.push('O CNPJ do estabelecimento está incompleto.');
   if (!text(establishment?.cityCode)) blockers.push('O município fiscal não foi identificado; revise CEP, município e UF.');
   if (!['Homologação', 'Produção'].includes(registrationData.registrationStatus)) blockers.push('O credenciamento ainda não foi confirmado para homologação ou produção.');
 
@@ -206,7 +207,7 @@ export function createFiscalIssuerSelectionSnapshot(establishment, documentType)
     label: establishment.label,
     kind: establishment.kind,
     legalName: establishment.legalName,
-    document: digits(establishment.document),
+    document: sanitizarCnpj(String(establishment.document||'')),
     uf: establishment.uf,
     city: establishment.city,
     cityCode: establishment.cityCode,

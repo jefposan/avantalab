@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../../../lib/consultas/validators/cnpj.ts';
 import {newFiscalNoteFields,validateFiscalNoteFields} from '../fiscal-note-editor.mjs';
 import {isValidCnpj,isValidCpf} from './commercial-customer-service.mjs';
 const date=value=>!value||(/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value);
@@ -18,7 +19,7 @@ export function normalizeFiscalNoteFields(input){
  if(fields.exitTime&&!fields.exitDate)errors.push('Informe a data de saída junto da hora.');
  const ufs=new Set('AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' '));
  for(const key of ['carrierState','vehicleState'])if(fields[key]&&!ufs.has(fields[key]))errors.push('Revise a UF do transporte.');
- fields.carrierDocument=fields.carrierDocument.replace(/\D/g,'');fields.intermediaryDocument=fields.intermediaryDocument.replace(/\D/g,'');
+ fields.carrierDocument=sanitizarCnpj(fields.carrierDocument);fields.intermediaryDocument=sanitizarCnpj(fields.intermediaryDocument);
  if(fields.carrierDocument&&!isValidCnpj(fields.carrierDocument)&&!isValidCpf(fields.carrierDocument))errors.push('Informe CPF ou CNPJ válido do transportador.');
  if(fields.intermediary==='1'&&!isValidCnpj(fields.intermediaryDocument))errors.push('Informe um CNPJ válido do intermediador.');
  for(const key of ['grossWeight','netWeight'])if(fields[key]&&!/^\d{1,12}(?:[,.]\d{1,3})?$/.test(fields[key]))errors.push('Informe pesos positivos com até três casas decimais.');

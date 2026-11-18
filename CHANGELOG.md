@@ -1,3 +1,12 @@
+# 3.2.0.484.01 — Vendas e Serviços: corrigir cinco prioridades da auditoria
+
+- Projeção server-side de custos em operações, OS, estoque e respostas do ciclo comercial, sem modificar retratos persistidos.
+- Política comercial por empresa/versionada: limite padrão de 15%, bloqueio de desconto por item e geral sem aprovação e configuração protegida por settings.edit.
+- Todas as páginas de clientes, fornecedores, operações, recebíveis, movimentos e centro fiscal alimentam busca e totais; falhas não publicam histórico parcial.
+- Listas de tributos indicam opções sem suporte atual; códigos gravados, CFOP, cálculos, série, número, ambientes e XMLs existentes preservados.
+- CNPJ alfanumérico nos cadastros/consulta, máscara e validação compartilhadas, persistência e destinatário XML; emissão por emitente alfanumérico permanece explicitamente bloqueada, pois exige homologação integral de chave, assinatura, eventos e DANFE. Sem remoção silenciosa de letras.
+- Migração aditiva para política comercial e aceitação do formato alfanumérico; sem alterar produtos, clientes, notas ou configurações fiscais existentes.
+
 # 3.2.0.484 — Backup de notas: nova geração após retomada
 
 - Limpa a identificação de uma tentativa de criação quando o histórico confirma o backup retomado, permitindo gerar outro pacote depois da conclusão. Preserva idempotência enquanto a criação ainda não foi confirmada.

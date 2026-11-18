@@ -1,7 +1,8 @@
+import {sanitizarCnpj,validarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 // Usa exclusivamente a Central de Consultas do AvantaLab; não consulta exemplos locais.
 export async function lookupCompanyCnpj(document, { fetcher = fetch, signal } = {}) {
-  const digits = String(document).replace(/\D/g, '');
-  if (digits.length !== 14) throw new Error('Informe os 14 dígitos do CNPJ.');
+  const digits = sanitizarCnpj(String(document));
+  if (!validarCnpj(digits).valido) throw new Error('Informe um CNPJ válido com 14 posições.');
   const controller = new AbortController();
   const abort = () => controller.abort();
   if (signal?.aborted) controller.abort();

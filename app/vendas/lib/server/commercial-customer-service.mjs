@@ -1,3 +1,4 @@
+import {sanitizarCnpj,validarCnpj} from '../../../../lib/consultas/validators/cnpj.ts';
 export const COMMERCIAL_CUSTOMER_SERVICE_REFERENCE = '2026-09-03';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -24,13 +25,7 @@ function cpfDigit(value, length) {
   return result === 10 ? 0 : result;
 }
 
-export function isValidCnpj(value) {
-  const normalized = digits(value);
-  if (normalized.length !== 14 || /^(\d)\1{13}$/.test(normalized)) return false;
-  const first = cnpjDigit(normalized, [5,4,3,2,9,8,7,6,5,4,3,2]);
-  const second = cnpjDigit(`${normalized.slice(0, 12)}${first}`, [6,5,4,3,2,9,8,7,6,5,4,3,2]);
-  return normalized.endsWith(`${first}${second}`);
-}
+export function isValidCnpj(value) { return validarCnpj(String(value??'')).valido; }
 
 export function isValidCpf(value) {
   const normalized = digits(value);
@@ -67,7 +62,7 @@ export function normalizeCommercialCustomerInput(input = {}) {
   const normalized = {
     personType: isIndividual ? 'fisica' : 'juridica',
     documentType,
-    document: digits(input.document),
+    document: isIndividual ? digits(input.document) : sanitizarCnpj(String(input.document??'')),
     legalName: text(input.legalName, 160),
     tradeName: text(input.tradeName, 160),
     displayName: text(input.displayName || input.tradeName || input.legalName, 160),

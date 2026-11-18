@@ -20,7 +20,7 @@ for(const message of ['Empresa não encontrada','Limite de consultas','Serviço 
 test('não usa base local em erro, documento divergente ou resposta inválida',async()=>{
  for(const payload of [null,{success:true,data:{documento:'00000000000000'}}]) await assert.rejects(lookupCompanyCnpj(document,{fetcher:async()=>({ok:true,json:async()=>payload})}));
  await assert.rejects(lookupCompanyCnpj(document,{fetcher:async()=>{throw new Error('Falha de rede')}}),/Falha de rede/);
- await assert.rejects(lookupCompanyCnpj('123',{fetcher:async()=>assert.fail('não deve consultar')}),/14 dígitos/);
+ await assert.rejects(lookupCompanyCnpj('123',{fetcher:async()=>assert.fail('não deve consultar')}),/14 posições/);
 });
 test('cancelamento é encaminhado à requisição',async()=>{
  const controller=new AbortController();controller.abort();

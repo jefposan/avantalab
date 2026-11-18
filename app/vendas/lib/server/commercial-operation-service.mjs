@@ -1,3 +1,4 @@
+import { protectCommercialService } from './commercial-visibility.mjs';
 import { createHash } from 'node:crypto';
 
 export const COMMERCIAL_OPERATION_SERVICE_REFERENCE = '2026-09-03';
@@ -185,6 +186,8 @@ export async function prepareOperation({ input, context, customerResolver, catal
   const lines = [];
   let subtotalCents = 0;
   let itemDiscountCents = 0;
+  let policyGrossCents=0;
+  let policyMaximumItemPercent=0;
   for (let index = 0; index < requestedItems.length; index += 1) {
     const requested = requestedItems[index];
     const source = byId.get(itemIds[index]);
@@ -209,6 +212,10 @@ export async function prepareOperation({ input, context, customerResolver, catal
       errors.push(error('AV-COMMERCIAL-LINE-TOTAL', `items.${index}`, 'O total deste item ultrapassa R$ 9.999.999,99.'));
       continue;
     }
+    const referenceCents=Math.max(unitPriceCents,defaultPriceCents||0);
+    const policyLineGross=lineCents(quantityMilli,referenceCents);
+    policyGrossCents+=policyLineGross;
+    policyMaximumItemPercent=Math.max(policyMaximumItemPercent,policyLineGross>0?(policyLineGross-netCents)*100/policyLineGross:0);
     const fiscal = catalogSnapshot(source);
     const fiscalReady = source.fiscalReady === true;
     lines.push({
@@ -273,19 +280,31 @@ export async function prepareOperation({ input, context, customerResolver, catal
   };
   operation.contentHash = fingerprint(operation);
   if (!HASH.test(operation.contentHash)) throw new Error('Falha ao identificar o conteúdo comercial.');
+  Object.defineProperty(operation,'discountPolicy',{value:{gross:moneyFromCents(policyGrossCents),discount:moneyFromCents(policyGrossCents-(subtotalCents-itemDiscountCents-generalDiscountCents)),maximumItemPercent:policyMaximumItemPercent}});
   return { operation, errors, warnings };
 }
 
-export function createCommercialOperationService({ repository, customerResolver, catalogResolver } = {}) {
+export function createCommercialOperationService({ repository, customerResolver, catalogResolver, policyResolver = async () => ({maxDiscountPercent:15}) } = {}) {
   if (!repository || typeof repository.create !== 'function' || typeof repository.update !== 'function' || typeof repository.convertQuoteToOrder !== 'function') throw new TypeError('Informe o repositório server-side de operações.');
   if (typeof customerResolver !== 'function' || typeof catalogResolver !== 'function') throw new TypeError('Informe os resolvedores server-side de cliente e catálogo.');
-  return Object.freeze({
+  return protectCommercialService({
     async create({ context, input } = {}) {
       const channel = text(input?.channel || 'vendas', 20).toLowerCase();
       const denied = accessError(context, requiredPermission(channel, 'create'));
       if (denied) return { ok: false, errors: [denied], warnings: [] };
       try {
         const prepared = await prepareOperation({ input, context, customerResolver, catalogResolver });
+        if (!prepared.errors.length) {
+          const policy=await policyResolver({companyId:context.companyId});
+          const limit=Number(policy?.maxDiscountPercent);
+          const op=prepared.operation;
+          const base=op.discountPolicy;
+          const excess=base.gross>0 && base.discount*100>base.gross*limit+0.000001;
+          const itemExcess=base.maximumItemPercent>limit+0.000001;
+          if(!Number.isFinite(limit)||limit<0||limit>100) throw Error("Política comercial indisponível.");
+          if(excess||itemExcess)op.discountApproval={approvedBy:context.actorId,limitPercent:limit,discountPercent:Math.max(base.maximumItemPercent,base.gross>0?base.discount*100/base.gross:0)};
+          if((excess||itemExcess)&&context.effectivePermissions?.["sales.approve_discount"]!==true) prepared.errors.push(error("AV-COMMERCIAL-DISCOUNT-PERMISSION","generalDiscount",`O desconto ultrapassa o limite de ${limit}%. Solicite a aprovação de um usuário autorizado.`));
+        }
         if (prepared.errors.length) return { ok: false, errors: prepared.errors, warnings: prepared.warnings };
         const result = await repository.create(prepared.operation);
         return { ok: true, operation: result.operation, reused: result.reused, errors: [], warnings: prepared.warnings };
@@ -300,6 +319,17 @@ export function createCommercialOperationService({ repository, customerResolver,
       if (!UUID.test(text(operationId)) || !Number.isInteger(expectedVersion) || expectedVersion < 1) return { ok: false, errors: [error('AV-COMMERCIAL-OPERATION-VERSION', 'version', 'Atualize o documento antes de salvar novamente.')], warnings: [] };
       try {
         const prepared = await prepareOperation({ input, context, customerResolver, catalogResolver });
+        if (!prepared.errors.length) {
+          const policy=await policyResolver({companyId:context.companyId});
+          const limit=Number(policy?.maxDiscountPercent);
+          const op=prepared.operation;
+          const base=op.discountPolicy;
+          const excess=base.gross>0 && base.discount*100>base.gross*limit+0.000001;
+          const itemExcess=base.maximumItemPercent>limit+0.000001;
+          if(!Number.isFinite(limit)||limit<0||limit>100) throw Error("Política comercial indisponível.");
+          if(excess||itemExcess)op.discountApproval={approvedBy:context.actorId,limitPercent:limit,discountPercent:Math.max(base.maximumItemPercent,base.gross>0?base.discount*100/base.gross:0)};
+          if((excess||itemExcess)&&context.effectivePermissions?.["sales.approve_discount"]!==true) prepared.errors.push(error("AV-COMMERCIAL-DISCOUNT-PERMISSION","generalDiscount",`O desconto ultrapassa o limite de ${limit}%. Solicite a aprovação de um usuário autorizado.`));
+        }
         if (prepared.errors.length) return { ok: false, errors: prepared.errors, warnings: prepared.warnings };
         const operation = await repository.update({ operationId, expectedVersion, operation: prepared.operation });
         return { ok: true, operation, errors: [], warnings: prepared.warnings };

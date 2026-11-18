@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../lib/consultas/validators/cnpj.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -10,7 +11,7 @@ const code=source.slice(start,source.indexOf('\n  const isIndividual = form.prof
 function run(contact={}){
  let saved,error,closed=false;
  const form={profile:'Pessoa física',document:'52998224725',legalName:'Cliente sintético',tradeName:'',contactName:'',email:'',phone:'',cep:'01001000',street:'Rua de teste',number:'1',district:'Centro',cityName:'São Paulo',state:'SP',cityCode:'3550308',fiscal:'Não contribuinte',...contact};
- const scope={exports:{},saving:false,form,clientRecords:[],isValidCpf,isValidCnpj,isValidEmail:x=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x),resolveMunicipalityCode:()=> '3550308',municipalityIsResolved:()=>true,formatCpf:x=>x,formatCnpj:x=>x,formatCep:x=>x,setError:x=>error=x,setSaving:()=>{},onSave:async x=>{saved=x;return {ok:true};},onClose:()=>closed=true};
+ const scope={exports:{},saving:false,form,clientRecords:[],sanitizarCnpj,isValidCpf,isValidCnpj,isValidEmail:x=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x),resolveMunicipalityCode:()=> '3550308',municipalityIsResolved:()=>true,formatCpf:x=>x,formatCnpj:x=>x,formatCep:x=>x,setError:x=>error=x,setSaving:()=>{},onSave:async x=>{saved=x;return {ok:true};},onClose:()=>closed=true};
  vm.runInNewContext(ts.transpileModule(code+'\nexports.save=save;',{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText,scope);
  return {save:scope.exports.save,result:()=>({saved,error,closed})};
 }

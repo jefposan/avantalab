@@ -1,3 +1,4 @@
+import {sanitizarCnpj,validarCnpj as validarCnpjOficial,formatarCnpjParaExibicao} from '../../lib/consultas/validators/cnpj.ts';
 export const TIPOS_EMPRESA = [
   ['autonomo', 'Autônomo'],
   ['mei', 'MEI'],
@@ -99,7 +100,8 @@ export function somenteDigitos(valor: unknown, limite = 30) {
 }
 
 export function formatarDocumentoFiscal(valor: unknown, tipo: 'cpf' | 'cnpj') {
-  const limite = tipo === 'cpf' ? 11 : 14;
+  if(tipo==='cnpj')return formatarCnpjParaExibicao(String(valor??''));
+  const limite = 11;
   const digitos = somenteDigitos(valor, limite);
 
   if (tipo === 'cpf') {
@@ -128,14 +130,4 @@ export function validarCpf(valor: unknown) {
   return calcular(9) === Number(cpf[9]) && calcular(10) === Number(cpf[10]);
 }
 
-export function validarCnpj(valor: unknown) {
-  const cnpj = somenteDigitos(valor, 14);
-  if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
-  const digito = (tamanho: number) => {
-    const pesos = tamanho === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2];
-    const soma = pesos.reduce((total, peso, indice) => total + Number(cnpj[indice]) * peso, 0);
-    const resto = soma % 11;
-    return resto < 2 ? 0 : 11 - resto;
-  };
-  return digito(12) === Number(cnpj[12]) && digito(13) === Number(cnpj[13]);
-}
+export function validarCnpj(valor: unknown) { return validarCnpjOficial(String(valor??'')).valido; }

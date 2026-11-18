@@ -104,8 +104,9 @@ export function createPostgresCommercialFiscalCenterRepository({ pool, pendingRe
   }
   return Object.freeze({
     configured: true,
-    async listDocuments({ companyId, limit = MAX_RESULTS } = {}) {
+    async listDocuments({ companyId, limit = MAX_RESULTS, offset = 0 } = {}) {
       const safeLimit = Math.min(MAX_RESULTS, Math.max(1, Number.parseInt(String(limit), 10) || MAX_RESULTS));
+      const safeOffset=Math.max(0,Number.isSafeInteger(Number(offset))?Number(offset):0);
       return withClient(pool, async (client) => {
         const result = await client.query(`
           select
@@ -128,9 +129,9 @@ export function createPostgresCommercialFiscalCenterRepository({ pool, pendingRe
           where r.empresa_id=$1 and not exists(select 1 from fiscal_private.draft_deletions deleted where deleted.company_id=r.empresa_id and deleted.draft_id=r.id)
           order by r.criado_em desc,r.id desc
           limit $2
-        `, [text(companyId, 80), safeLimit]);
-        const pending=pendingRepository?await pendingRepository.list({companyId,limit:safeLimit}):[];
-        return Object.freeze([...pending,...(result.rows || []).map(mapDocument)].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).slice(0,safeLimit));
+        `, [text(companyId, 80), safeLimit+safeOffset]);
+        const pending=pendingRepository?await pendingRepository.list({companyId,limit:safeLimit+safeOffset}):[];
+        return Object.freeze([...pending,...(result.rows || []).map(mapDocument)].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))||String(b.draftId).localeCompare(String(a.draftId))).slice(safeOffset,safeOffset+safeLimit));
       });
     },
   });
@@ -139,13 +140,13 @@ export function createPostgresCommercialFiscalCenterRepository({ pool, pendingRe
 export function createCommercialFiscalCenterService({ repository } = {}) {
   return Object.freeze({
     id: 'avantalab-commercial-fiscal-center-v1',
-    async list({ boundary, effectivePermissions, limit = MAX_RESULTS } = {}) {
+    async list({ boundary, effectivePermissions, limit = MAX_RESULTS, offset = 0 } = {}) {
       const access = evaluateAccessDecision({ boundary, effectivePermissions, permission: 'fiscal.view' });
       if (!access.allowed) return { ok: false, reason: access.reason, documents: [] };
       if (repository?.configured !== true || typeof repository.listDocuments !== 'function') {
         return { ok: false, reason: 'repository_unavailable', documents: [] };
       }
-      const documents = await repository.listDocuments({ companyId: access.session.companyId, limit });
+      const documents = await repository.listDocuments({ companyId: access.session.companyId, limit, offset });
       return { ok: true, reason: 'allowed', documents };
     },
   });

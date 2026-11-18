@@ -1,3 +1,4 @@
+import {sanitizarCnpj} from '../../../../lib/consultas/validators/cnpj.ts';
 import { createHash, randomUUID } from 'node:crypto';
 
 export const COMMERCIAL_SALES_ORDER_BILLING_REFERENCE = '2026-09-03';
@@ -60,7 +61,7 @@ export function normalizeIssuer(input = {}) {
   const address = input.address && typeof input.address === 'object' ? input.address : input;
   const snapshot = {
     establishmentId: UUID.test(clean(input.establishmentId)) ? clean(input.establishmentId) : '',
-    document: digits(input.document, 14),
+    document: sanitizarCnpj(String(input.document||'')),
     legalName: clean(input.legalName, 180),
     tradeName: clean(input.tradeName, 180),
     stateRegistration: clean(input.stateRegistration, 40),

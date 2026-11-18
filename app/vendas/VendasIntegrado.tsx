@@ -1,4 +1,5 @@
 'use client';
+import {fetchCommercialPages} from './lib/commercial-pages.mjs';
 import { COMPANY_PROFILE_SAVE_REQUEST, COMPANY_PROFILE_SAVE_RESPONSE, saveCompanyProfile } from './lib/company-profile-save.mjs';
 
 import { FISCAL_CHECKOUT_REQUEST_TYPE, FISCAL_CHECKOUT_RESPONSE_TYPE } from './lib/fiscal-checkout.mjs';
@@ -251,13 +252,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   const carregarDocumentosFiscais = useCallback(async (perfilId: string, token: string) => {
     if (!UUID_PATTERN.test(perfilId)) { setDocumentosFiscais([]); return; }
     try {
-      const parametros = new URLSearchParams({ companyId: perfilId });
-      const resposta = await fetch(`/api/modulos/vendas/fiscal/documents?${parametros}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: 'no-store',
-      });
-      const json = await resposta.json().catch(() => ({}));
-      setDocumentosFiscais(resposta.ok && json.ok === true && Array.isArray(json.documents) ? json.documents : []);
+      const documents=await fetchCommercialPages({url:`/api/modulos/vendas/fiscal/documents?companyId=${perfilId}`,key:'documents',token});
+      setDocumentosFiscais(documents);
     } catch {
       setDocumentosFiscais([]);
     }
@@ -339,17 +335,14 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
     try{
       const {data}=await supabase.auth.getSession();const token=data.session?.access_token;
       if(!token){send(false,[],'Confirme novamente sua sessão na Gestão.');return false;}
-      const params=new URLSearchParams({companyId:perfilId,limit:'200'});
-      const response=await fetch(`/api/modulos/vendas/commercial/receivables?${params}`,{headers:{Authorization:`Bearer ${token}`},cache:'no-store'});
-      const payload=await response.json().catch(()=>({}));
-      if(!response.ok||payload.ok!==true||!Array.isArray(payload.receivables)){send(false,[],payload.message||'Não foi possível carregar os recebimentos.');return false;}
-      send(true,payload.receivables);return true;
+      const records=await fetchCommercialPages({url:`/api/modulos/vendas/commercial/receivables?companyId=${perfilId}`,key:'receivables',token});
+      send(true,records);return true;
     }catch{send(false,[],'A conexão com os recebimentos está indisponível.');return false;}
   },[origemPrototipo]);
 
   const carregarEstoque = useCallback(async (perfilId:string)=>{
     const destination=iframeRef.current?.contentWindow;if(!destination||!UUID_PATTERN.test(perfilId))return false;const send=(ok:boolean,movements:unknown[],message='')=>destination.postMessage({type:STOCK_SNAPSHOT_TYPE,ok,movements,message},origemPrototipo);
-    try{const {data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token){send(false,[],'Confirme novamente sua sessão na Gestão.');return false;}const params=new URLSearchParams({companyId:perfilId,limit:'200'});const response=await fetch(`/api/modulos/vendas/commercial/stock?${params}`,{headers:{Authorization:`Bearer ${token}`},cache:'no-store'});const payload=await response.json().catch(()=>({}));if(!response.ok||payload.ok!==true||!Array.isArray(payload.movements)){send(false,[],payload.message||'Não foi possível carregar o estoque.');return false;}send(true,payload.movements);return true;}catch{send(false,[],'A conexão com o estoque está indisponível.');return false;}
+    try{const {data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token){send(false,[],'Confirme novamente sua sessão na Gestão.');return false;}const records=await fetchCommercialPages({url:`/api/modulos/vendas/commercial/stock?companyId=${perfilId}`,key:'movements',token});send(true,records);return true;}catch{send(false,[],'A conexão com o estoque está indisponível.');return false;}
   },[origemPrototipo]);
 
   const carregarClientes = useCallback(async (perfilId: string) => {
@@ -360,10 +353,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) { send(false, [], 'Confirme novamente sua sessão na Gestão.'); return false; }
-      const params = new URLSearchParams({ companyId: perfilId, limit: '100' });
-      const response = await fetch(`/api/modulos/vendas/commercial/customers?${params}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || payload.ok !== true || !Array.isArray(payload.customers)) { send(false, [], payload.message || 'Não foi possível carregar os clientes.'); return false; }
+      const records=await fetchCommercialPages({url:`/api/modulos/vendas/commercial/customers?companyId=${perfilId}`,key:'customers',token});
+      const payload={customers:records};
       send(true, payload.customers.map(clienteParaTela));
       return true;
     } catch { send(false, [], 'A conexão com os clientes está indisponível.'); return false; }
@@ -377,10 +368,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) { send(false, [], 'Confirme novamente sua sessão na Gestão.'); return false; }
-      const params = new URLSearchParams({ companyId: perfilId, limit: '200' });
-      const response = await fetch(`/api/modulos/vendas/commercial/suppliers?${params}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || payload.ok !== true || !Array.isArray(payload.suppliers)) { send(false, [], payload.message || 'Não foi possível carregar os fornecedores.'); return false; }
+      const records=await fetchCommercialPages({url:`/api/modulos/vendas/commercial/suppliers?companyId=${perfilId}`,key:'suppliers',token});
+      const payload={suppliers:records};
       send(true, payload.suppliers.map((supplier: Record<string, any>) => ({ id: supplier.id, name: supplier.name, document: supplier.document, contactName: supplier.contactName, email: supplier.email, phone: supplier.phone, active: supplier.active, persistence: { integrated: true, version: supplier.version } })));
       return true;
     } catch { send(false, [], 'A conexão com os fornecedores está indisponível.'); return false; }
@@ -393,11 +382,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
     try {
       const { data } = await supabase.auth.getSession(); const token = data.session?.access_token;
       if (!token) { send(false, [], 'Confirme novamente sua sessão na Gestão.'); return false; }
-      const headers = { Authorization: `Bearer ${token}` };
-      const [salesResponse, servicesResponse] = await Promise.all(['vendas', 'servicos'].map((channel) => fetch(`/api/modulos/vendas/commercial/operations?${new URLSearchParams({ companyId: perfilId, channel, limit: '100' })}`, { headers, cache: 'no-store' })));
-      const [sales, services] = await Promise.all([salesResponse.json().catch(() => ({})), servicesResponse.json().catch(() => ({}))]);
-      if (!salesResponse.ok || !servicesResponse.ok || sales.ok !== true || services.ok !== true) { send(false, [], sales.message || services.message || 'Não foi possível carregar os documentos comerciais.'); return false; }
-      send(true, [...(sales.operations || []), ...(services.operations || [])]); return true;
+      const [sales,services]=await Promise.all(['vendas','servicos'].map(channel=>fetchCommercialPages({url:`/api/modulos/vendas/commercial/operations?companyId=${perfilId}&channel=${channel}`,key:'operations',token})));
+      send(true,[...sales,...services]);return true;
     } catch { send(false, [], 'A conexão com os documentos comerciais está indisponível.'); return false; }
   }, [origemPrototipo]);
 
@@ -522,9 +508,9 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       }
       if(event.data?.type==='AVANTALAB_VENDAS_FISCAL_EDITOR_V1'){
         const port=event.ports?.[0],requestId=String(event.data.requestId||'');
-        if(!port||!UUID_PATTERN.test(requestId)||event.data.companyId!==empresaId||!['load','create-message','load-defaults','save-defaults'].includes(event.data.action))return;
+        if(!port||!UUID_PATTERN.test(requestId)||event.data.companyId!==empresaId||!['load','create-message','load-defaults','save-defaults','load-policy','save-policy'].includes(event.data.action))return;
         const action=event.data.action,message=event.data.message,defaults=event.data.defaults,version=event.data.version;
-        void(async()=>{try{const {data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token)throw Error('Confirme novamente sua sessão.');const params=new URLSearchParams({companyId:empresaId,...(action==='load-defaults'?{section:'defaults'}:{})});const reading=['load','load-defaults'].includes(action);const response=await fetch(`/api/modulos/vendas/fiscal/editor?${params}`,{method:reading?'GET':action==='save-defaults'?'PATCH':'POST',headers:{Authorization:`Bearer ${token}`,...(reading?{}:{'Content-Type':'application/json'})},...(reading?{}:{body:JSON.stringify(action==='save-defaults'?{defaults,version}:{message})}),cache:'no-store'});const result=await response.json().catch(()=>({}));port.postMessage({...result,ok:response.ok&&result.ok===true,companyId:empresaId,requestId});}catch(error){port.postMessage({ok:false,message:error instanceof Error?error.message:'Não foi possível consultar a emissão.',companyId:empresaId,requestId});}finally{port.close();}})();return;
+        void(async()=>{try{const {data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token)throw Error('Confirme novamente sua sessão.');const params=new URLSearchParams({companyId:empresaId,...(action==='load-defaults'?{section:'defaults'}:{})});const reading=['load','load-defaults','load-policy'].includes(action);const response=await fetch(`${['load-policy','save-policy'].includes(action)?'/api/modulos/vendas/commercial/policy':'/api/modulos/vendas/fiscal/editor'}?${params}`,{method:reading?'GET':['save-defaults','save-policy'].includes(action)?'PATCH':'POST',headers:{Authorization:`Bearer ${token}`,...(reading?{}:{'Content-Type':'application/json'})},...(reading?{}:{body:JSON.stringify(action==='save-policy'?event.data.policy:action==='save-defaults'?{defaults,version}:{message})}),cache:'no-store'});const result=await response.json().catch(()=>({}));port.postMessage({...result,ok:response.ok&&result.ok===true,companyId:empresaId,requestId});}catch(error){port.postMessage({ok:false,message:error instanceof Error?error.message:'Não foi possível consultar a emissão.',companyId:empresaId,requestId});}finally{port.close();}})();return;
       }
       if (event.data?.type === STANDALONE_FISCAL_SAVE_REQUEST_TYPE) {
         const port = event.ports?.[0];

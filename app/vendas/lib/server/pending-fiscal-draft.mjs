@@ -19,7 +19,7 @@ export function createPendingFiscalDraftRepository({pool}){
    }catch(error){await client.query('rollback');throw error;}finally{if(client!==pool)client.release();}
   },
   async list({companyId,limit=200}){
-   return (await pool.query('select * from public.vendas_fiscal_preenchimentos where empresa_id=$1 and not concluido order by atualizado_em desc,id desc limit $2',[companyId,limit])).rows.map(row=>{
+   return (await pool.query('select * from public.vendas_fiscal_preenchimentos where empresa_id=$1 and not concluido order by criado_em desc,id desc limit $2',[companyId,limit])).rows.map(row=>{
     const s=row.conteudo;return {...s,draftId:row.id,originId:row.id,originType:'avulsa',documentType:'nfe',draftStatus:'pendencia_cadastral',emissionId:'',emission:null,pendingVersion:Number(row.versao),createdAt:new Date(row.criado_em).toISOString()};
    });
   },

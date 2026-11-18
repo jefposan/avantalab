@@ -26,13 +26,11 @@ export function sanitizarCnpj(valor: string): string {
 export function formatarCnpjParaExibicao(valor: string): string {
   const documento = sanitizarCnpj(valor).slice(0, CNPJ_TAMANHO);
 
-  if (!/^\d*$/.test(documento)) return documento;
-
   return documento
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2');
+    .replace(/^([A-Z0-9]{2})([A-Z0-9])/, '$1.$2')
+    .replace(/^([A-Z0-9]{2})\.([A-Z0-9]{3})([A-Z0-9])/, '$1.$2.$3')
+    .replace(/\.([A-Z0-9]{3})([A-Z0-9])/, '.$1/$2')
+    .replace(/([A-Z0-9]{4})([A-Z0-9])/, '$1-$2');
 }
 
 function valorDoCaractere(caractere: string): number {
