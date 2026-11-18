@@ -13,3 +13,5 @@ Migração 20261118160000: tabela privada de política comercial (RLS, sem conce
 Validação: 688 testes de módulos/consultas/perfis aprovados; nove regressões específicas (incluindo HTTP sem sessão/sem permissão, versão concorrente e migração real em PGlite) aprovadas; TypeScript, PADRÃO AVANTA e Ava aprovados. Orquestrador fiscal e resiliência sintéticos aprovados, zero transmissões de notas reais. Build completo obrigatório na Vercel, sem salto de testes.
 
 Preservações: DANFE, backup e histórico, edição de cliente/produto, herança tributária, exceções por nota, série/número e ambientes. Venda rápida, build por módulo e demais itens da auditoria continuam fora do escopo.
+
+Fechamento da implementação: migração aplicada em transação única e registrada no histórico em 18/11/2026. Leitura posterior confirmou RLS ativa e ausência de SELECT para authenticated na política. Respostas paginadas de perfil anterior são descartadas e operações integradas não voltam a cortar o histórico durante atualizações. Os 19 testes finais de regressão dirigida passaram; nenhum documento fiscal real foi transmitido pelos testes.
