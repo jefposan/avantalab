@@ -1,3 +1,8 @@
+# 3.2.0.479 — DANFE: layout, logo por empresa e novas versões visuais
+
+- Diagramação aprovada: logo proporcional, identificação sem repetição, margens de 5 mm e espaçamento entre emitente/destinatário, labels e valores; textos medidos pela fonte.
+- Dados para emissão permite logo específico ou herdar o logo da empresa. Downloads reconstroem o DANFE do XML autorizado em versão imutável por hash, preservando o XML, autorização e PDF original. Sem reemissão, migração ou alteração dos dados fiscais.
+
 # 3.2.0.478 — Fiscal: padrões tributários organizados e IPI da empresa
 
 Dados para emissão organiza os padrões da empresa em ICMS, IPI, PIS/COFINS, IBS/CBS e CFOP, com grupos expansíveis e acesso às regras específicas. CST e enquadramento IPI são opcionais e persistidos no cadastro fiscal existente; itens que herdam a empresa recebem os valores, preservando exceções. Combinações incompatíveis de IPI são recusadas antes do envio, sem escolher códigos automaticamente. Sem migração ou alteração de cadastros de produção.

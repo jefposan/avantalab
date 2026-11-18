@@ -167,6 +167,13 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
     const emission = current.emission;
     if (!emission || emission.companyId !== job.companyId || !/^\d{44}$/.test(emission.accessKey || '')) return failure('AV-FISCAL-RECOVERY-EMISSION', 'A emissão fiscal da tarefa não foi encontrada ou está incompleta.');
     if (!['artifacts_stored', 'danfe_ready', 'canceled'].includes(emission.state) || !current.artifacts.processed_xml) return failure('AV-FISCAL-RECOVERY-DANFE-PREREQUISITE', 'O XML autorizado ainda não está registrado para gerar o DANFE.');
+    // A newer presentation must never replace or be compared against the authorized archive.
+    const original=current.artifacts.danfe_pdf;
+    if(original&&['danfe_ready','canceled'].includes(emission.state)){
+      if(emission.danfeStorageReference!==original.storageReference||emission.danfeChecksum!==original.checksum)return failure('AV-FISCAL-RECOVERY-DANFE-CONFLICT','A referência do DANFE original diverge do estado fiscal imutável.');
+      try{await storageProvider.readVerified({accessKey:emission.accessKey,storageKey:nfeDanfeStorageKey(emission.accessKey),contentType:'application/pdf',expectedChecksum:original.checksum});}catch{return failure('AV-FISCAL-RECOVERY-DANFE-STORE','O DANFE original não passou na verificação de integridade.');}
+      return{ok:true,artifactType:'danfe_pdf',persisted:true,reused:true,contentReturned:false};
+    }
     let loadedXml;
     try {
       loadedXml = await storageProvider.readVerified({ accessKey: emission.accessKey, storageKey: nfeProcessedStorageKey(emission.accessKey), contentType: 'application/xml', expectedChecksum: current.artifacts.processed_xml.checksum });

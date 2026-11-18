@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import pg from 'pg';
 
+import {createDanfePresentationRenderer} from './fiscal-danfe-presentation-service.mjs';
 import { createFiscalArtifactDownloadService } from './fiscal-artifact-download-service.mjs';
 import { createPostgresFiscalRepository } from './fiscal-postgres-repository.mjs';
 import { validateFiscalDurableStorageConfiguration } from './fiscal-durable-storage-policy.mjs';
@@ -61,7 +62,7 @@ export async function createFiscalDownloadRuntimeFromEnvironment(environment = p
       configured: true,
       reason: 'ready',
       accessResolver,
-      downloadService: createFiscalArtifactDownloadService({ repository: fiscalRepository, storageProvider, auditWriter: fiscalRepository, maxTtlSeconds: 60 }),
+      downloadService: createFiscalArtifactDownloadService({ repository: fiscalRepository, storageProvider, auditWriter: fiscalRepository, maxTtlSeconds: 60, presentationRenderer:createDanfePresentationRenderer({repository:fiscalRepository,storageProvider,supabaseUrl,appearanceReader:async companyId=>{const [profile,brand]=await Promise.all([storageClient.from('cadastros_perfil').select('configuracao_fiscal').eq('empresa_id',companyId).maybeSingle(),storageClient.from('configuracoes').select('logo_url').eq('empresa_id',companyId).maybeSingle()]);if(profile.error||brand.error)throw Error('Configuração visual indisponível.');return{logo:profile.data?.configuracao_fiscal?.danfe_logo||'',systemLogo:brand.data?.logo_url||''};}}) }),
     });
   } catch {
     await pool.end().catch(() => null);

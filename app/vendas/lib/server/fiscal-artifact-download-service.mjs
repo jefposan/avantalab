@@ -35,7 +35,7 @@ function validGrant(grant, now, requestedTtlSeconds) {
     && lifetime <= requestedTtlSeconds * 1000 + 1000;
 }
 
-export function createFiscalArtifactDownloadService({ repository, storageProvider, auditWriter, clock = () => new Date().toISOString(), maxTtlSeconds = 120 } = {}) {
+export function createFiscalArtifactDownloadService({ repository, storageProvider, auditWriter, presentationRenderer, clock = () => new Date().toISOString(), maxTtlSeconds = 120 } = {}) {
   const serviceTtl = Number(maxTtlSeconds);
   if (!Number.isInteger(serviceTtl) || serviceTtl < 30 || serviceTtl > 300) throw new TypeError('O prazo do acesso fiscal deve estar entre 30 e 300 segundos.');
   return Object.freeze({
@@ -65,11 +65,12 @@ export function createFiscalArtifactDownloadService({ repository, storageProvide
         ? storageProvider?.productionReady === true
         : storageProvider?.environment === 'homologacao' && storageProvider?.homologationReady === true;
       if (storageProvider?.configured !== true || !storageReady || typeof storageProvider.createReadGrant !== 'function') return denied('storage_unavailable', [error('AV-FISCAL-DOWNLOAD-STORAGE', 'storageProvider', 'A guarda fiscal privada não está disponível ou não passou pelas proteções do ambiente atual.')]);
-      const artifact = await repository.findArtifactForDownload({ companyId: access.session.companyId, artifactId: text(input.artifactId), artifactType });
+      let artifact = await repository.findArtifactForDownload({ companyId: access.session.companyId, artifactId: text(input.artifactId), artifactType });
       if (!artifact || text(artifact.companyId) !== access.session.companyId || artifact.artifactType !== artifactType || artifact.contentType !== artifactDefinition.contentType) {
         await auditWriter.appendArtifactAccessEvent({ ...baseEvent, outcome: 'denied', reasonCode: 'artifact_not_found' });
         return denied('artifact_not_found', [error('AV-FISCAL-DOWNLOAD-NOT-FOUND', 'artifactId', 'O documento fiscal não foi encontrado nesta empresa.')]);
       }
+      if(artifactType==='danfe_pdf'&&presentationRenderer){try{const identity=JSON.stringify([artifact.companyId,artifact.emissionId,artifact.accessKey,artifact.artifactType,artifact.contentType]);artifact=await presentationRenderer({artifact,companyId:access.session.companyId});if(JSON.stringify([artifact.companyId,artifact.emissionId,artifact.accessKey,artifact.artifactType,artifact.contentType])!==identity)throw Error('A apresentação não corresponde ao artefato autorizado.');}catch{await auditWriter.appendArtifactAccessEvent({...baseEvent,emissionId:artifact.emissionId,outcome:'failed',reasonCode:'presentation_failed'});return denied('grant_failed',[error('AV-FISCAL-DANFE-PRESENTATION','artifact','Não foi possível gerar a apresentação atualizada do DANFE.')]);}}
       const requestedTtl = Number(input.ttlSeconds ?? serviceTtl);
       const ttlSeconds = Number.isInteger(requestedTtl) ? Math.min(serviceTtl, Math.max(30, requestedTtl)) : serviceTtl;
       let grant;

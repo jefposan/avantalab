@@ -1,0 +1,1 @@
+export function createDanfePresentationRenderer(options:{repository:any;storageProvider:any;appearanceReader:(companyId:string)=>Promise<{logo:string;systemLogo:string}>;supabaseUrl?:string}):(input:{artifact:any;companyId:string})=>Promise<any>;

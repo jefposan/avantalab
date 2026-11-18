@@ -6,6 +6,7 @@ export function createFiscalArtifactDownloadService(options?: {
   repository?: { configured?: boolean; findArtifactForDownload?: (input: { companyId: string; artifactId: string; artifactType: FiscalArtifactType }) => Promise<Record<string, string> | null> };
   storageProvider?: { configured?: boolean; environment?: string; productionReady?: boolean; createReadGrant?: (input: Record<string, string | number>) => Promise<{ url: string; expiresAt: string }> };
   auditWriter?: { configured?: boolean; appendArtifactAccessEvent?: (event: Record<string, string>) => Promise<unknown> };
+  presentationRenderer?:(input:{artifact:any;companyId:string})=>Promise<any>;
   clock?: () => string;
   maxTtlSeconds?: number;
 }): { id: string; authorize(input?: { boundary?: Partial<AccessBoundary>; effectivePermissions?: Record<string, boolean>; artifactId?: string; artifactType?: FiscalArtifactType | string; ttlSeconds?: number }): Promise<FiscalArtifactDownloadResult> };

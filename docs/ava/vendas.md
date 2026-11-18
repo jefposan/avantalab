@@ -1,4 +1,4 @@
-<!-- ava-version: 3.2.0.478 -->
+<!-- ava-version: 3.2.0.479 -->
 
 > Revisão 3.2.0.478: Dados para emissão organiza os padrões da empresa em ICMS, IPI, PIS/COFINS, IBS/CBS e CFOP, com grupos expansíveis e acesso às regras específicas. CST e enquadramento IPI são opcionais e persistidos no cadastro fiscal existente; itens que herdam a empresa recebem os valores, preservando exceções. Combinações incompatíveis de IPI são recusadas antes do envio, sem escolher códigos automaticamente. Sem migração ou alteração de cadastros de produção.
 
@@ -6159,3 +6159,5 @@ Na edição fiscal, o cadeado do número indica somente leitura; série e próxi
 No cadastro do cliente, informe Consumidor final e a situação da inscrição estadual conforme a situação real. A emissão reutiliza esses dados. Em Natureza da operação, busque pelo número do CFOP ou pela descrição; a lista usa a tabela oficial do Portal NF-e e mantém as naturezas já configuradas. A seleção não cria nem publica uma nova regra fiscal: operações sem regra compatível/revisada precisam ser configuradas. O destino é comparado aos endereços, e CFOP/tipo de operação continuam validados.
 
 Nos itens, o CFOP vem da operação e dos valores configurados para dentro/fora da UF; uma exceção específica do produto é preservada. O campo CFOP permite alterar somente a nota, sem modificar o catálogo. Uma edição manual não é sobrescrita silenciosamente ao trocar outro campo; revise-a se mudar o destino. Valores incompletos/indevidos continuam impedindo emissão. Série e número seguem as configurações, e o número continua somente leitura com cadeado.
+
+Revisão 3.2.0.479: Dados para emissão → Aparência do DANFE usa o logo do perfil por padrão e permite um específico (ou sem logo). Próximos downloads atualizam somente apresentação a partir do XML autorizado, preservando os arquivos originais. Não emitir outra NF-e para mudar o layout.

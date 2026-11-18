@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import {createHash} from 'node:crypto';
 export {DEFAULT_KEYS,validateCompanyFiscalDefaults} from './fiscal-defaults-validation.mjs';
 import {validateCompanyFiscalDefaults} from './fiscal-defaults-validation.mjs';
@@ -13,6 +14,7 @@ export function createCompanyFiscalDefaultsRepository(pool){
 /** Same authenticated profile writer as Gestão, without broadening the fiscal DB role. */
 export async function saveCompanyFiscalDefaultsWithAdmin({client,companyId,values,version}){
  const validation=validateCompanyFiscalDefaults(values);if(validation)throw Error(validation);
+ if(values.danfe_logo&&values.danfe_logo!=='__blank__'){const bytes=Buffer.from(values.danfe_logo.split(',')[1],'base64');if(bytes.length>250*1024)throw Error('Logo muito grande.');const image=await sharp(bytes,{limitInputPixels:16_000_000}).metadata();if(!['png','jpeg','webp'].includes(image.format))throw Error('Logo inválido.');}
  const {data:row,error}=await client.from('cadastros_perfil').select('configuracao_fiscal,regime_tributario,atualizado_em').eq('empresa_id',companyId).maybeSingle();
  if(error||!row)throw Error('NOT_FOUND');if(defaultsVersion(row.configuracao_fiscal)!==version)throw Error('CONFLICT');
  let update=client.from('cadastros_perfil').update({configuracao_fiscal:{...(row.configuracao_fiscal||{}),...values},atualizado_em:new Date().toISOString()}).eq('empresa_id',companyId);

@@ -27,6 +27,7 @@ function normalizarConfiguracaoFiscal(valor: unknown) {
   const origemMercadoria = /^[0-8]$/.test(origem) ? origem : CONFIGURACAO_FISCAL_EMPRESA_VAZIA.origem_mercadoria_padrao;
   const campoNumerico = (chave: string, limite: number) => somenteDigitos(valor && typeof valor === 'object' ? (valor as Record<string, unknown>)[chave] : '', limite);
   return {
+    danfe_logo: texto(valor && typeof valor === 'object' ? (valor as Record<string, unknown>).danfe_logo : '', 360000),
     origem_mercadoria_padrao: origemMercadoria,
     cst_icms: campoNumerico('cst_icms', 3),
     csosn: campoNumerico('csosn', 3),

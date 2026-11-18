@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_8ABL47x7ppVSEHiMvhFG6dmD8NVj",
+  "baseDeploymentId": "dpl_7x4gjeX7pkBd87CvAU8DjeXMz7Mm",
   "migrations": [],
-  "version": "3.2.0.478",
-  "scope": "Dados para emissão organiza os padrões da empresa em ICMS, IPI, PIS/COFINS, IBS/CBS e CFOP, com grupos expansíveis e acesso às regras específicas. CST e enquadramento IPI são opcionais e persistidos no cadastro fiscal existente; itens que herdam a empresa recebem os valores, preservando exceções. Combinações incompatíveis de IPI são recusadas antes do envio, sem escolher códigos automaticamente. Sem migração ou alteração de cadastros de produção."
+  "version": "3.2.0.479",
+  "scope": "DANFE: aplicar diagramação aprovada com espaçamento, logo proporcional herdado do perfil ou específico, dados fiscais exclusivos do XML autorizado e download em novas versões visuais imutáveis por hash. Originais, XML e autorização preservados; sem migrações ou nova emissão."
 }

@@ -377,6 +377,9 @@ export function createPostgresFiscalRepository({ pool, schema = 'fiscal_private'
         return artifact ? { ...artifact, accessKey: text(result.rows[0].access_key) } : null;
       });
     },
+    async findProcessedXmlForPresentation({companyId,emissionId}={}) {
+      return withClient(pool,async client=>{const result=await client.query(`select a.*,e.access_key from ${safeSchema}.artifacts a join ${safeSchema}.emissions e on e.id=a.emission_id and e.company_id=a.company_id where a.company_id=$1 and a.emission_id=$2 and a.artifact_type='processed_xml'`,[text(companyId),text(emissionId)]);const artifact=mapArtifact(result.rows?.[0]);return artifact?{...artifact,accessKey:text(result.rows[0].access_key)}:null;});
+    },
     async appendArtifactAccessEvent(event = {}) {
       const accessEvents = `${safeSchema}.artifact_access_events`;
       const outcome = text(event.outcome);

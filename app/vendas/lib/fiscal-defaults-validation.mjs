@@ -1,11 +1,12 @@
 import {IPI_NT_OPTIONS,validateIpiClassification} from './fiscal-ipi.mjs';
 import {CSOSN_OPTIONS,ICMS_OPTIONS,CONTRIBUTION_OPTIONS,ORIGIN_OPTIONS} from './fiscal-tax-options.mjs';
 import {officialCfop} from './fiscal-cfop.mjs';
-export const DEFAULT_KEYS=['origem_mercadoria_padrao','csosn','cst_icms','cst_pis','cst_cofins','cst_ipi','enquadramento_ipi','cst_ibs_cbs','classificacao_ibs_cbs','cfop_venda_interna','cfop_venda_interestadual'];
+export const DEFAULT_KEYS=['origem_mercadoria_padrao','csosn','cst_icms','cst_pis','cst_cofins','cst_ipi','enquadramento_ipi','cst_ibs_cbs','classificacao_ibs_cbs','cfop_venda_interna','cfop_venda_interestadual','danfe_logo'];
 export function validateCompanyFiscalDefaults(input){
  if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>!DEFAULT_KEYS.includes(key)))return 'Revise os padrões fiscais da empresa.';
  const options={origem_mercadoria_padrao:ORIGIN_OPTIONS,csosn:CSOSN_OPTIONS,cst_icms:ICMS_OPTIONS,cst_pis:CONTRIBUTION_OPTIONS,cst_cofins:CONTRIBUTION_OPTIONS,cst_ipi:IPI_NT_OPTIONS};
  for(const [key,value]of Object.entries(input)){
+  if(key==='danfe_logo'){if(typeof value!=='string'||value.length>360000||(value&&value!=='__blank__'&&!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(value)))return 'Envie um logo PNG, JPG ou WebP de até 250 KB.';continue;}
   if(typeof value!=='string'||value.length>6)return 'Selecione os códigos nas listas de padrões fiscais.';
   if(!value)continue;
   if(options[key]&&!options[key].some(option=>option.value===value))return 'Um dos códigos tributários não existe na lista oficial.';
