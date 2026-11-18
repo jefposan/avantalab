@@ -1,6 +1,6 @@
 # Vendas e Serviços — cinco prioridades da auditoria
 
-Entrega 3.2.0.484.01. Base ae80e5663dee0377dcd964e3296707140d5983f1 / produção dpl_BE3UrWpA5EPkwvQVbwqNJS3S6mjC.
+Entrega 3.2.0.485. Base ae80e5663dee0377dcd964e3296707140d5983f1 / produção dpl_BE3UrWpA5EPkwvQVbwqNJS3S6mjC.
 
 - Custos: projeção da resposta no servidor para operações, OS, estoque e ciclo comercial; snapshots persistidos preservados. Custos e margens derivados não aparecem nos relatórios/CSV sem concessão.
 - Descontos: política por empresa protegida por settings.edit, versionada, padrão 15%. Serviço valida item, total e redução do preço de referência; aprovação exige sales.approve_discount. Interface integrada grava a política no servidor, sem confiar em preferência local. Nenhuma regra tributária é modificada.

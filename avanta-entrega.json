@@ -6,6 +6,6 @@
       "sha256": "70cf9c2c97b927db1efdc78e385f80f5d8ccf556993de99aeacb29163323e0d3"
     }
   ],
-  "version": "3.2.0.484.01",
+  "version": "3.2.0.485",
   "scope": "Vendas e Serviços: proteger custos e descontos, completar carga de listas, indicar capacidade fiscal e aceitar CNPJ alfanumérico nos cadastros e consultas; sem alterar tributos ou documentos existentes."
 }

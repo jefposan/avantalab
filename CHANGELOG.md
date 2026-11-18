@@ -1,4 +1,4 @@
-# 3.2.0.484.01 — Vendas e Serviços: corrigir cinco prioridades da auditoria
+# 3.2.0.485 — Vendas e Serviços: corrigir cinco prioridades da auditoria
 
 - Projeção server-side de custos em operações, OS, estoque e respostas do ciclo comercial, sem modificar retratos persistidos.
 - Política comercial por empresa/versionada: limite padrão de 15%, bloqueio de desconto por item e geral sem aprovação e configuração protegida por settings.edit.
