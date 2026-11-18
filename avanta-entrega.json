@@ -1,15 +1,6 @@
 {
-  "baseDeploymentId": "dpl_768MtsS53R4DJYT3qTweDA1AEPdr",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261118120000_vendas_backups_notas.sql",
-      "sha256": "49c1a1f374e1ec1f211a69c649bd2f388cbfa27de04e7724197fdd14c799ecc8"
-    },
-    {
-      "path": "supabase/migrations/20261118121000_vendas_backups_autor.sql",
-      "sha256": "0fefae25aee0978a3f46ec9eb7f5607fc247d6a17417067b56d4d8a8f3eb3f25"
-    }
-  ],
-  "version": "3.2.0.483",
-  "scope": "Vendas e Serviços: backup privado de notas por cliente e período, ZIP com XML/PDF, histórico e retomada; preserva notas e regras fiscais."
+  "baseDeploymentId": "dpl_2jwbeiRwmXT5T89AzUaHGPgRCqJR",
+  "migrations": [],
+  "version": "3.2.0.483.01",
+  "scope": "Backup de notas: confirmar a tentativa retomada para permitir gerar outro pacote após concluir; sem alterações fiscais."
 }

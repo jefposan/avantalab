@@ -1,3 +1,7 @@
+# 3.2.0.483.01 — Backup de notas: nova geração após retomada
+
+- Limpa a identificação de uma tentativa de criação quando o histórico confirma o backup retomado, permitindo gerar outro pacote depois da conclusão. Preserva idempotência enquanto a criação ainda não foi confirmada.
+
 # 3.2.0.483 — Vendas e Serviços: backup de notas com histórico
 
 - Popup em Notas fiscais, ao lado de Configurações fiscais, com cliente pesquisável e período de emissão.

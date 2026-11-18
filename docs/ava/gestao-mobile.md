@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.483 -->
+<!-- ava-version: 3.2.0.483.01 -->
+
+> Revisão 3.2.0.483.01: após retomar um backup confirmado, uma nova geração recebe identificação nova, inclusive se a resposta da criação anterior tiver sido perdida. Sem mudança nas notas ou regras fiscais.
 
 > Revisão 3.2.0.483: Vendas e Serviços → Notas fiscais → Backup de notas: selecione todos os clientes ou um cliente e o período de emissão. Gerar backup ZIP guarda um pacote com o primeiro nome da razão social e mês/ano, contendo pastas XML e PDF. Notas autorizadas e canceladas entram com seus eventos; rascunhos e rejeições ficam fora. O histórico permite baixar novamente, consultar falhas e retomar uma geração interrompida. Aguarde a conclusão com a janela aberta. Cada pacote aceita até 500 notas e 200 MB; períodos maiores devem ser divididos. Nenhuma nota ou regra fiscal é alterada.
 
