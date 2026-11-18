@@ -1,3 +1,9 @@
+# 3.2.0.487 — Custos e Precificação: retorno aos catálogos e lista com topo fixo
+
+- Voltar antes de Novo serviço retorna à área Catálogos sem alterar o filtro ou os cadastros.
+- Cabeçalho, filtros e ações de seleção permanecem fora da rolagem; somente a lista usa DetalhesRolaveis oficial, sem barra visível.
+- Preservados teclado, toque, mouse, telas pequenas e impressão. Sem mudanças de banco ou no editor de produtos.
+
 # 3.2.0.486 — Custos e Precificação: catálogos, edição e preços por destino
 
 - Chaves oficiais por destino com etiquetas de estado e realce local, sem borda verde no card inteiro.

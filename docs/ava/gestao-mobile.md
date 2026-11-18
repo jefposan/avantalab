@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.486 -->
+<!-- ava-version: 3.2.0.487 -->
+
+> Revisão 3.2.0.487: na lista de Produtos e serviços de Custos Web, Voltar fica antes de Novo serviço e retorna aos Catálogos. Cabeçalho e filtros permanecem fora da rolagem; role apenas os produtos com mouse, toque ou teclado, sem barra visível. Sem alteração de dados, editor, Gestão Mobile ou operações de Vendas.
 
 > Revisão 3.2.0.486: em Custos Web, chaves independentes com etiquetas identificam cada destino. Gerenciar produtos abre o catálogo selecionado para edição, mesmo sem destino ativo; Produtos e serviços permite Todos os catálogos ou um catálogo. Tabelas de preços e exportação incluem somente catálogos ativos em Vendas e Serviços; desativados não são excluídos do cadastro. Reajuste local segue o mesmo escopo. Publicação do AvantaVendas e registros anteriores preservados. Sem mudança de interface na Gestão Mobile.
 

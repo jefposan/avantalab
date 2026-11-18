@@ -68,3 +68,19 @@
 .catalogCards .catalogCard{background:var(--surface);border:1px solid var(--border)}
 .catalogDestinationHeading{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em}
 .catalogFooterNote{margin-top:16px;color:var(--muted);font-size:12px;line-height:1.5}
+.root:has(.productsPage){display:flex;flex-direction:column;height:100dvh;min-height:0}
+.root:has(.productsPage)>header,.root:has(.productsPage)>footer{flex:none}
+.workspace:has(.productsPage){flex:1;min-height:0}
+.workspace:has(.productsPage) .workspaceContent{height:100%;min-height:0}
+.workspace:has(.productsPage) .content{height:100%;min-height:0;padding-bottom:20px}
+.workspace:has(.productsPage) .sidebar{height:100%;min-height:0}
+.productsPage{display:flex;flex-direction:column;height:100%;min-height:0}
+.productsPage>div:first-child{flex:none}
+.productsPage>.panel{display:flex;flex:1;flex-direction:column;min-height:0;margin-bottom:0}
+.productsPage .catalogListTools,.productsPage .batchActions{flex:none}
+.productsPage .productsScroll{flex:1;min-height:0;overscroll-behavior:contain;scrollbar-width:none;scrollbar-gutter:auto}
+.productsScroll::-webkit-scrollbar,.productsScroll .tableWrap::-webkit-scrollbar{display:none}
+.productsScroll .tableWrap{scrollbar-width:none}
+@media(max-width:760px){.workspace:has(.productsPage) .workspaceContent{display:flex;flex-direction:column}.workspace:has(.productsPage) .sidebar{height:auto;flex:none}.workspace:has(.productsPage) .content{flex:1}.productsPage .headerActions{gap:6px;flex-wrap:wrap}}
+@media(max-height:540px){.root:has(.productsPage){height:auto;min-height:100dvh}.workspace:has(.productsPage) .content{height:auto}.productsPage{height:480px}}
+@media print{.root:has(.productsPage),.productsPage{height:auto;min-height:0}.productsPage .productsScroll{max-block-size:none!important;overflow:visible}}
