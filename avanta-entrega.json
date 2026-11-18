@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_Dga62t6wu9UA6TFcBctL6yukCtua",
+  "baseDeploymentId": "dpl_9eRpo1QAvg9miqbjoqFNkpByzxQi",
   "migrations": [],
-  "version": "3.2.0.480",
-  "scope": "Refinamento do layout DANFE: preservar o telefone do emitente quando presente no XML, com quebra por largura. Mantém logo proporcional, dados autorizados, nova versão visual e arquivos originais. Sem migrações ou reemissão."
+  "version": "3.2.0.481",
+  "scope": "DANFE: usar o ambiente do registro da emissão para validar o XML autorizado, independente do ambiente do armazenamento. Preserva isolamento, chave, protocolo, PDFs originais e novo layout com logo. Sem migração ou reemissão."
 }

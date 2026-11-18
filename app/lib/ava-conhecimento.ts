@@ -3008,3 +3008,5 @@ GUIAS['vendas'] += ' ATUALIZAÇÃO 3.2.0.461: Conteúdo AvantaVendas → Produto
 // Revisão 3.2.0.479: Vendas e Serviços > Ajustes > Empresa e notas > Dados para emissão > Aparência do DANFE: logo herdado ou específico; novo download atualiza apresentação, sem reemitir ou mudar XML autorizado.
 
 // Revisão 3.2.0.480: telefone do emitente preservado no DANFE; sem impacto operacional adicional.
+
+// Revisão 3.2.0.481: ambiente do DANFE vem da emissão, sem confundir com o armazenamento; sem impacto operacional adicional.

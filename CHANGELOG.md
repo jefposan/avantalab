@@ -1,3 +1,7 @@
+# 3.2.0.481 — DANFE: validar pelo ambiente da emissão
+
+A apresentação do DANFE usa o ambiente registrado na emissão fiscal, junto ao XML privado verificado, sem inferi-lo do bucket de armazenamento. Mantém a rejeição de XML de ambiente divergente, a chave, a autorização e os arquivos originais.
+
 # 3.2.0.480 — DANFE: preservar telefone do emitente
 
 Refinamento da entrega do novo layout: mantém telefone do emitente quando presente no XML, com quebra por largura no cabeçalho. Logo, dados fiscais, PDFs originais e autorização preservados.
