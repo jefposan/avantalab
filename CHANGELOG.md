@@ -1,4 +1,4 @@
-# 3.2.0.483.01 — Backup de notas: nova geração após retomada
+# 3.2.0.484 — Backup de notas: nova geração após retomada
 
 - Limpa a identificação de uma tentativa de criação quando o histórico confirma o backup retomado, permitindo gerar outro pacote depois da conclusão. Preserva idempotência enquanto a criação ainda não foi confirmada.
 
