@@ -20,6 +20,10 @@ export function validateNoteItem(input){
 }
 export function applyNoteItemFiscal(base,override){
  const applied={...base};if(!override)return applied;
- for(const key of ['ncm','cfop','taxableUnit','originCode','icmsCode','pisCst','cofinsCst','ipiCst','ipiLegalCode'])if(Object.hasOwn(override,key))applied[key]=override[key];
+ for(const key of ['ncm','cfop','taxableUnit','originCode','icmsCode','pisCst','cofinsCst','ipiCst','ipiLegalCode'])if(Object.hasOwn(override,key)){
+  // Classificações obrigatórias vazias não são exceções: continuam herdando os padrões.
+  if(['originCode','icmsCode','pisCst','cofinsCst'].includes(key)&&!String(override[key]??'').trim())continue;
+  applied[key]=override[key];
+ }
  return applied;
 }

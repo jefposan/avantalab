@@ -1,3 +1,7 @@
+# 3.2.0.475 — Fiscal: preservar herança tributária em ajustes vazios da nota
+
+Classificações obrigatórias vazias em ajustes antigos da nota deixam de apagar os padrões fiscais atuais da empresa. Exceções preenchidas continuam exclusivas da nota. Editor e validação usam a mesma herança; erro de CST não destaca CFOP por causa do texto de orientação. Sem alterar códigos cadastrados, cálculos ou dados de produção.
+
 # 3.2.0.474 — Fiscal: resumo flutuante sem rolagem interna
 
 Resumo da nota mantém posicionamento flutuante centralizado, sem limite de altura nem barra de rolagem interna. Em tela baixa, o conteúdo acompanha a rolagem da página para manter as ações alcançáveis. Correção restrita ao resumo, preservando campos, cálculos e regras fiscais.
