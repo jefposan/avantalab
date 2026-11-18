@@ -1,3 +1,4 @@
+import {normalizeFiscalDocument} from '../fiscal-identifiers.mjs';
 import { createHash, createSign, randomBytes, X509Certificate } from 'node:crypto';
 import forge from 'node-forge';
 import { extractIcpBrasilCnpjFromCertificate, validateSecureCertificateReference } from './nfe-certificate-vault.mjs';
@@ -9,7 +10,7 @@ export const NFE_A1_CERTIFICATE_REFERENCE = '2026-08-31';
 export const NFE_A1_MAX_PKCS12_BYTES = 5 * 1024 * 1024;
 
 function digits(value) {
-  return String(value || '').replace(/\D/g, '');
+  return normalizeFiscalDocument(value);
 }
 
 function diagnosticError(code, field, message) {

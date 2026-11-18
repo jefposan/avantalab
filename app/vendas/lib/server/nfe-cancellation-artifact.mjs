@@ -9,7 +9,7 @@ const tag = (xml, name) => text(xml).match(new RegExp(`<(?:[A-Za-z_][\\w.-]*:)?$
 
 export function nfeCancellationStorageKey(accessKey) {
   const normalized = text(accessKey);
-  if (!/^\d{44}$/.test(normalized)) return '';
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(normalized)) return '';
   return `fiscal/nfe/${normalized.slice(6, 20)}/20${normalized.slice(2, 4)}/${normalized.slice(4, 6)}/${normalized}-procEventoCancNFe.xml`;
 }
 
@@ -23,7 +23,7 @@ export function buildNfeCancellationArtifact({ processedEventXml, expectedAccess
   const registeredAt = tag(source, 'dhRegEvento');
   const errors = [];
   if (!source || Buffer.byteLength(source, 'utf8') > 1024 * 1024 || /<!DOCTYPE|<!ENTITY|<!\[CDATA\[|<!--/i.test(source)) errors.push(issue('AV-NFE-CANCEL-XML', 'event', 'O evento de cancelamento processado é inválido.'));
-  if (!/^\d{44}$/.test(expected) || accessKey !== expected) errors.push(issue('AV-NFE-CANCEL-KEY', 'accessKey', 'O evento não corresponde à chave de acesso da NF-e.'));
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(expected) || accessKey !== expected) errors.push(issue('AV-NFE-CANCEL-KEY', 'accessKey', 'O evento não corresponde à chave de acesso da NF-e.'));
   if (eventType !== '110111') errors.push(issue('AV-NFE-CANCEL-TYPE', 'eventType', 'O retorno não corresponde ao evento de cancelamento da NF-e.'));
   if (!['135', '155'].includes(statusCode)) errors.push(issue('AV-NFE-CANCEL-STATUS', 'statusCode', 'O autorizador não confirmou o registro do cancelamento.'));
   if (!/^\d{15,17}$/.test(protocolNumber)) errors.push(issue('AV-NFE-CANCEL-PROTOCOL', 'protocolNumber', 'O protocolo do evento de cancelamento é inválido.'));

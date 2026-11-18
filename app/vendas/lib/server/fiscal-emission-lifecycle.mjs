@@ -175,10 +175,10 @@ function validateTransition(current, toState, patch) {
   if (['signed', 'submitted', 'processing', 'authorized', 'artifacts_stored', 'danfe_ready', 'canceled'].includes(current.state) && Object.hasOwn(changes, 'accessKey') && changes.accessKey !== current.accessKey) errors.push(error('AV-FISCAL-LIFECYCLE-IMMUTABLE', 'patch.accessKey', 'A chave de acesso não pode mudar depois da assinatura.'));
   const candidate = { ...current, ...changes, state: next };
   if (next === 'number_reserved' && (!candidate.reservationId || !text(candidate.series) || !positiveInteger(candidate.number))) errors.push(error('AV-FISCAL-LIFECYCLE-NUMBER', 'patch.number', 'A reserva exige identificador, série e número fiscal.'));
-  if (next === 'signed' && (!candidate.reservationId || !text(candidate.series) || !positiveInteger(candidate.number) || !/^\d{44}$/.test(text(candidate.accessKey)) || !/^[a-f0-9]{64}$/i.test(text(candidate.signedChecksum)))) errors.push(error('AV-FISCAL-LIFECYCLE-SIGNATURE', 'patch.signedChecksum', 'A assinatura exige reserva, chave de 44 dígitos e checksum SHA-256.'));
+  if (next === 'signed' && (!candidate.reservationId || !text(candidate.series) || !positiveInteger(candidate.number) || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(text(candidate.accessKey)) || !/^[a-f0-9]{64}$/i.test(text(candidate.signedChecksum)))) errors.push(error('AV-FISCAL-LIFECYCLE-SIGNATURE', 'patch.signedChecksum', 'A assinatura exige reserva, chave de 44 posições e checksum SHA-256.'));
   if (next === 'submitted' && (!text(candidate.batchId) || !candidate.submittedAt)) errors.push(error('AV-FISCAL-LIFECYCLE-SUBMISSION', 'patch.batchId', 'O envio exige lote e data da tentativa.'));
   if (next === 'processing' && !/^\d{15}$/.test(text(candidate.receiptNumber))) errors.push(error('AV-FISCAL-LIFECYCLE-RECEIPT', 'patch.receiptNumber', 'O processamento exige recibo de 15 dígitos.'));
-  if (next === 'authorized' && (text(candidate.statusCode) !== '100' || !text(candidate.protocolNumber) || !candidate.authorizedAt || !/^\d{44}$/.test(text(candidate.accessKey)))) errors.push(error('AV-FISCAL-LIFECYCLE-AUTHORIZATION', 'patch.protocolNumber', 'A autorização exige situação 100, protocolo, data e chave válida.'));
+  if (next === 'authorized' && (text(candidate.statusCode) !== '100' || !text(candidate.protocolNumber) || !candidate.authorizedAt || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(text(candidate.accessKey)))) errors.push(error('AV-FISCAL-LIFECYCLE-AUTHORIZATION', 'patch.protocolNumber', 'A autorização exige situação 100, protocolo, data e chave válida.'));
   if (next === 'artifacts_stored' && (!text(candidate.processedStorageReference) || !/^[a-f0-9]{64}$/i.test(text(candidate.processedChecksum)))) errors.push(error('AV-FISCAL-LIFECYCLE-PROCESSED', 'patch.processedStorageReference', 'A guarda exige referência imutável e checksum do procNFe.'));
   if (next === 'danfe_ready' && (!text(candidate.danfeStorageReference) || !/^[a-f0-9]{64}$/i.test(text(candidate.danfeChecksum)))) errors.push(error('AV-FISCAL-LIFECYCLE-DANFE', 'patch.danfeStorageReference', 'O DANFE exige referência persistida e checksum do PDF.'));
   if (next === 'rejected' && (!/^\d{3,4}$/.test(text(candidate.statusCode)) || !text(candidate.statusReason))) errors.push(error('AV-FISCAL-LIFECYCLE-REJECTION', 'patch.statusCode', 'A rejeição precisa preservar código e motivo do autorizador.'));
@@ -259,7 +259,7 @@ export function createFiscalEmissionLifecycleService({ repository = createDisabl
         || !/^[A-Za-z0-9:_-]{8,120}$/.test(operationKey || '')
         || query?.valid !== true || query.networkAttempted !== true || query.responseReceived !== true
         || query.kind !== 'protocol' || query.status !== '217' || query.environment !== '2' || query.stateCode !== '35'
-        || !/^35\d{42}$/.test(query.queriedAccessKey || '') || (query.requestedAccessKey && query.requestedAccessKey !== query.queriedAccessKey) || query.authorized || query.canceled || query.protocolStatus || query.protocolNumber) return invalid();
+        || !/^35[0-9]{4}[A-Z0-9]{12}[0-9]{26}$/.test(query.queriedAccessKey || '') || (query.requestedAccessKey && query.requestedAccessKey !== query.queriedAccessKey) || query.authorized || query.canceled || query.protocolStatus || query.protocolNumber) return invalid();
       if (!repository?.configured || typeof repository.runInTransaction !== 'function') return unavailable();
       const at = clock();
       const operation = { emissionId, operationType: 'transition', requestHash: requestHash({ companyId, emissionId, expectedVersion, action: 'resume_unreceived', accessKey: query.queriedAccessKey }) };
@@ -394,7 +394,7 @@ export function createFiscalEmissionLifecycleService({ repository = createDisabl
       if (!companyId || !emissionId) errors.push(error('AV-FISCAL-LIFECYCLE-TARGET', 'emissionId', 'Empresa e emissão são obrigatórias.'));
       if (operationKey.length < 8 || operationKey.length > 120) errors.push(error('AV-FISCAL-LIFECYCLE-OPERATION', 'operationKey', 'A chave idempotente deve possuir de 8 a 120 caracteres.'));
       if (!expectedVersion) errors.push(error('AV-FISCAL-LIFECYCLE-VERSION', 'expectedVersion', 'Informe a versão esperada para impedir atualização concorrente.'));
-      if (!/^\d{44}$/.test(accessKey)) errors.push(error('AV-FISCAL-LIFECYCLE-SIGNATURE', 'accessKey', 'A chave de acesso assinada precisa possuir 44 dígitos.'));
+      if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(accessKey)) errors.push(error('AV-FISCAL-LIFECYCLE-SIGNATURE', 'accessKey', 'A chave de acesso assinada precisa possuir 44 posições.'));
       if (errors.length) return { ok: false, valid: false, persisted: false, reused: false, emission: null, artifact: null, errors };
       if (repository?.configured !== true || typeof repository.runInTransaction !== 'function') return unavailable();
       const artifact = normalizedArtifact.artifact;
@@ -445,7 +445,7 @@ export function createFiscalEmissionLifecycleService({ repository = createDisabl
       if (!companyId || !emissionId) errors.push(error('AV-FISCAL-LIFECYCLE-TARGET', 'emissionId', 'Empresa e emissão são obrigatórias.'));
       if (operationKey.length < 8 || operationKey.length > 120) errors.push(error('AV-FISCAL-LIFECYCLE-OPERATION', 'operationKey', 'A chave idempotente deve possuir de 8 a 120 caracteres.'));
       if (!expectedVersion) errors.push(error('AV-FISCAL-LIFECYCLE-VERSION', 'expectedVersion', 'Informe a versão esperada para impedir atualização concorrente.'));
-      if (!/^\d{44}$/.test(accessKey) || !/^[a-f0-9]{64}$/.test(signedChecksum)) errors.push(error('AV-FISCAL-LIFECYCLE-SUBMISSION-SIGNATURE', 'signedChecksum', 'A tentativa exige chave e checksum do XML assinado.'));
+      if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(accessKey) || !/^[a-f0-9]{64}$/.test(signedChecksum)) errors.push(error('AV-FISCAL-LIFECYCLE-SUBMISSION-SIGNATURE', 'signedChecksum', 'A tentativa exige chave e checksum do XML assinado.'));
       if (!/^\d{1,15}$/.test(batchId) || BigInt(batchId || '0') < 1n) errors.push(error('AV-FISCAL-LIFECYCLE-SUBMISSION-BATCH', 'batchId', 'O lote deve possuir entre 1 e 15 dígitos.'));
       if (errors.length) return { ok: false, valid: false, persisted: false, reused: false, emission: null, attempt: null, errors };
       if (repository?.configured !== true || typeof repository.runInTransaction !== 'function') return unavailable();
@@ -492,7 +492,7 @@ export function createFiscalEmissionLifecycleService({ repository = createDisabl
       const at = text(input.at) || clock();
       const normalizedArtifact = normalizeProtocolArtifact(input.artifact, companyId, emissionId, at);
       const errors = [...payload.errors, ...normalizedArtifact.errors];
-      if (!companyId || !emissionId || !/^\d{44}$/.test(accessKey)) errors.push(error('AV-FISCAL-LIFECYCLE-AUTHORIZATION-TARGET', 'accessKey', 'Empresa, emissão e chave autorizada são obrigatórias.'));
+      if (!companyId || !emissionId || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(accessKey)) errors.push(error('AV-FISCAL-LIFECYCLE-AUTHORIZATION-TARGET', 'accessKey', 'Empresa, emissão e chave autorizada são obrigatórias.'));
       if (operationKey.length < 8 || operationKey.length > 120 || !expectedVersion) errors.push(error('AV-FISCAL-LIFECYCLE-AUTHORIZATION-OPERATION', 'operationKey', 'A autorização exige versão e chave idempotente válidas.'));
       if (!protocolNumber || !Number.isFinite(Date.parse(authorizedAt))) errors.push(error('AV-FISCAL-LIFECYCLE-AUTHORIZATION-PROTOCOL', 'protocolNumber', 'A autorização exige protocolo e data de recebimento válidos.'));
       if (errors.length) return { ok: false, valid: false, persisted: false, reused: false, emission: null, artifact: null, errors };

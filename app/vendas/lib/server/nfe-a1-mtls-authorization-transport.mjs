@@ -26,7 +26,7 @@ function openingTagCount(xml, localName) {
 function authorizationRequestIsSafe({ endpoint, action, contentType, body, secureCertificateReference, timeoutMs, maxResponseBytes, followRedirects, issuerUf, environment }, configuredEnvironment) {
   const reference = validateSecureCertificateReference(secureCertificateReference);
   const source = typeof body === 'string' ? body.trim() : '';
-  const accessKey = /<(?:[A-Za-z_][\w.-]*:)?infNFe\b[^>]*\bId=["']NFe(\d{44})["']/i.exec(source)?.[1] || '';
+  const accessKey = /<(?:[A-Za-z_][\w.-]*:)?infNFe\b[^>]*\bId=["']NFe([0-9]{6}[A-Z0-9]{12}[0-9]{26})["']/i.exec(source)?.[1] || '';
   const authority = resolveNationalNfeAuthority({ uf: issuerUf, environment });
   return authority
     && environment === configuredEnvironment

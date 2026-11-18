@@ -1,3 +1,4 @@
+import {normalizeFiscalDocument} from './fiscal-identifiers.mjs';
 import { resolveFiscalIssuerSelection } from './fiscal-issuer-routing.mjs';
 
 export const NFE_SP_HOMOLOGATION_REFERENCE = '2026-09-02';
@@ -70,7 +71,7 @@ export function normalizeNfeSpHomologationConfig(value) {
     certificate: {
       mode: CERTIFICATE_MODES.includes(certificateMode) ? certificateMode : 'Não definido',
       secureReference: text(certificate.secureReference),
-      subjectDocument: digits(certificate.subjectDocument).slice(0, 14),
+      subjectDocument: normalizeFiscalDocument(certificate.subjectDocument).slice(0, 14),
       expiresAt: text(certificate.expiresAt),
       chainValidated: certificate.chainValidated === true,
     },
@@ -97,9 +98,9 @@ export function evaluateNfeSpHomologationConfig(value, context = {}) {
   const drafts = Array.isArray(context.drafts) ? context.drafts : [];
   const draft = drafts.find((item) => item?.id === config.selectedDraftId);
   const now = context.now instanceof Date ? context.now : new Date();
-  const issuerDocument = digits(snapshot?.document);
+  const issuerDocument = normalizeFiscalDocument(snapshot?.document);
   const draftRegistrationReady = Boolean(draft?.checks?.filter((item) => item?.scope === 'cadastro').every((item) => item.ready));
-  const certificateDocumentMatches = issuerDocument.length === 14 && digits(config.certificate.subjectDocument) === issuerDocument;
+  const certificateDocumentMatches = issuerDocument.length === 14 && normalizeFiscalDocument(config.certificate.subjectDocument) === issuerDocument;
 
   const checks = [
     check('environment-lock', 'seguranca', 'Ambiente travado em homologação', config.environment === 'homologacao', 'Este adaptador não contém endereço de produção nem chave para liberar transmissão real.'),

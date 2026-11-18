@@ -278,7 +278,7 @@ export function normalizeFiscalEmissionStatus(value) {
     stateLabel: text(value?.stateLabel) || 'Situação fiscal',
     series: text(value?.series),
     number: integer(value?.number),
-    accessKey: /^[0-9]{44}$/.test(text(value?.accessKey)) ? text(value.accessKey) : '',
+    accessKey: /^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(text(value?.accessKey)) ? text(value.accessKey) : '',
     statusCode: text(value?.statusCode),
     statusReason: text(value?.statusReason),
     protocolNumber: text(value?.protocolNumber),

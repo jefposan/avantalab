@@ -1,3 +1,4 @@
+import {normalizeFiscalDocument} from '../fiscal-identifiers.mjs';
 import { createHash, createSign, createVerify, randomBytes, X509Certificate } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import forge from 'node-forge';
@@ -21,7 +22,7 @@ function labError(code, field, message) {
 }
 
 function digits(value) {
-  return String(value || '').replace(/\D/g, '');
+  return normalizeFiscalDocument(value);
 }
 
 function extractElement(xml, expression) {
@@ -142,7 +143,7 @@ export async function createProtectedSignedNfeXml({ unsignedXml, certificatePem,
   if (typeof signCanonicalized !== 'function') throw new Error('O assinador protegido não está disponível.');
   const infNfe = extractElement(source, /<infNFe\b[\s\S]*?<\/infNFe>/);
   const referenceId = infNfe.match(/\bId="([^"]+)"/)?.[1] || '';
-  if (!/^NFe\d{44}$/.test(referenceId)) throw new Error('O identificador da infNFe não corresponde à chave de acesso técnica esperada.');
+  if (!/^NFe[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(referenceId)) throw new Error('O identificador da infNFe não corresponde à chave de acesso técnica esperada.');
   const canonicalInfNfe = await canonicalizeXml(normalizeInfNfeNamespace(infNfe));
   const digestValue = createHash('sha1').update(canonicalInfNfe, 'utf8').digest('base64');
   const signedInfo = buildSignedInfo(referenceId, digestValue);

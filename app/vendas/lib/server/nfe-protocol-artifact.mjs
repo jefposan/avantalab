@@ -8,7 +8,7 @@ const issue = (code, field, message) => ({ code, field, message });
 
 export function nfeProtocolStorageKey(accessKey) {
   const normalized = String(accessKey || '').trim();
-  if (!/^\d{44}$/.test(normalized)) return '';
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(normalized)) return '';
   return `fiscal/nfe/${normalized.slice(6, 20)}/20${normalized.slice(2, 4)}/${normalized.slice(4, 6)}/${normalized}-protocolNFe.xml`;
 }
 
@@ -36,7 +36,7 @@ export function buildNfeProtocolArtifact({ signedXml, protocolXml, expectedAcces
 
 export async function persistNfeProtocolArtifact({ artifact, provider = createDisabledNfeArtifactStorage() } = {}) {
   const result = { ok: true, valid: false, persisted: false, reused: false, accessKey: artifact?.accessKey || '', storageKey: artifact?.storageKey || '', checksum: artifact?.checksum || '', storageReference: '', storageVersion: '', storedAt: '', protocolContentReturned: false, errors: [] };
-  if (!artifact?.valid || !artifact?.protocolXml || !/^\d{44}$/.test(artifact?.accessKey || '')) result.errors.push(issue('AV-NFE-PROTOCOL-ARTIFACT', 'artifact', 'Somente um protocolo autorizado e validado pode ser armazenado.'));
+  if (!artifact?.valid || !artifact?.protocolXml || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(artifact?.accessKey || '')) result.errors.push(issue('AV-NFE-PROTOCOL-ARTIFACT', 'artifact', 'Somente um protocolo autorizado e validado pode ser armazenado.'));
   if (provider?.configured !== true || typeof provider.putImmutable !== 'function') result.errors.push(issue('AV-NFE-PROTOCOL-PROVIDER', 'provider', 'O armazenamento fiscal imutável ainda não está configurado.'));
   if (result.errors.length) return result;
   const existing = typeof provider.findByAccessKey === 'function' ? await provider.findByAccessKey({ accessKey: artifact.accessKey, storageKey: artifact.storageKey }) : null;

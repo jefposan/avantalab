@@ -1,3 +1,4 @@
+import {normalizeFiscalDocument} from '../fiscal-identifiers.mjs';
 import { createPostgresCommercialCatalogResolver } from './commercial-runtime-resolvers.mjs';
 import { createPostgresCommercialCustomerRepository } from './commercial-customer-repository.mjs';
 import { applyFiscalNoteEdit } from './fiscal-note-edit.mjs';
@@ -92,7 +93,7 @@ function normalizedCorrection(data, input, statusCode) {
     totalsSnapshot,
     paymentSnapshot,
   };
-  if (clean(issuerSnapshot.establishmentId) !== clean(data.emission.establishmentId) || clean(issuerSnapshot.document).replace(/\D/g, '') !== clean(data.baseIssuerDocument).replace(/\D/g, '')) return { error: issue('AV-NFE-CORRECTION-ISSUER', 'issuer', 'A correção não pode trocar a empresa emissora nem o estabelecimento desta numeração.') };
+  if (clean(issuerSnapshot.establishmentId) !== clean(data.emission.establishmentId) || normalizeFiscalDocument(issuerSnapshot.document) !== normalizeFiscalDocument(data.baseIssuerDocument)) return { error: issue('AV-NFE-CORRECTION-ISSUER', 'issuer', 'A correção não pode trocar a empresa emissora nem o estabelecimento desta numeração.') };
   if(input?.saveOnly===true)draft.totalsSnapshot.pendingFiscalRevision=true;else delete draft.totalsSnapshot.pendingFiscalRevision;
   const correctionDigest = sha256({
     companyId: draft.companyId,

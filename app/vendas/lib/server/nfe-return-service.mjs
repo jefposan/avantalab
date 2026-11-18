@@ -106,8 +106,8 @@ export function buildNfeReceiptQuerySoapRequest({ receiptNumber, environment = '
 
 export function buildNfeProtocolQuerySoapRequest({ accessKey, environment = 'homologacao' } = {}) {
   const authority = resolveNationalNfeAuthority({ uf: 'SP', environment });
-  const normalized = String(accessKey || '').replace(/\D/g, '').slice(0, 44);
-  if (!authority || !/^\d{44}$/.test(normalized)) return { valid: false, errors: [error('AV-NFE-PROTOCOL-KEY', 'accessKey', 'A chave de acesso deve conter 44 dígitos.')], endpoint: NFE_PROTOCOL_ENDPOINT, action: NFE_PROTOCOL_ACTION, envelope: '', accessKey: normalized };
+  const normalized = String(accessKey || '').trim();
+  if (!authority || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(normalized)) return { valid: false, errors: [error('AV-NFE-PROTOCOL-KEY', 'accessKey', 'A chave de acesso deve conter 44 posições.')], endpoint: NFE_PROTOCOL_ENDPOINT, action: NFE_PROTOCOL_ACTION, envelope: '', accessKey: normalized };
   return { ...soapRequest({ environment, endpoint: authority.endpoints.protocol, action: NFE_PROTOCOL_ACTION, wsdlNamespace: PROTOCOL_WSDL_NAMESPACE, payload: `<consSitNFe xmlns="${NFE_NAMESPACE}" versao="4.00"><tpAmb>${authority.environmentCode}</tpAmb><xServ>CONSULTAR</xServ><chNFe>${normalized}</chNFe></consSitNFe>` }), accessKey: normalized };
 }
 
@@ -131,7 +131,7 @@ export function parseNfeReceiptQuerySoapResponse(value, { environment = 'homolog
   if (!/^\d{3,4}$/.test(result.status) || !result.reason) result.errors.push(error('AV-NFE-RECEIPT-STATUS', 'response.cStat', 'A consulta não contém situação e motivo válidos.'));
   result.processed = result.status === '104';
   result.pending = result.status === '105';
-  result.authorized = result.processed && result.protocolStatus === '100' && result.protocolEnvironment === environmentCode && /^\d{44}$/.test(result.accessKey) && Boolean(result.protocolNumber);
+  result.authorized = result.processed && result.protocolStatus === '100' && result.protocolEnvironment === environmentCode && /^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(result.accessKey) && Boolean(result.protocolNumber);
   result.needsProtocolConsultation = result.processed && ['204', '539'].includes(result.protocolStatus);
   if (result.processed && !result.protocolStatus) result.errors.push(error('AV-NFE-RECEIPT-PROTOCOL', 'response.protNFe', 'O lote foi processado sem resultado individual da NF-e.'));
   result.valid = result.errors.length === 0 && (result.pending || result.authorized || result.needsProtocolConsultation || Boolean(result.protocolStatus));
@@ -155,7 +155,7 @@ export function parseNfeProtocolQuerySoapResponse(value, { environment = 'homolo
   if (!environmentCode || result.environment !== environmentCode) result.errors.push(error('AV-NFE-PROTOCOL-ENVIRONMENT', 'response.tpAmb', 'A resposta não pertence ao ambiente fiscal esperado.'));
   if (result.stateCode !== '35') result.errors.push(error('AV-NFE-PROTOCOL-UF', 'response.cUF', 'A resposta não pertence ao autorizador de São Paulo.'));
   if (!/^\d{3,4}$/.test(result.status) || !result.reason) result.errors.push(error('AV-NFE-PROTOCOL-STATUS', 'response.cStat', 'A consulta não contém situação e motivo válidos.'));
-  result.authorized = result.protocolStatus === '100' && result.protocolEnvironment === environmentCode && /^\d{44}$/.test(result.accessKey) && Boolean(result.protocolNumber);
+  result.authorized = result.protocolStatus === '100' && result.protocolEnvironment === environmentCode && /^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(result.accessKey) && Boolean(result.protocolNumber);
   result.canceled = ['101', '135', '151', '155'].includes(result.protocolStatus || result.status);
   result.found = result.authorized || result.canceled || Boolean(result.protocolStatus);
   if (result.requestedAccessKey && result.accessKey && result.requestedAccessKey !== result.accessKey) result.errors.push(error('AV-NFE-PROTOCOL-KEY-MISMATCH', 'response.chNFe', 'A resposta contém protocolo de outra chave de acesso.'));

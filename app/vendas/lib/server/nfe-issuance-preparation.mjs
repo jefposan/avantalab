@@ -1,3 +1,4 @@
+import {normalizeFiscalDocument} from '../fiscal-identifiers.mjs';
 import { createHash } from 'node:crypto';
 import { normalizeFiscalNumberingLedger, peekNextFiscalNumber } from '../fiscal-numbering.mjs';
 import { buildUnsignedNfeSpXml, prototypeDraftToNfeSpXmlInput } from '../nfe-sp-xml.mjs';
@@ -67,7 +68,7 @@ export async function buildNfeIssuancePreparation({ draft, client, config, numbe
   const normalizedConfig = config && typeof config === 'object' ? config : {};
   const normalizedAttemptKey = text(attemptKey);
   const draftId = text(normalizedDraft.id);
-  const issuerDocument = digits(normalizedDraft.issuer?.document);
+  const issuerDocument = normalizeFiscalDocument(normalizedDraft.issuer?.document);
   result.draftId = draftId;
   result.originId = text(normalizedDraft.originId);
 

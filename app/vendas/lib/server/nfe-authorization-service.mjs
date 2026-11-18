@@ -104,7 +104,7 @@ export function validateSignedNfeForAuthorization(value, { environment = 'homolo
   const issuerCode = accessKey.slice(0, 2);
   if (!nfeBlock) errors.push(error('AV-NFE-AUTH-XML-NFE', 'signedXml.NFe', 'O conteúdo não possui uma NF-e reconhecível.'));
   if (!/<(?:[A-Za-z_][\w.-]*:)?Signature\b/i.test(nfeBlock)) errors.push(error('AV-NFE-AUTH-XML-SIGNATURE', 'signedXml.Signature', 'A NF-e precisa estar assinada antes da autorização.'));
-  if (!/^\d{44}$/.test(accessKey)) errors.push(error('AV-NFE-AUTH-XML-KEY', 'signedXml.infNFe.Id', 'A identificação da NF-e não contém uma chave de acesso válida.'));
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(accessKey)) errors.push(error('AV-NFE-AUTH-XML-KEY', 'signedXml.infNFe.Id', 'A identificação da NF-e não contém uma chave de acesso válida.'));
   const authority = authorizationAuthority({ issuerCode, environment });
   if (tagValue(nfeBlock, 'tpAmb') !== authority?.environmentCode) errors.push(error('AV-NFE-AUTH-XML-ENVIRONMENT', 'signedXml.tpAmb', 'O ambiente do XML deve corresponder ao ambiente de autorização.'));
   if (tagValue(nfeBlock, 'mod') !== '55') errors.push(error('AV-NFE-AUTH-XML-MODEL', 'signedXml.mod', 'O primeiro conector aceita somente NF-e modelo 55.'));
@@ -165,7 +165,7 @@ export function parseNfeAuthorizationSoapResponse(value, { issuerCode = '35', en
   result.batchProcessed = result.batchStatus === '104';
   result.batchRejected = /^\d{3,4}$/.test(result.batchStatus) && Number(result.batchStatus) >= 200 && !['204', '539'].includes(result.batchStatus) && !result.protocolStatus;
   result.needsReceiptConsultation = result.batchStatus === '103' && /^\d{15}$/.test(result.receiptNumber);
-  result.authorized = result.batchProcessed && result.protocolStatus === '100' && /^\d{44}$/.test(result.accessKey) && Boolean(result.protocolNumber);
+  result.authorized = result.batchProcessed && result.protocolStatus === '100' && /^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(result.accessKey) && Boolean(result.protocolNumber);
   result.needsProtocolConsultation = result.batchProcessed && ['204', '539'].includes(result.protocolStatus);
   if (result.batchProcessed && !/^\d{3,4}$/.test(result.protocolStatus)) result.errors.push(error('AV-NFE-AUTH-RESPONSE-PROTOCOL', 'response.protNFe', 'O lote foi processado sem resultado individual da NF-e.'));
   result.valid = result.errors.length === 0 && (result.authorized || result.needsReceiptConsultation || result.batchRejected || Boolean(result.protocolStatus));

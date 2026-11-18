@@ -10,7 +10,7 @@ function error(code, field, message) {
 
 export function nfeSignedStorageKey(accessKey) {
   const normalized = String(accessKey || '').trim();
-  if (!/^\d{44}$/.test(normalized)) return '';
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(normalized)) return '';
   return `fiscal/nfe/${normalized.slice(6, 20)}/20${normalized.slice(2, 4)}/${normalized.slice(4, 6)}/${normalized}-signedNFe.xml`;
 }
 
@@ -38,7 +38,7 @@ export async function buildSignedNfeArtifact({ signedXml, expectedAccessKey, exp
 
 export async function persistSignedNfeArtifact({ artifact, provider = createDisabledNfeArtifactStorage() } = {}) {
   const result = { ok: true, valid: false, persisted: false, reused: false, accessKey: artifact?.accessKey || '', storageKey: artifact?.storageKey || '', checksum: artifact?.checksum || '', storageReference: '', storageVersion: '', storedAt: '', signedContentReturned: false, errors: [] };
-  if (!artifact?.valid || !artifact?.signedXml || !/^\d{44}$/.test(artifact?.accessKey || '')) result.errors.push(error('AV-NFE-SIGNED-ARTIFACT', 'artifact', 'Somente um XML assinado e validado pode ser armazenado.'));
+  if (!artifact?.valid || !artifact?.signedXml || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(artifact?.accessKey || '')) result.errors.push(error('AV-NFE-SIGNED-ARTIFACT', 'artifact', 'Somente um XML assinado e validado pode ser armazenado.'));
   if (provider?.configured !== true || typeof provider.putImmutable !== 'function') result.errors.push(error('AV-NFE-SIGNED-PROVIDER', 'provider', 'O armazenamento fiscal imutável ainda não está configurado.'));
   if (result.errors.length) return result;
   const existing = typeof provider.findByAccessKey === 'function' ? await provider.findByAccessKey({ accessKey: artifact.accessKey, storageKey: artifact.storageKey }) : null;

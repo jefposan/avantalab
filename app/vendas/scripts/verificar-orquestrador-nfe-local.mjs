@@ -36,7 +36,7 @@ const ISSUER = '48210380000142';
 const TOKEN = 'ensaio-sintetico-local-sem-rede-1234567890';
 const NOW = '2026-09-04T15:00:00.000Z';
 
-function syntheticUnsignedDocument(environment, series, number) {
+function syntheticUnsignedDocument(environment, series, number, issuerDocument=ISSUER) {
   return buildUnsignedNfeSpXml({
     issuedAt: '2026-09-04T12:00:00-03:00',
     operationNature: 'Venda de mercadoria',
@@ -46,7 +46,7 @@ function syntheticUnsignedDocument(environment, series, number) {
     consumerFinal: false,
     presence: 'Não presencial',
     issuer: {
-      document: ISSUER,
+      document: issuerDocument,
       legalName: 'Empresa Piloto Comércio Ltda.',
       tradeName: 'Empresa Piloto',
       stateRegistration: '110042490114',
@@ -191,7 +191,7 @@ function transportResult(answer) {
   throw new Error('A resposta sintética do transporte não foi configurada.');
 }
 
-export async function createSyntheticNfeOrchestratorLab({ authorizationResponder, returnResponder, startPrepared = false, environment = 'homologacao' } = {}) {
+export async function createSyntheticNfeOrchestratorLab({ authorizationResponder, returnResponder, startPrepared = false, environment = 'homologacao', issuerDocument=ISSUER } = {}) {
   const rootDirectory = await mkdtemp(join(tmpdir(), 'avantalab-nfe-orchestrator-lab-'));
   let cleaned = false;
   let currentTime = NOW;
@@ -199,10 +199,10 @@ export async function createSyntheticNfeOrchestratorLab({ authorizationResponder
     const production = environment === 'producao';
     const series = production ? '2' : '1';
     const number = production ? 1 : 7;
-    const generated = syntheticUnsignedDocument(environment, series, number);
+    const generated = syntheticUnsignedDocument(environment, series, number,issuerDocument);
     if (!generated.valid) throw new Error('O pré-XML sintético não passou na validação local.');
     const signed = await createEphemeralLabSignedNfeXml(generated.xml, new Date(NOW));
-    const signedArtifact = await buildSignedNfeArtifact({ signedXml: signed.signedXml, expectedAccessKey: generated.accessKey, expectedIssuerDocument: ISSUER });
+    const signedArtifact = await buildSignedNfeArtifact({ signedXml: signed.signedXml, expectedAccessKey: generated.accessKey, expectedIssuerDocument: issuerDocument });
     if (!signedArtifact.valid) throw new Error('O XML sintético não passou na validação criptográfica.');
 
     const clock = () => currentTime;
@@ -257,7 +257,7 @@ export async function createSyntheticNfeOrchestratorLab({ authorizationResponder
         },
       },
     });
-    const draft = { id: EMISSION, companyId: COMPANY, issuerSnapshot: { establishmentId: ESTABLISHMENT, document: ISSUER } };
+    const draft = { id: EMISSION, companyId: COMPANY, issuerSnapshot: { establishmentId: ESTABLISHMENT, document: issuerDocument } };
     const submissionService = createCommercialNfeSubmissionService({
       environment,
       repository: {
@@ -278,9 +278,9 @@ export async function createSyntheticNfeOrchestratorLab({ authorizationResponder
       } },
       signingService: { async sign({ context, emissionId, expectedVersion, idempotencyKey }) {
         const current = repository.state.emissions.get(emissionId);
-        const xml = syntheticUnsignedDocument(environment, current.series, current.number);
+        const xml = syntheticUnsignedDocument(environment, current.series, current.number,issuerDocument);
         const freshSignature = await createEphemeralLabSignedNfeXml(xml.xml, new Date(NOW));
-        const artifact = await buildSignedNfeArtifact({ signedXml: freshSignature.signedXml, expectedAccessKey: xml.accessKey, expectedIssuerDocument: ISSUER });
+        const artifact = await buildSignedNfeArtifact({ signedXml: freshSignature.signedXml, expectedAccessKey: xml.accessKey, expectedIssuerDocument: issuerDocument });
         const stored = await persistSignedNfeArtifact({ artifact, provider: storage });
         if (!stored.valid) return { ok: false, errors: stored.errors };
         const committed = await lifecycle.commitSignature({ companyId: context.companyId, emissionId, expectedVersion, operationKey: idempotencyKey, accessKey: xml.accessKey,
@@ -313,7 +313,7 @@ export async function createSyntheticNfeOrchestratorLab({ authorizationResponder
       storageProvider: storage,
       returnAdapter,
       certificateBindingResolver: async () => ({ secureReference: 'certificate://laboratorio/sintetico', expectedMode: 'Certificado A1' }),
-      issuerDocumentResolver: async () => ISSUER,
+      issuerDocumentResolver: async () => issuerDocument,
       clock,
     });
     const queueService = createFiscalRecoveryQueueService({ repository, clock });

@@ -31,13 +31,13 @@ export function validateNfeCancellationEndpoint(endpoint) {
 }
 
 export function buildNfeCancellationEvent({ accessKey, authorizationProtocol, justification, eventSequence = 1, eventTime = new Date().toISOString() } = {}) {
-  const key = digits(accessKey);
+  const key = String(accessKey??'').trim();
   const protocol = digits(authorizationProtocol);
   const reason = text(justification).replace(/\s+/g, ' ');
   const sequence = Number(eventSequence);
   const issuerDocument = key.slice(6, 20);
   const errors = [];
-  if (!/^35\d{42}$/.test(key)) errors.push(issue('AV-NFE-CANCEL-EVENT-KEY', 'accessKey', 'A chave deve identificar uma NF-e modelo 55 emitida em São Paulo.'));
+  if (!/^35[0-9]{4}[A-Z0-9]{12}[0-9]{26}$/.test(key)) errors.push(issue('AV-NFE-CANCEL-EVENT-KEY', 'accessKey', 'A chave deve identificar uma NF-e modelo 55 emitida em São Paulo.'));
   if (!/^\d{15,17}$/.test(protocol)) errors.push(issue('AV-NFE-CANCEL-EVENT-PROTOCOL', 'authorizationProtocol', 'O protocolo de autorização original é inválido.'));
   if (reason.length < 15 || reason.length > 255) errors.push(issue('AV-NFE-CANCEL-EVENT-JUSTIFICATION', 'justification', 'A justificativa deve ter entre 15 e 255 caracteres.'));
   if (!Number.isSafeInteger(sequence) || sequence !== 1) errors.push(issue('AV-NFE-CANCEL-EVENT-SEQUENCE', 'eventSequence', 'O cancelamento da NF-e deve usar a sequência 1.'));
@@ -57,7 +57,7 @@ export function buildNfeCancellationSoapRequest({ signedEventXml, lotId } = {}) 
   const errors = [];
   if (!source || Buffer.byteLength(source, 'utf8') > 256 * 1024 || /<!DOCTYPE|<!ENTITY|<!\[CDATA\[|<!--/i.test(source)) errors.push(issue('AV-NFE-CANCEL-REQUEST-XML', 'signedEventXml', 'O evento assinado é inválido.'));
   if (!/^\d{1,15}$/.test(normalizedLotId) || BigInt(normalizedLotId || '0') < 1n) errors.push(issue('AV-NFE-CANCEL-REQUEST-LOT', 'lotId', 'O lote deve possuir de 1 a 15 dígitos e ser maior que zero.'));
-  if (!/^35\d{42}$/.test(accessKey) || eventId !== `ID110111${accessKey}01`) errors.push(issue('AV-NFE-CANCEL-REQUEST-ID', 'infEvento.Id', 'A identificação do evento assinado é inválida.'));
+  if (!/^35[0-9]{4}[A-Z0-9]{12}[0-9]{26}$/.test(accessKey) || eventId !== `ID110111${accessKey}01`) errors.push(issue('AV-NFE-CANCEL-REQUEST-ID', 'infEvento.Id', 'A identificação do evento assinado é inválida.'));
   if (tag(info, 'cOrgao') !== '35' || tag(info, 'tpAmb') !== '2' || tag(info, 'tpEvento') !== '110111' || tag(info, 'nSeqEvento') !== '1') errors.push(issue('AV-NFE-CANCEL-REQUEST-SCOPE', 'infEvento', 'O evento não pertence ao cancelamento de NF-e em homologação paulista.'));
   if (!/<(?:[A-Za-z_][\w.-]*:)?Signature\b/i.test(event)) errors.push(issue('AV-NFE-CANCEL-REQUEST-SIGNATURE', 'Signature', 'O evento precisa estar assinado antes da transmissão.'));
   if (errors.length) return { valid: false, errors, envelope: '', endpoint: NFE_CANCELLATION_ENDPOINT, action: NFE_CANCELLATION_ACTION, contentType: NFE_CANCELLATION_CONTENT_TYPE, accessKey, eventId };

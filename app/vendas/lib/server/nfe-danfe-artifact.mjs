@@ -9,7 +9,7 @@ function error(code, field, message) {
 
 export function nfeDanfeStorageKey(accessKey) {
   const normalized = String(accessKey || '').trim();
-  if (!/^\d{44}$/.test(normalized)) return '';
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(normalized)) return '';
   const issuerDocument = normalized.slice(6, 20);
   const year = `20${normalized.slice(2, 4)}`;
   const month = normalized.slice(4, 6);
@@ -20,7 +20,7 @@ export function buildNfeDanfeArtifact({ danfe } = {}) {
   const errors = [];
   const accessKey = String(danfe?.accessKey || '').trim();
   const pdf = danfe?.pdf instanceof Uint8Array ? new Uint8Array(danfe.pdf) : new Uint8Array();
-  if (danfe?.valid !== true || !/^\d{44}$/.test(accessKey)) errors.push(error('AV-NFE-DANFE-STORE-SOURCE', 'danfe', 'Somente um DANFE validado e vinculado a uma chave de acesso pode ser armazenado.'));
+  if (danfe?.valid !== true || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(accessKey)) errors.push(error('AV-NFE-DANFE-STORE-SOURCE', 'danfe', 'Somente um DANFE validado e vinculado a uma chave de acesso pode ser armazenado.'));
   if (danfe?.sampleMode === true) errors.push(error('AV-NFE-DANFE-STORE-SAMPLE', 'danfe.sampleMode', 'Uma amostra técnica não pode ser registrada como DANFE fiscal.'));
   if (pdf.length === 0 || pdf.length > 10 * 1024 * 1024 || !Buffer.from(pdf.subarray(0, 8)).toString('ascii').startsWith('%PDF-')) errors.push(error('AV-NFE-DANFE-STORE-PDF', 'danfe.pdf', 'O conteúdo não é um PDF fiscal válido para armazenamento.'));
   if (errors.length) return { valid: false, errors, accessKey, content: new Uint8Array(), checksum: '', byteLength: 0, storageKey: '', contentType: 'application/pdf', immutable: true };
@@ -40,7 +40,7 @@ export function buildNfeDanfeArtifact({ danfe } = {}) {
 
 export async function persistNfeDanfeArtifact({ artifact, provider = createDisabledNfeArtifactStorage(), auditWriter } = {}) {
   const result = { ok: false, valid: false, persisted: false, reused: false, accessKey: artifact?.accessKey || '', storageKey: artifact?.storageKey || '', checksum: artifact?.checksum || '', byteLength: Number(artifact?.byteLength || 0), storageReference: '', versionId: '', storedAt: '', pdfReturned: false, errors: [], warnings: [] };
-  if (!artifact?.valid || !(artifact?.content instanceof Uint8Array) || !/^\d{44}$/.test(artifact?.accessKey || '')) result.errors.push(error('AV-NFE-DANFE-STORE-ARTIFACT', 'artifact', 'Somente um DANFE fiscal validado pode ser armazenado.'));
+  if (!artifact?.valid || !(artifact?.content instanceof Uint8Array) || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(artifact?.accessKey || '')) result.errors.push(error('AV-NFE-DANFE-STORE-ARTIFACT', 'artifact', 'Somente um DANFE fiscal validado pode ser armazenado.'));
   if (provider?.configured !== true || typeof provider.putImmutable !== 'function') result.errors.push(error('AV-NFE-DANFE-STORE-PROVIDER', 'provider', 'O armazenamento fiscal imutável ainda não está configurado.'));
   if (result.errors.length) { result.warnings = ['Nenhum DANFE foi gravado.']; return result; }
   const existing = typeof provider.findByAccessKey === 'function' ? await provider.findByAccessKey({ accessKey: artifact.accessKey, storageKey: artifact.storageKey }) : null;

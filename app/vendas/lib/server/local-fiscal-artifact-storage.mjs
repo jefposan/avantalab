@@ -6,7 +6,7 @@ import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path
 export const LOCAL_FISCAL_ARTIFACT_STORAGE_REFERENCE = '2026-09-03';
 
 const MAX_ARTIFACT_BYTES = 10 * 1024 * 1024;
-const STORAGE_KEY_PATTERN = /^fiscal\/nfe\/(\d{14})\/(20\d{2})\/(0[1-9]|1[0-2])\/(\d{44})-(signedNFe\.xml|protocolNFe\.xml|procNFe\.xml|danfe\.pdf)$/;
+const STORAGE_KEY_PATTERN = /^fiscal\/nfe\/([A-Z0-9]{12}[0-9]{2})\/(20\d{2})\/(0[1-9]|1[0-2])\/([0-9]{6}[A-Z0-9]{12}[0-9]{26})-(signedNFe\.xml|protocolNFe\.xml|procNFe\.xml|danfe\.pdf)$/;
 
 function storageError(code, message) {
   return Object.assign(new Error(message), { code });

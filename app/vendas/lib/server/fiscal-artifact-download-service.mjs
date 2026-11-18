@@ -21,7 +21,7 @@ function denied(reason, errors) {
 }
 
 function safeFilename(artifact) {
-  const accessKey = /^[0-9]{44}$/.test(text(artifact.accessKey)) ? text(artifact.accessKey) : text(artifact.emissionId).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 48);
+  const accessKey = /^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(text(artifact.accessKey)) ? text(artifact.accessKey) : text(artifact.emissionId).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 48);
   return `NFe-${accessKey || 'documento'}-${DOWNLOADABLE_ARTIFACTS[artifact.artifactType].suffix}`;
 }
 

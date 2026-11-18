@@ -1,3 +1,4 @@
+import {nfeAccessKeyDigit,CNPJ_FISCAL_RE} from './fiscal-identifiers.mjs';
 import {sanitizarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 import {validateIpiClassification} from './fiscal-ipi.mjs';
 import {newFiscalNoteFields,deliveryForecastAllowed} from './fiscal-note-editor.mjs';
@@ -197,18 +198,7 @@ function validIssuedAt(value) {
   return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$/.test(value) && Number.isFinite(new Date(value).getTime());
 }
 
-export function calculateNfeAccessKeyCheckDigit(base43) {
-  const digitsOnly = digits(base43);
-  if (digitsOnly.length !== 43) throw new Error('A base da chave deve possuir 43 dígitos.');
-  let weight = 2;
-  let sum = 0;
-  for (let index = digitsOnly.length - 1; index >= 0; index -= 1) {
-    sum += Number(digitsOnly[index]) * weight;
-    weight = weight === 9 ? 2 : weight + 1;
-  }
-  const result = 11 - (sum % 11);
-  return result === 10 || result === 11 ? '0' : String(result);
-}
+export function calculateNfeAccessKeyCheckDigit(base43) { return nfeAccessKeyDigit(base43); }
 
 export function buildNfeAccessKey(inputValue) {
   const input = normalizeNfeSpXmlInput(inputValue);
@@ -224,7 +214,7 @@ export function buildNfeAccessKey(inputValue) {
     input.emissionType,
     input.numericCode.padStart(8, '0'),
   ].join('');
-  if (base.length !== 43) throw new Error('Os campos informados não formam a base de 43 dígitos da chave.');
+  if (base.length !== 43) throw new Error('Os campos informados não formam a base de 43 posições da chave.');
   return `${base}${calculateNfeAccessKeyCheckDigit(base)}`;
 }
 
@@ -252,8 +242,7 @@ export function validateNfeSpXmlInput(inputValue, options) {
   if (!input.number || Number(input.number) < 1) errors.push(validationError('NFE-B08', 'number', 'Informe um número de teste entre 1 e 999999999.'));
   if (input.numericCode.length !== 8) errors.push(validationError('NFE-B03', 'numericCode', 'Informe o código numérico cNF com exatamente oito dígitos.'));
 
-  if (/[A-Z]/.test(input.issuer.document)) errors.push(validationError('AV-NFE-ISSUER-ALPHA','issuer.document','O cadastro aceita CNPJ alfanumérico; a emissão por emitente com letras exige a atualização do ciclo de chave e assinatura. Nenhuma letra será removida.'));
-  if (input.issuer.document.length !== 14) errors.push(validationError('NFE-C02', 'issuer.document', 'O CNPJ do emitente deve possuir 14 dígitos nesta fase do piloto.'));
+  if (!CNPJ_FISCAL_RE.test(input.issuer.document)) errors.push(validationError('NFE-C02', 'issuer.document', 'O CNPJ do emitente deve possuir 14 posições.'));
   requiredText(input.issuer.legalName, 'NFE-C03', 'issuer.legalName', 'Informe a razão social do emitente.');
   requiredText(input.issuer.stateRegistration, 'NFE-C17', 'issuer.stateRegistration', 'Informe a inscrição estadual do emitente.');
   if (!NFE_UF_CODES[input.issuer.address.uf]) errors.push(validationError('NFE-C09', 'issuer.address.uf', 'Informe uma UF brasileira atendida pela NF-e.'));

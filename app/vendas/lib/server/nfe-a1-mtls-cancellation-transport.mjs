@@ -16,8 +16,8 @@ const openingTagCount = (xml, name) => (xml.match(new RegExp(`<(?:[A-Za-z_][\\w.
 function requestIsSafe(request) {
   const body = typeof request?.body === 'string' ? request.body.trim() : '';
   const reference = validateSecureCertificateReference(request?.secureCertificateReference);
-  const eventId = /<(?:[A-Za-z_][\w.-]*:)?infEvento\b[^>]*\bId=["'](ID110111\d{44}01)["']/i.exec(body)?.[1] || '';
-  const accessKey = /<(?:[A-Za-z_][\w.-]*:)?chNFe>(\d{44})<\/(?:[A-Za-z_][\w.-]*:)?chNFe>/i.exec(body)?.[1] || '';
+  const eventId = /<(?:[A-Za-z_][\w.-]*:)?infEvento\b[^>]*\bId=["'](ID110111[0-9]{6}[A-Z0-9]{12}[0-9]{26}01)["']/i.exec(body)?.[1] || '';
+  const accessKey = /<(?:[A-Za-z_][\w.-]*:)?chNFe>([0-9]{6}[A-Z0-9]{12}[0-9]{26})<\/(?:[A-Za-z_][\w.-]*:)?chNFe>/i.exec(body)?.[1] || '';
   return request?.endpoint === NFE_CANCELLATION_ENDPOINT
     && request?.action === NFE_CANCELLATION_ACTION
     && request?.contentType === NFE_CANCELLATION_CONTENT_TYPE

@@ -47,7 +47,7 @@ function document(value) {
     version: Math.max(1, Number.parseInt(String(rawEmission.version), 10) || 1),
     series: text(rawEmission.series, 3),
     number: Math.max(0, Number.parseInt(String(rawEmission.number), 10) || 0),
-    accessKey: /^\d{44}$/.test(text(rawEmission.accessKey, 44)) ? text(rawEmission.accessKey, 44) : '',
+    accessKey: /^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(text(rawEmission.accessKey, 44)) ? text(rawEmission.accessKey, 44) : '',
     updatedAt: text(rawEmission.updatedAt, 40),
   }) : null;
   const issuer = object(source.issuer);

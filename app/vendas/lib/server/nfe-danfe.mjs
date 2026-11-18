@@ -1,3 +1,5 @@
+import {normalizeFiscalDocument,normalizeNfeAccessKey} from '../fiscal-identifiers.mjs';
+import {encodeNfeBarcode} from '../nfe-barcode.mjs';
 import {Font,Encodings} from '@pdf-lib/standard-fonts';
 import { buildProcessedNfeArtifact } from './nfe-processed-artifact.mjs';
 
@@ -67,10 +69,10 @@ function quantity(value) {
 }
 
 function documentMask(value) {
-  const valueDigits = digits(value);
-  if (valueDigits.length === 14) return valueDigits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
-  if (valueDigits.length === 11) return valueDigits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
-  return valueDigits;
+ const document=normalizeFiscalDocument(value);
+ if(document.length===14)return document.replace(/^([A-Z0-9]{2})([A-Z0-9]{3})([A-Z0-9]{3})([A-Z0-9]{4})([0-9]{2})$/,'$1.$2.$3/$4-$5');
+ if(document.length===11)return document.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,'$1.$2.$3-$4');
+ return document;
 }
 
 function cepMask(value) {
@@ -78,9 +80,7 @@ function cepMask(value) {
   return valueDigits.length === 8 ? valueDigits.replace(/^(\d{5})(\d{3})$/, '$1-$2') : valueDigits;
 }
 
-function accessKeyMask(value) {
-  return digits(value).replace(/(\d{4})(?=\d)/g, '$1 ').trim();
-}
+function accessKeyMask(value) { return normalizeNfeAccessKey(value).replace(/(.{4})(?=.)/g,'$1 ').trim(); }
 
 function dateTime(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(String(value || ''));
@@ -140,7 +140,7 @@ function parseProcessedNfe(value, expectedEnvironment) {
   };
   if (data.model && data.model !== '55') errors.push(error('AV-NFE-DANFE-MODEL', 'processedXml.mod', 'Este gerador aceita somente NF-e modelo 55.'));
   if (!data.number || !data.series || !data.nature || !data.issueDate) errors.push(error('AV-NFE-DANFE-IDENTIFICATION', 'processedXml.ide', 'Número, série, natureza e emissão são obrigatórios no DANFE.'));
-  if (!data.issuer.name || digits(data.issuer.document).length !== 14 || !data.issuer.address.street || !data.issuer.address.city || !data.issuer.address.state) errors.push(error('AV-NFE-DANFE-ISSUER', 'processedXml.emit', 'A identificação e o endereço do emitente estão incompletos.'));
+  if (!data.issuer.name || normalizeFiscalDocument(data.issuer.document).length !== 14 || !data.issuer.address.street || !data.issuer.address.city || !data.issuer.address.state) errors.push(error('AV-NFE-DANFE-ISSUER', 'processedXml.emit', 'A identificação e o endereço do emitente estão incompletos.'));
   if (!data.recipient.name || !data.recipient.document || !data.recipient.address.street || !data.recipient.address.city || !data.recipient.address.state) errors.push(error('AV-NFE-DANFE-RECIPIENT', 'processedXml.dest', 'A identificação e o endereço do destinatário estão incompletos.'));
   if (!items.length) errors.push(error('AV-NFE-DANFE-ITEMS', 'processedXml.det', 'A NF-e não possui itens para o DANFE.'));
   if (items.length > NFE_DANFE_MAX_ITEMS) errors.push(error('AV-NFE-DANFE-ITEMS-LIMIT', 'processedXml.det', `O DANFE aceita até ${NFE_DANFE_MAX_ITEMS} itens.`));
@@ -191,13 +191,8 @@ function labeledValue(commands,label,value,x,y,width,height,options={}){
 }
 
 function barcodeCommands(accessKey, x, y, maxWidth, height) {
-  const normalized = digits(accessKey);
-  if (!/^\d{44}$/.test(normalized)) return [];
-  const values = normalized.match(/\d{2}/g).map(Number);
-  const sequence = [105, ...values];
-  let checksum = 105;
-  values.forEach((value, index) => { checksum += value * (index + 1); });
-  sequence.push(checksum % 103, 106);
+  const sequence = encodeNfeBarcode(accessKey);
+  if(!sequence.length)return [];
   const modules = sequence.reduce((total, value) => total + [...CODE_128_PATTERNS[value]].reduce((sum, digit) => sum + Number(digit), 0), 0);
   const moduleWidth = Math.min(0.82, maxWidth / modules);
   let cursor = x + (maxWidth - modules * moduleWidth) / 2;
@@ -332,14 +327,14 @@ function buildPdf(pageCommands) {
 }
 
 export function nfeDanfeFileName(accessKey) {
-  const normalized = digits(accessKey);
-  return /^\d{44}$/.test(normalized) ? `danfe-nfe-${normalized}.pdf` : 'danfe-nfe.pdf';
+  const normalized = normalizeNfeAccessKey(accessKey);
+  return /^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(normalized) ? `danfe-nfe-${normalized}.pdf` : 'danfe-nfe.pdf';
 }
 
 export function buildNfeDanfe({ processedXml, expectedAccessKey, expectedEnvironment, sampleMode = false } = {}) {
   const parsed = parseProcessedNfe(processedXml, expectedEnvironment);
   const errors = [...parsed.errors];
-  if (expectedAccessKey && parsed.data.accessKey && digits(expectedAccessKey) !== parsed.data.accessKey) errors.push(error('AV-NFE-DANFE-EXPECTED-KEY', 'expectedAccessKey', 'O procNFe não corresponde à chave esperada.'));
+  if (expectedAccessKey && parsed.data.accessKey && normalizeNfeAccessKey(expectedAccessKey) !== parsed.data.accessKey) errors.push(error('AV-NFE-DANFE-EXPECTED-KEY', 'expectedAccessKey', 'O procNFe não corresponde à chave esperada.'));
   if (errors.length) return { valid: false, errors, pdf: new Uint8Array(), fileName: '', pageCount: 0, accessKey: parsed.data.accessKey || '', sampleMode: Boolean(sampleMode), xmlReturned: false };
   const natureHeight=Math.max(15,8+3.2*fitLines(parsed.data.nature,120*MM-8,7.3,true).length);
   const firstPageCapacity = Math.max(1,Math.min(5,Math.floor((at(203+natureHeight-15)-120-22)/27)));

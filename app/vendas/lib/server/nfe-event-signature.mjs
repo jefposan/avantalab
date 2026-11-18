@@ -1,3 +1,4 @@
+import {normalizeFiscalDocument} from '../fiscal-identifiers.mjs';
 import { createHash, createVerify, X509Certificate } from 'node:crypto';
 import { spawn } from 'node:child_process';
 
@@ -13,7 +14,7 @@ const XMLLINT_PATH = '/usr/bin/xmllint';
 const MAX_XML_BYTES = 256 * 1024;
 const TIMEOUT_MS = 8_000;
 
-const digits = (value) => String(value ?? '').replace(/\D/g, '');
+const digits = (value) => normalizeFiscalDocument(value);
 const block = (xml, name) => String(xml || '').match(new RegExp(`<(?:[A-Za-z_][\\w.-]*:)?${name}\\b[\\s\\S]*?<\\/(?:[A-Za-z_][\\w.-]*:)?${name}>`, 'i'))?.[0] || '';
 const value = (xml, name) => String(xml || '').match(new RegExp(`<(?:[A-Za-z_][\\w.-]*:)?${name}\\b[^>]*>([\\s\\S]*?)<\\/(?:[A-Za-z_][\\w.-]*:)?${name}>`, 'i'))?.[1]?.replace(/<[^>]+>/g, '').trim() || '';
 
@@ -59,7 +60,7 @@ export async function createProtectedSignedNfeEventXml({ unsignedEventXml, certi
   const referenceId = info.match(/\bId=["']([^"']+)["']/i)?.[1] || '';
   const accessKey = value(info, 'chNFe');
   const sequence = value(info, 'nSeqEvento');
-  if (referenceId !== `ID110111${accessKey}${String(sequence).padStart(2, '0')}` || !/^\d{44}$/.test(accessKey)) throw new Error('O Id do evento não corresponde à chave, ao tipo e à sequência informados.');
+  if (referenceId !== `ID110111${accessKey}${String(sequence).padStart(2, '0')}` || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(accessKey)) throw new Error('O Id do evento não corresponde à chave, ao tipo e à sequência informados.');
   const canonicalInfo = await canonicalize(namespacedInfo(info));
   const digestValue = createHash('sha1').update(canonicalInfo, 'utf8').digest('base64');
   const infoToSign = signedInfo(referenceId, digestValue);
@@ -93,9 +94,9 @@ export async function verifyProtectedSignedNfeEventXml(signedEventXml, expectedI
     verifier.end();
     signatureVerified = verifier.verify(certificate.publicKey, value(source, 'SignatureValue'), 'base64');
   } catch {}
-  if (!/^ID110111\d{44}\d{2}$/.test(referenceId) || referenceId !== referenceUri) errors.push({ code: 'AV-NFE-EVENT-SIG-REFERENCE', field: 'Reference.URI', message: 'A assinatura não referencia exatamente o Id do evento.' });
+  if (!/^ID110111[0-9]{6}[A-Z0-9]{12}[0-9]{26}\d{2}$/.test(referenceId) || referenceId !== referenceUri) errors.push({ code: 'AV-NFE-EVENT-SIG-REFERENCE', field: 'Reference.URI', message: 'A assinatura não referencia exatamente o Id do evento.' });
   if (!digestVerified) errors.push({ code: 'AV-NFE-EVENT-SIG-DIGEST', field: 'DigestValue', message: 'O resumo criptográfico do evento não confere.' });
   if (!signatureVerified) errors.push({ code: 'AV-NFE-EVENT-SIG-VALUE', field: 'SignatureValue', message: 'A assinatura criptográfica do evento não confere.' });
-  if (!/^\d{44}$/.test(accessKey) || expected.length !== 14 || issuer !== expected || accessKey.slice(6, 20) !== expected) errors.push({ code: 'AV-NFE-EVENT-SIG-ISSUER', field: 'CNPJ', message: 'O emissor do evento não corresponde à chave da NF-e.' });
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(accessKey) || expected.length !== 14 || issuer !== expected || accessKey.slice(6, 20) !== expected) errors.push({ code: 'AV-NFE-EVENT-SIG-ISSUER', field: 'CNPJ', message: 'O emissor do evento não corresponde à chave da NF-e.' });
   return { valid: errors.length === 0, accessKey, eventId: referenceId, digestVerified, signatureVerified, errors };
 }

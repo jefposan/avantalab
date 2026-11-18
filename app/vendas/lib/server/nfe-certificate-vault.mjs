@@ -1,3 +1,4 @@
+import {normalizeFiscalDocument} from '../fiscal-identifiers.mjs';
 import { X509Certificate } from 'node:crypto';
 import forge from 'node-forge';
 
@@ -12,7 +13,7 @@ const FORBIDDEN_REFERENCE_PATTERN = /(?:^|[/:])(?:file|https?|data):|\\|\.\.|---
 const FORBIDDEN_PROVIDER_KEYS = /^(?:privatekey|privatekeypem|password|passphrase|secret|token|pfx|pfxbase64|pfxcontent|pkcs12|p12)$/i;
 
 function digits(value) {
-  return String(value || '').replace(/\D/g, '');
+  return normalizeFiscalDocument(value);
 }
 
 function normalizeFingerprint(value) {

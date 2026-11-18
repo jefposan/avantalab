@@ -38,7 +38,7 @@ function validateLoaded(data, expectedVersion, environment) {
   if (!emission || !draft || !artifact) return issue('AV-NFE-SUBMISSION-NOT-FOUND', 'emission', 'A NF-e assinada não foi localizada nesta empresa.');
   if (emission.version !== expectedVersion) return issue('AV-NFE-SUBMISSION-CONFLICT', 'expectedVersion', 'A emissão foi alterada; atualize a Central Fiscal antes de enviar.');
   if (emission.state !== 'signed' || emission.documentType !== 'nfe' || emission.model !== '55' || emission.environment !== environment) return issue('AV-NFE-SUBMISSION-STATE', 'state', 'O envio exige uma NF-e assinada no ambiente configurado.');
-  if (!/^\d{44}$/.test(emission.accessKey) || !/^[a-f0-9]{64}$/.test(emission.signedChecksum)) return issue('AV-NFE-SUBMISSION-INTEGRITY', 'signature', 'A identificação do XML assinado está incompleta.');
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(emission.accessKey) || !/^[a-f0-9]{64}$/.test(emission.signedChecksum)) return issue('AV-NFE-SUBMISSION-INTEGRITY', 'signature', 'A identificação do XML assinado está incompleta.');
   if (artifact.artifactType !== 'signed_xml' || artifact.checksum !== emission.signedChecksum || artifact.contentType !== 'application/xml') return issue('AV-NFE-SUBMISSION-ARTIFACT', 'artifact', 'O artefato assinado não corresponde à emissão preparada.');
   if (draft.companyId !== emission.companyId || draft.id !== emission.draftId || draft.issuerSnapshot?.establishmentId !== emission.establishmentId) return issue('AV-NFE-SUBMISSION-LINK', 'draft', 'O vínculo entre emissão, rascunho e empresa não pôde ser confirmado.');
   return null;

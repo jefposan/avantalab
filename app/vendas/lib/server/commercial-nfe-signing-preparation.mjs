@@ -96,7 +96,7 @@ export async function reconstructCommercialNfeSigningDocument({ data, expectedVe
     issuedAt,
   });
   const generated = buildUnsignedNfeSpXml(input, { environment });
-  if (!generated.valid || !generated.xml || !/^\d{44}$/.test(generated.accessKey)) return { ok: false, errors: generated.errors?.length ? generated.errors : [issue('AV-NFE-SIGNING-DOCUMENT', 'fiscal', 'O documento definitivo não pôde ser montado com a numeração reservada.')] };
+  if (!generated.valid || !generated.xml || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(generated.accessKey)) return { ok: false, errors: generated.errors?.length ? generated.errors : [issue('AV-NFE-SIGNING-DOCUMENT', 'fiscal', 'O documento definitivo não pôde ser montado com a numeração reservada.')] };
   const schema = await schemaValidator(generated.xml);
   if (!schema?.executed || !schema?.valid) return { ok: false, errors: [issue('AV-NFE-SIGNING-XSD', 'fiscal', 'O documento definitivo não passou pela validação fiscal antes da assinatura.')] };
   return { ok: true, data, rules, generated, schema, errors: [] };

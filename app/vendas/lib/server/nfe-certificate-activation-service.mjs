@@ -1,8 +1,9 @@
+import {normalizeFiscalDocument} from '../fiscal-identifiers.mjs';
 export const NFE_CERTIFICATE_ACTIVATION_SERVICE_REFERENCE = '2026-09-05';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const clean = (value) => String(value ?? '').trim();
-const digits = (value) => clean(value).replace(/\D/g, '');
+const digits = (value) => normalizeFiscalDocument(value);
 const issue = (code, field, message) => ({ code, field, message });
 
 function accessError(context) {

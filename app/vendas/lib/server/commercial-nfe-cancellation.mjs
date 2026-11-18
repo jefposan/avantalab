@@ -1,3 +1,4 @@
+import {normalizeFiscalDocument} from '../fiscal-identifiers.mjs';
 import { buildNfeCancellationArtifact, persistNfeCancellationArtifact } from './nfe-cancellation-artifact.mjs';
 import { nfeStandardCancellationAvailability } from '../fiscal-note-result.mjs';
 
@@ -35,8 +36,8 @@ function validateLoaded(data, expectedVersion) {
   if (!emission || !data?.issuerDocument) return issue('AV-NFE-CANCEL-NOT-FOUND', 'emission', 'A NF-e autorizada não foi localizada nesta empresa.');
   if (emission.version !== expectedVersion) return issue('AV-NFE-CANCEL-CONFLICT', 'expectedVersion', 'A nota foi atualizada; consulte novamente antes de cancelar.');
   if (!['authorized', 'artifacts_stored', 'danfe_ready'].includes(emission.state) || emission.documentType !== 'nfe' || emission.model !== '55' || emission.environment !== 'homologacao') return issue('AV-NFE-CANCEL-STATE', 'state', 'Somente uma NF-e autorizada em homologação pode ser cancelada por este fluxo.');
-  if (!/^\d{44}$/.test(emission.accessKey) || emission.statusCode !== '100' || !/^\d{15,17}$/.test(emission.protocolNumber) || !emission.authorizedAt) return issue('AV-NFE-CANCEL-AUTHORIZATION', 'authorization', 'A autorização original não possui chave e protocolo suficientes para o cancelamento.');
-  if (emission.accessKey.slice(6, 20) !== clean(data.issuerDocument).replace(/\D/g, '')) return issue('AV-NFE-CANCEL-ISSUER', 'issuer', 'O CNPJ do emissor não corresponde à chave da NF-e autorizada.');
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(emission.accessKey) || emission.statusCode !== '100' || !/^\d{15,17}$/.test(emission.protocolNumber) || !emission.authorizedAt) return issue('AV-NFE-CANCEL-AUTHORIZATION', 'authorization', 'A autorização original não possui chave e protocolo suficientes para o cancelamento.');
+  if (emission.accessKey.slice(6, 20) !== normalizeFiscalDocument(data.issuerDocument)) return issue('AV-NFE-CANCEL-ISSUER', 'issuer', 'O CNPJ do emissor não corresponde à chave da NF-e autorizada.');
   return null;
 }
 

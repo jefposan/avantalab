@@ -63,7 +63,7 @@ function receiptRequestIsSafe(request, authority) {
 
 function protocolRequestIsSafe(request, authority) {
   const source = typeof request.body === 'string' ? request.body.trim() : '';
-  const accessKey = /<(?:[A-Za-z_][\w.-]*:)?chNFe>(\d{44})<\/(?:[A-Za-z_][\w.-]*:)?chNFe>/i.exec(source)?.[1] || '';
+  const accessKey = /<(?:[A-Za-z_][\w.-]*:)?chNFe>([0-9]{6}[A-Z0-9]{12}[0-9]{26})<\/(?:[A-Za-z_][\w.-]*:)?chNFe>/i.exec(source)?.[1] || '';
   return commonRequestIsSafe(request)
     && request.endpoint === authority.endpoints.protocol
     && request.action === NFE_PROTOCOL_ACTION

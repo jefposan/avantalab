@@ -32,7 +32,7 @@ function attributeValue(attributes, name) {
 
 export function nfeProcessedStorageKey(accessKey) {
   const normalized = String(accessKey || '').trim();
-  if (!/^\d{44}$/.test(normalized)) return '';
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(normalized)) return '';
   const issuerDocument = normalized.slice(6, 20);
   const year = `20${normalized.slice(2, 4)}`;
   const month = normalized.slice(4, 6);
@@ -61,7 +61,7 @@ export function buildProcessedNfeArtifact({ signedXml, protocolXml, expectedAcce
   if (protocolVersion && protocolVersion !== '4.00') errors.push(error('AV-NFE-PROC-VERSION', 'protocolXml.versao', 'O protocolo não usa o leiaute 4.00.'));
   if (!['1', '2'].includes(environmentCode) || (expectedEnvironment && expectedEnvironment !== environment)) errors.push(error('AV-NFE-PROC-ENVIRONMENT', 'protocolXml.tpAmb', 'O protocolo não corresponde ao ambiente fiscal esperado.'));
   if (status !== '100') errors.push(error('AV-NFE-PROC-STATUS', 'protocolXml.cStat', 'Somente uma NF-e autorizada com situação 100 pode gerar procNFe.'));
-  if (!/^\d{44}$/.test(accessKey)) errors.push(error('AV-NFE-PROC-KEY', 'protocolXml.chNFe', 'O protocolo não contém uma chave de acesso válida.'));
+  if (!/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(accessKey)) errors.push(error('AV-NFE-PROC-KEY', 'protocolXml.chNFe', 'O protocolo não contém uma chave de acesso válida.'));
   if (!protocolNumber) errors.push(error('AV-NFE-PROC-NUMBER', 'protocolXml.nProt', 'O protocolo de autorização não contém número.'));
   if (!receivedAt) errors.push(error('AV-NFE-PROC-DATE', 'protocolXml.dhRecbto', 'O protocolo de autorização não contém data de recebimento.'));
   if (signed.accessKey && accessKey && signed.accessKey !== accessKey) errors.push(error('AV-NFE-PROC-KEY-MISMATCH', 'protocolXml.chNFe', 'O protocolo pertence a outra NF-e.'));
@@ -94,7 +94,7 @@ export function createDisabledNfeArtifactStorage() {
 
 export async function persistProcessedNfeArtifact({ artifact, provider = createDisabledNfeArtifactStorage(), auditWriter } = {}) {
   const result = { ok: true, valid: false, persisted: false, reused: false, accessKey: artifact?.accessKey || '', storageKey: artifact?.storageKey || '', checksum: artifact?.checksum || '', storageReference: '', versionId: '', storedAt: '', xmlReturned: false, errors: [], warnings: [] };
-  if (!artifact?.valid || !artifact?.authorized || !artifact?.processedXml || !/^\d{44}$/.test(artifact?.accessKey || '')) result.errors.push(error('AV-NFE-STORE-ARTIFACT', 'artifact', 'Somente um procNFe autorizado e validado pode ser armazenado.'));
+  if (!artifact?.valid || !artifact?.authorized || !artifact?.processedXml || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(artifact?.accessKey || '')) result.errors.push(error('AV-NFE-STORE-ARTIFACT', 'artifact', 'Somente um procNFe autorizado e validado pode ser armazenado.'));
   if (provider?.configured !== true || typeof provider.putImmutable !== 'function') result.errors.push(error('AV-NFE-STORE-PROVIDER', 'provider', 'O armazenamento fiscal imutável ainda não está configurado.'));
   if (result.errors.length) { result.warnings = ['Nenhum XML foi gravado.']; return result; }
   const existing = typeof provider.findByAccessKey === 'function' ? await provider.findByAccessKey({ accessKey: artifact.accessKey, storageKey: artifact.storageKey }) : null;

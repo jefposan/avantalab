@@ -4,8 +4,8 @@ export const SUPABASE_FISCAL_ARTIFACT_STORAGE_REFERENCE = '2026-09-03';
 
 const MAX_ARTIFACT_BYTES = 10 * 1024 * 1024;
 const ALLOWED_CONTENT_TYPES = new Set(['application/xml', 'application/pdf']);
-const LOGICAL_STORAGE_KEY_PATTERN = /^fiscal\/nfe\/(\d{14})\/(20\d{2})\/(0[1-9]|1[0-2])\/(\d{44})-(signedNFe\.xml|protocolNFe\.xml|procNFe\.xml|danfe\.pdf)$/;
-const VERSIONED_STORAGE_KEY_PATTERN = /^fiscal\/nfe\/(\d{14})\/(20\d{2})\/(0[1-9]|1[0-2])\/(\d{44})\/versions\/([a-f0-9]{64})-(signedNFe\.xml|protocolNFe\.xml|procNFe\.xml|danfe\.pdf)$/;
+const LOGICAL_STORAGE_KEY_PATTERN = /^fiscal\/nfe\/([A-Z0-9]{12}[0-9]{2})\/(20\d{2})\/(0[1-9]|1[0-2])\/([0-9]{6}[A-Z0-9]{12}[0-9]{26})-(signedNFe\.xml|protocolNFe\.xml|procNFe\.xml|danfe\.pdf)$/;
+const VERSIONED_STORAGE_KEY_PATTERN = /^fiscal\/nfe\/([A-Z0-9]{12}[0-9]{2})\/(20\d{2})\/(0[1-9]|1[0-2])\/([0-9]{6}[A-Z0-9]{12}[0-9]{26})\/versions\/([a-f0-9]{64})-(signedNFe\.xml|protocolNFe\.xml|procNFe\.xml|danfe\.pdf)$/;
 const BUCKET_PATTERN = /^[a-z0-9][a-z0-9-]{2,61}[a-z0-9]$/;
 
 function storageError(code, message) {

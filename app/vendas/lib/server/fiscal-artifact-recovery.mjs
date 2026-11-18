@@ -1,3 +1,4 @@
+import {normalizeFiscalDocument,CNPJ_FISCAL_RE} from '../fiscal-identifiers.mjs';
 import { createHash } from 'node:crypto';
 import { createFiscalEmissionLifecycleService } from './fiscal-emission-lifecycle.mjs';
 import { buildNfeDanfe } from './nfe-danfe.mjs';
@@ -47,7 +48,7 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
     if (!available(repository, storageProvider) || typeof storageProvider.readByReference !== 'function') return failure('AV-FISCAL-RECOVERY-STORAGE', 'A guarda fiscal privada não está disponível para reconciliar a consulta.');
     const current = await snapshot(repository, job);
     const emission = current.emission;
-    if (!emission || emission.companyId !== job.companyId || !/^\d{44}$/.test(emission.accessKey || '')) return failure('AV-FISCAL-RECOVERY-EMISSION', 'A emissão fiscal da tarefa não foi encontrada ou está incompleta.');
+    if (!emission || emission.companyId !== job.companyId || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(emission.accessKey || '')) return failure('AV-FISCAL-RECOVERY-EMISSION', 'A emissão fiscal da tarefa não foi encontrada ou está incompleta.');
     if (emission.environment !== environment) return failure('AV-FISCAL-RECOVERY-ENVIRONMENT', 'A consulta fiscal exige uma emissão no ambiente configurado.');
     if (['authorized', 'artifacts_stored', 'danfe_ready', 'rejected', 'failed', 'canceled'].includes(emission.state)) return { ok: true, reconciled: true, stale: true, state: emission.state, contentReturned: false };
     if (!['submitted', 'processing'].includes(emission.state)) return failure('AV-FISCAL-RECOVERY-STATE', 'A emissão não está aguardando consulta de autorização.');
@@ -62,7 +63,7 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
     } catch {
       return failure('AV-FISCAL-RECOVERY-CERTIFICATE', 'O certificado e o cadastro do emissor não puderam ser confirmados.');
     }
-    if (!binding?.secureReference || !/^\d{14}$/.test(String(expectedDocument || '').replace(/\D/g, ''))) return failure('AV-FISCAL-RECOVERY-CERTIFICATE', 'O certificado ativo e o CNPJ do emissor são necessários para consultar a SEFAZ.');
+    if (!binding?.secureReference || !CNPJ_FISCAL_RE.test(normalizeFiscalDocument(expectedDocument))) return failure('AV-FISCAL-RECOVERY-CERTIFICATE', 'O certificado ativo e o CNPJ do emissor são necessários para consultar a SEFAZ.');
     const options = { secureReference: binding.secureReference, expectedDocument, expectedMode: binding.expectedMode || 'Certificado A1', expectedAccessKey: emission.accessKey };
     let result;
     try {
@@ -119,7 +120,7 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
     if (!available(repository, storageProvider)) return failure('AV-FISCAL-RECOVERY-STORAGE', 'A guarda fiscal privada não está disponível para a recuperação.');
     const current = await snapshot(repository, job, ['signed_xml', 'protocol_xml', 'processed_xml']);
     const emission = current.emission;
-    if (!emission || emission.companyId !== job.companyId || !/^\d{44}$/.test(emission.accessKey || '')) return failure('AV-FISCAL-RECOVERY-EMISSION', 'A emissão fiscal da tarefa não foi encontrada ou está incompleta.');
+    if (!emission || emission.companyId !== job.companyId || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(emission.accessKey || '')) return failure('AV-FISCAL-RECOVERY-EMISSION', 'A emissão fiscal da tarefa não foi encontrada ou está incompleta.');
     if (emission.state !== 'authorized' && !laterThanAuthorization(emission.state)) return failure('AV-FISCAL-RECOVERY-STATE', 'A emissão ainda não está autorizada para guardar o XML processado.');
     const storageKey = nfeProcessedStorageKey(emission.accessKey);
     if (!current.artifacts.processed_xml && emission.state === 'authorized') {
@@ -165,7 +166,7 @@ export function createFiscalArtifactRecoveryHandlers({ repository, storageProvid
     if (!available(repository, storageProvider)) return failure('AV-FISCAL-RECOVERY-STORAGE', 'A guarda fiscal privada não está disponível para a recuperação.');
     const current = await snapshot(repository, job, ['processed_xml', 'danfe_pdf']);
     const emission = current.emission;
-    if (!emission || emission.companyId !== job.companyId || !/^\d{44}$/.test(emission.accessKey || '')) return failure('AV-FISCAL-RECOVERY-EMISSION', 'A emissão fiscal da tarefa não foi encontrada ou está incompleta.');
+    if (!emission || emission.companyId !== job.companyId || !/^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$/.test(emission.accessKey || '')) return failure('AV-FISCAL-RECOVERY-EMISSION', 'A emissão fiscal da tarefa não foi encontrada ou está incompleta.');
     if (!['artifacts_stored', 'danfe_ready', 'canceled'].includes(emission.state) || !current.artifacts.processed_xml) return failure('AV-FISCAL-RECOVERY-DANFE-PREREQUISITE', 'O XML autorizado ainda não está registrado para gerar o DANFE.');
     // A newer presentation must never replace or be compared against the authorized archive.
     const original=current.artifacts.danfe_pdf;
