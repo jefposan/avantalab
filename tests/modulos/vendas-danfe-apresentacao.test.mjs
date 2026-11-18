@@ -32,3 +32,11 @@ test('recuperação conserva o PDF original mesmo depois de mudar a versão do l
  const handlers=createFiscalArtifactRecoveryHandlers({repository,storageProvider:{configured:true,readVerified:async input=>{reads++;assert.equal(input.contentType,'application/pdf');assert.equal(input.expectedChecksum,'original-hash');return{};},putImmutable:async()=>{throw Error('Nunca sobrescrever');}}});
  const result=await handlers.danfe_generation({companyId:'a',emissionId:'e',id:'j'});assert.equal(result.ok,true);assert.equal(result.reused,true);assert.equal(reads,1);assert.equal(emission.danfeChecksum,'original-hash');
 });
+test('link gerado após demora no DANFE conserva TTL de 60s; links expirados ou excessivos seguem bloqueados',async()=>{
+ const boundary={source:'authenticated',authenticated:true,userId:'actor',companyId:'a',userActive:true,membershipActive:true,companyActive:true,moduleActive:true};
+ for(const [remaining,expected]of [[60000,true],[-1000,false],[120000,false]]){
+  let now=Date.parse('2026-11-18T13:00:00Z');const artifact={id:'d',companyId:'a',emissionId:'e',accessKey:'1'.repeat(44),artifactType:'danfe_pdf',contentType:'application/pdf',storageReference:'original',storageVersion:'v',checksum:'h'};
+  const service=createFiscalArtifactDownloadService({clock:()=>new Date(now).toISOString(),repository:{configured:true,findArtifactForDownload:async()=>artifact},auditWriter:{configured:true,appendArtifactAccessEvent:async()=>{}},storageProvider:{configured:true,environment:'production',productionReady:true,createReadGrant:async()=>({url:'https://storage.example/private.pdf',expiresAt:new Date(now+remaining).toISOString()})},presentationRenderer:async({artifact})=>{now+=2500;return{...artifact,storageReference:'new-presentation'};},maxTtlSeconds:60});
+  const result=await service.authorize({boundary,effectivePermissions:{'fiscal.documents.danfe.download':true},artifactId:'d',artifactType:'danfe_pdf',ttlSeconds:60});assert.equal(result.ok,expected,`prazo restante ${remaining}: ${result.reason}`);
+ }
+});

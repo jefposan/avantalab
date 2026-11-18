@@ -1,3 +1,7 @@
+# 3.2.0.482 — DANFE: validar link após a geração do PDF
+
+O prazo restante do link temporário passa a ser conferido no momento atual, após gerar o DANFE. A demora de renderização não invalida um link recém-criado; TTL máximo, links vencidos, auditoria e permissões seguem protegidos.
+
 # 3.2.0.481 — DANFE: validar pelo ambiente da emissão
 
 A apresentação do DANFE usa o ambiente registrado na emissão fiscal, junto ao XML privado verificado, sem inferi-lo do bucket de armazenamento. Mantém a rejeição de XML de ambiente divergente, a chave, a autorização e os arquivos originais.

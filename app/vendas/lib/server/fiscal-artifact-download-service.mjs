@@ -87,7 +87,7 @@ export function createFiscalArtifactDownloadService({ repository, storageProvide
         await auditWriter.appendArtifactAccessEvent({ ...baseEvent, emissionId: artifact.emissionId, outcome: 'failed', reasonCode: 'grant_failed' });
         return denied('grant_failed', [error('AV-FISCAL-DOWNLOAD-GRANT', 'storageProvider', 'Não foi possível preparar o acesso temporário ao documento fiscal.')]);
       }
-      const now = new Date(occurredAt);
+      const now = new Date(clock());
       if (!validGrant(grant, now, ttlSeconds)) {
         await auditWriter.appendArtifactAccessEvent({ ...baseEvent, emissionId: artifact.emissionId, outcome: 'failed', reasonCode: 'invalid_grant' });
         return denied('invalid_grant', [error('AV-FISCAL-DOWNLOAD-GRANT-INVALID', 'storageProvider', 'O provedor não retornou um acesso temporário seguro.')]);

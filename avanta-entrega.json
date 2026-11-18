@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_9eRpo1QAvg9miqbjoqFNkpByzxQi",
+  "baseDeploymentId": "dpl_GyJbohNyEEmA3FntTA14LaTAHz72",
   "migrations": [],
-  "version": "3.2.0.481",
-  "scope": "DANFE: usar o ambiente do registro da emissão para validar o XML autorizado, independente do ambiente do armazenamento. Preserva isolamento, chave, protocolo, PDFs originais e novo layout com logo. Sem migração ou reemissão."
+  "version": "3.2.0.482",
+  "scope": "DANFE: validar o prazo restante do link temporário depois da geração do PDF, sem contar a renderização como duração do acesso. Preserva limite de 60s, bloqueio de links vencidos ou excessivos, auditoria, nota autorizada e arquivos originais."
 }

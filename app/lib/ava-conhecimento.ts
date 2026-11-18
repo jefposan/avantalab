@@ -3010,3 +3010,5 @@ GUIAS['vendas'] += ' ATUALIZAÇÃO 3.2.0.461: Conteúdo AvantaVendas → Produto
 // Revisão 3.2.0.480: telefone do emitente preservado no DANFE; sem impacto operacional adicional.
 
 // Revisão 3.2.0.481: ambiente do DANFE vem da emissão, sem confundir com o armazenamento; sem impacto operacional adicional.
+
+// Revisão 3.2.0.482: prazo do link de DANFE validado depois da geração; sem impacto operacional adicional.
