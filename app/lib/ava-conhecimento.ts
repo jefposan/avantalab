@@ -3006,3 +3006,5 @@ GUIAS['gestao-mobile'] += ' ATUALIZAÇÃO 3.2.0.461: Conteúdo AvantaVendas → 
 GUIAS['vendas'] += ' ATUALIZAÇÃO 3.2.0.461: Conteúdo AvantaVendas → Produtos: falha de conexão não significa catálogo ou produtos vazios. Sem internet, exibe aviso de rede e Tentar novamente; reconectar refaz a consulta sem reabrir a tela e sem reenviar salvamentos ou exclusões. Falha de transporte ou tempo de espera orienta verificar a conexão; erro de consulta/acesso tem aviso próprio. Nenhum catálogo ativo e Nenhum produto cadastrado só aparecem após consulta válida. Dados já consultados nesta abertura e rascunhos permanecem; isso não oferece catálogo offline em uma abertura nova. Respostas anteriores são descartadas. A consulta é interrompida após 15 segundos sem resposta.';
 
 // Revisão 3.2.0.479: Vendas e Serviços > Ajustes > Empresa e notas > Dados para emissão > Aparência do DANFE: logo herdado ou específico; novo download atualiza apresentação, sem reemitir ou mudar XML autorizado.
+
+// Revisão 3.2.0.480: telefone do emitente preservado no DANFE; sem impacto operacional adicional.

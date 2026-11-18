@@ -1,7 +1,7 @@
 import {PDFDocument} from 'pdf-lib';
 import sharp from 'sharp';
 import {buildNfeDanfe} from './nfe-danfe.mjs';
-export const DANFE_LAYOUT_VERSION='2026-11-18.1';
+export const DANFE_LAYOUT_VERSION='2026-11-18.2';
 export async function buildPresentedNfeDanfe({logoBytes,...source}={}){
  const result=buildNfeDanfe(source);if(!result.valid)return result;
  const pdf=await PDFDocument.load(result.pdf);pdf.setCreationDate(new Date(0));pdf.setModificationDate(new Date(0));pdf.setSubject(`DANFE AvantaLab ${DANFE_LAYOUT_VERSION}`);

@@ -226,9 +226,9 @@ function commonHeader(commands, data, pageNumber, pageCount, firstPage) {
  const names=fitLines(distinct?trade:legal,47*MM,9,true);names.forEach((entry,i)=>text(commands,entry,35*MM,at(y(33+i*3.5)),9,true));
  if(distinct)fitLines(legal,47*MM,6.8).forEach((entry,i)=>text(commands,entry,35*MM,at(y(43+i*3)),6.8));
  const issuerAddress=`${data.issuer.address.street}, ${data.issuer.address.number}${data.issuer.address.complement?` - ${data.issuer.address.complement}`:''} - ${data.issuer.address.district}`;
- fitLines(issuerAddress,74*MM,7).forEach((entry,i)=>text(commands,entry,8*MM,at(y(51+i*3)),7));
- text(commands,`${data.issuer.address.city}/${data.issuer.address.state} - CEP ${cepMask(data.issuer.address.cep)}`,8*MM,at(y(58)),7);
- text(commands,`CNPJ ${documentMask(data.issuer.document)} - IE ${data.issuer.stateRegistration||'-'}`,8*MM,at(y(62)),6.5,true);
+ fitLines(issuerAddress,74*MM,7).forEach((entry,i)=>text(commands,entry,8*MM,at(y(49+i*3)),7));
+ fitLines(`${data.issuer.address.city}/${data.issuer.address.state} - CEP ${cepMask(data.issuer.address.cep)}${data.issuer.address.phone?` - Fone ${data.issuer.address.phone}`:''}`,74*MM,6.5).forEach((entry,i)=>text(commands,entry,8*MM,at(y(56+i*3)),6.5));
+ text(commands,`CNPJ ${documentMask(data.issuer.document)} - IE ${data.issuer.stateRegistration||'-'}`,8*MM,at(y(63)),6.5,true);
  frame(commands,85,y(22),26,43);text(commands,'DANFE',87*MM,at(y(30)),15,true);['Documento Auxiliar','da Nota Fiscal','Eletronica'].forEach((v,i)=>text(commands,v,87*MM,at(y(35+i*3)),6));text(commands,data.operationType==='0'?'0 - ENTRADA':'1 - SAIDA',89*MM,at(y(46)),7,true);text(commands,`N. ${String(data.number).padStart(9,'0')}`,87*MM,at(y(52)),8,true);text(commands,`SERIE ${String(data.series).padStart(3,'0')}`,90*MM,at(y(57)),7,true);text(commands,`FOLHA ${pageNumber}/${pageCount}`,90*MM,at(y(62)),6.5);
  frame(commands,111,y(22),94,43);commands.push(...barcodeCommands(data.accessKey,116*MM,at(y(37)),84*MM,10*MM));text(commands,'CHAVE DE ACESSO',113*MM,at(y(41)),5.5,true);text(commands,accessKeyMask(data.accessKey),113*MM,at(y(46)),6.4,true);text(commands,'Consulta de autenticidade no portal nacional da NF-e',115*MM,at(y(51)),5.8);text(commands,'www.nfe.fazenda.gov.br/portal ou no site da Sefaz autorizadora',113*MM,at(y(55)),5.4);text(commands,'PROTOCOLO DE AUTORIZACAO DE USO',113*MM,at(y(59)),5.5);text(commands,`${data.protocolNumber} - ${dateTime(data.protocolReceivedAt)}`,117*MM,at(y(63)),6.5,true);
  return at(y(65));

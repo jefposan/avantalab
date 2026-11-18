@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_7x4gjeX7pkBd87CvAU8DjeXMz7Mm",
+  "baseDeploymentId": "dpl_Dga62t6wu9UA6TFcBctL6yukCtua",
   "migrations": [],
-  "version": "3.2.0.479",
-  "scope": "DANFE: aplicar diagramação aprovada com espaçamento, logo proporcional herdado do perfil ou específico, dados fiscais exclusivos do XML autorizado e download em novas versões visuais imutáveis por hash. Originais, XML e autorização preservados; sem migrações ou nova emissão."
+  "version": "3.2.0.480",
+  "scope": "Refinamento do layout DANFE: preservar o telefone do emitente quando presente no XML, com quebra por largura. Mantém logo proporcional, dados autorizados, nova versão visual e arquivos originais. Sem migrações ou reemissão."
 }

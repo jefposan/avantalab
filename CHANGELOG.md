@@ -1,3 +1,7 @@
+# 3.2.0.480 — DANFE: preservar telefone do emitente
+
+Refinamento da entrega do novo layout: mantém telefone do emitente quando presente no XML, com quebra por largura no cabeçalho. Logo, dados fiscais, PDFs originais e autorização preservados.
+
 # 3.2.0.479 — DANFE: layout, logo por empresa e novas versões visuais
 
 - Diagramação aprovada: logo proporcional, identificação sem repetição, margens de 5 mm e espaçamento entre emitente/destinatário, labels e valores; textos medidos pela fonte.

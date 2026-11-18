@@ -1,4 +1,4 @@
-<!-- ava-version: 3.2.0.479 -->
+<!-- ava-version: 3.2.0.480 -->
 
 > Revisão 3.2.0.478: Dados para emissão organiza os padrões da empresa em ICMS, IPI, PIS/COFINS, IBS/CBS e CFOP, com grupos expansíveis e acesso às regras específicas. CST e enquadramento IPI são opcionais e persistidos no cadastro fiscal existente; itens que herdam a empresa recebem os valores, preservando exceções. Combinações incompatíveis de IPI são recusadas antes do envio, sem escolher códigos automaticamente. Sem migração ou alteração de cadastros de produção.
 
@@ -6464,3 +6464,5 @@ Revisão técnica 3.2.0.358 da página inicial: sem impacto operacional; conteú
 > Revisão local 3.2.0.430 — AvantaPreços: abrir pelo histórico respeita a referência atual do cadastro e seus cálculos; edição manual aguarda a conferência terminar. Atualizar cálculos salva a referência sem pesquisar, alterar saldo ou preços dos anúncios.
 
 Revisão 3.2.0.479: Dados para emissão → Aparência do DANFE usa o logo do perfil por padrão e permite um específico (ou sem logo). Próximos downloads atualizam somente apresentação a partir do XML autorizado, preservando os arquivos originais. Não emitir outra NF-e para mudar o layout.
+
+Revisão 3.2.0.480: preservação do telefone do emitente no DANFE; sem impacto operacional adicional.
