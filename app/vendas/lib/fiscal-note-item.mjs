@@ -1,6 +1,7 @@
 import {CSOSN_OPTIONS,ICMS_OPTIONS,CONTRIBUTION_OPTIONS,ORIGIN_OPTIONS} from './fiscal-tax-options.mjs';
 import {officialCfop} from './fiscal-cfop.mjs';
-export const IPI_NT_OPTIONS=[['01','Entrada tributada com alíquota zero'],['02','Entrada isenta'],['03','Entrada não tributada'],['04','Entrada imune'],['05','Entrada com suspensão'],['51','Saída tributada com alíquota zero'],['52','Saída isenta'],['53','Saída não tributada'],['54','Saída imune'],['55','Saída com suspensão']].map(([value,label])=>({value,label:`${value} — ${label}`}));
+import {IPI_NT_OPTIONS,validateIpiClassification} from './fiscal-ipi.mjs';
+export {IPI_NT_OPTIONS} from './fiscal-ipi.mjs';
 export const NOTE_ITEM_KEYS=['name','unit','ncm','cfop','taxableUnit','originCode','icmsCode','pisCst','cofinsCst','ipiCst','ipiLegalCode'];
 export function validateNoteItem(input){
  if(input===undefined)return '';
@@ -15,7 +16,7 @@ export function validateNoteItem(input){
   if(options[key]&&!options[key].some(option=>option.value===value))return 'Selecione uma classificação disponível para este item. IPI com destaque exige apuração específica e continua protegido.';
   if(key==='ipiLegalCode'&&!/^\d{3}$/.test(value))return 'O enquadramento do IPI deve ter três dígitos.';
  }
- if(input.ipiCst&&!input.ipiLegalCode)return 'Informe o enquadramento do IPI para este item.';
+ const ipiError=validateIpiClassification(input.ipiCst,input.ipiLegalCode);if(ipiError)return ipiError;
  return '';
 }
 export function applyNoteItemFiscal(base,override){

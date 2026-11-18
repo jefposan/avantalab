@@ -4,7 +4,7 @@ import {normalizeCompanyFiscalDefaults} from '../../app/vendas/lib/fiscal-tax-op
 import {handleFiscalEditorSettings} from '../../app/vendas/lib/server/fiscal-editor-settings.mjs';
 import {resolverFiscalProduto} from '../../app/lib/fiscal-produto.mjs';
 const company='10000000-0000-4000-8000-000000000001',other='20000000-0000-4000-8000-000000000001';
-const values=normalizeCompanyFiscalDefaults({origem_mercadoria_padrao:'0',csosn:'102',cst_pis:'08',cst_cofins:'08',cfop_venda_interna:'5102',cfop_venda_interestadual:'6102'});
+const values=normalizeCompanyFiscalDefaults({origem_mercadoria_padrao:'0',csosn:'102',cst_pis:'08',cst_cofins:'08',cst_ipi:'53',enquadramento_ipi:'999',cst_ibs_cbs:'000',classificacao_ibs_cbs:'000001',cfop_venda_interna:'5102',cfop_venda_interestadual:'6102'});
 test('PostgreSQL: padrões usam cadastro existente, preservam dados, outras empresas e detectam concorrência',async()=>{
  const db=new PGlite();try{
  await db.exec('create table cadastros_perfil(empresa_id uuid primary key,regime_tributario text,configuracao_fiscal jsonb,atualizado_em timestamptz default now(),documento text);create table vendas_fiscal_configuracoes(empresa_id uuid,matriz jsonb,situacao text)');
@@ -14,7 +14,7 @@ test('PostgreSQL: padrões usam cadastro existente, preservam dados, outras empr
  const repo=createCompanyFiscalDefaultsRepository(db);const before=await repo.load(company);assert.equal(before.values.csosn,'');assert.equal(before.values.cfop_venda_interestadual,'6102');
  const saved=await repo.save(company,values,before.version);assert.equal(saved.values.csosn,'102');assert.notEqual(saved.version,before.version);assert.deepEqual((await repo.load(company)).values,saved.values);
  const row=(await db.query('select * from cadastros_perfil where empresa_id=$1',[company])).rows[0];assert.equal(row.documento,'não alterar');assert.equal(row.configuracao_fiscal.cst_ibs_cbs,'000');assert.equal((await repo.load(other)).values.csosn,'');await assert.rejects(repo.save(company,values,before.version),/CONFLICT/);
- const inherited=resolverFiscalProduto({useCompanyFiscal:true,ncm:'84145110'},{taxRegime:'simples_nacional',fiscalConfiguration:row.configuracao_fiscal},{destination:'Fora da UF',cfop:'6102'});assert.equal(inherited.icmsCode,'102');assert.equal(inherited.pisCst,'08');assert.equal(inherited.cofinsCst,'08');
+ const inherited=resolverFiscalProduto({useCompanyFiscal:true,ncm:'84145110'},{taxRegime:'simples_nacional',fiscalConfiguration:row.configuracao_fiscal},{destination:'Fora da UF',cfop:'6102'});assert.equal(inherited.icmsCode,'102');assert.equal(inherited.pisCst,'08');assert.equal(inherited.cofinsCst,'08');assert.equal(inherited.ipiCst,'53');assert.equal(inherited.ipiLegalCode,'999');
  const exception=resolverFiscalProduto({useCompanyFiscal:false,icmsCode:'500',pisCst:'49'},{taxRegime:'simples_nacional',fiscalConfiguration:row.configuracao_fiscal});assert.equal(exception.icmsCode,'500');assert.equal(exception.pisCst,'49');
  }finally{await db.close();}
 });

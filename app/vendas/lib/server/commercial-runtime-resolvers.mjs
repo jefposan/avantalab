@@ -10,6 +10,7 @@ function fiscalConfiguration(value) {
     cfopInternal: clean(source.cfop_venda_interna),cfopInterstate:clean(source.cfop_venda_interestadual),
     originCode: /^[0-8]$/.test(clean(source.origem_mercadoria_padrao)) ? clean(source.origem_mercadoria_padrao) : '',
     cstIcms: clean(source.cst_icms), csosn: clean(source.csosn),
+    ipiCst:clean(source.cst_ipi),ipiLegalCode:clean(source.enquadramento_ipi),
     pisCst: clean(source.cst_pis), cofinsCst: clean(source.cst_cofins),
     ibsCbsCst: clean(source.cst_ibs_cbs), ibsCbsClassification: clean(source.classificacao_ibs_cbs),
   };

@@ -6,7 +6,7 @@ export function usaFiscalEmpresa(source = {}) {
   const choice = source.usar_fiscal_empresa ?? source.useCompanyFiscal;
   if (typeof choice === 'boolean') return choice;
   return !['cfop_padrao', 'cfop_interestadual', 'cfopInternal', 'cfopInterstate', 'cfop', 'cst', 'csosn', 'icmsCode',
-    'cst_pis', 'pisCst', 'cst_cofins', 'cofinsCst', 'cst_ibs_cbs', 'ibsCbsCst', 'classificacao_ibs_cbs', 'ibsCbsClassification']
+    'cst_pis', 'pisCst', 'cst_cofins', 'cofinsCst', 'cst_ipi', 'ipiCst', 'enquadramento_ipi', 'ipiLegalCode', 'cst_ibs_cbs', 'ibsCbsCst', 'classificacao_ibs_cbs', 'ibsCbsClassification']
     .some(key => text(source[key])) && !/^[1-8](?:\D|$)/.test(pick(source, 'origem_mercadoria', 'originCode', 'fiscalOriginCode'));
 }
 
@@ -17,6 +17,7 @@ export function padroesFiscaisEmpresa(profile = {}) {
     originCode: pick(source, 'origem_mercadoria_padrao', 'originCode'),
     icmsCode: simples ? pick(source, 'csosn') : pick(source, 'cst_icms', 'cstIcms'),
     pisCst: pick(source, 'cst_pis', 'pisCst'), cofinsCst: pick(source, 'cst_cofins', 'cofinsCst'),
+    ipiCst: pick(source,'cst_ipi','ipiCst'), ipiLegalCode:pick(source,'enquadramento_ipi','ipiLegalCode'),
     ibsCbsCst: pick(source, 'cst_ibs_cbs', 'ibsCbsCst'),
     ibsCbsClassification: pick(source, 'classificacao_ibs_cbs', 'ibsCbsClassification'),
   };
@@ -38,6 +39,7 @@ export function resolverFiscalProduto(product = {}, company = {}, operation = {}
     originCode: value('originCode', 'origem_mercadoria', 'originCode', 'fiscalOriginCode').split(/\D/)[0],
     icmsCode: value('icmsCode', simples ? 'csosn' : 'cst', 'icmsCode'),
     pisCst: value('pisCst', 'cst_pis', 'pisCst'), cofinsCst: value('cofinsCst', 'cst_cofins', 'cofinsCst'),
+    ipiCst:value('ipiCst','cst_ipi','ipiCst'),ipiLegalCode:value('ipiLegalCode','enquadramento_ipi','ipiLegalCode'),
     ibsCbsCst: value('ibsCbsCst', 'cst_ibs_cbs', 'ibsCbsCst'),
     ibsCbsClassification: value('ibsCbsClassification', 'classificacao_ibs_cbs', 'ibsCbsClassification'),
     cfop: manualCfop || text(operation.cfop),

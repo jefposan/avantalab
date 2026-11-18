@@ -34,6 +34,8 @@ export type ConfiguracaoFiscalEmpresa = {
   origem_mercadoria_padrao: string;
   cst_icms: string;
   csosn: string;
+  cst_ipi?: string;
+  enquadramento_ipi?: string;
   cst_pis: string;
   cst_cofins: string;
   cst_ibs_cbs: string;

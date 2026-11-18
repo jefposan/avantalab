@@ -1,19 +1,8 @@
 import {createHash} from 'node:crypto';
-export const DEFAULT_KEYS=['origem_mercadoria_padrao','csosn','cst_icms','cst_pis','cst_cofins','cfop_venda_interna','cfop_venda_interestadual'];
+export {DEFAULT_KEYS,validateCompanyFiscalDefaults} from './fiscal-defaults-validation.mjs';
+import {validateCompanyFiscalDefaults} from './fiscal-defaults-validation.mjs';
 export const defaultsVersion=value=>createHash('sha256').update(JSON.stringify(Object.entries(value||{}).sort(([a],[b])=>a.localeCompare(b)))).digest('hex');
-import {normalizeCompanyFiscalDefaults,CSOSN_OPTIONS,ICMS_OPTIONS,CONTRIBUTION_OPTIONS,ORIGIN_OPTIONS} from './fiscal-tax-options.mjs';
-import {officialCfop} from './fiscal-cfop.mjs';
-export function validateCompanyFiscalDefaults(input){
- if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>!DEFAULT_KEYS.includes(key)))return 'Revise os padrões fiscais da empresa.';
- const options={origem_mercadoria_padrao:ORIGIN_OPTIONS,csosn:CSOSN_OPTIONS,cst_icms:ICMS_OPTIONS,cst_pis:CONTRIBUTION_OPTIONS,cst_cofins:CONTRIBUTION_OPTIONS};
- for(const [key,value]of Object.entries(input)){
-  if(typeof value!=='string'||value.length>4)return 'Selecione os códigos nas listas de padrões fiscais.';
-  if(!value)continue;
-  if(options[key]&&!options[key].some(option=>option.value===value))return 'Um dos códigos tributários não existe na lista oficial.';
-  if(key.startsWith('cfop_')&&(!officialCfop(value)||!value.startsWith(key==='cfop_venda_interna'?'5':'6')))return 'Selecione CFOP de saída 5xxx dentro da UF e 6xxx fora da UF.';
- }
- return '';
-}
+import {normalizeCompanyFiscalDefaults} from './fiscal-tax-options.mjs';
 export function createCompanyFiscalDefaultsRepository(pool){
  const read=async companyId=>{const result=await pool.query('select regime_tributario,configuracao_fiscal,atualizado_em from public.cadastros_perfil where empresa_id=$1',[companyId]);const row=result.rows[0];if(!row)throw Error('NOT_FOUND');return row;};
  return {

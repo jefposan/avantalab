@@ -1,3 +1,4 @@
+import {validateIpiClassification} from './fiscal-ipi.mjs';
 import {newFiscalNoteFields,deliveryForecastAllowed} from './fiscal-note-editor.mjs';
 export const NFE_SP_XML_REFERENCE = '2026-09-05';
 export const NFE_SP_SCHEMA_PACKAGE = 'PL_010e_v1.02';
@@ -279,6 +280,7 @@ export function validateNfeSpXmlInput(inputValue, options) {
     if (item.icmsCode !== '102') errors.push(validationError('AV-NFE-ICMS', `${prefix}.icmsCode`, `Item ${index + 1}: o primeiro gerador suporta somente CSOSN 102; outros regimes permanecem bloqueados.`));
     if(item.ipiCst&&(!['01','02','03','04','05','51','52','53','54','55'].includes(item.ipiCst)||!/^\d{3}$/.test(item.ipiLegalCode)))errors.push(validationError('AV-NFE-IPI',`${prefix}.ipiCst`,`Item ${index+1}: revise o IPI. Apuração com destaque exige suporte específico e não será omitida silenciosamente.`));
     if (['01','02','03'].includes(item.pisCst)||['01','02','03'].includes(item.cofinsCst)) errors.push(validationError('AV-NFE-CONTRIBUTION-RATE',prefix,`Item ${index+1}: PIS/COFINS tributados exigem base e alíquota apuradas; este gerador não assume valores zero.`));
+    const ipiError=validateIpiClassification(item.ipiCst,item.ipiLegalCode);if(ipiError)errors.push(validationError('AV-NFE-IPI-ENQUADRAMENTO',`${prefix}.ipiLegalCode`,`Item ${index+1}: ${ipiError}`));
     if (!item.pisCst || !item.cofinsCst) errors.push(validationError('AV-NFE-PIS-COFINS', prefix, `Item ${index + 1}: informe os CST de PIS e COFINS.`));
   });
 

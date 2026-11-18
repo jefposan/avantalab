@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.477 -->
+<!-- ava-version: 3.2.0.478 -->
+
+> Revisão 3.2.0.478: Dados para emissão organiza os padrões da empresa em ICMS, IPI, PIS/COFINS, IBS/CBS e CFOP, com grupos expansíveis e acesso às regras específicas. CST e enquadramento IPI são opcionais e persistidos no cadastro fiscal existente; itens que herdam a empresa recebem os valores, preservando exceções. Combinações incompatíveis de IPI são recusadas antes do envio, sem escolher códigos automaticamente. Sem migração ou alteração de cadastros de produção.
 
 > Revisão 3.2.0.477: Preparação da assinatura recebe explicitamente o ambiente fiscal configurado no runtime, em vez de assumir homologação. Produção e homologação permanecem isoladas; não altera ambiente de notas, série, número reservado, dados, layout ou regras fiscais. Testes dos dois ambientes usam XSD e assinatura efêmera sem transmissão.
 

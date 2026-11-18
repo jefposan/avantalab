@@ -2499,3 +2499,7 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 @media(max-width:480px) { .note-item-editor .segmented { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 
 .order-item-tax-summary input[name=itemCfop]:not(:disabled):not([readonly]) { background:#fff; color:#172839; border:1px solid var(--av-border,#dce5ed); border-radius:10px; }
+
+.fiscal-defaults-panel .fiscal-tax-group { min-width:0; padding:0 0 14px; border-bottom:1px solid var(--av-border-soft); }
+.fiscal-defaults-panel .fiscal-tax-group > summary { min-height:44px; padding:12px 0; cursor:pointer; font-weight:600; color:var(--av-text-strong); }
+.fiscal-defaults-panel .fiscal-tax-group > summary:focus-visible { outline:2px solid var(--brand); outline-offset:2px; border-radius:4px; }

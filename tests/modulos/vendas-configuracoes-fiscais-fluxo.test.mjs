@@ -15,7 +15,9 @@ test('retorno da numeração preserva responsável, revisões e tipos de nota ai
 });
 test('abrir numeração suspende o card pai sem limpar sua seção nem perder o rascunho',()=>{
  const start=source.indexOf('function SettingsView(');const end=source.indexOf('export function VendasServicosPrototype',start);const view=source.slice(start,end);
- assert.match(view,/suspended=\{numberingOpen\} onOpenNumbering=\{onOpenNumbering\}/);
+ assert.match(view,/suspended=\{numberingOpen\|\|matrixOpen\}/);
+ assert.match(view,/onOpenNumbering=\{onOpenNumbering\}/);
+ assert.match(view,/onOpenRules=\{canConfigureFiscal\?\(\)=>setMatrixOpen\(true\):undefined\}/);
  assert.doesNotMatch(view,/onOpenNumbering=\{onOpenNumbering\?\(\)=>\{setSection\(null\)/);
  assert.match(source,/<Dialog open=\{!suspended\}/);
  assert.match(source,/numberingOpen=\{fiscalNumberingOpen\}/);
