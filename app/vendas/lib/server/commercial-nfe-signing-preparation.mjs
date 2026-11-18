@@ -183,6 +183,7 @@ export function createCommercialNfeSigningPreparationService({
   fiscalRuleResolver,
   schemaValidator = validateNfeXmlAgainstXsd,
   signatureLab = runNfeSignatureLab,
+  environment = 'homologacao',
 } = {}) {
   if (!repository?.load) throw new TypeError('Informe o repositório server-side da preparação de assinatura.');
   if (typeof fiscalRuleResolver !== 'function') throw new TypeError('Informe o resolvedor tributário server-side.');
@@ -196,7 +197,7 @@ export function createCommercialNfeSigningPreparationService({
       if (!UUID.test(normalizedEmissionId) || !Number.isInteger(expectedVersion) || expectedVersion < 1 || !KEY.test(normalizedKey)) return { ok: false, errors: [issue('AV-NFE-SIGNING-INPUT', 'emission', 'Atualize a Central Fiscal e tente novamente.')] };
       try {
         const data = await repository.load({ companyId: context.companyId, emissionId: normalizedEmissionId });
-        const reconstructed = await reconstructCommercialNfeSigningDocument({ data, expectedVersion, context, idempotencyKey: normalizedKey, fiscalRuleResolver, schemaValidator });
+        const reconstructed = await reconstructCommercialNfeSigningDocument({ data, expectedVersion, context, idempotencyKey: normalizedKey, fiscalRuleResolver, schemaValidator, environment });
         if (!reconstructed.ok) return reconstructed;
         const { generated, schema } = reconstructed;
         const lab = await signatureLab(generated.xml, data.draft.issuerSnapshot.document);

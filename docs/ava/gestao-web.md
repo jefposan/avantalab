@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.476 -->
+<!-- ava-version: 3.2.0.477 -->
+
+> Revisão 3.2.0.477: Preparação da assinatura recebe explicitamente o ambiente fiscal configurado no runtime, em vez de assumir homologação. Produção e homologação permanecem isoladas; não altera ambiente de notas, série, número reservado, dados, layout ou regras fiscais. Testes dos dois ambientes usam XSD e assinatura efêmera sem transmissão.
 
 > Revisão 3.2.0.476: Preserva o nome do destinatário na normalização repetida entre o mapeamento e a geração do XML de produção. Mantém a validação de nome realmente ausente e o texto obrigatório de homologação. Regressão cobre mapeamento, XML/XSD, assinatura e DANFE com dados sintéticos, sem transmissão. Sem alteração do cadastro, layout ou regras fiscais.
 

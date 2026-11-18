@@ -384,6 +384,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     const nfeSigningPreparationService = fiscalWorkflowEnabled ? createCommercialNfeSigningPreparationService({
       repository: createPostgresCommercialNfeSigningPreparationRepository({ pool }),
       fiscalRuleResolver,
+      environment: fiscalEnvironment,
     }) : null;
     const nfeSigningService = fiscalWorkflowEnabled ? createSigningRuntime({ environment, databaseUrl, pool, certificateRuntime, fiscalRuleResolver, fiscalLifecycle, artifactStorage }) : null;
     const nfeStatusServiceAdapter = certificateRuntime?.nfeStatusServiceAdapter || null;
