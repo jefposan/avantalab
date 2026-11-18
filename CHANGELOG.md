@@ -1,3 +1,10 @@
+# 3.2.0.486 — Custos e Precificação: catálogos, edição e preços por destino
+
+- Chaves oficiais por destino com etiquetas de estado e realce local, sem borda verde no card inteiro.
+- Gerenciar produtos abre o catálogo escolhido para edição, mesmo desativado; Produtos e serviços permite Todos ou um catálogo.
+- Tabelas de preços e exportação exibem apenas catálogos ativos em Vendas e Serviços, sem excluir cadastros ou preços armazenados.
+- Reajuste em lote segue o mesmo escopo local em migração aditiva, sem modificar a publicação própria do AvantaVendas.
+
 # 3.2.0.485 — Vendas e Serviços: corrigir cinco prioridades da auditoria
 
 - Projeção server-side de custos em operações, OS, estoque e respostas do ciclo comercial, sem modificar retratos persistidos.

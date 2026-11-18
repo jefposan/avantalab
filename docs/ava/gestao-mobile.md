@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.485 -->
+<!-- ava-version: 3.2.0.486 -->
+
+> Revisão 3.2.0.486: em Custos Web, chaves independentes com etiquetas identificam cada destino. Gerenciar produtos abre o catálogo selecionado para edição, mesmo sem destino ativo; Produtos e serviços permite Todos os catálogos ou um catálogo. Tabelas de preços e exportação incluem somente catálogos ativos em Vendas e Serviços; desativados não são excluídos do cadastro. Reajuste local segue o mesmo escopo. Publicação do AvantaVendas e registros anteriores preservados. Sem mudança de interface na Gestão Mobile.
 
 > Revisão 3.2.0.485: Vendas e Serviços: custos são omitidos no servidor sem Visualizar custos; limite de desconto da empresa fica protegido no servidor (padrão 15%), e somente usuários com Aprovar desconto podem ultrapassá-lo. Listas percorrem todas as páginas antes de alimentar buscas e totais, sem publicar carga parcial como completa. Códigos tributários sem suporte no gerador aparecem indisponíveis, sem substituir valores gravados nem alterar regras fiscais. Cadastros e consulta preservam CNPJ alfanumérico, com máscara e validação compartilhadas; CPF e CNPJ numéricos continuam compatíveis. Emitente com letras permanece explicitamente bloqueado até homologar o ciclo completo de chave/assinatura; não prometer essa emissão.
 

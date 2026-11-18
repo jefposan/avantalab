@@ -349,7 +349,7 @@ export default function TabelasPrecosView({
       </div></div>
       <div className={styles.tableWrap}><table><thead><tr><th scope="col">Código</th><th scope="col">Produto ou serviço</th><th scope="col">Preço padrão</th><th scope="col">Preço nesta tabela</th></tr></thead><tbody>
         {produtosFiltrados.map((produto) => <tr key={produto.id}><td><b>{produto.sku}</b></td><td>{produto.nome}<small>{produto.tipo_item === 'servico' ? 'Serviço' : 'Produto'} · {produto.unidade}</small></td><td className={styles.numeric}>{formatarMoeda(produto.preco_venda)}</td><td className={styles.priceEditorCell}><PriceEditor value={precoEfetivoTabela(tabelaAtiva, produto, precos)} disabled={!podeEditar || !tabelaAtiva.ativo || processando} onSave={async (valor) => { try { await salvarPrecoTabela(companyId, tabelaAtiva.id, produto.id, valor); await onRecarregar(); } catch (falha) { onErro(falha instanceof Error ? falha.message : 'Não foi possível salvar o preço.'); throw falha; } }} /></td></tr>)}
-        {!produtosFiltrados.length && <tr><td colSpan={4} className={styles.empty}>Nenhum produto localizado.</td></tr>}
+        {!produtosFiltrados.length && <tr><td colSpan={4} className={styles.empty}>{produtos.length ? 'Nenhum produto ou serviço localizado.' : 'Nenhum produto ou serviço em catálogos ativos em Vendas e Serviços.'}</td></tr>}
       </tbody></table></div>
     </section> : <section className={styles.panel}><p className={styles.empty}>A tabela padrão ainda não foi preparada.</p></section>}
 

@@ -169,32 +169,29 @@ test('ações da planilha usam a mesma tipografia e área de toque no novo catá
   assert.match(estilos, /@media\(max-width:560px\)\{\.catalogImportActions\{display:grid;grid-template-columns:1fr\}/);
 });
 
-test('empresa organiza múltiplos catálogos e Produtos e serviços segue o destino automaticamente', () => {
+test('empresa organiza catálogos com edição independente dos destinos e preços locais filtrados', () => {
+  assert.match(workspace, /ChaveAtivacao/);
+  assert.match(workspace, /Gerenciar produtos/);
+  assert.match(workspace, /aria-label="Filtrar por catálogo"/);
+  assert.match(workspace, /Todos os catálogos/);
+  assert.match(workspace, /produtosParaCadastro\(produtos, catalogos, catalogoFiltroId\)/);
+  assert.match(workspace, /produtos=\{produtosParaTabelas\(produtosDisponiveis, catalogos\)\}/);
+  assert.doesNotMatch(workspace, /styles\.catalogCardCurrent/);
   assert.match(workspace, /rotulo: 'Catálogos'/);
   assert.match(workspace, /title="Catálogos"/);
   assert.match(workspace, /Novo catálogo/);
-  assert.match(workspace, /catalogo\.ativo \? desativarCatalogo\(catalogo\) : ativarCatalogo\(catalogo\)/);
   assert.doesNotMatch(workspace, /Tornar atual/);
-  assert.match(workspace, /ativoEmAlgumDestino \? styles\.catalogCardCurrent : styles\.catalogCardInactive/);
   assert.match(workspace, /<strong>Vendas e Serviços<\/strong>/);
   assert.match(workspace, /<strong>AvantaVendas<\/strong>/);
-  assert.match(estilos, /\.catalogCardCurrent\{border:4px solid var\(--success\)/);
   assert.match(workspace, /Catálogos da empresa/);
-  assert.doesNotMatch(workspace, /Todos os catálogos/);
-  assert.doesNotMatch(workspace, /aria-label="Filtrar por catálogo"/);
-  assert.doesNotMatch(workspace, /catalogoFiltroId/);
-  assert.match(workspace, /catalogosVendasIds = new Set\(catalogos\.filter\(\(catalogo\) => catalogo\.ativo\)\.map\(\(catalogo\) => catalogo\.id\)\)/);
-  assert.match(workspace, /produtos\.filter\(\(produto\) => catalogosVendasIds\.has\(produto\.catalogo_id\)\)/);
   assert.match(workspace, /const listaFiltrada = produtosCatalogo\.filter/);
   assert.match(workspace, /produtosCatalogo\.filter\(\(produto\) => produto\.tipo_item === 'produto'\)\.length/);
-  assert.match(workspace, /Itens de todos os catálogos ativos em Vendas e Serviços/);
-  assert.match(workspace, /Nenhum catálogo está ativo em Vendas e Serviços\./);
   assert.match(workspace, /catalogoIdsAssinatura\.split\(','\)\.filter\(Boolean\)/);
   assert.match(workspace, /filter: `catalogo_id=eq\.\$\{id\}`/);
   assert.match(workspace, /<table className=\{styles\.catalogProductsTable\}><colgroup>(<col \/>){8}<\/colgroup>/);
   assert.match(estilos, /\.catalogProductsTable\{min-width:1060px;table-layout:fixed\}/);
   assert.match(estilos, /\.catalogProductsTable td\{height:48px\}/);
-  assert.match(workspace, /const novo = novoProduto\(tipo, catalogoId\)/);
+  assert.match(workspace, /const novo = novoProduto\(tipo, catalogoFiltroId \|\| catalogoId\)/);
   assert.doesNotMatch(workspace, /Catálogo para novo cadastro/);
   assert.match(workspace, /label="Catálogo"/);
   assert.match(workspace, /mover_catalogo/);
