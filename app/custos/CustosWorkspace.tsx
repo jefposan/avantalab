@@ -22,6 +22,7 @@ import {
 } from './types';
 import styles from './custos.module.css';
 import ChaveAtivacao from '@/app/components/ChaveAtivacao';
+import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
 import { produtosParaCadastro, produtosParaTabelas } from './catalogos-visibilidade';
 import { excluirCatalogoEmpresa } from './repository';
 
@@ -340,8 +341,11 @@ function CatalogosView({ onGerenciar, companyId, catalogos, fornecedores, podeEd
             <div className={catalogo.publicado_avantavendas ? styles.catalogDestinationActive : undefined}><span><strong>AvantaVendas</strong><small className={styles.destinationBadge}>{catalogo.publicado_avantavendas ? '✓ Ativo' : 'Desativado'}</small></span><ChaveAtivacao data-destino="avantavendas" aria-label={`AvantaVendas — ${catalogo.nome}`} checked={catalogo.publicado_avantavendas} disabled={!podeEditar || salvando} onChange={(ativo) => void alterarPublicacao(catalogo, ativo)} /></div>
           </div>
           <div className={styles.catalogMeta}><span>Atualizado {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(catalogo.atualizado_em))}</span></div>
-          <button type="button" className={styles.secondaryButton} onClick={() => onGerenciar(catalogo.id)}>Gerenciar produtos</button>
-          {podeEditar && <div className={styles.catalogActions}><button type="button" className={styles.secondaryButton} disabled={salvando} onClick={() => abrirEdicao(catalogo)}>Editar</button>{catalogo.origem === 'manual' && !['CUSTOS_LOCAL', 'PRINCIPAL'].includes(catalogo.codigo) && <button type="button" className={styles.dangerButton} disabled={salvando} aria-label={`Excluir catálogo ${catalogo.nome}`} onClick={() => { setErroExcluirCatalogo(''); setCatalogoExcluir(catalogo); }}>Excluir</button>}</div>}
+          <div className={styles.catalogActionRow} role="group" aria-label={`Ações do catálogo ${catalogo.nome}`}>
+            <BotaoAcaoCompacto disabled={salvando} onClick={() => onGerenciar(catalogo.id)}>Gerenciar produtos</BotaoAcaoCompacto>
+            <BotaoAcaoCompacto disabled={!podeEditar || salvando} onClick={() => abrirEdicao(catalogo)}>Editar</BotaoAcaoCompacto>
+            <BotaoAcaoCompacto variante="destrutivo" disabled={!podeEditar || salvando || catalogo.origem !== 'manual' || ['CUSTOS_LOCAL', 'PRINCIPAL'].includes(catalogo.codigo)} title={catalogo.origem !== 'manual' || ['CUSTOS_LOCAL', 'PRINCIPAL'].includes(catalogo.codigo) ? 'Catálogo do sistema: exclusão indisponível.' : 'Excluir catálogo'} aria-label={`Excluir catálogo ${catalogo.nome}`} onClick={() => { setErroExcluirCatalogo(''); setCatalogoExcluir(catalogo); }}>Excluir</BotaoAcaoCompacto>
+          </div>
         </article>;
       })}
       {!catalogos.length && <div className={styles.empty}>Nenhum catálogo foi encontrado para esta empresa.</div>}

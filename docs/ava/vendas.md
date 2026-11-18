@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.488 -->
+<!-- ava-version: 3.2.0.489 -->
+
+> Revisão 3.2.0.489: nos cards de Catálogos de Custos Web, Gerenciar produtos, Editar e Excluir aparecem na mesma linha. Nos catálogos de sistema, Excluir é visível e desabilitado. Permissões e confirmação de exclusão preservadas. Sem impacto operacional na Gestão Mobile ou em Vendas.
 
 > Revisão 3.2.0.488: na lista de Produtos e serviços de Custos Web, Voltar fica antes de Novo serviço e retorna aos Catálogos. Cabeçalho e filtros permanecem fora da rolagem; role apenas os produtos com mouse, toque ou teclado, sem barra visível. Sem alteração de dados, editor, Gestão Mobile ou operações de Vendas.
 

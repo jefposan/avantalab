@@ -1,3 +1,9 @@
+# 3.2.0.489 — Custos e Precificação: ações dos catálogos alinhadas
+
+- Gerenciar produtos, Editar e Excluir ficam na mesma linha em todos os catálogos, usando os botões compactos oficiais.
+- Excluir permanece visível e desabilitado nos catálogos protegidos. Acesso de edição e confirmação destrutiva preservados; sem mudanças de banco.
+- Menu de ações dos produtos com largura limitada à janela; Editar cadastro não ultrapassa a área disponível.
+
 # 3.2.0.488 — Custos e Precificação: retorno aos catálogos e lista com topo fixo
 
 - Voltar antes de Novo serviço retorna à área Catálogos sem alterar o filtro ou os cadastros.

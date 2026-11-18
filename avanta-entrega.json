@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_7P7DquAziyqH1DUd1SuMraDnfQsY",
+  "baseDeploymentId": "dpl_EUD3doHYJCFra7uEv3F8nB71AgyD",
   "migrations": [],
-  "version": "3.2.0.488",
-  "scope": "Custos e Precificação: Voltar aos Catálogos antes de Novo serviço, topo e filtros fixos com rolagem somente na lista sem barra visível. Sem mudanças de banco; adequação fiscal local 487 do outro chat não incluída."
+  "version": "3.2.0.489",
+  "scope": "Custos e Precificação: ações dos catálogos na mesma linha, Excluir desabilitado nos protegidos e largura do menu Editar cadastro limitada à janela. Sem mudanças de banco ou inclusão do trabalho fiscal local do outro chat."
 }
