@@ -7,6 +7,8 @@ PL_Evento.zip SHA-256: 7995ad7865cf3710655ee5e3162ff10bd9725358e3f67523256667e9c
 
 Os sete XSDs oficiais foram extraídos sem alteração. evento_v1.00.xsd é composição local da raiz individual sobre TEvento, explicitamente identificada. O pacote histórico permanece intacto. O detEvento é validado adicionalmente pelo e110111_v1.00.xsd histórico, preservando a validação específica de cancelamento.
 
+Os atributos Git locais preservam CRLF e espaços dos arquivos de origem; não aplicar limpeza automática de whitespace ao pacote oficial.
+
 Hashes dos originais:
 {
   "envEvento_v1.00.xsd": "e4d61ba81582b5f1f9a2a4b135d33f4c1ec1c8f9138a2343a9abfffa02bb2777",

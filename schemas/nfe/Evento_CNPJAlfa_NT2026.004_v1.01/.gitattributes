@@ -1,0 +1,2 @@
+# Pacote oficial: preservar os bytes/CRLF e espaços presentes na origem.
+*.xsd -text -whitespace
