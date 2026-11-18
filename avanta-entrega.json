@@ -1,6 +1,6 @@
 {
   "baseDeploymentId": "dpl_7Gtaoxf8y1AfNfoSQRnPRd9BsdFH",
   "migrations": [],
-  "version": "3.2.0.473",
-  "scope": "Configurações fiscais recupera a rolagem interna para alcançar todos os campos, com cabeçalho e rodapé fixos. Listas flutuantes continuam acima do card. Sem alteração de dados ou regras fiscais. Inclui os ajustes pendentes de listas e CFOP da 472."
+  "version": "3.2.0.474",
+  "scope": "Resumo da nota mantém posicionamento flutuante centralizado, sem limite de altura nem barra de rolagem interna. Em tela baixa, o conteúdo acompanha a rolagem da página para manter as ações alcançáveis. Correção restrita ao resumo, preservando campos, cálculos e regras fiscais. Inclui os ajustes locais pendentes 472 e 473."
 }

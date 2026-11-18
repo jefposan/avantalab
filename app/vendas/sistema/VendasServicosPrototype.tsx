@@ -1293,10 +1293,10 @@ function NewOrderView({ companyId = '', fiscalEditor, correction, onSaveClient, 
     const update=()=>{
       const viewport=window.innerHeight;
       const headerHeight=header?.getBoundingClientRect().height||0;
-      const available=Math.max(120,viewport-headerHeight-32);
-      const height=Math.min(summary.scrollHeight,available);
-      summary.style.setProperty('--note-summary-top',`${Math.max(headerHeight+16,(viewport+headerHeight-height)/2)}px`);
-      summary.style.setProperty('--note-summary-max-height',`${available}px`);
+      const height=summary.scrollHeight;
+      // Mantém o resumo centralizado; conteúdo alto acompanha a página, sem rolagem interna.
+      const centered=Math.max(headerHeight+16,(viewport+headerHeight-height)/2);
+      summary.style.setProperty('--note-summary-top',`${Math.min(centered,viewport-height-16)}px`);
     };
     const observer=new ResizeObserver(update);
     observer.observe(summary);if(header)observer.observe(header);

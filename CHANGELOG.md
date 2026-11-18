@@ -1,3 +1,7 @@
+# 3.2.0.474 — Fiscal: resumo flutuante sem rolagem interna
+
+Resumo da nota mantém posicionamento flutuante centralizado, sem limite de altura nem barra de rolagem interna. Em tela baixa, o conteúdo acompanha a rolagem da página para manter as ações alcançáveis. Correção restrita ao resumo, preservando campos, cálculos e regras fiscais.
+
 # 3.2.0.473 — Fiscal: recuperar rolagem das configurações
 
 Configurações fiscais recupera a rolagem interna para alcançar todos os campos, com cabeçalho e rodapé fixos. Listas flutuantes continuam acima do card. Sem alteração de dados ou regras fiscais.

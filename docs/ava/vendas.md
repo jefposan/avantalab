@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.473 -->
+<!-- ava-version: 3.2.0.474 -->
+
+> Revisão 3.2.0.474: Resumo da nota mantém posicionamento flutuante centralizado, sem limite de altura nem barra de rolagem interna. Em tela baixa, o conteúdo acompanha a rolagem da página para manter as ações alcançáveis. Correção restrita ao resumo, preservando campos, cálculos e regras fiscais.
 
 > Revisão 3.2.0.473: Configurações fiscais recupera a rolagem interna para alcançar todos os campos, com cabeçalho e rodapé fixos. Listas flutuantes continuam acima do card. Sem alteração de dados ou regras fiscais.
 

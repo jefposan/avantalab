@@ -2442,7 +2442,7 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 
 /* Resumo fiscal acompanha a coluna sem sobrepor o preenchimento. */
 @media (min-width: 921px) {
-  .order-summary.note-summary-floating { position: sticky; top: var(--note-summary-top,96px); max-height: var(--note-summary-max-height,calc(100dvh - 112px)); overflow-y: auto; scrollbar-width: thin; }
+  .order-summary.note-summary-floating { position: sticky; top: var(--note-summary-top,96px); max-height: none; overflow: visible; }
 }
 @media (max-width: 1050px) {
   .note-local-page .order-summary.note-summary-floating { position: static; max-height: none; overflow: visible; }
