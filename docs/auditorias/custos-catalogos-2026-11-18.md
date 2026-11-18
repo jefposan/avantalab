@@ -1,6 +1,6 @@
 # Custos e Precificação — entrega 3.2.0.486
 
-- Branch isolada criada da main oficial; entrega rebaseada sobre `65dbc774b85376f87d0466341462ecafc93e5c1d`, preservando as cinco prioridades de Vendas e Serviços do chat paralelo.
+- Branch isolada criada da main oficial; entrega rebaseada sobre `99770b418c6702af2563885c1ed4d3cf1e100c67`, preservando as cinco prioridades de Vendas e Serviços do chat paralelo e a correção do mock de validação CNPJ exigida pelo build completo.
 - Numeração de Custos avançada de candidata 485 para 486 após a entrega paralela assumir 485. Nenhuma troca de branch do checkout compartilhado.
 - Cadastro administrativo independente dos destinos: Todos ou catálogo escolhido, acesso Gerenciar produtos e chaves oficiais por destino.
 - Tabelas de preços e exportação limitadas aos catálogos ativos em Vendas e Serviços, sem excluir cadastros ou preços armazenados.
