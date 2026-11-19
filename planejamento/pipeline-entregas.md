@@ -26,10 +26,15 @@ continuam bloqueadas. Build completo permanece obrigatório.
   scripts próprios compactos e `next build --webpack`, com TypeScript obrigatório.
 - O runner descobre arquivos `.test.mjs` na raiz de tests e em toda subpasta,
   sem depender do glob do shell. Um teste falho mantém saída não zero.
-- Em dois núcleos usa dois processos isolados, em vez do padrão Node de um.
-  Localmente limita também a dois para evitar pressão de memória em Macs de
-  8 GB (PostgreSQL/WASM por processo); um núcleo continua com um processo.
-  `AVANTA_TEST_CONCURRENCY=1` ou `2` permite reproduzir medições.
+- Localmente limita a dois processos para evitar pressão de memória em Macs
+  de 8 GB (PostgreSQL/WASM por processo); um núcleo usa um processo.
+- Em `VERCEL=1`, usa até quatro processos, limitados à CPU disponível e a um
+  orçamento conservador de 2 GiB por processo mais 4 GiB de reserva. Na Enhanced
+  de 8 CPUs/16 GiB, o teto inicial é quatro; Standard 4 CPUs/8 GiB mantém dois.
+  O limite de memória usa o menor entre a restrição do processo e a RAM total.
+  Memória desconhecida mantém teto de dois. Não muda máquina, plano ou fila.
+- `AVANTA_TEST_CONCURRENCY=1` ou `2` permite reproduzir medições em qualquer
+  ambiente; `3` e `4` somente na Vercel, ainda limitados pelos recursos detectados.
 - Não há cache de aprovação: todos os testes executam sempre. Cache adicional
   de compilação do Node foi experimentado, mas não ativado por padrão porque
   não demonstrou ganho consistente. Um opt-in externo do Node é preservado;

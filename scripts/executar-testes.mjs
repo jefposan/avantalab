@@ -1,16 +1,28 @@
 import { spawn } from 'node:child_process';
 import { lstatSync, readdirSync } from 'node:fs';
-import { availableParallelism } from 'node:os';
+import { availableParallelism, totalmem } from 'node:os';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-export function concorrenciaTestes(valor, nucleos = availableParallelism()) {
-  if (valor !== undefined && !/^[12]$/.test(String(valor))) {
-    throw new Error('AVANTA_TEST_CONCURRENCY deve ser 1 ou 2.');
+export function memoriaLimiteTestes() {
+  const restrita = process.constrainedMemory?.() || 0;
+  const total = totalmem();
+  return restrita > 0 ? Math.min(restrita, total) : total;
+}
+
+export function concorrenciaTestes(valor, nucleos = availableParallelism(), ambiente = process.env, memoriaBytes = memoriaLimiteTestes()) {
+  const vercel = ambiente.VERCEL === '1';
+  if (valor !== undefined && !(vercel ? /^[1-4]$/ : /^[12]$/).test(String(valor))) {
+    throw new Error(`AVANTA_TEST_CONCURRENCY deve ser ${vercel ? '1, 2, 3 ou 4 na Vercel' : '1 ou 2 no computador local'}.`);
   }
-  // Dois núcleos na Vercel; limite local também evita vários PostgreSQL/WASM
-  // disputando a memória dos Macs de 8 GB e travando a interface.
-  return Math.min(Number(valor ?? 2), Math.max(1, nucleos));
+  const cpu = Number.isSafeInteger(nucleos) && nucleos > 0 ? nucleos : 1;
+  // Reserva conservadora de 4 GiB para o build e 2 GiB por processo de testes.
+  // O computador local continua limitado a dois, independentemente da CPU/RAM.
+  const memoriaGiB = memoriaBytes / 1024 ** 3;
+  const limiteMemoria = Number.isFinite(memoriaGiB) && memoriaGiB > 0
+    ? Math.max(1, Math.floor((memoriaGiB - 4) / 2)) : 2;
+  const limite = vercel ? Math.min(4, limiteMemoria) : 2;
+  return Math.min(Number(valor ?? limite), cpu, limite);
 }
 
 // Descoberta explícita: inclui também testes na raiz e em subpastas profundas.
@@ -52,9 +64,12 @@ export function ambienteTeste(ambiente = process.env) {
 
 export async function executarTestes({ raiz = process.cwd(), selecao, ambiente = process.env } = {}) {
   const arquivos = arquivosTeste(raiz, selecao);
-  const concorrencia = concorrenciaTestes(ambiente.AVANTA_TEST_CONCURRENCY);
+  const nucleos = availableParallelism();
+  const memoria = memoriaLimiteTestes();
+  const concorrencia = concorrenciaTestes(ambiente.AVANTA_TEST_CONCURRENCY, nucleos, ambiente, memoria);
   const env = ambienteTeste(ambiente);
   console.log(`[testes] ${arquivos.length} arquivos; ${concorrencia} processos isolados; suíte ${selecao?.length ? 'selecionada' : 'completa'}.`);
+  console.log(`[testes] ambiente ${ambiente.VERCEL === '1' ? 'Vercel' : 'local'}; ${nucleos} CPUs disponíveis; limite de memória ${(memoria / 1024 ** 3).toFixed(1)} GiB; sem cache de aprovação.`);
   const inicio = performance.now();
   const filho = spawn(process.execPath, [
     '--no-warnings', '--experimental-strip-types', '--test',

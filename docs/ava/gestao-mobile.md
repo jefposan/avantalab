@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.491 -->
+<!-- ava-version: 3.2.0.492 -->
+
+> Revisão 3.2.0.492: sem impacto operacional. Ajuste técnico do executor de testes na Vercel; recursos nativos e regras de negócio preservados.
 
 > Revisão 3.2.0.491: sem impacto operacional na Gestão Mobile; ajuste restrito à seleção de colunas do Excel em Custos Web.
 

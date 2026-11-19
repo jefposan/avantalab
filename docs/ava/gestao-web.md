@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.491 -->
+<!-- ava-version: 3.2.0.492 -->
+
+> Revisão 3.2.0.492: sem impacto operacional. Ajuste técnico do executor de testes, limitado aos recursos atuais da Vercel e validado em preview; sem alteração de telas ou regras de negócio.
 
 > Revisão 3.2.0.491 : seleção de colunas do Excel tem Selecionar todos/Desmarcar todos no cabeçalho do cadastro e seleção em lote independente para tabelas (inclui Preço padrão). O controle Exibir mais campos do cadastro para seleção abre as opções; recolher não limpa as escolhas. Contadores acompanham cada grupo. Sem mudança de importação ou banco.
 

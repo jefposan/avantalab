@@ -1,3 +1,9 @@
+# 3.2.0.492 — Infraestrutura: paralelismo controlado de testes na Vercel
+
+- Executor reconhece Vercel e usa até quatro processos, respeitando CPU e memória disponíveis na máquina atual; computador local permanece limitado a dois.
+- Reserva de memória, configuração explícita limitada, falhas propagadas e suíte completa obrigatória. Sem cache de aprovação, mudança de máquina/plano, fila ou banco.
+- Medição em preview antes de qualquer promoção; sem impacto operacional na Ava ou nos aplicativos.
+
 # 3.2.0.491 — Custos e Precificação: seleção em lote e expansão descritiva
 
 - Selecionar todos/Desmarcar todos à direita do cabeçalho dos campos do cadastro, sem alterar tabelas de preços.

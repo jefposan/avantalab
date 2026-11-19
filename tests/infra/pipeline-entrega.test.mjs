@@ -32,11 +32,26 @@ async function temporario(acao) {
 }
 
 test('concorrência limitada usa dois processos em dois núcleos, sem aumentar a máquina', () => {
-  assert.equal(concorrenciaTestes(undefined, 2), 2);
-  assert.equal(concorrenciaTestes(undefined, 1), 1);
-  assert.equal(concorrenciaTestes('1', 8), 1);
-  assert.equal(concorrenciaTestes(undefined, 8), 2);
-  for (const valor of ['0', '7', '8', 'texto', '']) assert.throws(() => concorrenciaTestes(valor), /1 ou 2/);
+  assert.equal(concorrenciaTestes(undefined, 2, {}), 2);
+  assert.equal(concorrenciaTestes(undefined, 1, {}), 1);
+  assert.equal(concorrenciaTestes('1', 8, {}), 1);
+  assert.equal(concorrenciaTestes(undefined, 8, {}), 2);
+  for (const valor of ['0', '3', '4', '7', '8', 'texto', '']) assert.throws(() => concorrenciaTestes(valor, 8, {}), /1 ou 2/);
+});
+
+test('Vercel aproveita a máquina existente com teto de quatro e orçamento de memória', () => {
+  const gib=1024**3, vercel={VERCEL:'1'};
+  assert.equal(concorrenciaTestes(undefined,8,vercel,16*gib),4);
+  assert.equal(concorrenciaTestes(undefined,4,vercel,8*gib),2);
+  assert.equal(concorrenciaTestes(undefined,1,vercel,16*gib),1);
+  assert.equal(concorrenciaTestes(undefined,8,vercel,6*gib),1);
+  assert.equal(concorrenciaTestes(undefined,8,vercel,NaN),2);
+  assert.equal(concorrenciaTestes(undefined,30,vercel,60*gib),4);
+  assert.equal(concorrenciaTestes('2',8,vercel,16*gib),2);
+  assert.equal(concorrenciaTestes('3',8,vercel,16*gib),3);
+  assert.equal(concorrenciaTestes('4',8,vercel,8*gib),2);
+  assert.equal(concorrenciaTestes(undefined,8,{VERCEL:'true'},16*gib),2);
+  for(const valor of ['0','5','8','2.5','texto','']) assert.throws(()=>concorrenciaTestes(valor,8,vercel,16*gib),/1, 2, 3 ou 4/);
 });
 
 test('descoberta não perde testes na raiz/profundos, não segue symlink e recusa seleção vazia/externa', () => temporario(async pasta => {
