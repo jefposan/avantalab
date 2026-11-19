@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_GJfZNJpPZBvVeJm4zweFM8WR17AC",
-  "migrations": [],
-  "version": "3.2.0.505",
-  "scope": "Usuários: e-mail opcional para equipe e edição segura dos acessos"
+  "baseDeploymentId": "dpl_6Qd4cb2A4wZZPUi3NmDHYTgnLSZs",
+  "migrations": [{"path":"supabase/migrations/20261119193000_vendas_politica_runtime.sql","sha256":"d368843fe07e71bd609d71838ca4b077b51ccd1395ace4e07addc9ea57ca9e02"}],
+  "version": "3.2.0.506",
+  "scope": "Usuários e pedidos: senha da equipe, busca de clientes, confirmação e estoque negativo; permissão restrita de políticas comerciais"
 }

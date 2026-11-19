@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
+import {createPostgresCommercialStockRepository,createCommercialStockService} from '../../app/vendas/lib/server/commercial-stock-service.mjs';
 import {createPostgresCommercialOperationRepository} from '../../app/vendas/lib/server/commercial-operation-repository.mjs';
 import {createCommercialOperationService} from '../../app/vendas/lib/server/commercial-operation-service.mjs';
 import {createPostgresCommercialSalesOrderLifecycleRepository,createCommercialSalesOrderLifecycleService} from '../../app/vendas/lib/server/commercial-sales-order-lifecycle.mjs';
@@ -70,4 +71,39 @@ test('local principal inativo não gera movimentos',()=>fixture(async({db,life,c
 }));
 test('quantidades fracionadas respeitam a precisão de três casas do estoque',()=>fixture(async({db,life,command,balance,create})=>{
  const id=await create('late:fraction',[0.1]);await db.query('update vendas_estoque_saldos set saldo_fisico=0.3,saldo_reservado=0.2');await life.postStock(await command(id,'late:decimal'));assert.deepEqual(await balance(),[0.3,0.3]);
+}));
+
+test('pedido faturado sai de zero para -3 e entrada posterior de 5 resulta em 2, sem repetir baixa',()=>fixture(async({db,life,billing,command,balance,create})=>{
+ const id=await create('negative:late',[3]);
+ await life.startSeparation(await command(id,'negative:separate'));
+ await billing.invoice({...await command(id,'negative:invoice'),moveStock:false,issuerSnapshot:{}});
+ await db.query('update vendas_estoque_saldos set saldo_fisico=0');
+ const input={...await command(id,'negative:debit'),allowNegativeStock:true};
+ await life.postStock(input);assert.deepEqual(await balance(),[-3,0]);
+ assert.equal((await life.postStock(input)).reused,true);assert.deepEqual(await balance(),[-3,0]);
+ await db.exec("alter table vendas_mobile_catalogo_produtos add column sku text default 'P1',add column nome text default 'Produto teste';alter table vendas_estoque_movimentos add column data_movimentacao date default current_date;");
+ const pool={query:(...a)=>db.query(...a),connect:async()=>({query:(...a)=>db.query(...a),release(){}})};
+ const stock=createCommercialStockService({repository:createPostgresCommercialStockRepository({pool})});
+ const date=(await db.query("select to_char(now() at time zone 'America/Sao_Paulo','YYYY-MM-DD') data")).rows[0].data;
+ const entry=await stock.move({context:{...context,effectivePermissions:{...context.effectivePermissions,'stock.entry':true}},productId,localId,idempotencyKey:'negative:entry-five',mode:'entrada',amount:5,date,document:'Entrada teste'});
+ assert.equal(entry.ok,true,JSON.stringify(entry.errors));assert.deepEqual(await balance(),[2,0]);
+ assert.equal(entry.balance.current,2);
+}));
+test('sem saldo inicial, reserva negativa usa local principal e faturamento/cancelamento recompõem saldo',()=>fixture(async({db,life,billing,command,balance,operationService})=>{
+ const r=await operationService.create({context,input:{type:'pedido',channel:'vendas',customerId,reserveStock:true,fiscalDocument:'nenhum',idempotencyKey:'negative:new-zero',payment:{method:'pix',installments:1,firstDueDate:'2026-11-19'},items:[{catalogItemId:productId,quantity:3,unitPrice:99}]}});
+ assert.equal(r.ok,true,JSON.stringify(r.errors));const id=r.operation.id;
+ await db.query('delete from vendas_estoque_saldos');
+ await life.confirm({...await command(id,'negative:reserve-zero'),allowNegativeStock:true});assert.deepEqual(await balance(),[0,3]);
+ await life.startSeparation(await command(id,'negative:separate-zero'));
+ await billing.invoice({...await command(id,'negative:invoice-zero'),issuerSnapshot:{}});assert.deepEqual(await balance(),[-3,0]);
+ await life.cancelInvoiced(await command(id,'negative:cancel-zero'));assert.deepEqual(await balance(),[0,0]);
+}));
+test('falha tardia reverte também autorização de negativo e falta de permissão continua bloqueada',()=>fixture(async({db,life,command,balance,create})=>{
+ const id=await create('negative:rollback',[3]);await db.query('update vendas_estoque_saldos set saldo_fisico=0');
+ const service=createCommercialSalesOrderLifecycleService({repository:life});
+ const input={...await command(id,'negative:rollback-entry'),allowNegativeStock:true};
+ assert.equal((await service.postStock({...input,context:{...context,effectivePermissions:{'sales.view':true,'sales.edit':true}}})).ok,false);
+ await db.exec("alter table vendas_eventos add constraint fail_negative_event check(evento<>'pedido_estoque_posterior') not valid");
+ await assert.rejects(()=>life.postStock(input));assert.deepEqual(await balance(),[0,0]);
+ assert.equal((await db.query('select permite_negativo from vendas_estoque_saldos')).rows[0].permite_negativo,false);
 }));

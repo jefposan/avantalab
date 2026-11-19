@@ -27,7 +27,7 @@ export function createCommercialOrderWorkflowRequest(input = {}) {
 
 export function parseCommercialOrderWorkflowResponse(data) {
   if (!data || data.type !== COMMERCIAL_ORDER_WORKFLOW_RESPONSE_TYPE || !KEY.test(clean(data.requestId)) || typeof data.ok !== 'boolean') return null;
-  if (!data.ok) return Object.freeze({ requestId: clean(data.requestId), ok: false, message: clean(data.message) || 'Não foi possível persistir o pedido.' });
+  if (!data.ok) return Object.freeze({ requestId: clean(data.requestId), ok: false, message: clean(data.message) || 'Não foi possível persistir o pedido.', code: clean(data.code).slice(0,100), field: clean(data.field).slice(0,160) });
   const order = data.order;
   if (!order || !UUID.test(clean(order.operationId)) || !Number.isInteger(Number(order.version)) || Number(order.version) < 1 || !TARGETS.has(clean(order.status))) return null;
   return Object.freeze({

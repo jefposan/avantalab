@@ -2442,6 +2442,7 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 /* Cliente: edição no cadastro completo, ao lado externo do seletor. */
 .order-customer-control{display:flex;align-items:center;gap:8px;min-width:0}
 .order-customer-control select{flex:1;min-width:0;width:0}
+.order-customer-control > span:not(.badge){flex:1;min-width:0;width:0}
 .order-customer-control .order-customer-edit{flex:0 0 44px;width:44px;height:44px;color:var(--brand)}
 
 /* Resumo fiscal acompanha a coluna sem sobrepor o preenchimento. */

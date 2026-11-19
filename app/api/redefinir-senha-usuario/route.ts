@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { podeRedefinirSenhaEquipe } from '../../lib/usuarios-senha-equipe';
 
 function respostaErro(mensagem: string, status = 400) {
   return NextResponse.json(
@@ -102,14 +103,35 @@ export async function POST(request: Request) {
       return respostaErro('Você não tem permissão para redefinir senhas.', 403);
     }
 
+    let registroAdministrativo;
     if (!proprio) {
-      return respostaErro('A senha da conta global só pode ser alterada pelo próprio titular. Oriente o usuário a recuperar o acesso na tela de login.', 403);
+      const [conta, vinculos, identidade] = await Promise.all([
+        supabaseAdmin.from('usuarios_contas').select('user_id,origem,empresa_origem_id').eq('user_id', usuarioAlvo.user_id).maybeSingle(),
+        supabaseAdmin.from('usuarios_empresa').select('user_id,empresa_id,perfil,status').eq('user_id', usuarioAlvo.user_id),
+        supabaseAdmin.auth.admin.getUserById(usuarioAlvo.user_id),
+      ]);
+      if (conta.error || vinculos.error || identidade.error || !identidade.data?.user || !vinculos.data) {
+        return respostaErro('Não foi possível conferir a origem e os vínculos desta conta. Nenhuma senha foi alterada. Tente novamente.', 503);
+      }
+      const authAlvo = identidade.data.user;
+      if (!podeRedefinirSenhaEquipe({ userId: user.id, perfil: permissao.perfil, empresaId: usuarioAlvo.empresa_id }, usuarioAlvo, conta.data, vinculos.data)
+        || (authAlvo.app_metadata?.origem_avantalab && authAlvo.app_metadata.origem_avantalab !== 'usuario_interno')
+        || (authAlvo.app_metadata?.empresa_origem_id && authAlvo.app_metadata.empresa_origem_id !== usuarioAlvo.empresa_id)
+        || !Array.isArray(authAlvo.identities) || !authAlvo.identities.length
+        || authAlvo.identities.some(i => i.provider !== 'email')) {
+        return respostaErro('Esta conta é titular, pessoal, usa outro provedor ou está vinculada a outra empresa. Somente o próprio usuário pode alterar sua senha.', 403);
+      }
+      registroAdministrativo = {
+        ...authAlvo.app_metadata,
+        ultima_redefinicao_empresa: { empresa_id: usuarioAlvo.empresa_id, ator_user_id: user.id, em: new Date().toISOString() },
+      };
     }
 
     const { error: erroAtualizarSenha } = await supabaseAdmin.auth.admin.updateUserById(
       usuarioAlvo.user_id,
       {
         password: novaSenha,
+        ...(registroAdministrativo ? { app_metadata: registroAdministrativo } : {}),
       }
     );
 

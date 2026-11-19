@@ -295,3 +295,4 @@ testes. Esta seção resume apenas a face dos controles.
 - A lista pesquisável é renderizada por portal sobre cards/rodapés, com limites da viewport e reposicionamento na rolagem. Conserva tokens do campo, seleção por teclado e clique externo. Escape fecha a lista antes de alcançar o modal.
 
 - CampoSelecaoPesquisavel aceita `disabled` opcional por opção. Opções indisponíveis mantêm descrição e valor já selecionado, mas não podem ser escolhidas por mouse ou teclado. Consumidores anteriores permanecem inalterados.
+- Revisão 3.2.0.506: opções podem fornecer `selectedLabel` (valor confirmado) e `searchText` (termos auxiliares, incluindo documento sem máscara). `searchOnTypeOnly` abre resultados somente após digitação; `maxResults` limita a lista com orientação para refinar. Ambos são opt-in; o comportamento padrão permanece. `inputId`, `inputRef` e `invalid` integram foco e validação do formulário.

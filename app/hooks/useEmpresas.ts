@@ -100,6 +100,9 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   const [pesquisandoUsuarioExistente, setPesquisandoUsuarioExistente] = useState(false);
   const [vinculandoUsuarioExistente, setVinculandoUsuarioExistente] = useState(false);
   const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(null);
+  const contextoSenhaUsuarioRef = useRef({ empresaId, usuarioEditandoId });
+  const senhaRedefinindoRef = useRef(false);
+  useEffect(() => { contextoSenhaUsuarioRef.current = { empresaId, usuarioEditandoId }; }, [empresaId, usuarioEditandoId]);
   const [editUsuarioNome, setEditUsuarioNome] = useState('');
   const [editUsuarioLogin, setEditUsuarioLogin] = useState('');
   const [editUsuarioEmail, setEditUsuarioEmail] = useState('');
@@ -476,6 +479,10 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     if (!loginLimpo) { avisarCampoUsuario('Campo obrigatório', 'Informe o login deste usuário.', 'login', 'editar'); return; }
     if (loginLimpo.includes('@')) { avisarCampoUsuario('Login inválido', 'Use um login simples, sem @.', 'login', 'editar'); return; }
     if (editUsuarioNovaSenha.trim() !== editUsuarioConfirmarSenha.trim()) { avisarCampoUsuario('Senha não confere', 'Repita a nova senha exatamente igual.', 'confirmar-senha', 'editar'); return; }
+    if (usuarioEditandoId !== acessoUsuarioAtualId && editUsuarioNovaSenha.trim()) {
+      abrirAviso('Salvar nova senha', 'Use Redefinir senha para confirmar a nova credencial antes de salvar os demais dados.');
+      return;
+    }
 
     const nomeOriginal = (usuarioOriginal.nome || '').trim();
     const loginOriginal = (usuarioOriginal.login || usuarioOriginal.email || '').toLowerCase();
@@ -529,7 +536,12 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   };
 
   const redefinirSenhaUsuario = async () => {
-    if (!usuarioEditandoId) return;
+    if (!usuarioEditandoId || usuarioSalvando || senhaRedefinindoRef.current) return;
+    const usuario = usuariosEmpresa.find(u => u.id === usuarioEditandoId);
+    if (usuarioEditandoId !== acessoUsuarioAtualId && usuario?.pode_redefinir_senha !== true) {
+      abrirAviso('Acesso não permitido', 'Esta conta não permite redefinição administrativa de senha.');
+      return;
+    }
 
     const senhaLimpa = editUsuarioNovaSenha.trim();
     if (!senhaLimpa) {
@@ -540,22 +552,38 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       abrirAviso('Senha muito curta', 'A nova senha deve ter pelo menos 8 caracteres.');
       return;
     }
-
-    const resultado = await redefinirSenhaUsuarioEmpresa({
-      acessoId: usuarioEditandoId,
-      novaSenha: senhaLimpa,
+    if (senhaLimpa !== editUsuarioConfirmarSenha.trim()) {
+      avisarCampoUsuario('Senha não confere', 'Repita a nova senha exatamente igual.', 'confirmar-senha', 'editar');
+      return;
+    }
+    const acessoId = usuarioEditandoId;
+    const empresaDaEdicao = empresaId;
+    abrirConfirmacao({
+      titulo: 'Redefinir senha',
+      mensagem: `Confirmar a nova senha de ${usuario?.nome || 'usuário'}? A senha anterior deixará de funcionar. Anote ou copie a nova senha antes de confirmar: ela não poderá ser consultada depois.`,
+      textoConfirmar: 'Salvar nova senha',
+      variante: 'alerta',
+      acao: async () => {
+        const contextoAtual = () => contextoSenhaUsuarioRef.current.empresaId === empresaDaEdicao && contextoSenhaUsuarioRef.current.usuarioEditandoId === acessoId;
+        if (!contextoAtual() || senhaRedefinindoRef.current) return;
+        senhaRedefinindoRef.current = true;
+        setUsuarioSalvando(true);
+        try {
+          const resultado = await redefinirSenhaUsuarioEmpresa({ acessoId, novaSenha: senhaLimpa });
+          if (!contextoAtual()) return;
+          if (resultado.erro) { abrirAviso('Erro ao redefinir senha', resultado.mensagem); return; }
+          setEditUsuarioNovaSenha('');
+          setEditUsuarioConfirmarSenha('');
+          setMostrarEditUsuarioNovaSenha(false);
+          abrirAviso('Senha redefinida', 'A nova senha já está válida. Não é necessário clicar em Salvar alterações para confirmar a senha.', undefined, 'sucesso');
+        } catch {
+          if (contextoAtual()) abrirAviso('Não foi possível confirmar', 'O servidor não confirmou a troca. Não entregue a senha como válida; confira a conexão e tente novamente.');
+        } finally {
+          senhaRedefinindoRef.current = false;
+          setUsuarioSalvando(false);
+        }
+      },
     });
-
-    if (resultado.erro) { abrirAviso('Erro ao redefinir senha', resultado.mensagem); return; }
-
-    setEditUsuarioNovaSenha('');
-    setMostrarEditUsuarioNovaSenha(false);
-    abrirAviso(
-      'Senha redefinida',
-      'A nova senha foi salva com sucesso. Não é necessário clicar em Salvar para confirmar a senha.',
-      undefined,
-      'sucesso'
-    );
   };
 
   const bloquearAcessoUsuario = async (acessoId: string) => {

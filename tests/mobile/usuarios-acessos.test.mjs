@@ -33,8 +33,9 @@ function ambiente(papel = 'gestor_master', alvoPerfil = 'administrador') {
       enviados.push({ url, opts }); return { ok: true, json: async () => ({ usuarios: [{ ...alvo }] }) };
     },
   };
+  contexto.solicitarDialogoSistemaMobile = async () => 'salvar';
   vm.createContext(contexto);
-  const nomes = ['podeGerenciarUsuarios', 'podeAlterarAcessosUsuarioMobile', 'validarAcessosUsuarioMobile', 'acessosUsuarioSlotMobile', 'editarUsuarioMobile', 'salvarUsuarioMobile', 'carregarUsuariosMobile', 'criarUsuarioMobile', 'confirmarVinculoUsuarioExistenteMobile'];
+  const nomes = ['podeGerenciarUsuarios', 'podeAlterarAcessosUsuarioMobile', 'validarAcessosUsuarioMobile', 'acessosUsuarioSlotMobile', 'editarUsuarioMobile', 'salvarUsuarioMobile', 'carregarUsuariosMobile', 'criarUsuarioMobile', 'confirmarVinculoUsuarioExistenteMobile', 'redefinirSenhaEquipeMobile'];
   vm.runInContext(nomes.map(n => funcoes.get(n)).join('\n'), contexto);
   const registroEvento = ast.statements.find(n => ts.isExpressionStatement(n) && n.getText(ast).startsWith("window.addEventListener('avantalab:usuario-liberacoes'"));
   // O registro fica dentro da IIFE; localiza também seus descendentes.
@@ -59,6 +60,48 @@ test('mobile cria equipe sem e-mail e permite salvar acessos com contato vazio',
   await b.contexto.salvarUsuarioMobile();
   assert.equal(b.erros.length, 0);
   assert.equal(b.enviados.find(e => e.body)?.body.email, '');
+});
+
+function prepararSenhaMobile() {
+  const a = ambiente();
+  a.alvo.pode_redefinir_senha = true;
+  a.contexto.editarUsuarioMobile('alvo');
+  a.campos['edit-usuario-senha'] = a.campos['edit-usuario-confirmar-senha'] = 'NovaSenhaFicticia123';
+  return a;
+}
+test('Mobile redefine senha somente após confirmação e limpa os campos sem alterar acessos', async () => {
+  const a = prepararSenhaMobile();
+  const antes = JSON.stringify(a.alvo);
+  await a.contexto.redefinirSenhaEquipeMobile();
+  assert.equal(a.erros.length, 0);
+  assert.deepEqual(a.enviados.find(e => e.body), { url: '/api/redefinir-senha-usuario', body: { acessoId: 'alvo', novaSenha: 'NovaSenhaFicticia123' } });
+  assert.equal(a.state.editUsuarioSenha, '');
+  assert.equal(a.state.editUsuarioConfirmarSenha, '');
+  assert.equal(JSON.stringify(a.alvo), antes);
+});
+test('Mobile bloqueia conta sem concessão, cancelamento e contexto alterado', async () => {
+  for (const caso of ['sem-acesso', 'cancelado', 'outro-perfil']) {
+    const a = prepararSenhaMobile();
+    if (caso === 'sem-acesso') a.alvo.pode_redefinir_senha = false;
+    a.contexto.solicitarDialogoSistemaMobile = async () => {
+      if (caso === 'outro-perfil') a.state.empresa.id = 'outra';
+      return caso === 'cancelado' ? 'cancelar' : 'salvar';
+    };
+    await a.contexto.redefinirSenhaEquipeMobile();
+    assert.equal(a.enviados.length, 0, caso);
+  }
+});
+test('Mobile não duplica redefinição nem envia senha de terceiros pelo Salvar usuário', async () => {
+  const a = prepararSenhaMobile();
+  await a.contexto.salvarUsuarioMobile();
+  assert.equal(a.enviados.length, 0);
+  assert.match(a.erros[0], /Redefinir senha/);
+  let confirmar;
+  a.contexto.solicitarDialogoSistemaMobile = () => new Promise(resolve => { confirmar = resolve; });
+  const primeira = a.contexto.redefinirSenhaEquipeMobile();
+  await a.contexto.redefinirSenhaEquipeMobile();
+  confirmar('salvar'); await primeira;
+  assert.equal(a.enviados.filter(e => e.body).length, 1);
 });
 
 test('edição mobile desativa, salva, relê e reabre sem reativar acessos', async () => {

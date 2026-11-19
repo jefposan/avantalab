@@ -1,4 +1,9 @@
-<!-- ava-version: 3.2.0.505 -->
+<!-- ava-version: 3.2.0.506 -->
+> Revisão complementar 3.2.0.506: Novo pedido busca cliente digitando razão social ou CPF/CNPJ, sem abrir lista vazia e sem substituir razão social pelo nome fantasia. Confirmação aguarda o servidor; falha mantém dados para corrigir e tentar novamente. Controle de estoque ligado permite déficit autorizado: saída de 3 com saldo zero gera -3; entrada de 5 deixa 2. Reserva não é baixa física; faturamento baixa, cancelamento estorna. Controle desligado não movimenta estoque; contas a receber somente ao faturar. Em falha persistente, não criar outro pedido para contornar o erro.
+
+> Compatibilidade 3.2.0.506: conta legada comprovadamente interna no diretório, sem empresa de origem atribuída, também pode ter senha redefinida se for exclusiva da empresa atual. Não libera contas pessoais, titulares ou de origem/vínculos externos.
+
+> Revisão 3.2.0.506: Editar usuário mostra nova senha para equipe cuja redefinição administrativa é permitida. Gestor Master administra contas internas exclusivas da empresa; Administrador somente operadores. Redefinir senha é separado de Salvar usuário e exige confirmar; olho mostra somente a nova senha digitada. Copiar/anotar antes de confirmar; senha antiga não é recuperável. Contas titulares, pessoais, de outro provedor ou ligadas a outra empresa permanecem protegidas. Sem envio às lojas ou novo recurso nativo.
 
 > Revisão 3.2.0.505: criação e edição de usuários da empresa permitem e-mail pessoal vazio para equipe, mantendo nome completo, login e senha no cadastro. Titular/Gestor Master mantém e-mail obrigatório. Alterar nome/acessos de outra pessoa não altera credenciais globais. Login por usuário e senha e recuperação por SMS em celular confirmado permanecem. Nenhum plugin, permissão nativa ou envio às lojas nesta entrega.
 

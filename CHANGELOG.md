@@ -1,3 +1,16 @@
+# 3.2.0.506 — Usuários e pedidos: senhas, busca de clientes e confirmação segura
+
+- Novo pedido pesquisa razão social e CPF/CNPJ conforme digitação, sem lista ao focar vazio; seleção mantém ID do cliente, sem confundir nome fantasia com razão social. Cabeçalho compacto segue a nota fiscal.
+- Confirmar pedido aguarda resposta do servidor antes de sair da tela; falhas preservam formulário e identidade de repetição. Erros de campo continuam associados à origem.
+- Controle de estoque do pedido permite saldo negativo com permissão de saída, inclusive sem saldo inicial. Entrada posterior compensa o déficit; cancelamento devolve o movimento. Sem controle ligado, pedido não movimenta estoque.
+- Diagnóstico somente leitura identificou o 503: falta de SELECT do serviço interno em commercial_policies. Migração aditiva restrita autorizada concede SELECT/INSERT/UPDATE com RLS por empresa com módulo ativo, sem DELETE e sem acesso anon/authenticated.
+
+- Gestor Master pode definir nova senha de contas internas exclusivas originadas na empresa; Administrador somente de operadores. Contas titulares, pessoais, de outro provedor ou com vínculo em outra empresa permanecem protegidas. Servidor repete a validação de origem, Auth e hierarquia; indicação visual não é autorização.
+- Editar usuário na Gestão Web/Mobile oferece nova senha com exibição durante digitação e confirmação explícita. Senha antiga não é recuperada nem armazenada de forma reversível. Campos são limpos após sucesso; não são incluídos em rascunhos, respostas ou metadados.
+- Confirmação, bloqueio de repetição, tratamento de erro/rede e descarte de resposta de outro contexto. Editar nome/acessos não redefine a senha implicitamente. Metadados protegidos registram somente ator/empresa/data da última redefinição administrativa, preservando a origem.
+- Sem troca de credenciais ou pedidos reais durante QA, nem envio às lojas. Ajustes 3.2.0.505 e NF-e do outro chat preservados.
+- Contas legadas com origem interna comprovada no diretório, sem empresa de origem atribuída, também são aceitas somente se exclusivas da empresa atual. Ausência de origem interna nunca autoriza conta pessoal; qualquer origem divergente continua bloqueada.
+
 # 3.2.0.505 — Usuários: e-mail opcional para equipe e edição segura dos acessos
 
 - Cadastro de usuários da empresa permite e-mail em branco, mantendo nome completo, login, senha e perfil obrigatórios. Identificador técnico aleatório fica restrito ao Auth/diretório, sem ser apresentado como contato; e-mail preenchido continua validado e único.

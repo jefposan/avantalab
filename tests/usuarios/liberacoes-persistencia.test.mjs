@@ -39,6 +39,7 @@ function ambiente({ papel = 'gestor_master', omitir = false, persistir = true, a
     return q;
   } };
   const deps = { 'node:crypto': crypto, 'next/server': { NextResponse }, '@supabase/supabase-js': { createClient: () => db }, '@/app/lib/acessos-usuario': domain, '@/app/lib/usuarios-empresa-liberacoes': helper, '../../lib/nome-pessoa': nomes, '../../lib/email': carregar('app/lib/email.ts', {}), '../../lib/usuario-disponibilidade-servidor': { buscarContaAuthPorEmail: async () => null } };
+  deps['../../lib/usuarios-senha-equipe'] = carregar('app/lib/usuarios-senha-equipe.ts', {});
   const get = carregar('app/api/usuarios-empresa/route.ts', deps).GET;
   deps['@/app/lib/navegacao-acessos-servidor'] = { notificarAcessosModulos: async () => {} };
   const post = carregar('app/api/atualizar-usuario-empresa/route.ts', deps).POST;

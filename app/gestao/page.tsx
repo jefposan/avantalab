@@ -8099,6 +8099,7 @@ const usuarioOriginalEditando = usuariosEmpresa.find(
   (usuario) => usuario.id === usuarioEditandoId
 );
 const editandoIdentidadePropria = Boolean(usuarioEditandoId && usuarioEditandoId === acessoUsuarioAtualId);
+const podeGerenciarSenhaUsuario = editandoIdentidadePropria || usuarioOriginalEditando?.pode_redefinir_senha === true;
 
 const dadosUsuarioAlterados = usuarioOriginalEditando
   ? JSON.stringify(editUsuarioLiberacoes) !== JSON.stringify(liberacoesDoVinculo(usuarioOriginalEditando)) ||
@@ -10647,7 +10648,7 @@ if (validacaoTelefoneObrigatoria) {
           </h2>
 
           <p className="mt-1 text-sm opacity-80">
-            {editandoIdentidadePropria ? 'E-mail obrigatório somente para o titular. A nova senha é opcional.' : 'Aqui você administra o nome e os acessos. Login, senha e e-mail são alterados pelo próprio usuário.'}
+            {editandoIdentidadePropria ? 'E-mail obrigatório somente para o titular. A nova senha é opcional.' : podeGerenciarSenhaUsuario ? 'Administre nome, acessos e nova senha. Login e e-mail continuam protegidos.' : 'Aqui você administra o nome e os acessos. As credenciais desta conta são alteradas pelo próprio usuário.'}
           </p>
         </div>
 
@@ -10754,7 +10755,7 @@ if (validacaoTelefoneObrigatoria) {
 
         <AcessosUsuarioCampos value={editUsuarioLiberacoes} onChange={setEditUsuarioLiberacoes} perfil={editUsuarioPerfil} disabled={usuarioSalvando || (perfilUsuario !== 'gestor_master' && !['operador_simples', 'operador_completo'].includes(usuarioOriginalEditando?.perfil || ''))} />
 
-        {editandoIdentidadePropria && <div
+        {podeGerenciarSenhaUsuario && <div
           className={`rounded-xl border p-3 ${
             darkMode
               ? 'border-slate-700 bg-slate-900/50'
@@ -10772,6 +10773,8 @@ if (validacaoTelefoneObrigatoria) {
                   id="editar-usuario-senha"
                   type={mostrarEditUsuarioNovaSenha ? 'text' : 'password'}
                   autoComplete="new-password"
+                  disabled={usuarioSalvando}
+                  aria-label="Nova senha do usuário"
                   value={editUsuarioNovaSenha}
                   onChange={(e) => setEditUsuarioNovaSenha(e.target.value)}
                   placeholder="Nova senha"
@@ -10794,6 +10797,8 @@ if (validacaoTelefoneObrigatoria) {
                   id="editar-usuario-confirmar-senha"
                   type={mostrarEditUsuarioConfirmarSenha ? 'text' : 'password'}
                   autoComplete="new-password"
+                  disabled={usuarioSalvando}
+                  aria-label="Confirmar nova senha do usuário"
                   value={editUsuarioConfirmarSenha}
                   onChange={(e) => setEditUsuarioConfirmarSenha(e.target.value)}
                   placeholder="Confirmar nova senha"
@@ -10814,6 +10819,7 @@ if (validacaoTelefoneObrigatoria) {
             <button
               type="button"
               onClick={redefinirSenhaUsuario}
+              disabled={usuarioSalvando}
               className="rounded-xl border border-amber-500/40 px-4 py-2 text-xs font-black uppercase text-amber-600 transition hover:bg-amber-500/10 cursor-pointer"
             >
               Redefinir senha
@@ -10821,7 +10827,7 @@ if (validacaoTelefoneObrigatoria) {
           </div>
 
           <p className={`mt-2 text-[11px] font-semibold ${textMuted}`}>
-            A senha é salva imediatamente ao clicar em Redefinir senha.
+            Use o olho para conferir a nova senha e copie antes de confirmar. A senha antiga não pode ser consultada.
           </p>
         </div>}
       </div>

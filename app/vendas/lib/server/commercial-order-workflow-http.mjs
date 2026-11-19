@@ -54,7 +54,7 @@ export async function handleCommercialOrderWorkflowRequest({ request, runtime, c
   if (!result?.ok) {
     const error = Array.isArray(result?.errors) ? result.errors[0] : null;
     const code = clean(error?.code) || 'AV-COMMERCIAL-WORKFLOW';
-    return reply(statusFor(code), { ok: false, code, message: clean(error?.message) || 'Não foi possível concluir o fluxo comercial.' });
+    return reply(statusFor(code), { ok: false, code, field: clean(error?.field), message: clean(error?.message) || 'Não foi possível concluir o fluxo comercial.' });
   }
   return reply(200, { ok: true, customerId: result.customerId, order: result.order });
 }

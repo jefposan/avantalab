@@ -213,7 +213,8 @@ test('perfil integrado mantém indicadores reais nas páginas e menu sem contado
   assert.match(source, /integratedQuickActions = dashboardNewOptions\.filter\(\(option\) => option\.type !== 'venda'\)/);
   assert.match(source, /!managementCatalogBridge \|\| !\['venda', 'nfce', 'nfse'\]\.includes\(option\.type\)/);
   assert.match(source, /onFiscalCreated=\{saveStandaloneFiscal\}/);
-  assert.match(source, /connected \? 'Operação vinculada ao perfil\.' : 'Ambiente de demonstração\.'/);
+  assert.match(source, /connected \? 'Pedido no perfil ativo\.' : 'Ambiente de demonstração\.'/);
+  assert.match(source, /className="order-page-heading note-page-heading"/);
   assert.match(source, /connected \? 'Perfil empresarial' : 'Proposta local'/);
   assert.match(source, /managementProfileReady = !integratedManagementRuntime \|\| Boolean\(managementCatalogBridge\?\.company\)/);
   assert.match(source, /managementAccessReady = !integratedManagementRuntime \|\| accessBridgeState\.available/);

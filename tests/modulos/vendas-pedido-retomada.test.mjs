@@ -57,7 +57,8 @@ test('rascunho oferece retomada e reabre o mesmo registro no editor', async () =
   const source = await readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
   assert.match(source, /label: 'Continuar pedido'/);
   assert.match(source, /initialRecord=\{editingOrder\}/);
-  assert.match(source, /id: initialRecord\?\.id \|\| `PED-/);
+  assert.match(source, /id:initialRecord\?\.id\|\|`PED-/);
+  assert.match(source, /id: draftIdentity\.id/);
   assert.match(source, /previous \? created\.map\(\(item\) => item\.id === record\.id \? record : item\)/);
   assert.match(source, /action: updating \? 'update'/);
 });

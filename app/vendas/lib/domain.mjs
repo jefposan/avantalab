@@ -123,7 +123,8 @@ export function validateOrder(order) {
     if (!(Number(item.quantity) > 0)) errors.push(`${label}: informe uma quantidade maior que zero.`);
     if (!(Number(item.unitPrice) > 0)) errors.push(`${label}: informe um preço unitário maior que zero.`);
     if (order.reserveStock && item.kind !== 'servico' && Number(item.quantity) > Number(item.available)) {
-      errors.push(`${label}: estoque disponível insuficiente para a reserva.`);
+      if(order.allowNegativeStock===true)warnings.push(`${label}: o disponível ficará negativo até registrar a entrada.`);
+      else errors.push(`${label}: estoque disponível insuficiente para a reserva.`);
     }
     if (order.fiscalDocument === 'nfe' && item.fiscalStatus !== 'Completo') {
       warnings.push(`${label}: revise o cadastro fiscal antes de emitir a NF-e.`);
@@ -405,14 +406,15 @@ export function applyStockMovement({ current, reserved, quantity, direction, all
   if (!(amount > 0)) errors.push('Informe uma quantidade maior que zero.');
   const delta = direction === 'saida' ? -Math.abs(amount) : Math.abs(amount);
   const nextCurrent = physical + delta;
-  if (!allowNegativeStock && nextCurrent < 0) errors.push('A saída não pode deixar o saldo físico negativo.');
-  if (protectReservations && nextCurrent < committed) errors.push('A saída compromete unidades já reservadas. Revise as reservas antes de continuar.');
+  const recuperandoSaldo=physical<0&&delta>0;
+  if (!allowNegativeStock && nextCurrent < 0 && !recuperandoSaldo) errors.push('A saída não pode deixar o saldo físico negativo.');
+  if (protectReservations && committed>0 && nextCurrent < committed && delta<0) errors.push('A saída compromete unidades já reservadas. Revise as reservas antes de continuar.');
   return {
     valid: errors.length === 0,
     errors,
     delta,
-    nextCurrent: allowNegativeStock ? nextCurrent : Math.max(0, nextCurrent),
-    nextAvailable: allowNegativeStock ? nextCurrent - committed : Math.max(0, nextCurrent - committed),
+    nextCurrent: allowNegativeStock || recuperandoSaldo ? nextCurrent : Math.max(0, nextCurrent),
+    nextAvailable: allowNegativeStock || recuperandoSaldo ? nextCurrent - committed : Math.max(0, nextCurrent - committed),
   };
 }
 

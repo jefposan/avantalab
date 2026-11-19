@@ -94,7 +94,7 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
       try {
         if(normalizedTarget==='estoque'){
           if(!lifecycleService.postStock)return {ok:false,errors:[issue('AV-COMMERCIAL-WORKFLOW-UNAVAILABLE','stock','O lançamento posterior ainda não está disponível. Atualize a página.')]};
-          const posted=await lifecycleService.postStock({context,orderId:current.id,localId:stockLocationId,expectedVersion:order.expectedVersion,idempotencyKey:`stock:${current.id}:${order.expectedVersion}`});
+          const posted=await lifecycleService.postStock({context,orderId:current.id,localId:stockLocationId,expectedVersion:order.expectedVersion,idempotencyKey:`stock:${current.id}:${order.expectedVersion}`,allowNegativeStock:order?.allowNegativeStock===true});
           if(!posted?.ok)return {ok:false,errors:[firstError(posted,issue('AV-COMMERCIAL-WORKFLOW-STOCK','stock','Não foi possível lançar o estoque deste pedido.'))]};
           await refresh();
           return {ok:true,customerId:current.customerId,order:snapshot(current),errors:[]};
@@ -120,7 +120,7 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
           await refresh();
         }
         if (current.status === 'salvo' && ['confirmado', 'em_separacao', 'faturado'].includes(normalizedTarget)) {
-          const confirmed = await lifecycleService.confirm({ context, orderId: current.id, localId: stockLocationId, expectedVersion: current.version, idempotencyKey: `order:${key}:confirm:${current.version}` });
+          const confirmed = await lifecycleService.confirm({ context, orderId: current.id, localId: stockLocationId, expectedVersion: current.version, idempotencyKey: `order:${key}:confirm:${current.version}`,allowNegativeStock:order?.allowNegativeStock===true });
           if (!confirmed?.ok) return { ok: false, errors: [firstError(confirmed, issue('AV-COMMERCIAL-WORKFLOW-CONFIRM', 'order', 'Não foi possível confirmar o pedido.'))] };
           await refresh();
         }

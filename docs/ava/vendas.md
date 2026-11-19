@@ -1,4 +1,7 @@
-<!-- ava-version: 3.2.0.505 -->
+<!-- ava-version: 3.2.0.506 -->
+> Revisão complementar 3.2.0.506: Novo pedido busca cliente digitando razão social ou CPF/CNPJ, sem abrir lista vazia e sem substituir razão social pelo nome fantasia. Confirmação aguarda o servidor; falha mantém dados para corrigir e tentar novamente. Controle de estoque ligado permite déficit autorizado: saída de 3 com saldo zero gera -3; entrada de 5 deixa 2. Reserva não é baixa física; faturamento baixa, cancelamento estorna. Controle desligado não movimenta estoque; contas a receber somente ao faturar. Em falha persistente, não criar outro pedido para contornar o erro.
+
+> Revisão 3.2.0.506: sem impacto operacional no AvantaVendas independente. Redefinição administrativa restrita de senha na Gestão Web/Mobile não muda catálogo, pedidos, acessos concedidos ou dados comerciais.
 
 > Revisão 3.2.0.505: sem impacto operacional no AvantaVendas independente. Cadastro/edição de usuários da empresa ajustado na Gestão Web/Mobile; autenticação, sessões, acessos concedidos e catálogo do AvantaVendas permanecem preservados.
 

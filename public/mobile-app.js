@@ -7475,6 +7475,10 @@
     }
     if (senha && senha.length < 8) { setErroCampoUsuarioMobile('A nova senha deve ter pelo menos 8 caracteres.', 'edit-usuario-senha'); return; }
     if (senha !== confirmarSenha) { setErroCampoUsuarioMobile('A confirmação da nova senha não confere.', 'edit-usuario-confirmar-senha'); return; }
+    if (senha && state.empresa && String(state.empresa.acessoId) !== String(acessoEdicaoId)) {
+      setErroCampoUsuarioMobile('Use Redefinir senha para confirmar a nova credencial antes de salvar os demais dados.', 'edit-usuario-senha');
+      return;
+    }
 
     state.carregando = true;
     state.erro = '';
@@ -15473,13 +15477,58 @@
     );
   }
 
+  async function redefinirSenhaEquipeMobile() {
+    if (!state.empresa || !state.usuarioEditandoId || state.carregando || state.redefinindoSenhaUsuario) return;
+    var empresaId = state.empresa.id;
+    var acessoId = state.usuarioEditandoId;
+    var alvo = state.usuariosEmpresa.find(function (u) { return String(u.id) === String(acessoId); });
+    if (!alvo || alvo.pode_redefinir_senha !== true) { setErro('Esta conta não permite redefinição administrativa de senha.'); return; }
+    var senha = campo('edit-usuario-senha').trim();
+    var confirmarSenha = campo('edit-usuario-confirmar-senha').trim();
+    if (senha.length < 8) { setErroCampoUsuarioMobile('A nova senha deve ter pelo menos 8 caracteres.', 'edit-usuario-senha'); return; }
+    if (senha !== confirmarSenha) { setErroCampoUsuarioMobile('Repita a nova senha exatamente igual.', 'edit-usuario-confirmar-senha'); return; }
+    state.editUsuarioSenha = senha;
+    state.editUsuarioConfirmarSenha = confirmarSenha;
+    state.redefinindoSenhaUsuario = true;
+    function contextoAtual() { return state.empresa && state.empresa.id === empresaId && state.usuarioEditandoId === acessoId; }
+    try {
+      var decisao = await solicitarDialogoSistemaMobile({
+        titulo: 'Redefinir senha', rotulo: 'Usuários e permissões', variante: 'alerta',
+        mensagem: 'Confirmar a nova senha de ' + (alvo.nome || 'usuário') + '? A senha anterior deixará de funcionar. Anote ou copie a nova senha antes de confirmar: ela não poderá ser consultada depois.',
+        acoes: [{ valor: 'cancelar', rotulo: 'Cancelar', estilo: 'secundaria' }, { valor: 'salvar', rotulo: 'Salvar nova senha', estilo: 'primaria' }],
+      });
+      if (decisao !== 'salvar' || !contextoAtual()) return;
+      state.carregando = true;
+      render();
+      var token = await tokenSessao();
+      if (!token) { if (contextoAtual()) setErro('Sessão expirada. Faça login novamente.'); return; }
+      if (!contextoAtual()) return;
+      var http = await fetch('/api/redefinir-senha-usuario', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ acessoId: acessoId, novaSenha: senha }),
+      });
+      var resposta = await lerResposta(http);
+      if (!contextoAtual()) return;
+      if (!http.ok || resposta.erro) { setErro(resposta.mensagem || 'Não foi possível redefinir a senha.'); return; }
+      state.editUsuarioSenha = '';
+      state.editUsuarioConfirmarSenha = '';
+      mostrarToast('Nova senha salva.');
+    } catch (erroSenha) {
+      if (contextoAtual()) setErro('O servidor não confirmou a troca. Não entregue a senha como válida; confira a conexão e tente novamente.');
+    } finally {
+      state.redefinindoSenhaUsuario = false;
+      if (contextoAtual()) { state.carregando = false; render(); }
+    }
+  }
+
   function editarUsuarioHtml(usuario) {
     var identidadePropria = !!(state.empresa && String(state.empresa.acessoId) === String(state.usuarioEditandoId));
+    var podeGerenciarSenha = identidadePropria || usuario.pode_redefinir_senha === true;
     var somenteLeitura = identidadePropria ? '' : ' readonly';
     return (
       '<div class="grid gap-2 rounded-2xl bg-cyan-50 p-3">' +
         '<div class="flex items-center justify-between gap-2"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Editar usuario</p><button id="cancelar-edicao-usuario" type="button" class="text-[10px] font-black text-slate-500">Cancelar</button></div>' +
-        '<p class="text-xs font-semibold leading-relaxed text-slate-500">' + (identidadePropria ? 'E-mail obrigatório somente para o titular. A nova senha é opcional.' : 'Aqui você administra nome e acessos. Login, senha e e-mail são alterados pelo próprio usuário.') + '</p>' +
+        '<p class="text-xs font-semibold leading-relaxed text-slate-500">' + (identidadePropria ? 'E-mail obrigatório somente para o titular. A nova senha é opcional.' : podeGerenciarSenha ? 'Administre nome, acessos e nova senha. Login e e-mail continuam protegidos.' : 'Aqui você administra nome e acessos. As credenciais desta conta são alteradas pelo próprio usuário.') + '</p>' +
         '<label for="edit-usuario-nome" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Nome completo</label>' +
         '<input id="edit-usuario-nome" value="' + escapeHtml(state.editUsuarioNome || '') + '" placeholder="Nome e sobrenome" autocomplete="name" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<label for="edit-usuario-email" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">' + (state.editUsuarioPerfil === 'gestor_master' ? 'E-mail do titular' : 'E-mail (opcional)') + '</label>' +
@@ -15489,10 +15538,11 @@
         '<label for="edit-usuario-perfil" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Tipo de usuario</label>' +
         '<select id="edit-usuario-perfil"' + (state.empresa && state.empresa.perfil === 'gestor_master' ? '' : ' disabled') + ' style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(state.editUsuarioPerfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
         (state.editUsuarioLiberacoes ? acessosUsuarioSlotMobile('editar', state.editUsuarioPerfil, usuario) : '') +
-        (identidadePropria ? '<label for="edit-usuario-senha" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Nova senha (opcional)</label>' +
+        (podeGerenciarSenha ? '<label for="edit-usuario-senha" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Nova senha (opcional)</label>' +
         campoSenhaSimplesHtml('edit-usuario-senha', 'Minimo de 8 caracteres', 'h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioSenha || '') +
         '<label for="edit-usuario-confirmar-senha" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Confirmar nova senha</label>' +
-        campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Repita a nova senha', 'h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioConfirmarSenha || '') : '') +
+        campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Repita a nova senha', 'h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioConfirmarSenha || '') +
+        (!identidadePropria ? '<p class="text-xs text-slate-600">Use o olho para conferir e copie antes de confirmar. A senha antiga não pode ser consultada.</p><button id="redefinir-senha-equipe-mobile" type="button"' + (state.carregando ? ' disabled' : '') + ' class="h-12 rounded-xl border border-amber-500 px-4 text-xs font-bold text-amber-800 disabled:opacity-60">Redefinir senha</button>' : '') : '') +
         '<button id="salvar-usuario-mobile" type="button"' + (state.carregando ? ' disabled' : '') + ' class="h-12 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white disabled:cursor-wait disabled:opacity-60">' + (state.carregando ? 'Verificando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );
@@ -17542,6 +17592,7 @@
     });
     bind('criar-usuario-mobile', criarUsuarioMobile);
     bind('salvar-usuario-mobile', salvarUsuarioMobile);
+    bind('redefinir-senha-equipe-mobile', redefinirSenhaEquipeMobile);
     bindInput('usuario-nome', function () {
       state.usuarioNome = this.value || '';
       salvarRascunhoUsuarioMobile();

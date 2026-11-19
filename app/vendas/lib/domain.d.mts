@@ -47,6 +47,7 @@ export function calculateOrder(
 ): { subtotal: number; discount: number; freight: number; total: number };
 export function validateOrder(order: {
   client: string;
+  allowNegativeStock?: boolean;
   paymentMethod: string;
   reserveStock: boolean;
   fiscalDocument: 'nenhum' | 'nfe' | 'nfce' | 'nfse';

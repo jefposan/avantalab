@@ -17,13 +17,14 @@ const access=load('app/lib/acessos-usuario.ts',{'./modulos-registro':registry});
 const releases=load('app/lib/usuarios-empresa-liberacoes.ts',{'./acessos-usuario':access});
 const email=load('app/lib/email.ts');
 const names=load('app/lib/nome-pessoa.ts');
+const senhaEquipe=load('app/lib/usuarios-senha-equipe.ts');
 function environment({role='gestor_master',billing=false,quotaError=false,quotaAllowed=true,authFailure=false,writeFailure=false}={}) {
  const identity={id:'actor',email:'actor@example.invalid'};
  const rows={usuarios_empresa:[{id:'actor-link',empresa_id:'A',user_id:'actor',nome:'Ator Fictício',email:identity.email,login:'actor',perfil:role,status:'ativo',dashboard_liberada:true,modulos_liberados:null},
  {id:'victim-link',empresa_id:'A',user_id:'victim',nome:'Pessoa Fictícia',email:'victim@example.invalid',login:'victim',perfil:'operador_completo',status:'ativo'},
  {id:'victim-B',empresa_id:'B',user_id:'victim',nome:'Pessoa Fictícia',email:'victim@example.invalid',perfil:'gestor_master',status:'ativo'}],usuarios_contas:[{user_id:'actor',email:identity.email,login:'actor'},{user_id:'victim',nome:'Pessoa Fictícia',email:'victim@example.invalid',login:'victim'}]};
- const calls=[];
- const db={auth:{getUser:async()=>({data:{user:{...identity}},error:null}),admin:{updateUserById:async(id,patch)=>{calls.push({kind:'auth',id,patch});if(authFailure)return{error:{message:'falha'}};if(id===identity.id&&patch.email)identity.email=patch.email;return{data:{user:{...identity}},error:null};},createUser:async()=>{calls.push({kind:'create-auth'});return{data:{user:{id:'new-user'}},error:null};}}},
+ const calls=[];const authAccounts={victim:{id:'victim',app_metadata:{},identities:[{provider:'email'}]}};
+ const db={auth:{getUser:async()=>({data:{user:{...identity}},error:null}),admin:{getUserById:async id=>({data:{user:authAccounts[id]||null},error:authFailure?{message:'falha'}:null}),updateUserById:async(id,patch)=>{calls.push({kind:'auth',id,patch});if(authFailure)return{error:{message:'falha'}};if(id===identity.id&&patch.email)identity.email=patch.email;return{data:{user:{...identity}},error:null};},createUser:async()=>{calls.push({kind:'create-auth'});return{data:{user:{id:'new-user'}},error:null};}}},
  rpc:async(name,args)=>{calls.push({kind:'rpc',name,args});return{data:true,error:null};},from(table){
   const filters=[];let patch,insert;
   const run=()=>{
@@ -36,13 +37,13 @@ function environment({role='gestor_master',billing=false,quotaError=false,quotaA
   };
   const q={select(){return q;},eq(k,v){filters.push(r=>r[k]===v);return q;},neq(k,v){filters.push(r=>r[k]!==v);return q;},in(k,vs){filters.push(r=>vs.includes(r[k]));return q;},ilike(k,v){filters.push(r=>String(r[k]).toLowerCase()===v.toLowerCase());return q;},limit(){return q;},update(p){patch=p;return q;},insert(p){insert=p;return q;},upsert(p){insert=p;return q;},maybeSingle:async()=>{const r=run();return{...r,data:r.data?.[0]||null};},single:async()=>{const r=run();return{...r,data:r.data?.[0]||null};},then(ok,bad){return Promise.resolve(run()).then(ok,bad);}};return q;
  }};
- const deps={'node:crypto':crypto,'next/server':{NextResponse},'@supabase/supabase-js':{createClient:()=>db},'@/app/lib/acessos-usuario':access,'@/app/lib/usuarios-empresa-liberacoes':releases,
+ const deps={'../../lib/usuarios-senha-equipe':senhaEquipe,'node:crypto':crypto,'next/server':{NextResponse},'@supabase/supabase-js':{createClient:()=>db},'@/app/lib/acessos-usuario':access,'@/app/lib/usuarios-empresa-liberacoes':releases,
  '../../lib/nome-pessoa':names,'../../lib/email':email,'../../lib/usuario-disponibilidade-servidor':{buscarContaAuthPorEmail:async()=>null},
  '../../lib/cobranca':{COBRANCA_ATIVA:billing,podeUsar:()=>true},'../../lib/cobranca-servidor':{resolverEstadoAcessoParaUsuario:async()=>{if(quotaError)throw Error('assinatura indisponível');return{};}},'../../lib/limites-comerciais-servidor':{validarLimiteDeUsuarios:async()=>quotaAllowed?{permitido:true}:{permitido:false,mensagem:'Limite atingido'}}};
  const invoke=(file,body)=>load('app/api/'+file+'/route.ts',deps).POST(new Request('https://mock.invalid/api/'+file,{method:'POST',headers:{authorization:'Bearer ficticio','content-type':'application/json'},body:JSON.stringify(body)}));
  deps['@/app/lib/navegacao-acessos-servidor']={notificarAcessosModulos:async()=>{}};
  const update=(body={})=>invoke('atualizar-usuario-empresa',{acessoId:'victim-link',email:'victim@example.invalid',login:'victim',perfil:'operador_completo',...body});
- return{identity,rows,calls,invoke,update,recover:()=>{writeFailure=false;authFailure=false;}};
+ return{identity,rows,calls,invoke,update,authAccounts,db,recover:()=>{writeFailure=false;authFailure=false;}};
 }
 test('gestor e administrador não trocam e-mail, login ou senha globais de outro usuário',async()=>{
  for(const role of ['gestor_master','administrador'])for(const change of [{email:'outro@example.invalid'},{login:'tomada'},{novaSenha:'SenhaFicticia123'}]){
@@ -132,6 +133,62 @@ test('atalho de redefinir senha também rejeita terceiros e mantém o titular',a
   assert.equal(e.calls.filter(c=>c.kind==='auth').length,1);
  }
 });
+
+function equipeExclusiva(role='gestor_master',perfil='operador_completo') {
+ const e=environment({role});
+ e.rows.usuarios_empresa=e.rows.usuarios_empresa.filter(r=>r.id!=='victim-B');
+ e.rows.usuarios_empresa[1].perfil=perfil;
+ Object.assign(e.rows.usuarios_contas[1],{origem:'usuario_interno',empresa_origem_id:'A'});
+ e.authAccounts.victim.app_metadata={origem_avantalab:'usuario_interno',empresa_origem_id:'A',preservado:'sim'};
+ return e;
+}
+const trocarSenha=e=>e.invoke('redefinir-senha-usuario',{acessoId:'victim-link',novaSenha:'SenhaFicticia123'});
+test('Master redefine equipe exclusiva; administrador somente operadores, sem expor senha',async()=>{
+ for(const role of ['gestor_master','administrador','operador_completo','operador_simples']) for(const perfil of ['gestor_master','administrador','operador_completo','operador_simples']){
+  const e=equipeExclusiva(role,perfil);const r=await trocarSenha(e);
+  const permitido=perfil!=='gestor_master'&&(role==='gestor_master'||role==='administrador'&&perfil.startsWith('operador_'));
+  assert.equal(r.status,permitido?200:403,role+':'+perfil);
+  assert.equal(e.calls.filter(c=>c.kind==='auth').length,permitido?1:0);
+  assert.doesNotMatch(await r.text(),/SenhaFicticia123/);
+  if(permitido){
+   const patch=e.calls.find(c=>c.kind==='auth').patch;
+   assert.deepEqual(Object.keys(patch).sort(),['app_metadata','password']);
+   assert.equal(patch.app_metadata.preservado,'sim');
+   assert.equal(patch.app_metadata.ultima_redefinicao_empresa.ator_user_id,'actor');
+   assert.doesNotMatch(JSON.stringify(patch.app_metadata),/SenhaFicticia123/);
+  }
+ }
+});
+test('conta pessoal, externa, origem divergente e qualquer vínculo de outra empresa bloqueiam redefinição',async()=>{
+ const alterar=[
+  e=>{e.rows.usuarios_contas[1].origem='cadastro';},
+  e=>{e.rows.usuarios_contas[1].empresa_origem_id='B';},
+  e=>{e.authAccounts.victim.app_metadata.empresa_origem_id='B';},
+  e=>{e.authAccounts.victim.identities.push({provider:'google'});},
+  e=>{e.authAccounts.victim.identities=[];},
+  e=>{e.rows.usuarios_empresa.push({user_id:'victim',empresa_id:'B',perfil:'operador_simples',status:'inativo'});},
+  e=>{e.rows.usuarios_empresa.push({user_id:'victim',empresa_id:'A',perfil:'gestor_master',status:'ativo'});},
+  e=>{e.rows.usuarios_empresa[1].status='bloqueado';},
+ ];
+ for(const mudar of alterar){const e=equipeExclusiva();mudar(e);assert.equal((await trocarSenha(e)).status,403);assert.equal(e.calls.length,0);}
+});
+test('legado interno exclusivo sem empresa de origem aceita redefinição; ausência não autoriza conta pessoal',async()=>{
+ const e=equipeExclusiva();
+ delete e.rows.usuarios_contas[1].empresa_origem_id;e.authAccounts.victim.app_metadata={};
+ assert.equal((await trocarSenha(e)).status,200);
+ const p=equipeExclusiva();delete p.rows.usuarios_contas[1].empresa_origem_id;delete p.rows.usuarios_contas[1].origem;p.authAccounts.victim.app_metadata={};
+ assert.equal((await trocarSenha(p)).status,403);assert.equal(p.calls.length,0);
+});
+test('falha ao conferir origem ou Auth não redefine senha e falha de gravação não confirma sucesso',async()=>{
+ const e=equipeExclusiva();
+ e.db.auth.admin.getUserById=async()=>({data:{user:null},error:{message:'falha'}});
+ assert.equal((await trocarSenha(e)).status,503);assert.equal(e.calls.length,0);
+ const d=equipeExclusiva();const from=d.db.from;
+ d.db.from=t=>t==='usuarios_contas'?{select(){return this;},eq(){return this;},maybeSingle:async()=>({data:null,error:{message:'falha'}})}:from(t);
+ assert.equal((await trocarSenha(d)).status,503);assert.equal(d.calls.length,0);
+ const f=equipeExclusiva();f.db.auth.admin.updateUserById=async()=>({error:{message:'falha'}});
+ assert.equal((await trocarSenha(f)).status,500);
+});
 test('somente Master concede Master; operador não pode criar vínculo',async()=>{
  for(const role of ['gestor_master','administrador','operador_completo','operador_simples']){
   const e=environment({role});const r=await e.invoke('vincular-usuario-existente',{acao:'vincular',empresaId:'A',userId:'outra-pessoa',perfil:'gestor_master'});
@@ -189,11 +246,12 @@ test('leitura estrita detecta erros retornados pelo SDK sem alterar a política 
  }
 });
 
-test('Web e Mobile não oferecem credenciais editáveis de terceiros; titular mantém seus controles',()=>{
+test('Web e Mobile protegem identidade de terceiros e mostram nova senha somente com concessão',()=>{
  const web=readFileSync('app/gestao/page.tsx','utf8');
  assert.match(web,/id="editar-usuario-email"[\s\S]*?readOnly=\{!editandoIdentidadePropria\}/);
  assert.match(web,/id="editar-usuario-login"[\s\S]*?readOnly=\{!editandoIdentidadePropria\}/);
- assert.match(web,/\{editandoIdentidadePropria && <div/);
+ assert.match(web,/const podeGerenciarSenhaUsuario = editandoIdentidadePropria \|\| usuarioOriginalEditando\?\.pode_redefinir_senha === true/);
+ assert.match(web,/\{podeGerenciarSenhaUsuario && <div/);
  const mobile=readFileSync('public/mobile-app.js','utf8');
  const render=mobile.slice(mobile.indexOf('function editarUsuarioHtml('),mobile.indexOf('function trocarEmpresaHtml('));
  for(const own of [false,true]){
