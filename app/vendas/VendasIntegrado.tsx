@@ -937,7 +937,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível persistir o pedido.',payload); return; }
             destination.postMessage({ type: responseType, requestId, ok: true, customerId: payload.customerId, order: payload.order }, origemPrototipo);
             if (payload.order?.fiscalDraftId) await carregarDocumentosFiscais(empresaId, token);
-            if (payload.order?.stockIntegrated) await carregarCatalogo(empresaId);
+            if (payload.order?.stockIntegrated) await Promise.all([carregarCatalogo(empresaId),carregarEstoque(empresaId)]);
             return;
           }
           if (event.data.type === COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE) {

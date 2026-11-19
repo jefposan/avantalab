@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_DXz3AeXKHTbHtTHeRhEQQ867wVRY",
+  "baseDeploymentId": "dpl_EKvgkaU1NvRZhFi9oN6qqRPR7Buv",
   "migrations": [],
-  "version": "3.2.0.502",
-  "scope": "Vendas primeiro, Orçamentos abaixo somente quando salvos, sem card vazio e com Novo orçamento no topo. Layout aprovado e publicação autorizada. Sem migração ou alteração de registros reais; trabalhos paralelos preservados."
+  "version": "3.2.0.503",
+  "scope": "Pedidos: lançamento posterior no estoque com conferência, reserva antes do faturamento, baixa após faturamento, proteção contra duplicidade e integração dos estornos. Sem migrações ou operação real de teste; trabalhos paralelos preservados."
 }

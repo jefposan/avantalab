@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.502 -->
+<!-- ava-version: 3.2.0.503 -->
+
+> Revisão 3.2.0.503: Vendas > ações do pedido > Lançar no estoque permite ativar depois o estoque de pedidos com produtos e sem movimentação. Em Confirmado/Em separação, reserva e baixa somente ao faturar; em Faturado, baixa física imediata após conferência. O modal lista itens/quantidades, informa o efeito e exige confirmar. Usa estoque principal ativo e saldo disponível; falta de saldo/cadastro precisa ser resolvida em Estoque. Exige consultar/editar vendas e saída de estoque. Não altera valores, cobranças ou notas. Após lançamento o botão some; duplicidade também bloqueada no servidor. Cancelamento/devolução seguem regras e estornos existentes. Em erro/timeout, atualizar a lista antes de repetir; nunca orientar movimentação avulsa para contornar duplicidade.
 
 > Revisão local 3.2.0.502: Vendas > card Vendas (antes Operações comerciais) aparece primeiro, após os resumos, com pesquisa e ações existentes. Orçamentos (antes Orçamentos salvos) aparece abaixo somente quando há propostas salvas. Sem propostas, usar Novo orçamento no topo, ao lado de Novo pedido; não há card vazio. Sem alteração de dados ou publicação nesta etapa.
 

@@ -35,6 +35,9 @@ function publicError(error) {
     'AV-SALES-ORDER-RECEIVED': ['receivables', 'Existem valores recebidos. Abra Recebimentos e registre o estorno antes de cancelar ou devolver o pedido.'],
     'AV-SALES-ORDER-FISCAL': ['fiscal', 'O documento fiscal está no ciclo de emissão. Abra a Central Fiscal e conclua o cancelamento fiscal antes de cancelar ou devolver o pedido.'],
     'AV-SALES-ORDER-IDEMPOTENCY': ['idempotencyKey', 'Esta solicitação já foi usada para outra ação. Atualize o pedido.'],
+    'AV-SALES-ORDER-STOCK-DONE': ['stock', 'Este pedido já possui lançamento de estoque. Atualize a lista; nenhuma baixa adicional foi feita.'],
+    'AV-SALES-ORDER-STOCK-BALANCE': ['stock', 'Saldo disponível insuficiente no estoque principal. Confira entradas e reservas dos produtos antes de tentar novamente.'],
+    'AV-SALES-ORDER-STOCK-LOCATION': ['stock', 'Defina um local de estoque principal ativo e cadastre os saldos dos produtos antes de lançar este pedido.'],
   }[error?.code];
   return known
     ? issue(error.code, known[0], known[1])
@@ -94,7 +97,9 @@ async function controlledItems(client, companyId, orderId) {
   const result = await client.query(`
     select id,produto_id,sku,nome,quantidade
     from public.vendas_operacao_itens
-    where empresa_id=$1 and operacao_id=$2 and tipo_item='produto' and controla_estoque
+    where empresa_id=$1 and operacao_id=$2 and tipo_item='produto' and (controla_estoque or exists(
+      select 1 from public.vendas_estoque_reservas r where r.empresa_id=$1 and r.operacao_id=$2
+        and r.operacao_item_id=public.vendas_operacao_itens.id and r.situacao in ('ativa','consumida')))
     order by id for update
   `, [companyId, orderId]);
   return result.rows;
@@ -118,6 +123,42 @@ export function createPostgresCommercialSalesOrderLifecycleRepository({ pool } =
   if (!pool?.connect) throw new TypeError('Informe o pool PostgreSQL server-side.');
 
   return Object.freeze({
+    async postStock({companyId,actorId,orderId,localId,expectedVersion,idempotencyKey}) {
+      return transaction(pool,async client=>{
+        const repeated=await alreadyDone(client,companyId,idempotencyKey,orderId,'pedido_estoque_posterior');
+        if(repeated)return repeated;
+        const order=await loadOrder(client,companyId,orderId);
+        if(!order)throw coded('AV-SALES-ORDER-NOT-FOUND');
+        if(Number(order.versao)!==expectedVersion)throw coded('AV-SALES-ORDER-CONFLICT');
+        if(!['confirmado','em_separacao','faturado'].includes(order.situacao))throw coded('AV-SALES-ORDER-STATE');
+        if(order.situacao_estoque!=='sem_movimentacao')throw coded('AV-SALES-ORDER-STOCK-DONE');
+        if((await client.query("select 1 from public.vendas_estoque_reservas where empresa_id=$1 and operacao_id=$2 and situacao in ('ativa','consumida','devolvida') limit 1",[companyId,orderId])).rows.length)throw coded('AV-SALES-ORDER-STOCK-DONE');
+        const items=(await client.query("select id,produto_id,quantidade from public.vendas_operacao_itens where empresa_id=$1 and operacao_id=$2 and tipo_item='produto' order by produto_id,id for update",[companyId,orderId])).rows;
+        if(!items.length||items.some(i=>!i.produto_id||!Number.isFinite(Number(i.quantidade))||Number(i.quantidade)<=0))throw coded('AV-SALES-ORDER-ITEMS');
+        const location=(await client.query('select id from public.vendas_estoque_locais where empresa_id=$1 and ativo and (($2::uuid is null and padrao) or id=$2) order by id for update',[companyId,localId||null])).rows;
+        if(location.length!==1)throw coded('AV-SALES-ORDER-STOCK-LOCATION');
+        const debit=order.situacao==='faturado';let quantityTotal=0;
+        for(const item of items){
+          const balance=(await client.query('select * from public.vendas_estoque_saldos where empresa_id=$1 and local_id=$2 and produto_id=$3 for update',[companyId,location[0].id,item.produto_id])).rows[0];
+          const q=Number(item.quantidade);
+          if(!balance)throw coded('AV-SALES-ORDER-STOCK-LOCATION');
+          const physical=Number(balance.saldo_fisico),reserved=Number(balance.saldo_reservado);
+          if(!balance.permite_negativo&&Math.round((physical-reserved)*1000)<Math.round(q*1000))throw coded('AV-SALES-ORDER-STOCK-BALANCE');
+          const physicalAfter=debit?Number((physical-q).toFixed(3)):physical,reservedAfter=debit?reserved:Number((reserved+q).toFixed(3));
+          await client.query('update public.vendas_estoque_saldos set saldo_fisico=$3,saldo_reservado=$4 where empresa_id=$1 and id=$2',[companyId,balance.id,physicalAfter,reservedAfter]);
+          const reservation=(await client.query(`insert into public.vendas_estoque_reservas(empresa_id,saldo_id,operacao_id,operacao_item_id,quantidade,situacao,chave_idempotencia,criado_por)
+            values($1,$2,$3,$4,$5,$6,$7,$8) returning id`,[companyId,balance.id,orderId,item.id,q,debit?'consumida':'ativa',`${idempotencyKey}:${item.id}`,actorId])).rows[0];
+          await client.query(`insert into public.vendas_estoque_movimentos(empresa_id,saldo_id,reserva_id,operacao_id,tipo,quantidade,saldo_fisico_anterior,saldo_fisico_final,saldo_reservado_anterior,saldo_reservado_final,chave_idempotencia,criado_por)
+            values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,[companyId,balance.id,reservation.id,orderId,debit?'saida_venda':'reserva',debit?-q:q,physical,physicalAfter,reserved,reservedAfter,`${idempotencyKey}:${item.id}:mov`,actorId]);
+          quantityTotal+=q;
+        }
+        const stockStatus=debit?'baixado':order.situacao==='em_separacao'?'em_separacao':'reservado';
+        const updated=await client.query('update public.vendas_operacoes set situacao_estoque=$3,atualizado_por=$4 where empresa_id=$1 and id=$2 returning versao',[companyId,orderId,stockStatus,actorId]);
+        const metadata={quantity:Number(quantityTotal.toFixed(3)),itemCount:items.length,localId:location[0].id,stockStatus,operationVersion:Number(updated.rows[0].versao),physicalDebit:debit};
+        await recordEvent(client,{companyId,orderId,actorId,key:idempotencyKey,name:'pedido_estoque_posterior',summary:debit?'Baixa posterior do pedido faturado.':'Controle de estoque ativado posteriormente; produtos reservados.',metadata});
+        return {reused:false,event:'pedido_estoque_posterior',...metadata};
+      });
+    },
     async confirm({ companyId, actorId, orderId, localId, expectedVersion, idempotencyKey }) {
       return transaction(pool, async (client) => {
         const repeated = await alreadyDone(client, companyId, idempotencyKey, orderId, 'pedido_confirmado');
@@ -253,7 +294,8 @@ export function createPostgresCommercialSalesOrderLifecycleRepository({ pool } =
         let released = 0;
         for (const reservation of reservations) {
           const quantity = Number(reservation.quantidade);
-          const before = Number(reservation.saldo_reservado);
+          const current=(await client.query('select saldo_reservado from public.vendas_estoque_saldos where empresa_id=$1 and id=$2 for update',[companyId,reservation.saldo_id])).rows[0];
+          const before = Number(current.saldo_reservado);
           const after = before - quantity;
           if (after < 0) throw coded('AV-SALES-ORDER-RESERVATION');
           await client.query(`
@@ -340,7 +382,8 @@ export function createPostgresCommercialSalesOrderLifecycleRepository({ pool } =
         if (controlled.length !== reservations.length) throw coded('AV-SALES-ORDER-RESERVATION');
         let returned = 0;
         for (const reservation of reservations) {
-          const quantity = Number(reservation.quantidade); const before = Number(reservation.saldo_fisico); const after = before + quantity;
+          const balance=(await client.query('select saldo_fisico from public.vendas_estoque_saldos where empresa_id=$1 and id=$2 for update',[companyId,reservation.saldo_id])).rows[0];
+          const quantity = Number(reservation.quantidade); const before = Number(balance.saldo_fisico); const after = before + quantity;
           await client.query('update public.vendas_estoque_saldos set saldo_fisico=$3 where empresa_id=$1 and id=$2', [companyId, reservation.saldo_id, after]);
           await client.query("update public.vendas_estoque_reservas set situacao='devolvida',atualizado_em=now() where empresa_id=$1 and id=$2", [companyId, reservation.id]);
           await client.query(`insert into public.vendas_estoque_movimentos(
@@ -412,6 +455,7 @@ export function createCommercialSalesOrderLifecycleService({ repository } = {}) 
     }
   };
   return protectCommercialService({
+    postStock: run('postStock', ['sales.view', 'sales.edit', 'stock.exit']),
     confirm: run('confirm', ['sales.edit', 'stock.exit']),
     startSeparation: run('startSeparation', ['sales.edit', 'stock.exit']),
     cancel: run('cancel', ['sales.cancel', 'stock.exit']),

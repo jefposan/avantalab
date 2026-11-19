@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.502 -->
+<!-- ava-version: 3.2.0.503 -->
+
+> Revisão 3.2.0.503: sem impacto operacional no AvantaVendas independente. Lançamento posterior do estoque pertence a Vendas e Serviços Web; não altera catálogo, pedidos ou estoque do aplicativo independente.
 
 > Revisão local 3.2.0.502: sem impacto operacional no AvantaVendas independente. Reorganização visual exclusiva de Vendas e Serviços Web; nenhum pedido, catálogo ou histórico alterado.
 

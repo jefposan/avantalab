@@ -1,3 +1,10 @@
+# 3.2.0.503 — Pedidos: lançamento posterior no estoque com conferência
+
+- Nova ação Lançar no estoque para pedidos com produtos, confirmados/em separação/faturados e sem movimentação. Confere itens e quantidades do registro salvo; confirmados reservam e faturados baixam, sem alterar financeiro ou fiscal.
+- Servidor exige sessão, empresa e consultar/editar vendas + saída de estoque, versão e local principal ativo. Transação serializável com bloqueio do pedido/saldos, idempotência e auditoria; saldo insuficiente ou erro revertem todo o lote. Não aceita baixa repetida.
+- Reserva posterior integra separação, faturamento, cancelamento e devolução sem reescrever retratos de itens. Releitura do saldo durante movimentos mantém quantidades corretas quando o produto aparece em mais de uma linha.
+- Confirmação bloqueia repetição/fechamento em andamento, informa falhas em português e orienta atualizar a lista quando o resultado é incerto. Catálogo e estoque são atualizados após retorno autenticado. Sem migração, mudança de permissões ou operação real de teste.
+
 # 3.2.0.502 — Vendas: priorizar vendas e exibir orçamentos somente quando salvos
 
 - Card Operações comerciais passa a Vendas e ocupa a primeira posição após os resumos, mantendo pesquisa, situações e ações existentes.

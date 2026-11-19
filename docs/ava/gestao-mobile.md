@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.502 -->
+<!-- ava-version: 3.2.0.503 -->
+
+> Revisão 3.2.0.503: sem impacto operacional na Gestão mobile nativa. Nova ação de lançamento posterior do estoque em pedidos do módulo Web, com conferência e segurança; nenhum plugin, permissão nativa ou envio às lojas.
 
 > Revisão local 3.2.0.502: sem impacto operacional na Gestão mobile nativa. Apenas reorganização dos cards de Vendas e Orçamentos na tela Web, sem novos plugins ou publicação nativa.
 

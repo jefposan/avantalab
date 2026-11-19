@@ -175,9 +175,9 @@ export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {
 
         const items = await loadItems(client, companyId, orderId);
         if (!items.length) throw coded('AV-SALES-BILLING-ITEMS');
-        let controlled = items.filter((item) => item.tipo_item === 'produto' && item.controla_estoque);
         const reservations = await activeReservations(client, companyId, orderId);
         const reservationByItem = new Map(reservations.map((reservation) => [reservation.operacao_item_id, reservation]));
+        let controlled = items.filter((item) => item.tipo_item === 'produto' && (item.controla_estoque || reservationByItem.has(item.id)));
         if (controlled.length !== reservations.length || controlled.some((item) => Number(reservationByItem.get(item.id)?.quantidade) !== Number(item.quantidade))) {
           throw coded('AV-SALES-BILLING-RESERVATION');
         }
@@ -185,7 +185,8 @@ export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {
         let stockReleased = 0;
         if (moveStock === false) {
           for (const reservation of reservations) {
-            const before = Number(reservation.saldo_reservado);
+            const current=(await client.query('select saldo_reservado from public.vendas_estoque_saldos where empresa_id=$1 and id=$2 for update',[companyId,reservation.saldo_id])).rows[0];
+            const before = Number(current.saldo_reservado);
             const quantity = Number(reservation.quantidade);
             if (before < quantity) throw coded('AV-SALES-BILLING-RESERVATION');
             await client.query('update public.vendas_estoque_saldos set saldo_reservado=$3 where empresa_id=$1 and id=$2', [companyId, reservation.saldo_id, before - quantity]);
@@ -202,9 +203,10 @@ export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {
         let stockConsumed = 0;
         for (const item of controlled) {
           const reservation = reservationByItem.get(item.id);
+          const balance=(await client.query('select saldo_fisico,saldo_reservado from public.vendas_estoque_saldos where empresa_id=$1 and id=$2 for update',[companyId,reservation.saldo_id])).rows[0];
           const quantity = Number(item.quantidade);
-          const physicalBefore = Number(reservation.saldo_fisico);
-          const reservedBefore = Number(reservation.saldo_reservado);
+          const physicalBefore = Number(balance.saldo_fisico);
+          const reservedBefore = Number(balance.saldo_reservado);
           const physicalAfter = physicalBefore - quantity;
           const reservedAfter = reservedBefore - quantity;
           if (reservedAfter < 0 || (!reservation.permite_negativo && physicalAfter < 0)) {

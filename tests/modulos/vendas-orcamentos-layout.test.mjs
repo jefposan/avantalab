@@ -11,7 +11,7 @@ function render(created){
  const context={exports:{},React,useState:value=>[value,()=>{}],useMemo:fn=>fn(),money:value=>String(value),normalizeSearch:value=>String(value).toLowerCase(),commercialRecords:[],documentLabel:value=>value,
  PageHeading:({action})=>React.createElement('header',null,action),Metric:()=>null,Panel:({title,children})=>React.createElement('section',null,React.createElement('h2',null,title),children),Badge:({children})=>React.createElement('span',null,children),
  Table:({children})=>React.createElement('table',null,React.createElement('tbody',null,children)),SearchToolbar:({children})=>React.createElement('div',null,React.createElement('input',{'aria-label':'Pesquisar vendas'}),children),
- Icon:()=>null,EmptyState:({title})=>React.createElement('p',null,title),QuoteActions:()=>React.createElement('button',null,'Compartilhar orçamento'),CommercialRecordIndicators:()=>null,CommercialRecordActions:()=>React.createElement('button',null,'Ações da venda'),OrderDetailsDialog:()=>null,OrderLifecycleDialog:()=>null};
+ Icon:()=>null,EmptyState:({title})=>React.createElement('p',null,title),QuoteActions:()=>React.createElement('button',null,'Compartilhar orçamento'),CommercialRecordIndicators:()=>null,CommercialRecordActions:()=>React.createElement('button',null,'Ações da venda'),OrderDetailsDialog:()=>null,OrderLifecycleDialog:()=>null,OrderStockDialog:()=>null};
  vm.runInNewContext(ts.transpileModule(`${sales}\nexports.Component=SalesView;`,{compilerOptions:{jsx:ts.JsxEmit.React,target:ts.ScriptTarget.ES2022},fileName:'vendas.tsx'}).outputText,context);
  return renderToStaticMarkup(React.createElement(context.exports.Component,{created,connected:true,fiscalDrafts:[],fiscalPrepareState:{},onNew:()=>{}}));
 }
