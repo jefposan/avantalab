@@ -4,7 +4,7 @@ import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
 import AvisoFormulario from '@/app/components/AvisoFormulario';
 import {Modal} from '@/app/projetos/components/Modal';
 import {Icon} from '@/app/projetos/components/Icon';
-import {baixarModeloClientes,lerModeloClientes,solicitarImportacaoClientes,type CustomerImportPreview,type CustomerImportRow,type CustomerImportMode} from '../lib/customer-excel';
+import {ErroImportacaoClientes,mensagemFalhaClientes,baixarModeloClientes,lerModeloClientes,solicitarImportacaoClientes,type CustomerImportPreview,type CustomerImportRow,type CustomerImportMode} from '../lib/customer-excel';
 import styles from './CustomerExcelActions.module.css';
 
 export default function CustomerExcelActions({companyId,companyName,origin,canCreate,canView,canEdit=false,brand,onNotify}:{companyId:string;companyName:string;origin:string;canCreate:boolean;canView:boolean;canEdit?:boolean;brand:string;onNotify:(message:string)=>void}) {
@@ -19,18 +19,18 @@ export default function CustomerExcelActions({companyId,companyName,origin,canCr
   const importar=async(file?:File)=>{
     if(!file)return;setOpened(true);setBusy(true);setData(null);setError('');setReplacementAccepted(false);
     try {
-      if(!/\.xlsx$/i.test(file.name)||file.size>5*1024*1024)throw Error('Selecione um arquivo .xlsx de até 5 MB.');
+      if(!/\.xlsx$/i.test(file.name)||file.size>5*1024*1024)throw new ErroImportacaoClientes('Selecione uma planilha Excel .xlsx de até 5 MB. Arquivos .csv e .xls precisam ser convertidos para o modelo Excel antes de importar.');
       const parsed=await lerModeloClientes(await file.arrayBuffer(),companyId);
       const preview=await solicitarImportacaoClientes({companyId,origin,mode,...parsed,fileName:file.name,confirm:false});
       setData({...parsed,fileName:file.name,preview});
-    }catch(cause){setError(cause instanceof Error?cause.message:'Não foi possível ler a planilha.');}finally{setBusy(false);if(input.current)input.current.value='';}
+    }catch(cause){setError(mensagemFalhaClientes(cause,'Não foi possível abrir a planilha para leitura. Selecione o arquivo novamente; se o problema continuar, abra-o no Excel e salve uma nova cópia .xlsx. Nenhum cliente foi importado.'));}finally{setBusy(false);if(input.current)input.current.value='';}
   };
   const confirmar=async()=>{if(!data||!data.preview.canImport||busy||(mode==='replace'&&!replacementAccepted))return;setBusy(true);setError('');try{
     const result=await solicitarImportacaoClientes({companyId,origin,mode,rows:data.rows,fileName:data.fileName,fileCompanyId:data.fileCompanyId,confirm:true,previewKey:data.preview.previewKey});
-    if(!result.confirmed)throw Error('A importação não foi confirmada. Revise a planilha novamente.');
+    if(!result.confirmed)throw new ErroImportacaoClientes('A importação não foi confirmada. Revise a planilha novamente.');
     setOpened(false);setData(null);onNotify(mode==='replace'?`${result.created} novo(s), ${result.updated||0} atualizado(s) e ${result.inactivated||0} inativado(s). Históricos preservados.`:`${result.created} cliente(s) importado(s). ${result.skipped} duplicado(s) ignorado(s), sem alteração.`);
-  }catch(cause){setError(cause instanceof Error?cause.message:'Não foi possível concluir.');}finally{setBusy(false);}};
-  const revalidar=async()=>{if(!data||busy)return;setBusy(true);setReplacementAccepted(false);try{const preview=await solicitarImportacaoClientes({companyId,origin,mode,rows:data.rows,fileName:data.fileName,fileCompanyId:data.fileCompanyId,confirm:false});setData({...data,preview});setError('');}catch(cause){setError(cause instanceof Error?cause.message:'Não foi possível revisar a planilha.');}finally{setBusy(false);}};
+  }catch(cause){setError(mensagemFalhaClientes(cause,'Não foi possível confirmar o resultado da importação. Atualize a lista e revalide a planilha antes de tentar novamente.'));}finally{setBusy(false);}};
+  const revalidar=async()=>{if(!data||busy)return;setBusy(true);setReplacementAccepted(false);try{const preview=await solicitarImportacaoClientes({companyId,origin,mode,rows:data.rows,fileName:data.fileName,fileCompanyId:data.fileCompanyId,confirm:false});setData({...data,preview});setError('');}catch(cause){setError(mensagemFalhaClientes(cause,'Não foi possível atualizar a prévia. Confira a conexão e revalide a planilha antes de confirmar.'));}finally{setBusy(false);}};
   return <div className={styles.root} style={{'--brand':brand} as CSSProperties}>
     <input ref={input} type="file" accept=".xlsx" hidden aria-label="Planilha de clientes" onChange={event=>void importar(event.target.files?.[0])}/>
     <BotaoAcaoCompacto disabled={!canCreate||!companyId||!origin||busy} title={!canCreate?'Sem permissão para cadastrar clientes':!companyId||!origin?'Abra o módulo pelo perfil empresarial':undefined} aria-label="Importar clientes do Excel" onClick={()=>{setMode('add');setData(null);setError('');setReplacementAccepted(false);setOpened(true);}}><Icon name="upload" size={18}/><span className={styles.label}><strong>Importar</strong><small>Excel</small></span></BotaoAcaoCompacto>

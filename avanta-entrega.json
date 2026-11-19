@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_DdNbDN6BXz9pYd6ed2hh8dC9543D",
+  "baseDeploymentId": "dpl_7CuDqb9MbLQneBUpmB7MJnoYyA97",
   "migrations": [],
-  "version": "3.2.0.500",
-  "scope": "Clientes: importação Excel em modos adicionar e substituir, prévia, permissões, auditoria e preservação de históricos. Inclui pendências fiscais exclusivamente no menu de Notas e visual do Excel de preços, já ajustados localmente. Sem migrações ou execução de manutenção administrativa."
+  "version": "3.2.0.501",
+  "scope": "Correção local: leitura de clientes Excel com OOXML prefixado e erros orientativos em português. Sem publicação autorizada nesta etapa, sem migrações ou importação real de clientes."
 }

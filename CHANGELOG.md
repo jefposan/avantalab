@@ -1,3 +1,9 @@
+# 3.2.0.501 — Clientes: compatibilidade da leitura Excel e erros em português
+
+- Leitura usa o interpretador SheetJS já presente no sistema, compatível com namespaces OOXML prefixados (x:workbook) gerados por outros editores. Corrige a exceção técnica ao ler sheets, sem regravar arquivos ou flexibilizar identificação do modelo/perfil, cabeçalhos, fórmulas e limites.
+- Mensagens de arquivo antigo/protegido, formato inválido, estrutura danificada e modelo ausente passam a explicar o motivo e a ação em português. Exceções técnicas inesperadas não são mostradas diretamente; retornos técnicos de comunicação também recebem orientação segura.
+- Testes reproduzem a falha no leitor anterior e comprovam a leitura com valores idênticos, incluindo zeros à esquerda; navegador local validado sem importar clientes. Sem banco, publicação ou alteração nos arquivos originais.
+
 # 3.2.0.500 — Clientes: importar adicionando ou substituindo a base com segurança
 
 - Modal compacto aprovado: Importar Clientes, escolha em dois cards, planilha e revisão; sem subtítulo ou avisos extras na seleção.

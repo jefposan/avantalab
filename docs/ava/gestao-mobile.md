@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.500 -->
+<!-- ava-version: 3.2.0.501 -->
+
+> Revisão local 3.2.0.501: sem impacto operacional na Gestão mobile nativa. Correção do leitor Excel de clientes e mensagens orientativas em português somente no módulo Web, sem alteração de banco ou envio às lojas.
 
 > Revisão 3.2.0.500: sem impacto operacional na Gestão mobile nativa. Na Gestão Web, Clientes permite adicionar ou substituir a base por Excel, com prévia e inativação segura dos ausentes; sem apagar históricos. Inclui ajustes Web 499, sem plugins ou envio às lojas.
 

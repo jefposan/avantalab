@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.500 -->
+<!-- ava-version: 3.2.0.501 -->
+
+> Revisão local 3.2.0.501: sem impacto operacional no AvantaVendas independente. Leitor de Clientes no módulo Web corrige compatibilidade de arquivo e mensagens em português; não altera carteiras, pedidos ou catálogos automaticamente.
 
 > Revisão 3.2.0.500: sem impacto operacional no AvantaVendas independente. Clientes empresariais no módulo Web passa a permitir adicionar ou substituir a base, com inativação dos ausentes e históricos preservados. Inclui ajustes 499; nenhum catálogo, estoque ou pedido do AvantaVendas é alterado.
 

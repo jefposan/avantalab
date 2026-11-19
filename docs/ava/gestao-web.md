@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.500 -->
+<!-- ava-version: 3.2.0.501 -->
+
+> Revisão local 3.2.0.501: importação de Clientes aceita o modelo Excel com namespaces internos gerados por outros editores. Formato inválido/antigo/protegido, estrutura ilegível ou identificação do modelo ausente são explicados em português, com orientação. Preserve todas as abas do modelo exportado, inclusive _Avanta oculta; copiar somente dados para Clientes. Não recomendar remover a identificação para contornar bloqueios. Validações de perfil, fórmulas, CPF/CNPJ, prévia e confirmação permanecem. Em falha de comunicação, atualizar a lista e revalidar, pois o resultado pode não ter sido recebido. Nada importado ou publicado automaticamente.
 
 > Revisão 3.2.0.500 (substitui a orientação de importação 496): Clientes > Importar abre Importar Clientes. Escolher Adicionar à base (novos; CPF/CNPJ existentes e repetidos no arquivo ignorados, sem sobrescrever) ou Substituir a base (atualiza presentes, cria novos, inativa ausentes). Substituir exige também editar clientes. Selecionar planilha, revisar totais, marcar confirmação explícita da substituição e confirmar. Duplicados ambíguos na substituição devem ser corrigidos. IDs, códigos, tabelas, vendedores, pedidos, notas e históricos permanecem. Prévia não grava; mudanças concorrentes ou falha exigem revalidar; lote inteiro ou nada. Nenhuma base é alterada pela publicação. Mantém pendências fiscais e Excel de preços da revisão 499, agora incluídos na entrega.
 
