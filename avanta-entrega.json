@@ -2,5 +2,5 @@
   "baseDeploymentId": "dpl_5pL9ehsxUGWor8i35PwpbnREDfsu",
   "migrations": [],
   "version": "3.2.0.498",
-  "scope": "Vendas e Serviços: corrige o tipo do retorno de exclusão de rascunho fiscal, com sucesso/erro reconhecidos pela tela; espera visível, bloqueio de envio duplicado e recuperação em timeout. Mantém regras fiscais, permissões e banco. Sem SQL ou exclusão real para teste."
+  "scope": "Vendas e Serviços: retorno correto da exclusão de rascunho, espera e bloqueio de repetição; menu lateral sem contadores, indicadores mantidos nas páginas. Registra manutenção administrativa já executada e autorizada de duas notas de homologação Tridium, preservando oito arquivos, emissões, reservas e produção. Sem migração automática, botão novo ou mudança de permissões. SQL pontual não deve ser reexecutado na publicação."
 }

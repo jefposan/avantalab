@@ -3,6 +3,8 @@
 - Exclusão respondia com tipo de download e a tela ignorava sucesso e recusa. Corrigido o discriminador no dispatcher fiscal, removendo a condição indevida do dispatcher de anexos.
 - Confirmação mostra Excluindo, bloqueia duplicidade/fechamento durante envio, fecha apenas no sucesso correlacionado e conserva a mensagem de erro/timeout para recuperação.
 - Testes executam o dispatcher real em cenário isolado para sucesso, recusa, sessão ausente e falha de rede, além do envio único e tratamento na tela. Proteções fiscais/servidor e auditoria mantidas; nenhuma exclusão real para teste e nenhuma migração SQL.
+- Menu lateral de Vendas e Serviços sem contadores; ícones, rótulos, seleção e permissões preservados. Quantidades continuam nos indicadores das páginas, sem cálculo adicional só para a navegação.
+- Manutenção pontual autorizada: arquivadas operacionalmente somente as duas NF-e de homologação da Tridium, série 2/números 1 e 2 de 06/11/2026. Marcações existentes e dois eventos de auditoria, sem apagar documentos nem mudar emissões/reservas. Oito arquivos e impressões digitais fiscais/produção preservados. SQL de manutenção registrado fora da fila de migrações; não reexecutar automaticamente. Nenhum botão/rota novo.
 
 # 3.2.0.497 — Clientes e navegação: entrega conjunta com ações alinhadas e seletor CSS restrito
 

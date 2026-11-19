@@ -1,5 +1,7 @@
 <!-- ava-version: 3.2.0.498 -->
 
+> Revisão complementar 3.2.0.498: menu lateral de Vendas e Serviços mostra só nomes e ícones, sem contadores; quantidades permanecem nas páginas. Em manutenção pontual expressamente autorizada em 19/11/2026, arquivadas somente as notas de homologação série 2/números 1 e 2 da Tridium, de 06/11/2026. Não são listadas na operação, mas emissões, XML, DANFE, reservas e históricos permanecem; auditoria registrada, nenhum cancelamento ou alteração de produção. Não há botão novo nem arquivamento automático de outras notas.
+
 > Revisão 3.2.0.498: Vendas e Serviços > Notas Fiscais > Excluir rascunho agora reconhece o retorno correto. Excluindo indica envio em andamento e bloqueia cliques repetidos; sucesso fecha a confirmação e atualiza a lista. Em recusa, mantém a mensagem; em demora, atualizar a lista antes de repetir. Uma tentativa em versão anterior pode ter sido concluída no servidor apesar de o modal permanecer aberto: consultar a lista atualizada antes de repetir. Nenhuma nota autorizada é apagada; proteções fiscais e histórico permanecem.
 
 > Revisão 3.2.0.497: mantém os fluxos de Clientes Excel e Navegar descritos na 496. A candidata 496 não foi promovida; a 497 entrega ambos com botões alinhados, mesma altura e sem afetar selos. Sem mudança nas instruções operacionais.

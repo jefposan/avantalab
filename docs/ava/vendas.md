@@ -1,5 +1,7 @@
 <!-- ava-version: 3.2.0.498 -->
 
+> Revisão complementar 3.2.0.498: sem impacto operacional no AvantaVendas independente; menu lateral de Vendas e Serviços Web sem contadores. Arquivadas administrativamente apenas duas NF-e de homologação da Tridium autorizadas para limpeza; arquivos, histórico, reservas e produção preservados. Nenhum catálogo, pedido ou estoque foi alterado.
+
 > Revisão 3.2.0.498: sem impacto operacional no AvantaVendas independente; corrige confirmação de exclusão de rascunho em Vendas e Serviços Web. Não altera notas autorizadas, pedidos, catálogo ou regras fiscais.
 
 > Revisão 3.2.0.497: sem impacto operacional no AvantaVendas independente. Na Gestão Web, entrega Clientes Excel e Navegar da candidata 496 não promovida, com seletor CSS restrito às ações compactas e sem atingir selos.

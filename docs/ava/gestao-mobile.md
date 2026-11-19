@@ -1,5 +1,7 @@
 <!-- ava-version: 3.2.0.498 -->
 
+> Revisão complementar 3.2.0.498: sem impacto operacional na Gestão mobile nativa. No módulo Web, menu lateral sem contadores; indicadores permanecem nas páginas. Arquivamento administrativo pontual de somente duas notas de homologação Tridium, com oito arquivos e histórico preservados, sem alteração de notas de produção nem botão novo.
+
 > Revisão 3.2.0.498: sem impacto operacional na Gestão mobile nativa. Ajuste do retorno de exclusão de rascunho em Vendas e Serviços Web, com espera e bloqueio de repetição, sem nova publicação nativa.
 
 > Revisão 3.2.0.497: sem impacto operacional nativo; ajuste restrito ao seletor CSS das ações de Clientes Web. Mantém orientação de Clientes Excel e Navegar da 496, candidata não promovida.

@@ -956,10 +956,10 @@ const viewInfo: Record<View, { title: string; subtitle: string; eyebrow: string 
   configuracoes: { title: 'Ajustes', subtitle: 'Configure a empresa, as notas, a operação e os acessos por assunto.', eyebrow: 'Vendas e serviços' },
 };
 
-const navGroups: Array<{ label: string; items: Array<[View, string, IconName, string?]> }> = [
+const navGroups: Array<{ label: string; items: Array<[View, string, IconName]> }> = [
   { label: 'Resumo', items: [['painel', 'Visão geral', 'home']] },
-  { label: 'Operação', items: [['vendas', 'Vendas', 'sale', '6'], ['servicos', 'Serviços', 'service', '4'], ['fiscal', 'Notas Fiscais', 'fiscal', '2'], ['clientes', 'Clientes', 'users'], ['catalogo', 'Produtos e serviços', 'box']] },
-  { label: 'Controle', items: [['estoque', 'Estoque', 'stock', '2'], ['recebimentos', 'Recebimentos', 'money', '3']] },
+  { label: 'Operação', items: [['vendas', 'Vendas', 'sale'], ['servicos', 'Serviços', 'service'], ['fiscal', 'Notas Fiscais', 'fiscal'], ['clientes', 'Clientes', 'users'], ['catalogo', 'Produtos e serviços', 'box']] },
+  { label: 'Controle', items: [['estoque', 'Estoque', 'stock'], ['recebimentos', 'Recebimentos', 'money']] },
   { label: 'Gestão', items: [['relatorios', 'Relatórios', 'chart'], ['configuracoes', 'Ajustes', 'settings']] },
 ];
 
@@ -5886,11 +5886,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const pendingAccessSaveRef = useRef(new Map<string, number>());
   const pendingFiscalRulesSaveRef = useRef(new Map<string, number>());
   const pendingFiscalProfileSaveRef = useRef(new Map<string, { timer: number; resolve: (ok: boolean) => void; reject: (cause: Error) => void }>());
-  const stockAttentionCount = catalogRecords.filter((item) => item.category !== 'Serviço' && item.trackStock && stockStatus(item.available, item.minimum) !== 'normal').length;
-  const receivableOpenCount = receivableRecords.filter((item) => receivableBalance(item) > 0).length;
-  const salesRecordCount = created.filter((item) => ['orcamento', 'pedido', 'venda'].includes(item.type)).length;
-  const serviceRecordCount = created.filter((item) => item.type === 'ordem_servico').length;
-  const fiscalDocumentCount = fiscalDraftRecords.length;
   const currentFiscalConfig = useMemo(() => fiscalConfigFromSettings(moduleSettings, fiscalCertificateBridgeState.certificate, fiscalCertificateBridgeState.execution), [moduleSettings, fiscalCertificateBridgeState.certificate, fiscalCertificateBridgeState.execution]);
   useEffect(() => { const id = readCompanyStorage('avanta-fiscal-retorno'); if (id && fiscalDraftRecords.some((draft) => draft.id === id)) { removeCompanyStorage('avanta-fiscal-retorno'); setFiscalResumeId(id); setView('fiscal'); } }, [fiscalDraftRecords]);
   const managementProfileReady = !integratedManagementRuntime || Boolean(managementCatalogBridge?.company);
@@ -8140,7 +8135,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         {newMenu && <button type="button" className="new-selection-sidebar-backdrop" aria-label="Fechar opções de novo cadastro" onClick={() => setNewMenu(false)}/>} 
         <div className="sidebar-mobile-head"><strong>Menu comercial</strong><button type="button" className="icon-button" onClick={() => setMobileMenu(false)} aria-label="Fechar menu"><Icon name="close"/></button></div>
         {managementContextReady && <div className="new-wrap" ref={newMenuRef}><button type="button" className="new-button" aria-expanded={newMenu} disabled={!visibleNewOptions.length} title={!visibleNewOptions.length ? 'Usuário sem permissão para criar lançamentos' : undefined} onClick={() => setNewMenu((value) => !value)}><Icon name="plus" size={19}/> Novo <span>⌄</span></button>{newMenu && <div className="new-menu">{visibleNewOptions.map((option) => <button type="button" key={option.type} onClick={() => openNew(option.type)}><span><Icon name={option.icon} size={18}/></span><div><strong>{option.title}</strong><small>{option.description}</small></div></button>)}</div>}</div>}
-        {managementContextReady && <nav aria-label="Navegação comercial">{visibleNavGroups.map((group) => <div className="nav-group" key={group.label}><span>{group.label}</span>{group.items.map(([id, label, icon, count]) => { const active = view === id || ((view === 'novo_pedido' || view === 'novo_orcamento') && id === commercialReturnView) || (view === 'nova_ordem_servico' && id === serviceReturnView); const displayCount = id === 'vendas' ? String(managementCatalogBridge ? salesRecordCount : count ?? '') : id === 'servicos' ? String(managementCatalogBridge ? serviceRecordCount : count ?? '') : id === 'estoque' ? String(stockAttentionCount) : id === 'fiscal' ? String(managementCatalogBridge ? fiscalDocumentCount : count ?? '') : id === 'recebimentos' ? String(receivableOpenCount) : count; return <button type="button" key={id} onClick={() => navigate(id)} className={active ? 'active' : ''} aria-current={active ? 'page' : undefined}><Icon name={icon} size={18}/><b>{label}</b>{displayCount !== undefined && displayCount !== '' && <small>{displayCount}</small>}</button>; })}</div>)}</nav>}
+        {managementContextReady && <nav aria-label="Navegação comercial">{visibleNavGroups.map((group) => <div className="nav-group" key={group.label}><span>{group.label}</span>{group.items.map(([id, label, icon]) => { const active = view === id || ((view === 'novo_pedido' || view === 'novo_orcamento') && id === commercialReturnView) || (view === 'nova_ordem_servico' && id === serviceReturnView); return <button type="button" key={id} onClick={() => navigate(id)} className={active ? 'active' : ''} aria-current={active ? 'page' : undefined}><Icon name={icon} size={18}/><b>{label}</b></button>; })}</div>)}</nav>}
         <div className="sidebar-footer"><div><span><Icon name="fiscal" size={17}/></span><p><strong>{sidebarFiscalStatus.title}</strong><small>{sidebarFiscalStatus.detail}</small></p></div></div>
       </aside>
       <main className="main-content">

@@ -196,19 +196,19 @@ test('recarga de operações recompõe itens e toda a execução da ordem de ser
   assert.match(source, /serviceOrder:\s*mapServiceOrder/);
 });
 
-test('perfil integrado não reutiliza contadores nem indicadores demonstrativos', async () => {
+test('perfil integrado mantém indicadores reais nas páginas e menu sem contadores', async () => {
   const [source, integrated, page] = await Promise.all([
     readFile(new URL('../../app/vendas/sistema/VendasServicosPrototype.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../app/vendas/VendasIntegrado.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../app/vendas/sistema/page.tsx', import.meta.url), 'utf8'),
   ]);
-  assert.match(source, /salesRecordCount = created\.filter/);
-  assert.match(source, /serviceRecordCount = created\.filter/);
-  assert.match(source, /fiscalDocumentCount = fiscalDraftRecords\.length/);
+  assert.doesNotMatch(source, /const displayCount|const salesRecordCount|const serviceRecordCount|const fiscalDocumentCount/);
+  assert.match(source, /<Metric label="Documentos" value=\{String\(drafts.length\)\}/);
+  assert.match(source, /<Metric label="Receita recebida" value=\{money\(snapshot.receivedNet\)\}/);
   assert.match(source, /connected \? 0 : 9360/);
   assert.match(source, /connected \? 0 : 2260/);
-  assert.match(source, /managementCatalogBridge \? salesRecordCount/);
-  assert.match(source, /managementCatalogBridge \? fiscalDocumentCount/);
+  const nav = source.match(/<nav aria-label="Navegação comercial">[\s\S]*?<\/nav>/)?.[0];
+  assert.ok(nav);assert.doesNotMatch(nav, /<small>|displayCount/);
   assert.match(source, /connected\.company\) setFiscalIssuerRegistry\(createFiscalIssuerRegistry\(connected\.company\)\)/);
   assert.match(source, /integratedQuickActions = dashboardNewOptions\.filter\(\(option\) => option\.type !== 'venda'\)/);
   assert.match(source, /!managementCatalogBridge \|\| !\['venda', 'nfce', 'nfse'\]\.includes\(option\.type\)/);
