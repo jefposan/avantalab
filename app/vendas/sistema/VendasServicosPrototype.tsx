@@ -4495,6 +4495,7 @@ function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,comp
   const resultOpenedRef = useRef('');
   const resultGenerationRef = useRef(0);
   const [cancelDraft, setCancelDraft] = useState<FiscalDraftRecord | null>(null);
+  const [deletingDraftId,setDeletingDraftId]=useState('');
   const [numberingOpen, setNumberingOpen] = useState(false);
   const [fiscalSetupOpen, setFiscalSetupOpen] = useState(false);
   const [fiscalBackupOpen,setFiscalBackupOpen]=useState(false);
@@ -4630,9 +4631,11 @@ function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,comp
   }, [fiscalBridgeOrigin]);
 
   const requestDraftDelete = (draft: FiscalDraftRecord) => {
+    if([...pendingFiscalRequestsRef.current.values()].some(request=>request.kind==='delete'))return;
     if(!fiscalBridgeOrigin){setFiscalBridgeMessage('Abra o módulo pela Gestão para excluir este rascunho.');return;}
+    setDeletingDraftId(draft.id);setFiscalBridgeMessage('');
     const requestId=nextFiscalRequestId('delete');
-    const timer=window.setTimeout(()=>{pendingFiscalRequestsRef.current.delete(requestId);setFiscalBridgeMessage('Não foi possível confirmar a exclusão. Atualize a lista antes de repetir.');},20000);
+    const timer=window.setTimeout(()=>{pendingFiscalRequestsRef.current.delete(requestId);setDeletingDraftId('');setFiscalBridgeMessage('Não foi possível confirmar a exclusão. Atualize a lista antes de repetir.');},20000);
     pendingFiscalRequestsRef.current.set(requestId,{kind:'delete',targetId:draft.id,timer});
     window.parent.postMessage({type:'AVANTALAB_VENDAS_FISCAL_DELETE_REQUEST_V1',requestId,draftId:draft.id,expectedVersion:(draft.emissionId ? remoteStatuses[draft.emissionId]?.version || draft.remoteVersion : 0) || 0},fiscalBridgeOrigin);
   };
@@ -4693,6 +4696,7 @@ function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,comp
         const pending=pendingFiscalRequestsRef.current.get(event.data.requestId);
         if(!pending || pending.kind!=='delete')return;
         window.clearTimeout(pending.timer);pendingFiscalRequestsRef.current.delete(event.data.requestId);
+        setDeletingDraftId('');
         if(event.data.ok!==true){setFiscalBridgeMessage(String(event.data.message || 'Não foi possível excluir.'));return;}
         setCancelDraft(null);setIssueDraft(null);setResultDraft(null);setFiscalBridgeMessage('');return;
       }
@@ -4899,7 +4903,7 @@ function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,comp
     <FiscalNumberingDialog open={numberingOpen} ledger={numberingLedger} documentScope={settings.fiscal.documentScope} actor={activeUserName} readOnly={!can('fiscal.configure')} onClose={() => setNumberingOpen(false)} onSave={onSaveNumbering}/>
     {cancelDraft && cancelDraft.emissionId && remoteStatuses[cancelDraft.emissionId]?.authorized && remoteStatuses[cancelDraft.emissionId]?.state !== 'canceled'
       ? <FiscalCancellationDialog draft={cancelDraft} remoteStatus={remoteStatuses[cancelDraft.emissionId]} loading={statusSync[cancelDraft.emissionId]?.loading} onClose={() => setCancelDraft(null)} onSubmit={(justification) => requestFiscalCancellation(cancelDraft, remoteStatuses[cancelDraft.emissionId as string], justification)}/>
-      : cancelDraft && <Dialog open title="Excluir rascunho" description="O rascunho sairá da lista. Nenhuma nota autorizada será excluída." onClose={() => setCancelDraft(null)}><div className="dialog-body"><p>Deseja excluir este rascunho e liberar a numeração ainda não utilizada?</p>{fiscalBridgeMessage&&<p role="alert" className="field-error">{fiscalBridgeMessage}</p>}</div><footer className="dialog-footer"><BotaoAcaoCompacto variante="secundario" onClick={()=>setCancelDraft(null)}>Manter rascunho</BotaoAcaoCompacto><BotaoAcaoCompacto variante="destrutivo" disabled={!can('fiscal.cancel')} onClick={()=>requestDraftDelete(cancelDraft)}>Excluir rascunho</BotaoAcaoCompacto></footer></Dialog>}
+      : cancelDraft && <Dialog open title="Excluir rascunho" description="O rascunho sairá da lista. Nenhuma nota autorizada será excluída." onClose={() => {if(!deletingDraftId)setCancelDraft(null);}}><div className="dialog-body" aria-busy={Boolean(deletingDraftId)}><p>Deseja excluir este rascunho e liberar a numeração ainda não utilizada?</p>{deletingDraftId&&<p role="status">Excluindo rascunho…</p>}{fiscalBridgeMessage&&<p role="alert" className="field-error">{fiscalBridgeMessage}</p>}</div><footer className="dialog-footer"><BotaoAcaoCompacto variante="secundario" disabled={Boolean(deletingDraftId)} onClick={()=>setCancelDraft(null)}>Manter rascunho</BotaoAcaoCompacto><BotaoAcaoCompacto variante="destrutivo" disabled={!can('fiscal.cancel')||Boolean(deletingDraftId)} onClick={()=>requestDraftDelete(cancelDraft)}>{deletingDraftId?'Excluindo…':'Excluir rascunho'}</BotaoAcaoCompacto></footer></Dialog>}
 
   </>;
 }

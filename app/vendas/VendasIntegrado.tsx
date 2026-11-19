@@ -560,7 +560,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
         const destination = iframeRef.current?.contentWindow;
         const responsePort = event.ports[0];
         const requestId = String(event.data?.requestId || '');
-        const responseType = event.data?.type === FISCAL_DELETE_REQUEST_TYPE ? FISCAL_DELETE_RESPONSE_TYPE : event.data?.type === SERVICE_ATTACHMENT_UPLOAD_REQUEST_TYPE ? SERVICE_ATTACHMENT_UPLOAD_RESPONSE_TYPE : SERVICE_ATTACHMENT_OPEN_RESPONSE_TYPE;
+        const responseType = event.data?.type === SERVICE_ATTACHMENT_UPLOAD_REQUEST_TYPE ? SERVICE_ATTACHMENT_UPLOAD_RESPONSE_TYPE : SERVICE_ATTACHMENT_OPEN_RESPONSE_TYPE;
         if (!destination || !responsePort || !requestIdValido(requestId) || !UUID_PATTERN.test(empresaId)) return;
         const deliver = (payload: Record<string, unknown>) => responsePort.postMessage({ type: responseType, requestId, ...payload });
         const handleAttachment = async () => {
@@ -884,7 +884,9 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       if (![FISCAL_DELETE_REQUEST_TYPE, FISCAL_STATUS_REQUEST_TYPE, FISCAL_DOWNLOAD_REQUEST_TYPE, FISCAL_PREPARE_REQUEST_TYPE, FISCAL_VALIDATE_REQUEST_TYPE, FISCAL_NUMBER_REQUEST_TYPE, FISCAL_ISSUE_REQUEST_TYPE, FISCAL_CORRECTION_REQUEST_TYPE, FISCAL_CANCELLATION_REQUEST_TYPE, COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE, COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE].includes(event.data?.type)) return;
       const responder = async () => {
         const requestId = event.data?.requestId;
-        const responseType = event.data?.type === COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE
+        const responseType = event.data?.type === FISCAL_DELETE_REQUEST_TYPE
+          ? FISCAL_DELETE_RESPONSE_TYPE
+          : event.data?.type === COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE
           ? COMMERCIAL_SERVICE_WORKFLOW_RESPONSE_TYPE
           : event.data?.type === COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE
           ? COMMERCIAL_ORDER_WORKFLOW_RESPONSE_TYPE

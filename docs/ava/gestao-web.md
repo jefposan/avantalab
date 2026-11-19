@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.497 -->
+<!-- ava-version: 3.2.0.498 -->
+
+> Revisão 3.2.0.498: Vendas e Serviços > Notas Fiscais > Excluir rascunho agora reconhece o retorno correto. Excluindo indica envio em andamento e bloqueia cliques repetidos; sucesso fecha a confirmação e atualiza a lista. Em recusa, mantém a mensagem; em demora, atualizar a lista antes de repetir. Uma tentativa em versão anterior pode ter sido concluída no servidor apesar de o modal permanecer aberto: consultar a lista atualizada antes de repetir. Nenhuma nota autorizada é apagada; proteções fiscais e histórico permanecem.
 
 > Revisão 3.2.0.497: mantém os fluxos de Clientes Excel e Navegar descritos na 496. A candidata 496 não foi promovida; a 497 entrega ambos com botões alinhados, mesma altura e sem afetar selos. Sem mudança nas instruções operacionais.
 

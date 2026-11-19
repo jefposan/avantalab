@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_4ePfnHShcmkYPbTyt1mLN7QqGkxp",
+  "baseDeploymentId": "dpl_5pL9ehsxUGWor8i35PwpbnREDfsu",
   "migrations": [],
-  "version": "3.2.0.497",
-  "scope": "Clientes: modelo Excel vazio com 23 campos, download direto, importação com prévia, duplicidades por CPF/CNPJ, permissões e lote transacional. Navegação: menu compacto e abertura imediata com lista do login; eventos de instalação/remoção/pagamento/permissões e recuperação silenciosa. Acesso e dispositivo revalidados ao selecionar. Sem migração SQL ou mudança de máquina/build."
+  "version": "3.2.0.498",
+  "scope": "Vendas e Serviços: corrige o tipo do retorno de exclusão de rascunho fiscal, com sucesso/erro reconhecidos pela tela; espera visível, bloqueio de envio duplicado e recuperação em timeout. Mantém regras fiscais, permissões e banco. Sem SQL ou exclusão real para teste."
 }

@@ -1,3 +1,9 @@
+# 3.2.0.498 — Vendas e Serviços: retorno correto ao excluir rascunho
+
+- Exclusão respondia com tipo de download e a tela ignorava sucesso e recusa. Corrigido o discriminador no dispatcher fiscal, removendo a condição indevida do dispatcher de anexos.
+- Confirmação mostra Excluindo, bloqueia duplicidade/fechamento durante envio, fecha apenas no sucesso correlacionado e conserva a mensagem de erro/timeout para recuperação.
+- Testes executam o dispatcher real em cenário isolado para sucesso, recusa, sessão ausente e falha de rede, além do envio único e tratamento na tela. Proteções fiscais/servidor e auditoria mantidas; nenhuma exclusão real para teste e nenhuma migração SQL.
+
 # 3.2.0.497 — Clientes e navegação: entrega conjunta com ações alinhadas e seletor CSS restrito
 
 - Inclui modelo/importação Excel de clientes e Navegar compacto/imediato da candidata 3.2.0.496, não promovida. Botões Importar, Exportar e Novo cliente na mesma linha/altura, inclusive em 320 px.
