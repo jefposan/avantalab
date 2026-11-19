@@ -1,0 +1,13 @@
+# 3.2.0.507 — Ações do pedido
+
+Mesmo worktree isolado da entrega de navegação. Etiquetas adiada expressamente pelo responsável, para futura modelagem de Correios/transportadoras; não há gerador de etiqueta genérica entregue.
+
+- Copiar: exige sales.create, usa somente dados comerciais para outro rascunho, novo ID/chave, data/vencimento atuais, sem vínculo persistido, histórico anterior, reserva, baixa, financeiro ou emissão. Itens e preços exigem revisão; a origem não é mutada. Teste executa handler real e nega sem autorização.
+- Imprimir: gerador paginado local com pdf-lib já instalado; sem serviço externo, corte de itens ou custos internos. Documento comercial não substitui NF-e. Teste com 75 itens e inspeção visual com 42 itens fictícios. Resumo de comunicação é limitado a oito itens e aponta os demais no PDF.
+- E-mail/WhatsApp: autorizado abrir aplicativo/navegador, não enviar automaticamente. Contato vem do cliente por ID e pode ser corrigido somente no envio. E-mail usa handler mailto do navegador; WhatsApp usa URL oficial wa.me. Mensagem e destinatário são codificados, sem URL arbitrária. Não foram abertas mensagens reais no QA.
+- Copiar PDF usa ClipboardItem application/pdf quando suportado e aguarda write; nunca substitui por link/texto fingindo copiar um arquivo. Ausência da API, MIME incompatível ou recusa informa motivo em português e orienta baixar/anexar/arrastar. Compartilhar PDF usa Web Share somente com arquivo suportado. AbortError não anuncia envio/sucesso; sucesso de preparo não afirma entrega da mensagem.
+- Alterar status não faz update livre: lista transições do ciclo existente com permissões, confirmação, versão e efeitos transacionais já existentes. Reabrir exige confirmação, cancelamento/devolução seguem estornos e preservação fiscal.
+
+QA no navegador: somente origem local 127.0.0.1:3216, Empresa Demonstração; criado um rascunho fictício com item do catálogo demonstrativo, conferidos botões ativos (exceto etiquetas), geração PDF e cópia com estoque desligado. Captura em /private/tmp/avanta-pedidos-acoes-507.jpg. Sem nota, pedido, cliente ou saldo real alterado. Publicação autorizada posteriormente; main e produção conferidas na versão 3.2.0.506 antes da integração isolada da 507.
+
+Suíte de segurança: 977 testes aprovados, zero falhas. Após refinamento final da navegação, 22 testes focados aprovados (seletor, confirmação e ferramentas). Teste PDF decodifica conteúdo e confirma último item e total, sem custos ou observações internas. Compartilhamento não inclui observações internas. Copiar mensagem auxilia quem usa e-mail/WhatsApp no navegador e não tem handler padrão configurado. PADRÃO AVANTA/Ava e acesso Web/Mobile validados; tipagem conferida após geração dos tipos do Next.

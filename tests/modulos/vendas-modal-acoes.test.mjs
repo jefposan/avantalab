@@ -26,6 +26,10 @@ test('menu aprovado preserva todas as ações e separa recurso previsto de condi
   assert.equal(props.compactOrder, true);
   assert.equal(all.available.length, 6);
   assert.equal(all.planned.length, 6);
+  const activeProps=sandbox.exports.menu({record:{id:'2026/1',type:'Pedido',client:'Cliente',status:'Confirmado',fiscal:'Não definida',localRecord:{type:'pedido',status:'Confirmado',order:{fiscalDocument:'nenhum'}}},onCopy(){},onTool(){}});
+  const active=sandbox.exports.groups(activeProps.actions,()=>true);
+  assert.deepEqual(Array.from(active.planned,action=>action.label),['Etiquetas']);
+  for(const label of ['Copiar pedido','Imprimir pedido','Enviar por e-mail','Enviar pelo WhatsApp','Alterar status'])assert.ok(active.available.some(action=>action.label===label&&typeof action.onSelect==='function'),label);
   assert.equal(all.unavailable.length, 1);
   assert.equal(all.unavailable[0].label, 'Contas a receber');
   assert.equal(all.unavailable[0].reason, 'Disponíveis após o faturamento');

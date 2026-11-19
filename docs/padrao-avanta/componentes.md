@@ -84,6 +84,8 @@ divisor ou agrupamento sem identidade própria.
   rodapé do painel. `ModuloHeader.navigation` substitui o retorno somente nos
   consumidores que a fornecem; os demais conservam o comportamento anterior.
 
+- Revisão 3.2.0.507: `ocupado` no SeletorModulos representa gravação/operação em curso, não formulário simplesmente aberto. `alteracoesPendentes` permite escolher o destino e abre confirmação oficial. `salvarAntesDeSair` opcional adiciona Salvar e sair, com Cancelar e Sair sem salvar; o consumidor deve aguardar confirmação real, não emitir/faturar implicitamente e manter o formulário até a navegação autorizada. `descricaoPendencia` contextualiza pedido/nota. Falha não autoriza saída e consumidores sem callback preservam duas ações.
+
 - Reutilizar `app/components/ModuloHeader.tsx` para cabeçalhos leves de módulos:
   retorno à esquerda, identidade do perfil centralizada e ações opcionais à direita.
 - O componente reutiliza os estilos consolidados de Custos e Precificação, sem

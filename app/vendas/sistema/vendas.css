@@ -2513,3 +2513,5 @@ button.commercial-indicator-target { border:0; background:transparent; cursor:po
 .fiscal-defaults-panel .danfe-logo-settings > img { width:120px; height:90px; object-fit:contain; background:white; border:1px solid var(--border); border-radius:8px; padding:8px; }
 .fiscal-defaults-panel .danfe-logo-settings > div { min-width:0; }
 @media(max-width:600px){.fiscal-defaults-panel .danfe-logo-settings{flex-direction:column;align-items:flex-start;}}
+.order-tool-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0; }
+.order-document-preview { display: block; width: 100%; height: min(60vh, 600px); border: 1px solid var(--av-border); border-radius: var(--av-radius); }

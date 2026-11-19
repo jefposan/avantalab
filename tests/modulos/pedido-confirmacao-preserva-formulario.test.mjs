@@ -14,7 +14,23 @@ test('confirmação real aguarda servidor; falha mantém formulário e não nave
 test('somente confirmação positiva libera a tela de pedidos',async()=>{
  const f=fixture();const pending=f.ctx.execute(record);assert.equal(f.views.length,0);f.reply({ok:true,message:'Confirmado'});assert.equal((await pending).ok,true);assert.deepEqual(f.views,['vendas']);
 });
+test('Salvar e sair aguarda rascunho real e não desmonta formulário antes de navegar',async()=>{
+ const f=fixture();let reply;
+ f.ctx.syncSavedOperation=(record,previous,resolve)=>{reply=resolve;return true;};
+ const pending=f.ctx.execute({...record,status:'Rascunho'},{keepOpen:true});
+ assert.deepEqual(f.views,[]);
+ reply({ok:true,message:'Salvo',savedRecord:{id:'2026/12',persistence:{operationId:'persistido',version:1}}});
+ const result=await pending;assert.equal(result.ok,true);assert.equal(result.savedRecord.id,'2026/12');assert.deepEqual(f.views,[]);
+});
+test('falha ao salvar rascunho mantém edição; não executa confirmação de estoque',async()=>{
+ const f=fixture();let reply;
+ f.ctx.syncCommercialOrder=()=>assert.fail('salvar não confirma');
+ f.ctx.syncSavedOperation=(record,previous,resolve)=>{reply=resolve;return true;};
+ const pending=f.ctx.execute({...record,status:'Rascunho'},{keepOpen:true});
+ reply({ok:false,message:'Falha controlada'});
+ assert.equal((await pending).ok,false);assert.deepEqual(f.views,[]);
+});
 test('formulário reaproveita identidade e apresenta erro sem descartar itens; cabeçalho reutiliza nota fiscal',()=>{
- assert.match(file,/const \[draftIdentity\]=useState\(/);assert.match(file,/id: draftIdentity\.id/);assert.match(file,/persistenceKey: draftIdentity\.persistenceKey/);assert.match(file,/const result=await onCreated\(record\)/);assert.match(file,/if\(result&&!result\.ok\)showIssue\(result\)/);
+ assert.match(file,/const \[draftIdentity,setDraftIdentity\]=useState\(/);assert.match(file,/id: draftIdentity\.id/);assert.match(file,/persistenceKey: draftIdentity\.persistenceKey/);assert.match(file,/const result=await onCreated\(record, \{keepOpen\}\)/);assert.match(file,/if\(result&&!result\.ok\)showIssue\(result\)/);
  assert.match(file,/className="order-page-heading note-page-heading"/);
 });

@@ -540,7 +540,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
         const requestId = String(event.data.requestId || '');
         if (!port || !requestIdValido(requestId)) return;
         const document = event.data.document;
-        const deliver = (ok: boolean, message: string, draftId = '',issue:Record<string,any>={}) => { port.postMessage({ type: STANDALONE_FISCAL_SAVE_RESPONSE_TYPE, requestId, ok, message, draftId,code:String(issue.code||issue.errors?.[0]?.code||'').slice(0,100),field:String(issue.field||issue.errors?.[0]?.field||'').slice(0,160) }); port.close(); };
+        const deliver = (ok: boolean, message: string, draftId = '',issue:Record<string,any>={}) => { port.postMessage({ type: STANDALONE_FISCAL_SAVE_RESPONSE_TYPE, requestId, ok, message, draftId, version:Number(issue.version)||0,code:String(issue.code||issue.errors?.[0]?.code||'').slice(0,100),field:String(issue.field||issue.errors?.[0]?.field||'').slice(0,160) }); port.close(); };
         void (async () => {
           try {
             const { data } = await supabase.auth.getSession();
@@ -551,7 +551,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.ok !== true) { deliver(false, payload.message || 'Não foi possível preparar a nota avulsa.','',payload); return; }
             await carregarDocumentosFiscais(empresaId, token);
-            deliver(true, 'Nota fiscal salva para conferência.', String(payload.document?.draftId || ''));
+            deliver(true, 'Nota fiscal salva para conferência.', String(payload.document?.draftId || ''), {version:payload.document?.version});
           } catch { deliver(false, 'A conexão fiscal foi interrompida. Tente novamente com os mesmos dados.'); }
         })();
         return;

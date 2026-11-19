@@ -1,3 +1,12 @@
+# 3.2.0.507 — Pedidos: navegação protegida e ações comerciais
+
+- Navegar permanece disponível com pedido ou nota avulsa em preenchimento. Ao selecionar outro destino, oferece Cancelar, Salvar e sair ou Sair sem salvar na confirmação oficial.
+- Salvar e sair grava rascunho e aguarda ACK real, sem confirmar pedido, movimentar estoque, faturar ou emitir nota. Falha mantém formulário; ID/versão permitem continuar se o acesso ao destino for negado após salvar. Escrita em curso bloqueia repetição/descarte concorrente.
+- Copiar pedido cria novo rascunho sem identidade persistida, histórico, efeitos fiscais/financeiros ou controle de estoque da origem. Preços/itens são preservados para revisão antes de confirmar.
+- Imprimir pedido gera PDF completo paginado, com empresa, cliente, itens, descontos, frete, demais despesas e total, sem expor custos internos. Enviar por e-mail/WhatsApp prepara mensagem para o aplicativo/navegador, sem envio automático. Baixar, compartilhar e Copiar PDF disponíveis; incompatibilidade/recusa do navegador é explicada sem falso sucesso, com download como alternativa.
+- Alterar status oferece somente transições válidas com permissões e confirmação do ciclo existente. Etiquetas permanece prevista, adiada para modelagem Correios/transportadoras por solicitação do responsável.
+- Publicação autorizada após validação local. Sem migração ou operações reais de teste. Checkout compartilhado e demais entregas preservados.
+
 # 3.2.0.506 — Usuários e pedidos: senhas, busca de clientes e confirmação segura
 
 - Novo pedido pesquisa razão social e CPF/CNPJ conforme digitação, sem lista ao focar vazio; seleção mantém ID do cliente, sem confundir nome fantasia com razão social. Cabeçalho compacto segue a nota fiscal.
