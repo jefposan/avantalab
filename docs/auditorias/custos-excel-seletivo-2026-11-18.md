@@ -25,8 +25,9 @@ PADRÃO AVANTA 1.24.0 no pacote; fonte canônica local consultada também (1.23.
 - Arquivo gerado reaberto: Código, Nome e Preço · Atacado; IDs e datas ocultos; metadados veryHidden. A formatação ignora ISS quando a coluna não é selecionada.
 - Rota sintética de QA removida. Arquivo sintético movido de Downloads para `/private/tmp/avanta-excel-seletivo-qa-atacado.xlsx`; planilhas reais intactas.
 
-## Pendente de implantação
+## Implantação autorizada
 
-Migração `20261119010000_custos_excel_seletivo_multicatalogo.sql` testada apenas em banco de teste local.
-Não aplicada ao Supabase, não houve importação de dados reais, push ou publicação.
-Reavaliar versão, main e produção antes de integrar/publicar; executar o gate remoto completo na entrega.
+Migração `20261119010000_custos_excel_seletivo_multicatalogo.sql` aplicada no Supabase oficial e registrada na mesma transação, após autorização de publicação. Função confirmada; execução anônima negada e autenticada permitida, com validação interna de acesso e empresa.
+Conferência produtiva encontrou dados legados não preenchidos. A validação agora considera somente campos enviados; teste PostgreSQL com tipo/custo/ISS ausentes aprovado, preservando-os.
+Nenhuma importação de dados reais foi executada. Main e produção de base reconfirmadas em `aba282dcbbbb10e79b138bd595e1905ea364fa67` / `dpl_AW2PuZnrw2rjD9yoChp8UWmiCT7p`.
+Publicação segue pelo pipeline oficial com gate remoto completo e promoção automática após aprovação; recibo final em output/pipeline do checkout canônico.

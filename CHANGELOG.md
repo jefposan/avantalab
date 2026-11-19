@@ -5,7 +5,7 @@
 - Cada ID é validado pela empresa e atualizado em seu catálogo original. Lote atômico, confirmação prévia, histórico de preços e bloqueio de alterações concorrentes preservados.
 - Preços de tabelas vazios são ignorados; zero é válido. Textos vazios limpam somente campos selecionados. Valores inválidos não viram zero silenciosamente.
 - Erros de importação permanecem no contexto; Tentar novamente revalida o mesmo arquivo, e Escolher outro arquivo permite substituí-lo.
-- Migração aditiva preparada e testada em PostgreSQL local; aplicação no Supabase e publicação pendentes.
+- Migração aditiva testada em PostgreSQL e incluída na implantação autorizada. A validação considera somente campos enviados, preservando dados legados não preenchidos.
 
 # 3.2.0.489 — Custos e Precificação: ações dos catálogos alinhadas
 

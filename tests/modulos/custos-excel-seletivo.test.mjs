@@ -51,7 +51,7 @@ test('PostgreSQL: atualização parcial multicatálogo, preço isolado, empresa,
       insert into vendas_mobile_catalogos values('${c1}','${empresa}',null),('${c2}','${empresa}',null),('${c3}','${outro}',null);
       insert into vendas_mobile_catalogo_produtos values
       ('${p1}','${c1}','T001','Primeiro','produto','Marca','Descrição',5,10,0,true,true,null,'${data}'),
-      ('${p2}','${c2}','T001','Segundo','produto','Marca','Descrição',7,20,0,true,true,null,'${data}'),
+      ('${p2}','${c2}','T001','Segundo',null,'Marca','Descrição',null,20,null,true,true,null,'${data}'),
       ('${p3}','${c3}','T001','Outro','produto','Marca','Descrição',7,20,0,true,true,null,'${data}');
       insert into custos_tabelas_preco values('${tabela}','${empresa}','ATACADO','Atacado',false),('${padrao}','${empresa}','PADRAO','Padrão',true);`);
     await db.exec(readFileSync('supabase/migrations/20261119010000_custos_excel_seletivo_multicatalogo.sql','utf8'));

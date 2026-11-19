@@ -1,6 +1,6 @@
 <!-- ava-version: 3.2.0.490 -->
 
-> Revisão 3.2.0.490: sem impacto operacional no AvantaVendas. Candidato Web de Custos oferece Excel seletivo, com atualização somente de campos escolhidos nos catálogos originais, sem alterar preço de divulgação ou destino dos catálogos. Aplicação produtiva pendente.
+> Revisão 3.2.0.490: sem impacto operacional no AvantaVendas. Custos Web oferece Excel seletivo, com atualização somente de campos escolhidos nos catálogos originais, sem alterar preço de divulgação ou destino dos catálogos.
 
 > Revisão 3.2.0.489: nos cards de Catálogos de Custos Web, Gerenciar produtos, Editar e Excluir aparecem na mesma linha. Nos catálogos de sistema, Excluir é visível e desabilitado. Permissões e confirmação de exclusão preservadas. Sem impacto operacional na Gestão Mobile ou em Vendas.
 

@@ -71,13 +71,14 @@ begin
       raise exception 'A planilha contém campos de cadastro não permitidos.';
     end if;
     select * into novo from jsonb_populate_record(produto,linha - array['id','sku','atualizado_em']);
-    if trim(coalesce(novo.nome,''))='' or novo.tipo_item not in ('produto','servico') or novo.tipo_item is null then
+    if (linha ? 'nome' and trim(coalesce(novo.nome,''))='')
+      or (linha ? 'tipo_item' and (novo.tipo_item not in ('produto','servico') or novo.tipo_item is null)) then
       raise exception 'Confira nome e tipo do produto %.',produto.sku;
     end if;
-    if novo.preco_custo is null or novo.preco_venda is null or novo.preco_custo<0 or novo.preco_venda<0
-      or novo.aliquota_iss is null or novo.aliquota_iss<0 or novo.aliquota_iss>100
-      or novo.preco_custo::text in ('NaN','Infinity','-Infinity') or novo.preco_venda::text in ('NaN','Infinity','-Infinity')
-      or novo.aliquota_iss::text in ('NaN','Infinity','-Infinity') or novo.ativo is null or novo.disponivel_catalogo is null then
+    if (linha ? 'preco_custo' and (novo.preco_custo is null or novo.preco_custo<0 or novo.preco_custo::text in ('NaN','Infinity','-Infinity')))
+      or (linha ? 'preco_venda' and (novo.preco_venda is null or novo.preco_venda<0 or novo.preco_venda::text in ('NaN','Infinity','-Infinity')))
+      or (linha ? 'aliquota_iss' and (novo.aliquota_iss is null or novo.aliquota_iss<0 or novo.aliquota_iss>100 or novo.aliquota_iss::text in ('NaN','Infinity','-Infinity')))
+      or (linha ? 'ativo' and novo.ativo is null) or (linha ? 'disponivel_catalogo' and novo.disponivel_catalogo is null) then
       raise exception 'Confira valores, percentuais e situação do produto %.',produto.sku;
     end if;
     select array_agg(k order by k) into campos from jsonb_object_keys(linha) k
@@ -118,7 +119,7 @@ begin
     select preco into anterior from public.custos_tabela_preco_itens where tabela_preco_id=tabela.id and produto_id=produto.id;
     -- Na prévia, o preço padrão selecionado ainda não foi gravado.
     select value into linha from jsonb_array_elements(p_produtos) where value->>'id'=item->>'produto_id';
-    anterior:=coalesce(anterior,(linha->>'preco_venda')::numeric,produto.preco_venda);
+    anterior:=coalesce(anterior,(linha->>'preco_venda')::numeric,produto.preco_venda,0);
     if anterior is distinct from round(valor,2) then
       precos_atualizados:=precos_atualizados+1;
       if p_aplicar then
