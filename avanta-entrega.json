@@ -2,5 +2,5 @@
   "baseDeploymentId": "dpl_7CuDqb9MbLQneBUpmB7MJnoYyA97",
   "migrations": [],
   "version": "3.2.0.501",
-  "scope": "Correção local: leitura de clientes Excel com OOXML prefixado e erros orientativos em português. Sem publicação autorizada nesta etapa, sem migrações ou importação real de clientes."
+  "scope": "Clientes: corrigir leitura de Excel com OOXML prefixado e orientar erros em português. Publicação autorizada após validação local. Sem migrações, importação real de clientes ou alterações de outros chats."
 }

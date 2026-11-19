@@ -1,6 +1,6 @@
 # 3.2.0.501 — Correção local do leitor de clientes
 
-Base main 87a73ab87f18099a4e42cf20cb8e1a11474ea28a, produção 3.2.0.500. Branch isolada codex/clientes-leitura-excel-20261119. Sem publicação ou escrita no banco.
+Base main 87a73ab87f18099a4e42cf20cb8e1a11474ea28a, produção 3.2.0.500. Branch isolada codex/clientes-leitura-excel-20261119. Publicação posteriormente autorizada pelo responsável, com conferência da numeração e preservação de trabalhos paralelos. Main e produção continuam na base 500 e fila vazia na conferência prévia. Nenhuma escrita no banco.
 
 Erro reproduzido: ExcelJS falha em workbook.sheets quando o XML válido usa prefixo x:workbook. Leitura passou a usar SheetJS, já utilizado pelo sistema, sem nova dependência e sem regravar os arquivos.
 
