@@ -8,12 +8,12 @@ import {renderToStaticMarkup} from 'react-dom/server';
 const source=readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx','utf8');
 const sales=source.slice(source.indexOf('function SalesView('),source.indexOf('\nfunction ServicesView('));
 function render(created){
- const context={exports:{},React,useState:value=>[value,()=>{}],useMemo:fn=>fn(),money:value=>String(value),normalizeSearch:value=>String(value).toLowerCase(),commercialRecords:[],documentLabel:value=>value,
+ const context={exports:{},React,useState:value=>[value,()=>{}],useMemo:fn=>fn(),useRef:value=>({current:value}),useEffect(){},useContext:()=>({can:()=>true}),PermissionContext:{},money:value=>String(value),normalizeSearch:value=>String(value).toLowerCase(),commercialRecords:[],documentLabel:value=>value,
  PageHeading:({action})=>React.createElement('header',null,action),Metric:()=>null,Panel:({title,children})=>React.createElement('section',null,React.createElement('h2',null,title),children),Badge:({children})=>React.createElement('span',null,children),
  Table:({children})=>React.createElement('table',null,React.createElement('tbody',null,children)),SearchToolbar:({children})=>React.createElement('div',null,React.createElement('input',{'aria-label':'Pesquisar vendas'}),children),
  Icon:()=>null,EmptyState:({title})=>React.createElement('p',null,title),QuoteActions:()=>React.createElement('button',null,'Compartilhar orçamento'),CommercialRecordIndicators:()=>null,CommercialRecordActions:()=>React.createElement('button',null,'Ações da venda'),OrderDetailsDialog:()=>null,OrderLifecycleDialog:()=>null,OrderStockDialog:()=>null,OrderToolsDialog:()=>null};
  vm.runInNewContext(ts.transpileModule(`${sales}\nexports.Component=SalesView;`,{compilerOptions:{jsx:ts.JsxEmit.React,target:ts.ScriptTarget.ES2022},fileName:'vendas.tsx'}).outputText,context);
- return renderToStaticMarkup(React.createElement(context.exports.Component,{created,connected:true,fiscalDrafts:[],fiscalPrepareState:{},onNew:()=>{}}));
+ return renderToStaticMarkup(React.createElement(context.exports.Component,{created,company:{name:'Empresa fictícia',document:'teste'},clients:[],connected:true,fiscalDrafts:[],fiscalPrepareState:{},onNew:()=>{}}));
 }
 const order={id:'PED-1',type:'pedido',client:'Cliente sintético',createdAt:'2026-11-19T12:00:00Z',total:100,status:'Confirmado',order:{fiscalDocument:'nenhum'}};
 const quote={id:'ORC-1',type:'orcamento',client:'Cliente sintético',createdAt:'2026-11-19T12:00:00Z',total:80,quote:{source:'vendas'}};

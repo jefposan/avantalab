@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_5GkoxnVtb9G1XRh4YtbR226zuFbf",
+  "baseDeploymentId": "dpl_7ajuWnNfGamYe6LJpY5y6V1oitar",
   "migrations": [],
-  "version": "3.2.0.507",
-  "scope": "Pedidos: navegação com rascunho, cópia, impressão, compartilhamento e transições de status"
+  "version": "3.2.0.508",
+  "scope": "Pedidos: impressão direta e modelo com logo, tabela e totais em A4/A5"
 }

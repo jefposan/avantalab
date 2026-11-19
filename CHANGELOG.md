@@ -1,3 +1,10 @@
+# 3.2.0.508 — Pedidos: impressão direta e documento com logo em A4/A5
+
+- Imprimir pedido gera o PDF e solicita a impressão nativa diretamente, sem modal intermediário ou botão Gerar PDF. Bloqueio contra repetição; carregamento, timeout, recusa do navegador e limpeza de iframe/URL tratados. Solicitação de impressão não é confirmação de saída física e cancelar não altera o pedido.
+- Novo modelo aprovado com logo cadastrado, identificação da empresa/pedido, cliente, vendedor/pagamento/vencimento, tabela com números à direita, descontos/frete/seguro/despesas e total destacado, recebimento e rodapé. Sem custo ou observações internas.
+- A4 e A5 com dimensões e tipografia próprias; preferência em Ajustes > Comercial, padrão A4 para configurações antigas/inválidas. Pedidos longos repetem cabeçalho/colunas e preservam todos os itens, incluindo descrições extensas. Tamanhos disponíveis sem nova janela em cada impressão.
+- Logo carregado sem credenciais/referrer, com tamanho/tempo limitados; PNG/JPEG/WebP normalizados quando necessário. Logo branco recebe fundo de contraste. Sem migração, emissão fiscal, movimentação comercial ou teste em registros reais.
+
 # 3.2.0.507 — Pedidos: navegação protegida e ações comerciais
 
 - Navegar permanece disponível com pedido ou nota avulsa em preenchimento. Ao selecionar outro destino, oferece Cancelar, Salvar e sair ou Sair sem salvar na confirmação oficial.

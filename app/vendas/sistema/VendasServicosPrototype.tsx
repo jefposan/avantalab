@@ -1,6 +1,7 @@
 'use client';
 import SeletorModulos from '@/app/components/SeletorModulos';
 import {buildOrderPdf, copyOrderPdf, orderContactLink, orderMessage, orderStatusActions} from '../lib/order-tools';
+import {prepareOrderLogo,printOrderPdf} from '../lib/order-print';
 import CustomerExcelActions from '../components/CustomerExcelActions';
 import {countPendingFiscalDrafts,mergeFiscalIndicatorStatuses} from '../lib/fiscal-pending-indicator.mjs';
 import {sanitizarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
@@ -762,7 +763,7 @@ const PermissionContext = createContext<PermissionContextValue>({ can: () => tru
 type ModuleSettings = {
   version: 8;
   company: CompanyProfile;
-  commercial: { sellers: string[]; defaultSeller: string; quoteValidityDays: number; reserveStockDefault: boolean; defaultFiscalDocument: 'nenhum' | 'nfe' | 'nfce' | 'nfse'; maxDiscountPercent: number };
+  commercial: { sellers: string[]; defaultSeller: string; quoteValidityDays: number; reserveStockDefault: boolean; defaultFiscalDocument: 'nenhum' | 'nfe' | 'nfce' | 'nfse'; maxDiscountPercent: number; orderPrintPaper?: 'A4'|'A5' };
   payments: { enabledMethods: PaymentMethod[]; defaultMethod: PaymentMethod; defaultInstallments: number; firstDueDays: number };
   services: { technicians: string[]; defaultTechnician: string; defaultDurationMinutes: number };
   fiscal: {
@@ -845,7 +846,7 @@ function orderLineFromRecord(line: NonNullable<CreatedRecord['order']>['lines'][
 const defaultModuleSettings: ModuleSettings = {
   version: 8,
   company: { ...activeCompany, stateRegistration: '110.042.490.114', municipalRegistration: '', taxRegime: 'Simples Nacional', cityCode: '3550308', cep: '01001-000', street: 'Praça da Sé', number: '100', complement: '', district: 'Sé', email: 'contato@empresa.com.br', phone: '(11) 4000-0000' },
-  commercial: { sellers: ['Marina', 'Caio', 'Paulo'], defaultSeller: 'Marina', quoteValidityDays: 10, reserveStockDefault: true, defaultFiscalDocument: 'nfe', maxDiscountPercent: 15 },
+  commercial: { sellers: ['Marina', 'Caio', 'Paulo'], defaultSeller: 'Marina', quoteValidityDays: 10, reserveStockDefault: true, defaultFiscalDocument: 'nfe', maxDiscountPercent: 15, orderPrintPaper:'A4' },
   payments: { enabledMethods: ['pix', 'boleto', 'cartao', 'prazo'], defaultMethod: 'pix', defaultInstallments: 1, firstDueDays: 0 },
   services: { technicians: ['Rafael', 'Marina', 'Caio', 'Paulo'], defaultTechnician: 'Rafael', defaultDurationMinutes: 60 },
   fiscal: { environment: 'homologacao', documentScope: ['nfe', 'nfce', 'nfse'], fiscalResponsible: '', taxReviewConfirmed: false, taxReformReviewConfirmed: false, providerMode: 'Não definido', certificateMode: 'Não definido', nfseAuthorityMode: 'Não definido', contingencyPlan: 'Não definido', nfeSeries: '1', nfceSeries: '1', nfseSeries: '90001', matrix: createDefaultFiscalMatrix() },
@@ -1820,7 +1821,7 @@ type RecordAction = {
   permissions?: string[];
 };
 
-function OrderToolsDialog({request,company,clients,onClose,onStatus,onNotify}:{request:{record:CreatedRecord;action:OrderTool}|null;company:CompanyProfile;clients:ClientRecord[];onClose:()=>void;onStatus:(record:CreatedRecord,action:OrderLifecycleAction|'continuar')=>void;onNotify:(message:string)=>void}) {
+function OrderToolsDialog({request,companyLogoUrl = '',paperSize = 'A4',company,clients,onClose,onStatus,onNotify}:{companyLogoUrl?:string;paperSize?:'A4'|'A5';request:{record:CreatedRecord;action:OrderTool}|null;company:CompanyProfile;clients:ClientRecord[];onClose:()=>void;onStatus:(record:CreatedRecord,action:OrderLifecycleAction|'continuar')=>void;onNotify:(message:string)=>void}) {
   const {can}=useContext(PermissionContext);
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[url,setUrl]=useState('');
   const [destination,setDestination]=useState('');
@@ -1836,7 +1837,8 @@ function OrderToolsDialog({request,company,clients,onClose,onStatus,onNotify}:{r
     if(running.current||!can('sales.view'))return;
     running.current=true;setBusy(true);setError('');const current=++generation.current;
     try {
-      const bytes=await buildOrderPdf(record,company,contact||{});
+      const logo=await prepareOrderLogo(companyLogoUrl);
+      const bytes=await buildOrderPdf(record,{...company,logo},contact||{},{paperSize});
       if(current!==generation.current)return;
       const blob=new Blob([new Uint8Array(bytes)],{type:'application/pdf'});pdfBlobRef.current=blob;setUrl(URL.createObjectURL(blob));
     }catch(e){if(current===generation.current)setError(e instanceof Error?e.message:'Não foi possível gerar o PDF.');}
@@ -2656,13 +2658,28 @@ function CommercialRecordIndicators({ record, onFiscal }: { record: CommercialOp
   return <span className="commercial-indicators" role="group" aria-label="Situação da operação">{indicators.map((indicator) => <Tooltip key={indicator.key} texto={indicator.label} posicao="bottom">{indicator.key==='fiscal'&&onFiscal ? <button type="button" className="commercial-indicator-target" aria-label={`${indicator.label} · Abrir nota fiscal`} onClick={onFiscal}><CommercialIndicatorIcon indicator={indicator}/></button> : <span className="commercial-indicator-target" tabIndex={0} role="img" aria-label={indicator.label}><CommercialIndicatorIcon indicator={indicator}/></span>}</Tooltip>)}</span>;
 }
 
-function SalesView({ company, clients, onCopy, created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle, onStockLaunch }: { company:CompanyProfile; clients:ClientRecord[]; onCopy:(record:CreatedRecord)=>void; created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void; onStockLaunch:(record:CreatedRecord)=>Promise<ConfirmedSave> }) {
+function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, onCopy, created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle, onStockLaunch }: { companyLogoUrl?:string; paperSize?:'A4'|'A5'; company:CompanyProfile; clients:ClientRecord[]; onCopy:(record:CreatedRecord)=>void; created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void; onStockLaunch:(record:CreatedRecord)=>Promise<ConfirmedSave> }) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todas as situações');
   const [detailRecord, setDetailRecord] = useState<CreatedRecord | null>(null);
   const [lifecycleRequest, setLifecycleRequest] = useState<{ record: CreatedRecord; action: OrderConfirmationAction } | null>(null);
   const [stockRequest,setStockRequest]=useState<CreatedRecord|null>(null);
   const [toolRequest,setToolRequest]=useState<{record:CreatedRecord;action:OrderTool}|null>(null);
+  const {can}=useContext(PermissionContext);
+  const printingRef=useRef(false),printGeneration=useRef(0);
+  useEffect(()=>()=>{printGeneration.current++;},[company.document]);
+  const printDirect=async(record:CreatedRecord)=>{
+    if(printingRef.current||!record.order||!can('sales.view'))return;
+    printingRef.current=true;const generation=++printGeneration.current;onNotify('Preparando a impressão do pedido…');
+    try{
+      const logo=await prepareOrderLogo(companyLogoUrl);
+      const bytes=await buildOrderPdf(record,{...company,logo},clienteDoRegistro(clients,record)||{},{paperSize});
+      if(generation!==printGeneration.current)return;
+      await printOrderPdf(bytes);
+      if(generation===printGeneration.current)onNotify('Impressão solicitada. Confirme a impressora e o papel; cancelar não altera o pedido.');
+    }catch(error){if(generation===printGeneration.current)onNotify(error instanceof Error?error.message:'Não foi possível abrir a impressão. Tente novamente.');}
+    finally{printingRef.current=false;}
+  };
   const localQuotes = created.filter((item) => item.type === 'orcamento' && item.quote);
   const localOperations = created.filter((item) => ['pedido', 'venda'].includes(item.type));
   const records = useMemo<CommercialOperationRecord[]>(() => {
@@ -2700,7 +2717,7 @@ function SalesView({ company, clients, onCopy, created, connected, fiscalDrafts,
         <td data-label="Cliente"><strong>{record.client}</strong></td>
         <td data-label="Situação"><Badge>{record.status}</Badge></td>
         <td data-label="Total" className="numeric"><strong>{money(record.total)}</strong></td>
-        <td data-label="Ações" className="commercial-actions-cell"><div className="commercial-row-actions"><CommercialRecordIndicators record={record} onFiscal={record.fiscalDraft ? ()=>onFiscalStart({id:record.id,client:record.client,item:`Pedido ${record.id}`,total:record.total,documentType:record.fiscalDraft!.documentType,sourceLabel:'Pedido'}) : undefined}/><CommercialRecordActions onCopy={onCopy} onTool={(record,action)=>setToolRequest({record,action})} record={record} fiscalPrepareLoading={record.fiscalDraft ? fiscalPrepareState[record.fiscalDraft.id]?.loading : false} onNavigate={onNavigate} onFiscalStart={onFiscalStart} onFiscalPrepare={onFiscalPrepare} onReceivables={onReceivables} onOpenLocal={setDetailRecord} onContinueOrder={onContinueOrder} onLifecycleRequest={(localRecord, action) => action==='estoque'?setStockRequest(localRecord):action === 'editar' ? onLifecycle(localRecord, action) : setLifecycleRequest({ record: localRecord, action })}/></div></td>
+        <td data-label="Ações" className="commercial-actions-cell"><div className="commercial-row-actions"><CommercialRecordIndicators record={record} onFiscal={record.fiscalDraft ? ()=>onFiscalStart({id:record.id,client:record.client,item:`Pedido ${record.id}`,total:record.total,documentType:record.fiscalDraft!.documentType,sourceLabel:'Pedido'}) : undefined}/><CommercialRecordActions onCopy={onCopy} onTool={(record,action)=>action==='print'?void printDirect(record):setToolRequest({record,action})} record={record} fiscalPrepareLoading={record.fiscalDraft ? fiscalPrepareState[record.fiscalDraft.id]?.loading : false} onNavigate={onNavigate} onFiscalStart={onFiscalStart} onFiscalPrepare={onFiscalPrepare} onReceivables={onReceivables} onOpenLocal={setDetailRecord} onContinueOrder={onContinueOrder} onLifecycleRequest={(localRecord, action) => action==='estoque'?setStockRequest(localRecord):action === 'editar' ? onLifecycle(localRecord, action) : setLifecycleRequest({ record: localRecord, action })}/></div></td>
       </tr>)}</></Table>
       {records.length === 0 && <EmptyState title="Nenhuma operação encontrada" description="Ajuste a busca ou limpe os filtros para ver as vendas."/>}
     </Panel>
@@ -2710,7 +2727,7 @@ function SalesView({ company, clients, onCopy, created, connected, fiscalDrafts,
     <OrderDetailsDialog record={detailRecord} onClose={() => setDetailRecord(null)}/>
     <OrderStockDialog record={stockRequest} onClose={()=>setStockRequest(null)} onConfirm={onStockLaunch}/>
     <OrderLifecycleDialog request={lifecycleRequest} onClose={() => setLifecycleRequest(null)} onConfirm={onLifecycle}/>
-    <OrderToolsDialog request={toolRequest} company={company} clients={clients} onNotify={onNotify} onClose={()=>setToolRequest(null)} onStatus={(record,action)=>{if(action==='continuar')onContinueOrder(record);else setLifecycleRequest({record,action:action as OrderConfirmationAction});}}/>
+    <OrderToolsDialog request={toolRequest} companyLogoUrl={companyLogoUrl} paperSize={paperSize} company={company} clients={clients} onNotify={onNotify} onClose={()=>setToolRequest(null)} onStatus={(record,action)=>{if(action==='continuar')onContinueOrder(record);else setLifecycleRequest({record,action:action as OrderConfirmationAction});}}/>
   </>;
 }
 
@@ -5385,6 +5402,7 @@ function SettingsDialog({ fiscalDefaultsContext,section, settings, onClose, onSa
         </div></section>
       </div>}
       {section === 'comercial' && <div className="form-grid">
+        <label className="field"><span>Papel da impressão de pedidos</span><select value={draft.commercial.orderPrintPaper||'A4'} onChange={event=>updateCommercial({orderPrintPaper:event.target.value==='A5'?'A5':'A4'})}><option value="A4">A4 · 210 × 297 mm</option><option value="A5">A5 · 148 × 210 mm</option></select><small>Usado diretamente ao imprimir. Confira o mesmo tamanho no diálogo da impressora.</small></label>
         <label className="field"><span>Vendedor padrão</span><select value={draft.commercial.defaultSeller} onChange={(event) => updateCommercial({ defaultSeller: event.target.value })}>{draft.commercial.sellers.map((seller) => <option key={seller}>{seller}</option>)}</select></label>
         <label className="field"><span>Validade do orçamento (dias)</span><input type="number" min="1" max="365" value={draft.commercial.quoteValidityDays} onChange={(event) => updateCommercial({ quoteValidityDays: Number(event.target.value) })}/></label>
         <label className="field"><span>Documento fiscal padrão</span><select value={draft.commercial.defaultFiscalDocument} onChange={(event) => updateCommercial({ defaultFiscalDocument: event.target.value as ModuleSettings['commercial']['defaultFiscalDocument'] })}><option value="nenhum">Não definido</option>{draft.fiscal.documentScope.includes('nfe') && <option value="nfe">NF-e</option>}{draft.fiscal.documentScope.includes('nfce') && <option value="nfce">NFC-e</option>}{draft.fiscal.documentScope.includes('nfse') && <option value="nfse">NFS-e</option>}</select></label>
@@ -8313,6 +8331,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         {managementContextReady && activeUser?.active && <>
         {view === 'painel' && <Dashboard onNew={openNew} onNavigate={navigate} connected={Boolean(managementCatalogBridge)} created={created} receivableRecords={receivableRecords} catalogRecords={catalogRecords}/>} 
         {view === 'vendas' && <SalesView
+          companyLogoUrl={companyLogoUrl}
+          paperSize={moduleSettings.commercial.orderPrintPaper||'A4'}
           company={moduleSettings.company}
           clients={clientRecords}
           onCopy={record=>{

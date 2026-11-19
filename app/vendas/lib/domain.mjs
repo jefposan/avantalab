@@ -216,6 +216,7 @@ export function normalizeModuleSettings(input, defaults) {
   const company = { ...defaults.company, ...(source.company && typeof source.company === 'object' ? source.company : {}) };
   company.cityCode = resolveMunicipalityCode({ city: company.city, cep: company.cep, currentCode: company.cityCode });
   const commercial = { ...defaults.commercial, ...(source.commercial && typeof source.commercial === 'object' ? source.commercial : {}) };
+  commercial.orderPrintPaper = commercial.orderPrintPaper === 'A5' ? 'A5' : 'A4';
   const payments = { ...defaults.payments, ...(source.payments && typeof source.payments === 'object' ? source.payments : {}) };
   const services = { ...defaults.services, ...(source.services && typeof source.services === 'object' ? source.services : {}) };
   const fiscal = { ...defaults.fiscal, ...(source.fiscal && typeof source.fiscal === 'object' ? source.fiscal : {}) };
