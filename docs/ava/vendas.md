@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.493 -->
+<!-- ava-version: 3.2.0.494 -->
+
+> Revisão 3.2.0.494: sem impacto operacional no AvantaVendas independente. Na Gestão Web, Vendas e Serviços recebe seletor de módulos autorizados à direita do cabeçalho, antes dos ajustes; conclua ou cancele o editor de novo pedido antes de trocar.
 
 > Revisão 3.2.0.493: sem impacto operacional no AvantaVendas; organização visual da revisão de importação em Custos Web, sem alteração de cálculos ou persistência.
 

@@ -65,6 +65,14 @@ divisor ou agrupamento sem identidade própria.
 
 ### Cabeçalho de módulo
 
+- `app/components/SeletorModulos.tsx` é o acionador compartilhado para trocar de
+  módulo nos cabeçalhos Web de página total. Posicionar à direita, antes dos
+  ajustes; preservar logo central e retorno à esquerda. Usa o registro oficial,
+  consulta autenticada sem cache ao abrir/selecionar e política de dispositivo.
+  Empresa é contexto, nunca concessão. Receber bloqueio de operações e edição
+  pendente do consumidor; manter a confirmação oficial e proteções de saída.
+  Em telas menores, grade com nome acessível; sem aviso no rodapé do painel.
+
 - Reutilizar `app/components/ModuloHeader.tsx` para cabeçalhos leves de módulos:
   retorno à esquerda, identidade do perfil centralizada e ações opcionais à direita.
 - O componente reutiliza os estilos consolidados de Custos e Precificação, sem

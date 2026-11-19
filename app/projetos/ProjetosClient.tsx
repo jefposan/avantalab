@@ -1,4 +1,5 @@
 'use client';
+import SeletorModulos from '@/app/components/SeletorModulos';
 
 import Link from 'next/link';
 import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
@@ -33,7 +34,7 @@ type ModuleAccess = {
 type SharedContext = { id: string; nome: string; corPrimaria: string; temaEscuro: boolean; logoUrl?: string };
 type SharedProjectsState = 'loading' | 'ready' | 'error';
 
-function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId, showSettings = false, onSettings, badge, onReturn }: {
+function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId, showSettings = false, onSettings, badge, onReturn, navigationBlocked = false, darkMode = false, corPrimaria = '#003E73' }: {
   companyName: string;
   companyLogoUrl?: string;
   returnCompanyId: string;
@@ -41,6 +42,9 @@ function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId
   onSettings?: () => void;
   badge?: string;
   onReturn?: () => void;
+  navigationBlocked?: boolean;
+  darkMode?: boolean;
+  corPrimaria?: string;
 }) {
   return <header className={styles.moduleHeader}>
     {onReturn
@@ -50,6 +54,7 @@ function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId
       {companyLogoUrl ? <AdaptiveModuleLogo key={companyLogoUrl} src={companyLogoUrl} alt={companyName} className={styles.companyLogo} /> : <span>{companyName}</span>}
     </div>
     <div className={styles.moduleHeaderActions}>
+      <SeletorModulos empresaId={returnCompanyId} moduloAtual="projetos" ocupado={navigationBlocked} darkMode={darkMode} corPrimaria={corPrimaria} />
       {showSettings && <button type="button" className={styles.moduleSettingsButton} onClick={onSettings} aria-label="Abrir ajustes do AvantaProjetos" title="Ajustes"><Icon name="settings" size={18} /></button>}
       {badge && <span className={styles.readOnlyBadge}>{badge}</span>}
     </div>
@@ -133,7 +138,7 @@ function ProjectApp({ companyId, returnCompanyId, initialProjectId, access, onAc
   };
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.darkTheme : ''} ${mapaEmFoco ? styles.mapFocusMode : ''} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
-    <ProjectModuleHeader companyName={access.empresa.nome} companyLogoUrl={access.empresa.logoUrl} returnCompanyId={effectiveReturnCompanyId} onReturn={retornarInicio} showSettings={access.podeGerenciarModulo} onSettings={() => setAjustesAbertos(true)} badge={activeProject ? activeProjectReadOnly ? 'Somente visualização' : access.compartilhado ? 'Projeto compartilhado' : undefined : access.compartilhado ? 'Acesso compartilhado' : !access.podeEditar ? 'Somente visualização' : undefined} />
+    <ProjectModuleHeader companyName={access.empresa.nome} companyLogoUrl={access.empresa.logoUrl} darkMode={access.empresa.temaEscuro} corPrimaria={access.empresa.corPrimaria} returnCompanyId={effectiveReturnCompanyId} navigationBlocked={access.podeEditar && (!loaded || ['saving', 'error', 'offline'].includes(saveState))} onReturn={retornarInicio} showSettings={access.podeGerenciarModulo} onSettings={() => setAjustesAbertos(true)} badge={activeProject ? activeProjectReadOnly ? 'Somente visualização' : access.compartilhado ? 'Projeto compartilhado' : undefined : access.compartilhado ? 'Acesso compartilhado' : !access.podeEditar ? 'Somente visualização' : undefined} />
     <div className={styles.moduleContent}>
       <div aria-hidden={carregandoDados || undefined} inert={carregandoDados || undefined}>
         {activeProject ? <ProjectWorkspace readOnly={activeProjectReadOnly} project={activeProject} people={collection.people} saveState={saveState} onBack={voltarParaProjetos} onChange={(next) => setCollection((current) => ({ ...current, projects: current.projects.map((project) => project.id === next.id ? next : project) }))} onUndo={() => { if (!undo()) setMessage('Não há alterações para desfazer.'); }} onRedo={() => { if (!redo()) setMessage('Não há alterações para refazer.'); }} canUndo={!activeProjectReadOnly && canUndo} canRedo={!activeProjectReadOnly && canRedo} onMessage={setMessage} mapaEmFoco={mapaEmFoco} onMapaEmFocoChange={setMapaEmFoco} /> : <ProjectHome readOnly={!access.podeEditar || access.compartilhado === true} collection={collection} onChange={(next) => setCollection(next)} onOpen={setActiveProjectId} onMessage={setMessage} sharedProjects={sharedProjects} sharedProjectsState={sharedProjectsState} onOpenShared={openSharedProject} sharedAccessOnly={access.compartilhado === true} />}
@@ -166,7 +171,7 @@ function SharedProjectsHub({ companyId, context, projects, state }: { companyId:
     router.push(`/projetos?empresaId=${encodeURIComponent(project.companyId)}&projetoId=${encodeURIComponent(project.projectId)}&retornoEmpresaId=${encodeURIComponent(companyId)}`);
   };
   return <main className={`${styles.root} ${context.temaEscuro ? styles.darkTheme : ''} typography-system`} style={{ '--project-profile-color': context.corPrimaria } as React.CSSProperties}>
-    <ProjectModuleHeader companyName={context.nome} companyLogoUrl={context.logoUrl} returnCompanyId={companyId} badge="Acesso compartilhado" />
+    <ProjectModuleHeader companyName={context.nome} companyLogoUrl={context.logoUrl} darkMode={context.temaEscuro} corPrimaria={context.corPrimaria} returnCompanyId={companyId} badge="Acesso compartilhado" />
     <div className={styles.moduleContent}>
       <ProjectHome collection={collection} onChange={() => {}} onOpen={() => {}} onMessage={setMessage} readOnly sharedProjects={projects} sharedProjectsState={state} onOpenShared={openSharedProject} sharedAccessOnly />
     </div>

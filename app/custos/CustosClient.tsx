@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
 import ModuloHeader from '@/app/components/ModuloHeader';
+import SeletorModulos from '@/app/components/SeletorModulos';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
 import { Icon } from '@/app/projetos/components/Icon';
@@ -22,6 +23,8 @@ export type CustosAccess = {
 
 export default function CustosClient({ companyId, initialNewType, initialProductId, returnTo, initialContext, embeddedProduct = false, onProductSaved, onProductCancel, onProductDirtyChange, onProductBusyChange }: { companyId: string; initialNewType?: 'produto'; initialProductId?: string; returnTo?: 'vendas'; initialContext?: ContextoNavegacaoModulo | null; embeddedProduct?: boolean; onProductSaved?: (produto: import('./types').ProdutoCustos) => void; onProductCancel?: () => void; onProductDirtyChange?: (dirty:boolean)=>void; onProductBusyChange?: (busy:boolean)=>void }) {
   const router = useRouter();
+  const [edicaoPendente, setEdicaoPendente] = useState(false);
+  const [gravandoProduto, setGravandoProduto] = useState(false);
   const returnHref = returnTo === 'vendas' && companyId ? `/vendas?empresaId=${encodeURIComponent(companyId)}` : companyId ? `/gestao?inicio=1&empresaId=${encodeURIComponent(companyId)}` : '/gestao';
   const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('custos', companyId));
   const [access, setAccess] = useState<CustosAccess | null>(() => contextoInicial ? {
@@ -106,10 +109,11 @@ export default function CustosClient({ companyId, initialNewType, initialProduct
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{ '--custos-brand': access.empresa.corPrimaria } as React.CSSProperties}>
     <ModuloHeader empresa={access.empresa} onBack={voltar} returnLabel={returnLabel} returnAriaLabel={returnAriaLabel}>
+        <SeletorModulos empresaId={companyId} moduloAtual="custos" corPrimaria={access.empresa.corPrimaria} darkMode={access.empresa.temaEscuro} alteracoesPendentes={edicaoPendente} ocupado={gravandoProduto || atualizandoTema} />
         {access.podeGerenciarModulo && <button type="button" className={styles.moduleSettingsButton} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Custos e Precificação" title="Ajustes"><Icon name="settings" size={18} /></button>}
         {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
     </ModuloHeader>
-    <CustosWorkspace initialProductId={initialProductId} companyId={companyId} access={access} initialNewType={initialNewType} />
+    <CustosWorkspace initialProductId={initialProductId} companyId={companyId} access={access} initialNewType={initialNewType} onProductDirtyChange={setEdicaoPendente} onProductBusyChange={setGravandoProduto} />
     <RodapeAvanta darkMode={access.empresa.temaEscuro} />
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes de Custos e Precificação" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
       <section className={styles.settingsSection} aria-label="Ajustes visuais">

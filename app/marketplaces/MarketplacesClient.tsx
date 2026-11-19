@@ -1,4 +1,5 @@
 'use client';
+import SeletorModulos from '@/app/components/SeletorModulos';
 import CatalogCompletion from './CatalogCompletion';
 import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
 
@@ -716,6 +717,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     <CarregamentoDadosModulo ativo={noticeOpening} escurecerFundo titulo={noticeTarget?.origin==='announced'?'Abrindo produto':'Abrindo pendência'} mensagem="Localizando e preparando o item…" corPrimaria={empresa.corPrimaria} temaEscuro={effectiveDark} onCancelar={cancelNoticeOpening} />
     <MarketplaceLiveMonitor key={companyId} companyId={companyId} brand={empresa.corPrimaria} dark={effectiveDark} onOpenSale={openAlertSale} />
     <ModuloHeader empresa={{ ...empresa, temaEscuro: effectiveDark }} onBack={voltar} productFocusNavigation className={styles.salesHeader} returnTooltip="Voltar à Gestão" returnTooltipPosition="bottom">
+      <SeletorModulos empresaId={companyId} moduloAtual="marketplaces" corPrimaria={empresa.corPrimaria} darkMode={effectiveDark} ocupado={publicationBusy || accountSelectionLocked || connecting || disconnecting || priceLotReading} />
       <div className={styles.headerToolbar}>
       <SalesFilters period={salesPeriod} onPeriodChange={period => selectSalesFromHeader({ period })} group={salesGroup} onGroupChange={group => selectSalesFromHeader({ group })} counts={summary.byGroup} total={summary.total} dark={effectiveDark} brand={empresa.corPrimaria}
         notices={<InventoryNotices key={companyId} companyId={companyId} canManage={canManage} feed={inventorySnapshot?.companyId===companyId ? inventorySnapshot.feed : null} unavailable={liveUnavailable} dark={effectiveDark} brand={empresa.corPrimaria} onAdjust={notice=>void adjustNotice(notice)} onDismiss={async notice=>{

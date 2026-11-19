@@ -1,4 +1,5 @@
 'use client';
+import SeletorModulos from '@/app/components/SeletorModulos';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -31,6 +32,7 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
   } : null);
   const [erro, setErro] = useState('');
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
+  const [operacaoEmAndamento, setOperacaoEmAndamento] = useState(false);
 
   useEffect(() => {
     let ativo = true;
@@ -104,7 +106,10 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
             ? <AdaptiveModuleLogo key={acesso.empresa.logoUrl} src={acesso.empresa.logoUrl} alt={acesso.empresa.nome} className={styles.logoEmpresaModulo} />
             : <span className={styles.nomeEmpresaModulo}>{acesso.empresa.nome}</span>}
         </div>
-        <button type="button" className={styles.botaoAjustes} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Operações de Campo" title="Ajustes">⚙</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifySelf: 'end' }}>
+          <SeletorModulos empresaId={empresaId} moduloAtual="recebimentos_presencial" corPrimaria={acesso.empresa.corPrimaria} darkMode={acesso.empresa.temaEscuro} ocupado={operacaoEmAndamento} />
+          <button type="button" className={styles.botaoAjustes} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Operações de Campo" title="Ajustes">⚙</button>
+        </div>
       </header>
       <section className={styles.areaModulo} aria-labelledby="recebimentos-pagina-titulo">
         <div className={styles.tituloPaginaModulo}>
@@ -122,6 +127,7 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
             nomeEmpresa={acesso.empresa.nome}
             mostrarLinkColaboradores
             rascunhoEscopo={`pagina:${acesso.empresa.id}`}
+            onBusyChange={setOperacaoEmAndamento}
           />
         </div>
       </section>

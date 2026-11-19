@@ -1,3 +1,10 @@
+# 3.2.0.494 — Navegação: troca direta entre módulos pelo cabeçalho
+
+- Seletor compartilhado à direita, antes dos ajustes, nos cabeçalhos de Custos, Projetos, Operações de Campo, Vendas e Serviços e Marketplaces. Logo central e Início à esquerda preservados; sem mensagem no rodapé do seletor.
+- Lista somente módulos autorizados da empresa atual, consultados novamente ao abrir e ao selecionar. Destinos derivados do registro oficial; não altera concessões, instalação ou hierarquia.
+- Navegação na mesma guia preserva proteções nativas de saída dos editores. Custos confirma descarte de edição; gravações sinalizadas bloqueiam a troca. Projetos aguarda sincronização e Vendas exige concluir/sair do editor de novo pedido antes de trocar.
+- Versão compacta em telas menores, tema contextual, Escape, restauração de foco e estados de carregamento, vazio e falha. Sem alterações de banco ou de paralelismo do build.
+
 # 3.2.0.493 — Custos e Precificação: revisão de importação organizada
 
 - Colunas selecionadas em etiquetas, separadas por cadastro e tabelas de preços, sem repetir o prefixo Preço em cada tabela.

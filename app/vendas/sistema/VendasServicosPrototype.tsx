@@ -1,4 +1,5 @@
 'use client';
+import SeletorModulos from '@/app/components/SeletorModulos';
 import {sanitizarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 import { validateFiscalSettingsForm, mergeSettingsNumbering } from '../lib/fiscal-settings-form.mjs';
 import { COMPANY_PROFILE_SAVE_REQUEST, COMPANY_PROFILE_SAVE_RESPONSE } from '../lib/company-profile-save.mjs';
@@ -8124,6 +8125,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           : <span>{managementProfileReady ? moduleSettings.company.name : 'Carregando perfil empresarial'}</span>}
       </div>
       <div className="topbar-actions">
+        {managementContextReady && managementCatalogBridge?.companyId && <SeletorModulos empresaId={managementCatalogBridge.companyId} moduloAtual="vendas" corPrimaria={profileColor} ocupado={view === 'novo_pedido'} />}
         {managementContextReady && can('settings.view') && <button type="button" className="module-settings-button" onClick={() => navigate('configuracoes')} aria-label="Abrir ajustes de Vendas e Serviços" title="Ajustes"><Icon name="settings" size={18}/></button>}
       </div>
     </header>

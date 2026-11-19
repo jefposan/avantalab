@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.493 -->
+<!-- ava-version: 3.2.0.494 -->
+
+> Revisão 3.2.0.494: sem impacto operacional no runtime da Gestão Mobile. Cabeçalhos Web de módulos têm seletor compacto de módulos autorizados, sem alterar os menus ou recursos nativos.
 
 > Revisão 3.2.0.493: sem impacto operacional na Gestão Mobile; organização visual da revisão de importação em Custos Web, sem alteração de cálculos ou persistência.
 

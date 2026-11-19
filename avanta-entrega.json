@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_FSvEmaHut9pEho1F3wQYGgtgU9MP",
+  "baseDeploymentId": "dpl_Db9ssTuJQx6LrVtsQLaeJ3XnUiyK",
   "migrations": [],
-  "version": "3.2.0.493",
-  "scope": "Custos e Precificação: revisão de importação com etiquetas por grupo, totais distintos de cadastro e preços adicionais e regras em bloco separado. Sem alteração de cálculos, API ou banco. Preserva paralelismo validado do build."
+  "version": "3.2.0.494",
+  "scope": "Navegação: seletor de módulos autorizados à direita dos cabeçalhos Web, antes dos ajustes, com revalidação por empresa e proteção de edições e operações sinalizadas. Sem banco, mudanças nativas ou alteração de paralelismo do build."
 }

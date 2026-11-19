@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.493 -->
+<!-- ava-version: 3.2.0.494 -->
+
+> Revisão 3.2.0.494: nos cabeçalhos de Custos, Projetos, Operações de Campo, Vendas e Serviços e Marketplaces, use o seletor à direita, antes dos ajustes, para trocar diretamente de módulo. Em telas menores, o acionador mostra o ícone de grade. Somente acessos autorizados do perfil atual aparecem; abrir e selecionar revalidam o acesso. Sem troca de empresa. Em Custos, descarte de edição exige confirmação; aguarde gravações/sincronização. Em Vendas, conclua ou cancele o editor de novo pedido antes de trocar. Falha de consulta não autoriza navegação; tentar novamente refaz a consulta.
 
 > Revisão 3.2.0.493: a revisão de importação do Excel em Custos separa as colunas em etiquetas de Dados do cadastro e Tabelas de preços. Os totais distinguem cadastros a atualizar (dados/preço padrão) de preços nas tabelas adicionais. Valores vazios e zero são explicados em bloco próprio; confirmar continua obrigatório. Sem alteração de cálculos ou persistência.
 

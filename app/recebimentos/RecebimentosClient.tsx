@@ -22,6 +22,7 @@ type Props = {
   rascunhoEscopo?: string;
   onAviso?: AbrirAvisoFn;
   onConfirmacao?: AbrirConfirmacaoFn;
+  onBusyChange?: (ocupado: boolean) => void;
 };
 
 export default function RecebimentosClient({
@@ -33,6 +34,7 @@ export default function RecebimentosClient({
   nomeEmpresa = '',
   mostrarLinkColaboradores = false,
   rascunhoEscopo = 'preview',
+  onBusyChange,
   onAviso,
   onConfirmacao,
 }: Props) {
@@ -46,6 +48,7 @@ export default function RecebimentosClient({
   const [carregando, setCarregando] = useState(true);
   const [processando, setProcessando] = useState(false);
   const [erro, setErro] = useState('');
+  useEffect(() => { onBusyChange?.(processando); }, [onBusyChange, processando]);
 
   const carregar = useCallback(async (silencioso = false) => {
     if (!silencioso) setCarregando(true);
