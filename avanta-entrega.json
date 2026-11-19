@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_EUD3doHYJCFra7uEv3F8nB71AgyD",
-  "migrations": [],
-  "version": "3.2.0.489",
-  "scope": "Custos e Precificação: ações dos catálogos na mesma linha, Excluir desabilitado nos protegidos e largura do menu Editar cadastro limitada à janela. Sem mudanças de banco ou inclusão do trabalho fiscal local do outro chat."
+  "baseDeploymentId": "dpl_AW2PuZnrw2rjD9yoChp8UWmiCT7p",
+  "migrations": [{"path":"supabase/migrations/20261119010000_custos_excel_seletivo_multicatalogo.sql","sha256":"c24ed5ce6e4bc52788e6c0b1d9f11e9e48b567987741415ad97e0196dc997c35"}],
+  "version": "3.2.0.490",
+  "scope": "Custos e Precificação: Excel com seleção de campos e tabelas, atualização parcial por ID no catálogo original, prévia, histórico e nova tentativa real. Candidato local; migração e publicação produtivas pendentes."
 }

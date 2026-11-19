@@ -1,3 +1,12 @@
+# 3.2.0.490 — Custos e Precificação: Excel seletivo e atualização multicatálogo
+
+- Exportar abre escolha de campos do cadastro e tabelas de preços. Código e Nome identificam os itens; IDs e datas técnicos ficam ocultos.
+- Importação altera somente as colunas presentes e autorizadas no arquivo, preservando as demais. Compatibilidade de atualização com planilhas v2 mantida; novas planilhas v3 não criam produtos.
+- Cada ID é validado pela empresa e atualizado em seu catálogo original. Lote atômico, confirmação prévia, histórico de preços e bloqueio de alterações concorrentes preservados.
+- Preços de tabelas vazios são ignorados; zero é válido. Textos vazios limpam somente campos selecionados. Valores inválidos não viram zero silenciosamente.
+- Erros de importação permanecem no contexto; Tentar novamente revalida o mesmo arquivo, e Escolher outro arquivo permite substituí-lo.
+- Migração aditiva preparada e testada em PostgreSQL local; aplicação no Supabase e publicação pendentes.
+
 # 3.2.0.489 — Custos e Precificação: ações dos catálogos alinhadas
 
 - Gerenciar produtos, Editar e Excluir ficam na mesma linha em todos os catálogos, usando os botões compactos oficiais.

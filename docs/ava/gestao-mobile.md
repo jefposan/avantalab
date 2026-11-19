@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.489 -->
+<!-- ava-version: 3.2.0.490 -->
+
+> Revisão 3.2.0.490: sem impacto operacional na Gestão Mobile. Candidato Web de Custos oferece exportação seletiva e atualização parcial multicatálogo com prévia; aplicação produtiva pendente. Não orientar transferência de planilha para criar novos produtos por esse fluxo.
 
 > Revisão 3.2.0.489: nos cards de Catálogos de Custos Web, Gerenciar produtos, Editar e Excluir aparecem na mesma linha. Nos catálogos de sistema, Excluir é visível e desabilitado. Permissões e confirmação de exclusão preservadas. Sem impacto operacional na Gestão Mobile ou em Vendas.
 

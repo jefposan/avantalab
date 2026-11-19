@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.489 -->
+<!-- ava-version: 3.2.0.490 -->
+
+> Revisão 3.2.0.490 (candidato local): em Custos → Tabelas de preços, Exportar abre seleção de campos e tabelas. Código e Nome acompanham para identificar; Nome só é editável se selecionado. Não alterar IDs, códigos ou datas ocultas. A planilha v3 atualiza cadastros existentes sem movê-los entre catálogos; cadastre novos produtos pela tela ou pela importação de novo catálogo. Somente as colunas presentes e selecionadas são alteradas após prévia e confirmação. Texto vazio limpa o campo selecionado; preço de tabela vazio mantém o vigente e zero grava zero; números e situações selecionados exigem preenchimento válido. Arquivos v2 antigos continuam aceitos para atualização dos IDs existentes. Alterações concorrentes exigem nova exportação. Tentar novamente revalida o arquivo; Escolher outro arquivo substitui o arquivo. Banco produtivo e publicação ainda pendentes.
 
 > Revisão 3.2.0.489: nos cards de Catálogos de Custos Web, Gerenciar produtos, Editar e Excluir aparecem na mesma linha. Nos catálogos de sistema, Excluir é visível e desabilitado. Permissões e confirmação de exclusão preservadas. Sem impacto operacional na Gestão Mobile ou em Vendas.
 

@@ -246,7 +246,7 @@ export async function importarCadastroProdutosPrecos(
   precos: Array<Record<string, unknown>>,
   aplicar: boolean,
 ) {
-  const { data, error } = await supabase.rpc('custos_importar_produtos_precos_rpc', {
+  const { data, error } = await supabase.rpc('custos_importar_produtos_precos_seletivo_rpc', {
     p_empresa_id: empresaId,
     p_catalogo_id: catalogoId,
     p_arquivo_nome: arquivoNome,

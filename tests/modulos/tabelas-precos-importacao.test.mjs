@@ -62,7 +62,7 @@ test('cadastro exporta e importa produtos e preços com prévia e proteção con
   assert.doesNotMatch(tabelas, /book_append_sheet\(livro, planilhaPrecos, 'Tabelas de preços'\)/);
   assert.match(tabelas, /ID interno \(não alterar\)/);
   assert.match(tabelas, /Atualizado em \(não alterar\)/);
-  assert.match(repositorio, /custos_importar_produtos_precos_rpc/);
+  assert.match(repositorio, /custos_importar_produtos_precos_seletivo_rpc/);
   assert.match(migracao, /foi alterado no sistema depois da exportação/);
   assert.match(migracao, /p_aplicar boolean default false/);
   assert.match(migracao, /custos_importacoes_produtos_precos/);
