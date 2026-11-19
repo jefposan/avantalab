@@ -137,14 +137,43 @@ export function createPostgresCommercialCustomerRepository({ pool } = {}) {
       });
     },
 
-    async importMany({companyId,actorId,customers,expectedExisting,fileName}) {
+    async findImportSnapshot({companyId}) {
+      return withClient(pool,async client=>(await client.query('select id,documento,versao,situacao,atualizado_em from public.vendas_clientes where empresa_id=$1 order by id',[companyId])).rows);
+    },
+
+    async importMany({companyId,actorId,customers,expectedExisting,fileName,mode='add',expectedSnapshot}) {
+      if(!['add','replace'].includes(mode)||!customers.length)throw new Error('Modo ou lote inválido');
       return runSerializable(pool,async client=>{
         await client.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[`vendas:cliente:codigo:${companyId}`]);
+        let updated=0,inactivated=0;
+        if(mode==='replace'){
+          const snapshot=(await client.query('select id,documento,versao,situacao,atualizado_em from public.vendas_clientes where empresa_id=$1 order by id for update',[companyId])).rows;
+          if(JSON.stringify(snapshot)!==JSON.stringify(expectedSnapshot)){const error=new Error('Prévia alterada');error.code='AV-COMMERCIAL-IMPORT-CONFLICT';throw error;}
+        }
         const current=await client.query('select documento from public.vendas_clientes where empresa_id=$1 and documento=any($2::text[]) for update',[companyId,customers.map(c=>c.document)]);
         const existing=(current.rows||[]).map(row=>row.documento).sort();
         if(JSON.stringify(existing)!==JSON.stringify([...expectedExisting].sort())){const error=new Error('Prévia alterada');error.code='AV-COMMERCIAL-IMPORT-CONFLICT';throw error;}
         const seen=new Set(existing); const novos=customers.filter(customer=>!seen.has(customer.document));
-        if(!novos.length)return {created:0,skipped:customers.length};
+        if(mode==='replace'){
+          const changed=await client.query(`update public.vendas_clientes c set
+            tipo_pessoa=item->>'personType',documento_tipo=item->>'documentType',razao_social=item->>'legalName',
+            nome_fantasia=nullif(item->>'tradeName',''),nome_exibicao=item->>'displayName',
+            inscricao_estadual=nullif(item->>'stateRegistration',''),inscricao_municipal=nullif(item->>'municipalRegistration',''),
+            indicador_ie=item->>'stateRegistrationIndicator',consumidor_final=(item->>'consumerFinal')::boolean,
+            email=nullif(item->>'email',''),telefone=nullif(item->>'phone',''),contato_principal=nullif(item->>'primaryContact',''),
+            cep=nullif(item->>'postalCode',''),logradouro=nullif(item->>'street',''),numero=nullif(item->>'number',''),
+            complemento=nullif(item->>'complement',''),bairro=nullif(item->>'district',''),municipio=nullif(item->>'city',''),
+            municipio_ibge=nullif(item->>'cityCode',''),uf=nullif(item->>'state',''),condicao_pagamento=nullif(item->>'paymentTerms',''),
+            observacoes=nullif(item->>'notes',''),situacao=item->>'status',atualizado_por=$3
+            from jsonb_array_elements($2::jsonb) item where c.empresa_id=$1 and c.documento=item->>'document' returning c.id`,[companyId,JSON.stringify(customers),actorId]);
+          const hidden=await client.query("update public.vendas_clientes set situacao='inativo',atualizado_por=$3 where empresa_id=$1 and not(documento=any($2::text[])) and situacao<>'inativo' returning id",[companyId,customers.map(c=>c.document),actorId]);
+          updated=changed.rows.length;inactivated=hidden.rows.length;
+          for(const [items,event,summary] of [[changed.rows,'cliente_atualizado_excel','Cadastro atualizado pela substituição da base Excel.'],[hidden.rows,'cliente_inativado_excel','Cliente ausente da planilha inativado, com histórico preservado.']]){
+            if(items.length)await client.query(`insert into public.vendas_eventos(empresa_id,recurso_tipo,recurso_id,evento,resumo,metadados,criado_por)
+              select $1,'cliente',x.id::uuid,$3,$4,$5::jsonb,$6 from jsonb_to_recordset($2::jsonb) x(id text)`,[companyId,JSON.stringify(items),event,summary,JSON.stringify({origem:'excel',modo:mode,arquivo:fileName}),actorId]);
+          }
+        }
+        if(!novos.length)return mode==='replace'?{created:0,skipped:0,updated,inactivated}:{created:0,skipped:customers.length};
         await client.query(`insert into public.vendas_sequencias(empresa_id,tipo,ano,proximo_numero)
           select $1,'cliente',0,coalesce(max(codigo)+1,1) from public.vendas_clientes where empresa_id=$1
           on conflict on constraint vendas_sequencias_pkey do nothing`,[companyId]);
@@ -166,7 +195,7 @@ export function createPostgresCommercialCustomerRepository({ pool } = {}) {
         await client.query(`insert into public.vendas_eventos(empresa_id,recurso_tipo,recurso_id,evento,resumo,metadados,criado_por)
           select $1,'cliente',x.id::uuid,'cliente_importado',x.resumo,x.metadados,$3
           from jsonb_to_recordset($2::jsonb) as x(id text,resumo text,metadados jsonb)`,[companyId,JSON.stringify(result.rows.map(row=>({id:row.id,resumo:`Cliente ${row.nome_exibicao} importado por Excel.`,metadados:{origem:'excel',arquivo:fileName,codigo:row.codigo}}))),actorId]);
-        return {created:novos.length,skipped:customers.length-novos.length};
+        return mode==='replace'?{created:novos.length,skipped:0,updated,inactivated}:{created:novos.length,skipped:customers.length-novos.length};
       });
     },
 

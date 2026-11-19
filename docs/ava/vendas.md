@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.499 -->
+<!-- ava-version: 3.2.0.500 -->
+
+> Revisão 3.2.0.500: sem impacto operacional no AvantaVendas independente. Clientes empresariais no módulo Web passa a permitir adicionar ou substituir a base, com inativação dos ausentes e históricos preservados. Inclui ajustes 499; nenhum catálogo, estoque ou pedido do AvantaVendas é alterado.
 
 > Revisão local 3.2.0.499: sem impacto operacional no AvantaVendas independente. Em Vendas e Serviços Web, contador exclusivo de pendências fiscais; em Custos, Excel de preços com cores do modelo de clientes. Nada publicado ou alterado no banco.
 

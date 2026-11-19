@@ -1,6 +1,6 @@
 {
   "baseDeploymentId": "dpl_DdNbDN6BXz9pYd6ed2hh8dC9543D",
   "migrations": [],
-  "version": "3.2.0.499",
-  "scope": "Somente local, publicação não autorizada: contador de pendências exclusivamente em Notas Fiscais e Excel de tabelas com padrão visual do modelo de clientes, preservando dados e reimportação. Sem banco ou repetição de manutenção administrativa."
+  "version": "3.2.0.500",
+  "scope": "Clientes: importação Excel em modos adicionar e substituir, prévia, permissões, auditoria e preservação de históricos. Inclui pendências fiscais exclusivamente no menu de Notas e visual do Excel de preços, já ajustados localmente. Sem migrações ou execução de manutenção administrativa."
 }

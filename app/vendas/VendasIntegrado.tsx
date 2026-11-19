@@ -485,13 +485,13 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       if (event.data?.type === CUSTOMER_IMPORT_REQUEST) {
         const port=event.ports?.[0],requestId=String(event.data.requestId||'');
         if(!port||event.data.companyId!==empresaId||!/^[-0-9a-f]{36}$/i.test(requestId))return;
-        const {rows,confirm,previewKey,fileName,fileCompanyId}=event.data;
+        const {rows,confirm,previewKey,fileName,fileCompanyId,mode}=event.data;
         void(async()=>{
           try {
             if(!Array.isArray(rows)||rows.length<1||rows.length>1000)throw Error('Selecione até 1000 clientes por arquivo.');
             const {data}=await supabase.auth.getSession();const token=data.session?.access_token;
             if(!token||activeCompanyRef.current!==empresaId)throw Error('Confirme novamente o perfil e sua sessão.');
-            const body=JSON.stringify({rows,confirm,previewKey,fileName,fileCompanyId});
+            const body=JSON.stringify({rows,confirm,previewKey,fileName,fileCompanyId,mode});
             if(body.length>2_000_000)throw Error('O lote ultrapassa o limite de tamanho.');
             const response=await fetch(`/api/modulos/vendas/commercial/customers/import?companyId=${encodeURIComponent(empresaId)}`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body,cache:'no-store'});
             const result=await response.json().catch(()=>({}));

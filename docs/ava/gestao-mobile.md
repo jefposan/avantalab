@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.499 -->
+<!-- ava-version: 3.2.0.500 -->
+
+> Revisão 3.2.0.500: sem impacto operacional na Gestão mobile nativa. Na Gestão Web, Clientes permite adicionar ou substituir a base por Excel, com prévia e inativação segura dos ausentes; sem apagar históricos. Inclui ajustes Web 499, sem plugins ou envio às lojas.
 
 > Revisão local 3.2.0.499: sem impacto operacional na Gestão mobile nativa. Indicador de pendências fiscais no menu Web e apresentação do Excel de preços, sem nova publicação, banco ou plugins.
 

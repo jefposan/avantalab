@@ -38,10 +38,10 @@ test('prévia não grava, confirmação é vinculada ao usuário e arquivo',asyn
  assert.equal((await service.run({context,rows,confirm:true,previewKey:'alterada'})).ok,false);assert.equal(writes,0);
  const result=await service.run({context,rows,confirm:true,previewKey:preview.previewKey});assert.equal(result.confirmed,true);assert.equal(writes,1);assert.equal(saved.companyId,companyId);assert.equal(saved.customers[0].status,'revisar_cadastro');
 });
-test('CPF existente é ignorado e duplicado no arquivo bloqueia o lote',async()=>{
+test('adicionar ignora CPF existente e repetições no arquivo sem sobrescrever',async()=>{
  const service=createCommercialCustomerImportService({repository:{findExistingDocuments:async()=>[customer.document],importMany:async()=>assert.fail('não gravar')}});
  const preview=await service.run({context,rows});assert.equal(preview.created,0);assert.equal(preview.skipped,1);
- const duplicate=await service.run({context,rows:[...rows,{line:3,customer}]});assert.equal(duplicate.canImport,false);assert.match(duplicate.rowErrors[0].message,/repetido/);
+ const duplicate=await service.run({context,rows:[...rows,{line:3,customer}]});assert.equal(duplicate.canImport,true);assert.equal(duplicate.skipped,2);assert.equal(duplicate.duplicates,1);
 });
 test('acesso, limite e dados inválidos são rejeitados antes de consultar o banco',async()=>{
  const service=createCommercialCustomerImportService({repository:{findExistingDocuments:()=>assert.fail('sem consulta')}});

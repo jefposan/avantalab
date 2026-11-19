@@ -1,3 +1,10 @@
+# 3.2.0.500 — Clientes: importar adicionando ou substituindo a base com segurança
+
+- Modal compacto aprovado: Importar Clientes, escolha em dois cards, planilha e revisão; sem subtítulo ou avisos extras na seleção.
+- Adicionar ignora documentos existentes e repetidos no arquivo, sem sobrescrever cadastros. Substituir atualiza os presentes, cria os novos e inativa ausentes, mantendo IDs, códigos, vínculos comerciais, pedidos, notas e históricos; nunca exclui registros.
+- Substituição exige consultar, cadastrar e editar clientes, prévia vinculada ao usuário/empresa/modo/versões da base, confirmação explícita dos totais e transação integral com auditoria. Dados concorrentes invalidam a prévia; erros não gravam lote parcial. Duplicidades ambíguas na substituição precisam de correção.
+- Inclui os ajustes locais 3.2.0.499 abaixo, agora autorizados para publicação. Sem migração ou alteração automática da base de clientes.
+
 # 3.2.0.499 — Ajustes locais: pendências fiscais no menu e visual do Excel de preços
 
 - Somente Notas Fiscais recebe contador de pendências/aguardo, incluindo preparação, fila, processamento, rejeição e falha. Autorizações concluídas e cancelamentos ficam fora; os outros menus não mostram números. Até 99, contagem exata; acima, 99+ visual com total exato na descrição acessível.

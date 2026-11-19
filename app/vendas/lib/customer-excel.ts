@@ -1,6 +1,7 @@
 import {CUSTOMER_EXCEL_FIELDS,CUSTOMER_EXCEL_FORMAT,CUSTOMER_IMPORT_LIMIT,CUSTOMER_IMPORT_REQUEST,normalizarCabecalhoCliente} from './customer-excel-contract.mjs';
 export type CustomerImportRow={line:number;customer:Record<string,unknown>};
-export type CustomerImportPreview={ok:boolean;canImport:boolean;confirmed?:boolean;total:number;created:number;skipped:number;review:number;previewKey:string;rowErrors:Array<{line:number;field:string;message:string}>;rows?:Array<{line:number;status:string}>};
+export type CustomerImportMode='add'|'replace';
+export type CustomerImportPreview={ok:boolean;canImport:boolean;confirmed?:boolean;total:number;created:number;skipped:number;updated?:number;inactivated?:number;duplicates?:number;review:number;previewKey:string;rowErrors:Array<{line:number;field:string;message:string}>;rows?:Array<{line:number;status:string}>};
 
 export async function criarModeloClientes(companyId='') {
   const ExcelJS=(await import('exceljs')).default;
@@ -15,7 +16,8 @@ export async function criarModeloClientes(companyId='') {
     ['Documentos e códigos','CPF/CNPJ, telefone, CEP, número e código IBGE são textos. Preserve zeros à esquerda. CNPJ alfanumérico é aceito conforme o cadastro do sistema.'],
     ['Dados fiscais incompletos','Endereço e inscrições podem ser completados depois. Clientes sem dados fiscais suficientes ficam como Revisar cadastro; não ficam prontos para emissão. Inativos permanecem inativos.'],
     ['Inscrição estadual','Escolha Contribuinte ICMS, Contribuinte isento ou Não contribuinte. Se informar IE, indique sua situação. Para pessoa física, o cadastro utiliza Não contribuinte.'],
-    ['Duplicidades','CPF/CNPJ já cadastrado neste perfil será ignorado, sem sobrescrever o cliente existente. Documento repetido no arquivo precisa ser corrigido.'],
+    ['Duplicidades','Adicionar à base: CPF/CNPJ existente é ignorado, sem sobrescrever. Repetidos no arquivo são ignorados após a primeira linha válida. Substituir a base: mantenha uma única linha por CPF/CNPJ.'],
+    ['Modo de importação','Adicionar mantém os clientes existentes. Substituir atualiza os presentes e inativa os ausentes, sem apagar pedidos, notas ou históricos. Revise as quantidades antes de confirmar.'],
     ['Revisão antes de gravar',`Importe até ${CUSTOMER_IMPORT_LIMIT} linhas por arquivo (.xlsx, até 5 MB). Revise novos clientes, ignorados e erros. Nada é gravado antes de Confirmar importação.`],
     ['Tabelas e vendedores','O código interno é gerado pelo AvantaLab. Vendedor e vínculo com tabela de preços podem ser definidos depois no cadastro do cliente.'],
     ['Segurança do arquivo','Não utilize fórmulas, macros ou links como valores. Não inclua vendas, saldos ou históricos: este arquivo cadastra somente clientes.'],
@@ -76,7 +78,7 @@ export async function lerModeloClientes(buffer:ArrayBuffer,companyId:string) {
   return {rows,fileCompanyId};
 }
 
-export function solicitarImportacaoClientes({companyId,origin,...body}:{companyId:string;origin:string;rows:CustomerImportRow[];fileName:string;fileCompanyId:string;confirm:boolean;previewKey?:string}):Promise<CustomerImportPreview> {
+export function solicitarImportacaoClientes({companyId,origin,...body}:{companyId:string;origin:string;mode?:CustomerImportMode;rows:CustomerImportRow[];fileName:string;fileCompanyId:string;confirm:boolean;previewKey?:string}):Promise<CustomerImportPreview> {
   return new Promise((resolve,reject)=>{
     if(!companyId||!origin||window.parent===window){reject(Error('Abra Clientes pelo módulo Vendas e Serviços do perfil empresarial.'));return;}
     const requestId=crypto.randomUUID(),channel=new MessageChannel();

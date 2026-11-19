@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.499 -->
+<!-- ava-version: 3.2.0.500 -->
+
+> Revisão 3.2.0.500 (substitui a orientação de importação 496): Clientes > Importar abre Importar Clientes. Escolher Adicionar à base (novos; CPF/CNPJ existentes e repetidos no arquivo ignorados, sem sobrescrever) ou Substituir a base (atualiza presentes, cria novos, inativa ausentes). Substituir exige também editar clientes. Selecionar planilha, revisar totais, marcar confirmação explícita da substituição e confirmar. Duplicados ambíguos na substituição devem ser corrigidos. IDs, códigos, tabelas, vendedores, pedidos, notas e históricos permanecem. Prévia não grava; mudanças concorrentes ou falha exigem revalidar; lote inteiro ou nada. Nenhuma base é alterada pela publicação. Mantém pendências fiscais e Excel de preços da revisão 499, agora incluídos na entrega.
 
 > Revisão local 3.2.0.499 (não publicada): somente Notas Fiscais mostra contador de notas em preparação, com pendências, aguardando, rejeitadas/falhas ou processando. Autorizadas concluídas e canceladas não entram. Acima de 99, selo 99+ e total exato na ajuda/descrição; outros menus continuam sem números. Retornos fiscais atualizam o contador sem nova gravação. Em Custos > Tabelas, o Excel exportado segue cores e organização do modelo de clientes; campos escolhidos, IDs e metadados para importação permanecem iguais.
 

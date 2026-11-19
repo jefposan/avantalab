@@ -10,7 +10,7 @@ export async function handleCustomerImport({request,runtime,companyId}) {
   let body; try {const raw=await request.text();if(raw.length>2_000_000)return reply(413,{ok:false,message:'O lote ultrapassa o limite de tamanho.'});body=JSON.parse(raw);}catch{return reply(400,{ok:false,message:'Arquivo de importação inválido.'});}
   if(!body||typeof body!=='object'||(body.confirm!==false&&body.confirm!==true))return reply(400,{ok:false,message:'Confirme a etapa da importação.'});
   if(body.fileCompanyId&&body.fileCompanyId!==companyId)return reply(403,{ok:false,message:'Este modelo pertence a outro perfil empresarial.'});
-  const result=await runtime.customerImportService.run({context:resolved.context,rows:body.rows,confirm:body.confirm,previewKey:body.previewKey,fileName:body.fileName});
+  const result=await runtime.customerImportService.run({context:resolved.context,rows:body.rows,mode:body.mode,confirm:body.confirm,previewKey:body.previewKey,fileName:body.fileName});
   if(!result.ok){const code=result.errors?.[0]?.code||'';return reply(code.includes('PERMISSION')?403:code.includes('CONFLICT')?409:code.includes('STORAGE')?503:400,{...result,message:result.errors?.[0]?.message||'Não foi possível importar.'});}
   return reply(200,result);
 }
