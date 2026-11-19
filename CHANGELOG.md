@@ -1,3 +1,9 @@
+# 3.2.0.493 — Custos e Precificação: revisão de importação organizada
+
+- Colunas selecionadas em etiquetas, separadas por cadastro e tabelas de preços, sem repetir o prefixo Preço em cada tabela.
+- Dois totais com formatação pt-BR e identificação do alcance: cadastros (dados/preço padrão) e preços das tabelas adicionais. Regras de valores vazios e zero em bloco próprio.
+- Confirmação e cancelamento oficiais, bloqueio durante gravação e erro contextual junto às ações. Sem alterações de cálculos, API ou banco; preserva otimização do build.
+
 # 3.2.0.492 — Infraestrutura: paralelismo controlado de testes na Vercel
 
 - Executor reconhece Vercel e usa até quatro processos, respeitando CPU e memória disponíveis na máquina atual; computador local permanece limitado a dois.

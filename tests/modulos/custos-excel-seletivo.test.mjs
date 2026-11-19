@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
-import { CAMPOS_EXCEL, camposPresentesExcel, limitarPatchExcel } from '../../app/custos/excel-seletivo.ts';
+import { CAMPOS_EXCEL, camposPresentesExcel, limitarPatchExcel, agruparColunasRevisao } from '../../app/custos/excel-seletivo.ts';
 
 test('colunas ausentes e campos técnicos nunca entram no patch; texto vazio e zero são preservados',()=>{
   const campos=camposPresentesExcel(['Código','Nome','Marca','Custo'],['marca']);
@@ -21,9 +21,21 @@ test('fluxo seletivo conserva cabeçalhos técnicos, compatibilidade v2, prévia
   assert.match(source,/AVANTALAB-CUSTOS-2/);
   assert.match(source,/limitarPatchExcel/);
   assert.match(source,/ultimoArquivo.current\) void lerArquivo\(ultimoArquivo.current\)/);
-  assert.match(source,/Colunas que poderão ser alteradas/);
+  assert.match(source,/<RevisaoImportacao colunas=\{importacao.colunas\}/);
   assert.match(source,/indiceAliquotaIss >= 0 \? XLSX.utils.encode_col\(indiceAliquotaIss\) : null/);
   assert.match(source,/name === 'Metadados' \? 2 : 0/);
+});
+
+test('revisão agrupa colunas sem repetir prefixo de preço e mantém nomes distintos',()=>{
+  assert.deepEqual(agruparColunasRevisao(['Nome','Preço padrão','Preço · ATACADO','Custo','Preço · ATACADO','Preço · ATACADO (2)']),{cadastro:['Nome','Custo'],precos:['Preço padrão','ATACADO','ATACADO (2)']});
+  const source=readFileSync('app/custos/RevisaoImportacao.tsx','utf8');
+  assert.match(source,/grupos.cadastro/); assert.match(source,/grupos.precos/);
+  assert.match(source,/resumo.produtos_atualizados.toLocaleString\('pt-BR'\)/);
+  assert.match(source,/resumo.precos_atualizados.toLocaleString\('pt-BR'\)/);
+  assert.match(source,/dados e preço padrão/); assert.match(source,/tabelas adicionais/);
+  assert.match(source,/disabled=\{processando\}/);
+  assert.match(source,/<AvisoFormulario/);
+  assert.doesNotMatch(source,/novos produtos|colunas.join/);
 });
 
 test('seleção em lote tem escopos claros e expansão usa o componente oficial',()=>{

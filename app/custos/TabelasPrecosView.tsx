@@ -18,6 +18,7 @@ import {
 } from './types';
 import styles from './custos.module.css';
 import { CAMPOS_EXCEL, camposPresentesExcel, limitarPatchExcel } from './excel-seletivo';
+import RevisaoImportacao from './RevisaoImportacao';
 
 type ImportacaoPendente = {
   arquivoNome: string;
@@ -471,10 +472,8 @@ export default function TabelasPrecosView({
       {editandoTabela && <div className={styles.priceTableForm}><label>Nome<input autoFocus minLength={2} value={editandoTabela.nome || ''} maxLength={80} onChange={(evento) => setEditandoTabela({ ...editandoTabela, nome: evento.target.value })} /></label>{editandoTabela.id && <label>Descrição<textarea rows={3} value={editandoTabela.descricao || ''} onChange={(evento) => setEditandoTabela({ ...editandoTabela, descricao: evento.target.value })} /></label>}{editandoTabela.id && !editandoTabela.padrao && <label className={styles.checkboxLine}><input type="checkbox" checked={editandoTabela.ativo !== false} onChange={(evento) => setEditandoTabela({ ...editandoTabela, ativo: evento.target.checked })} />Tabela ativa</label>}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} onClick={() => setEditandoTabela(null)} disabled={processando}>Cancelar</button><button type="button" className={styles.primaryButton} onClick={() => void gravarTabela()} disabled={processando || (editandoTabela.nome?.trim().length || 0) < 2}>Salvar tabela</button></div></div>}
     </Modal>
 
-    <Modal open={Boolean(importacao)} onClose={() => !processando && setImportacao(null)} title="Revisar importação" description={importacao?.arquivoNome || ''}>
-      {importacao && <p>Colunas que poderão ser alteradas: {importacao.colunas.join(', ')}. As demais serão mantidas. Textos vazios limpam o campo selecionado; preços de tabelas vazios são ignorados.</p>}
-      {erroImportacao && <p role="alert" className={styles.repriceError}>{erroImportacao}</p>}
-      {importacao && <div className={styles.importPreview}><div><strong>{importacao.resumo.produtos_criados}</strong><span>novos produtos</span></div><div><strong>{importacao.resumo.produtos_atualizados}</strong><span>produtos atualizados</span></div><div><strong>{importacao.resumo.precos_atualizados}</strong><span>preços processados</span></div><p>Nenhuma alteração foi aplicada ainda. Confirme somente se os totais estiverem de acordo com a planilha.</p><div className={styles.formActions}><button type="button" className={styles.secondaryButton} disabled={processando} onClick={() => setImportacao(null)}>Cancelar</button><button type="button" className={styles.primaryButton} disabled={processando} onClick={() => void confirmarImportacao()}>{processando ? 'Aplicando…' : 'Confirmar importação'}</button></div></div>}
+    <Modal open={Boolean(importacao)} onClose={() => !processando && setImportacao(null)} title="Revisar importação" description={importacao?.arquivoNome || ''} wide compact>
+      {importacao && <RevisaoImportacao colunas={importacao.colunas} resumo={importacao.resumo} processando={processando} erro={erroImportacao} onCancelar={() => setImportacao(null)} onConfirmar={() => void confirmarImportacao()} />}
     </Modal>
   </>;
 }

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.492 -->
+<!-- ava-version: 3.2.0.493 -->
+
+> Revisão 3.2.0.493: sem impacto operacional no AvantaVendas; organização visual da revisão de importação em Custos Web, sem alteração de cálculos ou persistência.
 
 > Revisão 3.2.0.492: sem impacto operacional. Ajuste técnico do executor de testes na Vercel; recursos nativos e regras de negócio preservados.
 

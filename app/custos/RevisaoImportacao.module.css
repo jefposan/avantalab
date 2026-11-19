@@ -1,0 +1,24 @@
+.flow{display:grid;gap:20px}
+.hint{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+.sectionTitle{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.sectionTitle h3{margin:0;font-size:15px;font-weight:600}
+.sectionTitle>span{flex-shrink:0;padding:5px 10px;border-radius:20px;color:var(--muted);background:var(--surface-soft);font-size:12px}
+.tags{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-height:250px;overflow:auto;margin:0;padding:0;list-style:none}
+.tags>li{display:flex;align-items:center;gap:8px;min-width:0;min-height:38px;padding:8px 11px;border:1px solid color-mix(in srgb,var(--brand) 20%,var(--border));border-radius:9px;color:var(--text);background:color-mix(in srgb,var(--brand) 5%,var(--surface));font-size:12px;font-weight:500}
+.tags li>span{overflow-wrap:anywhere}
+.tags svg{flex:0 0 16px;width:16px;height:16px;fill:none;stroke:var(--brand);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.totals{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.totals>div{display:flex;align-items:center;gap:15px;min-width:0;padding:16px 20px;border-radius:var(--quadrant-small-radius);background:var(--surface-soft)}
+.totals strong{font-size:30px;font-weight:600;letter-spacing:-.04em;line-height:1.2;overflow-wrap:anywhere}
+.totals span{font-size:12px;color:var(--muted)}
+.totals small{display:block;margin-top:3px;font-size:10px}
+.rules{padding:12px 15px;border-radius:10px;background:color-mix(in srgb,var(--brand) 6%,var(--surface))}
+.rules strong{font-size:12px;font-weight:600}
+.rules p{margin:4px 0 0;font-size:12px;color:var(--muted);line-height:1.5}
+.footer{display:grid;gap:12px;padding-top:4px}
+.actions{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.actions p{margin:0;color:var(--muted);font-size:11px;line-height:1.6}
+.actions>div{display:flex;gap:6px}
+@media(max-width:600px){.tags{grid-template-columns:1fr 1fr}.actions{align-items:stretch;flex-direction:column}.actions>div{justify-content:flex-end;flex-wrap:wrap}.totals>div{padding:12px;gap:10px;align-items:flex-start;flex-direction:column}.totals strong{font-size:26px}}
+@media(max-width:360px){.tags{grid-template-columns:1fr}.sectionTitle{align-items:flex-start;flex-direction:column;gap:6px}}
+@media print{.tags{max-height:none;overflow:visible}}

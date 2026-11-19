@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.492 -->
+<!-- ava-version: 3.2.0.493 -->
+
+> Revisão 3.2.0.493: a revisão de importação do Excel em Custos separa as colunas em etiquetas de Dados do cadastro e Tabelas de preços. Os totais distinguem cadastros a atualizar (dados/preço padrão) de preços nas tabelas adicionais. Valores vazios e zero são explicados em bloco próprio; confirmar continua obrigatório. Sem alteração de cálculos ou persistência.
 
 > Revisão 3.2.0.492: sem impacto operacional. Ajuste técnico do executor de testes, limitado aos recursos atuais da Vercel e validado em preview; sem alteração de telas ou regras de negócio.
 

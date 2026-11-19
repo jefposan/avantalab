@@ -20,3 +20,13 @@ export function limitarPatchExcel(produto: Record<string, unknown>, campos: stri
     (['id', 'sku', 'atualizado_em'].includes(campo) || campos.includes(campo)) &&
     !(campo === 'preco_venda' && (valor === null || valor === ''))));
 }
+
+export function agruparColunasRevisao(colunas: string[]) {
+  const cadastro: string[] = [], precos: string[] = [];
+  for (const titulo of new Set(colunas)) {
+    if (titulo === 'Preço padrão') precos.push(titulo);
+    else if (titulo.startsWith('Preço · ')) precos.push(titulo.slice('Preço · '.length));
+    else cadastro.push(titulo);
+  }
+  return { cadastro, precos };
+}
