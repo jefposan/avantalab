@@ -2,5 +2,5 @@
   "baseDeploymentId": "dpl_34dkWXmq2B6a2KQw6Lv5i11qEQx3",
   "migrations": [],
   "version": "3.2.0.491",
-  "scope": "Custos e Precificação: proposta local de seleção em lote independente dos campos e das tabelas, com botão em destaque e expansão descritiva. Sem mudanças de banco; ainda não publicada."
+  "scope": "Custos e Precificação: seleção em lote independente dos campos e das tabelas, com botão em destaque e expansão descritiva. Sem mudanças de banco."
 }

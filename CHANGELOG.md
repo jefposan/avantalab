@@ -1,8 +1,8 @@
-# 3.2.0.491 — Custos e Precificação: seleção em lote e expansão descritiva (proposta local)
+# 3.2.0.491 — Custos e Precificação: seleção em lote e expansão descritiva 
 
 - Selecionar todos/Desmarcar todos à direita do cabeçalho dos campos do cadastro, sem alterar tabelas de preços.
 - Seleção em lote independente para tabelas, incluindo Preço padrão; contadores mostram o alcance de cada grupo.
-- Expansão oficial com texto Exibir mais campos do cadastro para seleção; recolher preserva a seleção. Sem alteração de banco ou publicação nesta proposta.
+- Expansão oficial com texto Exibir mais campos do cadastro para seleção; recolher preserva a seleção. Sem alteração de banco.
 
 # 3.2.0.490 — Custos e Precificação: Excel seletivo e atualização multicatálogo
 
