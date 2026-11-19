@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { notificarAcessosModulos } from '@/app/lib/navegacao-acessos-servidor';
 import {
   atualizarAssinaturaAsaas,
   listarCobrancasAssinaturaAsaas,
@@ -447,6 +448,7 @@ export async function PATCH(request: Request) {
       });
     }
   }
+  await notificarAcessosModulos(acesso.db, empresaId);
   return NextResponse.json({ ok: true, ciclo, plano });
 }
 

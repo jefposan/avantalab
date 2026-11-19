@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 
 import { createAvantaLabAccessResolver, createPostgresAvantaLabModuleAccessRepository } from './avantalab-module-access.mjs';
 import { createCommercialCustomerService } from './commercial-customer-service.mjs';
+import { createCommercialCustomerImportService } from './commercial-customer-import.mjs';
 import { createPostgresCommercialCustomerRepository } from './commercial-customer-repository.mjs';
 import { createCommercialCatalogService, createPostgresCommercialCatalogRepository } from './commercial-catalog.mjs';
 import { createCommercialFiscalCenterService, createPostgresCommercialFiscalCenterRepository } from './commercial-fiscal-center.mjs';
@@ -488,6 +489,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
       }),
       customerService,
       operationService,
+      customerImportService: createCommercialCustomerImportService({repository:customerRepository}),
       commercialPolicyRepository,
       orderFiscalDraftService: createOrderFiscalDraftService({
         repository: createPostgresOrderFiscalDraftRepository({ pool }),

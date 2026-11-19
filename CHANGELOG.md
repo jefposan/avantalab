@@ -1,3 +1,15 @@
+# 3.2.0.496 — Clientes e navegação: modelo Excel, importação validada e menu imediato
+
+- Clientes em Vendas e Serviços recebe Importar/Exportar Excel ao lado de Novo cliente, com ações oficiais e ícones. Exportação direta de modelo vazio organizado, instruções, 23 colunas e escolhas assistidas; documentos e CEP como texto para preservar zeros.
+- Importação de até 1.000 clientes por arquivo, com prévia sem gravação, erros por linha, novos/ignorados e revisão fiscal. CPF/CNPJ existente não é sobrescrito; repetição no arquivo bloqueia o lote. Códigos internos automáticos e clientes inativos preservados.
+- Confirmação autenticada no perfil de destino, permissões de consultar/cadastrar, prévia vinculada a usuário/dados, lote transacional e eventos de auditoria. Falha exige revalidar, sem repetição cega. Não importa pedidos/históricos nem modifica tabelas de preços; sem migração de banco.
+
+- Menu Navegar exibe somente títulos, ícones e identificação Atual. Removidos descrições dos destinos e subtítulo do painel.
+- Painel de 320 px, itens com altura mínima de 44 px, ícones e espaçamentos menores; mantém teclado, foco, tema e limites da viewport. Sem alteração de acessos ou destinos.
+- Abertura sem consulta: reutiliza a lista do login, reativa e separada por usuário/empresa. Validação autenticada e política de dispositivo obrigatórias ao selecionar; a prévia nunca concede acesso.
+- Instalação, remoção, cancelamento, pagamento de módulo e edição de permissões emitem aviso de atualização sem dados pessoais/concessões. Janelas conectadas atualizam a lista em segundo plano; recuperação silenciosa por reconexão, foco e intervalo se houver perda de eventos.
+- Prévia compartilhada entre host e iframes, limpeza no logout, proteção de respostas antigas e deduplicação de consultas de recuperação. Sem migração de banco ou alteração no paralelismo do build.
+
 # 3.2.0.495 — Navegação: menu Navegar com Dashboard e módulos
 
 - Navegar, com grade e seta, substitui Início à esquerda nos cabeçalhos Web de Custos, Projetos, Operações de Campo, Vendas e Serviços e Marketplaces. Removido o seletor separado à direita; logo e ajustes preservados.

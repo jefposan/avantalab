@@ -4,7 +4,7 @@ const clean = (value) => String(value ?? '').trim();
 const reply = (status, body) => Response.json(body, { status, headers });
 const statusFor = (code) => code.includes('SESSION') ? 401 : code.includes('PERMISSION') || code.includes('ACCESS') ? 403 : code.includes('NOT-FOUND') ? 404 : code.includes('CONFLICT') || code.includes('DUPLICATE') ? 409 : code.includes('STORAGE') ? 503 : 400;
 
-async function contextFor(request, runtime, companyId) {
+export async function contextFor(request, runtime, companyId) {
   if (runtime?.configured !== true || !runtime.accessResolver || !runtime.customerService) return { error: reply(503, { ok: false, code: 'AV-COMMERCIAL-CUSTOMER-PENDING', message: 'A persistência dos clientes ainda não está disponível neste ambiente.' }) };
   let access;
   try { access = await runtime.accessResolver.resolve(request, { companyId }); }

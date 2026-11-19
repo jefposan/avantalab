@@ -2,9 +2,10 @@
 
 import { Fragment, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { supabase } from '@/app/lib/supabase';
+import { useAcessosNavegacao } from '@/app/hooks/useAcessosNavegacao';
+import { atualizarAcessosNavegacao } from '@/app/lib/navegacao-acessos-cliente';
 import { validarSessaoDoDispositivo } from '@/app/lib/sessao-acesso-cliente';
-import { opcoesNavegacao, type PerfilSeletorModulos } from '@/app/lib/seletor-modulos';
+import { opcoesNavegacao } from '@/app/lib/seletor-modulos';
 import { Icon } from '@/app/projetos/components/Icon';
 import ModalConfirmacao from './ModalConfirmacao';
 import styles from './SeletorModulos.module.css';
@@ -19,7 +20,7 @@ export function ListaDestinosNavegacao({ opcoes, moduloAtual, bloqueado, onSelec
   return <>{opcoes.map((opcao, index) => <Fragment key={opcao.id}>
     {opcao.id !== 'dashboard' && (index === 0 || opcoes[index - 1].id === 'dashboard') && <h2 className={styles.sectionLabel}>MÓDULOS</h2>}
     <button type="button" disabled={bloqueado || opcao.id === moduloAtual} aria-current={opcao.id === moduloAtual ? 'page' : undefined} onClick={() => onSelecionar(opcao.id)}>
-      <Icon name={icons[opcao.id] || 'grid'} size={22} /><span><strong>{opcao.nome}</strong><small>{opcao.descricao}</small></span>{opcao.id === moduloAtual ? <b>Atual</b> : <Icon name="chevron" size={16} />}
+      <Icon name={icons[opcao.id] || 'grid'} size={18} /><span><strong>{opcao.nome}</strong></span>{opcao.id === moduloAtual ? <b>Atual</b> : <Icon name="chevron" size={14} />}
     </button>
   </Fragment>)}</>;
 }
@@ -28,13 +29,15 @@ export default function SeletorModulos({ empresaId, moduloAtual, darkMode = fals
   const [aberto, setAberto] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
-  const [opcoes, setOpcoes] = useState<ReturnType<typeof opcoesNavegacao>>([]);
+  const { perfil, usuarioId, atualizar, erro: erroPreparacao } = useAcessosNavegacao(empresaId);
+  const opcoes = opcoesNavegacao(perfil ? [perfil] : [], empresaId);
   const [pendente, setPendente] = useState('');
   const [posicao, setPosicao] = useState({ top: 0, right: 8 });
   const botao = useRef<HTMLButtonElement>(null);
   const painel = useRef<HTMLElement>(null);
   const pedido = useRef(0);
   const ocupadoAtual = useRef(ocupado);
+  const ultimoDestino = useRef('');
   const id = useId();
   const tema = { '--seletor-brand': corPrimaria } as CSSProperties;
 
@@ -45,7 +48,7 @@ export default function SeletorModulos({ empresaId, moduloAtual, darkMode = fals
     const posicionar = () => {
       const rect = botao.current?.getBoundingClientRect();
       if (rect) {
-        const largura = Math.min(410, window.innerWidth - 16);
+        const largura = Math.min(320, window.innerWidth - 16);
         setPosicao({ top: Math.min(rect.bottom + 8, window.innerHeight - 140), right: Math.max(8, window.innerWidth - Math.max(8, Math.min(rect.left, window.innerWidth - largura - 8)) - largura) });
       }
     };
@@ -63,19 +66,15 @@ export default function SeletorModulos({ empresaId, moduloAtual, darkMode = fals
     return () => { window.removeEventListener('resize', posicionar); window.removeEventListener('scroll', posicionar, true); document.removeEventListener('keydown', tecla); document.removeEventListener('pointerdown', fora); document.removeEventListener('focusin', foco); };
   }, [aberto]);
 
-  async function consultar(destino?: string) {
+  async function consultar(destino: string) {
+    ultimoDestino.current = destino;
     const sequencia = ++pedido.current;
     setCarregando(true); setErro('');
     try {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) throw new Error('Sua sessão expirou. Entre novamente.');
-      const parametros = new URLSearchParams({ empresaId, logos: 'adiadas' });
-      const response = await fetch(`/api/acessos-usuario?${parametros}`, { headers: { Authorization: `Bearer ${data.session.access_token}` }, cache: 'no-store', signal: AbortSignal.timeout(15000) });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.mensagem || 'Não foi possível consultar seus módulos.');
-      const lista = opcoesNavegacao(Array.isArray(body.perfis) ? body.perfis as PerfilSeletorModulos[] : [], empresaId);
+      if (!usuarioId) throw new Error('Sua sessão não está disponível. Entre novamente.');
+      const perfis = await atualizarAcessosNavegacao(empresaId, usuarioId, true);
+      const lista = opcoesNavegacao(perfis, empresaId);
       if (sequencia !== pedido.current) return;
-      setOpcoes(lista);
       if (destino) {
         const opcao = lista.find(item => item.id === destino);
         if (!opcao) throw new Error('Este destino não está mais disponível para seu perfil.');
@@ -93,15 +92,16 @@ export default function SeletorModulos({ empresaId, moduloAtual, darkMode = fals
   }
 
   return <>
-    <button ref={botao} type="button" className={`${styles.trigger} ${darkMode ? styles.dark : ''}`} style={tema} aria-label="Navegar" aria-expanded={aberto} aria-controls={aberto ? id : undefined} disabled={!empresaId || ocupado} title={ocupado ? 'Aguarde a conclusão da operação' : 'Navegar entre Dashboard e módulos'} onClick={() => { if (aberto) { pedido.current += 1; setAberto(false); } else { setAberto(true); void consultar(); } }}>
+    <button ref={botao} type="button" className={`${styles.trigger} ${darkMode ? styles.dark : ''}`} style={tema} aria-label="Navegar" aria-expanded={aberto} aria-controls={aberto ? id : undefined} disabled={!empresaId || ocupado} title={ocupado ? 'Aguarde a conclusão da operação' : 'Navegar entre Dashboard e módulos'} onClick={() => { if (aberto) { pedido.current += 1; setAberto(false); } else { setErro(''); setAberto(true); } }}>
       <Icon name="grid" size={18} /><span>Navegar</span><Icon name="chevron" size={14} />
     </button>
     {aberto && createPortal(<nav data-product-focus-navigation id={id} ref={painel} tabIndex={-1} aria-label="Navegar para" className={`${styles.panel} ${darkMode ? styles.dark : ''}`} style={{ ...tema, ...posicao }}>
-      <header><strong>Navegar para</strong><small>Disponíveis neste perfil</small></header>
-      {carregando && <p role="status">Consultando acessos…</p>}
-      {erro && <div role="alert"><p>{erro}</p><button type="button" onClick={() => void consultar()}>Tentar novamente</button></div>}
-      {!carregando && !erro && !opcoes.length && <p role="status">Nenhum destino disponível. Consulte o gestor.</p>}
-      {!erro && <ListaDestinosNavegacao opcoes={opcoes} moduloAtual={moduloAtual} bloqueado={carregando || ocupado} onSelecionar={destino => { if (alteracoesPendentes) setPendente(destino); else void consultar(destino); }} />}
+      <header><strong>Navegar para</strong></header>
+      {carregando && <p role="status">Validando acesso…</p>}
+      {erro && <div role="alert"><p>{erro}</p><button type="button" disabled={carregando} onClick={() => void consultar(ultimoDestino.current)}>Tentar novamente</button></div>}
+      {!perfil && erroPreparacao && <div role="alert"><p>{erroPreparacao}</p><button type="button" onClick={() => void atualizar()}>Atualizar acessos</button></div>}
+      {!carregando && !erro && !erroPreparacao && !opcoes.length && <p role="status">{perfil ? 'Nenhum destino disponível. Consulte o gestor.' : 'Preparando a lista de acessos em segundo plano…'}</p>}
+      <ListaDestinosNavegacao opcoes={opcoes} moduloAtual={moduloAtual} bloqueado={carregando || ocupado} onSelecionar={destino => { if (alteracoesPendentes) setPendente(destino); else void consultar(destino); }} />
     </nav>, document.body)}
     <ModalConfirmacao aberto={Boolean(pendente)} titulo="Sair desta tela?" mensagem="Existem alterações não salvas nesta tela. Se continuar, elas serão descartadas." textoCancelar="Continuar editando" textoConfirmar="Descartar e navegar" corPrimaria={corPrimaria} darkMode={darkMode} aoCancelar={() => setPendente('')} aoConfirmar={() => { const destino = pendente; setPendente(''); void consultar(destino); }} />
   </>;

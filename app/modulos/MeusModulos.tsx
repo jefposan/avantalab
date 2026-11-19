@@ -24,6 +24,7 @@ function perfilAnterior() {
   return params.get('retorno') === '1' ? lerPreviaModulos(params.get('empresaId') || '')?.perfil || null : null;
 }
 export async function buscarAcessosUsuario(empresaId?: string, opcoes: { adiarLogos?: boolean; logoAposDashboard?: boolean; registrarPrevia?: boolean } = {}) {
+  const consultaIniciadaEm = Date.now();
   const { data } = await supabase.auth.getSession();
   if (!data.session) throw new Error('Sua sessão expirou. Entre novamente.');
   const parametros = new URLSearchParams();
@@ -34,7 +35,9 @@ export async function buscarAcessosUsuario(empresaId?: string, opcoes: { adiarLo
   const body = await response.json();
   if (!response.ok) throw new Error(body.mensagem || 'Não foi possível carregar os acessos.');
   const perfis = body.perfis as PerfilModulos[];
-  if (opcoes.registrarPrevia !== false) guardarPreviaModulos(data.session.user.id, perfis, empresaId);
+  const atual = await supabase.auth.getSession();
+  if (atual.data.session?.user.id !== data.session.user.id) throw new Error('O usuário foi alterado. Confirme novamente seus acessos.');
+  if (opcoes.registrarPrevia !== false) guardarPreviaModulos(data.session.user.id, perfis, empresaId, consultaIniciadaEm);
   return perfis;
 }
 

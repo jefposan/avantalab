@@ -1,4 +1,8 @@
-<!-- ava-version: 3.2.0.495 -->
+<!-- ava-version: 3.2.0.496 -->
+
+> Clientes — revisão 3.2.0.496: sem impacto operacional na Gestão mobile nativa. Na Gestão Web, Vendas e Serviços > Clientes recebe modelo Excel vazio e importação validada de novos clientes; não exporta a carteira existente nem altera clientes por CPF/CNPJ já cadastrado. Nenhum plugin, permissão nativa ou envio às lojas nesta entrega.
+
+> Revisão 3.2.0.496: sem mudança de interface no runtime da Gestão Mobile. A ativação legada do Conteúdo AvantaVendas pelo mobile também avisa as janelas Web conectadas, sem enviar permissões ou depender do aviso para confirmar a instalação. O menu Navegar Web abre com a lista do login e sincroniza módulos/permissões em segundo plano; seleção mantém confirmação de acesso no servidor. Não orientar uso de prévia como permissão. Sem plugin ou envio às lojas.
 
 > Revisão 3.2.0.495: sem impacto operacional no runtime da Gestão Mobile. Cabeçalhos Web de módulos usam Navegar à esquerda para abrir Dashboard e módulos autorizados; sem novo menu no app nativo.
 

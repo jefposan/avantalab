@@ -70,7 +70,14 @@ divisor ou agrupamento sem identidade própria.
   fica à esquerda em lugar de Início, sem duplicação à direita; preservar logo
   central e ajustes. Dashboard é exibida somente com concessão explícita da
   empresa atual, seguida dos módulos autorizados. Usa o registro oficial,
-  consulta autenticada sem cache ao abrir/selecionar e política de dispositivo.
+  prévia do login para abertura imediata, sem consulta no clique; apenas selecionar
+  exige revalidação autenticada sem cache e política de dispositivo. O hook
+  `useAcessosNavegacao` mantém a apresentação por usuário/empresa, observa a prévia
+  do host/iframes e avisos Realtime de mudanças confirmadas. Mensagens somente
+  invalidam a lista, nunca transportam permissões; a atualização ocorre em
+  segundo plano. Logout limpa a apresentação; respostas antigas não podem
+  ressuscitar acesso removido. Recuperar eventos perdidos ao reconectar/focar e
+  silenciosamente por intervalo, sem vincular rede à abertura do menu.
   Empresa é contexto, nunca concessão. Receber bloqueio de operações e edição
   pendente do consumidor; manter a confirmação oficial e proteções de saída.
   Em telas menores, manter o nome Navegar, grade e seta visíveis; sem aviso no

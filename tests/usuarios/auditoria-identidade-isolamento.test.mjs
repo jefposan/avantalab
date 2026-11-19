@@ -39,6 +39,7 @@ function environment({role='gestor_master',billing=false,quotaError=false,quotaA
  '../../lib/nome-pessoa':names,'../../lib/email':email,'../../lib/usuario-disponibilidade-servidor':{buscarContaAuthPorEmail:async()=>null},
  '../../lib/cobranca':{COBRANCA_ATIVA:billing,podeUsar:()=>true},'../../lib/cobranca-servidor':{resolverEstadoAcessoParaUsuario:async()=>{if(quotaError)throw Error('assinatura indisponível');return{};}},'../../lib/limites-comerciais-servidor':{validarLimiteDeUsuarios:async()=>quotaAllowed?{permitido:true}:{permitido:false,mensagem:'Limite atingido'}}};
  const invoke=(file,body)=>load('app/api/'+file+'/route.ts',deps).POST(new Request('https://mock.invalid/api/'+file,{method:'POST',headers:{authorization:'Bearer ficticio','content-type':'application/json'},body:JSON.stringify(body)}));
+ deps['@/app/lib/navegacao-acessos-servidor']={notificarAcessosModulos:async()=>{}};
  const update=(body={})=>invoke('atualizar-usuario-empresa',{acessoId:'victim-link',email:'victim@example.invalid',login:'victim',perfil:'operador_completo',...body});
  return{identity,rows,calls,invoke,update,recover:()=>{writeFailure=false;authFailure=false;}};
 }

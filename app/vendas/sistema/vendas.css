@@ -254,6 +254,10 @@ select:focus-visible {
 .page-heading h1 { margin: 0; color: var(--av-blue-950); font-size: clamp(25px, 2.2vw, 34px); line-height: 1.15; letter-spacing: -.025em; }
 .page-heading p { max-width: 720px; margin: 7px 0 0; color: var(--av-muted); font-size: 13px; }
 .heading-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.page-heading:has(> .client-heading-actions) { align-items: center; flex-wrap: wrap; }
+.client-heading-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; flex-wrap: nowrap; }
+@media (max-width:680px) { .client-heading-actions { width:100%; } .client-heading-actions > button { margin-left:auto; } }
+@media (max-width:380px) { .client-heading-actions { gap:4px; } .client-heading-actions button > span { padding-inline:6px; gap:4px; font-size:12px; } }
 
 .button {
   display: inline-flex;

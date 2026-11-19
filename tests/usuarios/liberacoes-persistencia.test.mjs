@@ -39,6 +39,7 @@ function ambiente({ papel = 'gestor_master', omitir = false, persistir = true, a
   } };
   const deps = { 'next/server': { NextResponse }, '@supabase/supabase-js': { createClient: () => db }, '@/app/lib/acessos-usuario': domain, '@/app/lib/usuarios-empresa-liberacoes': helper, '../../lib/nome-pessoa': nomes, '../../lib/email': { normalizarEmail: e => e, validarEmail: () => true }, '../../lib/usuario-disponibilidade-servidor': { buscarContaAuthPorEmail: async () => null } };
   const get = carregar('app/api/usuarios-empresa/route.ts', deps).GET;
+  deps['@/app/lib/navegacao-acessos-servidor'] = { notificarAcessosModulos: async () => {} };
   const post = carregar('app/api/atualizar-usuario-empresa/route.ts', deps).POST;
   const listar = (id = empresa, token = 'teste') => get(new Request('https://teste/api/usuarios-empresa?empresaId=' + id, { headers: token ? { authorization: 'Bearer ' + token } : {} }));
   const salvar = (liberacoes, campos = {}) => post(new Request('https://teste/api/atualizar-usuario-empresa', { method: 'POST', headers: { authorization: 'Bearer teste', 'content-type': 'application/json' }, body: JSON.stringify({ acessoId: alvo.id, nome: alvo.nome, email: alvo.email, login: alvo.login, perfil: alvo.perfil, liberacoes, ...campos }) }));

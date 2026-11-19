@@ -12,6 +12,8 @@ export type CommercialCustomerRecord = {
 };
 export function createPostgresCommercialCustomerRepository(options?: { pool?: any }): {
   id: string; configured: true;
+  findExistingDocuments(input: {companyId:string;documents:string[]}): Promise<string[]>;
+  importMany(input: {companyId:string;actorId:string;customers:Record<string,any>[];expectedExisting:string[];fileName:string}): Promise<{created:number;skipped:number}>;
   create(customer: Record<string, any>): Promise<CommercialCustomerRecord>;
   update(input: Record<string, any>): Promise<CommercialCustomerRecord>;
   deactivate(input: Record<string, any>): Promise<CommercialCustomerRecord>;

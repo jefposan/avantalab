@@ -1,4 +1,8 @@
-<!-- ava-version: 3.2.0.495 -->
+<!-- ava-version: 3.2.0.496 -->
+
+> Clientes — revisão 3.2.0.496: sem mudança no AvantaVendas independente. A importação é da carteira empresarial em Gestão Web > Vendas e Serviços > Clientes, com modelo vazio, prévia e confirmação; clientes já cadastrados pelo CPF/CNPJ são ignorados, não atualizados. Não migra pedidos nem altera o catálogo de divulgação.
+
+> Revisão 3.2.0.496: sem mudança operacional no AvantaVendas independente. Na Gestão Web, menu Navegar compacto abre imediatamente com a lista do login; mudanças confirmadas de módulos notificam as janelas conectadas e atualizam a lista em segundo plano. O acesso ao destino é validado ao selecionar, nunca autorizado pela prévia.
 
 > Revisão 3.2.0.495: sem impacto operacional no AvantaVendas independente. Na Gestão Web, Vendas e Serviços usa Navegar (grade e seta) à esquerda em vez de Início, com Dashboard e módulos autorizados na lista; removido botão separado à direita. Conclua ou cancele o novo pedido antes de navegar.
 

@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_JDtDVj9YpvtoBAb3L1wegybfw5LF",
+  "baseDeploymentId": "dpl_4ePfnHShcmkYPbTyt1mLN7QqGkxp",
   "migrations": [],
-  "version": "3.2.0.495",
-  "scope": "Navegação: menu Navegar à esquerda, com Dashboard e módulos autorizados, substituindo Início e o seletor separado da direita. Preserva permissões, empresa, proteções de edição e build completo. Sem banco."
+  "version": "3.2.0.496",
+  "scope": "Clientes: modelo Excel vazio com 23 campos, download direto, importação com prévia, duplicidades por CPF/CNPJ, permissões e lote transacional. Navegação: menu compacto e abertura imediata com lista do login; eventos de instalação/remoção/pagamento/permissões e recuperação silenciosa. Acesso e dispositivo revalidados ao selecionar. Sem migração SQL ou mudança de máquina/build."
 }

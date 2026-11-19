@@ -8,6 +8,7 @@ import AcessosUsuarioCampos from '@/app/components/AcessosUsuarioCampos';
 import SeloPerfilEmUso from '@/app/components/SeloPerfilEmUso';
 import ModuloHeader from '@/app/components/ModuloHeader';
 import { buscarAcessosUsuario } from '@/app/modulos/MeusModulos';
+import { anunciarMudancaAcessos } from '@/app/lib/navegacao-acessos-cliente';
 import { destinoAposLogin, liberacoesDoVinculo } from '@/app/lib/acessos-usuario';
 import Dashboard from '@/app/components/Dashboard';
 import BalancoGeral from '@/app/components/BalancoGeral';
@@ -3173,6 +3174,16 @@ useEffect(() => {
     }
   }
 
+  async function atualizarMenuAposMudancaModulo(empresaAtualId: string) {
+    const geracao = cargaPerfilRef.current;
+    try {
+      const perfis = await buscarAcessosUsuario(empresaAtualId, { adiarLogos: true });
+      const perfil = perfis.find(item => item.empresa.id === empresaAtualId);
+      if (geracao === cargaPerfilRef.current && perfil) setModulosLiberados(perfil.modulos.map(item => item.id));
+    } catch { /* Realtime e recuperação silenciosa confirmam o estado assim que a rede retornar. */ }
+    void anunciarMudancaAcessos(empresaAtualId);
+  }
+
   async function instalarModulo(moduloId: string) {
     if (!empresaId) return;
     setModuloAcaoId(moduloId);
@@ -3212,6 +3223,7 @@ useEffect(() => {
         const json = await resposta.json();
         if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível instalar o módulo.');
         setModulosAtivos((prev) => (prev.includes(moduloId) ? prev : [...prev, moduloId]));
+        await atualizarMenuAposMudancaModulo(empresaId);
         abrirAviso(
           'Módulo ativado',
           acessoComercial === 'cortesia'
@@ -3256,6 +3268,7 @@ useEffect(() => {
       }
 
       setModulosAtivos((prev) => (prev.includes(moduloId) ? prev : [...prev, moduloId]));
+      await atualizarMenuAposMudancaModulo(empresaId);
       if (moduloId === 'vendas_mobile') {
         abrirAviso('Conteúdo AvantaVendas ativado', 'O módulo de publicação foi instalado neste perfil e o acesso do gestor foi liberado.', undefined, 'sucesso');
       }
@@ -3376,6 +3389,7 @@ useEffect(() => {
           const json = await resposta.json();
           if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível remover o módulo.');
           setModulosAtivos((prev) => prev.filter((id) => id !== moduloId));
+          await atualizarMenuAposMudancaModulo(empresaId);
           abrirAviso('Módulo removido', 'O acesso foi retirado e todos os dados foram preservados.', undefined, 'sucesso');
         } catch (error) {
           abrirAviso('Não foi possível concluir', error instanceof Error ? error.message : 'Tente novamente em instantes.', undefined, 'erro');

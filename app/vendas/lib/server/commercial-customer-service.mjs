@@ -94,7 +94,7 @@ export function normalizeCommercialCustomerInput(input = {}) {
   );
   const stateRegistrationReady = stateRegistrationIndicator !== 'contribuinte_icms'
     || Boolean(normalized.stateRegistration && normalized.stateRegistration.toLocaleLowerCase('pt-BR') !== 'isento');
-  if (!fiscalAddressReady || !stateRegistrationReady) normalized.status = 'revisar_cadastro';
+  if ((!fiscalAddressReady || !stateRegistrationReady) && normalized.status !== 'inativo') normalized.status = 'revisar_cadastro';
   return { normalized, fiscalReady: fiscalAddressReady && stateRegistrationReady };
 }
 
@@ -115,7 +115,7 @@ export function validateCommercialCustomerInput(input = {}) {
   if (normalized.priceTableId && !UUID.test(normalized.priceTableId)) errors.push(error('AV-COMMERCIAL-PRICE-TABLE','priceTableId','Selecione uma lista de preços válida.'));
   if (normalized.sellerId && !UUID.test(normalized.sellerId)) errors.push(error('AV-COMMERCIAL-SELLER', 'sellerId', 'Selecione um vendedor válido ou deixe o campo vazio.'));
   if (!ALLOWED_STATE_REGISTRATION.has(normalized.stateRegistrationIndicator)) errors.push(error('AV-COMMERCIAL-IE-INDICATOR', 'stateRegistrationIndicator', 'Selecione a situação correta da inscrição estadual.'));
-  if (!fiscalReady) warnings.push(error('AV-COMMERCIAL-FISCAL-REVIEW', 'status', 'O cliente será salvo como Revisar cadastro e não poderá emitir nota até completar os dados fiscais.'));
+  if (!fiscalReady && normalized.status !== 'inativo') warnings.push(error('AV-COMMERCIAL-FISCAL-REVIEW', 'status', 'O cliente será salvo como Revisar cadastro e não poderá emitir nota até completar os dados fiscais.'));
   return { valid: errors.length === 0, normalized, fiscalReady, errors, warnings };
 }
 

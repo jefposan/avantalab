@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { notificarAcessosModulos } from '@/app/lib/navegacao-acessos-servidor';
 import { autenticarPerfilCobranca, resolverEstadoAcesso } from '@/app/lib/cobranca-servidor';
 import {
   permiteInstalacaoModuloSemCobranca,
@@ -25,5 +26,6 @@ export async function POST(request: Request) {
     .update({ ativo: false, expira_em: null, atualizado_em: new Date().toISOString() })
     .eq('empresa_id', empresaId).eq('modulo_id', moduloId);
   if (error) return NextResponse.json({ erro: true, mensagem: 'Não foi possível remover o módulo.' }, { status: 500 });
+  await notificarAcessosModulos(acesso.db, empresaId);
   return NextResponse.json({ ok: true, dadosPreservados: true });
 }

@@ -1,5 +1,6 @@
 'use client';
 import SeletorModulos from '@/app/components/SeletorModulos';
+import CustomerExcelActions from '../components/CustomerExcelActions';
 import {sanitizarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 import { validateFiscalSettingsForm, mergeSettingsNumbering } from '../lib/fiscal-settings-form.mjs';
 import { COMPANY_PROFILE_SAVE_REQUEST, COMPANY_PROFILE_SAVE_RESPONSE } from '../lib/company-profile-save.mjs';
@@ -3057,7 +3058,7 @@ function ClientRecordActions({ client, onEdit, onReport, onNewOrder, onNewServic
   return <RecordActionsDialog title={`Ações de ${client.tradeName}`} description="Crie novas operações ou consulte tudo o que já está relacionado a este cliente." actions={actions} triggerLabel={`Ações de ${client.tradeName}`}/>;
 }
 
-function ClientsView({ priceTables,clientRecords, createdRecords, receivableRecords, settings, connected, onSave, onNewOrder, onNewService, onNewQuote, onNotify }: { priceTables?:FiscalNoteEditorOptions['priceTables'];clientRecords: ClientRecord[]; createdRecords: CreatedRecord[]; receivableRecords: ReceivableRecord[]; settings: ModuleSettings; connected: boolean; onSave: (client: ClientRecord) => Promise<ConfirmedSave>; onNewOrder: (client: ClientRecord) => void; onNewService: (client: ClientRecord) => void; onNewQuote: (client: ClientRecord) => void; onNotify: (message: string) => void }) {
+function ClientsView({ companyId='',importOrigin='',brand='#003E73',priceTables,clientRecords, createdRecords, receivableRecords, settings, connected, onSave, onNewOrder, onNewService, onNewQuote, onNotify }: { companyId?:string;importOrigin?:string;brand?:string;priceTables?:FiscalNoteEditorOptions['priceTables'];clientRecords: ClientRecord[]; createdRecords: CreatedRecord[]; receivableRecords: ReceivableRecord[]; settings: ModuleSettings; connected: boolean; onSave: (client: ClientRecord) => Promise<ConfirmedSave>; onNewOrder: (client: ClientRecord) => void; onNewService: (client: ClientRecord) => void; onNewQuote: (client: ClientRecord) => void; onNotify: (message: string) => void }) {
   const { can } = useContext(PermissionContext);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('Todos');
@@ -3072,7 +3073,7 @@ function ClientsView({ priceTables,clientRecords, createdRecords, receivableReco
   const totalRevenue = [...clientSnapshots.values()].reduce((sum, snapshot) => sum + snapshot.revenue, 0);
   const totalOrders = [...clientSnapshots.values()].reduce((sum, snapshot) => sum + snapshot.operationCount, 0);
   return <>
-    <PageHeading view="clientes" action={<button type="button" className="button primary" disabled={!can('clients.create')} title={!can('clients.create') ? 'Usuário sem permissão para cadastrar clientes' : undefined} onClick={() => { setEditingClient(null); setFormOpen(true); }}><Icon name="plus" size={18}/> Novo cliente</button>}/>
+    <PageHeading view="clientes" action={<div className="client-heading-actions" style={{'--brand':brand} as CSSProperties}><CustomerExcelActions companyId={companyId} companyName={settings.company.name} origin={connected?importOrigin:''} canCreate={can('clients.create')&&can('clients.view')} canView={can('clients.view')} brand={brand} onNotify={onNotify}/><BotaoAcaoCompacto variante="primario" disabled={!can('clients.create')} title={!can('clients.create') ? 'Usuário sem permissão para cadastrar clientes' : undefined} onClick={() => { setEditingClient(null); setFormOpen(true); }}><Icon name="plus" size={18}/> Novo cliente</BotaoAcaoCompacto></div>}/>
     <div className="metric-grid compact">
       <Metric label="Clientes cadastrados" value={String(clientRecords.length)} note={`${active} ativos`}/>
       <Metric label="Pedidos vinculados" value={String(totalOrders)} note="Histórico da carteira" tone="cyan"/>
@@ -8163,7 +8164,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         {view === 'novo_orcamento' && <QuoteView source={quoteSource} clientRecords={clientRecords} catalogRecords={catalogRecords} settings={moduleSettings} connected={Boolean(managementCatalogBridge)} initialClient={commercialClient} initialSku={commercialSku} onCancel={() => navigate(commercialReturnView)} onCreated={createRecord}/>}
         {view === 'nova_ordem_servico' && <NewServiceOrderView clientRecords={clientRecords} catalogRecords={catalogRecords} settings={moduleSettings} issuerRegistry={fiscalIssuerRegistry} connected={Boolean(managementCatalogBridge)} initialClient={serviceClient} initialSku={serviceSku} onCancel={() => navigate(serviceReturnView)} onCreated={createRecord}/>}
         {view === 'servicos' && <ServicesView created={created} connected={Boolean(managementCatalogBridge)} clients={clientRecords} catalogRecords={catalogRecords} fiscalDrafts={fiscalDraftRecords} company={moduleSettings.company} onNew={openNew} onQuote={() => openQuote('servicos')} onNavigate={navigate} onFiscalStart={startFiscal} onReceivables={openReceivables} onStock={openStockMovements} onLifecycle={updateServiceLifecycle} onExecutionSave={saveServiceExecution} onOpenAttachment={openServiceAttachment} onNotify={setToast}/>} 
-        {view === 'clientes' && <ClientsView priceTables={realFiscalEditor?.priceTables} clientRecords={clientRecords} createdRecords={created} receivableRecords={receivableRecords} settings={moduleSettings} connected={Boolean(managementCatalogBridge)} onSave={saveClient} onNewOrder={openClientOrder} onNewService={openClientService} onNewQuote={openClientQuote} onNotify={setToast}/>}
+        {view === 'clientes' && <ClientsView companyId={managementCatalogBridge?.companyId||''} importOrigin={managementBridgeOrigin||''} brand={profileColor} priceTables={realFiscalEditor?.priceTables} clientRecords={clientRecords} createdRecords={created} receivableRecords={receivableRecords} settings={moduleSettings} connected={Boolean(managementCatalogBridge)} onSave={saveClient} onNewOrder={openClientOrder} onNewService={openClientService} onNewQuote={openClientQuote} onNotify={setToast}/>}
         {view === 'catalogo' && <CatalogView catalogRecords={catalogRecords} onSave={saveCatalogItem} onNavigate={navigate} onOpenCosts={() => openCosts()} onNewOrder={openCatalogOrder} onNewService={openCatalogService} onNewQuote={openCatalogQuote}/>} 
         {view === 'estoque' && (
           <InventoryView

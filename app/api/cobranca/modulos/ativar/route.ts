@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { notificarAcessosModulos } from '@/app/lib/navegacao-acessos-servidor';
 import { autenticarPerfilCobranca, resolverEstadoAcesso } from '../../../../lib/cobranca-servidor';
 import {
   permiteInstalacaoModuloSemCobranca,
@@ -53,5 +54,6 @@ export async function POST(request: Request) {
     atualizado_em: new Date().toISOString(),
   }, { onConflict: 'empresa_id,modulo_id' });
   if (error) return NextResponse.json({ erro: true, mensagem: 'Não foi possível instalar o módulo.' }, { status: 500 });
+  await notificarAcessosModulos(acesso.db, empresaId);
   return NextResponse.json({ ok: true });
 }

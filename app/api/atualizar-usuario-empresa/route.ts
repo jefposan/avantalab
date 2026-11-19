@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { notificarAcessosModulos } from '@/app/lib/navegacao-acessos-servidor';
 import { validarLiberacoes, liberacoesDoVinculo } from '@/app/lib/acessos-usuario';
 import { liberacoesPersistidasIguais } from '@/app/lib/usuarios-empresa-liberacoes';
 import { createClient } from '@supabase/supabase-js';
@@ -384,6 +385,7 @@ export async function POST(request: Request) {
       }
       Object.assign(usuarioAtualizado, confirmado.data);
     }
+    await notificarAcessosModulos(supabaseAdmin, usuarioAlvo.empresa_id);
     return NextResponse.json({
       erro: false,
       usuario: usuarioAtualizado,

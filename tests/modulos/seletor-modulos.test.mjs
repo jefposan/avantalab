@@ -44,7 +44,9 @@ test('destinos são locais do registro, ignorando URLs externas enviadas na list
 });
 test('troca revalida acesso, preserva beforeunload e não usa cache visual ou mensagens irrestritas', () => {
   const code = readFileSync('app/components/SeletorModulos.tsx', 'utf8');
-  assert.match(code, /cache: 'no-store'/);
+  const cliente = readFileSync('app/lib/navegacao-acessos-cliente.ts', 'utf8');
+  assert.match(cliente, /cache: 'no-store'/);
+  assert.match(code, /atualizarAcessosNavegacao\(empresaId, usuarioId, true\)/);
   assert.match(code, /void consultar\(destino\)/);
   assert.match(code, /window.top \|\| window/);
   assert.match(code, /location.assign\(opcao.href\)/);
@@ -117,6 +119,16 @@ test('lista renderizada separa Dashboard e módulos, mantém Atual e bloqueia op
   assert.equal((html.match(/aria-current="page"/g) || []).length, 1);
   assert.match(html, /disabled="" aria-current="page"/);
   assert.match(html, />Atual<\/b>/);
+  assert.doesNotMatch(html, /<small|Visão geral da empresa|Planejamento visual de projetos/);
   const bloqueado = renderToStaticMarkup(React.createElement(ListaDestinosNavegacao, { ...props, bloqueado: true }));
   assert.equal((bloqueado.match(/disabled=""/g) || []).length, opcoes.length);
+});
+
+test('menu compacto mantém medidas de layout e cálculo do portal consistentes', () => {
+  const css = readFileSync('app/components/SeletorModulos.module.css', 'utf8');
+  const code = readFileSync('app/components/SeletorModulos.tsx', 'utf8');
+  assert.match(css, /width: min\(320px, calc\(100vw - 16px\)\)/);
+  assert.match(code, /Math.min\(320, window.innerWidth - 16\)/);
+  assert.match(css, /\.panel > button \{[\s\S]*?min-height: 44px/);
+  assert.doesNotMatch(code, /Disponíveis neste perfil/);
 });

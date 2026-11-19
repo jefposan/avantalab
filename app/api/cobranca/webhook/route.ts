@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { notificarAcessosModulos } from '@/app/lib/navegacao-acessos-servidor';
 import { createClient } from '@supabase/supabase-js';
 import { atualizarAssinaturaAsaas, listarCobrancasAssinaturaAsaas } from '../../../lib/asaas';
 import { calcularFimCarencia, calcularFimPeriodoPago } from '../../../lib/cobranca-fluxo';
@@ -119,6 +120,7 @@ export async function POST(request: Request) {
         await db.from('empresa_modulos').update({ ativo: true, expira_em: assinaturaModulo.valido_ate, atualizado_em: new Date().toISOString() })
           .eq('empresa_id', assinaturaModulo.empresa_id).eq('modulo_id', assinaturaModulo.modulo_id);
         await db.from('cobranca_webhook_eventos').update({ status: 'processado', erro: null, processado_em: new Date().toISOString() }).eq('id', registroEventoId);
+        await notificarAcessosModulos(db, assinaturaModulo.empresa_id);
         return NextResponse.json({ recebido: true, modulo: true, cancelamentoAgendado: true });
       }
       let novoStatus: 'ativa' | 'inadimplente' | 'cancelada' | null = null;
@@ -154,6 +156,7 @@ export async function POST(request: Request) {
           atualizado_em: new Date().toISOString(),
         }, { onConflict: 'empresa_id,modulo_id' });
         if (erroInstalacaoModulo) throw erroInstalacaoModulo;
+        await notificarAcessosModulos(db, assinaturaModulo.empresa_id);
       }
       await db.from('cobranca_webhook_eventos').update({ status: 'processado', erro: null, processado_em: new Date().toISOString() }).eq('id', registroEventoId);
       return NextResponse.json({ recebido: true, modulo: true });
@@ -317,6 +320,7 @@ export async function POST(request: Request) {
       erro: null,
       processado_em: new Date().toISOString(),
     }).eq('id', registroEventoId);
+    if (assinaturaAtual?.empresa_id) await notificarAcessosModulos(db, assinaturaAtual.empresa_id);
     return NextResponse.json({ recebido: true });
   } catch (erro) {
     await db.from('cobranca_webhook_eventos').update({

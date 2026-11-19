@@ -130,6 +130,46 @@ export function createPostgresCommercialCustomerRepository({ pool } = {}) {
     id: 'avantalab-commercial-customer-postgres-v1',
     configured: true,
 
+    async findExistingDocuments({companyId,documents}) {
+      return withClient(pool,async client=>{
+        const result=await client.query('select documento from public.vendas_clientes where empresa_id=$1 and documento=any($2::text[])',[companyId,documents]);
+        return (result.rows||[]).map(row=>row.documento);
+      });
+    },
+
+    async importMany({companyId,actorId,customers,expectedExisting,fileName}) {
+      return runSerializable(pool,async client=>{
+        await client.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[`vendas:cliente:codigo:${companyId}`]);
+        const current=await client.query('select documento from public.vendas_clientes where empresa_id=$1 and documento=any($2::text[]) for update',[companyId,customers.map(c=>c.document)]);
+        const existing=(current.rows||[]).map(row=>row.documento).sort();
+        if(JSON.stringify(existing)!==JSON.stringify([...expectedExisting].sort())){const error=new Error('Prévia alterada');error.code='AV-COMMERCIAL-IMPORT-CONFLICT';throw error;}
+        const seen=new Set(existing); const novos=customers.filter(customer=>!seen.has(customer.document));
+        if(!novos.length)return {created:0,skipped:customers.length};
+        await client.query(`insert into public.vendas_sequencias(empresa_id,tipo,ano,proximo_numero)
+          select $1,'cliente',0,coalesce(max(codigo)+1,1) from public.vendas_clientes where empresa_id=$1
+          on conflict on constraint vendas_sequencias_pkey do nothing`,[companyId]);
+        const sequence=await client.query("select proximo_numero from public.vendas_sequencias where empresa_id=$1 and tipo='cliente' and ano=0 for update",[companyId]);
+        const code=Number(sequence.rows?.[0]?.proximo_numero);
+        if(!Number.isSafeInteger(code)||code<1||!Number.isSafeInteger(code+novos.length))throw new Error('Sequência indisponível');
+        await client.query("update public.vendas_sequencias set proximo_numero=$2,atualizado_em=now() where empresa_id=$1 and tipo='cliente' and ano=0",[companyId,code+novos.length]);
+        const result=await client.query(`insert into public.vendas_clientes(
+          empresa_id,codigo,tipo_pessoa,documento_tipo,documento,razao_social,nome_fantasia,nome_exibicao,
+          inscricao_estadual,inscricao_municipal,indicador_ie,consumidor_final,email,telefone,contato_principal,
+          cep,logradouro,numero,complemento,bairro,municipio,municipio_ibge,uf,condicao_pagamento,observacoes,situacao,criado_por,atualizado_por)
+          select $1, $3::bigint+ordinality-1, item->>'personType',item->>'documentType',item->>'document',item->>'legalName',
+          nullif(item->>'tradeName',''),item->>'displayName',nullif(item->>'stateRegistration',''),nullif(item->>'municipalRegistration',''),
+          item->>'stateRegistrationIndicator',(item->>'consumerFinal')::boolean,nullif(item->>'email',''),nullif(item->>'phone',''),nullif(item->>'primaryContact',''),
+          nullif(item->>'postalCode',''),nullif(item->>'street',''),nullif(item->>'number',''),nullif(item->>'complement',''),nullif(item->>'district',''),
+          nullif(item->>'city',''),nullif(item->>'cityCode',''),nullif(item->>'state',''),nullif(item->>'paymentTerms',''),nullif(item->>'notes',''),item->>'status',$4,$4
+          from jsonb_array_elements($2::jsonb) with ordinality as source(item,ordinality) returning *`,[companyId,JSON.stringify(novos),code,actorId]);
+        if(result.rows.length!==novos.length)throw new Error('Lote incompleto');
+        await client.query(`insert into public.vendas_eventos(empresa_id,recurso_tipo,recurso_id,evento,resumo,metadados,criado_por)
+          select $1,'cliente',x.id::uuid,'cliente_importado',x.resumo,x.metadados,$3
+          from jsonb_to_recordset($2::jsonb) as x(id text,resumo text,metadados jsonb)`,[companyId,JSON.stringify(result.rows.map(row=>({id:row.id,resumo:`Cliente ${row.nome_exibicao} importado por Excel.`,metadados:{origem:'excel',arquivo:fileName,codigo:row.codigo}}))),actorId]);
+        return {created:novos.length,skipped:customers.length-novos.length};
+      });
+    },
+
     async create(customer) {
       try {
         return await runSerializable(pool, async (client) => {

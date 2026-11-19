@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { notificarAcessosModulos } from '@/app/lib/navegacao-acessos-servidor';
 import { listarCobrancasAssinaturaAsaas, removerAssinaturaAsaas } from '../../../../lib/asaas';
 import { autenticarPerfilCobranca, resolverEstadoAcesso } from '../../../../lib/cobranca-servidor';
 import { calcularFimPeriodoPago } from '../../../../lib/cobranca-fluxo';
@@ -49,5 +50,6 @@ export async function POST(request: Request) {
   if (assinaturaAtualizada.error || instalacaoAtualizada.error) {
     return NextResponse.json({ erro: true, mensagem: 'A renovação foi cancelada, mas não foi possível registrar o período restante. Tente novamente.' }, { status: 500 });
   }
+  await notificarAcessosModulos(acesso.db, empresaId);
   return NextResponse.json({ ok: true, validoAte: validoAte || null });
 }

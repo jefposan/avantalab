@@ -3211,6 +3211,13 @@
       if (acessoAtivo.error || acessoAtivo.data !== true) {
         throw (acessoAtivo.error || new Error('Nao foi possivel validar o acesso ao Vendas Mobile.'));
       }
+      // Apenas invalida a lista Web; o aviso nunca transporta permissões.
+      try {
+        var canalAcessosModulo = db.channel('avantalab-acessos-modulos-v1:' + empresaIdAtivacao);
+        Promise.resolve(canalAcessosModulo.send({ type: 'broadcast', event: 'atualizados', payload: {} }))
+          .catch(function() {})
+          .finally(function() { try { Promise.resolve(db.removeChannel(canalAcessosModulo)).catch(function() {}); } catch (erroAviso) {} });
+      } catch (erroAvisoModulo) { /* Compatibilidade: confirmação da ativação não depende de Realtime. */ }
       if (!state.empresa || state.empresa.id !== empresaIdAtivacao) return;
 
       state.vendasMobileModuloAtivo = true;
