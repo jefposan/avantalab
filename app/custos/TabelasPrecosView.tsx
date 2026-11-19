@@ -252,7 +252,8 @@ export default function TabelasPrecosView({
       ]);
       XLSX.utils.book_append_sheet(livro, metadados, 'Metadados');
       livro.Workbook = { ...livro.Workbook, Sheets: livro.SheetNames.map((name) => ({ name, Hidden: name === 'Metadados' ? 2 : 0 })) };
-      XLSX.writeFile(livro, `avantalab-produtos-precos-${agora.slice(0, 10)}.xlsx`, { compression: true });
+      const {baixarLivroPrecos}=await import('./excel-apresentacao');
+      await baixarLivroPrecos(XLSX.write(livro,{type:'array',bookType:'xlsx',compression:true}),cabecalhosPlanilhaProdutos,`avantalab-produtos-precos-${agora.slice(0, 10)}.xlsx`);
       setExportacaoAberta(false);
     } catch (falha) { setErroExportacao(falha instanceof Error ? falha.message : 'Não foi possível gerar a planilha.'); }
     finally { setProcessando(false); }

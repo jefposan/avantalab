@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.498 -->
+<!-- ava-version: 3.2.0.499 -->
+
+> Revisão local 3.2.0.499: sem impacto operacional na Gestão mobile nativa. Indicador de pendências fiscais no menu Web e apresentação do Excel de preços, sem nova publicação, banco ou plugins.
 
 > Revisão complementar 3.2.0.498: sem impacto operacional na Gestão mobile nativa. No módulo Web, menu lateral sem contadores; indicadores permanecem nas páginas. Arquivamento administrativo pontual de somente duas notas de homologação Tridium, com oito arquivos e histórico preservados, sem alteração de notas de produção nem botão novo.
 

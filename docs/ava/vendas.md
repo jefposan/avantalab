@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.498 -->
+<!-- ava-version: 3.2.0.499 -->
+
+> Revisão local 3.2.0.499: sem impacto operacional no AvantaVendas independente. Em Vendas e Serviços Web, contador exclusivo de pendências fiscais; em Custos, Excel de preços com cores do modelo de clientes. Nada publicado ou alterado no banco.
 
 > Revisão complementar 3.2.0.498: sem impacto operacional no AvantaVendas independente; menu lateral de Vendas e Serviços Web sem contadores. Arquivadas administrativamente apenas duas NF-e de homologação da Tridium autorizadas para limpeza; arquivos, histórico, reservas e produção preservados. Nenhum catálogo, pedido ou estoque foi alterado.
 

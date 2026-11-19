@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.498 -->
+<!-- ava-version: 3.2.0.499 -->
+
+> Revisão local 3.2.0.499 (não publicada): somente Notas Fiscais mostra contador de notas em preparação, com pendências, aguardando, rejeitadas/falhas ou processando. Autorizadas concluídas e canceladas não entram. Acima de 99, selo 99+ e total exato na ajuda/descrição; outros menus continuam sem números. Retornos fiscais atualizam o contador sem nova gravação. Em Custos > Tabelas, o Excel exportado segue cores e organização do modelo de clientes; campos escolhidos, IDs e metadados para importação permanecem iguais.
 
 > Revisão complementar 3.2.0.498: menu lateral de Vendas e Serviços mostra só nomes e ícones, sem contadores; quantidades permanecem nas páginas. Em manutenção pontual expressamente autorizada em 19/11/2026, arquivadas somente as notas de homologação série 2/números 1 e 2 da Tridium, de 06/11/2026. Não são listadas na operação, mas emissões, XML, DANFE, reservas e históricos permanecem; auditoria registrada, nenhum cancelamento ou alteração de produção. Não há botão novo nem arquivamento automático de outras notas.
 

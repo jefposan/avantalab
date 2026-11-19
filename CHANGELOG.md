@@ -1,3 +1,10 @@
+# 3.2.0.499 — Ajustes locais: pendências fiscais no menu e visual do Excel de preços
+
+- Somente Notas Fiscais recebe contador de pendências/aguardo, incluindo preparação, fila, processamento, rejeição e falha. Autorizações concluídas e cancelamentos ficam fora; os outros menus não mostram números. Até 99, contagem exata; acima, 99+ visual com total exato na descrição acessível.
+- Retornos fiscais válidos atualizam o indicador sem persistir/gravar notas; versões antigas e emissões alheias são ignoradas.
+- Excel seletivo de tabelas de preços segue o modelo de clientes: cabeçalhos azul/verde-petróleo com texto branco, linhas alternadas, fonte e instruções organizadas. Mantidos cabeçalhos técnicos, dados numéricos, códigos textuais, colunas escolhidas, moeda com centavos, filtros e metadados ocultos para reimportação.
+- Solicitação expressa: somente local, sem publicação, alteração de banco ou nova consulta ao abrir o menu.
+
 # 3.2.0.498 — Vendas e Serviços: retorno correto ao excluir rascunho
 
 - Exclusão respondia com tipo de download e a tela ignorava sucesso e recusa. Corrigido o discriminador no dispatcher fiscal, removendo a condição indevida do dispatcher de anexos.

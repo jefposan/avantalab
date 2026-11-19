@@ -1,6 +1,7 @@
 'use client';
 import SeletorModulos from '@/app/components/SeletorModulos';
 import CustomerExcelActions from '../components/CustomerExcelActions';
+import {countPendingFiscalDrafts,mergeFiscalIndicatorStatuses} from '../lib/fiscal-pending-indicator.mjs';
 import {sanitizarCnpj} from '../../../lib/consultas/validators/cnpj.ts';
 import { validateFiscalSettingsForm, mergeSettingsNumbering } from '../lib/fiscal-settings-form.mjs';
 import { COMPANY_PROFILE_SAVE_REQUEST, COMPANY_PROFILE_SAVE_RESPONSE } from '../lib/company-profile-save.mjs';
@@ -4482,7 +4483,7 @@ function FiscalNumberingDialog({ open, ledger, documentScope, actor, readOnly, o
   </Dialog>;
 }
 
-function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,companyId, catalogRecords, clientRecords, issuerRegistry, records, origin, drafts, fiscalPrepareState, config, execution, company, settings, numberingLedger, activeUserName, onClearOrigin, onPrepare, onValidate, onReserveNumber, onContinueIssuance, onRevalidate, onCancel, onOpenCertificate, onNavigate, onSaveNumbering, onNewFiscal, onResumeStandalone, onPreviewDraft, onResolveIssue, resumeDraftId, onCheckout, onOpenNumbering, resultRequest }: { onSaveClient: (client: ClientRecord) => Promise<ConfirmedSave>; fiscalEditor?:FiscalNoteEditorOptions;editorError?:string;onReloadEditor?:()=>void;companyId: string; catalogRecords: CatalogItem[]; clientRecords: ClientRecord[]; issuerRegistry: FiscalIssuerRegistry; records: CreatedRecord[]; origin: FiscalOrigin | null; drafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; config: FiscalConfig; execution: FiscalExecutionReadiness | null; company: CompanyProfile; settings: ModuleSettings; numberingLedger: FiscalNumberingLedger; activeUserName: string; onClearOrigin: () => void; onPrepare: (draft: FiscalDraftRecord) => void; onValidate: (draft: FiscalDraftRecord) => void; onReserveNumber: (draft: FiscalDraftRecord, expectedVersion: number) => void; onContinueIssuance: (draft: FiscalDraftRecord, expectedVersion: number) => void; onRevalidate: (draft: FiscalDraftRecord) => void; onCancel: (draft: FiscalDraftRecord) => void; onOpenCertificate: () => void; onNavigate: (view: View) => void; onSaveNumbering: (ledger: FiscalNumberingLedger, message: string) => boolean; onNewFiscal: () => void; onResumeStandalone?: (draft:FiscalDraftRecord)=>void; onPreviewDraft?: (draft: FiscalDraftRecord) => FiscalDraftRecord; onResolveIssue?: (draft: FiscalDraftRecord, key: string, productTarget?: string) => void; resumeDraftId?: string; onCheckout?: (draft: FiscalDraftRecord, action: 'save' | 'issue') => Promise<FiscalCheckoutResult>; onOpenNumbering?: () => void; resultRequest?: {draftId: string; requestId: string} }) {
+function FiscalView({ onStatusesChange, onSaveClient, fiscalEditor,editorError,onReloadEditor,companyId, catalogRecords, clientRecords, issuerRegistry, records, origin, drafts, fiscalPrepareState, config, execution, company, settings, numberingLedger, activeUserName, onClearOrigin, onPrepare, onValidate, onReserveNumber, onContinueIssuance, onRevalidate, onCancel, onOpenCertificate, onNavigate, onSaveNumbering, onNewFiscal, onResumeStandalone, onPreviewDraft, onResolveIssue, resumeDraftId, onCheckout, onOpenNumbering, resultRequest }: { onStatusesChange?: (statuses:Record<string,FiscalEmissionStatus>)=>void; onSaveClient: (client: ClientRecord) => Promise<ConfirmedSave>; fiscalEditor?:FiscalNoteEditorOptions;editorError?:string;onReloadEditor?:()=>void;companyId: string; catalogRecords: CatalogItem[]; clientRecords: ClientRecord[]; issuerRegistry: FiscalIssuerRegistry; records: CreatedRecord[]; origin: FiscalOrigin | null; drafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; config: FiscalConfig; execution: FiscalExecutionReadiness | null; company: CompanyProfile; settings: ModuleSettings; numberingLedger: FiscalNumberingLedger; activeUserName: string; onClearOrigin: () => void; onPrepare: (draft: FiscalDraftRecord) => void; onValidate: (draft: FiscalDraftRecord) => void; onReserveNumber: (draft: FiscalDraftRecord, expectedVersion: number) => void; onContinueIssuance: (draft: FiscalDraftRecord, expectedVersion: number) => void; onRevalidate: (draft: FiscalDraftRecord) => void; onCancel: (draft: FiscalDraftRecord) => void; onOpenCertificate: () => void; onNavigate: (view: View) => void; onSaveNumbering: (ledger: FiscalNumberingLedger, message: string) => boolean; onNewFiscal: () => void; onResumeStandalone?: (draft:FiscalDraftRecord)=>void; onPreviewDraft?: (draft: FiscalDraftRecord) => FiscalDraftRecord; onResolveIssue?: (draft: FiscalDraftRecord, key: string, productTarget?: string) => void; resumeDraftId?: string; onCheckout?: (draft: FiscalDraftRecord, action: 'save' | 'issue') => Promise<FiscalCheckoutResult>; onOpenNumbering?: () => void; resultRequest?: {draftId: string; requestId: string} }) {
   const correctionWaiters = useRef(new Map<string,(result: ConfirmedSave)=>void>());
   const { can } = useContext(PermissionContext);
   const [documentType, setDocumentType] = useState<FiscalDocumentType>(() => settings.fiscal.documentScope[0] ?? 'nfe');
@@ -4504,6 +4505,7 @@ function FiscalView({ onSaveClient, fiscalEditor,editorError,onReloadEditor,comp
   useEffect(() => { if (!resumeDraftId || resumedDraftRef.current === resumeDraftId) return; const draft = drafts.find((record) => record.id === resumeDraftId); if (draft) { resumedDraftRef.current = resumeDraftId; setIssueDraft(draft); } }, [resumeDraftId, drafts]);
   const [fiscalBridgeOrigin, setFiscalBridgeOrigin] = useState('');
   const [remoteStatuses, setRemoteStatuses] = useState<Record<string, FiscalEmissionStatus>>({});
+  useEffect(()=>{onStatusesChange?.(remoteStatuses);},[remoteStatuses,onStatusesChange]);
   const [statusSync, setStatusSync] = useState<Record<string, { loading: boolean; message: string }>>({});
   const [fiscalBridgeMessage, setFiscalBridgeMessage] = useState('');
   const requestedEmissionsRef = useRef(new Set<string>());
@@ -5826,6 +5828,10 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [serviceReturnView, setServiceReturnView] = useState<'servicos' | 'clientes' | 'catalogo'>('servicos');
   const [fiscalOrigin, setFiscalOrigin] = useState<FiscalOrigin | null>(null);
   const [fiscalDraftRecords, setFiscalDraftRecords] = useState<FiscalDraftRecord[]>(() => [createAuthorizedCancellationDemoDraft(), createRejectedNcmDemoDraft()]);
+  const fiscalPendingCount=countPendingFiscalDrafts(fiscalDraftRecords);
+  const syncFiscalIndicatorStatuses=useCallback((statuses:Record<string,FiscalEmissionStatus>)=>{
+    setFiscalDraftRecords(current=>mergeFiscalIndicatorStatuses(current,statuses));
+  },[]);
   const [receivableOrigin, setReceivableOrigin] = useState('');
   const [stockOrigin, setStockOrigin] = useState('');
   const [certificateOpen, setCertificateOpen] = useState(false);
@@ -8135,7 +8141,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         {newMenu && <button type="button" className="new-selection-sidebar-backdrop" aria-label="Fechar opções de novo cadastro" onClick={() => setNewMenu(false)}/>} 
         <div className="sidebar-mobile-head"><strong>Menu comercial</strong><button type="button" className="icon-button" onClick={() => setMobileMenu(false)} aria-label="Fechar menu"><Icon name="close"/></button></div>
         {managementContextReady && <div className="new-wrap" ref={newMenuRef}><button type="button" className="new-button" aria-expanded={newMenu} disabled={!visibleNewOptions.length} title={!visibleNewOptions.length ? 'Usuário sem permissão para criar lançamentos' : undefined} onClick={() => setNewMenu((value) => !value)}><Icon name="plus" size={19}/> Novo <span>⌄</span></button>{newMenu && <div className="new-menu">{visibleNewOptions.map((option) => <button type="button" key={option.type} onClick={() => openNew(option.type)}><span><Icon name={option.icon} size={18}/></span><div><strong>{option.title}</strong><small>{option.description}</small></div></button>)}</div>}</div>}
-        {managementContextReady && <nav aria-label="Navegação comercial">{visibleNavGroups.map((group) => <div className="nav-group" key={group.label}><span>{group.label}</span>{group.items.map(([id, label, icon]) => { const active = view === id || ((view === 'novo_pedido' || view === 'novo_orcamento') && id === commercialReturnView) || (view === 'nova_ordem_servico' && id === serviceReturnView); return <button type="button" key={id} onClick={() => navigate(id)} className={active ? 'active' : ''} aria-current={active ? 'page' : undefined}><Icon name={icon} size={18}/><b>{label}</b></button>; })}</div>)}</nav>}
+        {managementContextReady && <nav aria-label="Navegação comercial">{visibleNavGroups.map((group) => <div className="nav-group" key={group.label}><span>{group.label}</span>{group.items.map(([id, label, icon]) => { const active = view === id || ((view === 'novo_pedido' || view === 'novo_orcamento') && id === commercialReturnView) || (view === 'nova_ordem_servico' && id === serviceReturnView); return <button type="button" key={id} onClick={() => navigate(id)} className={active ? 'active' : ''} aria-current={active ? 'page' : undefined}><Icon name={icon} size={18}/><b>{label}</b>{id === 'fiscal' && <small aria-label={fiscalPendingCount+' '+(fiscalPendingCount===1?'nota fiscal com pendências ou aguardando conclusão':'notas fiscais com pendências ou aguardando conclusão')} title={fiscalPendingCount+' '+(fiscalPendingCount===1?'nota pendente':'notas pendentes')}>{fiscalPendingCount>99?'99+':fiscalPendingCount}</small>}</button>; })}</div>)}</nav>}
         <div className="sidebar-footer"><div><span><Icon name="fiscal" size={17}/></span><p><strong>{sidebarFiscalStatus.title}</strong><small>{sidebarFiscalStatus.detail}</small></p></div></div>
       </aside>
       <main className="main-content">
@@ -8181,6 +8187,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           catalogRecords={catalogRecords} clientRecords={clientRecords} issuerRegistry={fiscalIssuerRegistry} records={created}
           origin={fiscalOrigin}
           drafts={fiscalDraftRecords}
+          onStatusesChange={syncFiscalIndicatorStatuses}
           fiscalPrepareState={fiscalPrepareState}
           config={currentFiscalConfig}
           execution={fiscalCertificateBridgeState.execution}

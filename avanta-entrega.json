@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_5pL9ehsxUGWor8i35PwpbnREDfsu",
+  "baseDeploymentId": "dpl_DdNbDN6BXz9pYd6ed2hh8dC9543D",
   "migrations": [],
-  "version": "3.2.0.498",
-  "scope": "Vendas e Serviços: retorno correto da exclusão de rascunho, espera e bloqueio de repetição; menu lateral sem contadores, indicadores mantidos nas páginas. Registra manutenção administrativa já executada e autorizada de duas notas de homologação Tridium, preservando oito arquivos, emissões, reservas e produção. Sem migração automática, botão novo ou mudança de permissões. SQL pontual não deve ser reexecutado na publicação."
+  "version": "3.2.0.499",
+  "scope": "Somente local, publicação não autorizada: contador de pendências exclusivamente em Notas Fiscais e Excel de tabelas com padrão visual do modelo de clientes, preservando dados e reimportação. Sem banco ou repetição de manutenção administrativa."
 }
