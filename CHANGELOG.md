@@ -1775,6 +1775,13 @@ Emissão: lápis do item abre ajustes exclusivos desta nota, com abas Dados, ICM
 
 # Changelog
 
+## 3.2.0.509-av212 - AvantaVendas: seleção por arraste e preparo separado do compartilhamento
+
+- Mantém limite de 10, seleção por intervalo com dedo/mouse, rolagem automática nas bordas, rolagem vertical comum e atalho explícito de lote limitado, sem remontar a grade durante o gesto.
+- Separa preparo de arquivos e abertura pelo novo toque. Prepara temporários nativos antes de pronto; compatibilidade do contrato antigo de PDF/comprovantes preservada. Cancelamento/falha mantém arquivos para tentar novamente; contexto ou seleção diferente invalida e libera recursos.
+- Aviso de demora após 12 segundos, opção de continuar ou cancelar mantendo seleção. Fallbacks antigos de Android/download permanecem explícitos, sem confundir download iniciado com envio concluído.
+- Sem backend, migração, novos plugins, permissões ou alteração de comprovantes. Publicação autorizada em pacote isolado da main, com build completo obrigatório; aparelhos físicos ainda precisam de validação.
+
 ## 3.2.0.384-av198 - AvantaVendas: somente falhas no rodapé
 
 - Falhas em vermelho; validações no formulário e pendências no status de sincronização. Sem alteração na Gestão Mobile ou migração.

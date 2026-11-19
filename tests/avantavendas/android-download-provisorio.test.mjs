@@ -144,7 +144,7 @@ test('origem externa nunca é aberta e seleção múltipla oferece downloads ind
   assert.equal(aberturas.length, 0);
   assert.equal(avisos[0].tipo, 'erro');
   contexto.state.divulgacaoMateriais[0] = imagem;
-  await contexto.compartilharMateriaisSelecionadosDivulgacao();
+  await contexto.prepararEnvioMateriaisDivulgacao();
   assert.match(telas[0], /Baixar materiais/);
   assert.match(telas[0], /baixarMaterialDivulgacaoAndroid\('foto'/);
   assert.match(telas[0], /baixarMaterialDivulgacaoAndroid\('pdf'/);

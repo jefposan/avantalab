@@ -1560,13 +1560,15 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .material-thumb b { display: -webkit-box; overflow: hidden; margin: 8px 10px 0; font-size: 11px; line-height: 1.25; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .material-thumb b + small { margin-top: 3px; }
 .material-thumb small { display: block; overflow: hidden; margin: 8px 10px 0; color: #718096; font-size: 9px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
-.material-thumb.is-selectable { cursor: pointer; }
+.material-thumb.is-selectable { cursor: pointer; touch-action: pan-y pinch-zoom; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.material-thumb.is-selectable img { -webkit-user-drag: none; pointer-events: none; }
+.material-page-content.is-drag-selecting { cursor: crosshair; }
 .material-thumb.is-selected { border-color: #1687D9; background: #eef8ff; box-shadow: 0 0 0 2px rgba(22,135,217,.22), 0 10px 22px rgba(15,42,80,.14); }
 .material-selection-marker { position: absolute; z-index: 3; top: 8px; right: 8px; display: grid; width: 30px; height: 30px; place-items: center; border: 2px solid rgba(255,255,255,.96); border-radius: 999px; color: #fff; background: rgba(15,31,52,.64); box-shadow: 0 3px 10px rgba(15,23,42,.28); pointer-events: none; }
 .material-selection-marker .svg-icon { width: 19px; height: 19px; }
 .material-thumb.is-selected .material-selection-marker { background: #1687D9; }
 .material-select-mode.is-active { border-color: #1687D9; color: #fff; background: #1687D9; }
-.divulgacao-page.is-selecting .material-page-content { padding-bottom: 116px; }
+.divulgacao-page.is-selecting .material-page-content { padding-bottom: max(116px,var(--material-selection-reserva,116px)); }
 .material-selection-bar { position: fixed; z-index: 115; bottom: 18px; left: calc(255px + (100% - 255px) / 2); display: grid; width: min(calc(100% - 295px),720px); grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 14px; transform: translateX(-50%); border: 1px solid #c8dce9; border-radius: 18px; padding: 12px 14px; background: rgba(255,255,255,.97); box-shadow: 0 18px 40px rgba(15,42,80,.24); backdrop-filter: blur(14px); }
 .material-selection-bar > div:first-child { min-width: 0; }
 .material-selection-bar b,.material-selection-bar small { display: block; }
@@ -1575,6 +1577,8 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .material-selection-bar > div:last-child { display: flex; gap: 8px; }
 .material-selection-bar button { min-height: 40px; border-radius: 12px; padding: 0 14px; font-size: 10px; font-weight: 850; white-space: nowrap; }
 .material-selection-bar button:disabled { cursor: wait; opacity: .62; }
+.material-selection-bar .material-select-batch { min-height: 44px; margin-top: 4px; padding: 0 8px; }
+.material-selection-bar .material-preparo-demora { margin: 8px 0 4px; font-size: 12px; line-height: 1.4; color: inherit; }
 .material-sheet-empty { padding: 52px 20px; color: #718096; text-align: center; }
 .material-preview-backdrop .sheet { width: min(94vw,620px); max-height: calc(100dvh - 104px); overflow: hidden; }
 .material-preview-stage { position: relative; display: grid; width: 100%; max-height: calc(100dvh - 260px); place-items: center; overflow: hidden; border-radius: 12px; background: #07111d; touch-action: pan-y; user-select: none; }
@@ -2622,7 +2626,7 @@ body.settings-kanban-arrastando { cursor: grabbing; user-select: none; -webkit-u
   .divulgacao-page .search-compact-always .search-actions { display: flex; width: 100%; gap: 8px; }
   .divulgacao-page .search-compact-always .search-actions button { height: 29px; min-height: 29px; }
   .material-page-files { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
-  .divulgacao-page.is-selecting .material-page-content { padding-bottom: 152px; }
+  .divulgacao-page.is-selecting .material-page-content { padding-bottom: max(152px,var(--material-selection-reserva,152px)); }
   .material-selection-bar { right: 12px; bottom: calc(env(safe-area-inset-bottom) + 78px); left: 12px; width: auto; grid-template-columns: 1fr; gap: 9px; transform: none; border-radius: 16px; padding: 11px 12px; }
   .material-selection-bar > div:last-child { display: grid; grid-template-columns: minmax(0,.72fr) minmax(0,1.28fr); }
   .material-selection-bar button { width: 100%; min-height: 38px; padding: 0 9px; }

@@ -12,6 +12,7 @@ const [aplicacao, estilos] = await Promise.all([
 const inicioCompartilhamento = aplicacao.indexOf('async function compartilharMateriaisSelecionadosDivulgacao()');
 const fimCompartilhamento = aplicacao.indexOf('\nasync function compartilharMaterialDivulgacao(', inicioCompartilhamento);
 const compartilhamentoMultiplo = aplicacao.slice(inicioCompartilhamento, fimCompartilhamento);
+const preparoMultiplo = aplicacao.slice(aplicacao.indexOf('async function prepararEnvioMateriaisDivulgacao()'),inicioCompartilhamento);
 const inicioCompartilhamentoUnico = fimCompartilhamento + 1;
 const fimCompartilhamentoUnico = aplicacao.indexOf('\nconst CONFIGURACOES_CARD_ID_POR_TITULO', inicioCompartilhamentoUnico);
 const compartilhamentoUnico = aplicacao.slice(inicioCompartilhamentoUnico, fimCompartilhamentoUnico);
@@ -76,14 +77,16 @@ test('PDF possui tela cheia com links externos e navegação interna preservados
   assert.match(estilos, /touch-action: pan-x pan-y pinch-zoom/);
 });
 
-test('arquivos são preparados em sequência e compartilhados sem texto automático', () => {
+test('preparo sequencial e abertura pelo novo toque são separados, sem texto automático', () => {
   assert.ok(inicioCompartilhamento >= 0 && fimCompartilhamento > inicioCompartilhamento);
-  assert.match(compartilhamentoMultiplo, /for \(let indice = 0; indice < materiais\.length; indice \+= 1\)/);
-  assert.match(compartilhamentoMultiplo, /tentarCompartilharArquivosWebDivulgacao\(arquivos\)/);
+  assert.match(preparoMultiplo, /for \(let indice = 0; indice < materiais\.length; indice \+= 1\)/);
+  assert.match(compartilhamentoMultiplo, /tentarCompartilharArquivosWebDivulgacao\(envio.arquivos\)/);
+  assert.doesNotMatch(compartilhamentoMultiplo, /await prepararArquivoMaterialDivulgacao/);
+  assert.doesNotMatch(preparoMultiplo, /navigator.share\(|\.compartilhar\(\)/);
   assert.match(compartilhamentoWeb, /navigator\.share\(\{ files: arquivos \}\)/);
   assert.doesNotMatch(compartilhamentoWeb, /navigator\.share\(\{[^}]*\b(?:text|title|url)\s*:/);
-  assert.match(compartilhamentoMultiplo, /zip\.generateAsync\(\{ type: 'blob', compression: 'STORE' \}\)/);
-  assert.match(compartilhamentoMultiplo, /materiais-avantalab\.zip/);
+  assert.match(preparoMultiplo, /zip\.generateAsync\(\{type:'blob',compression:'STORE'\}\)/);
+  assert.match(preparoMultiplo, /materiais-avantalab\.zip/);
 });
 
 test('vídeo é preparado antes do toque que abre o compartilhamento no iPhone', () => {

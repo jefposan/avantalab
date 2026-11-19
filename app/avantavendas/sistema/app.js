@@ -531,6 +531,11 @@ const divulgacaoMateriaisSelecionados = new Set();
 let divulgacaoCompartilhamentoMultiploEmAndamento = false;
 let divulgacaoCompartilhamentoStatus = '';
 let divulgacaoCompartilhamentoAbortController = null;
+let divulgacaoEnvioPreparado = null;
+let divulgacaoPreparoDemorado = false;
+let divulgacaoAbrindoCompartilhamento = false;
+let limparArrasteSelecaoDivulgacao = null;
+let ignorarCliqueSelecaoDivulgacaoAte = 0;
 const LIMITE_SELECAO_MATERIAIS_DIVULGACAO = 10;
 let divulgacaoAtualizando = false;
 let conteudosSecundariosCarregando = false;
@@ -2055,6 +2060,7 @@ function podePreservarSalaBotoes(assinatura) {
 
 function render() {
   limparRolagemProdutosRelatorio?.(); limparRolagemProdutosRelatorio = null;
+  limparArrasteSelecaoDivulgacao?.(); limparArrasteSelecaoDivulgacao = null;
   const areaPrincipalAnterior = app.querySelector('.main-area');
   const preservarRolagemConteudo = Boolean(
     window.matchMedia('(max-width: 850px)').matches
@@ -2167,6 +2173,7 @@ function render() {
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
   prepararRolagemProdutosRelatorio();
+  prepararArrasteSelecaoDivulgacao();
 }
 
 function abrirAssinaturaGestaoVendas() {
@@ -6312,11 +6319,36 @@ function cancelarGestoAtualizacaoDivulgacao() {
   if (!divulgacaoAtualizando) esconderIndicadorGestoDivulgacao();
 }
 
-function limparSelecaoMateriaisDivulgacao(renderizar = true) {
+function chaveSelecaoEnvioDivulgacao() {
+  return JSON.stringify([state.usuario?.id,state.contaVendasAtiva?.id,divulgacaoSelecaoPastaId,[...divulgacaoMateriaisSelecionados].sort().map(id=>{
+    const m=(state.divulgacaoMateriais || []).find(m=>m.id===id);
+    return [id,m?.arquivo_url,m?.mime_type,m?.titulo,m?.tipo];
+  })]);
+}
+
+function invalidarPreparoEnvioDivulgacao() {
   divulgacaoCompartilhamentoAbortController?.abort();
   divulgacaoCompartilhamentoAbortController = null;
   divulgacaoCompartilhamentoMultiploEmAndamento = false;
   divulgacaoCompartilhamentoStatus = '';
+  divulgacaoPreparoDemorado = false;
+  divulgacaoEnvioPreparado?.nativo?.descartar();
+  divulgacaoEnvioPreparado = null;
+}
+
+function cancelarPreparoEnvioDivulgacao() {
+  if (divulgacaoAbrindoCompartilhamento) return;
+  invalidarPreparoEnvioDivulgacao();
+  render();
+}
+
+function continuarPreparoEnvioDivulgacao() {
+  divulgacaoPreparoDemorado=false;
+  atualizarBarraSelecaoDivulgacao();
+}
+
+function limparSelecaoMateriaisDivulgacao(renderizar = true) {
+  invalidarPreparoEnvioDivulgacao();
   divulgacaoSelecaoAtiva = false;
   divulgacaoSelecaoPastaId = null;
   divulgacaoMateriaisSelecionados.clear();
@@ -6328,6 +6360,7 @@ function ativarSelecaoMateriaisDivulgacao(materialId = '') {
   const materialInicial = materialId
     ? (state.divulgacaoMateriais || []).find((item) => item.id === materialId && item.pasta_id === divulgacaoPastaAtualId)
     : null;
+  invalidarPreparoEnvioDivulgacao();
   divulgacaoSelecaoAtiva = true;
   divulgacaoSelecaoPastaId = divulgacaoPastaAtualId;
   divulgacaoMateriaisSelecionados.clear();
@@ -6336,31 +6369,134 @@ function ativarSelecaoMateriaisDivulgacao(materialId = '') {
 }
 
 function alternarSelecaoMaterialDivulgacao(materialId) {
+  if (Date.now()<ignorarCliqueSelecaoDivulgacaoAte) return;
   if (!divulgacaoSelecaoAtiva || divulgacaoCompartilhamentoMultiploEmAndamento) return;
   const material = (state.divulgacaoMateriais || []).find((item) => item.id === materialId);
   if (!material || material.pasta_id !== divulgacaoSelecaoPastaId) return;
   if (divulgacaoMateriaisSelecionados.has(materialId)) {
+    invalidarPreparoEnvioDivulgacao();
     divulgacaoMateriaisSelecionados.delete(materialId);
   } else if (divulgacaoMateriaisSelecionados.size >= LIMITE_SELECAO_MATERIAIS_DIVULGACAO) {
     toast(`Selecione no máximo ${LIMITE_SELECAO_MATERIAIS_DIVULGACAO} arquivos por vez.`);
     return;
   } else {
+    invalidarPreparoEnvioDivulgacao();
     divulgacaoMateriaisSelecionados.add(materialId);
   }
   render();
 }
 
+function selecionarLoteMateriaisDivulgacao() {
+  if (!divulgacaoSelecaoAtiva || divulgacaoCompartilhamentoMultiploEmAndamento) return;
+  invalidarPreparoEnvioDivulgacao();
+  const visiveis=[...app.querySelectorAll('.material-thumb[data-material-id]')].map(el=>el.dataset.materialId);
+  for (const id of visiveis) { if (divulgacaoMateriaisSelecionados.size>=LIMITE_SELECAO_MATERIAIS_DIVULGACAO) break; divulgacaoMateriaisSelecionados.add(id); }
+  render();
+}
+
+function atualizarBarraSelecaoDivulgacao() {
+  const barra=app.querySelector('.material-selection-bar');
+  if (barra) barra.outerHTML=renderBarraSelecaoMateriaisDivulgacao();
+  atualizarReservaBarraSelecaoDivulgacao();
+}
+
+function atualizarReservaBarraSelecaoDivulgacao() {
+  const pagina=app.querySelector('.divulgacao-page');
+  const barra=app.querySelector('.material-selection-bar');
+  if (pagina && barra) pagina.style.setProperty('--material-selection-reserva',`${barra.offsetHeight+24}px`);
+}
+
+function prepararArrasteSelecaoDivulgacao() {
+  atualizarReservaBarraSelecaoDivulgacao();
+  if (!divulgacaoSelecaoAtiva || divulgacaoCompartilhamentoMultiploEmAndamento) return;
+  const grade=app.querySelector('.material-page-content');
+  if (!grade) return;
+  const cards=[...grade.querySelectorAll('.material-thumb[data-material-id]')];
+  const controlador=new AbortController(),opcoes={signal:controlador.signal};
+  let gesto=null,frame=null,pressao=null;
+  const encerrar=()=>{
+    if (gesto?.ativo) ignorarCliqueSelecaoDivulgacaoAte=Date.now()+400;
+    gesto=null; clearTimeout(pressao); cancelAnimationFrame(frame); frame=null;
+    grade.classList.remove('is-drag-selecting');
+  };
+  const aplicar=(x,y)=>{
+    const alvo=document.elementFromPoint(x,y)?.closest('.material-thumb[data-material-id]');
+    const fim=cards.indexOf(alvo); if (!gesto || fim<0) return;
+    const proxima=new Set(gesto.base);
+    for(let i=Math.min(gesto.inicio,fim);i<=Math.max(gesto.inicio,fim);i++) {
+      const id=cards[i].dataset.materialId;
+      if (!gesto.marcar) proxima.delete(id);
+      else if (proxima.size<LIMITE_SELECAO_MATERIAIS_DIVULGACAO) proxima.add(id);
+    }
+    if (JSON.stringify([...proxima].sort())===JSON.stringify([...divulgacaoMateriaisSelecionados].sort())) return;
+    invalidarPreparoEnvioDivulgacao();
+    divulgacaoMateriaisSelecionados.clear(); proxima.forEach(id=>divulgacaoMateriaisSelecionados.add(id));
+    cards.forEach(card=>{
+      const marcado=proxima.has(card.dataset.materialId);
+      card.classList.toggle('is-selected',marcado); card.setAttribute('aria-pressed',String(marcado));
+      card.setAttribute('aria-label',(card.getAttribute('aria-label') || '').replace(/^(Selecionar|Remover)/,marcado?'Remover':'Selecionar'));
+      card.querySelector('.material-selection-marker').innerHTML=marcado?svgIcon('check-circle'):'';
+    });
+    atualizarBarraSelecaoDivulgacao();
+  };
+  const rolar=()=>{
+    if (!gesto?.ativo) return;
+    const area=grade.closest('.content-area') || app.querySelector('.content-area');
+    const externo=area && area.scrollHeight>area.clientHeight ? area : document.scrollingElement;
+    const topo=Math.max(grade.getBoundingClientRect().top,app.querySelector('.module-sticky-head')?.getBoundingClientRect().bottom || 0);
+    const fundo=Math.min(window.innerHeight,app.querySelector('.material-selection-bar')?.getBoundingClientRect().top || window.innerHeight);
+    const delta=gesto.y<topo+52 ? -12 : gesto.y>fundo-52 ? 12 : 0;
+    if (delta && externo) { externo.scrollTop+=delta; aplicar(gesto.x,Math.max(topo+4,Math.min(fundo-4,gesto.y))); }
+    frame=requestAnimationFrame(rolar);
+  };
+  const ativar=()=>{
+    if (!gesto || gesto.ativo) return;
+    gesto.ativo=true; grade.classList.add('is-drag-selecting');
+    aplicar(gesto.x,gesto.y); frame=requestAnimationFrame(rolar);
+  };
+  grade.addEventListener('pointerdown',e=>{
+    if (!e.isPrimary || e.button!==0) return;
+    const card=e.target.closest('.material-thumb[data-material-id]');
+    if (!card || !grade.contains(card)) return;
+    gesto={inicio:cards.indexOf(card),x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,base:new Set(divulgacaoMateriaisSelecionados),marcar:!divulgacaoMateriaisSelecionados.has(card.dataset.materialId),ativo:false};
+    pressao=setTimeout(ativar,280);
+  },opcoes);
+  const mover=(e,x,y)=>{
+    if (!gesto) return;
+    gesto.x=x; gesto.y=y;
+    const dx=Math.abs(x-gesto.x0),dy=Math.abs(y-gesto.y0);
+    if (!gesto.ativo && dy>10 && dy>dx) { encerrar(); return; }
+    if (!gesto.ativo && dx>8 && dx>=dy) ativar();
+    if (gesto?.ativo) { if(e.cancelable)e.preventDefault(); aplicar(x,y); }
+  };
+  window.addEventListener('pointermove',e=>mover(e,e.clientX,e.clientY),{...opcoes,passive:false});
+  grade.addEventListener('touchmove',e=>{
+    if (e.touches.length!==1) { encerrar(); return; }
+    mover(e,e.touches[0].clientX,e.touches[0].clientY);
+  },{...opcoes,passive:false});
+  window.addEventListener('pointerup',encerrar,opcoes);
+  window.addEventListener('pointercancel',encerrar,opcoes);
+  window.addEventListener('blur',encerrar,opcoes);
+  window.addEventListener('resize',atualizarReservaBarraSelecaoDivulgacao,opcoes);
+  grade.addEventListener('contextmenu',e=>{if(gesto?.ativo)e.preventDefault();},opcoes);
+  limparArrasteSelecaoDivulgacao=()=>{encerrar();controlador.abort();};
+}
+
 function renderBarraSelecaoMateriaisDivulgacao() {
   if (!divulgacaoSelecaoAtiva) return '';
   const quantidade = divulgacaoMateriaisSelecionados.size;
+  const pronto=divulgacaoEnvioPreparado?.chave===chaveSelecaoEnvioDivulgacao();
   const status = divulgacaoCompartilhamentoMultiploEmAndamento
     ? divulgacaoCompartilhamentoStatus || 'Preparando arquivos...'
-    : `${quantidade} ${quantidade === 1 ? 'arquivo selecionado' : 'arquivos selecionados'}`;
+    : pronto ? `Envio pronto · ${quantidade} ${quantidade===1?'arquivo':'arquivos'}` : `${quantidade} ${quantidade === 1 ? 'arquivo selecionado' : 'arquivos selecionados'}`;
   const rotuloCancelar = divulgacaoCompartilhamentoMultiploEmAndamento ? 'Cancelar preparo' : 'Cancelar';
   const rotuloCompartilhar = divulgacaoCompartilhamentoMultiploEmAndamento
     ? 'Preparando...'
-    : `Compartilhar${quantidade ? ` ${quantidade}` : ''}`;
-  return `<aside class="material-selection-bar${divulgacaoCompartilhamentoMultiploEmAndamento ? ' is-busy' : ''}" aria-live="polite"><div><b id="materialSelectionStatus">${escapeHtml(status)}</b><small>Selecione até ${LIMITE_SELECAO_MATERIAIS_DIVULGACAO} arquivos desta pasta.</small></div><div><button type="button" class="ghost" onclick="limparSelecaoMateriaisDivulgacao()">${escapeHtml(rotuloCancelar)}</button><button id="materialSelectionShare" type="button" class="primary" onclick="compartilharMateriaisSelecionadosDivulgacao()" ${!quantidade || divulgacaoCompartilhamentoMultiploEmAndamento ? 'disabled' : ''}>${svgIcon('save')} ${escapeHtml(rotuloCompartilhar)}</button></div></aside>`;
+    : usarDownloadProvisorioAndroidDivulgacao() ? 'Baixar arquivos' : pronto ? (divulgacaoEnvioPreparado.download ? (quantidade>1?'Baixar pacote':'Baixar arquivo') : `Compartilhar ${quantidade}`) : 'Preparar envio';
+  const aviso=divulgacaoPreparoDemorado ? '<p class="material-preparo-demora">A preparação está demorando mais que o normal. Continue aguardando ou cancele e selecione menos arquivos.</p><button type="button" class="ghost" onclick="continuarPreparoEnvioDivulgacao()">Continuar aguardando</button>' : '';
+  const visiveis=(state.divulgacaoMateriais || []).filter(m=>m.pasta_id===divulgacaoSelecaoPastaId && (!buscaAplicada || normalizar(m.titulo).includes(normalizar(buscaAplicada)))).length;
+  const lote=visiveis>10?'Selecionar 10':'Selecionar todos';
+  return `<aside class="material-selection-bar${divulgacaoCompartilhamentoMultiploEmAndamento ? ' is-busy' : ''}" aria-live="polite"><div><b id="materialSelectionStatus">${escapeHtml(status)}</b><small>Até ${LIMITE_SELECAO_MATERIAIS_DIVULGACAO} arquivos. Toque ou arraste para selecionar.</small>${aviso}${!divulgacaoCompartilhamentoMultiploEmAndamento && !pronto ? `<button type="button" class="ghost material-select-batch" onclick="selecionarLoteMateriaisDivulgacao()" ${quantidade>=10?'disabled':''}>${lote}</button>`:''}</div><div><button type="button" class="ghost" onclick="${divulgacaoCompartilhamentoMultiploEmAndamento?'cancelarPreparoEnvioDivulgacao':'limparSelecaoMateriaisDivulgacao'}()">${escapeHtml(rotuloCancelar)}</button><button id="materialSelectionShare" type="button" class="primary" onclick="${pronto?'compartilharMateriaisSelecionadosDivulgacao':'prepararEnvioMateriaisDivulgacao'}()" ${!quantidade || divulgacaoCompartilhamentoMultiploEmAndamento ? 'disabled' : ''}>${svgIcon('save')} ${escapeHtml(rotuloCompartilhar)}</button></div></aside>`;
 }
 
 function renderDivulgacao() {
@@ -6431,7 +6567,7 @@ function renderDivulgacao() {
     const atributosSelecao = divulgacaoSelecaoAtiva
       ? ` aria-pressed="${selecionado}" aria-label="${selecionado ? 'Remover' : 'Selecionar'} ${escapeAttr(identificacaoAcessivel)}"`
       : ` aria-label="Abrir ${escapeAttr(identificacaoAcessivel)}"`;
-    return `<button type="button" class="material-thumb${divulgacaoSelecaoAtiva ? ' is-selectable' : ''}${selecionado ? ' is-selected' : ''}" onclick="${acao}"${atributosSelecao}>${divulgacaoSelecaoAtiva ? `<i class="material-selection-marker" aria-hidden="true">${selecionado ? svgIcon('check-circle') : ''}</i>` : ''}<span>${capaMaterial(item)}</span>${nomeCatalogo ? `<b title="${escapeAttr(nomeCatalogo)}">${escapeHtml(nomeCatalogo)}</b>` : ''}<small>${rotulo}</small></button>`;
+    return `<button type="button" data-material-id="${escapeAttr(item.id)}" class="material-thumb${divulgacaoSelecaoAtiva ? ' is-selectable' : ''}${selecionado ? ' is-selected' : ''}" onclick="${acao}"${atributosSelecao}>${divulgacaoSelecaoAtiva ? `<i class="material-selection-marker" aria-hidden="true">${selecionado ? svgIcon('check-circle') : ''}</i>` : ''}<span>${capaMaterial(item)}</span>${nomeCatalogo ? `<b title="${escapeAttr(nomeCatalogo)}">${escapeHtml(nomeCatalogo)}</b>` : ''}<small>${rotulo}</small></button>`;
   }).join('');
   const acaoSelecao = pastaAtual && materiaisDaPasta.length > 1
     ? `<button type="button" class="secondary material-select-mode${divulgacaoSelecaoAtiva ? ' is-active' : ''}" onclick="${divulgacaoSelecaoAtiva ? 'limparSelecaoMateriaisDivulgacao()' : 'ativarSelecaoMateriaisDivulgacao()'}" ${divulgacaoCompartilhamentoMultiploEmAndamento ? 'disabled' : ''}>${svgIcon('check-circle')} ${divulgacaoSelecaoAtiva ? 'Cancelar' : 'Selecionar'}</button>`
@@ -7030,7 +7166,7 @@ function atualizarStatusCompartilhamentoMultiploDivulgacao(mensagem) {
   if (status) status.textContent = mensagem;
 }
 
-async function compartilharMateriaisSelecionadosDivulgacao() {
+async function prepararEnvioMateriaisDivulgacao() {
   if (divulgacaoCompartilhamentoMultiploEmAndamento) return;
   const materiais = [...divulgacaoMateriaisSelecionados]
     .map((id) => (state.divulgacaoMateriais || []).find((item) => item.id === id))
@@ -7050,13 +7186,17 @@ async function compartilharMateriaisSelecionadosDivulgacao() {
   divulgacaoCompartilhamentoMultiploEmAndamento = true;
   divulgacaoCompartilhamentoStatus = `Preparando arquivo 1 de ${materiais.length}...`;
   const controlador = new AbortController();
+  const chave=chaveSelecaoEnvioDivulgacao();
   divulgacaoCompartilhamentoAbortController = controlador;
+  const demora=setTimeout(()=>{
+    if (divulgacaoCompartilhamentoAbortController===controlador) { divulgacaoPreparoDemorado=true; atualizarBarraSelecaoDivulgacao(); }
+  },12000);
   render();
-  let compartilhamentoConcluido = false;
   try {
     const arquivos = [];
     const nomesUsados = new Map();
     for (let indice = 0; indice < materiais.length; indice += 1) {
+      if (controlador.signal.aborted || divulgacaoCompartilhamentoAbortController!==controlador) return;
       atualizarStatusCompartilhamentoMultiploDivulgacao(`Preparando arquivo ${indice + 1} de ${materiais.length}...`);
       arquivos.push(await prepararArquivoMaterialDivulgacao(materiais[indice], {
         signal: controlador.signal,
@@ -7064,46 +7204,64 @@ async function compartilharMateriaisSelecionadosDivulgacao() {
       }));
     }
 
-    const compartilhamentoNativo = solicitarCompartilhamentoNativoDivulgacao(arquivos, {
-      titulo: materiais.length > 1 ? 'Materiais AvantaLab' : 'Material AvantaLab',
-      tituloDialogo: materiais.length > 1 ? 'Compartilhar materiais' : 'Compartilhar material',
-    });
-    if (compartilhamentoNativo) {
-      atualizarStatusCompartilhamentoMultiploDivulgacao('Abrindo opções de compartilhamento...');
-      await compartilhamentoNativo;
-    } else {
-      atualizarStatusCompartilhamentoMultiploDivulgacao('Abrindo opções de compartilhamento...');
-      const compartilhadoPeloNavegador = await tentarCompartilharArquivosWebDivulgacao(arquivos);
-      if (!compartilhadoPeloNavegador && arquivos.length === 1) {
-        const material = materiais[0];
-        if (podeCompartilharEnderecoMaterialDivulgacao(material)) {
-          await navigator.share({ url: material.arquivo_url });
-        } else {
-          baixarArquivoGeradoVendas(arquivos[0], arquivos[0].name);
-          toast('Seu navegador não abriu o compartilhamento. O arquivo foi salvo para envio manual.', { tipo: "erro" });
-        }
-      } else if (!compartilhadoPeloNavegador) {
-        atualizarStatusCompartilhamentoMultiploDivulgacao('Organizando arquivos para download...');
-        const JSZip = await carregarBibliotecaZip();
-        const zip = new JSZip();
-        arquivos.forEach((arquivo) => zip.file(arquivo.name, arquivo));
-        const pacote = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
-        baixarArquivoGeradoVendas(pacote, 'materiais-avantalab.zip');
-        toast('Arquivos reunidos em um pacote para compartilhar.');
+    if (controlador.signal.aborted || chave!==chaveSelecaoEnvioDivulgacao()) return;
+    const nativo=typeof window.__avantavendasPrepararCompartilhamentoArquivos==='function'
+      ? await window.__avantavendasPrepararCompartilhamentoArquivos({arquivos,titulo:'Materiais AvantaLab',tituloDialogo:'Compartilhar materiais',signal:controlador.signal}) : null;
+    if (controlador.signal.aborted || divulgacaoCompartilhamentoAbortController!==controlador || chave!==chaveSelecaoEnvioDivulgacao()) { nativo?.descartar(); return; }
+    let download=null;
+    if (!nativo && typeof window.__avantavendasCompartilharArquivos!=='function' && !podeCompartilharArquivosDivulgacao(arquivos)) {
+      if (arquivos.length===1) download={arquivo:arquivos[0],nome:arquivos[0].name};
+      else {
+        const JSZip=await carregarBibliotecaZip(),zip=new JSZip();
+        arquivos.forEach(arquivo=>zip.file(arquivo.name,arquivo));
+        download={arquivo:await zip.generateAsync({type:'blob',compression:'STORE'}),nome:'materiais-avantalab.zip'};
       }
     }
-    compartilhamentoConcluido = true;
+    if (controlador.signal.aborted || divulgacaoCompartilhamentoAbortController!==controlador || chave!==chaveSelecaoEnvioDivulgacao()) { nativo?.descartar(); return; }
+    divulgacaoEnvioPreparado?.nativo?.descartar();
+    divulgacaoEnvioPreparado={chave,arquivos,nativo,download};
   } catch (error) {
     const mensagem = traduzErroCompartilhamento(error);
-    if (mensagem) toast(mensagem, { tipo: 'erro', titulo: 'Não foi possível enviar o arquivo' });
+    if (mensagem && divulgacaoCompartilhamentoAbortController===controlador) toast(mensagem, { tipo: 'erro', titulo: 'Não foi possível preparar o envio' });
   } finally {
-    divulgacaoCompartilhamentoAbortController = null;
-    divulgacaoCompartilhamentoMultiploEmAndamento = false;
-    divulgacaoCompartilhamentoStatus = '';
-    if (compartilhamentoConcluido) {
-      limparSelecaoMateriaisDivulgacao(false);
+    clearTimeout(demora);
+    if (divulgacaoCompartilhamentoAbortController===controlador) {
+      divulgacaoCompartilhamentoAbortController = null;
+      divulgacaoCompartilhamentoMultiploEmAndamento = false;
+      divulgacaoCompartilhamentoStatus = '';
+      divulgacaoPreparoDemorado=false;
+      render();
     }
-    render();
+  }
+}
+
+async function compartilharMateriaisSelecionadosDivulgacao() {
+  if (divulgacaoCompartilhamentoMultiploEmAndamento) return;
+  const envio=divulgacaoEnvioPreparado;
+  if (!envio || envio.chave!==chaveSelecaoEnvioDivulgacao()) { invalidarPreparoEnvioDivulgacao(); render(); return; }
+  divulgacaoCompartilhamentoMultiploEmAndamento=true;
+  divulgacaoAbrindoCompartilhamento=true;
+  divulgacaoCompartilhamentoStatus='Abrindo opções de compartilhamento...';
+  atualizarBarraSelecaoDivulgacao();
+  try {
+    if (envio.download) baixarArquivoGeradoVendas(envio.download.arquivo,envio.download.nome);
+    else {
+      // Abertura ligada diretamente ao novo toque: nenhum download ou escrita aqui.
+      const pedido=envio.nativo ? envio.nativo.compartilhar() : solicitarCompartilhamentoNativoDivulgacao(envio.arquivos);
+      if (pedido) await pedido;
+      else if (!await tentarCompartilharArquivosWebDivulgacao(envio.arquivos)) throw new Error('Não foi possível abrir o compartilhamento neste aparelho. Tente novamente.');
+    }
+    if (divulgacaoEnvioPreparado===envio) limparSelecaoMateriaisDivulgacao(false);
+  } catch (erro) {
+    if (!compartilhamentoCanceladoDivulgacao(erro) && divulgacaoEnvioPreparado===envio) {
+      const mensagem=traduzErroCompartilhamento(erro);
+      if (mensagem) toast(mensagem,{tipo:'erro',titulo:'Não foi possível compartilhar'});
+    }
+  } finally {
+    divulgacaoAbrindoCompartilhamento=false;
+    if (divulgacaoEnvioPreparado===envio || !divulgacaoSelecaoAtiva) {
+      divulgacaoCompartilhamentoMultiploEmAndamento=false; divulgacaoCompartilhamentoStatus=''; render();
+    }
   }
 }
 
@@ -12384,6 +12542,10 @@ window.ativarSelecaoMateriaisDivulgacao = ativarSelecaoMateriaisDivulgacao;
 window.alternarSelecaoMaterialDivulgacao = alternarSelecaoMaterialDivulgacao;
 window.limparSelecaoMateriaisDivulgacao = limparSelecaoMateriaisDivulgacao;
 window.compartilharMateriaisSelecionadosDivulgacao = compartilharMateriaisSelecionadosDivulgacao;
+window.prepararEnvioMateriaisDivulgacao = prepararEnvioMateriaisDivulgacao;
+window.cancelarPreparoEnvioDivulgacao = cancelarPreparoEnvioDivulgacao;
+window.continuarPreparoEnvioDivulgacao = continuarPreparoEnvioDivulgacao;
+window.selecionarLoteMateriaisDivulgacao = selecionarLoteMateriaisDivulgacao;
 window.abrirMaterialDivulgacao = abrirMaterialDivulgacao;
 window.navegarMaterialDivulgacao = navegarMaterialDivulgacao;
 window.iniciarGestoMaterialDivulgacao = iniciarGestoMaterialDivulgacao;

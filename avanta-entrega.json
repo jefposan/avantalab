@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_7ajuWnNfGamYe6LJpY5y6V1oitar",
+  "baseDeploymentId": "dpl_BkiRkM7NSJUkBUQRZs3ZLbLAkpb9",
   "migrations": [],
-  "version": "3.2.0.508",
-  "scope": "Pedidos: impressão direta e modelo com logo, tabela e totais em A4/A5"
+  "version": "3.2.0.509",
+  "scope": "AvantaVendas: selecionar até 10 por arraste, preparar envio e compartilhar por novo toque"
 }
