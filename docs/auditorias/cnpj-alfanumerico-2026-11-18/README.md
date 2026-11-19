@@ -33,8 +33,14 @@ Entrega local na branch `codex/nfe-cnpj-alfanumerico`, criada de `origin/main` b
 - [Portal NF-e: schemas de eventos NT 2026.004 v1.01](https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=FOEnx2KAsCk%3D).
 - [ITI: DOC-ICP-04.01](https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/IN2020_15_DOCICP_04.01.pdf): identificação CNPJ no otherName 2.16.76.1.3.3.
 
-## Limites e próxima liberação
+## Limites da validação inicial (18/11/2026)
 
 Não foi emitida/cancelada nota real, acessado certificado privado de cliente, alterado banco hospedado, integrado à main ou enviado pacote à Vercel. Testes locais não equivalem à autorização externa da SEFAZ para emitente alfanumérico.
 
 Antes de liberar o novo formato: validar em homologação com CNPJ/certificado alfanumérico legítimos e autorizador apto, reconciliar com a main atual e aplicar/publicar a entrega pelo pipeline oficial quando autorizado. Preservar o fluxo numérico atual e os artefatos históricos durante essa etapa. Não fabricar um CNPJ ou instalar certificado de teste no cadastro real para transmitir.
+
+## Entrega 3.2.0.504 — 19/11/2026
+
+Integração realizada sobre main 3.2.0.503 (bf2b0f3), preservando as entregas posteriores. Resultado externo em homologacao-externa.md: destinatário alfanumérico oficial autorizado, cStat 100/protocolo 135260010146989. Não comprova emitente alfanumérico ou cancelamento externo. Laboratório, certificado e snapshots locais não pertencem ao pacote.
+
+Inspeção do banco real identificou a restrição de chave em transmission_attempts (artefatos não possuem tal coluna). Migração e teste corrigidos antes da aplicação: emissions, transmission_attempts e certificates aceitam letras somente nas posições oficiais. Migração aplicada em transação com limites de bloqueio/execução, registrada no histórico e três definições conferidas depois; nenhum UPDATE comercial/fiscal ou alteração de configuração.

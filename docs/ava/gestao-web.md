@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.503 -->
+<!-- ava-version: 3.2.0.504 -->
+
+> Revisão 3.2.0.504: Adequação ao CNPJ alfanumérico na chave, assinatura, certificado, transporte, eventos e DANFE, preservando emissão numérica e regras fiscais. Homologação externa autorizada com emitente numérico Saldão Aline e destinatário alfanumérico oficial; cStat 100, protocolo 135260010146989, série 889/número 1. Emitente alfanumérico ainda depende de certificado e ensaio específicos. Laboratório, certificados e dados do teste ficam fora da produção.
 
 > Revisão 3.2.0.503: Vendas > ações do pedido > Lançar no estoque permite ativar depois o estoque de pedidos com produtos e sem movimentação. Em Confirmado/Em separação, reserva e baixa somente ao faturar; em Faturado, baixa física imediata após conferência. O modal lista itens/quantidades, informa o efeito e exige confirmar. Usa estoque principal ativo e saldo disponível; falta de saldo/cadastro precisa ser resolvida em Estoque. Exige consultar/editar vendas e saída de estoque. Não altera valores, cobranças ou notas. Após lançamento o botão some; duplicidade também bloqueada no servidor. Cancelamento/devolução seguem regras e estornos existentes. Em erro/timeout, atualizar a lista antes de repetir; nunca orientar movimentação avulsa para contornar duplicidade.
 

@@ -1,3 +1,8 @@
+# 3.2.0.504 — NF-e: adequar CNPJ alfanumérico preservando emissão numérica
+
+- Adequação ao CNPJ alfanumérico na chave, assinatura, certificado, transporte, eventos e DANFE, preservando emissão numérica e regras fiscais. Homologação externa autorizada com emitente numérico Saldão Aline e destinatário alfanumérico oficial; cStat 100, protocolo 135260010146989, série 889/número 1. Emitente alfanumérico ainda depende de certificado e ensaio específicos. Laboratório, certificados e dados do teste ficam fora da produção.
+- Migração altera somente três restrições de formato, aceitando também documentos numéricos. Sem atualização de notas, séries, números, tributos ou certificados existentes.
+
 # 3.2.0.503 — Pedidos: lançamento posterior no estoque com conferência
 
 - Nova ação Lançar no estoque para pedidos com produtos, confirmados/em separação/faturados e sem movimentação. Confere itens e quantidades do registro salvo; confirmados reservam e faturados baixam, sem alterar financeiro ou fiscal.

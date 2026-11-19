@@ -1,6 +1,11 @@
 {
-  "baseDeploymentId": "dpl_EKvgkaU1NvRZhFi9oN6qqRPR7Buv",
-  "migrations": [],
-  "version": "3.2.0.503",
-  "scope": "Pedidos: lançamento posterior no estoque com conferência, reserva antes do faturamento, baixa após faturamento, proteção contra duplicidade e integração dos estornos. Sem migrações ou operação real de teste; trabalhos paralelos preservados."
+  "baseDeploymentId": "dpl_7xPWbLqvwHCV8Jc9gMdPqSaAE1HR",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261118190000_nfe_identificadores_alfanumericos.sql",
+      "sha256": "361f1d9c2badc7c524521429c510c80824a8a9708b31d3869b08c341231c07c1"
+    }
+  ],
+  "version": "3.2.0.504",
+  "scope": "NF-e: adequar CNPJ alfanumérico preservando emissão numérica e mantendo homologação separada"
 }

@@ -6,8 +6,8 @@ alter table fiscal_private.emissions drop constraint emissions_access_key_check;
 alter table fiscal_private.emissions add constraint emissions_access_key_check check (
  access_key is null or access_key ~ '^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$'
 );
-alter table fiscal_private.artifacts drop constraint artifacts_access_key_check;
-alter table fiscal_private.artifacts add constraint artifacts_access_key_check check (
+alter table fiscal_private.transmission_attempts drop constraint transmission_attempts_access_key_check;
+alter table fiscal_private.transmission_attempts add constraint transmission_attempts_access_key_check check (
  access_key ~ '^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$'
 );
 alter table fiscal_private.certificates drop constraint certificates_subject_document_check;
