@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.496 -->
+<!-- ava-version: 3.2.0.497 -->
+
+> Revisão 3.2.0.497: mantém os fluxos de Clientes Excel e Navegar descritos na 496. A candidata 496 não foi promovida; a 497 entrega ambos com botões alinhados, mesma altura e sem afetar selos. Sem mudança nas instruções operacionais.
 
 > Clientes — 3.2.0.496: em Vendas e Serviços > Clientes, Exportar Excel baixa diretamente um modelo vazio (não exporta a carteira existente), com Instruções e Clientes. Copie os dados do sistema anterior para a aba Clientes; não é importação automática do formato original do VHSYS. São obrigatórios Tipo de pessoa, CPF/CNPJ válido, Razão social / Nome e Consumidor final. Preserve zeros dos documentos/CEP. Importar Excel aceita .xlsx até 5 MB e 1.000 clientes por lote. Revise novos, já cadastrados e erros por linha antes de confirmar; nenhum dado é gravado na prévia. CPF/CNPJ já cadastrado no perfil é ignorado, sem atualizar/sobrescrever; repetidos no arquivo devem ser corrigidos. Dados fiscais faltantes ficam para revisão e inativos permanecem inativos. O código interno é automático; tabela de preços/vendedor são vinculados depois no cadastro. Requer consultar e cadastrar clientes. Em falha, use Revalidar planilha antes de reconfirmar; se a resposta demorou, a prévia atualizada identifica os documentos já gravados e evita duplicar. Não migra vendas, saldos ou históricos.
 

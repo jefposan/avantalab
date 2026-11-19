@@ -1,6 +1,6 @@
 {
   "baseDeploymentId": "dpl_4ePfnHShcmkYPbTyt1mLN7QqGkxp",
   "migrations": [],
-  "version": "3.2.0.496",
+  "version": "3.2.0.497",
   "scope": "Clientes: modelo Excel vazio com 23 campos, download direto, importação com prévia, duplicidades por CPF/CNPJ, permissões e lote transacional. Navegação: menu compacto e abertura imediata com lista do login; eventos de instalação/remoção/pagamento/permissões e recuperação silenciosa. Acesso e dispositivo revalidados ao selecionar. Sem migração SQL ou mudança de máquina/build."
 }

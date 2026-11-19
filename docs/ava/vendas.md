@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.496 -->
+<!-- ava-version: 3.2.0.497 -->
+
+> Revisão 3.2.0.497: sem impacto operacional no AvantaVendas independente. Na Gestão Web, entrega Clientes Excel e Navegar da candidata 496 não promovida, com seletor CSS restrito às ações compactas e sem atingir selos.
 
 > Clientes — revisão 3.2.0.496: sem mudança no AvantaVendas independente. A importação é da carteira empresarial em Gestão Web > Vendas e Serviços > Clientes, com modelo vazio, prévia e confirmação; clientes já cadastrados pelo CPF/CNPJ são ignorados, não atualizados. Não migra pedidos nem altera o catálogo de divulgação.
 

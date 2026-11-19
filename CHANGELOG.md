@@ -1,3 +1,8 @@
+# 3.2.0.497 — Clientes e navegação: entrega conjunta com ações alinhadas e seletor CSS restrito
+
+- Inclui modelo/importação Excel de clientes e Navegar compacto/imediato da candidata 3.2.0.496, não promovida. Botões Importar, Exportar e Novo cliente na mesma linha/altura, inclusive em 320 px.
+- Restringe o ajuste mobile à face das ações compactas, excluindo selos. A tentativa 496 foi corretamente bloqueada pelo teste de seletores genéricos; produção anterior preservada. Causa determinística de CSS, sem relação com concorrência de testes; quatro processos e gate completo mantidos.
+
 # 3.2.0.496 — Clientes e navegação: modelo Excel, importação validada e menu imediato
 
 - Clientes em Vendas e Serviços recebe Importar/Exportar Excel ao lado de Novo cliente, com ações oficiais e ícones. Exportação direta de modelo vazio organizado, instruções, 23 colunas e escolhas assistidas; documentos e CEP como texto para preservar zeros.

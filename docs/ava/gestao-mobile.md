@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.496 -->
+<!-- ava-version: 3.2.0.497 -->
+
+> Revisão 3.2.0.497: sem impacto operacional nativo; ajuste restrito ao seletor CSS das ações de Clientes Web. Mantém orientação de Clientes Excel e Navegar da 496, candidata não promovida.
 
 > Clientes — revisão 3.2.0.496: sem impacto operacional na Gestão mobile nativa. Na Gestão Web, Vendas e Serviços > Clientes recebe modelo Excel vazio e importação validada de novos clientes; não exporta a carteira existente nem altera clientes por CPF/CNPJ já cadastrado. Nenhum plugin, permissão nativa ou envio às lojas nesta entrega.
 

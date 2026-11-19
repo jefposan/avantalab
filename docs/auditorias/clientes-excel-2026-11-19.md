@@ -1,5 +1,7 @@
 # Clientes Excel — 3.2.0.496
 
+Reenvio 3.2.0.497: candidata 496 bloqueada, sem promoção, por teste determinístico de seletor genérico `span` no breakpoint de 380 px. Corrigido para ação oficial compacta com exclusão de `.badge`. Suite completa da tentativa: 3.111 testes, 3.104 aprovados, 6 ignorados e 1 falho, 161.941 ms, Enhanced fixa 8 CPU/16 GB, 4 processos. Mantém concorrência e todos os testes; falha não é instabilidade do executor.
+
 PADRÃO AVANTA 1.24.0. Entrega conjunta autorizada com Navegar compacto/imediato.
 
 ## Contrato e segurança

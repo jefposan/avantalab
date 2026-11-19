@@ -257,7 +257,7 @@ select:focus-visible {
 .page-heading:has(> .client-heading-actions) { align-items: center; flex-wrap: wrap; }
 .client-heading-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; flex-wrap: nowrap; }
 @media (max-width:680px) { .client-heading-actions { width:100%; } .client-heading-actions > button { margin-left:auto; } }
-@media (max-width:380px) { .client-heading-actions { gap:4px; } .client-heading-actions button > span { padding-inline:6px; gap:4px; font-size:12px; } }
+@media (max-width:380px) { .client-heading-actions { gap:4px; } .client-heading-actions button[data-av-action="compact"] > span:not(.badge) { padding-inline:6px; gap:4px; font-size:12px; } }
 
 .button {
   display: inline-flex;
