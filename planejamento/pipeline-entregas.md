@@ -91,6 +91,20 @@ Os testes de upload são simulados e não publicam nem alteram a Vercel.
 
 ## Medição
 
+Otimização 3.2.0.492 autorizada após preview aprovado: nas próximas publicações,
+registrar máquina efetiva, CPU/RAM detectadas, número de processos, total de
+testes, duração da suíte/build e eventual falha. Referência e limites do ensaio:
+`docs/auditorias/paralelismo-vercel-2026-11-18.md`.
+
+Se houver instabilidade relacionada ao paralelismo (memória, disputa de recursos
+ou falhas não determinísticas), o responsável autorizou retornar a dois processos
+com `AVANTA_TEST_CONCURRENCY=2` no ambiente de build da Vercel, mantendo a máquina
+atual e executando novamente o gate completo pelo pipeline oficial após diagnóstico.
+Não repetir silenciosamente uma execução falha até ficar verde, aumentar recursos,
+pular testes, limpar caches por rotina ou promover um build reprovado. Produção
+permanece no deployment anterior até aprovação. Não criar builds extras somente
+para monitorar: coletar os resultados das próximas entregas já necessárias.
+
 Comparações e limites da medição estão em
 `docs/auditorias/pipeline-desempenho-2026-10-22.md`.
 Não extrapolar um benchmark local como tempo já comprovado na Vercel.

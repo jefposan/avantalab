@@ -37,4 +37,12 @@ Deployment `dpl_9ApnjzAK1HPHqA5yE8jPgRkUJHZX`, snapshot
 - Computador local confirmado com dois processos apesar de oito CPUs disponíveis.
 
 Recibo em output/pipeline do checkout canônico. Produção 3.2.0.491 preservada.
-O candidato está pronto para a próxima integração/publicação autorizada, sem trocar o plano ou os recursos da máquina.
+## Implantação e acompanhamento autorizados
+
+O responsável autorizou integrar e publicar o candidato após o ensaio aprovado,
+sem trocar o plano ou os recursos da máquina. Nas próximas entregas necessárias,
+registrar tempos da suíte/build, processos efetivos e falhas. Se houver instabilidade
+relacionada ao paralelismo, retornar a dois processos (`AVANTA_TEST_CONCURRENCY=2`
+no ambiente de build), diagnosticar e executar o gate completo novamente pelo
+pipeline oficial. Não ocultar falhas com retries automáticos nem dispensar testes.
+Registro definitivo desta publicação em output/pipeline do checkout canônico.

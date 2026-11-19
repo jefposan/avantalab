@@ -2,5 +2,5 @@
   "baseDeploymentId": "dpl_Acrf4YzYC1krvmVTgJ7NQw27cF6a",
   "migrations": [],
   "version": "3.2.0.492",
-  "scope": "Infraestrutura: medir em preview até quatro processos de testes na Vercel, limitados à CPU/memória da máquina atual, preservando teto local de dois, suíte completa e proteções. Sem alterações de máquina, plano ou banco."
+  "scope": "Infraestrutura: até quatro processos de testes na Vercel, limitados à CPU/memória da máquina atual, preservando teto local de dois, suíte completa e proteções. Benchmark aprovado; acompanhamento e retorno a dois em caso de instabilidade. Sem alterações de máquina, plano ou banco."
 }

@@ -2,7 +2,7 @@
 
 - Executor reconhece Vercel e usa até quatro processos, respeitando CPU e memória disponíveis na máquina atual; computador local permanece limitado a dois.
 - Reserva de memória, configuração explícita limitada, falhas propagadas e suíte completa obrigatória. Sem cache de aprovação, mudança de máquina/plano, fila ou banco.
-- Medição em preview antes de qualquer promoção; sem impacto operacional na Ava ou nos aplicativos.
+- Preview aprovado: suíte de 5min04s para 2min01s e build de 8min09s para 4min53s nesta medição. Acompanhamento nas próximas entregas e retorno autorizado a dois processos em caso de instabilidade; sem impacto operacional na Ava ou nos aplicativos.
 
 # 3.2.0.491 — Custos e Precificação: seleção em lote e expansão descritiva
 
