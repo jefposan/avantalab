@@ -66,12 +66,16 @@ divisor ou agrupamento sem identidade própria.
 ### Cabeçalho de módulo
 
 - `app/components/SeletorModulos.tsx` é o acionador compartilhado para trocar de
-  módulo nos cabeçalhos Web de página total. Posicionar à direita, antes dos
-  ajustes; preservar logo central e retorno à esquerda. Usa o registro oficial,
+  destino nos cabeçalhos Web de página total. O botão Navegar, com grade e seta,
+  fica à esquerda em lugar de Início, sem duplicação à direita; preservar logo
+  central e ajustes. Dashboard é exibida somente com concessão explícita da
+  empresa atual, seguida dos módulos autorizados. Usa o registro oficial,
   consulta autenticada sem cache ao abrir/selecionar e política de dispositivo.
   Empresa é contexto, nunca concessão. Receber bloqueio de operações e edição
   pendente do consumidor; manter a confirmação oficial e proteções de saída.
-  Em telas menores, grade com nome acessível; sem aviso no rodapé do painel.
+  Em telas menores, manter o nome Navegar, grade e seta visíveis; sem aviso no
+  rodapé do painel. `ModuloHeader.navigation` substitui o retorno somente nos
+  consumidores que a fornecem; os demais conservam o comportamento anterior.
 
 - Reutilizar `app/components/ModuloHeader.tsx` para cabeçalhos leves de módulos:
   retorno à esquerda, identidade do perfil centralizada e ações opcionais à direita.

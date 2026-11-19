@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.494 -->
+<!-- ava-version: 3.2.0.495 -->
+
+> Revisão 3.2.0.495: Navegar (grade e seta), à esquerda, substitui Início e o botão separado MÓDULOS nos cabeçalhos de Custos, Projetos, Operações de Campo, Vendas e Serviços e Marketplaces. Clique para abrir Dashboard e módulos autorizados do perfil atual; Dashboard aparece somente com acesso concedido e vem antes do grupo MÓDULOS. O módulo aberto mantém o selo Atual. Nome Navegar também fica visível em telas menores. Escolher um destino revalida o acesso e a sessão do dispositivo; mantém confirmação de descarte em Custos e bloqueio de operações sinalizadas. Não abre a Dashboard automaticamente ao clicar em Navegar.
 
 > Revisão 3.2.0.494: nos cabeçalhos de Custos, Projetos, Operações de Campo, Vendas e Serviços e Marketplaces, use o seletor à direita, antes dos ajustes, para trocar diretamente de módulo. Em telas menores, o acionador mostra o ícone de grade. Somente acessos autorizados do perfil atual aparecem; abrir e selecionar revalidam o acesso. Sem troca de empresa. Em Custos, descarte de edição exige confirmação; aguarde gravações/sincronização. Em Vendas, conclua ou cancele o editor de novo pedido antes de trocar. Falha de consulta não autoriza navegação; tentar novamente refaz a consulta.
 

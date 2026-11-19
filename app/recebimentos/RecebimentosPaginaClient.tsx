@@ -100,14 +100,13 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
       style={{ '--cp': acesso.empresa.corPrimaria } as CSSProperties}
     >
       <header className={styles.cabecalhoModulo}>
-        <button type="button" onClick={retornarInicio} className={styles.botaoInicio} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</button>
+        {empresaId ? <SeletorModulos empresaId={empresaId} moduloAtual="recebimentos_presencial" corPrimaria={acesso.empresa.corPrimaria} darkMode={acesso.empresa.temaEscuro} ocupado={operacaoEmAndamento} /> : <button type="button" onClick={retornarInicio} className={styles.botaoInicio} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</button>}
         <div className={styles.identidadeModulo}>
           {acesso.empresa.logoUrl
             ? <AdaptiveModuleLogo key={acesso.empresa.logoUrl} src={acesso.empresa.logoUrl} alt={acesso.empresa.nome} className={styles.logoEmpresaModulo} />
             : <span className={styles.nomeEmpresaModulo}>{acesso.empresa.nome}</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifySelf: 'end' }}>
-          <SeletorModulos empresaId={empresaId} moduloAtual="recebimentos_presencial" corPrimaria={acesso.empresa.corPrimaria} darkMode={acesso.empresa.temaEscuro} ocupado={operacaoEmAndamento} />
           <button type="button" className={styles.botaoAjustes} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Operações de Campo" title="Ajustes">⚙</button>
         </div>
       </header>

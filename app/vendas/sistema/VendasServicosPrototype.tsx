@@ -8116,7 +8116,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   return <PermissionContext.Provider value={{ can, user: activeUser, role: activeRole }}><div className="commercial-app" style={{ '--av-profile-primary': profileColor, '--av-profile-on-primary': corEhClara(profileColor) ? '#0f172a' : '#ffffff' } as CSSProperties}>
     <header className="topbar">
       <div className="topbar-start">
-        <button type="button" onClick={retornarGestao} className="module-exit" aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16}/> Início</button>
+        {managementContextReady && managementCatalogBridge?.companyId ? <SeletorModulos empresaId={managementCatalogBridge.companyId} moduloAtual="vendas" corPrimaria={profileColor} ocupado={view === 'novo_pedido'} /> : <button type="button" onClick={retornarGestao} className="module-exit" aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16}/> Início</button>}
         <button type="button" className="mobile-menu-button" onClick={() => setMobileMenu(true)} aria-label="Abrir menu"><Icon name="menu"/></button>
       </div>
       <div className="module-brand">
@@ -8125,7 +8125,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           : <span>{managementProfileReady ? moduleSettings.company.name : 'Carregando perfil empresarial'}</span>}
       </div>
       <div className="topbar-actions">
-        {managementContextReady && managementCatalogBridge?.companyId && <SeletorModulos empresaId={managementCatalogBridge.companyId} moduloAtual="vendas" corPrimaria={profileColor} ocupado={view === 'novo_pedido'} />}
         {managementContextReady && can('settings.view') && <button type="button" className="module-settings-button" onClick={() => navigate('configuracoes')} aria-label="Abrir ajustes de Vendas e Serviços" title="Ajustes"><Icon name="settings" size={18}/></button>}
       </div>
     </header>

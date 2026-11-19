@@ -1,3 +1,9 @@
+# 3.2.0.495 — Navegação: menu Navegar com Dashboard e módulos
+
+- Navegar, com grade e seta, substitui Início à esquerda nos cabeçalhos Web de Custos, Projetos, Operações de Campo, Vendas e Serviços e Marketplaces. Removido o seletor separado à direita; logo e ajustes preservados.
+- Dashboard aparece primeiro apenas quando concedida ao perfil da empresa atual; módulos autorizados seguem em grupo próprio, com destaque Atual. Consulta/revalidação autenticada, política de dispositivo e proteção de edições/gravações preservadas.
+- Acionador mantém nome visível nas telas menores, painel alinhado à esquerda e limitado à viewport. Demais consumidores do ModuloHeader mantêm retorno anterior quando não recebem navegação. Sem banco ou mudanças no build.
+
 # 3.2.0.494 — Navegação: troca direta entre módulos pelo cabeçalho
 
 - Seletor compartilhado à direita, antes dos ajustes, nos cabeçalhos de Custos, Projetos, Operações de Campo, Vendas e Serviços e Marketplaces. Logo central e Início à esquerda preservados; sem mensagem no rodapé do seletor.

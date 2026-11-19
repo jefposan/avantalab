@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_Db9ssTuJQx6LrVtsQLaeJ3XnUiyK",
+  "baseDeploymentId": "dpl_JDtDVj9YpvtoBAb3L1wegybfw5LF",
   "migrations": [],
-  "version": "3.2.0.494",
-  "scope": "Navegação: seletor de módulos autorizados à direita dos cabeçalhos Web, antes dos ajustes, com revalidação por empresa e proteção de edições e operações sinalizadas. Sem banco, mudanças nativas ou alteração de paralelismo do build."
+  "version": "3.2.0.495",
+  "scope": "Navegação: menu Navegar à esquerda, com Dashboard e módulos autorizados, substituindo Início e o seletor separado da direita. Preserva permissões, empresa, proteções de edição e build completo. Sem banco."
 }

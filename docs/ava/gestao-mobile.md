@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.494 -->
+<!-- ava-version: 3.2.0.495 -->
+
+> Revisão 3.2.0.495: sem impacto operacional no runtime da Gestão Mobile. Cabeçalhos Web de módulos usam Navegar à esquerda para abrir Dashboard e módulos autorizados; sem novo menu no app nativo.
 
 > Revisão 3.2.0.494: sem impacto operacional no runtime da Gestão Mobile. Cabeçalhos Web de módulos têm seletor compacto de módulos autorizados, sem alterar os menus ou recursos nativos.
 

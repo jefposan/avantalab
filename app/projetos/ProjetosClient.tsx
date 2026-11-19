@@ -47,14 +47,13 @@ function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId
   corPrimaria?: string;
 }) {
   return <header className={styles.moduleHeader}>
-    {onReturn
+    {returnCompanyId ? <SeletorModulos empresaId={returnCompanyId} moduloAtual="projetos" ocupado={navigationBlocked} darkMode={darkMode} corPrimaria={corPrimaria} /> : onReturn
       ? <button type="button" onClick={onReturn} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</button>
       : <Link href={`/gestao?inicio=1&empresaId=${encodeURIComponent(returnCompanyId)}`} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</Link>}
     <div className={styles.moduleIdentity}>
       {companyLogoUrl ? <AdaptiveModuleLogo key={companyLogoUrl} src={companyLogoUrl} alt={companyName} className={styles.companyLogo} /> : <span>{companyName}</span>}
     </div>
     <div className={styles.moduleHeaderActions}>
-      <SeletorModulos empresaId={returnCompanyId} moduloAtual="projetos" ocupado={navigationBlocked} darkMode={darkMode} corPrimaria={corPrimaria} />
       {showSettings && <button type="button" className={styles.moduleSettingsButton} onClick={onSettings} aria-label="Abrir ajustes do AvantaProjetos" title="Ajustes"><Icon name="settings" size={18} /></button>}
       {badge && <span className={styles.readOnlyBadge}>{badge}</span>}
     </div>

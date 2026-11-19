@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.494 -->
+<!-- ava-version: 3.2.0.495 -->
+
+> Revisão 3.2.0.495: sem impacto operacional no AvantaVendas independente. Na Gestão Web, Vendas e Serviços usa Navegar (grade e seta) à esquerda em vez de Início, com Dashboard e módulos autorizados na lista; removido botão separado à direita. Conclua ou cancele o novo pedido antes de navegar.
 
 > Revisão 3.2.0.494: sem impacto operacional no AvantaVendas independente. Na Gestão Web, Vendas e Serviços recebe seletor de módulos autorizados à direita do cabeçalho, antes dos ajustes; conclua ou cancele o editor de novo pedido antes de trocar.
 
