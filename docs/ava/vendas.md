@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.501 -->
+<!-- ava-version: 3.2.0.502 -->
+
+> Revisão local 3.2.0.502: sem impacto operacional no AvantaVendas independente. Reorganização visual exclusiva de Vendas e Serviços Web; nenhum pedido, catálogo ou histórico alterado.
 
 > Revisão local 3.2.0.501: sem impacto operacional no AvantaVendas independente. Leitor de Clientes no módulo Web corrige compatibilidade de arquivo e mensagens em português; não altera carteiras, pedidos ou catálogos automaticamente.
 

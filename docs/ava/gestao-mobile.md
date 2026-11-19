@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.501 -->
+<!-- ava-version: 3.2.0.502 -->
+
+> Revisão local 3.2.0.502: sem impacto operacional na Gestão mobile nativa. Apenas reorganização dos cards de Vendas e Orçamentos na tela Web, sem novos plugins ou publicação nativa.
 
 > Revisão local 3.2.0.501: sem impacto operacional na Gestão mobile nativa. Correção do leitor Excel de clientes e mensagens orientativas em português somente no módulo Web, sem alteração de banco ou envio às lojas.
 

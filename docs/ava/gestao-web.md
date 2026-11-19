@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.501 -->
+<!-- ava-version: 3.2.0.502 -->
+
+> Revisão local 3.2.0.502: Vendas > card Vendas (antes Operações comerciais) aparece primeiro, após os resumos, com pesquisa e ações existentes. Orçamentos (antes Orçamentos salvos) aparece abaixo somente quando há propostas salvas. Sem propostas, usar Novo orçamento no topo, ao lado de Novo pedido; não há card vazio. Sem alteração de dados ou publicação nesta etapa.
 
 > Revisão local 3.2.0.501: importação de Clientes aceita o modelo Excel com namespaces internos gerados por outros editores. Formato inválido/antigo/protegido, estrutura ilegível ou identificação do modelo ausente são explicados em português, com orientação. Preserve todas as abas do modelo exportado, inclusive _Avanta oculta; copiar somente dados para Clientes. Não recomendar remover a identificação para contornar bloqueios. Validações de perfil, fórmulas, CPF/CNPJ, prévia e confirmação permanecem. Em falha de comunicação, atualizar a lista e revalidar, pois o resultado pode não ter sido recebido. Nada importado ou publicado automaticamente.
 

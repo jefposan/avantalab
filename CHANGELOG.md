@@ -1,3 +1,9 @@
+# 3.2.0.502 — Vendas: priorizar vendas e exibir orçamentos somente quando salvos
+
+- Card Operações comerciais passa a Vendas e ocupa a primeira posição após os resumos, mantendo pesquisa, situações e ações existentes.
+- Card Orçamentos salvos passa a Orçamentos e aparece abaixo de Vendas somente quando há propostas salvas. Removido o grande estado vazio; Novo orçamento permanece no topo ao lado de Novo pedido.
+- Ajuste local para aprovação visual, sem publicação, banco ou alteração de registros reais. Testes cobrem ausência/presença e ordem dos cards; captura obtida na demonstração local.
+
 # 3.2.0.501 — Clientes: compatibilidade da leitura Excel e erros em português
 
 - Leitura usa o interpretador SheetJS já presente no sistema, compatível com namespaces OOXML prefixados (x:workbook) gerados por outros editores. Corrige a exceção técnica ao ler sheets, sem regravar arquivos ou flexibilizar identificação do modelo/perfil, cabeçalhos, fórmulas e limites.

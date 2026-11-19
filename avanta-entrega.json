@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_7CuDqb9MbLQneBUpmB7MJnoYyA97",
+  "baseDeploymentId": "dpl_DXz3AeXKHTbHtTHeRhEQQ867wVRY",
   "migrations": [],
-  "version": "3.2.0.501",
-  "scope": "Clientes: corrigir leitura de Excel com OOXML prefixado e orientar erros em português. Publicação autorizada após validação local. Sem migrações, importação real de clientes ou alterações de outros chats."
+  "version": "3.2.0.502",
+  "scope": "Vendas primeiro, Orçamentos abaixo somente quando salvos, sem card vazio e com Novo orçamento no topo. Layout aprovado e publicação autorizada. Sem migração ou alteração de registros reais; trabalhos paralelos preservados."
 }
