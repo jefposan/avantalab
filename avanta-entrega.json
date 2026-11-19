@@ -1,11 +1,6 @@
 {
-  "baseDeploymentId": "dpl_7xPWbLqvwHCV8Jc9gMdPqSaAE1HR",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261118190000_nfe_identificadores_alfanumericos.sql",
-      "sha256": "361f1d9c2badc7c524521429c510c80824a8a9708b31d3869b08c341231c07c1"
-    }
-  ],
-  "version": "3.2.0.504",
-  "scope": "NF-e: adequar CNPJ alfanumérico preservando emissão numérica e mantendo homologação separada"
+  "baseDeploymentId": "dpl_GJfZNJpPZBvVeJm4zweFM8WR17AC",
+  "migrations": [],
+  "version": "3.2.0.505",
+  "scope": "Usuários: e-mail opcional para equipe e edição segura dos acessos"
 }

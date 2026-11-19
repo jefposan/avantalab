@@ -16,3 +16,13 @@ test('liberações compactas preservam toque e coluna mobile', () => {
   assert.match(campos, /min-h-11/);
   assert.match(campos, /sm:col-span-2/);
 });
+
+test('e-mail é opcional para equipe, sem required incondicional bloqueando acessos', () => {
+  const emailEdicao = editar.match(/<input\s+id="editar-usuario-email"[\s\S]*?\/>/)?.[0];
+  assert.ok(emailEdicao);
+  assert.match(emailEdicao, /readOnly=\{!editandoIdentidadePropria\}/);
+  assert.match(emailEdicao, /required=\{editandoIdentidadePropria && editUsuarioPerfil === 'gestor_master'\}/);
+  const emailCriacao = gestao.match(/<input\s+id="novo-usuario-email"[\s\S]*?\/>/)?.[0];
+  assert.ok(emailCriacao);
+  assert.doesNotMatch(emailCriacao, /\brequired\b/);
+});

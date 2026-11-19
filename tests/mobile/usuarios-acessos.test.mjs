@@ -41,8 +41,25 @@ function ambiente(papel = 'gestor_master', alvoPerfil = 'administrador') {
   let eventoNo = registroEvento;
   function encontrar(no) { if (ts.isExpressionStatement(no) && no.getText(ast).startsWith("window.addEventListener('avantalab:usuario-liberacoes'")) eventoNo = no; ts.forEachChild(no, encontrar); }
   encontrar(ast); vm.runInContext(eventoNo.getText(ast), contexto);
-  return { contexto, state, alvo, enviados, erros, avisos, eventos };
+  return { contexto, state, alvo, enviados, erros, avisos, eventos, campos };
 }
+
+test('mobile cria equipe sem e-mail e permite salvar acessos com contato vazio', async () => {
+  const a = ambiente();
+  a.state.usuarioLiberacoes = { dashboard: true, modulos: [] };
+  a.campos['usuario-email'] = '';
+  a.contexto.emailCadastroValido = () => false;
+  await a.contexto.criarUsuarioMobile();
+  assert.equal(a.erros.length, 0);
+  assert.equal(a.enviados.find(e => e.body)?.body.email, '');
+  const b = ambiente();
+  b.contexto.editarUsuarioMobile('alvo');
+  b.campos['edit-usuario-email'] = '';
+  b.contexto.emailCadastroValido = () => false;
+  await b.contexto.salvarUsuarioMobile();
+  assert.equal(b.erros.length, 0);
+  assert.equal(b.enviados.find(e => e.body)?.body.email, '');
+});
 
 test('edição mobile desativa, salva, relê e reabre sem reativar acessos', async () => {
   const a = ambiente(); a.contexto.editarUsuarioMobile('alvo');

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.504 -->
+<!-- ava-version: 3.2.0.505 -->
+
+> Revisão 3.2.0.505: sem impacto operacional no AvantaVendas independente. Cadastro/edição de usuários da empresa ajustado na Gestão Web/Mobile; autenticação, sessões, acessos concedidos e catálogo do AvantaVendas permanecem preservados.
 
 > Revisão 3.2.0.504: Adequação ao CNPJ alfanumérico na chave, assinatura, certificado, transporte, eventos e DANFE, preservando emissão numérica e regras fiscais. Homologação externa autorizada com emitente numérico Saldão Aline e destinatário alfanumérico oficial; cStat 100, protocolo 135260010146989, série 889/número 1. Emitente alfanumérico ainda depende de certificado e ensaio específicos. Laboratório, certificados e dados do teste ficam fora da produção.
 

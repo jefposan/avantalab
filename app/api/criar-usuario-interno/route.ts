@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
 import { validarLiberacoes } from '@/app/lib/acessos-usuario';
 import { createClient } from '@supabase/supabase-js';
 import { COBRANCA_ATIVA, podeUsar } from '../../lib/cobranca';
 import { resolverEstadoAcessoParaUsuario } from '../../lib/cobranca-servidor';
 import { validarLimiteDeUsuarios } from '../../lib/limites-comerciais-servidor';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
-import { normalizarEmail, validarEmail } from '../../lib/email';
+import { normalizarEmail, validarEmail, emailTecnicoUsuario } from '../../lib/email';
 import { buscarContaAuthPorEmail } from '../../lib/usuario-disponibilidade-servidor';
 
 type PerfilUsuario =
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
 
     const empresaId = String(corpo.empresaId || '').trim();
     const nome = String(corpo.nome || '').trim();
-    const email = normalizarEmail(corpo.email);
+    const emailPessoal = normalizarEmail(corpo.email);
     const loginOriginal = String(corpo.login || '').trim();
     const senha = String(corpo.senha || '');
     const perfil = String(corpo.perfil || '') as PerfilUsuario;
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
       return respostaErro('Informe o nome completo do usuário, com nome e sobrenome.', 400, 'nome');
     }
 
-    if (!validarEmail(email)) {
+    if (emailPessoal && (!validarEmail(emailPessoal) || emailTecnicoUsuario(emailPessoal))) {
       return respostaErro('Informe um e-mail válido para o usuário.', 400, 'email');
     }
 
@@ -162,38 +163,43 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: emailExistente, error: erroEmailExistente } = await supabaseAdmin
-      .from('usuarios_contas')
-      .select('user_id')
-      .ilike('email', email)
-      .limit(1)
-      .maybeSingle();
+    // A ausência de contato não cria uma caixa postal fictícia para o usuário.
+    // O identificador aleatório serve somente ao Auth e ao diretório de login.
+    const email = emailPessoal || `usuario-${randomUUID()}@usuarios.avantalab.local`;
+    if (emailPessoal) {
+      const { data: emailExistente, error: erroEmailExistente } = await supabaseAdmin
+        .from('usuarios_contas')
+        .select('user_id')
+        .ilike('email', email)
+        .limit(1)
+        .maybeSingle();
 
-    if (erroEmailExistente) {
-      console.error('Erro ao verificar e-mail:', erroEmailExistente);
-      return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
-    }
+      if (erroEmailExistente) {
+        console.error('Erro ao verificar e-mail:', erroEmailExistente);
+        return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
+      }
 
-    if (emailExistente) {
-      return respostaErro(
-        'Este e-mail já pertence a uma conta. Use “Adicionar usuário existente” para vinculá-la a este perfil.',
-        400,
-        'email'
-      );
-    }
-
-    try {
-      const contaAuthExistente = await buscarContaAuthPorEmail(supabaseAdmin, email);
-      if (contaAuthExistente) {
+      if (emailExistente) {
         return respostaErro(
           'Este e-mail já pertence a uma conta. Use “Adicionar usuário existente” para vinculá-la a este perfil.',
           400,
           'email'
         );
       }
-    } catch (erroConsultaAuth) {
-      console.error('Erro ao verificar e-mail no Auth:', erroConsultaAuth);
-      return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
+
+      try {
+        const contaAuthExistente = await buscarContaAuthPorEmail(supabaseAdmin, email);
+        if (contaAuthExistente) {
+          return respostaErro(
+            'Este e-mail já pertence a uma conta. Use “Adicionar usuário existente” para vinculá-la a este perfil.',
+            400,
+            'email'
+          );
+        }
+      } catch (erroConsultaAuth) {
+        console.error('Erro ao verificar e-mail no Auth:', erroConsultaAuth);
+        return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
+      }
     }
 
     const { data: usuarioCriado, error: erroCriarAuth } =

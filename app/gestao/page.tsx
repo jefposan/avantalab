@@ -73,7 +73,7 @@ import {
   type TipoPerfil,
 } from '@/app/lib/perfis';
 import { APP_VERSION } from '@/app/lib/version';
-import { normalizarEmail } from '@/app/lib/email';
+import { normalizarEmail, emailPessoalUsuario } from '@/app/lib/email';
 import { consolidarReceitasRealizadasPorMes } from '@/app/lib/financeiro-consolidado';
 import {
   ehCriacaoDePerfilAdicional,
@@ -8104,7 +8104,7 @@ const dadosUsuarioAlterados = usuarioOriginalEditando
   ? JSON.stringify(editUsuarioLiberacoes) !== JSON.stringify(liberacoesDoVinculo(usuarioOriginalEditando)) ||
     editUsuarioNome.trim() !== (usuarioOriginalEditando.nome || '').trim() ||
     editUsuarioLogin.trim().toLowerCase() !== (usuarioOriginalEditando.login || '').toLowerCase() ||
-    editUsuarioEmail.trim().toLowerCase() !== (String(usuarioOriginalEditando.email || '').includes('@usuarios.avantalab.local') ? '' : usuarioOriginalEditando.email || '').toLowerCase() ||
+    editUsuarioEmail.trim().toLowerCase() !== emailPessoalUsuario(usuarioOriginalEditando.email) ||
     editUsuarioPerfil !== usuarioOriginalEditando.perfil
   : false;
 
@@ -10647,7 +10647,7 @@ if (validacaoTelefoneObrigatoria) {
           </h2>
 
           <p className="mt-1 text-sm opacity-80">
-            {editandoIdentidadePropria ? 'Nome, e-mail, login e tipo são obrigatórios. A nova senha é opcional.' : 'E-mail, login e senha são alterados pelo titular da conta. Aqui você administra o nome e os acessos deste perfil.'}
+            {editandoIdentidadePropria ? 'E-mail obrigatório somente para o titular. A nova senha é opcional.' : 'Aqui você administra o nome e os acessos. Login, senha e e-mail são alterados pelo próprio usuário.'}
           </p>
         </div>
 
@@ -10683,7 +10683,7 @@ if (validacaoTelefoneObrigatoria) {
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.4fr_1fr_1.2fr]">
         <label className={`grid min-w-0 gap-1 text-xs font-bold ${textMuted}`} htmlFor="editar-usuario-email">
-          E-mail
+          {editUsuarioPerfil === 'gestor_master' ? 'E-mail do titular' : 'E-mail (opcional)'}
           <input
             id="editar-usuario-email"
             type="email"
@@ -10694,7 +10694,7 @@ if (validacaoTelefoneObrigatoria) {
             autoComplete="email"
             autoCapitalize="none"
             spellCheck={false}
-            required
+            required={editandoIdentidadePropria && editUsuarioPerfil === 'gestor_master'}
             className={`h-11 w-full rounded-xl border px-3 text-sm font-semibold outline-none ${
               darkMode ? 'bg-slate-900 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'
             }`}
@@ -11001,7 +11001,7 @@ if (validacaoTelefoneObrigatoria) {
       {modoFormularioUsuario === 'criar' ? (
         <div>
           <p className={`mb-3 text-xs font-semibold ${textMuted}`}>
-            Todos os campos são obrigatórios. Depois de criado, o usuário poderá entrar com o e-mail ou com o login.
+            E-mail opcional. O usuário poderá entrar com login e senha.
           </p>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[1.4fr_1.35fr_1fr_1.2fr_1.2fr_auto] xl:items-end">
@@ -11025,7 +11025,7 @@ if (validacaoTelefoneObrigatoria) {
             </label>
 
             <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="novo-usuario-email">
-              E-mail
+              E-mail (opcional)
               <input
                 id="novo-usuario-email"
                 type="email"
@@ -11036,7 +11036,6 @@ if (validacaoTelefoneObrigatoria) {
                 autoCapitalize="none"
                 spellCheck={false}
                 name="novo-usuario-email"
-                required
                 className={`h-11 w-full rounded-xl border px-3 text-sm font-semibold outline-none transition ${
                   darkMode
                     ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'

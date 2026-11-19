@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.504 -->
+<!-- ava-version: 3.2.0.505 -->
+
+> Revisão 3.2.0.505: Usuários e permissões > Criar novo usuário: e-mail opcional para equipe; nome completo, login, senha e tipo obrigatórios. Sem e-mail, entrar com login e senha; identificador técnico não é contato. Titular/Gestor Master mantém e-mail obrigatório, mesmo se editar por outro perfil. Editar nome/acessos de outra pessoa não exige e-mail pessoal nem altera identidade global. Contato/login/senha são alterados pelo próprio usuário. Recuperação continua por SMS em celular confirmado; sem celular confirmado, seguir suporte de recuperação existente, nunca prometer envio para endereço técnico ou redefinição administrativa indiscriminada.
 
 > Revisão 3.2.0.504: Adequação ao CNPJ alfanumérico na chave, assinatura, certificado, transporte, eventos e DANFE, preservando emissão numérica e regras fiscais. Homologação externa autorizada com emitente numérico Saldão Aline e destinatário alfanumérico oficial; cStat 100, protocolo 135260010146989, série 889/número 1. Emitente alfanumérico ainda depende de certificado e ensaio específicos. Laboratório, certificados e dados do teste ficam fora da produção.
 

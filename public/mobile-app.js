@@ -7314,10 +7314,10 @@
     state.usuarioPerfil = perfil;
     salvarRascunhoUsuarioMobile();
 
-    if (!nome || !email || !login || !senha || !perfil) {
-      var campoObrigatorio = !nome ? 'nome' : !email ? 'email' : !login ? 'login' : !senha ? 'senha' : 'perfil';
+    if (!nome || !login || !senha || !perfil) {
+      var campoObrigatorio = !nome ? 'nome' : !login ? 'login' : !senha ? 'senha' : 'perfil';
       setErroCampoUsuarioMobile(
-        'Informe nome completo, email, login, senha e perfil.',
+        'Informe nome completo, login, senha e perfil.',
         idCampoUsuarioMobile(campoObrigatorio, 'criar')
       );
       return;
@@ -7328,7 +7328,7 @@
       return;
     }
 
-    if (!emailCadastroValido(email)) {
+    if (email && !emailCadastroValido(email)) {
       setErroCampoUsuarioMobile('Informe um email valido para o usuario.', 'usuario-email');
       return;
     }
@@ -7449,10 +7449,10 @@
       try { liberacoes = validarAcessosUsuarioMobile(state.editUsuarioLiberacoes, perfil); } catch (erro) { setErro(erro.message || 'Aguarde os acessos e tente novamente.'); return; }
     }
 
-    if (!nome || !email || !login) {
-      var campoEdicaoObrigatorio = !nome ? 'nome' : !email ? 'email' : 'login';
+    if (!nome || !login) {
+      var campoEdicaoObrigatorio = !nome ? 'nome' : 'login';
       setErroCampoUsuarioMobile(
-        'Informe nome completo, email e login. O perfil atual sera mantido.',
+        'Informe nome completo e login. O perfil atual será mantido.',
         idCampoUsuarioMobile(campoEdicaoObrigatorio, 'editar')
       );
       return;
@@ -7461,7 +7461,11 @@
       setErroCampoUsuarioMobile('Informe o nome completo do usuario, com nome e sobrenome.', 'edit-usuario-nome');
       return;
     }
-    if (!emailCadastroValido(email)) {
+    if (!email && perfil === 'gestor_master' && state.empresa && String(state.empresa.acessoId) === String(acessoEdicaoId)) {
+      setErroCampoUsuarioMobile('O titular precisa manter um e-mail válido.', 'edit-usuario-email');
+      return;
+    }
+    if (email && !emailCadastroValido(email)) {
       setErroCampoUsuarioMobile('Informe um email valido para o usuario.', 'edit-usuario-email');
       return;
     }
@@ -15419,10 +15423,10 @@
     return (
       '<div class="grid gap-2 rounded-2xl bg-slate-50 p-3">' +
         '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Criar novo usuario</p>' +
-        '<p class="text-xs font-semibold leading-relaxed text-slate-500">Todos os campos sao obrigatorios. O usuario podera entrar com o email ou com o login.</p>' +
+        '<p class="text-xs font-semibold leading-relaxed text-slate-500">E-mail opcional. O usuário poderá entrar com login e senha.</p>' +
         '<label for="usuario-nome" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Nome completo</label>' +
         '<input id="usuario-nome" value="' + escapeHtml(state.usuarioNome || '') + '" placeholder="Nome e sobrenome" autocomplete="name" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
-        '<label for="usuario-email" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Email</label>' +
+        '<label for="usuario-email" class="text-[10px] font-black uppercase tracking-wide text-slate-500">E-mail (opcional)</label>' +
         '<input id="usuario-email" type="email" inputmode="email" value="' + escapeHtml(state.usuarioEmail || '') + '" placeholder="usuario@empresa.com.br" autocomplete="email" autocapitalize="none" spellcheck="false" oninput="this.value=this.value.toLowerCase()" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
         '<div class="grid gap-2">' +
           '<label for="usuario-login" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Login</label>' +
@@ -15475,10 +15479,10 @@
     return (
       '<div class="grid gap-2 rounded-2xl bg-cyan-50 p-3">' +
         '<div class="flex items-center justify-between gap-2"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Editar usuario</p><button id="cancelar-edicao-usuario" type="button" class="text-[10px] font-black text-slate-500">Cancelar</button></div>' +
-        '<p class="text-xs font-semibold leading-relaxed text-slate-500">' + (identidadePropria ? 'Nome, email, login e tipo sao obrigatorios. A nova senha e opcional.' : 'Email, login e senha sao alterados pelo titular. Aqui voce administra nome e acessos deste perfil.') + '</p>' +
+        '<p class="text-xs font-semibold leading-relaxed text-slate-500">' + (identidadePropria ? 'E-mail obrigatório somente para o titular. A nova senha é opcional.' : 'Aqui você administra nome e acessos. Login, senha e e-mail são alterados pelo próprio usuário.') + '</p>' +
         '<label for="edit-usuario-nome" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Nome completo</label>' +
         '<input id="edit-usuario-nome" value="' + escapeHtml(state.editUsuarioNome || '') + '" placeholder="Nome e sobrenome" autocomplete="name" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<label for="edit-usuario-email" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Email</label>' +
+        '<label for="edit-usuario-email" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">' + (state.editUsuarioPerfil === 'gestor_master' ? 'E-mail do titular' : 'E-mail (opcional)') + '</label>' +
         '<input id="edit-usuario-email"' + somenteLeitura + ' type="email" inputmode="email" value="' + escapeHtml(state.editUsuarioEmail || '') + '" placeholder="usuario@empresa.com.br" autocomplete="email" autocapitalize="none" spellcheck="false" oninput="this.value=this.value.toLowerCase()" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<label for="edit-usuario-login" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Login</label>' +
         '<input id="edit-usuario-login"' + somenteLeitura + ' value="' + escapeHtml(state.editUsuarioLogin || '') + '" placeholder="Login" autocomplete="username" autocapitalize="none" spellcheck="false" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +

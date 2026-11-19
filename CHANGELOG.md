@@ -1,3 +1,10 @@
+# 3.2.0.505 — Usuários: e-mail opcional para equipe e edição segura dos acessos
+
+- Cadastro de usuários da empresa permite e-mail em branco, mantendo nome completo, login, senha e perfil obrigatórios. Identificador técnico aleatório fica restrito ao Auth/diretório, sem ser apresentado como contato; e-mail preenchido continua validado e único.
+- Edição Web/Mobile deixa de bloquear alterações de acessos quando o e-mail pessoal está vazio. Salvar nome/permissões de outra pessoa preserva a identidade global; telefone confirmado e recuperação por SMS seguem o fluxo existente.
+- Titular (Gestor Master) mantém e-mail obrigatório, inclusive quando edita sua conta por outro perfil. Somente o próprio usuário pode alterar seu contato/login/senha; permissões, isolamento empresarial e limites de assinatura preservados.
+- Base oficial 3.2.0.504 integralmente preservada, incluindo NF-e alfanumérica e migração já entregue. Nenhuma migração nova, alteração de usuários reais ou publicação nas lojas.
+
 # 3.2.0.504 — NF-e: adequar CNPJ alfanumérico preservando emissão numérica
 
 - Adequação ao CNPJ alfanumérico na chave, assinatura, certificado, transporte, eventos e DANFE, preservando emissão numérica e regras fiscais. Homologação externa autorizada com emitente numérico Saldão Aline e destinatário alfanumérico oficial; cStat 100, protocolo 135260010146989, série 889/número 1. Emitente alfanumérico ainda depende de certificado e ensaio específicos. Laboratório, certificados e dados do teste ficam fora da produção.

@@ -18,7 +18,7 @@ import {
 } from '../lib/database';
 import { normalizarTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { validarNomeCompleto } from '../lib/nome-pessoa';
-import { validarEmail } from '../lib/email';
+import { validarEmail, emailPessoalUsuario } from '../lib/email';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from './useUI';
 
 const CHAVE_RASCUNHO_USUARIO_WEB = 'avantalab:rascunho:v1:gestao-web:usuarios:';
@@ -341,16 +341,16 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     const loginLimpo = usuarioLogin.trim().toLowerCase();
     const senhaLimpa = usuarioSenha.trim();
 
-    if (!nomeLimpo || !emailLimpo || !loginLimpo || !senhaLimpa || !usuarioPerfil) {
-      const campo = !nomeLimpo ? 'nome' : !emailLimpo ? 'email' : !loginLimpo ? 'login' : !senhaLimpa ? 'senha' : 'perfil';
-      avisarCampoUsuario('Campos obrigatórios', 'Informe nome completo, e-mail, login, senha e tipo de usuário.', campo, 'criar');
+    if (!nomeLimpo || !loginLimpo || !senhaLimpa || !usuarioPerfil) {
+      const campo = !nomeLimpo ? 'nome' : !loginLimpo ? 'login' : !senhaLimpa ? 'senha' : 'perfil';
+      avisarCampoUsuario('Campos obrigatórios', 'Informe nome completo, login, senha e tipo de usuário.', campo, 'criar');
       return;
     }
     if (!validarNomeCompleto(nomeLimpo)) {
       avisarCampoUsuario('Nome incompleto', 'Informe o nome completo do usuário, com nome e sobrenome.', 'nome', 'criar');
       return;
     }
-    if (!validarEmail(emailLimpo)) {
+    if (emailLimpo && !validarEmail(emailLimpo)) {
       avisarCampoUsuario('E-mail inválido', 'Informe um e-mail válido para este usuário.', 'email', 'criar');
       return;
     }
@@ -436,7 +436,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     setUsuarioEditandoId(usuario.id);
     setEditUsuarioNome(usuario.nome || '');
     setEditUsuarioLogin(usuario.login || '');
-    setEditUsuarioEmail(String(usuario.email || '').includes('@usuarios.avantalab.local') ? '' : (usuario.email || ''));
+    setEditUsuarioEmail(emailPessoalUsuario(usuario.email));
     setEditUsuarioNovaSenha('');
     setEditUsuarioConfirmarSenha('');
     setMostrarEditUsuarioNovaSenha(false);
@@ -471,8 +471,8 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     const loginLimpo = editUsuarioLogin.trim().toLowerCase();
 
     if (!validarNomeCompleto(nomeLimpo)) { avisarCampoUsuario('Nome incompleto', 'Informe o nome completo do usuário, com nome e sobrenome.', 'nome', 'editar'); return; }
-    if (!emailLimpo) { avisarCampoUsuario('Campo obrigatório', 'Informe o e-mail deste usuário.', 'email', 'editar'); return; }
-    if (!validarEmail(emailLimpo)) { avisarCampoUsuario('E-mail inválido', 'Informe um e-mail válido para este usuário.', 'email', 'editar'); return; }
+    if (!emailLimpo && editUsuarioPerfil === 'gestor_master' && usuarioEditandoId === acessoUsuarioAtualId) { avisarCampoUsuario('Campo obrigatório', 'O titular precisa manter um e-mail válido.', 'email', 'editar'); return; }
+    if (emailLimpo && !validarEmail(emailLimpo)) { avisarCampoUsuario('E-mail inválido', 'Informe um e-mail válido para este usuário.', 'email', 'editar'); return; }
     if (!loginLimpo) { avisarCampoUsuario('Campo obrigatório', 'Informe o login deste usuário.', 'login', 'editar'); return; }
     if (loginLimpo.includes('@')) { avisarCampoUsuario('Login inválido', 'Use um login simples, sem @.', 'login', 'editar'); return; }
     if (editUsuarioNovaSenha.trim() !== editUsuarioConfirmarSenha.trim()) { avisarCampoUsuario('Senha não confere', 'Repita a nova senha exatamente igual.', 'confirmar-senha', 'editar'); return; }
@@ -485,7 +485,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       JSON.stringify(editUsuarioLiberacoes) !== JSON.stringify(liberacoesDoVinculo(usuarioOriginal)) ||
       nomeLimpo !== nomeOriginal ||
       loginLimpo !== loginOriginal ||
-      emailLimpo !== String(usuarioOriginal.email || '').toLowerCase() ||
+      emailLimpo !== emailPessoalUsuario(usuarioOriginal.email) ||
       editUsuarioPerfil !== perfilOriginal ||
       Boolean(editUsuarioNovaSenha.trim());
 

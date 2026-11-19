@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import * as crypto from 'node:crypto';
 
 function load(file,deps={}) {
  const exports={};
@@ -35,7 +36,7 @@ function environment({role='gestor_master',billing=false,quotaError=false,quotaA
   };
   const q={select(){return q;},eq(k,v){filters.push(r=>r[k]===v);return q;},neq(k,v){filters.push(r=>r[k]!==v);return q;},in(k,vs){filters.push(r=>vs.includes(r[k]));return q;},ilike(k,v){filters.push(r=>String(r[k]).toLowerCase()===v.toLowerCase());return q;},limit(){return q;},update(p){patch=p;return q;},insert(p){insert=p;return q;},upsert(p){insert=p;return q;},maybeSingle:async()=>{const r=run();return{...r,data:r.data?.[0]||null};},single:async()=>{const r=run();return{...r,data:r.data?.[0]||null};},then(ok,bad){return Promise.resolve(run()).then(ok,bad);}};return q;
  }};
- const deps={'next/server':{NextResponse},'@supabase/supabase-js':{createClient:()=>db},'@/app/lib/acessos-usuario':access,'@/app/lib/usuarios-empresa-liberacoes':releases,
+ const deps={'node:crypto':crypto,'next/server':{NextResponse},'@supabase/supabase-js':{createClient:()=>db},'@/app/lib/acessos-usuario':access,'@/app/lib/usuarios-empresa-liberacoes':releases,
  '../../lib/nome-pessoa':names,'../../lib/email':email,'../../lib/usuario-disponibilidade-servidor':{buscarContaAuthPorEmail:async()=>null},
  '../../lib/cobranca':{COBRANCA_ATIVA:billing,podeUsar:()=>true},'../../lib/cobranca-servidor':{resolverEstadoAcessoParaUsuario:async()=>{if(quotaError)throw Error('assinatura indisponível');return{};}},'../../lib/limites-comerciais-servidor':{validarLimiteDeUsuarios:async()=>quotaAllowed?{permitido:true}:{permitido:false,mensagem:'Limite atingido'}}};
  const invoke=(file,body)=>load('app/api/'+file+'/route.ts',deps).POST(new Request('https://mock.invalid/api/'+file,{method:'POST',headers:{authorization:'Bearer ficticio','content-type':'application/json'},body:JSON.stringify(body)}));
@@ -54,6 +55,68 @@ test('nome local e permissões continuam editáveis sem escrita de identidade gl
  assert.equal(r.status,200);assert.equal(e.rows.usuarios_empresa[1].nome,'Nome no Perfil');assert.equal(e.rows.usuarios_empresa[1].dashboard_liberada,false);
  assert.equal(e.calls.some(c=>c.kind==='auth'||c.kind==='rpc'||c.table==='usuarios_contas'),false);
  assert.equal(e.rows.usuarios_empresa[2].nome,'Pessoa Fictícia');
+});
+test('equipe sem e-mail pessoal salva acessos sem trocar identidade, inclusive no outro perfil',async()=>{
+ const e=environment();
+ for(const row of e.rows.usuarios_empresa.filter(r=>r.user_id==='victim')) row.email='usuario-teste@usuarios.avantalab.local';
+ e.rows.usuarios_contas[1].email='usuario-teste@usuarios.avantalab.local';
+ const r=await e.update({email:'',nome:'Nome no Perfil',liberacoes:{dashboard:false,modulos:['custos']}});
+ assert.equal(r.status,200);
+ assert.equal(e.rows.usuarios_empresa[1].dashboard_liberada,false);
+ assert.equal(e.rows.usuarios_empresa[2].email,'usuario-teste@usuarios.avantalab.local');
+ assert.equal(e.calls.some(c=>c.kind==='auth'||c.kind==='rpc'||c.table==='usuarios_contas'),false);
+});
+test('omitir e-mail permite editar acessos sem apagar e-mail pessoal existente',async()=>{
+ const e=environment();const r=await e.update({email:undefined,nome:'Nome no Perfil'});
+ assert.equal(r.status,200);assert.equal(e.rows.usuarios_empresa[1].email,'victim@example.invalid');
+ assert.equal(e.calls.some(c=>c.kind==='auth'),false);
+});
+test('titular não remove e-mail, inclusive ao editar por outro perfil',async()=>{
+ const e=environment();
+ assert.equal((await e.update({acessoId:'actor-link',email:'',login:'actor',perfil:'gestor_master'})).status,400);
+ e.rows.usuarios_empresa.push({id:'owner-B',empresa_id:'B',user_id:'actor',perfil:'gestor_master',status:'ativo'});
+ e.rows.usuarios_empresa[0].perfil='operador_completo';
+ assert.equal((await e.update({acessoId:'actor-link',email:'',login:'actor'})).status,400);
+ assert.equal(e.calls.length,0);
+});
+test('usuário sem e-mail pessoal edita a própria conta sem recriar identidade técnica',async()=>{
+ const e=environment({role:'operador_completo'});
+ e.identity.email='usuario-teste@usuarios.avantalab.local';
+ e.rows.usuarios_empresa[0].email=e.identity.email;e.rows.usuarios_contas[0].email=e.identity.email;
+ const r=await e.update({acessoId:'actor-link',email:'',login:'actor',nome:'Ator Atualizado'});
+ assert.equal(r.status,200);assert.equal(e.identity.email,'usuario-teste@usuarios.avantalab.local');
+ assert.equal(e.calls.some(c=>c.kind==='auth'),false);
+});
+test('equipe pode remover seu contato; Auth e diretório mantêm identificador para login',async()=>{
+ const e=environment({role:'operador_completo'});
+ const r=await e.update({acessoId:'actor-link',email:'',login:'actor'});
+ assert.equal(r.status,200);assert.match(e.identity.email,/^usuario-[a-f0-9-]+@usuarios\.avantalab\.local$/);
+ assert.equal(e.rows.usuarios_empresa[0].email,e.identity.email);
+ assert.equal(e.rows.usuarios_contas[0].email,e.identity.email);
+});
+test('novo usuário sem e-mail tem identificador único, login e senha sem relaxar perfil',async()=>{
+ const e=environment();
+ const body={empresaId:'A',nome:'Pessoa Nova',email:'',login:'novo',senha:'SenhaFicticia123',perfil:'operador_simples'};
+ assert.equal((await e.invoke('criar-usuario-interno',body)).status,200);
+ const account=e.rows.usuarios_contas.find(r=>r.user_id==='new-user');
+ assert.match(account.email,/^usuario-[a-f0-9-]+@usuarios\.avantalab\.local$/);
+ assert.equal(account.login,'novo');
+ const second=environment();assert.equal((await second.invoke('criar-usuario-interno',body)).status,200);
+ assert.notEqual(second.rows.usuarios_contas.find(r=>r.user_id==='new-user').email,account.email);
+ for(const patch of [{email:'invalido'},{email:'x@usuarios.avantalab.local'},{login:''},{senha:''},{perfil:'gestor_master'}]){
+  const env=environment();assert.equal((await env.invoke('criar-usuario-interno',{...body,...patch})).status,400);
+  assert.equal(env.calls.length,0);
+ }
+});
+test('opcional não significa ignorar duplicidade ou permitir endereço técnico escolhido',async()=>{
+ const body={empresaId:'A',nome:'Pessoa Nova',login:'novo',senha:'SenhaFicticia123',perfil:'operador_simples'};
+ for(const patch of [{email:'victim@example.invalid'},{login:'victim',email:''}]){
+  const e=environment();assert.equal((await e.invoke('criar-usuario-interno',{...body,...patch})).status,400);
+  assert.equal(e.calls.length,0);
+ }
+ const e=environment({role:'operador_completo'});
+ assert.equal((await e.update({acessoId:'actor-link',login:'actor',email:'escolhido@usuarios.avantalab.local'})).status,400);
+ assert.equal(e.calls.length,0);
 });
 test('vínculo sem login próprio aceita o login global inalterado sem permitir sua mudança',async()=>{
  const e=environment();e.rows.usuarios_empresa[1].login=null;

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import vm from 'node:vm';
+import * as crypto from 'node:crypto';
 import { createElement } from 'react';
 import * as jsxRuntime from 'react/jsx-runtime';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -37,7 +38,7 @@ function ambiente({ papel = 'gestor_master', omitir = false, persistir = true, a
     const q = { select(c) { colunas = c; return q; }, eq(k,v) { filtros.push(l => l[k] === v); return q; }, neq(k,v) { filtros.push(l => l[k] !== v); return q; }, in(k,vs) { filtros.push(l => vs.includes(l[k])); return q; }, limit() { return q; }, update(v) { patch = v; return q; }, maybeSingle: async () => { const r = executar(); return { ...r, data: r.data[0] || null }; }, single: async () => { const r = executar(); return { ...r, data: r.data[0] || null }; }, then(resolve, reject) { return Promise.resolve(executar()).then(resolve, reject); } };
     return q;
   } };
-  const deps = { 'next/server': { NextResponse }, '@supabase/supabase-js': { createClient: () => db }, '@/app/lib/acessos-usuario': domain, '@/app/lib/usuarios-empresa-liberacoes': helper, '../../lib/nome-pessoa': nomes, '../../lib/email': { normalizarEmail: e => e, validarEmail: () => true }, '../../lib/usuario-disponibilidade-servidor': { buscarContaAuthPorEmail: async () => null } };
+  const deps = { 'node:crypto': crypto, 'next/server': { NextResponse }, '@supabase/supabase-js': { createClient: () => db }, '@/app/lib/acessos-usuario': domain, '@/app/lib/usuarios-empresa-liberacoes': helper, '../../lib/nome-pessoa': nomes, '../../lib/email': carregar('app/lib/email.ts', {}), '../../lib/usuario-disponibilidade-servidor': { buscarContaAuthPorEmail: async () => null } };
   const get = carregar('app/api/usuarios-empresa/route.ts', deps).GET;
   deps['@/app/lib/navegacao-acessos-servidor'] = { notificarAcessosModulos: async () => {} };
   const post = carregar('app/api/atualizar-usuario-empresa/route.ts', deps).POST;

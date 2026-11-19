@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.504 -->
+<!-- ava-version: 3.2.0.505 -->
+
+> Revisão 3.2.0.505: criação e edição de usuários da empresa permitem e-mail pessoal vazio para equipe, mantendo nome completo, login e senha no cadastro. Titular/Gestor Master mantém e-mail obrigatório. Alterar nome/acessos de outra pessoa não altera credenciais globais. Login por usuário e senha e recuperação por SMS em celular confirmado permanecem. Nenhum plugin, permissão nativa ou envio às lojas nesta entrega.
 
 > Revisão 3.2.0.504: Adequação ao CNPJ alfanumérico na chave, assinatura, certificado, transporte, eventos e DANFE, preservando emissão numérica e regras fiscais. Homologação externa autorizada com emitente numérico Saldão Aline e destinatário alfanumérico oficial; cStat 100, protocolo 135260010146989, série 889/número 1. Emitente alfanumérico ainda depende de certificado e ensaio específicos. Laboratório, certificados e dados do teste ficam fora da produção.
 

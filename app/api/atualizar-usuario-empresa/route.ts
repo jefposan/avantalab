@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
 import { notificarAcessosModulos } from '@/app/lib/navegacao-acessos-servidor';
 import { validarLiberacoes, liberacoesDoVinculo } from '@/app/lib/acessos-usuario';
 import { liberacoesPersistidasIguais } from '@/app/lib/usuarios-empresa-liberacoes';
 import { createClient } from '@supabase/supabase-js';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
-import { normalizarEmail, validarEmail } from '../../lib/email';
+import { normalizarEmail, validarEmail, emailTecnicoUsuario } from '../../lib/email';
 import { buscarContaAuthPorEmail } from '../../lib/usuario-disponibilidade-servidor';
 
 type PerfilUsuario =
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
     const acessoId = String(corpo.acessoId || '').trim();
     const nome = String(corpo.nome || '').trim();
     const loginEnviado = corpo.login === undefined ? '' : String(corpo.login || '').trim().toLowerCase();
-    const emailEnviado = normalizarEmail(corpo.email);
+    let emailEnviado = normalizarEmail(corpo.email);
     const perfil = String(corpo.perfil || '') as PerfilUsuario;
     const novaSenha = String(corpo.novaSenha || '').trim();
     let liberacoes;
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
       return respostaErro('Informe o nome completo do usuario, com nome e sobrenome.', 400, 'nome');
     }
 
-    if (!validarEmail(emailEnviado)) {
+    if (emailEnviado && !validarEmail(emailEnviado)) {
       return respostaErro('Informe um e-mail valido para o usuario.', 400, 'email');
     }
 
@@ -144,6 +145,29 @@ export async function POST(request: Request) {
     const solicitanteEhAdministrador = permissao.perfil === 'administrador';
     const solicitanteEhOperadorCompleto = permissao.perfil === 'operador_completo';
     const editandoProprioUsuario = usuarioAlvo.user_id === user.id;
+    // Campo ausente não é uma solicitação de mudança de identidade. E-mail
+    // técnico fica oculto na interface; salvar acessos não pode apagá-lo.
+    if (corpo.email === undefined || (!editandoProprioUsuario && !emailEnviado)
+      || (!emailEnviado && emailTecnicoUsuario(usuarioAlvo.email))) {
+      emailEnviado = normalizarEmail(usuarioAlvo.email);
+    }
+    if (emailTecnicoUsuario(emailEnviado) && emailEnviado !== normalizarEmail(usuarioAlvo.email)) {
+      return respostaErro('Este domínio é reservado ao sistema. Informe seu e-mail pessoal ou deixe o campo vazio.', 400, 'email');
+    }
+    if (editandoProprioUsuario && (!emailEnviado || emailTecnicoUsuario(emailEnviado))) {
+      // A identidade é global: quem é titular em outro perfil também precisa
+      // manter contato real. Falha de consulta nunca dispensa essa proteção.
+      const titulares = await supabaseAdmin.from('usuarios_empresa').select('id')
+        .eq('user_id', user.id).eq('perfil', 'gestor_master').limit(1);
+      if (titulares.error) return respostaErro('Não foi possível conferir a titularidade da conta. Tente novamente.', 503);
+      if (titulares.data?.length || perfil === 'gestor_master') {
+        return respostaErro('O titular precisa manter um e-mail válido na conta.', 400, 'email');
+      }
+      emailEnviado ||= `usuario-${randomUUID()}@usuarios.avantalab.local`;
+    }
+    if (perfil === 'gestor_master' && emailTecnicoUsuario(emailEnviado)) {
+      return respostaErro('Para se tornar titular, o usuário precisa cadastrar seu e-mail primeiro.', 400, 'email');
+    }
     const alvoEhOperador = ['operador_completo', 'operador_simples'].includes(usuarioAlvo.perfil);
     if (liberacoes && JSON.stringify(liberacoes) !== JSON.stringify(liberacoesDoVinculo(usuarioAlvo)) && !solicitanteEhGestorMaster && !(solicitanteEhAdministrador && alvoEhOperador)) return respostaErro('Você não pode alterar as liberações deste usuário.', 403);
 
@@ -252,34 +276,36 @@ export async function POST(request: Request) {
       }
     }
 
-    const { data: conflitoEmailVinculo, error: erroConflitoEmailVinculo } = await supabaseAdmin
-      .from('usuarios_contas')
-      .select('user_id')
-      .eq('email', emailEnviado)
-      .neq('user_id', usuarioAlvo.user_id)
-      .limit(1)
-      .maybeSingle();
+    if (editandoProprioUsuario) {
+      const { data: conflitoEmailVinculo, error: erroConflitoEmailVinculo } = await supabaseAdmin
+        .from('usuarios_contas')
+        .select('user_id')
+        .eq('email', emailEnviado)
+        .neq('user_id', usuarioAlvo.user_id)
+        .limit(1)
+        .maybeSingle();
 
-    if (erroConflitoEmailVinculo) {
-      console.error('Erro ao verificar e-mail:', erroConflitoEmailVinculo);
-      return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
-    }
-    if (conflitoEmailVinculo) {
-      return respostaErro('Este e-mail já está em uso por outra conta.', 400, 'email');
-    }
-
-    try {
-      const conflitoEmailAuth = await buscarContaAuthPorEmail(
-        supabaseAdmin,
-        emailEnviado,
-        usuarioAlvo.user_id
-      );
-      if (conflitoEmailAuth) {
+      if (erroConflitoEmailVinculo) {
+        console.error('Erro ao verificar e-mail:', erroConflitoEmailVinculo);
+        return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
+      }
+      if (conflitoEmailVinculo) {
         return respostaErro('Este e-mail já está em uso por outra conta.', 400, 'email');
       }
-    } catch (erroConsultaAuth) {
-      console.error('Erro ao verificar e-mail no Auth:', erroConsultaAuth);
-      return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
+
+      try {
+        const conflitoEmailAuth = await buscarContaAuthPorEmail(
+          supabaseAdmin,
+          emailEnviado,
+          usuarioAlvo.user_id
+        );
+        if (conflitoEmailAuth) {
+          return respostaErro('Este e-mail já está em uso por outra conta.', 400, 'email');
+        }
+      } catch (erroConsultaAuth) {
+        console.error('Erro ao verificar e-mail no Auth:', erroConsultaAuth);
+        return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
+      }
     }
 
     // O Auth é a fonte da verdade. Não salvar primeiro o e-mail do vínculo:
