@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_AW2PuZnrw2rjD9yoChp8UWmiCT7p",
-  "migrations": [{"path":"supabase/migrations/20261119010000_custos_excel_seletivo_multicatalogo.sql","sha256":"6e5c74b55bd06d63b5fec8ba386495fd610f77c71ca5f5dbfb948436feadd48f"}],
-  "version": "3.2.0.490",
-  "scope": "Custos e Precificação: Excel com seleção de campos e tabelas, atualização parcial por ID no catálogo original, prévia, histórico e nova tentativa real; valida somente campos enviados, preservando cadastros legados incompletos."
+  "baseDeploymentId": "dpl_34dkWXmq2B6a2KQw6Lv5i11qEQx3",
+  "migrations": [],
+  "version": "3.2.0.491",
+  "scope": "Custos e Precificação: proposta local de seleção em lote independente dos campos e das tabelas, com botão em destaque e expansão descritiva. Sem mudanças de banco; ainda não publicada."
 }

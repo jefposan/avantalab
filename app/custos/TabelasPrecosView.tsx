@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Icon } from '@/app/projetos/components/Icon';
 import { Modal } from '@/app/projetos/components/Modal';
 import CampoBusca from '@/app/components/CampoBusca';
 import CampoMoeda from '@/app/components/CampoMoeda';
+import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
+import BotaoExpandirCard from '@/app/components/BotaoExpandirCard';
 import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero, normalizarTexto } from '@/app/lib/formatters';
 import {
   aplicarReajusteTabelas, importarCadastroProdutosPrecos, salvarPrecoTabela, salvarTabelaPreco,
@@ -94,7 +96,13 @@ export default function TabelasPrecosView({
   const [exportacaoAberta, setExportacaoAberta] = useState(false);
   const [erroExportacao, setErroExportacao] = useState('');
   const [camposExportacao, setCamposExportacao] = useState<string[]>([]);
+  const [camposExportacaoAbertos, setCamposExportacaoAbertos] = useState(false);
+  const camposExportacaoId = useId();
   const [tabelasExportacao, setTabelasExportacao] = useState<string[]>([]);
+  const camposCadastro = CAMPOS_EXCEL.filter(([campo]) => campo !== 'preco_venda');
+  const todosCamposCadastro = camposCadastro.every(([campo]) => camposExportacao.includes(campo));
+  const colunasTabelasExportacao = colunasExportacaoTabelasPreco(tabelas);
+  const todasTabelasExportacao = camposExportacao.includes('preco_venda') && colunasTabelasExportacao.every((coluna) => tabelasExportacao.includes(coluna.codigo));
   const [erroImportacao, setErroImportacao] = useState('');
   const ultimoArquivo = useRef<File | null>(null);
   const [reajusteAberto, setReajusteAberto] = useState(false);
@@ -376,11 +384,16 @@ export default function TabelasPrecosView({
       <div className={styles.exportSelection}>
         {erroExportacao && <p className={styles.repriceError} role="alert">{erroExportacao}</p>}
         <p>Código e Nome acompanham o arquivo para identificação. IDs e datas de atualização ficam ocultos e não devem ser alterados.</p>
-        <details><summary>Dados do cadastro · {camposExportacao.filter((campo) => campo !== 'preco_venda').length} selecionado(s)</summary><fieldset><legend>Campos opcionais</legend><div className={styles.exportColumnGrid}>{CAMPOS_EXCEL.filter(([campo]) => campo !== 'preco_venda').map(([campo, titulo]) => <label key={campo}><input type="checkbox" checked={camposExportacao.includes(campo)} onChange={() => setCamposExportacao((atuais) => atuais.includes(campo) ? atuais.filter((item) => item !== campo) : [...atuais, campo])} />{titulo}</label>)}</div></fieldset></details>
-        <fieldset><legend>Tabelas de preços</legend><div className={styles.exportColumnGrid}>
+        <section aria-label="Dados do cadastro para exportação">
+          <div className={styles.exportGroupHeader}><strong>Dados do cadastro <span>· {camposExportacao.filter((campo) => campo !== 'preco_venda').length} selecionado(s)</span></strong><BotaoAcaoCompacto variante="primario" aria-label={todosCamposCadastro ? 'Desmarcar todos os campos do cadastro' : 'Selecionar todos os campos do cadastro'} onClick={() => setCamposExportacao((atuais) => todosCamposCadastro ? atuais.filter((campo) => campo === 'preco_venda') : [...new Set([...atuais, ...camposCadastro.map(([campo]) => campo)])])}>{todosCamposCadastro ? 'Desmarcar todos' : 'Selecionar todos'}</BotaoAcaoCompacto></div>
+          <div className={styles.exportExpandHint}><BotaoExpandirCard variante="painel" modo="lista" somenteIcone contexto="campos do cadastro para seleção" controlsId={camposExportacaoId} expandido={camposExportacaoAbertos} onClick={() => setCamposExportacaoAbertos((atual) => !atual)} corPrimaria="var(--brand)" /><span>{camposExportacaoAbertos ? 'Ocultar opções de campos do cadastro' : 'Exibir mais campos do cadastro para seleção'}</span></div>
+          <fieldset id={camposExportacaoId} hidden={!camposExportacaoAbertos}><legend>Campos opcionais</legend><div className={styles.exportColumnGrid}>{camposCadastro.map(([campo, titulo]) => <label key={campo}><input type="checkbox" checked={camposExportacao.includes(campo)} onChange={() => setCamposExportacao((atuais) => atuais.includes(campo) ? atuais.filter((item) => item !== campo) : [...atuais, campo])} />{titulo}</label>)}</div></fieldset>
+        </section>
+        <section aria-label="Tabelas de preços para exportação"><div className={styles.exportGroupHeader}><strong>Tabelas de preços <span>· {tabelasExportacao.length + Number(camposExportacao.includes('preco_venda'))} selecionada(s)</span></strong><BotaoAcaoCompacto variante="primario" aria-label={todasTabelasExportacao ? 'Desmarcar todas as tabelas de preços' : 'Selecionar todas as tabelas de preços'} onClick={() => { setCamposExportacao((atuais) => todasTabelasExportacao ? atuais.filter((campo) => campo !== 'preco_venda') : [...new Set([...atuais, 'preco_venda'])]); setTabelasExportacao(todasTabelasExportacao ? [] : colunasTabelasExportacao.map((coluna) => coluna.codigo)); }}>{todasTabelasExportacao ? 'Desmarcar todas' : 'Selecionar todas'}</BotaoAcaoCompacto></div>
+        <fieldset><legend>Escolha as tabelas que deseja editar</legend><div className={styles.exportColumnGrid}>
           <label><input type="checkbox" checked={camposExportacao.includes('preco_venda')} onChange={() => setCamposExportacao((atuais) => atuais.includes('preco_venda') ? atuais.filter((item) => item !== 'preco_venda') : [...atuais, 'preco_venda'])} />Preço padrão</label>
           {colunasExportacaoTabelasPreco(tabelas).map((coluna) => <label key={coluna.codigo}><input type="checkbox" checked={tabelasExportacao.includes(coluna.codigo)} onChange={() => setTabelasExportacao((atuais) => atuais.includes(coluna.codigo) ? atuais.filter((item) => item !== coluna.codigo) : [...atuais, coluna.codigo])} />{coluna.nome}</label>)}
-        </div></fieldset>
+        </div></fieldset></section>
         <footer className={styles.formActions}><button type="button" className={styles.secondaryButton} disabled={processando} onClick={() => setExportacaoAberta(false)}>Cancelar</button><button type="button" className={styles.primaryButton} disabled={processando || !produtos.length || !camposExportacao.length && !tabelasExportacao.length} onClick={() => void exportar()}>{processando ? 'Gerando…' : 'Exportar seleção'}</button></footer>
       </div>
     </Modal>

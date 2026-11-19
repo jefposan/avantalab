@@ -26,6 +26,17 @@ test('fluxo seletivo conserva cabeçalhos técnicos, compatibilidade v2, prévia
   assert.match(source,/name === 'Metadados' \? 2 : 0/);
 });
 
+test('seleção em lote tem escopos claros e expansão usa o componente oficial',()=>{
+  const source=readFileSync('app/custos/TabelasPrecosView.tsx','utf8');
+  assert.match(source,/Selecionar todos os campos do cadastro/);
+  assert.match(source,/Selecionar todas as tabelas de preços/);
+  assert.match(source,/Exibir mais campos do cadastro para seleção/);
+  assert.match(source,/<BotaoExpandirCard variante="painel" modo="lista" somenteIcone/);
+  assert.match(source,/hidden=\{!camposExportacaoAbertos\}/);
+  assert.match(source,/todosCamposCadastro \? atuais.filter\(\(campo\) => campo === 'preco_venda'\)/);
+  assert.match(source,/todasTabelasExportacao \? atuais.filter\(\(campo\) => campo !== 'preco_venda'\)/);
+});
+
 test('PostgreSQL: atualização parcial multicatálogo, preço isolado, empresa, concorrência e atomicidade',async()=>{
   const db=new PGlite();
   const empresa='10000000-0000-4000-8000-000000000001';

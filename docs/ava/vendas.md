@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.490 -->
+<!-- ava-version: 3.2.0.491 -->
+
+> Revisão 3.2.0.491: sem impacto operacional no AvantaVendas; proposta local restrita à seleção de colunas do Excel em Custos Web.
 
 > Revisão 3.2.0.490: sem impacto operacional no AvantaVendas. Custos Web oferece Excel seletivo, com atualização somente de campos escolhidos nos catálogos originais, sem alterar preço de divulgação ou destino dos catálogos.
 

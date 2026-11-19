@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.490 -->
+<!-- ava-version: 3.2.0.491 -->
+
+> Revisão 3.2.0.491: sem impacto operacional na Gestão Mobile; proposta local restrita à seleção de colunas do Excel em Custos Web.
 
 > Revisão 3.2.0.490: sem impacto operacional na Gestão Mobile. Custos Web oferece exportação seletiva e atualização parcial multicatálogo com prévia. Não orientar transferência de planilha para criar novos produtos por esse fluxo.
 
