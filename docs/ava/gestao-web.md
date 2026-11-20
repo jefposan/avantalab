@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.509.01 -->
+<!-- ava-version: 3.2.0.509.02 -->
+
+> Revisão 3.2.0.509.02: Vendas e Serviços Web: rodapé lateral não exibe aviso quando certificado e emissão em produção estão disponíveis. Homologação, validação, pendências e desconexão continuam visíveis; mudanças de disponibilidade atualizam o aviso. Sem mudança de regras fiscais ou emissão.
 
 > Revisão 3.2.0.509.01: Navegar fecha a lista imediatamente ao escolher um destino. A revalidação de acesso e sessão ocorre somente na preparação oficial do destino, sem Validando no painel nem retorno visual à origem antes da troca de documento. Mantém confirmação de edição, bloqueio de gravação, rotas oficiais, recuperação de erro e retorno pelo navegador.
 

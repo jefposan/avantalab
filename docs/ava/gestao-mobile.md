@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.509.01 -->
+<!-- ava-version: 3.2.0.509.02 -->
+
+> Revisão 3.2.0.509.02: Sem impacto operacional no aplicativo independente; ajuste de aviso no módulo Vendas e Serviços Web.
 
 > Revisão 3.2.0.509.01: Sem impacto operacional no aplicativo independente; ajuste exclusivo do seletor Navegar dos módulos Web.
 
