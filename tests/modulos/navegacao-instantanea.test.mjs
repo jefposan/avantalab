@@ -165,3 +165,27 @@ test('fluxos confirmados notificam mudança, sem conceder direitos pelo broadcas
   assert.match(mobile, /db.channel\('avantalab-acessos-modulos-v1:' \+ empresaIdAtivacao\)/);
   assert.match(mobile, /type: 'broadcast', event: 'atualizados', payload: \{\}/);
 });
+
+
+test('selecionar fecha Navegar antes da rede e conserva preparação até a troca de documento', async () => {
+  let liberar;
+  const fresco = new Promise(resolve => { liberar = resolve; });
+  const c = componente({ aberto: true, fresco });
+  const selecao = selecionar(c, 'custos');
+  assert.ok(c.mudancas.some(([indice, valor]) => indice === 0 && valor === false));
+  assert.ok(c.mudancas.some(([indice, valor]) => indice === 1 && valor === true));
+  assert.ok(!c.chamadas.some(item => item[0] === 'navegar'));
+  liberar([perfil('e')]);
+  await selecao;
+  assert.deepEqual(c.chamadas.at(-1), ['navegar', '/custos?empresaId=e']);
+  assert.ok(!c.mudancas.some(([indice, valor]) => indice === 1 && valor === false));
+});
+test('recusa restaura a lista com erro e encerra a preparação', async () => {
+  const c = componente({ aberto: true, fresco: [] }); await selecionar(c, 'custos');
+  assert.ok(c.mudancas.some(([indice, valor]) => indice === 0 && valor === true));
+  assert.ok(c.mudancas.some(([indice, valor]) => indice === 1 && valor === false));
+  const source = readFileSync('app/components/SeletorModulos.tsx', 'utf8');
+  assert.doesNotMatch(source, /Validando acesso/);
+  assert.match(source, /createPortal\(<CarregamentoDadosModulo ativo/);
+  assert.match(source, /addEventListener\('pageshow', retomar\)/);
+});

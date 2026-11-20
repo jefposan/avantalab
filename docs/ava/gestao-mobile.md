@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.509 -->
+<!-- ava-version: 3.2.0.509.01 -->
+
+> Revisão 3.2.0.509.01: Sem impacto operacional no aplicativo independente; ajuste exclusivo do seletor Navegar dos módulos Web.
 
 > Revisão 3.2.0.509: sem impacto operacional na Gestão; seleção e preparação do compartilhamento exclusivas do AvantaVendas independente.
 

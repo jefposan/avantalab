@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.509 -->
+<!-- ava-version: 3.2.0.509.01 -->
+
+> Revisão 3.2.0.509.01: Navegar fecha a lista imediatamente ao escolher um destino. A revalidação de acesso e sessão ocorre somente na preparação oficial do destino, sem Validando no painel nem retorno visual à origem antes da troca de documento. Mantém confirmação de edição, bloqueio de gravação, rotas oficiais, recuperação de erro e retorno pelo navegador.
 
 > Revisão 3.2.0.509: sem impacto operacional na Gestão; seleção e preparação do compartilhamento exclusivas do AvantaVendas independente.
 

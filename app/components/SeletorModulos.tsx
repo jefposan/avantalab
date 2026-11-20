@@ -8,6 +8,7 @@ import { validarSessaoDoDispositivo } from '@/app/lib/sessao-acesso-cliente';
 import { opcoesNavegacao } from '@/app/lib/seletor-modulos';
 import { Icon } from '@/app/projetos/components/Icon';
 import ModalConfirmacao from './ModalConfirmacao';
+import CarregamentoDadosModulo from './CarregamentoDadosModulo';
 import styles from './SeletorModulos.module.css';
 
 type Props = { empresaId: string; moduloAtual: string; darkMode?: boolean; corPrimaria?: string; ocupado?: boolean; alteracoesPendentes?: boolean; salvarAntesDeSair?: () => Promise<boolean>; descricaoPendencia?: string };
@@ -40,11 +41,17 @@ export default function SeletorModulos({ empresaId, moduloAtual, darkMode = fals
   const pedido = useRef(0);
   const ocupadoAtual = useRef(ocupado);
   const ultimoDestino = useRef('');
+  const navegacaoEmCurso = useRef(false);
   const id = useId();
   const tema = { '--seletor-brand': corPrimaria } as CSSProperties;
 
-  useEffect(() => { setAberto(false); setPendente(''); return () => { pedido.current += 1; }; }, [empresaId, usuarioId]);
+  useEffect(() => { setAberto(false); setPendente(''); setCarregando(false); navegacaoEmCurso.current = false; return () => { pedido.current += 1; }; }, [empresaId, usuarioId]);
   useEffect(() => { ocupadoAtual.current = ocupado; }, [ocupado]);
+  useEffect(() => {
+    const retomar = () => { navegacaoEmCurso.current = false; setCarregando(false); };
+    window.addEventListener('pageshow', retomar);
+    return () => window.removeEventListener('pageshow', retomar);
+  }, []);
   useEffect(() => {
     if (!aberto) return;
     const posicionar = () => {
@@ -69,9 +76,13 @@ export default function SeletorModulos({ empresaId, moduloAtual, darkMode = fals
   }, [aberto]);
 
   async function consultar(destino: string, salvoNestaConfirmacao = false) {
+    if (navegacaoEmCurso.current) return;
+    navegacaoEmCurso.current = true;
     ultimoDestino.current = destino;
     const sequencia = ++pedido.current;
+    setAberto(false); setPendente('');
     setCarregando(true); setErro('');
+    let encaminhado = false;
     try {
       if (!usuarioId) throw new Error('Sua sessão não está disponível. Entre novamente.');
       const perfis = await atualizarAcessosNavegacao(empresaId, usuarioId, true);
@@ -87,10 +98,17 @@ export default function SeletorModulos({ empresaId, moduloAtual, darkMode = fals
         // Navegação de documento preserva beforeunload, inclusive dos editores em iframes.
         // O destino é sempre derivado do registro oficial, nunca de uma URL recebida.
         (window.top || window).location.assign(opcao.href);
+        encaminhado = true;
       }
     } catch (error) {
-      if (sequencia === pedido.current) setErro(error instanceof Error ? error.message : 'Não foi possível consultar seus módulos.');
-    } finally { if (sequencia === pedido.current) setCarregando(false); }
+      if (sequencia === pedido.current) {
+        setErro(error instanceof Error ? error.message : 'Não foi possível consultar seus módulos.');
+        setAberto(true);
+      }
+    } finally {
+      // Mantém a preparação até a troca do documento, sem piscar a tela de origem.
+      if (!encaminhado && sequencia === pedido.current) { navegacaoEmCurso.current = false; setCarregando(false); }
+    }
   }
 
   async function salvarENavegar() {
@@ -116,17 +134,17 @@ export default function SeletorModulos({ empresaId, moduloAtual, darkMode = fals
   }
 
   return <>
-    <button ref={botao} type="button" className={`${styles.trigger} ${darkMode ? styles.dark : ''}`} style={tema} aria-label="Navegar" aria-expanded={aberto} aria-controls={aberto ? id : undefined} disabled={!empresaId || ocupado} title={ocupado ? 'Aguarde a conclusão da operação' : 'Navegar entre Dashboard e módulos'} onClick={() => { if (aberto) { pedido.current += 1; setAberto(false); } else { setErro(''); setAberto(true); } }}>
+    <button ref={botao} type="button" className={`${styles.trigger} ${darkMode ? styles.dark : ''}`} style={tema} aria-label="Navegar" aria-expanded={aberto} aria-controls={aberto ? id : undefined} disabled={!empresaId || ocupado || carregando} title={ocupado ? 'Aguarde a conclusão da operação' : 'Navegar entre Dashboard e módulos'} onClick={() => { if (aberto) { pedido.current += 1; setAberto(false); } else { setErro(''); setAberto(true); } }}>
       <Icon name="grid" size={18} /><span>Navegar</span><Icon name="chevron" size={14} />
     </button>
     {aberto && createPortal(<nav data-product-focus-navigation id={id} ref={painel} tabIndex={-1} aria-label="Navegar para" className={`${styles.panel} ${darkMode ? styles.dark : ''}`} style={{ ...tema, ...posicao }}>
       <header><strong>Navegar para</strong></header>
-      {carregando && <p role="status">Validando acesso…</p>}
       {erro && <div role="alert"><p>{erro}</p><button type="button" disabled={carregando} onClick={() => void consultar(ultimoDestino.current)}>Tentar novamente</button></div>}
       {!perfil && erroPreparacao && <div role="alert"><p>{erroPreparacao}</p><button type="button" onClick={() => void atualizar()}>Atualizar acessos</button></div>}
       {!carregando && !erro && !erroPreparacao && !opcoes.length && <p role="status">{perfil ? 'Nenhum destino disponível. Consulte o gestor.' : 'Preparando a lista de acessos em segundo plano…'}</p>}
       <ListaDestinosNavegacao opcoes={opcoes} moduloAtual={moduloAtual} bloqueado={carregando || ocupado} onSelecionar={destino => { if (alteracoesPendentes) setPendente(destino); else void consultar(destino); }} />
     </nav>, document.body)}
+    {carregando && createPortal(<CarregamentoDadosModulo ativo titulo={`Preparando ${opcoes.find(opcao => opcao.id === ultimoDestino.current)?.nome || 'destino'}`} mensagem="Carregando os dados do módulo…" corPrimaria={corPrimaria} temaEscuro={darkMode} />, document.body)}
     <ModalConfirmacao aberto={Boolean(pendente)} titulo="Sair desta tela?" variante="alerta" mensagem={descricaoPendencia || 'Existem alterações não salvas nesta tela. Sair sem salvar descarta essas alterações.'} textoCancelar="Cancelar" textoConfirmar={salvarAntesDeSair ? 'Salvar e sair' : 'Sair sem salvar'} carregando={salvando} mostrarProgresso corPrimaria={corPrimaria} darkMode={darkMode} aoCancelar={() => { if (!salvandoRef.current) setPendente(''); }} aoConfirmar={salvarAntesDeSair ? salvarENavegar : descartarENavegar} acaoAdicional={salvarAntesDeSair ? {texto:'Sair sem salvar',aoClicar:descartarENavegar} : undefined} />
   </>;
 }

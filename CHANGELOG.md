@@ -1,3 +1,8 @@
+# 3.2.0.509.01 — Navegação: concentrar espera na preparação do destino
+
+- Navegar fecha a lista imediatamente ao escolher um destino. A revalidação de acesso e sessão ocorre somente na preparação oficial do destino, sem Validando no painel nem retorno visual à origem antes da troca de documento. Mantém confirmação de edição, bloqueio de gravação, rotas oficiais, recuperação de erro e retorno pelo navegador.
+- Sem publicação ou mudança de permissões, sessão, banco e regras dos módulos.
+
 # 3.2.0.508 — Pedidos: impressão direta e documento com logo em A4/A5
 
 - Imprimir pedido gera o PDF e solicita a impressão nativa diretamente, sem modal intermediário ou botão Gerar PDF. Bloqueio contra repetição; carregamento, timeout, recusa do navegador e limpeza de iframe/URL tratados. Solicitação de impressão não é confirmação de saída física e cancelar não altera o pedido.

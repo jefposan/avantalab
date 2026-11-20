@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.509 -->
+<!-- ava-version: 3.2.0.509.01 -->
+
+> Revisão 3.2.0.509.01: Sem impacto operacional no aplicativo independente; ajuste exclusivo do seletor Navegar dos módulos Web.
 
 > Revisão 3.2.0.508: Vendas Web > ações do pedido > Imprimir pedido gera automaticamente o PDF com o logo cadastrado e solicita a impressão do navegador. Não abre a janela intermediária de Gerar PDF. Em Ajustes > Comercial > Papel da impressão de pedidos, definir A4 ou A5; conferir o mesmo papel na impressora. O padrão é A4. Modelos têm tamanhos próprios, repetem cabeçalho/colunas em pedidos longos e não incluem custos ou observações internas. Impressão solicitada não comprova papel impresso; cancelar não muda pedido/estoque/financeiro/fiscal. Em bloqueio/timeout ou erro no logo, corrigir o motivo e tentar novamente, sem prometer impressão silenciosa. E-mail/WhatsApp mantêm baixar/copiar/compartilhar PDF; etiquetas continuam adiadas. Sem alteração nativa nos aplicativos independentes.
 
