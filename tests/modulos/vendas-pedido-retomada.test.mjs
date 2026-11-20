@@ -53,6 +53,27 @@ test('recarga do servidor trata pedido salvo como rascunho e preserva estados po
   assert.equal(records[0].total, 99);
 });
 
+test('recarga mostra razão social e não nome fantasia, inclusive em vendas canceladas, sem alterar o retrato salvo', async () => {
+  const source = await readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
+  const start = source.indexOf('const statusLabel =', source.indexOf('if (event.data?.type === OPERATION_SNAPSHOT_TYPE'));
+  const end = source.indexOf('setCreated(records);', start) + 'setCreated(records);'.length;
+  const snapshots = [
+    {legalName:'  Sergio Ramos Roberto Figueiredo  ',displayName:'DRIMARY'},
+    {legalName:'Nome civil do cliente',displayName:'Fantasia'},
+    {legalName:'',displayName:'Legado sem razão social'},
+    {legalName:'   ',displayName:'Legado com nome disponível'},
+    {},
+  ];
+  const operations = snapshots.map((customerSnapshot,index)=>({id:`${operationId}-${index}`,type:'pedido',status:index===0?'cancelado':'faturado',year:2026,number:index+1,total:1039.5,customerId,customerSnapshot,items:[]}));
+  const original = structuredClone(operations);let records;
+  vm.runInNewContext(ts.transpileModule(source.slice(start,end),{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText,{
+    event:{data:{operations}},setCreated:value=>{records=value;},
+  });
+  assert.deepEqual(Array.from(records,r=>r.client),['Sergio Ramos Roberto Figueiredo','Nome civil do cliente','Legado sem razão social','Legado com nome disponível','Cliente']);
+  assert.equal(records[0].status,'Cancelado');assert.equal(records[0].total,1039.5);
+  assert.deepEqual(operations,original);
+});
+
 test('rascunho oferece retomada e reabre o mesmo registro no editor', async () => {
   const source = await readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
   assert.match(source, /label: 'Continuar pedido'/);

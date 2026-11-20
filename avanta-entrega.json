@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_9Yjv64xhPgoyfWxtkEQ7zYCp76HF",
+  "baseDeploymentId": "dpl_AnBFgmKbLdTDS7ibyjityWhciaUw",
   "migrations": [],
-  "version": "3.2.0.511",
-  "scope": "Pedidos: logo substitui nome fantasia no comprovante, preservando razão social"
+  "version": "3.2.0.512",
+  "scope": "Vendas: manter razão social do cliente na lista após salvar ou recarregar"
 }

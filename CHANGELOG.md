@@ -1,3 +1,8 @@
+# 3.2.0.512 — Vendas: razão social na lista após salvar
+
+- A recarga das operações comerciais prioriza a razão social do retrato salvo do cliente, não o nome fantasia/de exibição; vale também para pedidos cancelados. Registros legados sem razão social conservam o nome disponível.
+- Somente apresentação: sem regravar clientes, vendas, valores ou históricos. Publicação autorizada após validação.
+
 # 3.2.0.511 — Pedidos: identificação sem repetição da marca
 
 - Com logo, o PDF omite o nome fantasia e mantém razão social, documento e cidade. Sem logo, mantém nome fantasia e razão social sem repetir textos iguais, inclusive nas páginas de continuação.

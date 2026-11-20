@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.511 -->
+<!-- ava-version: 3.2.0.512 -->
+
+> Revisão 3.2.0.512: a lista de Vendas Web mantém a razão social do cliente após salvar/recarregar, inclusive cancelados. Nome de exibição é alternativa apenas em registros sem razão social. Sem alteração dos históricos.
 
 > Revisão 3.2.0.511: cabeçalho do PDF de pedido não repete nome fantasia quando há logo. Sem mudança de navegação ou cadastro.
 

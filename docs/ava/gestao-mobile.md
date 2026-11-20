@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.511 -->
+<!-- ava-version: 3.2.0.512 -->
+
+> Revisão 3.2.0.512: sem impacto operacional nos aplicativos nativos.
 
 > Revisão 3.2.0.511: sem impacto operacional no aplicativo nativo. Refinamento do cabeçalho do PDF do pedido Web.
 
