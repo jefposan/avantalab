@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_BkiRkM7NSJUkBUQRZs3ZLbLAkpb9",
+  "baseDeploymentId": "dpl_w8xdSjgjLwTLLv9sATBpA26xbdxf",
   "migrations": [],
-  "version": "3.2.0.509",
-  "scope": "AvantaVendas: selecionar até 10 por arraste, preparar envio e compartilhar por novo toque"
+  "version": "3.2.0.509.02",
+  "scope": "Navegação e Vendas: fechar Navegar imediatamente, concentrar espera no destino e ocultar aviso fiscal de produção normal"
 }
