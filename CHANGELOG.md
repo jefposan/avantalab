@@ -1,11 +1,8 @@
-# 3.2.0.510 — Vendas: ocultar aviso fiscal de produção normal
+# 3.2.0.510 — Navegação e Vendas: transição direta e aviso fiscal somente para atenção
 
-- Vendas e Serviços Web: rodapé lateral não exibe aviso quando certificado e emissão em produção estão disponíveis. Homologação, validação, pendências e desconexão continuam visíveis; mudanças de disponibilidade atualizam o aviso. Sem mudança de regras fiscais ou emissão.
-
-# 3.2.0.510 — Navegação: concentrar espera na preparação do destino
-
-- Navegar fecha a lista imediatamente ao escolher um destino. A revalidação de acesso e sessão ocorre somente na preparação oficial do destino, sem Validando no painel nem retorno visual à origem antes da troca de documento. Mantém confirmação de edição, bloqueio de gravação, rotas oficiais, recuperação de erro e retorno pelo navegador.
-- Sem mudança de permissões, sessão, banco e regras dos módulos.
+- Navegar fecha imediatamente ao selecionar o destino, sem Validando no painel. A espera permanece na preparação oficial, com revalidação de acesso, sessão, confirmação de edição e recuperação de erro preservadas.
+- O aviso fiscal lateral é omitido quando certificado e produção estão disponíveis. Homologação, validação e pendências continuam sinalizadas.
+- Sem mudança de banco, permissões, sessão, emissão ou regras fiscais.
 
 # 3.2.0.508 — Pedidos: impressão direta e documento com logo em A4/A5
 
