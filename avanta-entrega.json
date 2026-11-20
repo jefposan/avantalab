@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_w8xdSjgjLwTLLv9sATBpA26xbdxf",
+  "baseDeploymentId": "dpl_9Yjv64xhPgoyfWxtkEQ7zYCp76HF",
   "migrations": [],
-  "version": "3.2.0.510",
-  "scope": "Navegação e Vendas: fechar Navegar imediatamente, concentrar espera no destino e ocultar aviso fiscal de produção normal"
+  "version": "3.2.0.511",
+  "scope": "Pedidos: logo substitui nome fantasia no comprovante, preservando razão social"
 }

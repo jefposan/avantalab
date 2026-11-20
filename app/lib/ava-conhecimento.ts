@@ -3059,3 +3059,4 @@ GUIAS.vendas += ' ATUALIZAÇÃO 3.2.0.509-av212: Divulgação seleciona até 10 
 GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.510: Ao selecionar um destino em Navegar, a lista fecha imediatamente. A espera aparece somente na preparação do destino. Confirmação de alterações não salvas e validações de acesso continuam obrigatórias; falha reabre a lista com recuperação.';
 
 GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.510: No Vendas e Serviços, o aviso fiscal lateral aparece somente para homologação, consulta, validação e pendências. Produção disponível não exibe aviso; emissão e regras fiscais continuam iguais.';
+GUIAS.vendas += ' Revisão 3.2.0.511: PDF de pedido mostra logo e razão social, sem repetir nome fantasia. Sem logo, mostra nome fantasia. Não altera cadastro, estoque ou financeiro.';

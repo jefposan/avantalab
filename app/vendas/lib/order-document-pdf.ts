@@ -37,8 +37,8 @@ export async function buildOrderPdf(record:OrderDocument,company:OrderCompany,co
    if(company.logo?.darkBackground)page.drawRectangle({x:m-3,y:leftY-maxH-3,width:maxW+6,height:maxH+6,color:ink});
    page.drawImage(logo,{x:m,y:leftY-maxH,width:logo.width*scale,height:logo.height*scale});leftY-=maxH+9;
   }
-  leftY-=paragraph(company.name,m,leftY,identityW,compact?12:16,true)+3;
-  if(company.legalName&&company.legalName!==company.name)leftY-=paragraph(company.legalName,m,leftY,identityW,small);
+  if(!logo)leftY-=paragraph(company.name,m,leftY,identityW,compact?12:16,true)+3;
+  if(company.legalName&&(logo||company.legalName!==company.name))leftY-=paragraph(company.legalName,m,leftY,identityW,small);
   if(company.document)leftY-=paragraph(company.document,m,leftY,identityW,small);
   if(company.city)leftY-=paragraph(company.city,m,leftY,identityW,small);
   let rightY=y;rightY-=paragraph('PEDIDO',titleX,rightY,titleW,compact?17:23,true);

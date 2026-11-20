@@ -1,3 +1,8 @@
+# 3.2.0.511 — Pedidos: identificação sem repetição da marca
+
+- Com logo, o PDF omite o nome fantasia e mantém razão social, documento e cidade. Sem logo, mantém nome fantasia e razão social sem repetir textos iguais, inclusive nas páginas de continuação.
+- Sem alterações cadastrais; demais entregas preservadas.
+
 # 3.2.0.510 — Navegação e Vendas: transição direta e aviso fiscal somente para atenção
 
 - Navegar fecha imediatamente ao selecionar o destino, sem Validando no painel. A espera permanece na preparação oficial, com revalidação de acesso, sessão, confirmação de edição e recuperação de erro preservadas.

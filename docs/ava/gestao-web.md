@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.510 -->
+<!-- ava-version: 3.2.0.511 -->
+
+> Revisão 3.2.0.511: cabeçalho do PDF de pedido não repete nome fantasia quando há logo. Sem mudança de navegação ou cadastro.
 
 > Revisão 3.2.0.510: Vendas e Serviços Web: rodapé lateral não exibe aviso quando certificado e emissão em produção estão disponíveis. Homologação, validação, pendências e desconexão continuam visíveis; mudanças de disponibilidade atualizam o aviso. Sem mudança de regras fiscais ou emissão.
 

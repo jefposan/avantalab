@@ -9,6 +9,15 @@ import {printOrderPdf,prepareOrderLogo} from '../../app/vendas/lib/order-print.t
 const company={name:'Empresa fictícia',logo:{format:'png',bytes:new Uint8Array(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64'))}};
 const record={id:'2026/001',client:'Cliente fictício',status:'Confirmado',createdAt:'2026-11-19T15:00:00Z',total:560.45,order:{lines:Array.from({length:75},(_,i)=>({sku:`T${i+1}`,name:`Produto ${i+1} com descrição extensa para preservar todas as linhas e valores sem sobreposição.`,unit:'un',quantity:2,unitPrice:100,unitDiscount:2,cost:888})),commercialTotals:{products:14700,orderDiscount:10,freight:15,insurance:5,other:8},paymentMethod:'Pix',installments:1,firstDueDate:'2026-11-26',seller:'Equipe',notes:'SEGREDO INTERNO'}};
 function streams(pdf){return pdf.context.enumerateIndirectObjects().filter(([,obj])=>obj instanceof PDFRawStream&&String(obj.dict.get(PDFName.of('Subtype')))!=='/Image').map(([,obj])=>Buffer.from(decodePDFRawStream(obj).decode()).toString('latin1'));}
+test('logo substitui nome fantasia, preserva razão social; sem logo mantém nome fantasia',async()=>{
+ for(const hasLogo of [true,false])for(const sameName of [true,false]){
+  const name='FANTASIA UNICA',legalName=sameName?name:'RAZAO SOCIAL LTDA';
+  const pdf=await PDFDocument.load(await buildOrderPdf({...record,order:{...record.order,lines:record.order.lines.slice(0,1)}},{name,legalName,...(hasLogo?{logo:company.logo}:{})}));
+  const text=streams(pdf).map(stream=>[...stream.matchAll(/<([0-9a-f]+)>\s*Tj/gi)].map(m=>Buffer.from(m[1],'hex').toString('latin1')).join(' ')).join(' ');
+  assert.ok(text.includes(legalName));
+  assert.equal(text.includes(name),!hasLogo||sameName);
+ }
+});
 test('A4/A5 têm dimensões próprias, logo e todas as linhas até o último item, sem custo/observação interna',async()=>{
  for(const size of ['A4','A5']){
   const pdf=await PDFDocument.load(await buildOrderPdf(record,company,{legalName:'Cliente fictício Ltda.'},{paperSize:size}));

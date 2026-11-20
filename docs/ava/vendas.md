@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.510 -->
+<!-- ava-version: 3.2.0.511 -->
+
+> Revisão 3.2.0.511: no PDF do pedido, o logo substitui o nome fantasia no cabeçalho; razão social e documento permanecem. Sem logo, o nome fantasia aparece.
 
 > Revisão 3.2.0.510: Sem impacto operacional no aplicativo independente; ajuste de aviso no módulo Vendas e Serviços Web.
 

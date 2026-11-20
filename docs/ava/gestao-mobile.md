@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.510 -->
+<!-- ava-version: 3.2.0.511 -->
+
+> Revisão 3.2.0.511: sem impacto operacional no aplicativo nativo. Refinamento do cabeçalho do PDF do pedido Web.
 
 > Revisão 3.2.0.510: Sem impacto operacional no aplicativo independente; ajuste de aviso no módulo Vendas e Serviços Web.
 
