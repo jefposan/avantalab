@@ -1,3 +1,13 @@
+# 3.2.0.517 — Vendas e Serviços: limpeza de avisos e descrições dos cabeçalhos
+
+- Cabeçalhos das páginas padronizados sem descrição introdutória, incluindo relatórios e novas operações; mensagens de erro e filtros do relatório gerado preservados.
+- Removidos o rótulo Operação de hoje, o subtítulo de Visão geral e seu aviso Perfil conectado, mantendo indicadores e isolamento do perfil.
+- Removidos o subtítulo introdutório de Ajustes e o rótulo Vendas e serviços acima do título.
+- Removido o rótulo Ciclo comercial acima do título de Vendas.
+- Removido o rótulo NF-e · NFC-e · NFS-e acima do título de Notas Fiscais.
+- Removido o subtítulo introdutório de Relatórios; bloco informativo e selo da visão anterior já retirados na entrega 3.2.0.516.
+- Removidos o subtítulo do catálogo e o bloco sobre a origem em Custos e Precificação, incluindo o selo Sem cadastro duplicado. Sem mudança na origem dos dados.
+
 # 3.2.0.516 — Relatórios configuráveis e ajustes de Clientes
 
 - Indicadores de estoque, faturamento e nota fiscal usam três posições fixas de mesma largura, inclusive quando a nota é clicável, mantendo o alinhamento vertical entre pedidos.

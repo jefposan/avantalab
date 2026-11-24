@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.516 -->
+<!-- ava-version: 3.2.0.517 -->
+
+> Revisão 3.2.0.517: sem impacto operacional; retirada apenas dos avisos introdutórios em Produtos e serviços, Relatórios, Ajustes e Visão geral Web. Títulos das páginas sem descrição introdutória. A origem do catálogo permanece a mesma.
 
 > Revisão local 3.2.0.516: sem impacto operacional nos aplicativos independentes. Relatórios configuráveis pertencem exclusivamente a Vendas e Serviços Web, inclusive seu acesso em navegador mobile.
 

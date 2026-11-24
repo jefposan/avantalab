@@ -954,19 +954,19 @@ const initialReceivables: ReceivableRecord[] = receivables.map((record) => ({
 }));
 
 const viewInfo: Record<View, { title: string; subtitle: string; eyebrow: string }> = {
-  painel: { title: 'Visão geral comercial', subtitle: 'Vendas, serviços, recebimentos e estoque em um único panorama.', eyebrow: 'Operação de hoje' },
-  vendas: { title: 'Vendas', subtitle: 'Do orçamento ao faturamento, com estoque e fiscal rastreáveis.', eyebrow: 'Ciclo comercial' },
+  painel: { title: 'Visão geral comercial', subtitle: '', eyebrow: '' },
+  vendas: { title: 'Vendas', subtitle: 'Do orçamento ao faturamento, com estoque e fiscal rastreáveis.', eyebrow: '' },
   novo_pedido: { title: 'Novo pedido', subtitle: 'Registre cliente, itens, condições comerciais, estoque e preparação fiscal.', eyebrow: 'Pedido comercial' },
   novo_orcamento: { title: 'Novo orçamento', subtitle: 'Monte, salve, compartilhe e exporte a proposta comercial.', eyebrow: 'Proposta comercial' },
   nova_ordem_servico: { title: 'Nova ordem de serviço', subtitle: 'Organize agenda, execução, recebimento e preparação da NFS-e.', eyebrow: 'Prestação de serviços' },
   servicos: { title: 'Serviços', subtitle: 'Agenda, ordens de serviço, execução e emissão de NFS-e.', eyebrow: 'Prestação de serviços' },
   clientes: { title: 'Clientes', subtitle: 'Cadastro comercial, fiscal, entrega, cobrança e relacionamento.', eyebrow: 'Cadastros' },
-  catalogo: { title: 'Produtos e serviços', subtitle: 'Catálogo publicado por Custos e Precificação com complementos fiscais.', eyebrow: 'Catálogo comercial' },
+  catalogo: { title: 'Produtos e serviços', subtitle: '', eyebrow: 'Catálogo comercial' },
   estoque: { title: 'Estoque', subtitle: '', eyebrow: 'Movimentações' },
-  fiscal: { title: 'Notas Fiscais', subtitle: 'Consulte as notas emitidas, acompanhe os rascunhos e acesse as ações de cada documento.', eyebrow: 'NF-e · NFC-e · NFS-e' },
+  fiscal: { title: 'Notas Fiscais', subtitle: 'Consulte as notas emitidas, acompanhe os rascunhos e acesse as ações de cada documento.', eyebrow: '' },
   recebimentos: { title: 'Recebimentos', subtitle: '', eyebrow: 'Contas a receber' },
-  relatorios: { title: 'Relatórios', subtitle: 'Indicadores comerciais, operacionais, fiscais e de estoque.', eyebrow: 'Análises' },
-  configuracoes: { title: 'Ajustes', subtitle: 'Configure a empresa, as notas, a operação e os acessos por assunto.', eyebrow: 'Vendas e serviços' },
+  relatorios: { title: 'Relatórios', subtitle: '', eyebrow: 'Análises' },
+  configuracoes: { title: 'Ajustes', subtitle: '', eyebrow: '' },
 };
 
 const navGroups: Array<{ label: string; items: Array<[View, string, IconName]> }> = [
@@ -1040,7 +1040,7 @@ function Panel({ title, subtitle, action, children, className = '' }: { title: s
 
 function PageHeading({ view, action }: { view: View; action?: ReactNode }) {
   const info = viewInfo[view];
-  return <div className="page-heading"><div><span>{info.eyebrow}</span><h1>{info.title}</h1>{info.subtitle && <p>{info.subtitle}</p>}</div>{action}</div>;
+  return <div className="page-heading"><div>{info.eyebrow && <span>{info.eyebrow}</span>}<h1>{info.title}</h1></div>{action}</div>;
 }
 
 function EmptyState({ title, description }: { title: string; description: string }) {
@@ -1597,7 +1597,7 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
     {(editingProduct || creatingProduct) && companyId && <Dialog open title={creatingProduct ? 'Novo produto' : `Cadastro de ${editingProduct!.name}`} description="" onClose={closeProduct}><div className="dialog-body order-product-registration"><ProductRegistration companyId={companyId} initialNewType={creatingProduct?'produto':undefined} initialProductId={editingProduct?.catalogItemId} embeddedProduct onProductSaved={savedProduct} onProductCancel={()=>{setProductDirty(false);setEditingProduct(null);setCreatingProduct(false);}} onProductDirtyChange={setProductDirty} onProductBusyChange={setProductBusy}/></div></Dialog>}
     <ModalConfirmacao aberto={confirmProductClose} titulo="Descartar alterações do cadastro?" mensagem="As alterações não salvas deste produto serão descartadas. O pedido ou a nota permanecerá aberto." textoCancelar="Continuar editando" textoConfirmar="Descartar" variante="alerta" aoCancelar={()=>setConfirmProductClose(false)} aoConfirmar={()=>{setConfirmProductClose(false);setProductDirty(false);setEditingProduct(null);setCreatingProduct(false);}}/>
     <div className="order-page-heading note-page-heading">
-      <div><span>{fiscalOnly ? 'Documento fiscal' : 'Pedido comercial'}</span><h1>{correction ? correction.status.number ? `${correction.status.state==='rejected'?'Corrigir':'Editar'} NF-e ${correction.status.number} · série ${correction.status.series}` : 'Editar nota fiscal avulsa' : fiscalOnly ? 'Nova nota fiscal avulsa' : editing ? `Continuar pedido ${initialRecord?.id}` : 'Novo pedido'}</h1><p>{correction ? correction.status.state==='rejected'?`Rejeição ${correction.status.statusCode}: ${correction.status.statusReason}`:'Revise os dados da nota. Salvar não transmite o documento.' : fiscalOnly ? 'Preencha destinatário, produtos e valores para preparar a NF-e.' : editing ? 'Revise o rascunho salvo e continue do ponto em que parou.' : 'O pedido concentra condições comerciais, reserva de estoque, recebimento e preparação fiscal.'}</p></div>
+      <div><span>{fiscalOnly ? 'Documento fiscal' : 'Pedido comercial'}</span><h1>{correction ? correction.status.number ? `${correction.status.state==='rejected'?'Corrigir':'Editar'} NF-e ${correction.status.number} · série ${correction.status.series}` : 'Editar nota fiscal avulsa' : fiscalOnly ? 'Nova nota fiscal avulsa' : editing ? `Continuar pedido ${initialRecord?.id}` : 'Novo pedido'}</h1>{correction?.status.state==='rejected'&&<p role="alert">{`Rejeição ${correction.status.statusCode}: ${correction.status.statusReason}`}</p>}</div>
       {fiscalOnly && <div className="order-safety note-heading-safety"><Icon name="check" size={18}/><p><strong>Somente emissão fiscal.</strong> Preparar ou emitir esta nota não cria pedido, não gera contas a receber, não entra nas receitas e não movimenta estoque.</p></div>}
       {!fiscalOnly && <div className="order-safety note-heading-safety"><Icon name={connected ? 'check' : 'warning'} size={18}/><p><strong>{connected ? 'Pedido no perfil ativo.' : 'Ambiente de demonstração.'}</strong> {connected ? 'Estoque somente com o controle ativado; contas a receber apenas ao faturar. A emissão fiscal é separada.' : 'Estoque e pedidos ficam neste protótipo; nenhuma cobrança ou nota fiscal será transmitida.'}</p></div>}
       <Badge tone={connected ? 'info' : 'warning'}>{connected ? 'Perfil empresarial' : 'Rascunho local'}</Badge>
@@ -2124,7 +2124,7 @@ function NewServiceOrderView({ clientRecords, catalogRecords, settings, issuerRe
   };
 
   return <>
-    <div className="order-page-heading"><div><span>Ordem de serviço</span><h1>Nova ordem de serviço</h1><p>Organize o atendimento da agenda à conclusão, mantendo cobrança e NFS-e vinculadas à mesma origem.</p></div><Badge tone={connected ? 'info' : 'warning'}>{connected ? 'Perfil empresarial' : 'Rascunho local'}</Badge></div>
+    <div className="order-page-heading"><div><span>Ordem de serviço</span><h1>Nova ordem de serviço</h1></div><Badge tone={connected ? 'info' : 'warning'}>{connected ? 'Perfil empresarial' : 'Rascunho local'}</Badge></div>
     <div className="order-safety"><Icon name={connected ? 'check' : 'warning'} size={18}/><p><strong>{connected ? 'Operação vinculada ao perfil.' : 'Fluxo seguro de demonstração.'}</strong> {connected ? 'Agendar grava a ordem para a empresa ativa. Recebimentos e o rascunho de NFS-e surgem somente após a conclusão.' : 'Agendar salva a ordem neste navegador. Recebimentos e rascunho de NFS-e surgem somente após a conclusão.'}</p></div>
     <div className="order-layout service-order-layout">
       <div className="order-main">
@@ -2576,7 +2576,7 @@ function QuoteView({ source, clientRecords, catalogRecords, settings, connected,
   };
 
   return <>
-    <div className="order-page-heading"><div><span>{source === 'servicos' ? 'Proposta de serviço' : 'Proposta comercial'}</span><h1>Novo orçamento</h1><p>Monte uma proposta, salve o registro e gere o PDF que será compartilhado com o cliente.</p></div><Badge tone="info">{connected ? 'Perfil empresarial' : 'Proposta local'}</Badge></div>
+    <div className="order-page-heading"><div><span>{source === 'servicos' ? 'Proposta de serviço' : 'Proposta comercial'}</span><h1>Novo orçamento</h1></div><Badge tone="info">{connected ? 'Perfil empresarial' : 'Proposta local'}</Badge></div>
     <div className="order-safety"><Icon name="document" size={18}/><p><strong>Orçamento sem efeitos operacionais.</strong> Salvar não reserva estoque, não cria cobrança e não emite nota fiscal.</p></div>
     <div className="order-layout">
       <div className="order-main">
@@ -2617,7 +2617,6 @@ function Dashboard({ onNew, onNavigate, connected, created, receivableRecords, c
     const integratedQuickActions = dashboardNewOptions.filter((option) => option.type !== 'venda');
     return <>
       <PageHeading view="painel" action={<button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button>}/>
-      <div className="demo-banner"><span>Perfil conectado</span><p>Os indicadores abaixo usam somente os registros do perfil empresarial acessado.</p></div>
       <div className="metric-grid"><Metric label="Receita recebida" value={money(snapshot.receivedNet)} note="Recebimentos líquidos"/><Metric label="A receber" value={money(snapshot.openReceivables)} note={`${snapshot.overdueReceivables ? money(snapshot.overdueReceivables) : 'Sem valores'} em atraso`} tone="cyan"/>{can('catalog.view_cost')&&<Metric label="Margem estimada" value={percent(snapshot.marginPercent)} note="Custos publicados no catálogo" tone="success"/>}<Metric label="Atenções de estoque" value={String(snapshot.stockLowItems)} note="Itens abaixo do mínimo" tone="warning"/></div>
       <section className="quick-actions" aria-label="Ações rápidas">{integratedQuickActions.map((option) => <button type="button" key={option.type} onClick={() => onNew(option.type)}><span><Icon name={option.icon}/></span><div><strong>Novo {option.title.toLocaleLowerCase('pt-BR')}</strong><small>{option.description}</small></div><Icon name="chevron" size={17}/></button>)}</section>
       <div className="dashboard-grid"><Panel title="Operação comercial" subtitle="Registros persistidos no perfil"><div className="pipeline">{[['Orçamentos', created.filter((item) => item.type === 'orcamento').length], ['Pedidos', created.filter((item) => item.type === 'pedido').length], ['Serviços', created.filter((item) => item.type === 'ordem_servico').length], ['Faturados', created.filter((item) => item.status === 'Faturado').length]].map(([label, count], index) => <div key={String(label)}><span className={`pipeline-icon pipeline-${index}`}><Icon name={index === 0 ? 'document' : index === 2 ? 'service' : 'sale'} size={18}/></span><div><strong>{label}</strong><small>Perfil empresarial</small></div><b>{count}</b></div>)}</div></Panel><Panel title="Atenção necessária" subtitle="Prioridades atuais"><div className="attention-list"><button type="button" onClick={() => onNavigate('estoque')}><i className="dot warning"/><span><strong>{snapshot.stockLowItems} itens com atenção</strong><small>Saldo disponível e estoque mínimo</small></span><Badge tone="warning">Estoque</Badge></button><button type="button" onClick={() => onNavigate('recebimentos')}><i className="dot warning"/><span><strong>{money(snapshot.overdueReceivables)} em atraso</strong><small>Parcelas vencidas do perfil</small></span><Badge tone="warning">Cobrança</Badge></button></div></Panel></div>
@@ -3287,7 +3286,6 @@ function CatalogView({ catalogRecords, onSave, onNavigate, onOpenCosts, onNewOrd
   const reformReview = taxEvaluations.filter((evaluation) => !evaluation.reformReady).length;
   return <>
     <PageHeading view="catalogo" action={<button type="button" className="button secondary" onClick={onOpenCosts}><Icon name="chart" size={18}/> Abrir origem em Custos</button>}/>
-    <div className="integration-banner"><span><Icon name="box"/></span><div><strong>Custos e Precificação é a fonte oficial do catálogo</strong><p>Código, nome, unidade, custo e preço são publicados por Custos. Vendas mantém somente disponibilidade comercial, operação e complemento fiscal.</p></div><Badge tone="info">Sem cadastro duplicado</Badge></div>
     <div className="metric-grid compact"><Metric label="Produtos publicados" value={String(products.length)} note={`${products.filter((item) => item.saleStatus === 'Ativo').length} ativos`}/><Metric label="Serviços publicados" value={String(services.length)} note={`${services.filter((item) => item.saleStatus === 'Ativo').length} ${services.filter((item) => item.saleStatus === 'Ativo').length === 1 ? 'ativo' : 'ativos'}`} tone="cyan"/><Metric label="Margem média publicada" value={percent(averageMargin)} note="Calculada sobre o preço atual" tone="success"/><Metric label="Perfis a revisar" value={String(fiscalReview)} note={`${reformReview} com IBS/CBS pendente`} tone="warning"/></div>
     <Panel title="Catálogo comercial" subtitle="Itens publicados por Custos e complementados para venda, estoque e fiscal">
       <SearchToolbar value={query} onChange={setQuery} placeholder="Buscar por código, produto, serviço ou dado fiscal">

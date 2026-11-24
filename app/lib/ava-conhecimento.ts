@@ -3083,3 +3083,13 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.513: Landing pública: Gestão Fina
 
 // Revisão 3.2.0.514: restaurar pedido cancelado sem refaturamento automático.
 GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido Cancelado: Ações oferece somente Restaurar como rascunho, para quem pode editar vendas. A restauração confirmada devolve o mesmo pedido à lista como Rascunho; as opções normais do rascunho reaparecem conforme permissões. Não confirma nem fatura automaticamente, não recria parcelas ou movimenta estoque e preserva documentos fiscais e histórico. Falha ou tempo de espera não declara sucesso; consulte a lista antes de repetir. Pedidos com efeitos de cancelamento pendentes exigem conferência. Reconfirmar e faturar depois cria um novo ciclo de parcelas, mantendo as canceladas no histórico.';
+
+// Revisão 3.2.0.517: sem impacto operacional; retirada visual dos avisos e das descrições introdutórias sob os títulos das páginas de Vendas e Serviços Web.
+
+// Ajustes sem rótulo introdutório acima do título; sem impacto operacional (3.2.0.517).
+
+// Notas Fiscais sem rótulo introdutório acima do título; sem impacto operacional (3.2.0.517).
+
+// Visão geral sem rótulo Operação de hoje; sem impacto operacional (3.2.0.517).
+
+// Vendas sem rótulo Ciclo comercial; sem impacto operacional (3.2.0.517).

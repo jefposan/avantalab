@@ -81,7 +81,7 @@ export default function CommercialReports({operations,clients,catalog,receivable
   </section>;
  }
  return <section className="report-config-page" aria-label="Configuração de relatórios">
-  <header className="page-heading"><div><h1>Relatórios</h1><p>Escolha a área, o relatório e os filtros.</p></div></header>
+  <header className="page-heading"><div><h1>Relatórios</h1></div></header>
   <nav className="report-area-nav" aria-label="Áreas de relatórios">{REPORT_AREAS.filter(([a])=>a==='overview'||allowed.some(r=>r.area===a)).map(([key,label,icon])=><button type="button" key={key} aria-pressed={area===key} className={area===key?'active':''} onClick={()=>{setArea(key);choose(allowed.find(r=>r.area===key)?.id||'');}}>{renderIcon(icon==='cart'?'sale':icon)}<span>{label}</span></button>)}</nav>
   {area==='overview'?overview:<>
    <nav className="report-type-nav" aria-label="Tipo de relatório">{allowed.filter(r=>r.area===area).map(r=><button key={r.id} type="button" aria-pressed={id===r.id} className={id===r.id?'active':''} onClick={()=>choose(r.id)}>{r.title}</button>)}</nav>

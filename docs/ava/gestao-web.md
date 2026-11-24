@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.516 -->
+<!-- ava-version: 3.2.0.517 -->
+
+> Revisão 3.2.0.517: sem impacto operacional; retirada apenas dos avisos introdutórios em Produtos e serviços, Relatórios, Ajustes e Visão geral Web. Títulos das páginas sem descrição introdutória. A origem do catálogo permanece a mesma.
 
 > Revisão local 3.2.0.516 — Relatórios de Vendas e Serviços: entrar pelo menu abre Visão geral. Escolher categoria e tipo abre somente configuração. Vendas oferece Pedidos, Orçamentos, Faturamento, Produtos mais vendidos, Produtos por cliente e Clientes que mais compram. Selecionar período, clientes, produtos, vendedores, pagamentos, situação, ordenação, agrupamento e colunas conforme o relatório. Gerar relatório abre página dedicada com resultado, Voltar, PDF e Excel. Voltar mantém as configurações; navegar entre tipos também conserva seus filtros dentro da área. Limpar filtros apaga as configurações; sair da área ou trocar de empresa elimina a sessão, e retornar abre Visão geral sem filtros anteriores. Filtros não ficam no armazenamento local ou no servidor. PDF A4 paisagem e Excel formatado usam o mesmo retrato e todos os registros do resultado; a tabela tem páginas de 50 linhas. Totais não são somente da página visível. Custos/margens e valores financeiros dependem dos acessos atuais, assim como exportação. Relatórios de vendas concluídas excluem cancelados/devolvidos; produtos aplicam descontos e não incluem frete nas receitas por item. Estoque representa posição atual. Nenhum relatório registra vendas, pagamentos ou movimentações.
 
@@ -6576,3 +6578,11 @@ Revisão 3.2.0.482: geração do DANFE não invalida o link temporário pelo tem
 - Indicadores de estoque, faturamento e nota fiscal usam três posições fixas de mesma largura, inclusive quando a nota é clicável, mantendo o alinhamento vertical entre pedidos.
 
 - Recebimentos identifica ações pelo número comercial do pedido e cliente; UUID interno removido dos títulos, detalhes e opções visíveis de parcelas, preservando vínculos internos.
+
+- Revisão 3.2.0.517: Ajustes sem o rótulo Vendas e serviços acima do título; sem impacto operacional.
+
+- Revisão 3.2.0.517: Notas Fiscais sem o rótulo NF-e · NFC-e · NFS-e acima do título; sem impacto operacional.
+
+- Revisão 3.2.0.517: Visão geral sem o rótulo Operação de hoje acima do título; sem impacto operacional.
+
+- Revisão 3.2.0.517: Vendas sem o rótulo Ciclo comercial acima do título; sem impacto operacional.

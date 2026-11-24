@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_8KGo7ajzddxjmPGDMaTLWRwQ56Lu",
+  "baseDeploymentId": "dpl_8HJZDTynHZ3RkEvjt6WFKdvDDECa",
   "migrations": [],
-  "version": "3.2.0.516",
-  "scope": "Vendas e Serviços: relatórios configuráveis com PDF e Excel, filtros e identificação dos pedidos"
+  "version": "3.2.0.517",
+  "scope": "Vendas e Serviços: limpeza de avisos e descrições dos cabeçalhos"
 }
