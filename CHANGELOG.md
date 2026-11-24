@@ -1,3 +1,8 @@
+# 3.2.0.518 — Pedidos: estorno de estoque e orientação da edição
+
+- Estornar baixa de estoque com confirmação; reposição única, transação, versão, permissões e histórico, preservando financeiro e fiscal. Sem migração de banco.
+- Editar pedido permanece visível e inativo quando bloqueado, com tooltip e orientação acessível de estoque/faturamento; removida a ação Estoque e reserva.
+
 # 3.2.0.517 — Vendas e Serviços: limpeza de avisos e descrições dos cabeçalhos
 
 - Cabeçalhos das páginas padronizados sem descrição introdutória, incluindo relatórios e novas operações; mensagens de erro e filtros do relatório gerado preservados.

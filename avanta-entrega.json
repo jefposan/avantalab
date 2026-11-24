@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_8HJZDTynHZ3RkEvjt6WFKdvDDECa",
+  "baseDeploymentId": "dpl_91LSJjbP4Z4mF9wacTKKDMq1XxGg",
   "migrations": [],
-  "version": "3.2.0.517",
-  "scope": "Vendas e Serviços: limpeza de avisos e descrições dos cabeçalhos"
+  "version": "3.2.0.518",
+  "scope": "Pedidos: estorno de estoque e orientação da edição"
 }

@@ -2416,6 +2416,7 @@ FINANCEIRO
 - Filtros de cliente, produto e serviço aparecem antes das datas, vazios com placeholder; digitar mostra sugestões, permite múltiplas seleções e, sem selecionar, inclui todos.
 - Indicadores de estoque, faturamento e nota fiscal usam três posições fixas de mesma largura, inclusive quando a nota é clicável, mantendo o alinhamento vertical entre pedidos.
 - Recebimentos identifica ações pelo número comercial do pedido e cliente; UUID interno removido dos títulos, detalhes e opções visíveis de parcelas, preservando vínculos internos.
+- Nas ações do pedido Web, Estornar baixa de estoque devolve produtos ao saldo sem alterar faturamento ou nota fiscal, com confirmação. Editar pedido fica inativo e explica o que falta estornar (estoque e/ou faturamento); depois dos estornos necessários, pode voltar ao rascunho. A consulta de estoque fica no menu Estoque.
 - Relatórios e gráficos dependem do perfil e período selecionados. Clicar em totais por categoria pode abrir os lançamentos que formam o valor.
 - Backup e restauração operam sobre o perfil ativo e devem ser usados com cautela; explique a opção exibida antes de orientar substituição de dados.
 

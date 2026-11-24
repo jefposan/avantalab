@@ -303,6 +303,50 @@ export function createPostgresCommercialSalesOrderLifecycleRepository({ pool } =
       });
     },
 
+    async reverseStock({companyId,actorId,orderId,expectedVersion,idempotencyKey}) {
+      return transaction(pool,async client=>{
+        const event='pedido_estoque_estornado';
+        const repeated=await alreadyDone(client,companyId,idempotencyKey,orderId,event);
+        if(repeated)return repeated;
+        const order=await loadOrder(client,companyId,orderId);
+        if(!order)throw coded('AV-SALES-ORDER-NOT-FOUND');
+        if(Number(order.versao)!==expectedVersion)throw coded('AV-SALES-ORDER-CONFLICT');
+        if(!['confirmado','em_separacao','faturado'].includes(order.situacao)||order.situacao_estoque!=='baixado')throw coded('AV-SALES-ORDER-STATE');
+        const controlled = order.situacao_estoque === 'baixado' ? await controlledItems(client, companyId, orderId) : [];
+        const reservations = (await client.query(`
+          select r.id,r.saldo_id,r.operacao_item_id,r.quantidade,s.saldo_fisico,s.saldo_reservado
+          from public.vendas_estoque_reservas r
+          join public.vendas_estoque_saldos s on s.empresa_id=r.empresa_id and s.id=r.saldo_id
+          where r.empresa_id=$1 and r.operacao_id=$2 and r.operacao_item_id is not null
+            and r.situacao='consumida'
+          order by r.id for update of r,s
+        `, [companyId, orderId])).rows;
+        if (controlled.length !== reservations.length) throw coded('AV-SALES-ORDER-RESERVATION');
+        let returned = 0;
+        for (const reservation of reservations) {
+          const balance=(await client.query('select saldo_fisico from public.vendas_estoque_saldos where empresa_id=$1 and id=$2 for update',[companyId,reservation.saldo_id])).rows[0];
+          const quantity = Number(reservation.quantidade); const before = Number(balance.saldo_fisico); const after = before + quantity;
+          await client.query('update public.vendas_estoque_saldos set saldo_fisico=$3 where empresa_id=$1 and id=$2', [companyId, reservation.saldo_id, after]);
+          await client.query("update public.vendas_estoque_reservas set situacao='liberada',atualizado_em=now() where empresa_id=$1 and id=$2", [companyId, reservation.id]);
+          await client.query(`insert into public.vendas_estoque_movimentos(
+            empresa_id,saldo_id,reserva_id,operacao_id,tipo,quantidade,
+            saldo_fisico_anterior,saldo_fisico_final,saldo_reservado_anterior,
+            saldo_reservado_final,chave_idempotencia,criado_por
+          ) values($1,$2,$3,$4,'devolucao',$5,$6,$7,$8,$8,$9,$10)`,
+          [companyId, reservation.saldo_id, reservation.id, orderId, quantity, before, after,
+            Number(reservation.saldo_reservado), `${idempotencyKey}:${reservation.operacao_item_id}:estoque`, actorId]);
+          returned += quantity;
+        }
+        await client.query(`update public.vendas_estoque_reservas r set item_origem_retrato=to_jsonb(i),operacao_item_id=null
+          from public.vendas_operacao_itens i where r.empresa_id=$1 and r.operacao_id=$2 and r.situacao='liberada'
+          and i.empresa_id=r.empresa_id and i.id=r.operacao_item_id`,[companyId,orderId]);
+        const updated=await client.query("update public.vendas_operacoes set situacao_estoque='sem_movimentacao',atualizado_por=$3 where empresa_id=$1 and id=$2 returning versao",[companyId,orderId,actorId]);
+        const metadata={returned:Number(returned.toFixed(3)),operationVersion:Number(updated.rows[0].versao),billingPreserved:true,fiscalPreserved:true};
+        await recordEvent(client,{companyId,orderId,actorId,key:idempotencyKey,name:event,summary:'Baixa de estoque estornada; faturamento e documentos fiscais preservados.',metadata});
+        return {reused:false,event,...metadata};
+      });
+    },
+
     async reverseBilling({ companyId, actorId, orderId, expectedVersion, idempotencyKey }) {
       return transaction(pool, async (client) => {
         const event = 'pedido_faturamento_estornado';
@@ -510,6 +554,7 @@ export function createCommercialSalesOrderLifecycleService({ repository } = {}) 
     }
   };
   return protectCommercialService({
+    reverseStock: run('reverseStock', ['sales.edit', 'stock.adjust']),
     postStock: run('postStock', ['sales.view', 'sales.edit', 'stock.exit']),
     confirm: run('confirm', ['sales.edit', 'stock.exit']),
     startSeparation: run('startSeparation', ['sales.edit', 'stock.exit']),

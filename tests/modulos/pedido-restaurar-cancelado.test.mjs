@@ -85,7 +85,7 @@ test('popup espera confirmação, impede clique duplicado e permanece aberto em 
  const source=readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx','utf8');
  const extract=name=>{const ast=ts.createSourceFile('ui.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);return ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text===name).getText(ast);};
  const React=await import('react/jsx-runtime');const states=[],refs=[];let cursor=0,refCursor=0,calls=0,resolve,ok=false;
- const sandbox={exports:{},require:n=>React,useState(initial){const i=cursor++;if(!(i in states))states[i]=initial;return [states[i],v=>states[i]=v];},useRef(initial){const i=refCursor++;return refs[i]||=( {current:initial} );},useContext:()=>({can:()=>true}),PermissionContext:{},Dialog:()=>null,Badge:()=>null,Icon:()=>null,BotaoAcaoCompacto:()=>null,AvisoFormulario:()=>null};
+ const sandbox={exports:{},require:n=>React,useState(initial){const i=cursor++;if(!(i in states))states[i]=initial;return [states[i],v=>states[i]=v];},useRef(initial){const i=refCursor++;return refs[i]||=( {current:initial} );},useContext:()=>({can:()=>true}),PermissionContext:{},Dialog:()=>null,Tooltip:()=>null,Badge:()=>null,Icon:()=>null,BotaoAcaoCompacto:()=>null,AvisoFormulario:()=>null};
  vm.runInNewContext(ts.transpileModule(extract('groupCommercialRecordActions')+'\n'+extract('RecordActionsDialog')+'\nexports.component=RecordActionsDialog;',{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS}}).outputText,sandbox);
  const action={label:'Restaurar como rascunho',description:'Rascunho',icon:'back',onSelect:async()=>{calls++;await new Promise(r=>resolve=r);return {ok,message:'Falha controlada'};}};
  const render=()=>{cursor=0;refCursor=0;return sandbox.exports.component({title:'Pedido',description:'Cliente',actions:[action],triggerLabel:'Ações',singleAction:true});};
@@ -96,6 +96,9 @@ test('popup espera confirmação, impede clique duplicado e permanece aberto em 
  const send=button().props.onClick;send();send();assert.equal(calls,1);assert.equal(button().props.disabled,true);dialog().props.onClose();assert.equal(dialog().props.open,true);
  resolve();await new Promise(setImmediate);assert.equal(dialog().props.open,true);assert.equal(button().props.disabled,false);assert.ok(nodes(render()).some(n=>n.type===sandbox.AvisoFormulario));
  ok=true;button().props.onClick();resolve();await new Promise(setImmediate);assert.equal(dialog().props.open,false);
+ action.label='Editar pedido';action.disabled=true;action.disabledLabel='Para editar, estorne a baixa de estoque e o faturamento.';
+ const blocked=button();assert.equal(blocked.props['aria-disabled'],true);const beforeCalls=calls;blocked.props.onClick();assert.equal(calls,beforeCalls);
+ assert.ok(nodes(render()).some(n=>n.type===sandbox.Tooltip&&n.props.texto===action.disabledLabel&&!n.props.desativado));
 });
 
 

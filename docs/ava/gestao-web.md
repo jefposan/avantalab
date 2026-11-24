@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.517 -->
+<!-- ava-version: 3.2.0.518 -->
+
+> Revisão 3.2.0.518: Web: nas ações do pedido, Estornar baixa de estoque devolve as quantidades ao saldo físico, preserva faturamento/fiscal e exige confirmação. Editar pedido permanece inativo com orientação dos bloqueios: baixa de estoque e/ou faturamento; após os estornos necessários, reabrir para edição. Estoque e reserva foi removido das ações; consulta pelo menu Estoque.
 
 > Revisão 3.2.0.517: sem impacto operacional; retirada apenas dos avisos introdutórios em Produtos e serviços, Relatórios, Ajustes e Visão geral Web. Títulos das páginas sem descrição introdutória. A origem do catálogo permanece a mesma.
 

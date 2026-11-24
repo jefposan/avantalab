@@ -269,8 +269,8 @@ type CreatedRecord = {
   events?: Array<{ date: string; label: string; description: string }>;
 };
 
-type OrderLifecycleAction = 'editar' | 'separar' | 'faturar' | 'cancelar' | 'devolver' | 'estoque';
-type OrderConfirmationAction = Exclude<OrderLifecycleAction, 'estoque'>;
+type OrderLifecycleAction = 'editar' | 'separar' | 'faturar' | 'cancelar' | 'devolver' | 'estoque' | 'estornar_estoque';
+type OrderConfirmationAction = Exclude<OrderLifecycleAction, 'estoque' | 'estornar_estoque'>;
 type ServiceLifecycleAction = 'agendar' | 'iniciar' | 'cancelar';
 type CommercialOperationRecord = CommercialRecord & { localRecord?: CreatedRecord; fiscalDraft?: FiscalDraftRecord };
 type ServiceOperationRecord = ServiceOrder & { localRecord?: CreatedRecord; fiscalDraft?: FiscalDraftRecord };
@@ -1890,12 +1890,12 @@ function OrderToolsDialog({request,companyLogoUrl = '',paperSize = 'A4',company,
 
 function groupCommercialRecordActions(actions: RecordAction[], can: (permission: string) => boolean) {
   const denied = (action: RecordAction) => Boolean((action.permission && !can(action.permission)) || action.permissions?.some((permission) => !can(permission)));
-  const destructive = actions.find((action) => /^(Cancelar|Estornar)\b/.test(action.label) && !action.planned);
+  const destructive = actions.find((action) => /^(Cancelar|Estornar)\b/.test(action.label) && action.label!=='Estornar baixa de estoque' && !action.planned);
   const remaining = actions.filter((action) => action !== destructive);
   const rank = (action: RecordAction) => ['Continuar pedido', 'Abrir pedido', 'Editar pedido', 'Iniciar separação', 'Faturar pedido', 'Contas do pedido', 'Estoque e reserva'].indexOf(action.label);
   return {
-    available: remaining.filter((action) => !action.planned && !action.disabled && !denied(action)).sort((a, b) => (rank(a) < 0 ? 99 : rank(a)) - (rank(b) < 0 ? 99 : rank(b))),
-    unavailable: remaining.filter((action) => !action.planned && (action.disabled || denied(action))).map((action) => ({ ...action, reason: denied(action) ? 'Sem acesso' : action.disabledLabel || 'Indisponível' })),
+    available: remaining.filter((action) => !action.planned && (!action.disabled||action.label==='Editar pedido') && !denied(action)).sort((a, b) => (rank(a) < 0 ? 99 : rank(a)) - (rank(b) < 0 ? 99 : rank(b))),
+    unavailable: remaining.filter((action) => !action.planned && ((action.disabled&&action.label!=='Editar pedido') || denied(action))).map((action) => ({ ...action, reason: denied(action) ? 'Sem acesso' : action.disabledLabel || 'Indisponível' })),
     planned: remaining.filter((action) => action.planned),
     destructive: destructive ? { ...destructive, disabled: Boolean(destructive.disabled || denied(destructive)) } : null,
   };
@@ -1908,6 +1908,7 @@ function RecordActionsDialog({ title, description, actions, triggerLabel, compac
   const running = useRef(false);
   const sections = groupCommercialRecordActions(actions, can);
   const select = async (action: RecordAction) => {
+    if(action.disabled)return;
     if (!singleAction) { setOpen(false); action.onSelect?.(); return; }
     if (running.current) return;
     running.current = true; setBusy(true); setError('');
@@ -1925,7 +1926,7 @@ function RecordActionsDialog({ title, description, actions, triggerLabel, compac
       <>
         <div className="dialog-body commercial-action-menu" data-single-action={singleAction || undefined} aria-busy={busy}>
           {error && <AvisoFormulario idMensagem="order-restore-error" titulo="Pedido não restaurado" mensagem={error}/>}
-          {sections.available.length > 0 && <section aria-label="Ações disponíveis">{!singleAction && <h3>Ações disponíveis</h3>}<div className="record-action-options commercial-action-available">{sections.available.map((action) => <button type="button" key={action.label} disabled={busy} onClick={() => void select(action)}><span className="record-action-icon"><Icon name={action.icon} size={21}/></span><span><strong>{busy && singleAction ? 'Restaurando…' : action.label}</strong><small>{(compactOrder && brief[action.label]) || action.description}</small></span><Icon name="chevron" size={14}/></button>)}</div></section>}
+          {sections.available.length > 0 && <section aria-label="Ações disponíveis">{!singleAction && <h3>Ações disponíveis</h3>}<div className="record-action-options commercial-action-available">{sections.available.map((action) => <Tooltip key={action.label} texto={action.disabledLabel||action.description} desativado={!action.disabled} wrapperClassName="commercial-action-tooltip"><button type="button" aria-disabled={action.disabled||undefined} disabled={busy} onClick={() => void select(action)}><span className="record-action-icon"><Icon name={action.icon} size={21}/></span><span><strong>{busy && singleAction ? 'Restaurando…' : action.label}</strong><small>{action.disabled? action.disabledLabel : (compactOrder && brief[action.label]) || action.description}</small></span><Icon name="chevron" size={14}/></button></Tooltip>)}</div></section>}
           {sections.unavailable.length > 0 && <div className="commercial-action-conditions">{sections.unavailable.map((action) => <div key={action.label}><span><Icon name={action.icon} size={16}/>{action.label}</span><Badge tone="neutral">{action.reason}</Badge></div>)}</div>}
           {sections.planned.length > 0 && <section className="commercial-action-planned-section" aria-label="Opções previstas"><h3>Opções previstas</h3><div className="record-action-options commercial-action-planned">{sections.planned.map((action) => <button type="button" key={action.label} disabled aria-label={`${action.label}: opção prevista`}><Icon name={action.icon} size={17}/><strong>{action.label}</strong></button>)}</div></section>}
         </div>
@@ -1970,12 +1971,14 @@ function CommercialRecordActions({ onRestore, onCopy, onTool, record, fiscalPrep
     const fiscalDraft = record.fiscalDraft;
     const localOperational = !local || ['Confirmado', 'Em separação', 'Faturado'].includes(local.status ?? '');
     const financialAvailable = !local || ['Faturado', 'Devolvido'].includes(local.status ?? '');
+    const editBlocks=[...(local?.order?.stockState==='Baixado'?['estornar a baixa de estoque']:[]),...(local?.status==='Faturado'?['estornar o faturamento em Recebimentos']:[]),...(!['Confirmado','Em separação','Faturado'].includes(local?.status||'')?['retornar o pedido a uma etapa editável']:[])];
     const lifecycleActions: RecordAction[] = local?.type === 'pedido' && local.order ? [
+      ...(local.status!=='Rascunho'?[{label:'Editar pedido',description:'Abrir o formulário completo',icon:'edit' as IconName,disabled:editBlocks.length>0,disabledLabel:`Para editar, é necessário ${editBlocks.join(' e ')}.`,onSelect:()=>onLifecycleRequest(local,'editar' as OrderLifecycleAction),permissions:['sales.edit','stock.exit']}]:[]),
       ...(local.status === 'Confirmado' ? [{ label: 'Iniciar separação', description: 'Mantém a reserva e registra o pedido em preparação', icon: 'stock' as IconName, onSelect: () => onLifecycleRequest(local, 'separar' as OrderLifecycleAction), permissions: ['sales.edit', 'stock.exit'] }] : []),
       ...(['Confirmado', 'Em separação'].includes(local.status ?? '') ? [
-        ...(local.order.stockState !== 'Baixado' ? [{ label: 'Editar pedido', description: 'Volta ao rascunho e libera eventual reserva para revisar os dados', icon: 'edit' as IconName, onSelect: () => onLifecycleRequest(local, 'editar' as OrderLifecycleAction), permissions: ['sales.edit', 'stock.exit'] }] : []),
         { label: 'Faturar pedido', description: 'Gera as contas a receber e permite escolher a baixa de estoque', icon: 'check' as IconName, onSelect: () => onLifecycleRequest(local, 'faturar' as OrderLifecycleAction), permissions: ['sales.invoice', 'stock.exit', ...(local.order.fiscalDocument !== 'nenhum' ? ['fiscal.prepare'] : [])] },
       ] : []),
+      ...(local.order.stockState==='Baixado'&&['Confirmado','Em separação','Faturado'].includes(local.status??'')?[{label:'Estornar baixa de estoque',description:'Devolve os produtos ao saldo; preserva faturamento e nota fiscal',icon:'back' as IconName,onSelect:()=>onLifecycleRequest(local,'estornar_estoque'),permissions:['sales.edit','stock.adjust']}]:[]),
       ...(['Confirmado', 'Em separação', 'Faturado'].includes(local.status ?? '') ? [{ label: 'Cancelar pedido', description: local.status === 'Faturado' ? 'Cancela a venda e estorna estoque e parcelas; a nota fiscal permanece preservada' : 'Cancela o pedido e libera eventual reserva', icon: 'close' as IconName, onSelect: () => onLifecycleRequest(local, 'cancelar' as OrderLifecycleAction), permissions: local.status === 'Faturado' || local.order.stockState === 'Baixado' ? ['sales.cancel', 'stock.adjust'] : ['sales.cancel', 'stock.exit'] }] : []),
       ...(local.status === 'Rascunho' ? [{ label: 'Cancelar rascunho', description: 'Cancela o registro sem efeito sobre o estoque', icon: 'close' as IconName, onSelect: () => onLifecycleRequest(local, 'cancelar' as OrderLifecycleAction), permission: 'sales.cancel' }] : []),
       ...(local.status === 'Faturado' ? [{ label: 'Registrar devolução total', description: 'Recoloca os produtos no saldo físico e disponível', icon: 'back' as IconName, onSelect: () => onLifecycleRequest(local, 'devolver' as OrderLifecycleAction), permissions: ['sales.cancel', 'stock.exit'] }] : []),
@@ -1988,7 +1991,6 @@ function CommercialRecordActions({ onRestore, onCopy, onTool, record, fiscalPrep
       financialAvailable
         ? { label: 'Contas do pedido', description: 'Parcelas, recebimentos e possíveis estornos', icon: 'money', onSelect: () => onReceivables(record.id), permission: 'receivables.view' }
         : { label: 'Contas a receber', description: 'As parcelas serão criadas quando o pedido for faturado', icon: 'money', disabled: true, disabledLabel: 'Disponíveis após o faturamento' },
-      { label: 'Estoque e reserva', description: 'Reserva, separação, baixa e estorno do estoque', icon: 'stock', onSelect: () => onNavigate('estoque'), permission: 'stock.view' },
       ...(local?.order && ['Confirmado','Em separação','Faturado'].includes(local.status||'') && local.order.stockState==='Sem movimentação' && local.order.lines.some(line=>line.kind==='produto') ? [{label:'Lançar no estoque',description:local.status==='Faturado'?'Registrar a baixa dos produtos deste pedido':'Ativar a reserva dos produtos; baixa ao faturar',icon:'stock' as IconName,onSelect:()=>onLifecycleRequest(local,'estoque'),permissions:['sales.view','sales.edit','stock.exit']}] : []),
       ...(fiscalDraft?.persistenceSource === 'server' && fiscalDraft.documentType === 'nfe' && !fiscalDraft.emissionId
         ? [{ label: fiscalPrepareLoading ? 'Abrindo emissão…' : 'Abrir emissão fiscal', description: 'Cria o vínculo privado da NF-e em homologação, sem validar XML, reservar número ou transmitir', icon: 'fiscal' as IconName, onSelect: () => onFiscalPrepare(fiscalDraft), disabled: fiscalPrepareLoading, disabledLabel: 'Abrindo', permission: 'fiscal.prepare' }]
@@ -2203,7 +2205,7 @@ function OrderLifecycleDialog({ request, onClose, onConfirm }: { request: { reco
   </Dialog>;
 }
 
-function OrderStockDialog({record,onClose,onConfirm}:{record:CreatedRecord|null;onClose:()=>void;onConfirm:(record:CreatedRecord)=>Promise<ConfirmedSave>}) {
+function OrderStockDialog({record,onClose,onConfirm,reverse=false}:{reverse?:boolean;record:CreatedRecord|null;onClose:()=>void;onConfirm:(record:CreatedRecord)=>Promise<ConfirmedSave>}) {
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
   const running=useRef(false);
   useEffect(()=>{setError('');},[record?.id]);
@@ -2211,10 +2213,10 @@ function OrderStockDialog({record,onClose,onConfirm}:{record:CreatedRecord|null;
   if(!record?.order)return null;
   const debit=record.status==='Faturado';
   const confirm=async()=>{if(running.current)return;running.current=true;setBusy(true);setError('');try{const result=await onConfirm(record);if(result.ok)onClose();else setError(result.message||'Não foi possível lançar o estoque. Atualize a lista antes de tentar novamente.');}catch{setError('Não foi possível confirmar o lançamento. Atualize a lista antes de repetir; a solicitação pode já ter sido concluída.');}finally{running.current=false;setBusy(false);}};
-  return <Dialog open title={`Lançar no estoque · ${record.id}`} description={debit?'Registrar a baixa dos produtos deste pedido no estoque principal.':'Ativar o controle de estoque: reservar agora e baixar ao faturar.'} onClose={()=>{if(!running.current)onClose();}}>
-    <div className="dialog-body lifecycle-confirmation" aria-busy={busy}><p><strong>{record.client}</strong> · {record.status}</p><p>{debit?'O saldo físico e o disponível serão reduzidos pelas quantidades abaixo.':'As quantidades ficarão reservadas, sem reduzir o saldo físico nesta etapa.'} Valores, cobranças e documentos fiscais não serão alterados.</p>
-      <Table headers={['Produto','Quantidade','Unidade']} minWidth={0}><>{record.order.lines.filter(line=>line.kind==='produto').map((line,index)=><tr key={`${line.sku}-${index}`}><td>{line.name}<small> · {line.sku}</small></td><td className="numeric">{formatLineNumber(line.quantity,false)}</td><td>{line.unit}</td></tr>)}</></Table><p>Sem saldo registrado, o lançamento poderá deixar o estoque negativo. As próximas entradas compensarão esse saldo. O servidor mantém o histórico e bloqueia lançamentos repetidos.</p></div>
-    <footer className="dialog-footer" style={{flexWrap:'wrap'}}>{error&&<AvisoFormulario idMensagem="order-stock-error" titulo="Estoque não confirmado" mensagem={error}/>}<BotaoAcaoCompacto disabled={busy} onClick={onClose}>Voltar</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" disabled={busy||Boolean(error)} onClick={()=>void confirm()}>{busy?'Registrando…':debit?'Confirmar baixa':'Confirmar reserva'}</BotaoAcaoCompacto></footer>
+  return <Dialog open title={`${reverse?'Estornar baixa de estoque':'Lançar no estoque'} · ${record.id}`} description={reverse?'Devolver os produtos ao saldo físico e disponível, preservando faturamento e nota fiscal.':debit?'Registrar a baixa dos produtos deste pedido no estoque principal.':'Ativar o controle de estoque: reservar agora e baixar ao faturar.'} onClose={()=>{if(!running.current)onClose();}}>
+    <div className="dialog-body lifecycle-confirmation" aria-busy={busy}><p><strong>{record.client}</strong> · {record.status}</p><p>{reverse?'O saldo físico e o disponível serão aumentados pelas quantidades abaixo.':debit?'O saldo físico e o disponível serão reduzidos pelas quantidades abaixo.':'As quantidades ficarão reservadas, sem reduzir o saldo físico nesta etapa.'} Valores, cobranças e documentos fiscais não serão alterados.</p>
+      <Table headers={['Produto','Quantidade','Unidade']} minWidth={0}><>{record.order.lines.filter(line=>line.kind==='produto').map((line,index)=><tr key={`${line.sku}-${index}`}><td>{line.name}<small> · {line.sku}</small></td><td className="numeric">{formatLineNumber(line.quantity,false)}</td><td>{line.unit}</td></tr>)}</></Table>{!reverse&&<p>Sem saldo registrado, o lançamento poderá deixar o estoque negativo. As próximas entradas compensarão esse saldo. O servidor mantém o histórico e bloqueia lançamentos repetidos.</p>}</div>
+    <footer className="dialog-footer" style={{flexWrap:'wrap'}}>{error&&<AvisoFormulario idMensagem="order-stock-error" titulo="Estoque não confirmado" mensagem={error}/>}<BotaoAcaoCompacto disabled={busy} onClick={onClose}>Voltar</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" disabled={busy||Boolean(error)} onClick={()=>void confirm()}>{busy?'Registrando…':reverse?'Estornar baixa':debit?'Confirmar baixa':'Confirmar reserva'}</BotaoAcaoCompacto></footer>
   </Dialog>;
 }
 
@@ -2678,11 +2680,12 @@ function CommercialRecordIndicators({ record, onFiscal }: { record: CommercialOp
   return <span className="commercial-indicators" role="group" aria-label="Situação da operação">{indicators.map((indicator) => <Tooltip key={indicator.key} texto={indicator.label} posicao="bottom">{indicator.key==='fiscal'&&onFiscal ? <button type="button" className="commercial-indicator-target" aria-label={`${indicator.label} · Abrir nota fiscal`} onClick={onFiscal}><CommercialIndicatorIcon indicator={indicator}/></button> : <span className="commercial-indicator-target" tabIndex={0} role="img" aria-label={indicator.label}><CommercialIndicatorIcon indicator={indicator}/></span>}</Tooltip>)}</span>;
 }
 
-function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, onCopy, created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle, onStockLaunch, onRestoreOrder }: { companyLogoUrl?:string; paperSize?:'A4'|'A5'; company:CompanyProfile; clients:ClientRecord[]; onCopy:(record:CreatedRecord)=>void; created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void; onStockLaunch:(record:CreatedRecord)=>Promise<ConfirmedSave>; onRestoreOrder:(record:CreatedRecord)=>Promise<ConfirmedSave> }) {
+function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, onCopy, created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle, onStockLaunch, onStockReverse, onRestoreOrder }: { companyLogoUrl?:string; paperSize?:'A4'|'A5'; company:CompanyProfile; clients:ClientRecord[]; onCopy:(record:CreatedRecord)=>void; created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void; onStockLaunch:(record:CreatedRecord)=>Promise<ConfirmedSave>; onStockReverse:(record:CreatedRecord)=>Promise<ConfirmedSave>; onRestoreOrder:(record:CreatedRecord)=>Promise<ConfirmedSave> }) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todas as situações');
   const [detailRecord, setDetailRecord] = useState<CreatedRecord | null>(null);
   const [lifecycleRequest, setLifecycleRequest] = useState<{ record: CreatedRecord; action: OrderConfirmationAction } | null>(null);
+  const [stockReverseRequest,setStockReverseRequest]=useState<CreatedRecord|null>(null);
   const [stockRequest,setStockRequest]=useState<CreatedRecord|null>(null);
   const [toolRequest,setToolRequest]=useState<{record:CreatedRecord;action:OrderTool}|null>(null);
   const {can}=useContext(PermissionContext);
@@ -2737,7 +2740,7 @@ function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, on
         <td data-label="Cliente"><strong>{record.client}</strong></td>
         <td data-label="Situação"><Badge>{record.status}</Badge></td>
         <td data-label="Total" className="numeric"><strong>{money(record.total)}</strong></td>
-        <td data-label="Ações" className="commercial-actions-cell"><div className="commercial-row-actions"><CommercialRecordIndicators record={record} onFiscal={record.fiscalDraft ? ()=>onFiscalStart({id:record.id,client:record.client,item:`Pedido ${record.id}`,total:record.total,documentType:record.fiscalDraft!.documentType,sourceLabel:'Pedido'}) : undefined}/><CommercialRecordActions onRestore={onRestoreOrder} onCopy={onCopy} onTool={(record,action)=>action==='print'?void printDirect(record):setToolRequest({record,action})} record={record} fiscalPrepareLoading={record.fiscalDraft ? fiscalPrepareState[record.fiscalDraft.id]?.loading : false} onNavigate={onNavigate} onFiscalStart={onFiscalStart} onFiscalPrepare={onFiscalPrepare} onReceivables={onReceivables} onOpenLocal={setDetailRecord} onContinueOrder={onContinueOrder} onLifecycleRequest={(localRecord, action) => action==='estoque'?setStockRequest(localRecord):action === 'editar' ? onLifecycle(localRecord, action) : setLifecycleRequest({ record: localRecord, action })}/></div></td>
+        <td data-label="Ações" className="commercial-actions-cell"><div className="commercial-row-actions"><CommercialRecordIndicators record={record} onFiscal={record.fiscalDraft ? ()=>onFiscalStart({id:record.id,client:record.client,item:`Pedido ${record.id}`,total:record.total,documentType:record.fiscalDraft!.documentType,sourceLabel:'Pedido'}) : undefined}/><CommercialRecordActions onRestore={onRestoreOrder} onCopy={onCopy} onTool={(record,action)=>action==='print'?void printDirect(record):setToolRequest({record,action})} record={record} fiscalPrepareLoading={record.fiscalDraft ? fiscalPrepareState[record.fiscalDraft.id]?.loading : false} onNavigate={onNavigate} onFiscalStart={onFiscalStart} onFiscalPrepare={onFiscalPrepare} onReceivables={onReceivables} onOpenLocal={setDetailRecord} onContinueOrder={onContinueOrder} onLifecycleRequest={(localRecord, action) => action==='estornar_estoque'?setStockReverseRequest(localRecord):action==='estoque'?setStockRequest(localRecord):action === 'editar' ? onLifecycle(localRecord, action) : setLifecycleRequest({ record: localRecord, action })}/></div></td>
       </tr>)}</></Table>
       {records.length === 0 && <EmptyState title="Nenhuma operação encontrada" description="Ajuste a busca ou limpe os filtros para ver as vendas."/>}
     </Panel>
@@ -2745,6 +2748,7 @@ function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, on
       <Table headers={['Número', 'Criado em', 'Cliente', 'Origem', 'Situação', 'Total', 'Arquivo']} minWidth={840}><>{localQuotes.map((record) => <tr key={record.id}><td><strong>{record.id}</strong></td><td>{new Date(record.createdAt).toLocaleDateString('pt-BR')}</td><td><strong>{record.client}</strong></td><td>{record.quote?.source === 'servicos' ? 'Serviços' : 'Vendas'}</td><td><Badge tone="success">Salvo</Badge></td><td className="numeric"><strong>{money(record.total)}</strong></td><td><QuoteActions record={record} onNotify={onNotify}/></td></tr>)}</></Table>
     </Panel>}
     <OrderDetailsDialog record={detailRecord} onClose={() => setDetailRecord(null)}/>
+    <OrderStockDialog reverse record={stockReverseRequest} onClose={()=>setStockReverseRequest(null)} onConfirm={onStockReverse}/>
     <OrderStockDialog record={stockRequest} onClose={()=>setStockRequest(null)} onConfirm={onStockLaunch}/>
     <OrderLifecycleDialog request={lifecycleRequest} onClose={() => setLifecycleRequest(null)} onConfirm={onLifecycle}/>
     <OrderToolsDialog request={toolRequest} companyLogoUrl={companyLogoUrl} paperSize={paperSize} company={company} clients={clients} onNotify={onNotify} onClose={()=>setToolRequest(null)} onStatus={(record,action)=>{if(action==='continuar')onContinueOrder(record);else setLifecycleRequest({record,action:action as OrderConfirmationAction});}}/>
@@ -6058,7 +6062,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const pendingFiscalValidationRef = useRef(new Map<string, { draftId: string; timer: number }>());
   const pendingFiscalNumberRef = useRef(new Map<string, { draftId: string; timer: number }>());
   const pendingFiscalIssueRef = useRef(new Map<string, { draftId: string; timer: number }>());
-  const pendingOrderWorkflowRef = useRef(new Map<string, { recordId: string; target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque' | 'restaurar' | 'estornar_faturamento'; timer: number; previous?: CreatedRecord; resolve?:(result:ConfirmedSave)=>void }>());
+  const pendingOrderWorkflowRef = useRef(new Map<string, { recordId: string; target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque' | 'restaurar' | 'estornar_faturamento' | 'estornar_estoque'; timer: number; previous?: CreatedRecord; resolve?:(result:ConfirmedSave)=>void }>());
   const pendingServiceWorkflowRef = useRef(new Map<string, { recordId: string; action: 'start' | 'complete' | 'cancel' | 'reverse'; timer: number }>());
   const pendingReceivableRef = useRef(new Map<string, PendingConfirmedSave>());
   const pendingStockRef = useRef(new Map<string, PendingConfirmedSave>());
@@ -6398,15 +6402,15 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             order: record.order ? { ...record.order, stockState, reserveStock: commercial.order.stockIntegrated === true } : record.order,
             events: [...(record.events ?? []), {
               date: now,
-              label: pending.target==='estornar_faturamento'?'Faturamento estornado':pending.target==='restaurar'?'Pedido restaurado como rascunho':pending.target==='estoque'?'Estoque lançado posteriormente':status === 'Faturado' ? 'Pedido faturado no repositório' : status === 'Em separação' ? 'Separação persistida' : status === 'Cancelado' ? 'Pedido cancelado' : status === 'Devolvido' ? 'Devolução registrada' : 'Pedido persistido',
-              description: pending.target==='estornar_faturamento'?'Pedido pendente de faturamento; estoque, nota fiscal e histórico preservados.':pending.target==='restaurar'?'Restaurado para edição; histórico, estoque, parcelas canceladas e documentos fiscais preservados.':pending.target==='estoque'?`Estoque em ${stockState.toLocaleLowerCase('pt-BR')}; valores, cobranças e fiscal preservados.`:status === 'Faturado'
+              label: pending.target==='estornar_estoque'?'Baixa de estoque estornada; faturamento e nota fiscal preservados.':pending.target==='estornar_faturamento'?'Faturamento estornado':pending.target==='restaurar'?'Pedido restaurado como rascunho':pending.target==='estoque'?'Estoque lançado posteriormente':status === 'Faturado' ? 'Pedido faturado no repositório' : status === 'Em separação' ? 'Separação persistida' : status === 'Cancelado' ? 'Pedido cancelado' : status === 'Devolvido' ? 'Devolução registrada' : 'Pedido persistido',
+              description: pending.target==='estornar_estoque'?'Baixa de estoque estornada; faturamento e nota fiscal preservados.':pending.target==='estornar_faturamento'?'Pedido pendente de faturamento; estoque, nota fiscal e histórico preservados.':pending.target==='restaurar'?'Restaurado para edição; histórico, estoque, parcelas canceladas e documentos fiscais preservados.':pending.target==='estoque'?`Estoque em ${stockState.toLocaleLowerCase('pt-BR')}; valores, cobranças e fiscal preservados.`:status === 'Faturado'
                 ? `${commercial.order.receivableCount} ${commercial.order.receivableCount === 1 ? 'parcela registrada' : 'parcelas registradas'}${commercial.order.fiscalDraftId ? ' e rascunho fiscal criado.' : '.'}`
                 : commercial.order.stockIntegrated ? `Operação vinculada ao perfil ativo com estoque em ${stockState.toLocaleLowerCase('pt-BR')}.` : 'Operação vinculada ao perfil ativo sem item controlado em estoque.',
             }],
           } : record);
           return next;
         });
-        pending.resolve?.({ok:true,message:pending.target==='estornar_faturamento'?'Faturamento estornado; pedido pendente de faturamento.':pending.target==='restaurar'?'Pedido restaurado como rascunho.':'Lançamento de estoque confirmado.'});
+        pending.resolve?.({ok:true,message:pending.target==='estornar_estoque'?'Baixa de estoque estornada; faturamento e nota fiscal preservados.':pending.target==='estornar_faturamento'?'Faturamento estornado; pedido pendente de faturamento.':pending.target==='restaurar'?'Pedido restaurado como rascunho.':'Lançamento de estoque confirmado.'});
         if (pending.target === 'salvo' && pending.previous?.order) {
           const reopened: CreatedRecord = { ...pending.previous, status: 'Rascunho', persistence: { ...pending.previous.persistence, operationId: commercial.order.operationId, customerId: commercial.customerId || pending.previous.persistence?.customerId || '', version: commercial.order.version, status: 'salvo' }, order: { ...pending.previous.order, stockState: 'Sem movimentação' } };
           setEditingOrder(reopened);
@@ -6419,7 +6423,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           setView('novo_pedido');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        setToast(pending.target==='estornar_faturamento'?'Faturamento estornado; pedido pendente de faturamento.':pending.target==='restaurar'?'Pedido restaurado como rascunho.':pending.target==='estoque'?`Lançamento confirmado: estoque ${stockState.toLocaleLowerCase('pt-BR')}.`:status === 'Rascunho' ? '' : status === 'Faturado'
+        setToast(pending.target==='estornar_estoque'?'Baixa de estoque estornada; faturamento e nota fiscal preservados.':pending.target==='estornar_faturamento'?'Faturamento estornado; pedido pendente de faturamento.':pending.target==='restaurar'?'Pedido restaurado como rascunho.':pending.target==='estoque'?`Lançamento confirmado: estoque ${stockState.toLocaleLowerCase('pt-BR')}.`:status === 'Rascunho' ? '' : status === 'Faturado'
           ? 'Pedido faturado e persistido. A nota permaneceu como rascunho na Central Fiscal.'
           : status === 'Em separação' ? 'Separação registrada no repositório comercial.'
             : status === 'Cancelado' ? 'Pedido cancelado comercialmente. A situação da nota fiscal foi preservada.'
@@ -7921,10 +7925,10 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     });
   };
 
-  const syncCommercialOrder = (record: CreatedRecord, target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque' | 'restaurar' | 'estornar_faturamento', previous?: CreatedRecord, moveStock?: boolean, resolve?:(result:ConfirmedSave)=>void) => {
+  const syncCommercialOrder = (record: CreatedRecord, target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque' | 'restaurar' | 'estornar_faturamento' | 'estornar_estoque', previous?: CreatedRecord, moveStock?: boolean, resolve?:(result:ConfirmedSave)=>void) => {
     if (!record.order || !managementCatalogBridge || !managementBridgeOrigin || window.parent === window) return false;
     const failOrder=(message:string)=>{if(resolve)resolve({ok:false,message});else setToast(message);return true;};
-    if (target!=='estoque' && target!=='restaurar' && target!=='estornar_faturamento' && record.order.fiscalDocument === 'nfse') return failOrder('Pedido de venda não pode gerar NFS-e. Use uma ordem de serviço ou selecione NF-e.');
+    if (target!=='estoque' && target!=='restaurar' && target!=='estornar_faturamento' && target!=='estornar_estoque' && record.order.fiscalDocument === 'nfse') return failOrder('Pedido de venda não pode gerar NFS-e. Use uma ordem de serviço ou selecione NF-e.');
     if ([...pendingOrderWorkflowRef.current.values()].some((pending) => pending.recordId === record.id)) {
       return failOrder('Este pedido já está sendo atualizado. Aguarde a conclusão.');
     }
@@ -7981,7 +7985,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     }, 15_000);
     pendingOrderWorkflowRef.current.set(requestId, { recordId: record.id, target, timer, previous: target === 'salvo' ? record : previous,resolve });
     window.parent.postMessage(message, managementBridgeOrigin);
-    setToast(target==='estornar_faturamento'?'Estornando o faturamento do pedido…':target==='restaurar'?'Restaurando o pedido como rascunho…':target==='estoque'?'Registrando o estoque do pedido…':target === 'salvo' ? 'Abrindo o pedido para edição…' : target === 'faturado' ? 'Faturando o pedido no repositório comercial…' : target === 'em_separacao' ? 'Registrando a separação…' : target === 'cancelado' ? 'Cancelando o pedido e liberando a reserva…' : target === 'devolvido' ? 'Registrando devolução e estornos integrados…' : 'Persistindo e confirmando o pedido…');
+    setToast(target==='estornar_estoque'?'Estornando baixa de estoque…':target==='estornar_faturamento'?'Estornando o faturamento do pedido…':target==='restaurar'?'Restaurando o pedido como rascunho…':target==='estoque'?'Registrando o estoque do pedido…':target === 'salvo' ? 'Abrindo o pedido para edição…' : target === 'faturado' ? 'Faturando o pedido no repositório comercial…' : target === 'em_separacao' ? 'Registrando a separação…' : target === 'cancelado' ? 'Cancelando o pedido e liberando a reserva…' : target === 'devolvido' ? 'Registrando devolução e estornos integrados…' : 'Persistindo e confirmando o pedido…');
     return true;
   };
   const syncSavedOperation = (record: CreatedRecord, previous?: CreatedRecord, resolve?: (result:ConfirmedSave)=>void) => {
@@ -8059,6 +8063,18 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0);
     return {ok:true,message:'Pedido confirmado.'};
   };
+  const reverseOrderStock=async(record:CreatedRecord):Promise<ConfirmedSave>=>{
+    if(!record.order||record.order.stockState!=='Baixado'||!['Confirmado','Em separação','Faturado'].includes(record.status||''))return {ok:false,message:'Atualize a lista e selecione um pedido com baixa de estoque.'};
+    if(!can('sales.edit')||!can('stock.adjust'))return {ok:false,message:'Seu acesso não permite estornar a baixa de estoque.'};
+    if(managementCatalogBridge){
+      if(!managementCatalogBridge.stockIntegrated||!record.persistence?.operationId)return {ok:false,message:'Pedido e estoque precisam estar conectados ao perfil empresarial.'};
+      if([...pendingOrderWorkflowRef.current.values()].some(p=>p.recordId===record.id))return {ok:false,message:'Este pedido já está sendo atualizado. Aguarde.'};
+      return new Promise(resolve=>{if(!syncCommercialOrder(record,'estornar_estoque',undefined,undefined,resolve))resolve({ok:false,message:'Não foi possível enviar o estorno.'});});
+    }
+    if(!applyOrderStockEffect(record,'devolver'))return {ok:false,message:'Não foi possível devolver os produtos ao estoque.'};
+    const next=created.map(item=>item.id===record.id?{...item,order:{...record.order!,reserveStock:false,stockState:'Sem movimentação' as const},events:[...(item.events||[]),{date:new Date().toISOString(),label:'Baixa de estoque estornada',description:'Produtos devolvidos; faturamento e nota fiscal preservados.'}]}:item);
+    setCreated(next);writeCompanyStorage(STORAGE_KEY,JSON.stringify({version:1,created:next}));return {ok:true,message:'Baixa de estoque estornada.'};
+  };
   const launchOrderStock=async(record:CreatedRecord):Promise<ConfirmedSave>=>{
     if(!record.order||!['Confirmado','Em separação','Faturado'].includes(record.status||'')||record.order.stockState!=='Sem movimentação')return {ok:false,message:'O pedido já movimentou estoque ou não está em uma etapa permitida. Atualize a lista.'};
     if(!can('sales.view')||!can('sales.edit')||!can('stock.exit'))return {ok:false,message:'Seu acesso não permite lançar o estoque deste pedido.'};
@@ -8087,6 +8103,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     return { ok: true, message: 'Pedido restaurado como rascunho.' };
   };
   const updateOrderLifecycle = (record: CreatedRecord, action: OrderLifecycleAction, moveStock?: boolean) => {
+    if(action==='estornar_estoque'){void reverseOrderStock(record);return;}
     if(action==='estoque'){void launchOrderStock(record);return;}
     if (!record.order) return;
     const commercialPermission = action === 'faturar' ? 'sales.invoice' : action === 'cancelar' || action === 'devolver' ? 'sales.cancel' : 'sales.edit';
@@ -8421,6 +8438,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           onContinueOrder={continueOrder}
           onLifecycle={updateOrderLifecycle}
           onStockLaunch={launchOrderStock}
+          onStockReverse={reverseOrderStock}
           onRestoreOrder={restoreCanceledOrder}
         />}
         {view==='novo_pedido'&&standaloneFiscal&&!realFiscalEditor&&<section role="alert"><p>{editorError||'Carregando dados do perfil para a emissão…'}</p><BotaoAcaoCompacto onClick={()=>void loadRealFiscalEditor()}>Tentar novamente</BotaoAcaoCompacto></section>}

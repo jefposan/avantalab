@@ -27,7 +27,13 @@ test('menu real oferece edição e faturamento para confirmados e cancelamento t
   assert.ok(names('Confirmado').includes('Cancelar pedido'));
   assert.ok(names('Em separação').includes('Editar pedido'));
   assert.ok(names('Faturado').includes('Cancelar pedido'));
-  assert.ok(!names('Faturado').includes('Editar pedido'));
+  assert.ok(names('Faturado').includes('Editar pedido'));
+  for(const [status,stockState,expected] of [['Confirmado','Reservado',[]],['Em separação','Baixado',['estoque']],['Faturado','Sem movimentação',['faturamento']],['Faturado','Baixado',['estoque','faturamento']]]){
+    const props=sandbox.exports.menu({record:{id:'2026/1',type:'Pedido',status,fiscal:'Não definida',localRecord:{type:'pedido',status,order:{fiscalDocument:'nenhum',stockState,lines:[]}}}});
+    const edit=props.actions.find(a=>a.label==='Editar pedido');assert.ok(edit);assert.equal(edit.disabled,expected.length>0);for(const reason of expected)assert.ok(edit.disabledLabel.includes(reason));
+    assert.ok(!props.actions.some(a=>a.label==='Estoque e reserva'));
+    assert.equal(props.actions.some(a=>a.label==='Estornar baixa de estoque'),stockState==='Baixado');
+  }
   assert.ok(!names('Cancelado').includes('Cancelar pedido'));
   assert.ok(names('Rascunho').includes('Continuar pedido'));
 });

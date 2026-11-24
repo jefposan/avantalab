@@ -107,3 +107,33 @@ test('falha tardia reverte também autorização de negativo e falta de permiss�
  await assert.rejects(()=>life.postStock(input));assert.deepEqual(await balance(),[0,0]);
  assert.equal((await db.query('select permite_negativo from vendas_estoque_saldos')).rows[0].permite_negativo,false);
 }));
+test('estorno de baixa devolve estoque uma vez, preserva financeiro/fiscal e permite novo lançamento',()=>fixture(async({db,life,billing,load,command,balance,create})=>{
+ const id=await create('stock:reverse',[2,3],'nfe');await life.startSeparation(await command(id,'stock:separate'));await billing.invoice({...await command(id,'stock:invoice'),issuerSnapshot:{},moveStock:false});await life.postStock(await command(id,'stock:post'));
+ assert.deepEqual(await balance(),[15,0]);
+ const before=await load(id),accounts=(await db.query('select * from vendas_contas_receber')).rows,fiscal=(await db.query('select * from vendas_fiscal_rascunhos')).rows;
+ const input=await command(id,'stock:reverse:once');await life.reverseStock(input);assert.deepEqual(await balance(),[20,0]);await life.reverseStock(input);assert.deepEqual(await balance(),[20,0]);
+ const after=await load(id);assert.equal(after.situacao,before.situacao);assert.deepEqual(after.faturado_em,before.faturado_em);assert.equal(after.situacao_fiscal,before.situacao_fiscal);assert.equal(after.situacao_estoque,'sem_movimentacao');
+ assert.deepEqual((await db.query('select * from vendas_contas_receber')).rows,accounts);assert.deepEqual((await db.query('select * from vendas_fiscal_rascunhos')).rows,fiscal);
+ await assert.rejects(()=>life.reverseStock({...input,idempotencyKey:'stock:stale'}),/CONFLICT/);
+ await life.postStock(await command(id,'stock:post:again'));assert.deepEqual(await balance(),[15,0]);
+}));
+test('estorno de estoque valida permissão, empresa, etapa e permite editar após estornar faturamento',()=>fixture(async({db,life,billing,load,command,balance,create,operationService})=>{
+ const id=await create('stock:edit',[2]);await life.startSeparation(await command(id,'stock:edit:sep'));await billing.invoice({...await command(id,'stock:edit:bill'),issuerSnapshot:{},moveStock:false});await life.postStock(await command(id,'stock:edit:post'));await life.reverseBilling(await command(id,'stock:edit:unbill'));
+ const input=await command(id,'stock:edit:reverse'),service=createCommercialSalesOrderLifecycleService({repository:life});
+ assert.equal((await service.reverseStock({...input,context})).ok,false);assert.deepEqual(await balance(),[18,0]);
+ await assert.rejects(()=>life.reverseStock({...input,companyId:'99999999-9999-4999-8999-999999999999'}),/NOT-FOUND/);
+ const allowed={...context,effectivePermissions:{...context.effectivePermissions,'stock.adjust':true}};
+ const workflow=createCommercialOrderWorkflow({customerRepository:{findByDocument:()=>assert.fail()},customerService:{create:()=>assert.fail()},operationService,lifecycleService:service,billingService:{invoice:()=>assert.fail()}});
+ const result=await workflow.advance({context:allowed,target:'estornar_estoque',operationId:id,persistenceKey:'stock:workflow',order:{expectedVersion:input.expectedVersion}});assert.equal(result.ok,true,JSON.stringify(result.errors));assert.equal(result.order.status,'em_separacao');assert.equal(result.order.stockStatus,'sem_movimentacao');assert.deepEqual(await balance(),[20,0]);
+ await life.reopen(await command(id,'stock:edit:reopen'));assert.equal((await load(id)).situacao,'salvo');
+ await assert.rejects(async()=>life.reverseStock(await command(id,'stock:edit:bad')),/STATE/);
+ assert.ok(createCommercialOrderWorkflowRequest({requestId:'stock:request',persistenceKey:'stock:workflow',target:'estornar_estoque',operationId:id,order:{expectedVersion:input.expectedVersion}}));
+}));
+test('falha no histórico do estorno reverte saldos e reservas integralmente',()=>fixture(async({db,pool,life,billing,command,balance,create})=>{
+ const id=await create('stock:rollback');await life.startSeparation(await command(id,'stock:rollback:sep'));await billing.invoice({...await command(id,'stock:rollback:bill'),issuerSnapshot:{},moveStock:false});await life.postStock(await command(id,'stock:rollback:post'));
+ const input=await command(id,'stock:rollback:reverse');
+ const failPool={connect:async()=>{const client=await pool.connect();return {release:()=>client.release(),query:(sql,args)=>{if(/insert into public.vendas_eventos/i.test(sql))throw Error('audit-failure');return client.query(sql,args);}};}};
+ const failing=createPostgresCommercialSalesOrderLifecycleRepository({pool:failPool});await assert.rejects(()=>failing.reverseStock(input),/audit-failure/);
+ assert.deepEqual(await balance(),[18,0]);assert.equal((await db.query('select situacao from vendas_estoque_reservas where operacao_id=$1',[id])).rows[0].situacao,'consumida');
+ await life.reverseStock(input);assert.deepEqual(await balance(),[20,0]);
+}));

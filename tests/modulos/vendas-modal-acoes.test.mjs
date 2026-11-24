@@ -9,7 +9,7 @@ test('modal de ações comerciais cabe na viewport sem rolagem horizontal', asyn
 
   assert.match(css, /\.dialog:has\(\.record-action-options\)\s*\{[^}]*grid-template-rows:\s*auto minmax\(0,1fr\) auto[^}]*width:\s*min\(940px,100%\)[^}]*overflow:\s*hidden/s);
   assert.match(css, /\.record-action-options\s*\{[^}]*min-width:\s*0[^}]*overflow-x:\s*hidden[^}]*overflow-y:\s*auto/s);
-  assert.match(css, /\.record-action-options\s*>\s*button\s*\{[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*overflow:\s*hidden/s);
+  assert.match(css, /\.record-action-options\s*>\s*button(?:,\.record-action-options > \.commercial-action-tooltip > button\))?\s*\{[^}]*min-width:\s*0[^}]*max-width:\s*100%[^}]*overflow:\s*hidden/s);
   assert.match(css, /\.record-action-options\s+(?:strong|small)\s*\{[^}]*overflow-wrap:\s*anywhere[^}]*white-space:\s*normal/s);
   assert.match(css, /@media\s*\(max-width:\s*760px\)[\s\S]*\.record-action-options\s*\{\s*grid-template-columns:\s*1fr/);
 });
@@ -24,7 +24,7 @@ test('menu aprovado preserva todas as ações e separa recurso previsto de condi
   const props = sandbox.exports.menu({ record: { id: '2026/1', type: 'Pedido', client: 'Cliente', status: 'Confirmado', fiscal: 'Cancelado', localRecord: { type: 'pedido', status: 'Confirmado', order: { fiscalDocument: 'nfe' } }, fiscalDraft: { status: 'Cancelado', documentType: 'nfe' } }, onLifecycleRequest: (_record, action) => { if (action === 'cancelar') canceled++; } });
   const all = sandbox.exports.groups(props.actions, () => true);
   assert.equal(props.compactOrder, true);
-  assert.equal(all.available.length, 6);
+  assert.equal(all.available.length, 5);
   assert.equal(all.planned.length, 6);
   const activeProps=sandbox.exports.menu({record:{id:'2026/1',type:'Pedido',client:'Cliente',status:'Confirmado',fiscal:'Não definida',localRecord:{type:'pedido',status:'Confirmado',order:{fiscalDocument:'nenhum'}}},onCopy(){},onTool(){}});
   const active=sandbox.exports.groups(activeProps.actions,()=>true);
@@ -39,7 +39,8 @@ test('menu aprovado preserva todas as ações e separa recurso previsto de condi
   all.destructive.onSelect(); assert.equal(canceled, 1);
   const denied = sandbox.exports.groups(props.actions, permission => permission !== 'stock.view' && permission !== 'sales.cancel');
   assert.ok(!denied.available.some(action => action.label === 'Estoque e reserva'));
-  assert.equal(denied.unavailable.find(action => action.label === 'Estoque e reserva').reason, 'Sem acesso');
+  assert.ok(!props.actions.some(action=>action.label==='Estoque e reserva'));
+  const editDenied=sandbox.exports.groups(props.actions,p=>p!=='sales.edit');assert.equal(editDenied.unavailable.find(a=>a.label==='Editar pedido').reason,'Sem acesso');
   assert.equal(denied.destructive.disabled, true);
   assert.ok(!denied.planned.some(action => action.label === 'Estoque e reserva'), 'falta de permissão não é recurso previsto');
 });
