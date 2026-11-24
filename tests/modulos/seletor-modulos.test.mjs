@@ -60,7 +60,7 @@ test('Navegar ocupa lado esquerdo e não é duplicado nas ações da direita', (
   for (const [file, inicio, identidade, fim] of [
     ['app/projetos/ProjetosClient.tsx', 'return <header', '<div className={styles.moduleIdentity}', '</header>'],
     ['app/recebimentos/RecebimentosPaginaClient.tsx', '<header className={styles.cabecalhoModulo}', '<div className={styles.identidadeModulo}', '</header>'],
-    ['app/vendas/sistema/VendasServicosPrototype.tsx', '<header className="topbar">', '<div className="module-brand">', '</header>'],
+    ['app/vendas/sistema/VendasServicosPrototype.tsx', '<header ref={topbarRef} className="topbar">', '<div className="module-brand">', '</header>'],
   ]) {
     const code = readFileSync(file, 'utf8').split(inicio)[1].split(fim)[0];
     assert.equal((code.match(/<SeletorModulos/g) || []).length, 1, file);

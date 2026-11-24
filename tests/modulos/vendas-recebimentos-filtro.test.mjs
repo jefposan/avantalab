@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+import {receivableStatus,receivableBalance,normalizeSearch} from '../../app/vendas/lib/domain.mjs';
+const source=readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx','utf8');
+const view=source.slice(source.indexOf('function ReceivablesView('));
+const filter=view.match(/const filtered = rows\.filter\([^\n]+/)[0];
+const records=[['futuro','2026-12-10',0,0],['hoje','2026-11-24',0,0],['atrasado','2026-10-01',0,0],['parcial','2026-10-01',40,0],['quitado','2026-10-01',100,0],['estornado','2026-10-01',0,100]].map(([id,dueDate,received,reversed])=>({id,dueDate,received,reversed,value:100,refunded:0,client:'Cliente',origin:'Pedido 1',method:'PIX'}));
+const rows=records.map(record=>({record,status:receivableStatus(record,'2026-11-24'),balance:receivableBalance(record)}));
+const run=(statusFilter,query='')=>{const context={rows,statusFilter,normalizedQuery:normalizeSearch(query),normalizeSearch};vm.runInNewContext(filter+'\nresult=filtered.map(row=>row.record.id);',context);return Array.from(context.result);};
+test('Em aberto inclui futuro, hoje, vencido e parcial; exclui quitado e estornado',()=>assert.deepEqual(run('Em aberto'),['futuro','hoje','atrasado','parcial']));
+test('filtro específico e busca mantêm o recorte escolhido',()=>{assert.deepEqual(run('Atrasado'),['atrasado']);assert.deepEqual(run('Em aberto','parcial'),['parcial']);assert.equal(run('Todas as situações').length,6);});

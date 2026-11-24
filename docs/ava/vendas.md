@@ -1,4 +1,16 @@
-<!-- ava-version: 3.2.0.514 -->
+<!-- ava-version: 3.2.0.515 -->
+
+> Revisão visual complementar 3.2.0.515: sem impacto operacional; cabeçalho fixo ajustado somente em Vendas e Serviços Web.
+
+> Revisão complementar 3.2.0.515: sem impacto operacional nos aplicativos independentes; estorno de faturamento disponível somente em Recebimentos de Vendas e Serviços Web.
+
+> Revisão visual complementar 3.2.0.515: sem impacto operacional; datas da lista de Recebimentos ajustadas somente em Vendas e Serviços Web.
+
+> Revisão complementar 3.2.0.515: sem impacto operacional nos aplicativos independentes; Consignado sem parcelas disponível no pedido de Vendas e Serviços Web.
+
+> Revisão complementar 3.2.0.515: sem impacto operacional nos aplicativos independentes; sincronização imediata de Recebimentos exclusiva do fluxo Web de pedidos.
+
+> Revisão 3.2.0.515: sem impacto operacional; ajustes de indicadores, camadas e limites dos popups exclusivos de Vendas e Serviços Web.
 
 > Revisão 3.2.0.514: Sem impacto operacional no aplicativo AvantaVendas ou no financeiro nativo. O módulo Vendas e Serviços Web responsivo passa a oferecer somente Restaurar como rascunho para pedidos cancelados; não há refaturamento automático.
 

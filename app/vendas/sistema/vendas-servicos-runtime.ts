@@ -56,8 +56,8 @@ export function ptBrDateToIso(value: string) {
 }
 
 export function displayIsoDate(value: string) {
-  const [year, month, day] = String(value || '').split('-');
-  return year && month && day ? `${day}/${month}/${year}` : value;
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:$|T| )/.exec(String(value || ''));
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
 }
 
 export function displayDateTime(value: string) {
@@ -91,5 +91,5 @@ export function isoAfterDays(days: number) {
 }
 
 export function paymentMethodLabel(value: string) {
-  return ({ pix: 'PIX', boleto: 'Boleto', cartao: 'Cartão', prazo: 'A prazo' } as Record<string, string>)[value] ?? value;
+  return ({ pix: 'PIX', consignado: 'Consignado', boleto: 'Boleto', cartao: 'Cartão', prazo: 'A prazo' } as Record<string, string>)[value] ?? value;
 }

@@ -106,6 +106,7 @@ export function calculateOrder(items, discount = 0, freight = 0) {
 }
 
 export function validateOrder(order) {
+  const consigned = order?.paymentMethod === 'consignado';
   const errors = [];
   const warnings = [];
   const items = Array.isArray(order?.items) ? order.items : [];
@@ -115,9 +116,9 @@ export function validateOrder(order) {
   if (order?.orderDate && !isValidIsoDate(order.orderDate)) errors.push('Informe uma data válida para o pedido.');
   if (order?.deliveryDate && !isValidIsoDate(order.deliveryDate)) errors.push('Informe uma data válida para a entrega.');
   if (order?.orderDate && order?.deliveryDate && isValidIsoDate(order.orderDate) && isValidIsoDate(order.deliveryDate) && order.deliveryDate < order.orderDate) errors.push('A entrega não pode ocorrer antes da data do pedido.');
-  if (!Number.isInteger(Number(order?.installments)) || Number(order?.installments) < 1 || Number(order?.installments) > 120) errors.push('Informe de 1 a 120 parcelas.');
-  if (!isValidIsoDate(order?.firstDueDate)) errors.push('Informe uma data válida para o primeiro vencimento.');
-  if (order?.orderDate && isValidIsoDate(order.orderDate) && isValidIsoDate(order?.firstDueDate) && order.firstDueDate < order.orderDate) errors.push('O primeiro vencimento não pode ser anterior à data do pedido.');
+  if (!consigned && (!Number.isInteger(Number(order?.installments)) || Number(order?.installments) < 1 || Number(order?.installments) > 120)) errors.push('Informe de 1 a 120 parcelas.');
+  if (!consigned && !isValidIsoDate(order?.firstDueDate)) errors.push('Informe uma data válida para o primeiro vencimento.');
+  if (!consigned && order?.orderDate && isValidIsoDate(order.orderDate) && isValidIsoDate(order?.firstDueDate) && order.firstDueDate < order.orderDate) errors.push('O primeiro vencimento não pode ser anterior à data do pedido.');
   items.forEach((item, index) => {
     const label = item.name?.trim() || `Item ${index + 1}`;
     if (!(Number(item.quantity) > 0)) errors.push(`${label}: informe uma quantidade maior que zero.`);

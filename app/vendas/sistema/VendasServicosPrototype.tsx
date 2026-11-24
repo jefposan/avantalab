@@ -285,6 +285,8 @@ type ReceivableEvent = {
 
 type ReceivableRecord = {
   id: string;
+  orderDate?: string;
+  operationType?: string;
   dueDate: string;
   client: string;
   origin: string;
@@ -740,7 +742,7 @@ type OrderLine = {
 };
 
 type CatalogItem = CatalogItemRecord & CatalogTaxProfile & { catalogItemId?: string; stockLocationId?: string; allowNegativeStock?: boolean };
-type PaymentMethod = 'pix' | 'boleto' | 'cartao' | 'prazo';
+type PaymentMethod = 'pix' | 'boleto' | 'cartao' | 'prazo' | 'consignado';
 type CompanyProfile = typeof activeCompany & {
   stateRegistration: string; municipalRegistration: string; taxRegime: string; cityCode: string; cep: string; street: string; number: string; complement: string; district: string; email: string; phone: string;
 };
@@ -958,9 +960,9 @@ const viewInfo: Record<View, { title: string; subtitle: string; eyebrow: string 
   servicos: { title: 'Serviços', subtitle: 'Agenda, ordens de serviço, execução e emissão de NFS-e.', eyebrow: 'Prestação de serviços' },
   clientes: { title: 'Clientes', subtitle: 'Cadastro comercial, fiscal, entrega, cobrança e relacionamento.', eyebrow: 'Cadastros' },
   catalogo: { title: 'Produtos e serviços', subtitle: 'Catálogo publicado por Custos e Precificação com complementos fiscais.', eyebrow: 'Catálogo comercial' },
-  estoque: { title: 'Estoque', subtitle: 'Saldos, reservas, entradas, saídas, produção e inventário.', eyebrow: 'Movimentações' },
+  estoque: { title: 'Estoque', subtitle: '', eyebrow: 'Movimentações' },
   fiscal: { title: 'Notas Fiscais', subtitle: 'Consulte as notas emitidas, acompanhe os rascunhos e acesse as ações de cada documento.', eyebrow: 'NF-e · NFC-e · NFS-e' },
-  recebimentos: { title: 'Recebimentos', subtitle: 'Parcelas geradas por vendas e serviços, com sincronização futura com a Gestão Financeira.', eyebrow: 'Contas a receber' },
+  recebimentos: { title: 'Recebimentos', subtitle: '', eyebrow: 'Contas a receber' },
   relatorios: { title: 'Relatórios', subtitle: 'Indicadores comerciais, operacionais, fiscais e de estoque.', eyebrow: 'Análises' },
   configuracoes: { title: 'Ajustes', subtitle: 'Configure a empresa, as notas, a operação e os acessos por assunto.', eyebrow: 'Vendas e serviços' },
 };
@@ -1036,7 +1038,7 @@ function Panel({ title, subtitle, action, children, className = '' }: { title: s
 
 function PageHeading({ view, action }: { view: View; action?: ReactNode }) {
   const info = viewInfo[view];
-  return <div className="page-heading"><div><span>{info.eyebrow}</span><h1>{info.title}</h1><p>{info.subtitle}</p></div>{action}</div>;
+  return <div className="page-heading"><div><span>{info.eyebrow}</span><h1>{info.title}</h1>{info.subtitle && <p>{info.subtitle}</p>}</div>{action}</div>;
 }
 
 function EmptyState({ title, description }: { title: string; description: string }) {
@@ -1365,7 +1367,8 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
     const initialItem = catalogRecords.find((item) => item.sku === initialSku);
     return initialItem ? [orderLineFromCatalog(initialItem)] : [];
   });
-  const [paymentMethod, setPaymentMethod] = useState<string>(() => correction ? (/^pix$/i.test(correction.draft.paymentMethod) ? '' : correction.draft.paymentMethod) : fiscalEditor ? (initialOrder?.paymentMethod || '') : (settings.payments.enabledMethods.includes(initialOrder?.paymentMethod as PaymentMethod) ? initialOrder?.paymentMethod : settings.payments.defaultMethod) || '');
+  const [paymentMethod, setPaymentMethod] = useState<string>(() => correction ? (/^pix$/i.test(correction.draft.paymentMethod) ? '' : correction.draft.paymentMethod) : fiscalEditor ? (initialOrder?.paymentMethod || '') : ((initialOrder?.paymentMethod === 'consignado' || settings.payments.enabledMethods.includes(initialOrder?.paymentMethod as PaymentMethod)) ? initialOrder?.paymentMethod : settings.payments.defaultMethod) || '');
+  const consigned = !fiscalOnly && !correction && !fiscalEditor && paymentMethod === 'consignado';
   const [paymentDetails, setPaymentDetails] = useState(correction?.draft.paymentDetails || initialOrder?.paymentDetails || {integrationType:'',institutionDocument:'',authorizationCode:''});
   const [insurance, setInsurance] = useState(formatLineNumber(initialOrder?.commercialTotals.insurance ?? 0,true));
   const [otherExpenses, setOtherExpenses] = useState(formatLineNumber(initialOrder?.commercialTotals.other ?? 0,true));
@@ -1430,8 +1433,8 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
     paymentMethod,
     orderDate,
     deliveryDate,
-    installments: Number(installments),
-    firstDueDate,
+    installments: consigned ? 0 : Number(installments),
+    firstDueDate: consigned ? '' : firstDueDate,
     reserveStock,
     fiscalDocument,
     items: lines.map((line) => ({ name: line.name, kind: line.kind, quantity: line.quantity, unitPrice: line.unitPrice, available: line.available, fiscalStatus: line.fiscalStatus })),
@@ -1525,8 +1528,8 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
         fiscalIssuer: fiscalDocument !== 'nenhum' ? issuerSelection?.snapshot : undefined,
         paymentMethod,
         ...(fiscalEditor?{paymentDetails}:{}),
-        installments: Number(installments),
-        firstDueDate,
+        installments: consigned ? 0 : Number(installments),
+        firstDueDate: consigned ? '' : firstDueDate,
         channel,
         orderDate,
         deliveryDate,
@@ -1652,10 +1655,10 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
           <header><div><h2 id="order-conditions-title">{fiscalOnly ? 'Totais e pagamento' : 'Condições comerciais'}</h2><p>{fiscalOnly ? 'Valores e condições que constarão no documento fiscal.' : 'Pagamento, descontos, entrega e observações do pedido.'}</p></div></header>
           <div className="order-card-body order-form-grid">
             {fiscalEditor&&<label className="field"><span>Condição de pagamento</span><select value={installments==='1'?'cash':'installments'} onChange={event=>setInstallments(event.target.value==='cash'?'1':'2')}><option value="cash">À vista</option><option value="installments">Parcelado</option></select></label>}
-            <label className="field"><span>Forma de pagamento *</span><select name="paymentMethod" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}>{(correction || fiscalEditor) ? <><option value="">Selecione o meio utilizado</option>{['PIX estático','PIX dinâmico','Dinheiro','Boleto','Transferência bancária','Cartão de crédito','Cartão de débito','Sem pagamento'].map(method=><option value={method} key={method}>{method==='PIX estático'?'PIX — chave ou QR Code fixo':method==='PIX dinâmico'?'PIX — cobrança com QR Code dinâmico':method}</option>)}</> : settings.payments.enabledMethods.map((method) => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}</select></label>
+            <label className="field"><span>Forma de pagamento *</span><select name="paymentMethod" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}>{(correction || fiscalEditor) ? <><option value="">Selecione o meio utilizado</option>{['PIX estático','PIX dinâmico','Dinheiro','Boleto','Transferência bancária','Cartão de crédito','Cartão de débito','Sem pagamento'].map(method=><option value={method} key={method}>{method==='PIX estático'?'PIX — chave ou QR Code fixo':method==='PIX dinâmico'?'PIX — cobrança com QR Code dinâmico':method}</option>)}</> : [...new Set([...settings.payments.enabledMethods, ...(!fiscalOnly ? ['consignado' as PaymentMethod] : [])])].map((method) => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}</select></label>
             {(correction || fiscalEditor) && ['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(paymentMethod) && <><label className="field"><span>Integração do pagamento</span><select name="integrationType" value={paymentDetails.integrationType} onChange={event=>setPaymentDetails(current=>({...current,integrationType:event.target.value}))}><option value="">Selecione</option><option value="1">Integrado ao sistema da empresa</option><option value="2">Pagamento externo, sem integração</option></select></label><label className="field"><span>CNPJ da instituição de pagamento</span><input name="institutionDocument" value={formatCnpj(paymentDetails.institutionDocument)} inputMode="text" autoCapitalize="characters" maxLength={18} placeholder="00.000.000/0000-00" onChange={event=>setPaymentDetails(current=>({...current,institutionDocument:sanitizarCnpj(event.target.value).slice(0,14)}))}/></label><label className="field"><span>{paymentMethod==='PIX dinâmico'?'Identificador da transação PIX (EndToEndId)':'Código de autorização do pagamento'}</span><input name="authorizationCode" value={paymentDetails.authorizationCode} placeholder={paymentDetails.integrationType==='2'?'Opcional':undefined} maxLength={128} onChange={event=>setPaymentDetails(current=>({...current,authorizationCode:event.target.value}))}/></label></>}
-            <label className="field"><span>Parcelas</span><select name="installments" value={installments} onChange={(event) => setInstallments(event.target.value)}><option value="1">1 parcela</option><option value="2">2 parcelas</option><option value="3">3 parcelas</option><option value="6">6 parcelas</option>{![1,2,3,6].includes(Number(installments))&&<option value={installments}>{installments} parcelas</option>}</select></label>
-            <label className="field"><span>Primeiro vencimento</span><input type="date" name="firstDueDate" value={firstDueDate} onChange={(event) => setFirstDueDate(event.target.value)}/></label>
+            <label className="field"><span>Parcelas</span><select name="installments" disabled={consigned} value={consigned ? '0' : installments} onChange={(event) => setInstallments(event.target.value)}>{consigned && <option value="0">Não se aplica</option>}<option value="1">1 parcela</option><option value="2">2 parcelas</option><option value="3">3 parcelas</option><option value="6">6 parcelas</option>{![1,2,3,6].includes(Number(installments))&&<option value={installments}>{installments} parcelas</option>}</select></label>
+            <label className="field"><span>Primeiro vencimento</span><input type="date" name="firstDueDate" disabled={consigned} value={consigned ? '' : firstDueDate} onChange={(event) => setFirstDueDate(event.target.value)}/></label>
             {!fiscalOnly && <label className="field"><span>Entrega ou retirada</span><select value={fulfillment} onChange={(event) => setFulfillment(event.target.value)}><option>Entrega</option><option>Retirada</option><option>Serviço no local</option></select></label>}
             <label className="field"><span>Frete</span>{fiscalEditor?<CampoMoeda name="freight" value={freight} onChange={setFreight} aria-label="Valor do frete"/>:<MoneyInput value={freight} onChange={setFreight} ariaLabel="Valor do frete"/>}</label>
             <label className="field"><span>Desconto geral</span>{fiscalEditor?<CampoMoeda name="generalDiscount" value={globalDiscount} onChange={setGlobalDiscount} aria-label="Desconto geral"/>:<MoneyInput value={globalDiscount} onChange={setGlobalDiscount} ariaLabel="Desconto geral"/>}</label>
@@ -1683,7 +1686,7 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
           <header><span>{fiscalOnly ? 'Resumo da nota' : 'Resumo do pedido'}</span><Badge tone={orderReady ? 'success' : 'warning'}>{orderReady ? 'Pronto para confirmar' : fiscalOnly ? 'Revisar nota' : 'Revisar pedido'}</Badge></header>
           <dl><div><dt>Itens</dt><dd>{money(fiscalEditor?productsTotal:totals.subtotal)}</dd></div><div><dt>Desconto</dt><dd>− {money(fiscalEditor?lineDiscountTotal+totals.discount:totals.discount)}</dd></div><div><dt>Frete</dt><dd>{money(commercialNumber(freight))}</dd></div>{fiscalEditor&&<><div><dt>Seguro</dt><dd>{money(commercialNumber(insurance))}</dd></div><div><dt>Outras despesas</dt><dd>{money(commercialNumber(otherExpenses))}</dd></div></>}<div className="order-total"><dt>Total</dt><dd>{money(totals.total)}</dd></div></dl>
           {!fiscalOnly && <div className="order-margin"><span>Margem bruta estimada</span><strong>{percent(estimatedMargin)}</strong><small>Custo publicado: {money(totalCost)}</small></div>}
-          <div className="order-effects"><div><Icon name="stock" size={16}/><span><strong>{reserveStock ? 'Reserva prevista' : 'Sem reserva'}</strong><small>{physicalProductCount} {physicalProductCount === 1 ? 'produto físico' : 'produtos físicos'}</small></span></div><div><Icon name="money" size={16}/><span><strong>{installments} {installments === '1' ? 'parcela' : 'parcelas'}</strong><small>{paymentMethod.toLocaleUpperCase('pt-BR')}</small></span></div><div><Icon name="fiscal" size={16}/><span><strong>{fiscalDocument === 'nenhum' ? 'Fiscal não definido' : fiscalDocument.toLocaleUpperCase('pt-BR')}</strong><small>{fiscalDocument === 'nenhum' ? operationNature : issuerError || 'Empresa ativa aplicada automaticamente'}</small></span></div></div>
+          <div className="order-effects"><div><Icon name="stock" size={16}/><span><strong>{reserveStock ? 'Reserva prevista' : 'Sem reserva'}</strong><small>{physicalProductCount} {physicalProductCount === 1 ? 'produto físico' : 'produtos físicos'}</small></span></div><div><Icon name="money" size={16}/><span><strong>{consigned ? 'Sem parcelas' : `${installments} ${installments === '1' ? 'parcela' : 'parcelas'}`}</strong><small>{paymentMethod.toLocaleUpperCase('pt-BR')}</small></span></div><div><Icon name="fiscal" size={16}/><span><strong>{fiscalDocument === 'nenhum' ? 'Fiscal não definido' : fiscalDocument.toLocaleUpperCase('pt-BR')}</strong><small>{fiscalDocument === 'nenhum' ? operationNature : issuerError || 'Empresa ativa aplicada automaticamente'}</small></span></div></div>
         </section>
         {submitted&&!fiscalSaveError&&previewIssues.length>0&&<section role="alert" className="order-validation">{previewIssues.map(issue=><p className="error" key={issue}>{issue}</p>)}</section>}
         {((submitted&&!fiscalSaveError) || validation.warnings.length > 0) && <section className="order-validation" aria-live="polite"><h3>Validação</h3>{submitted && !fiscalSaveError && [...validation.errors, ...(issuerError ? [issuerError] : [])].map((message) => <p className="error" key={message}><Icon name="warning" size={15}/>{message}</p>)}{validation.warnings.map((message) => <p className="warning" key={message}><Icon name="warning" size={15}/>{message}</p>)}</section>}
@@ -1968,10 +1971,10 @@ function CommercialRecordActions({ onRestore, onCopy, onTool, record, fiscalPrep
     const lifecycleActions: RecordAction[] = local?.type === 'pedido' && local.order ? [
       ...(local.status === 'Confirmado' ? [{ label: 'Iniciar separação', description: 'Mantém a reserva e registra o pedido em preparação', icon: 'stock' as IconName, onSelect: () => onLifecycleRequest(local, 'separar' as OrderLifecycleAction), permissions: ['sales.edit', 'stock.exit'] }] : []),
       ...(['Confirmado', 'Em separação'].includes(local.status ?? '') ? [
-        { label: 'Editar pedido', description: 'Volta ao rascunho e libera eventual reserva para revisar os dados', icon: 'edit' as IconName, onSelect: () => onLifecycleRequest(local, 'editar' as OrderLifecycleAction), permissions: ['sales.edit', 'stock.exit'] },
+        ...(local.order.stockState !== 'Baixado' ? [{ label: 'Editar pedido', description: 'Volta ao rascunho e libera eventual reserva para revisar os dados', icon: 'edit' as IconName, onSelect: () => onLifecycleRequest(local, 'editar' as OrderLifecycleAction), permissions: ['sales.edit', 'stock.exit'] }] : []),
         { label: 'Faturar pedido', description: 'Gera as contas a receber e permite escolher a baixa de estoque', icon: 'check' as IconName, onSelect: () => onLifecycleRequest(local, 'faturar' as OrderLifecycleAction), permissions: ['sales.invoice', 'stock.exit', ...(local.order.fiscalDocument !== 'nenhum' ? ['fiscal.prepare'] : [])] },
       ] : []),
-      ...(['Confirmado', 'Em separação', 'Faturado'].includes(local.status ?? '') ? [{ label: 'Cancelar pedido', description: local.status === 'Faturado' ? 'Cancela a venda e estorna estoque e parcelas; a nota fiscal permanece preservada' : 'Cancela o pedido e libera eventual reserva', icon: 'close' as IconName, onSelect: () => onLifecycleRequest(local, 'cancelar' as OrderLifecycleAction), permissions: local.status === 'Faturado' ? ['sales.cancel', 'stock.adjust'] : ['sales.cancel', 'stock.exit'] }] : []),
+      ...(['Confirmado', 'Em separação', 'Faturado'].includes(local.status ?? '') ? [{ label: 'Cancelar pedido', description: local.status === 'Faturado' ? 'Cancela a venda e estorna estoque e parcelas; a nota fiscal permanece preservada' : 'Cancela o pedido e libera eventual reserva', icon: 'close' as IconName, onSelect: () => onLifecycleRequest(local, 'cancelar' as OrderLifecycleAction), permissions: local.status === 'Faturado' || local.order.stockState === 'Baixado' ? ['sales.cancel', 'stock.adjust'] : ['sales.cancel', 'stock.exit'] }] : []),
       ...(local.status === 'Rascunho' ? [{ label: 'Cancelar rascunho', description: 'Cancela o registro sem efeito sobre o estoque', icon: 'close' as IconName, onSelect: () => onLifecycleRequest(local, 'cancelar' as OrderLifecycleAction), permission: 'sales.cancel' }] : []),
       ...(local.status === 'Faturado' ? [{ label: 'Registrar devolução total', description: 'Recoloca os produtos no saldo físico e disponível', icon: 'back' as IconName, onSelect: () => onLifecycleRequest(local, 'devolver' as OrderLifecycleAction), permissions: ['sales.cancel', 'stock.exit'] }] : []),
     ] : [];
@@ -2163,7 +2166,7 @@ function OrderDetailsDialog({ record, onClose }: { record: CreatedRecord | null;
   return <Dialog open title={record.id} description={`Pedido de ${record.client} · criado em ${new Date(record.createdAt).toLocaleString('pt-BR')}`} onClose={onClose}>
     <div className="dialog-body order-record-details">
       <div className="order-record-head"><div><span>Situação comercial</span><Badge>{record.status ?? 'Rascunho'}</Badge></div><div><span>Estoque</span><Badge tone={record.order.stockState === 'Baixado' || record.order.stockState === 'Devolvido' ? 'success' : record.order.stockState === 'Liberado' ? 'neutral' : 'info'}>{record.order.stockState}</Badge></div><div><span>Total</span><strong>{money(record.total)}</strong></div><div><span>Produtos físicos</span><strong>{productCount}</strong></div></div>
-      <section><div className="client-section-heading"><h3>Condições e preparação fiscal</h3><p>Condições preservadas na criação do pedido.</p></div><dl className="receivable-definition-list"><div><dt>Vendedor</dt><dd>{record.order.seller}</dd></div><div><dt>Pagamento</dt><dd>{paymentMethodLabel(record.order.paymentMethod)} · {record.order.installments}x</dd></div><div><dt>Documento previsto</dt><dd>{record.order.fiscalDocument === 'nenhum' ? 'Não definido' : documentLabel(record.order.fiscalDocument)}</dd></div><div><dt>Empresa</dt><dd>Perfil ativo aplicado automaticamente</dd></div></dl></section>
+      <section><div className="client-section-heading"><h3>Condições e preparação fiscal</h3><p>Condições preservadas na criação do pedido.</p></div><dl className="receivable-definition-list"><div><dt>Vendedor</dt><dd>{record.order.seller}</dd></div><div><dt>Pagamento</dt><dd>{paymentMethodLabel(record.order.paymentMethod)}{record.order.paymentMethod !== 'consignado' && ` · ${record.order.installments}x`}</dd></div><div><dt>Documento previsto</dt><dd>{record.order.fiscalDocument === 'nenhum' ? 'Não definido' : documentLabel(record.order.fiscalDocument)}</dd></div><div><dt>Empresa</dt><dd>Perfil ativo aplicado automaticamente</dd></div></dl></section>
       <section><div className="client-section-heading"><h3>Itens do pedido</h3><p>Retrato de quantidade, preço e custo usado na confirmação.</p></div><Table headers={['Produto ou serviço', 'Quantidade', 'Preço', 'Subtotal']} minWidth={0} className="order-detail-table"><>{record.order.lines.map((line) => <tr key={line.sku}><td data-label="Item"><strong>{line.name}</strong><small>{line.sku}</small></td><td data-label="Quantidade" className="numeric">{line.quantity} {line.unit}</td><td data-label="Preço" className="numeric">{money(line.unitPrice)}</td><td data-label="Subtotal" className="numeric"><strong>{money(line.quantity * line.unitPrice)}</strong></td></tr>)}</></Table></section>
       <section><div className="client-section-heading"><h3>Histórico</h3><p>Transições comerciais e seus efeitos operacionais.</p></div><div className="order-event-list">{(record.events ?? []).map((event, index) => <div key={`${event.date}-${index}`}><span><Icon name="check" size={15}/></span><div><strong>{event.label}</strong><small>{new Date(event.date).toLocaleString('pt-BR')} · {event.description}</small></div></div>)}</div></section>
     </div>
@@ -2189,7 +2192,8 @@ function OrderLifecycleDialog({ request, onClose, onConfirm }: { request: { reco
   return <Dialog open title={`${info.title} · ${record.id}`} description={info.description} onClose={onClose}>
     <div className="dialog-body lifecycle-confirmation">
       <div className="lifecycle-summary"><div><span>Cliente</span><strong>{record.client}</strong></div><div><span>Situação atual</span><Badge>{record.status}</Badge></div><div><span>Estoque atual</span><Badge tone="info">{order.stockState}</Badge></div><div><span>Total</span><strong>{money(record.total)}</strong></div></div>
-      {action === 'faturar' && <label className="check-field"><input type="checkbox" checked={moveStock} disabled={!order.reserveStock} onChange={(event) => setMoveStock(event.target.checked)}/><span><strong>Baixar estoque neste faturamento</strong><small>{!order.reserveStock ? 'Este pedido está sem controle de estoque. Use Lançar no estoque nas ações do pedido para ativar.' : moveStock ? 'A reserva será convertida em saída física.' : 'Sem saída física; eventual reserva será liberada.'}</small></span></label>}
+      {action === 'faturar' && order.stockState === 'Baixado' && <p>Estoque já baixado. O refaturamento preserva a baixa existente e a nota fiscal.</p>}
+      {action === 'faturar' && order.stockState !== 'Baixado' && <label className="check-field"><input type="checkbox" checked={moveStock} disabled={!order.reserveStock} onChange={(event) => setMoveStock(event.target.checked)}/><span><strong>Baixar estoque neste faturamento</strong><small>{!order.reserveStock ? 'Este pedido está sem controle de estoque. Use Lançar no estoque nas ações do pedido para ativar.' : moveStock ? 'A reserva será convertida em saída física.' : 'Sem saída física; eventual reserva será liberada.'}</small></span></label>}
       <div className="lifecycle-effect"><Icon name={action === 'cancelar' ? 'warning' : 'stock'} size={19}/><div><strong>Efeito previsto no estoque</strong><p>{action === 'faturar' && !moveStock ? 'Nenhuma baixa de estoque. Eventual reserva será liberada.' : productLines.length ? productLines.map((line) => `${line.name}: ${line.quantity} ${line.unit}`).join(' · ') : 'Este pedido não possui produto com controle físico.'}</p></div></div>
       <p className="lifecycle-safety">{record.persistence?.operationId ? 'A operação será registrada no perfil empresarial e refletida em estoque, recebimentos e Central Fiscal. A transmissão fiscal real permanece condicionada à homologação.' : 'A operação será registrada somente neste navegador e poderá ser conferida no histórico local.'}</p>
     </div>
@@ -2655,13 +2659,13 @@ function commercialRecordIndicators(record: CommercialOperationRecord) {
   const needsReview = record.fiscal.includes('revisar fiscal');
   const fiscalLabel = canceled ? 'cancelada' : authorized ? 'autorizada' : rejected ? 'rejeitada ou com falha' : processing ? 'em emissão' : draft ? draft.status : record.fiscal;
   const fiscal: Indicator = { key: 'fiscal', icon: 'fiscal', label: `Nota fiscal: ${fiscalLabel}${needsReview ? ' · venda cancelada; revisar situação fiscal' : ''}`, tone: canceled || rejected ? 'danger' : authorized ? 'success' : needsReview || draft?.status === 'Com pendências' ? 'warning' : processing ? 'info' : 'neutral', mark: canceled ? 'close' : rejected ? 'warning' : authorized ? 'check' : needsReview || draft?.status === 'Com pendências' ? 'warning' : processing || draft ? 'clock' : 'none' };
-  return [billing, stock, fiscal];
+  return [stock, billing, fiscal];
 }
 
 function CommercialIndicatorIcon({ indicator }: { indicator: ReturnType<typeof commercialRecordIndicators>[number] }) {
   const filled = indicator.mark === 'check';
   const ink = filled ? '#fff' : 'currentColor';
-  return <svg className={`commercial-indicator ${indicator.tone}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  return <svg className={`commercial-indicator ${filled ? 'success' : 'neutral'}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     {indicator.key === 'billing' ? <><circle cx="12" cy="12" r={filled ? 10 : 9} fill={filled ? 'currentColor' : 'none'} stroke={filled ? 'none' : 'currentColor'}/><path d="M15 8.8c-.8-1-5.5-1.4-5.6 1-.2 2.3 5.5 1.6 5.3 4-.2 2.3-4.7 2.1-5.9.7M12 6v12" stroke={ink} strokeWidth="1.5"/></>
       : indicator.key === 'stock' ? filled ? <><path d="M3 4.5h18v5H3zM4.5 10.5h15V21h-15z" fill="currentColor" stroke="none"/><path d="M9 14h6" stroke={ink}/></> : <><path d="M3 5h18v4H3zM4.5 9v11h15V9"/>{indicator.mark === 'back' ? <path d="M15 15H9m0 0 2.5-2.5M9 15l2.5 2.5"/> : <path d="M9 13h6"/>}</>
       : <><path d={filled ? 'M5 2h9l6 6v14H5z' : 'M5 3h9l5 5v13H5z'} fill={filled ? 'currentColor' : 'none'} stroke={filled ? 'none' : 'currentColor'}/><path d={filled ? 'M14 2v6h6' : 'M14 3v6h5'} stroke={ink}/>{indicator.mark === 'close' ? <path d="m9 13 6 5m0-5-6 5"/> : indicator.mark === 'warning' ? <path d="M12 12v3m0 3h.01"/> : <path d="M8.5 13h7M8.5 17h5" stroke={ink}/>}</>}
@@ -3538,8 +3542,6 @@ function InventoryView({ catalogRecords, movementRecords, suppliers, settings, i
   const filterHistory = (item: CatalogItem) => { setMovementQuery(item.sku); window.setTimeout(() => document.getElementById('stock-movements')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); };
   return <>
     <PageHeading view="estoque" action={<div className="heading-actions"><button type="button" className="button secondary" disabled={!can('stock.inventory')} onClick={() => openInventory()}>Novo inventário</button><button type="button" className="button primary" disabled={!can('stock.entry')} onClick={() => openMovement('entrada')}><Icon name="plus" size={18}/> Registrar entrada</button></div>}/>
-    <div className="scope-note"><Icon name="warning" size={18}/><p><strong>Controle operacional:</strong> pedidos reservam e vendas baixam estoque; entradas e ajustes exigem documento, usuário e saldo resultante. Compras e Financeiro serão origens integradas futuras, sem duplicação nesta tela.</p></div>
-    <div className="stock-policy-summary"><span><Icon name="settings" size={17}/><p><strong>Política ativa</strong><small>Saldo consolidado · local padrão {settings.stock.defaultLocation}</small></p></span><Badge tone={settings.stock.allowNegativeStock ? 'warning' : 'success'}>{settings.stock.allowNegativeStock ? 'Negativo permitido' : 'Saldo protegido'}</Badge><Badge tone={settings.stock.protectReservations ? 'success' : 'warning'}>{settings.stock.protectReservations ? 'Reservas protegidas' : 'Reservas flexíveis'}</Badge></div>
     {initialOrigin && <div className="stock-origin-filter" role="status"><span><Icon name="service" size={17}/><span><strong>Consumo vinculado a {initialOrigin}</strong><small>A relação de movimentações foi filtrada a partir da ordem de serviço.</small></span></span><button type="button" className="button secondary" onClick={() => { setMovementQuery(''); onClearOrigin(); }}>Mostrar todas</button></div>}
     <div className="metric-grid compact"><Metric label="Itens controlados" value={String(products.length)} note={`${settings.stock.locations.length} locais configurados`}/><Metric label="Valor disponível" value={money(products.reduce((sum, item) => sum + Math.max(0, item.available) * item.cost, 0))} note="Pelo custo publicado" tone="cyan"/><Metric label="Reservado em pedidos" value={`${products.reduce((sum, item) => sum + item.reserved, 0)} un`} note="Saldo comprometido" tone="success"/><Metric label="Abaixo do mínimo" value={String(low.length)} note="Reposição necessária" tone="warning"/></div>
     {low.length > 0 && <Panel title="Reposição necessária" subtitle="Produtos abaixo do mínimo ou sem disponibilidade" className="stock-attention-panel"><div className="stock-attention-list">{low.map((item) => <div key={item.sku}><span className="dot warning"/><div><strong>{item.name}</strong><small>{item.available} {item.unit} disponíveis · mínimo {item.minimum} {item.unit}</small></div><Badge tone="warning">Faltam {Math.max(0, item.minimum - item.available)} {item.unit}</Badge><button type="button" className="button secondary" onClick={() => openMovement('entrada', item)}>Registrar entrada</button></div>)}</div></Panel>}
@@ -5139,20 +5141,25 @@ function ReceivableOperationDialog({ mode, records, initialId, connected, onClos
   </Dialog>;
 }
 
-function ReceivableRecordActions({ record, onDetails, onOperation }: { record: ReceivableRecord; onDetails: () => void; onOperation: (mode: ReceivableOperation) => void }) {
+function ReceivableRecordActions({ record, onDetails, onOperation, onReverseBilling }: { record: ReceivableRecord; onDetails: () => void; onOperation: (mode: ReceivableOperation) => void; onReverseBilling?: () => void }) {
   const actions: RecordAction[] = [
     { label: 'Abrir detalhes', description: 'Origem, valores e histórico financeiro da parcela', icon: 'document', onSelect: onDetails },
     ...(receivableBalance(record) > 0 ? [{ label: 'Registrar recebimento', description: 'Baixa parcial ou total vinculada à parcela', icon: 'money' as IconName, onSelect: () => onOperation('receber'), permission: 'receivables.receive' }] : []),
     ...(record.received - record.refunded > 0 ? [{ label: 'Estornar recebimento', description: 'Reabre o saldo sem apagar o histórico original', icon: 'back' as IconName, onSelect: () => onOperation('estornar_recebimento'), permission: 'receivables.refund' }] : []),
+    ...(onReverseBilling && record.status !== 'cancelado' && record.reversed < record.value ? [{label:'Estornar faturamento',description:'Estorna todas as parcelas do pedido; preserva estoque e nota fiscal',icon:'back' as IconName,onSelect:onReverseBilling,permissions:['sales.edit','receivables.refund']}] : []),
     { label: 'Enviar cobrança', description: 'E-mail ou WhatsApp com link e documento da parcela', icon: 'mail', planned: true },
     { label: 'Gerar comprovante', description: 'Documento da empresa após integração financeira', icon: 'print', planned: true },
   ];
   return <RecordActionsDialog title={`Ações de ${record.id}`} description={`${record.client} · ${record.origin}. O histórico financeiro nunca é apagado.`} actions={actions} triggerLabel={`Ações de ${record.id}`}/>;
 }
 
-function ReceivablesView({ records, initialOrigin, connected, onReceive, onRefund }: { records: ReceivableRecord[]; initialOrigin: string; connected: boolean; onReceive: (input: ReceivableOperationInput) => Promise<ConfirmedSave>; onRefund: (input: ReceivableOperationInput) => Promise<ConfirmedSave> }) {
+function ReceivablesView({ records, initialOrigin, connected, onReceive, onRefund, onReverseBilling }: { records: ReceivableRecord[]; initialOrigin: string; connected: boolean; onReverseBilling: (record:ReceivableRecord)=>Promise<ConfirmedSave>; onReceive: (input: ReceivableOperationInput) => Promise<ConfirmedSave>; onRefund: (input: ReceivableOperationInput) => Promise<ConfirmedSave> }) {
   const { can } = useContext(PermissionContext);
   const [query, setQuery] = useState(initialOrigin);
+  const [billingReversal,setBillingReversal]=useState<ReceivableRecord|null>(null);
+  const [reversingBilling,setReversingBilling]=useState(false);
+  const [billingError,setBillingError]=useState('');
+  const reversingBillingRef=useRef(false);
   const [statusFilter, setStatusFilter] = useState('Todas as situações');
   const [detailRecord, setDetailRecord] = useState<ReceivableRecord | null>(null);
   const [operation, setOperation] = useState<{ mode: ReceivableOperation; id: string } | null>(null);
@@ -5160,7 +5167,7 @@ function ReceivablesView({ records, initialOrigin, connected, onReceive, onRefun
   const today = todayIso();
   const normalizedQuery = normalizeSearch(query);
   const rows = records.map((record) => ({ record, status: receivableStatus(record, today), balance: receivableBalance(record), netReceived: Math.max(0, record.received - record.refunded) }));
-  const filtered = rows.filter(({ record, status }) => (!normalizedQuery || normalizeSearch(`${record.id} ${record.client} ${record.origin} ${record.method} ${status}`).includes(normalizedQuery)) && (statusFilter === 'Todas as situações' || status === statusFilter));
+  const filtered = rows.filter(({ record, status, balance }) => (!normalizedQuery || normalizeSearch(`${record.id} ${record.client} ${record.origin} ${record.method} ${status}`).includes(normalizedQuery)) && (statusFilter === 'Todas as situações' || (statusFilter === 'Em aberto' ? balance > 0 : status === statusFilter)));
   const openRows = rows.filter(({ balance }) => balance > 0);
   const openTotal = openRows.reduce((sum, row) => sum + row.balance, 0);
   const netReceivedTotal = rows.reduce((sum, row) => sum + row.netReceived, 0);
@@ -5169,10 +5176,13 @@ function ReceivablesView({ records, initialOrigin, connected, onReceive, onRefun
   const saveOperation = (mode: ReceivableOperation, input: ReceivableOperationInput) => mode === 'receber' ? onReceive(input) : onRefund(input);
   return <>
     <PageHeading view="recebimentos" action={<button type="button" className="button primary" onClick={() => openRows[0] && setOperation({ mode: 'receber', id: openRows[0].record.id })} disabled={!openRows.length || !can('receivables.receive')}><Icon name="plus" size={17}/> Registrar recebimento</button>}/>
-    <div className="finance-boundary"><span><Icon name="money"/></span><div><strong>Resumo comercial, não um segundo financeiro</strong><p>Esta área acompanha parcelas originadas por vendas e serviços. Bancos, conciliação, caixa, DRE e relatórios contábeis continuam na Gestão Financeira.</p></div><button type="button" className="button secondary" disabled title="Disponível após integração com a Gestão">Abrir Gestão Financeira</button></div>
     {initialOrigin && <div className="receivable-origin-banner" role="status"><span><Icon name="sale" size={19}/></span><div><strong>Contas vinculadas a {initialOrigin}</strong><p>A busca foi aplicada a partir das ações da operação comercial.</p></div><button type="button" className="button secondary" onClick={() => setQuery('')}>Mostrar todas</button></div>}
     <div className="metric-grid compact"><Metric label="A receber" value={money(openTotal)} note={`${openRows.length} ${openRows.length === 1 ? 'parcela' : 'parcelas'}`}/><Metric label="Recebido líquido" value={money(netReceivedTotal)} note={connected ? 'No perfil empresarial' : 'Nos registros locais'} tone="cyan"/><Metric label="Vence hoje" value={money(dueTodayRows.reduce((sum, row) => sum + row.balance, 0))} note={`${dueTodayRows.length} ${dueTodayRows.length === 1 ? 'parcela' : 'parcelas'}`} tone="warning"/><Metric label="Em atraso" value={money(overdueRows.reduce((sum, row) => sum + row.balance, 0))} note={`${overdueRows.length} ${overdueRows.length === 1 ? 'parcela' : 'parcelas'}`} tone="warning"/></div>
-    <Panel title="Parcelas comerciais" subtitle={`${filtered.length} de ${records.length} registros · a origem comercial nunca é perdida`}><SearchToolbar value={query} onChange={setQuery} placeholder="Buscar por parcela, cliente, operação ou situação"><select aria-label="Situação financeira" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>Todas as situações</option><option>Em aberto</option><option>Vence hoje</option><option>Atrasado</option><option>Recebido parcial</option><option>Recebido</option><option>Estornado</option></select></SearchToolbar><Table headers={['Parcela', 'Cliente e origem', 'Vencimento', 'Condição', 'Valor', 'Recebido', 'Saldo', 'Situação', 'Ações']} minWidth={0} className="receivables-table"><>{filtered.map(({ record, status, balance, netReceived }) => <tr key={record.id}><td data-label="Parcela"><button className="row-link" type="button" onClick={() => setDetailRecord(record)}>{record.id}</button></td><td data-label="Cliente e origem"><div className="receivable-party"><strong>{record.client}</strong><small>{record.origin}</small></div></td><td data-label="Vencimento">{displayIsoDate(record.dueDate)}</td><td data-label="Condição"><div className="receivable-condition"><strong>{record.method}</strong><small>{record.installment}</small></div></td><td data-label="Valor" className="numeric"><strong>{money(record.value)}</strong></td><td data-label="Recebido" className="numeric">{money(netReceived)}</td><td data-label="Saldo" className="numeric"><strong>{money(balance)}</strong></td><td data-label="Situação"><Badge tone={financialTone(status)}>{status}</Badge></td><td data-label="Ações" className="receivable-actions-cell"><ReceivableRecordActions record={record} onDetails={() => setDetailRecord(record)} onOperation={(mode) => setOperation({ mode, id: record.id })}/></td></tr>)}</></Table>{!filtered.length && <EmptyState title="Nenhuma parcela encontrada" description="Ajuste a busca ou a situação para consultar outros recebimentos."/>}</Panel>
+    <Panel title="Parcelas comerciais" subtitle={`${filtered.length} de ${records.length} registros · a origem comercial nunca é perdida`}><SearchToolbar value={query} onChange={setQuery} placeholder="Buscar por parcela, cliente, operação ou situação"><select aria-label="Situação financeira" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>Todas as situações</option><option>Em aberto</option><option>Vence hoje</option><option>Atrasado</option><option>Recebido parcial</option><option>Recebido</option><option>Estornado</option></select></SearchToolbar><Table headers={['Data do pedido', 'Cliente e origem', 'Vencimento', 'Condição', 'Valor', 'Recebido', 'Saldo', 'Situação', 'Ações']} minWidth={0} className="receivables-table"><>{filtered.map(({ record, status, balance, netReceived }) => <tr key={record.id}><td data-label="Data do pedido">{record.orderDate ? displayIsoDate(record.orderDate) : '—'}</td><td data-label="Cliente e origem"><div className="receivable-party"><strong>{record.client}</strong><small>{record.origin}</small></div></td><td data-label="Vencimento">{displayIsoDate(record.dueDate)}</td><td data-label="Condição"><div className="receivable-condition"><strong>{record.method}</strong><small>{record.installment}</small></div></td><td data-label="Valor" className="numeric"><strong>{money(record.value)}</strong></td><td data-label="Recebido" className="numeric">{money(netReceived)}</td><td data-label="Saldo" className="numeric"><strong>{money(balance)}</strong></td><td data-label="Situação"><Badge tone={financialTone(status)}>{status}</Badge></td><td data-label="Ações" className="receivable-actions-cell"><ReceivableRecordActions record={record} onReverseBilling={record.operationType==='pedido'||/^Pedido /i.test(record.origin)||!record.persistence?()=>{setBillingError('');setBillingReversal(record);}:undefined} onDetails={() => setDetailRecord(record)} onOperation={(mode) => setOperation({ mode, id: record.id })}/></td></tr>)}</></Table>{!filtered.length && <EmptyState title="Nenhuma parcela encontrada" description="Ajuste a busca ou a situação para consultar outros recebimentos."/>}</Panel>
+    <Dialog open={Boolean(billingReversal)} title="Estornar faturamento" description={billingReversal ? `${billingReversal.client} · ${billingReversal.origin}` : ''} onClose={()=>{if(!reversingBillingRef.current)setBillingReversal(null);}}>
+      <div className="dialog-body"><p>Todas as parcelas serão estornadas e o pedido ficará pendente de faturamento. Estoque e nota fiscal serão mantidos.</p>{billingError&&<AvisoFormulario idMensagem="billing-reversal-error" titulo="Não foi possível estornar" mensagem={billingError}/>}</div>
+      <footer className="dialog-footer"><BotaoAcaoCompacto disabled={reversingBilling} onClick={()=>setBillingReversal(null)}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto variante="destrutivo" disabled={reversingBilling} onClick={async()=>{if(!billingReversal||reversingBillingRef.current)return;reversingBillingRef.current=true;setReversingBilling(true);setBillingError('');try{const result=await onReverseBilling(billingReversal);if(result.ok)setBillingReversal(null);else setBillingError(result.message||'Não foi possível estornar o faturamento.');}catch{setBillingError('Não foi possível confirmar o estorno. Confira a lista antes de repetir.');}finally{reversingBillingRef.current=false;setReversingBilling(false);}}}>{reversingBilling?'Estornando…':'Estornar faturamento'}</BotaoAcaoCompacto></footer>
+    </Dialog>
     <ReceivableDetailsDialog record={detailRecord} onClose={() => setDetailRecord(null)}/>
     {operation && <ReceivableOperationDialog key={`${operation.mode}-${operation.id}`} mode={operation.mode} records={records} initialId={operation.id} connected={connected} onClose={() => setOperation(null)} onSave={saveOperation}/>}
   </>;
@@ -5967,6 +5977,17 @@ function SettingsView({ fiscalDefaultsContext,settings, connected, canEdit, canV
 
 export function VendasServicosPrototype({ integratedManagementRuntime = false }: { integratedManagementRuntime?: boolean }) {
   const [view, setView] = useState<View>('painel');
+  const commercialRootRef=useRef<HTMLDivElement>(null);
+  const topbarRef=useRef<HTMLElement>(null);
+  useEffect(()=>{
+    const header=topbarRef.current,root=commercialRootRef.current;
+    if(!header||!root)return;
+    const measure=()=>root.style.setProperty('--av-topbar-height',`${Math.ceil(header.getBoundingClientRect().height)}px`);
+    measure();
+    const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(measure):null;
+    observer?.observe(header);window.addEventListener('resize',measure);
+    return()=>{observer?.disconnect();window.removeEventListener('resize',measure);};
+  },[]);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [newMenu, setNewMenu] = useState(false);
   const [newType, setNewType] = useState<DocumentType | null>(null);
@@ -6040,7 +6061,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const pendingFiscalValidationRef = useRef(new Map<string, { draftId: string; timer: number }>());
   const pendingFiscalNumberRef = useRef(new Map<string, { draftId: string; timer: number }>());
   const pendingFiscalIssueRef = useRef(new Map<string, { draftId: string; timer: number }>());
-  const pendingOrderWorkflowRef = useRef(new Map<string, { recordId: string; target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque' | 'restaurar'; timer: number; previous?: CreatedRecord; resolve?:(result:ConfirmedSave)=>void }>());
+  const pendingOrderWorkflowRef = useRef(new Map<string, { recordId: string; target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque' | 'restaurar' | 'estornar_faturamento'; timer: number; previous?: CreatedRecord; resolve?:(result:ConfirmedSave)=>void }>());
   const pendingServiceWorkflowRef = useRef(new Map<string, { recordId: string; action: 'start' | 'complete' | 'cancel' | 'reverse'; timer: number }>());
   const pendingReceivableRef = useRef(new Map<string, PendingConfirmedSave>());
   const pendingStockRef = useRef(new Map<string, PendingConfirmedSave>());
@@ -6379,15 +6400,15 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             order: record.order ? { ...record.order, stockState, reserveStock: commercial.order.stockIntegrated === true } : record.order,
             events: [...(record.events ?? []), {
               date: now,
-              label: pending.target==='restaurar'?'Pedido restaurado como rascunho':pending.target==='estoque'?'Estoque lançado posteriormente':status === 'Faturado' ? 'Pedido faturado no repositório' : status === 'Em separação' ? 'Separação persistida' : status === 'Cancelado' ? 'Pedido cancelado' : status === 'Devolvido' ? 'Devolução registrada' : 'Pedido persistido',
-              description: pending.target==='restaurar'?'Restaurado para edição; histórico, estoque, parcelas canceladas e documentos fiscais preservados.':pending.target==='estoque'?`Estoque em ${stockState.toLocaleLowerCase('pt-BR')}; valores, cobranças e fiscal preservados.`:status === 'Faturado'
+              label: pending.target==='estornar_faturamento'?'Faturamento estornado':pending.target==='restaurar'?'Pedido restaurado como rascunho':pending.target==='estoque'?'Estoque lançado posteriormente':status === 'Faturado' ? 'Pedido faturado no repositório' : status === 'Em separação' ? 'Separação persistida' : status === 'Cancelado' ? 'Pedido cancelado' : status === 'Devolvido' ? 'Devolução registrada' : 'Pedido persistido',
+              description: pending.target==='estornar_faturamento'?'Pedido pendente de faturamento; estoque, nota fiscal e histórico preservados.':pending.target==='restaurar'?'Restaurado para edição; histórico, estoque, parcelas canceladas e documentos fiscais preservados.':pending.target==='estoque'?`Estoque em ${stockState.toLocaleLowerCase('pt-BR')}; valores, cobranças e fiscal preservados.`:status === 'Faturado'
                 ? `${commercial.order.receivableCount} ${commercial.order.receivableCount === 1 ? 'parcela registrada' : 'parcelas registradas'}${commercial.order.fiscalDraftId ? ' e rascunho fiscal criado.' : '.'}`
                 : commercial.order.stockIntegrated ? `Operação vinculada ao perfil ativo com estoque em ${stockState.toLocaleLowerCase('pt-BR')}.` : 'Operação vinculada ao perfil ativo sem item controlado em estoque.',
             }],
           } : record);
           return next;
         });
-        pending.resolve?.({ok:true,message:pending.target==='restaurar'?'Pedido restaurado como rascunho.':'Lançamento de estoque confirmado.'});
+        pending.resolve?.({ok:true,message:pending.target==='estornar_faturamento'?'Faturamento estornado; pedido pendente de faturamento.':pending.target==='restaurar'?'Pedido restaurado como rascunho.':'Lançamento de estoque confirmado.'});
         if (pending.target === 'salvo' && pending.previous?.order) {
           const reopened: CreatedRecord = { ...pending.previous, status: 'Rascunho', persistence: { ...pending.previous.persistence, operationId: commercial.order.operationId, customerId: commercial.customerId || pending.previous.persistence?.customerId || '', version: commercial.order.version, status: 'salvo' }, order: { ...pending.previous.order, stockState: 'Sem movimentação' } };
           setEditingOrder(reopened);
@@ -6400,7 +6421,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           setView('novo_pedido');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        setToast(pending.target==='restaurar'?'Pedido restaurado como rascunho.':pending.target==='estoque'?`Lançamento confirmado: estoque ${stockState.toLocaleLowerCase('pt-BR')}.`:status === 'Rascunho' ? '' : status === 'Faturado'
+        setToast(pending.target==='estornar_faturamento'?'Faturamento estornado; pedido pendente de faturamento.':pending.target==='restaurar'?'Pedido restaurado como rascunho.':pending.target==='estoque'?`Lançamento confirmado: estoque ${stockState.toLocaleLowerCase('pt-BR')}.`:status === 'Rascunho' ? '' : status === 'Faturado'
           ? 'Pedido faturado e persistido. A nota permaneceu como rascunho na Central Fiscal.'
           : status === 'Em separação' ? 'Separação registrada no repositório comercial.'
             : status === 'Cancelado' ? 'Pedido cancelado comercialmente. A situação da nota fiscal foi preservada.'
@@ -6436,7 +6457,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         if(!receivableSnapshot.ok){setReceivableRecords([]);setToast(receivableSnapshot.message||'Não foi possível carregar os recebimentos do perfil.');return;}
         const eventType=(value:string):ReceivableEvent['type']=>value==='recebimento'?'Recebimento':value==='estorno_recebimento'?'Estorno de recebimento':value==='estorno_parcela'||value==='cancelamento'?'Estorno da parcela':'Geração';
         setReceivableRecords(receivableSnapshot.records.map((row:any)=>({
-          id:row.id,dueDate:row.dueDate,client:row.clientName||'Cliente',origin:row.originLabel||row.operationId,method:paymentMethodLabel(row.method),installment:`${row.installment}/${row.installmentCount}`,value:row.original,received:row.received,reversed:row.status==='cancelado'?row.original:0,refunded:row.refunded,createdAt:row.createdAt,status:row.status,
+          id:row.id,operationType:row.operationType,orderDate:row.orderDate,dueDate:row.dueDate,client:row.clientName||'Cliente',origin:row.originLabel||row.operationId,method:paymentMethodLabel(row.method),installment:`${row.installment}/${row.installmentCount}`,value:row.original,received:row.received,reversed:row.status==='cancelado'?row.original:0,refunded:row.refunded,createdAt:row.createdAt,status:row.status,
           events:(Array.isArray(row.events)?row.events:[]).map((entry:any)=>({date:entry.createdAt||`${entry.date}T12:00:00-03:00`,type:eventType(String(entry.type||'')),amount:Number(entry.amount)||0,method:paymentMethodLabel(entry.method),account:String(entry.account||''),user:'Sistema',description:String(entry.description||'Movimentação financeira registrada.')})),
           persistence:{operationId:row.operationId,version:row.version},
         })));
@@ -6517,12 +6538,12 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             reserveStock: operation.stockStatus !== 'sem_movimentacao',
             stockState: operation.stockStatus === 'reservado' ? 'Reservado' : operation.stockStatus === 'em_separacao' ? 'Em separação' : operation.stockStatus === 'baixado' ? 'Baixado' : operation.stockStatus === 'liberado' ? 'Liberado' : operation.stockStatus === 'devolvido' ? 'Devolvido' : 'Sem movimentação',
             seller: String(operation.sellerName || ''), fiscalDocument: operation.fiscalDocument || 'nenhum',
-            paymentMethod: String(operation.paymentSnapshot?.method || ''), installments: Number(operation.paymentSnapshot?.installments || 1), firstDueDate: String(operation.paymentSnapshot?.firstDueDate || ''),
-            channel: String(operation.deliverySnapshot?.notes || 'Atendimento direto'), orderDate: String(operation.createdAt || '').slice(0, 10), deliveryDate: String(operation.deliverySnapshot?.expectedDate || ''), fulfillment: String(operation.deliverySnapshot?.mode || 'Entrega'), notes: String(operation.internalNotes || ''),
+            paymentMethod: String(operation.paymentSnapshot?.method || ''), installments: Number(operation.paymentSnapshot?.installments ?? 1), firstDueDate: String(operation.paymentSnapshot?.firstDueDate || ''),
+            channel: String(operation.deliverySnapshot?.notes || 'Atendimento direto'), orderDate: String(operation.deliverySnapshot?.orderDate || operation.createdAt || '').slice(0, 10), deliveryDate: String(operation.deliverySnapshot?.expectedDate || ''), fulfillment: String(operation.deliverySnapshot?.mode || 'Entrega'), notes: String(operation.internalNotes || ''),
           } }];
           const service = operation.serviceOrder || {};
           const scheduled = String(service.scheduledAt || '');
-          return [{ ...base, serviceOrder: { lines: items.filter((line: any) => line.itemType === 'servico').map((line: any) => ({ sku: line.sku, name: line.name, kind: 'servico', unit: line.unit, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice), cost: Number(line.costUnitSnapshot || 0), municipalServiceCode: String(line.fiscalSnapshot?.municipalServiceCode || ''), fiscalStatus: line.fiscalReady ? 'Completo' : 'Revisar' })), scheduledDate: scheduled.slice(0, 10), scheduledTime: scheduled.slice(11, 16), durationMinutes: Number(service.expectedDurationMinutes || 60), technician: String(service.technicianName || ''), location: String(service.executionLocation || ''), contactName: String(service.onSiteContact || ''), paymentMethod: String(operation.paymentSnapshot?.method || ''), installments: Number(operation.paymentSnapshot?.installments || 1), firstDueDate: String(operation.paymentSnapshot?.firstDueDate || ''), fiscalDocument: operation.fiscalDocument === 'nfse' ? 'nfse' : 'nenhum', internalNotes: String(operation.internalNotes || ''), customerNotes: String(operation.customerNotes || ''), completionNotes: String(service.completionNotes || ''), startedAt: String(service.startedAt || ''), completedAt: String(service.completedAt || ''), actualDurationMinutes: Number(service.actualDurationMinutes || 0), materials: (Array.isArray(service.materials) ? service.materials : []).map((material: any) => ({ id: String(material.id), catalogItemId: String(material.productId || ''), sku: String(material.sku || ''), name: String(material.name || ''), quantity: Number(material.usedQuantity || material.plannedQuantity || 0), unit: String(material.unit || 'un'), source: material.origin === 'catalogo' ? 'Catálogo' : material.origin === 'cliente' ? 'Cliente' : 'Externo', cost: Number(material.costUnitSnapshot || 0) })), checklist: (Array.isArray(service.checklist) ? service.checklist : []).map((item: any) => ({ id: String(item.id), label: String(item.description || ''), complete: item.completed === true })), attachments: (Array.isArray(service.attachments) ? service.attachments : []).map((item: any) => ({ id: String(item.id), name: String(item.name || ''), type: String(item.type || 'application/octet-stream'), size: Number(item.size || 0), checksum: String(item.checksum || ''), addedAt: String(item.addedAt || '') })), acceptance: { status: service.acceptanceStatus === 'aceito' ? 'Aceito' : service.acceptanceStatus === 'recusado' ? 'Recusado' : 'Pendente', acceptedBy: String(service.acceptedBy || ''), acceptedAt: String(service.acceptedAt || ''), notes: String(service.acceptanceNotes || '') }, materialStockState: operation.stockStatus === 'baixado' ? 'Baixado' : operation.stockStatus === 'devolvido' ? 'Estornado' : operation.stockStatus === 'reservado' ? 'Pendente' : 'Não aplicável', laborCostTotal: Number(service.laborCost || 0), materialCostTotal: Number(service.materialCost || 0), actualCostTotal: Number(service.actualCost || 0) } }];
+          return [{ ...base, serviceOrder: { lines: items.filter((line: any) => line.itemType === 'servico').map((line: any) => ({ sku: line.sku, name: line.name, kind: 'servico', unit: line.unit, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice), cost: Number(line.costUnitSnapshot || 0), municipalServiceCode: String(line.fiscalSnapshot?.municipalServiceCode || ''), fiscalStatus: line.fiscalReady ? 'Completo' : 'Revisar' })), scheduledDate: scheduled.slice(0, 10), scheduledTime: scheduled.slice(11, 16), durationMinutes: Number(service.expectedDurationMinutes || 60), technician: String(service.technicianName || ''), location: String(service.executionLocation || ''), contactName: String(service.onSiteContact || ''), paymentMethod: String(operation.paymentSnapshot?.method || ''), installments: Number(operation.paymentSnapshot?.installments ?? 1), firstDueDate: String(operation.paymentSnapshot?.firstDueDate || ''), fiscalDocument: operation.fiscalDocument === 'nfse' ? 'nfse' : 'nenhum', internalNotes: String(operation.internalNotes || ''), customerNotes: String(operation.customerNotes || ''), completionNotes: String(service.completionNotes || ''), startedAt: String(service.startedAt || ''), completedAt: String(service.completedAt || ''), actualDurationMinutes: Number(service.actualDurationMinutes || 0), materials: (Array.isArray(service.materials) ? service.materials : []).map((material: any) => ({ id: String(material.id), catalogItemId: String(material.productId || ''), sku: String(material.sku || ''), name: String(material.name || ''), quantity: Number(material.usedQuantity || material.plannedQuantity || 0), unit: String(material.unit || 'un'), source: material.origin === 'catalogo' ? 'Catálogo' : material.origin === 'cliente' ? 'Cliente' : 'Externo', cost: Number(material.costUnitSnapshot || 0) })), checklist: (Array.isArray(service.checklist) ? service.checklist : []).map((item: any) => ({ id: String(item.id), label: String(item.description || ''), complete: item.completed === true })), attachments: (Array.isArray(service.attachments) ? service.attachments : []).map((item: any) => ({ id: String(item.id), name: String(item.name || ''), type: String(item.type || 'application/octet-stream'), size: Number(item.size || 0), checksum: String(item.checksum || ''), addedAt: String(item.addedAt || '') })), acceptance: { status: service.acceptanceStatus === 'aceito' ? 'Aceito' : service.acceptanceStatus === 'recusado' ? 'Recusado' : 'Pendente', acceptedBy: String(service.acceptedBy || ''), acceptedAt: String(service.acceptedAt || ''), notes: String(service.acceptanceNotes || '') }, materialStockState: operation.stockStatus === 'baixado' ? 'Baixado' : operation.stockStatus === 'devolvido' ? 'Estornado' : operation.stockStatus === 'reservado' ? 'Pendente' : 'Não aplicável', laborCostTotal: Number(service.laborCost || 0), materialCostTotal: Number(service.materialCost || 0), actualCostTotal: Number(service.actualCost || 0) } }];
         });
         setCreated(records);
         return;
@@ -7660,7 +7681,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   };
   const createOperationReceivables = (record: CreatedRecord) => {
     const operation = record.order ?? record.serviceOrder;
-    if (!operation || receivableRecords.some((item) => item.origin === record.id && item.reversed < item.value)) return 0;
+    if (!operation || record.order?.paymentMethod === 'consignado' || receivableRecords.some((item) => item.origin === record.id && item.reversed < item.value)) return 0;
     const schedule = createReceivableSchedule({
       total: record.total,
       installments: operation.installments || 1,
@@ -7673,6 +7694,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const now = new Date();
     const generated: ReceivableRecord[] = schedule.items.map((item, index) => ({
       id: `REC-${now.getTime().toString().slice(-5)}${index + 1}`,
+      operationType: record.type,
+      orderDate: record.order?.orderDate || record.createdAt.slice(0, 10),
       dueDate: item.dueDate,
       client: record.client,
       origin: record.id,
@@ -7900,10 +7923,10 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     });
   };
 
-  const syncCommercialOrder = (record: CreatedRecord, target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque' | 'restaurar', previous?: CreatedRecord, moveStock?: boolean, resolve?:(result:ConfirmedSave)=>void) => {
+  const syncCommercialOrder = (record: CreatedRecord, target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque' | 'restaurar' | 'estornar_faturamento', previous?: CreatedRecord, moveStock?: boolean, resolve?:(result:ConfirmedSave)=>void) => {
     if (!record.order || !managementCatalogBridge || !managementBridgeOrigin || window.parent === window) return false;
     const failOrder=(message:string)=>{if(resolve)resolve({ok:false,message});else setToast(message);return true;};
-    if (target!=='estoque' && target!=='restaurar' && record.order.fiscalDocument === 'nfse') return failOrder('Pedido de venda não pode gerar NFS-e. Use uma ordem de serviço ou selecione NF-e.');
+    if (target!=='estoque' && target!=='restaurar' && target!=='estornar_faturamento' && record.order.fiscalDocument === 'nfse') return failOrder('Pedido de venda não pode gerar NFS-e. Use uma ordem de serviço ou selecione NF-e.');
     if ([...pendingOrderWorkflowRef.current.values()].some((pending) => pending.recordId === record.id)) {
       return failOrder('Este pedido já está sendo atualizado. Aguarde a conclusão.');
     }
@@ -7940,7 +7963,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       insurance: record.order.commercialTotals.insurance, otherExpenses: record.order.commercialTotals.other,
       fiscalDocument: record.order.fiscalDocument,
       payment: { method: record.order.paymentMethod, installments: record.order.installments, firstDueDate: record.order.firstDueDate },
-      delivery: { mode: record.order.fulfillment || '', expectedDate: record.order.deliveryDate || '', notes: record.order.channel || '' },
+      delivery: { orderDate: record.order.orderDate || record.createdAt.slice(0,10), mode: record.order.fulfillment || '', expectedDate: record.order.deliveryDate || '', notes: record.order.channel || '' },
       internalNotes: record.order.notes || '', items,
     };
     const message = createCommercialOrderWorkflowRequest({
@@ -7960,7 +7983,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     }, 15_000);
     pendingOrderWorkflowRef.current.set(requestId, { recordId: record.id, target, timer, previous: target === 'salvo' ? record : previous,resolve });
     window.parent.postMessage(message, managementBridgeOrigin);
-    setToast(target==='restaurar'?'Restaurando o pedido como rascunho…':target==='estoque'?'Registrando o estoque do pedido…':target === 'salvo' ? 'Abrindo o pedido para edição…' : target === 'faturado' ? 'Faturando o pedido no repositório comercial…' : target === 'em_separacao' ? 'Registrando a separação…' : target === 'cancelado' ? 'Cancelando o pedido e liberando a reserva…' : target === 'devolvido' ? 'Registrando devolução e estornos integrados…' : 'Persistindo e confirmando o pedido…');
+    setToast(target==='estornar_faturamento'?'Estornando o faturamento do pedido…':target==='restaurar'?'Restaurando o pedido como rascunho…':target==='estoque'?'Registrando o estoque do pedido…':target === 'salvo' ? 'Abrindo o pedido para edição…' : target === 'faturado' ? 'Faturando o pedido no repositório comercial…' : target === 'em_separacao' ? 'Registrando a separação…' : target === 'cancelado' ? 'Cancelando o pedido e liberando a reserva…' : target === 'devolvido' ? 'Registrando devolução e estornos integrados…' : 'Persistindo e confirmando o pedido…');
     return true;
   };
   const syncSavedOperation = (record: CreatedRecord, previous?: CreatedRecord, resolve?: (result:ConfirmedSave)=>void) => {
@@ -7982,7 +8005,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       customerId: client.id, priceTableId: managementCatalogBridge.priceTable?.id || '', sellerName: record.order?.seller || record.serviceOrder?.technician || '',
       idempotencyKey: persistenceKey, validityDate: isoValidity || firstDueDate,
       generalDiscount: record.quote?.discount || record.order?.commercialTotals.orderDiscount || 0, freight: record.quote?.freight || record.order?.commercialTotals.freight || 0, insurance: record.order?.commercialTotals.insurance || 0, otherExpenses: record.order?.commercialTotals.other || 0,
-      fiscalDocument: record.order?.fiscalDocument || record.serviceOrder?.fiscalDocument || 'nenhum', payment: { method: record.order?.paymentMethod || record.serviceOrder?.paymentMethod || 'a_definir', installments: record.order?.installments || record.serviceOrder?.installments || 1, firstDueDate }, delivery: record.order ? { mode: record.order.fulfillment || '', expectedDate: record.order.deliveryDate || '', notes: record.order.channel || '' } : {},
+      fiscalDocument: record.order?.fiscalDocument || record.serviceOrder?.fiscalDocument || 'nenhum', payment: { method: record.order?.paymentMethod || record.serviceOrder?.paymentMethod || 'a_definir', installments: record.order?.installments || record.serviceOrder?.installments || 1, firstDueDate }, delivery: record.order ? { orderDate: record.order.orderDate || record.createdAt.slice(0,10), mode: record.order.fulfillment || '', expectedDate: record.order.deliveryDate || '', notes: record.order.channel || '' } : {},
       ...(record.order ? { reserveStock: record.order.reserveStock === true } : {}),
       customerNotes: record.serviceOrder?.customerNotes || record.quote?.notes || '', internalNotes: record.order?.notes || record.serviceOrder?.internalNotes || '', items,
     };
@@ -8070,7 +8093,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     if (!record.order) return;
     const commercialPermission = action === 'faturar' ? 'sales.invoice' : action === 'cancelar' || action === 'devolver' ? 'sales.cancel' : 'sales.edit';
     if (!authorize(commercialPermission, action === 'faturar' ? 'faturar pedidos' : action === 'cancelar' || action === 'devolver' ? 'cancelar ou devolver pedidos' : 'alterar pedidos')) return;
-    const reversesInvoice = action === 'devolver' || (action === 'cancelar' && record.status === 'Faturado');
+    const reversesInvoice = action === 'devolver' || (action === 'cancelar' && record.order.stockState === 'Baixado');
     if (!authorize(reversesInvoice ? 'stock.adjust' : 'stock.exit', 'executar o efeito de estoque do pedido')) return;
     if (action === 'devolver' && (!authorize('receivables.refund', 'estornar as parcelas') || !authorize('fiscal.cancel', 'encerrar o vínculo fiscal'))) return;
     if (action === 'faturar' && record.order.fiscalDocument !== 'nenhum' && !authorize('fiscal.prepare', 'preparar o documento fiscal do faturamento')) return;
@@ -8094,17 +8117,18 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       continueOrder(reopened);
       return;
     }
-    if (action === 'faturar' && moveStock === false) {
+    if (action === 'faturar' && moveStock === false && record.order.stockState !== 'Baixado') {
       if (['Reservado', 'Em separação'].includes(record.order.stockState) && !applyOrderStockEffect(record, 'liberar')) return;
       record = { ...record, order: { ...record.order, reserveStock: false, stockState: 'Sem movimentação' } };
     }
     if (!record.order) return;
+    const stockAlreadyPosted = record.order.stockState === 'Baixado';
     const hasProducts = record.order.reserveStock && record.order.lines.some((line) => line.kind === 'produto');
-    const transition = action === 'faturar' && hasProducts
+    const transition = action === 'faturar' && hasProducts && !stockAlreadyPosted
       ? (['Reservado', 'Em separação'].includes(record.order.stockState) ? 'baixar' : 'baixar_direto')
       : action === 'cancelar' && ['Reservado', 'Em separação'].includes(record.order.stockState)
         ? 'liberar'
-        : (action === 'devolver' || (action === 'cancelar' && record.status === 'Faturado')) && hasProducts
+        : (action === 'devolver' || (action === 'cancelar' && record.order.stockState === 'Baixado')) && hasProducts
           ? 'devolver'
           : null;
     if (transition && !applyOrderStockEffect(record, transition)) return;
@@ -8123,7 +8147,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const now = new Date().toISOString();
     const lifecycle = {
       separar: { status: 'Em separação' as const, stockState: record.order.stockState === 'Reservado' ? 'Em separação' as const : record.order.stockState, label: 'Separação iniciada', description: record.order.stockState === 'Reservado' ? 'A reserva foi preservada durante a preparação do pedido.' : 'Separação iniciada sem reserva de estoque.' },
-      faturar: { status: 'Faturado' as const, stockState: hasProducts ? 'Baixado' as const : 'Sem movimentação' as const, label: 'Pedido faturado', description: `${hasProducts ? transition === 'baixar' ? 'A reserva foi convertida em saída física.' : 'O saldo disponível foi baixado diretamente.' : 'Pedido sem produto físico faturado.'} ${generatedInstallments ? `${generatedInstallments} ${generatedInstallments === 1 ? 'parcela gerada' : 'parcelas geradas'} em Recebimentos.` : 'As parcelas já estavam vinculadas.'}${fiscalDraftCreated ? ' Rascunho fiscal local criado sem transmissão.' : ''}` },
+      faturar: { status: 'Faturado' as const, stockState: hasProducts ? 'Baixado' as const : 'Sem movimentação' as const, label: 'Pedido faturado', description: `${hasProducts ? transition === 'baixar' ? 'A reserva foi convertida em saída física.' : 'O saldo disponível foi baixado diretamente.' : 'Pedido sem produto físico faturado.'} ${generatedInstallments ? `${generatedInstallments} ${generatedInstallments === 1 ? 'parcela gerada' : 'parcelas geradas'} em Recebimentos.` : record.order?.paymentMethod === 'consignado' ? 'Consignado sem geração automática de parcelas.' : 'As parcelas já estavam vinculadas.'}${fiscalDraftCreated ? ' Rascunho fiscal local criado sem transmissão.' : ''}` },
       cancelar: { status: 'Cancelado' as const, stockState: transition === 'devolver' ? 'Devolvido' as const : transition === 'liberar' ? 'Liberado' as const : record.order.stockState, label: 'Pedido cancelado', description: `${transition === 'devolver' ? 'A saída de estoque foi estornada.' : transition === 'liberar' ? 'A reserva foi liberada e retornou ao disponível.' : 'Cancelamento sem efeito de estoque.'}${reversedInstallments ? ` ${reversedInstallments} ${reversedInstallments === 1 ? 'parcela estornada' : 'parcelas estornadas'}.` : ''}${fiscalDraftCanceled ? ' Rascunho fiscal cancelado.' : ''}` },
       devolver: { status: 'Devolvido' as const, stockState: hasProducts ? 'Devolvido' as const : record.order.stockState, label: 'Devolução registrada', description: `${hasProducts ? 'Os produtos retornaram ao saldo físico e disponível.' : 'Pedido sem produto físico.'}${reversedInstallments ? ` ${reversedInstallments} ${reversedInstallments === 1 ? 'parcela e seu recebimento foram estornados' : 'parcelas e seus recebimentos foram estornados'}.` : ''}${fiscalDraftCanceled ? ' Rascunho fiscal cancelado sem transmissão.' : ''}` },
     }[action];
@@ -8131,6 +8155,20 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     setCreated(next);
     writeCompanyStorage(STORAGE_KEY, JSON.stringify({ version: 1, created: next }));
     setToast(`${lifecycle.label} em ${record.id}. ${lifecycle.description}`);
+  };
+  const reverseOrderBilling = async (receivable:ReceivableRecord):Promise<ConfirmedSave> => {
+    if(!can('sales.edit')||!can('receivables.refund'))return {ok:false,message:'Seu acesso não permite estornar faturamento.'};
+    const record=created.find(item=>item.type==='pedido'&&(receivable.persistence?.operationId ? item.persistence?.operationId===receivable.persistence.operationId : item.id===receivable.origin));
+    if(!record?.order||record.status!=='Faturado')return {ok:false,message:'Selecione uma parcela de pedido faturado. Atualize a lista se a situação mudou.'};
+    if(managementCatalogBridge){
+      if(!record.persistence?.operationId)return {ok:false,message:'O vínculo do pedido está indisponível. Atualize a lista.'};
+      return new Promise(resolve=>{if(!syncCommercialOrder(record,'estornar_faturamento',undefined,undefined,resolve))resolve({ok:false,message:'Não foi possível conectar o estorno ao perfil.'});});
+    }
+    if(receivableRecords.some(item=>item.origin===record.id&&item.received-item.refunded>0.001))return {ok:false,message:'Estorne os recebimentos deste pedido antes de estornar o faturamento.'};
+    reverseOperationReceivables(record,`Faturamento de ${record.id} estornado; estoque e nota fiscal preservados.`);
+    const next=created.map(item=>item.id===record.id?{...item,status:'Em separação' as const,events:[...(item.events||[]),{date:new Date().toISOString(),label:'Faturamento estornado',description:'Pendente de faturamento; estoque e nota fiscal preservados.'}]}:item);
+    setCreated(next);writeCompanyStorage(STORAGE_KEY,JSON.stringify({version:1,created:next}));setToast('Faturamento estornado; pedido pendente de faturamento.');
+    return {ok:true,message:'Faturamento estornado.'};
   };
   const syncServiceWorkflow = (record: CreatedRecord, action: 'start' | 'complete' | 'cancel' | 'reverse', input: Record<string, unknown>) => {
     if (!record.serviceOrder || !record.persistence?.operationId || !managementCatalogBridge || !managementBridgeOrigin || window.parent === window) return false;
@@ -8328,8 +8366,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     window.location.assign(gestaoHref);
   };
 
-  return <PermissionContext.Provider value={{ can, user: activeUser, role: activeRole }}><div className="commercial-app" style={{ '--av-profile-primary': profileColor, '--av-profile-on-primary': corEhClara(profileColor) ? '#0f172a' : '#ffffff' } as CSSProperties}>
-    <header className="topbar">
+  return <PermissionContext.Provider value={{ can, user: activeUser, role: activeRole }}><div ref={commercialRootRef} className="commercial-app" style={{ '--av-profile-primary': profileColor, '--av-profile-on-primary': corEhClara(profileColor) ? '#0f172a' : '#ffffff' } as CSSProperties}>
+    <header ref={topbarRef} className="topbar">
       <div className="topbar-start">
         {managementContextReady && managementCatalogBridge?.companyId ? <SeletorModulos empresaId={managementCatalogBridge.companyId} moduloAtual="vendas" corPrimaria={profileColor} ocupado={editorSaving} alteracoesPendentes={view === 'novo_pedido'} descricaoPendencia={standaloneFiscal ? 'Existe uma nota fiscal não salva. Sair sem salvar perde os dados não salvos; Salvar e sair guarda o rascunho sem emitir.' : 'Existe um pedido não salvo. Sair sem salvar perde os dados não salvos; Salvar e sair guarda o rascunho sem confirmar o pedido.'} salvarAntesDeSair={async () => (await editorNavigationRef.current?.save()) === true} /> : <button type="button" onClick={retornarGestao} className="module-exit" aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16}/> Início</button>}
         <button type="button" className="mobile-menu-button" onClick={() => setMobileMenu(true)} aria-label="Abrir menu"><Icon name="menu"/></button>
@@ -8435,7 +8473,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             setStandaloneFiscal(true);setCommercialReturnView('fiscal');setView('novo_pedido');
           }}
         />}
-        {view === 'recebimentos' && <ReceivablesView records={receivableRecords} initialOrigin={receivableOrigin} connected={Boolean(managementCatalogBridge)} onReceive={receiveInstallment} onRefund={refundInstallment}/>}
+        {view === 'recebimentos' && <ReceivablesView onReverseBilling={reverseOrderBilling} records={receivableRecords} initialOrigin={receivableOrigin} connected={Boolean(managementCatalogBridge)} onReceive={receiveInstallment} onRefund={refundInstallment}/>}
         {view === 'relatorios' && <ReportsView created={created} catalogRecords={catalogRecords} movementRecords={stockMovementRecords} receivableRecords={receivableRecords} fiscalDrafts={fiscalDraftRecords}/>}
         {view === 'configuracoes' && (
           <SettingsView fiscalDefaultsContext={{companyId:managementCatalogBridge?.companyId||'',origin:managementBridgeOrigin||'',onSaved:()=>void loadRealFiscalEditor()}}

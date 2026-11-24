@@ -1,11 +1,6 @@
 {
-  "baseDeploymentId": "dpl_4FdhFMd8oPK5mG1FAXHESYRroqwy",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261124190000_vendas_pedido_restauracao.sql",
-      "sha256": "fe099f557ab0f8b029eac207896ccba04f12035ea4d139bb70161be97f674d71"
-    }
-  ],
-  "version": "3.2.0.514",
-  "scope": "Vendas: restaurar pedido cancelado como rascunho"
+  "baseDeploymentId": "dpl_9woAkts53VMUT3fCNcfe9a1wF2rZ",
+  "migrations": [],
+  "version": "3.2.0.515",
+  "scope": "Vendas e Serviços: consignado, estorno de faturamento, recebimentos e cabeçalho fixo"
 }

@@ -1,3 +1,5 @@
+import {createPostgresCommercialReceivableRepository} from '../../app/vendas/lib/server/commercial-receivable-service.mjs';
+import {validateOrder} from '../../app/vendas/lib/domain.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -10,8 +12,8 @@ import {createPostgresCommercialSalesOrderLifecycleRepository,createCommercialSa
 import {createPostgresCommercialSalesOrderBillingRepository,createCommercialSalesOrderBillingService} from '../../app/vendas/lib/server/commercial-sales-order-billing.mjs';
 import {createCommercialOrderWorkflow} from '../../app/vendas/lib/server/commercial-order-workflow.mjs';
 const companyId='11111111-1111-4111-8111-111111111111',actorId='22222222-2222-4222-8222-222222222222',customerId='33333333-3333-4333-8333-333333333333',productId='55555555-5555-4555-8555-555555555555',catalogId='66666666-6666-4666-8666-666666666666',localId='77777777-7777-4777-8777-777777777777';
-const context={companyId,actorId,moduleId:'vendas',active:true,moduleActive:true,effectivePermissions:Object.fromEntries(['sales.view','sales.create','sales.edit','sales.invoice','sales.cancel','stock.exit','stock.adjust','fiscal.prepare'].map(p=>[p,true]))};
-async function fixture(){
+const context={companyId,actorId,moduleId:'vendas',active:true,moduleActive:true,effectivePermissions:Object.fromEntries(['sales.view','sales.create','sales.edit','sales.invoice','sales.cancel','receivables.refund','stock.exit','stock.adjust','fiscal.prepare'].map(p=>[p,true]))};
+async function fixture({consigned=false}={}){
  const db=new PGlite();
  await db.exec(`create schema auth;create role anon;create role authenticated;create role service_role;create table auth.users(id uuid primary key);create table empresas(id uuid primary key);create table custos_tabelas_preco(id uuid primary key,empresa_id uuid);create table vendas_mobile_catalogos(id uuid primary key,empresa_id uuid);create table vendas_mobile_catalogo_produtos(id uuid primary key,catalogo_id uuid);create schema fiscal_private;create table fiscal_private.draft_deletions(company_id uuid,draft_id uuid);create table fiscal_private.emissions(company_id uuid,draft_id text,origin_id text,state text);`);
  for(const path of ['20260905152000_vendas_comercial.sql','20261105150000_vendas_reserva_reabertura.sql','20261124190000_vendas_pedido_restauracao.sql'])await db.exec(readFileSync('supabase/migrations/'+path,'utf8'));
@@ -28,7 +30,7 @@ async function fixture(){
  const repository=createPostgresCommercialSalesOrderLifecycleRepository({pool});
  const lifecycle=createCommercialSalesOrderLifecycleService({repository});
  const billing=createCommercialSalesOrderBillingService({repository:createPostgresCommercialSalesOrderBillingRepository({pool}),issuerResolver:async()=>({})});
- const order={type:'pedido',channel:'vendas',customerId,fiscalDocument:'nenhum',reserveStock:true,payment:{method:'pix',installments:2,firstDueDate:'2026-11-24'},items:[{catalogItemId:productId,quantity:2,unitPrice:99}],idempotencyKey:'restaurar:pedido:1'};
+ const order={type:'pedido',channel:'vendas',customerId,fiscalDocument:'nenhum',reserveStock:true,payment:consigned?{method:'consignado',installments:0,firstDueDate:''}:{method:'pix',installments:2,firstDueDate:'2026-11-24'},items:[{catalogItemId:productId,quantity:2,unitPrice:99}],idempotencyKey:'restaurar:pedido:1'};
  const saved=await operations.create({context,input:order});assert.equal(saved.ok,true,JSON.stringify(saved.errors));const orderId=saved.operation.id;
  const load=async()=>(await db.query('select * from vendas_operacoes where id=$1',[orderId])).rows[0];
  const workflow=createCommercialOrderWorkflow({customerRepository:{findByDocument:async()=>customer},customerService:{create:async()=>({ok:false})},operationService:operations,lifecycleService:lifecycle,billingService:billing});
@@ -94,4 +96,71 @@ test('popup espera confirmação, impede clique duplicado e permanece aberto em 
  const send=button().props.onClick;send();send();assert.equal(calls,1);assert.equal(button().props.disabled,true);dialog().props.onClose();assert.equal(dialog().props.open,true);
  resolve();await new Promise(setImmediate);assert.equal(dialog().props.open,true);assert.equal(button().props.disabled,false);assert.ok(nodes(render()).some(n=>n.type===sandbox.AvisoFormulario));
  ok=true;button().props.onClick();resolve();await new Promise(setImmediate);assert.equal(dialog().props.open,false);
+});
+
+
+test('pedido consignado salva sem vencimento, fatura sem parcelas e preserva estoque e cancelamento',async()=>{
+ const f=await fixture({consigned:true});try{
+  const before=await f.load();assert.equal(before.pagamento_retrato.method,'consignado');assert.equal(before.pagamento_retrato.installments,0);assert.equal(before.pagamento_retrato.firstDueDate,'');
+  const billed=await f.advance('faturado');assert.equal(billed.ok,true,JSON.stringify(billed.errors));assert.equal((await f.load()).situacao,'faturado');
+  assert.equal((await f.db.query('select * from vendas_contas_receber')).rows.length,0);
+  assert.equal(Number((await f.db.query('select saldo_fisico from vendas_estoque_saldos')).rows[0].saldo_fisico),8);
+  assert.equal((await f.advance('cancelado')).ok,true);
+  assert.equal(Number((await f.db.query('select saldo_fisico from vendas_estoque_saldos')).rows[0].saldo_fisico),10);
+ }finally{await f.db.close();}
+});
+
+
+test('validação dispensa parcelas apenas no consignado e preserva exigências das formas comuns',()=>{
+ const base={client:'Cliente',paymentMethod:'consignado',installments:0,firstDueDate:'',reserveStock:false,fiscalDocument:'nenhum',items:[{name:'Produto',quantity:1,unitPrice:100}]};
+ assert.equal(validateOrder(base).ready,true);
+ assert.equal(validateOrder({...base,paymentMethod:'pix'}).ready,false);
+ assert.equal(validateOrder({...base,items:[]}).ready,false);
+});
+
+
+test('Recebimentos retorna data do pedido distinta da geração da parcela e vencimento ISO',async()=>{
+ const f=await fixture();try{
+  assert.equal((await f.advance('faturado')).ok,true);
+  await f.db.query(`update vendas_operacoes set entrega_retrato=jsonb_build_object('orderDate','2026-10-02') where id=$1`,[f.orderId]);
+  await f.db.exec('alter table vendas_contas_receber_eventos add column data_movimentacao date default current_date');
+  const repository=createPostgresCommercialReceivableRepository({pool:{query:(...a)=>f.db.query(...a),connect:async()=>({})}});
+  const rows=await repository.list({companyId});
+  assert.equal(rows.length,2);assert.equal(rows[0].orderDate,'2026-10-02');assert.equal(rows[0].dueDate,'2026-11-24');
+ }finally{await f.db.close();}
+});
+
+
+test('estorno de faturamento preserva estoque/fiscal e refaturamento não repete baixa',async()=>{
+ const f=await fixture();try{
+  assert.equal((await f.advance('faturado')).ok,true);
+  const before=await f.load();
+  const movements=await f.db.query('select * from vendas_estoque_movimentos order by id');
+  const old=(await f.db.query('select id from vendas_contas_receber order by id')).rows;
+  const version=before.versao;
+  const command={context,orderId:f.orderId,expectedVersion:version,idempotencyKey:'reverse:billing:1'};
+  assert.equal((await f.lifecycle.reverseBilling(command)).ok,true);
+  assert.equal((await f.lifecycle.reverseBilling(command)).result.reused,true);
+  const pending=await f.load();assert.equal(pending.situacao,'em_separacao');assert.equal(pending.situacao_estoque,before.situacao_estoque);assert.equal(pending.situacao_fiscal,before.situacao_fiscal);assert.equal(pending.faturado_em,null);
+  assert.deepEqual((await f.db.query('select * from vendas_estoque_movimentos order by id')).rows,movements.rows);
+  assert.ok((await f.db.query('select situacao from vendas_contas_receber')).rows.every(row=>row.situacao==='cancelado'));
+  assert.equal((await f.advance('faturado')).ok,true);
+  assert.deepEqual((await f.db.query('select * from vendas_estoque_movimentos order by id')).rows,movements.rows);
+  assert.equal(Number((await f.db.query('select saldo_fisico from vendas_estoque_saldos')).rows[0].saldo_fisico),8);
+  const rows=(await f.db.query('select * from vendas_contas_receber')).rows;assert.equal(rows.length,4);assert.equal(rows.filter(row=>row.situacao!=='cancelado').length,2);assert.ok(old.every(old=>rows.find(row=>row.id===old.id)?.situacao==='cancelado'));
+  const stale=await f.lifecycle.reverseBilling({...command,idempotencyKey:'reverse:billing:stale'});assert.equal(stale.ok,false);
+  assert.equal((await f.advance('estornar_faturamento')).ok,true);
+  assert.equal((await f.advance('cancelado')).ok,true);
+  assert.equal(Number((await f.db.query('select saldo_fisico from vendas_estoque_saldos')).rows[0].saldo_fisico),10);
+ }finally{await f.db.close();}
+});
+
+test('estorno de faturamento recusa valor recebido e acesso sem permissão, sem tocar no pedido',async()=>{
+ const f=await fixture();try{
+  assert.equal((await f.advance('faturado')).ok,true);const before=await f.load();
+  const command={context,orderId:f.orderId,expectedVersion:before.versao,idempotencyKey:'reverse:billing:blocked'};
+  assert.equal((await f.lifecycle.reverseBilling({...command,context:{...context,effectivePermissions:{...context.effectivePermissions,'receivables.refund':false}}})).ok,false);
+  await f.db.query("update vendas_contas_receber set valor_recebido=10,saldo_aberto=valor_original-10,situacao='parcial' where operacao_id=$1",[f.orderId]);
+  assert.equal((await f.lifecycle.reverseBilling(command)).ok,false);assert.deepEqual(await f.load(),before);
+ }finally{await f.db.close();}
 });

@@ -11,13 +11,13 @@ vm.runInNewContext(ts.transpileModule(snippet + '\nexports.indicators = commerci
 const indicators = (patch = {}) => sandbox.exports.indicators({ status: 'Confirmado', type: 'Pedido', stock: 'Sem movimentação', fiscal: 'NF-e prevista', ...patch });
 
 test('faturar sem estoque não confirma baixa nem autorização; baixa isolada não confirma faturamento', () => {
-  const [billing, stock, fiscal] = indicators({ status: 'Faturado' });
+  const [stock, billing, fiscal] = indicators({ status: 'Faturado' });
   assert.equal(billing.mark, 'check');
   assert.match(billing.label, /não indica pagamento recebido/);
   assert.equal(stock.mark, 'none');
   assert.equal(fiscal.mark, 'none');
-  assert.equal(indicators({ stock: 'Baixado' })[0].mark, 'none');
-  assert.equal(indicators({ stock: 'Baixado' })[1].mark, 'check');
+  assert.equal(indicators({ stock: 'Baixado' })[1].mark, 'none');
+  assert.equal(indicators({ stock: 'Baixado' })[0].mark, 'check');
 });
 
 test('preparação fiscal não significa autorização e falha tem indicação própria', () => {
@@ -28,7 +28,7 @@ test('preparação fiscal não significa autorização e falha tem indicação p
 });
 
 test('cancelamento comercial preserva nota autorizada e distingue estoque devolvido', () => {
-  const [billing, stock, fiscal] = indicators({ status: 'Cancelado', stock: 'Devolvido', fiscal: 'Pronto para homologação · revisar fiscal', fiscalDraft: { status: 'Pronto para homologação', remoteState: 'danfe_ready' } });
+  const [stock, billing, fiscal] = indicators({ status: 'Cancelado', stock: 'Devolvido', fiscal: 'Pronto para homologação · revisar fiscal', fiscalDraft: { status: 'Pronto para homologação', remoteState: 'danfe_ready' } });
   assert.equal(billing.mark, 'close');
   assert.equal(stock.mark, 'back');
   assert.equal(fiscal.mark, 'check');
@@ -47,7 +47,7 @@ test('cada indicador tem tooltip e foco independentes com somente seu estado atu
   assert.equal(group.props.role, 'group');
   assert.equal(group.props.tabIndex, undefined);
   assert.equal(group.props.children.length, 3);
-  const expected = ['Faturamento: realizado · não indica pagamento recebido', 'Estoque: Baixado', 'Nota fiscal: autorizada'];
+  const expected = ['Estoque: Baixado', 'Faturamento: realizado · não indica pagamento recebido', 'Nota fiscal: autorizada'];
   group.props.children.forEach((tooltip, index) => {
     assert.equal(tooltip.type, 'tooltip');
     assert.equal(tooltip.props.texto, expected[index]);
@@ -57,7 +57,7 @@ test('cada indicador tem tooltip e foco independentes com somente seu estado atu
     assert.equal(tooltip.props.children.props['aria-label'], expected[index]);
   });
   const pending = jsxSandbox.exports.render({ record: { status: 'Confirmado', type: 'Pedido', stock: 'Reservado', fiscal: 'NF-e prevista', fiscalDraft: { status: 'Com pendências' } } });
-  assert.equal(pending.props.children[0].props.texto, 'Faturamento: não realizado');
-  assert.equal(pending.props.children[1].props.texto, 'Estoque: Reservado');
+  assert.equal(pending.props.children[1].props.texto, 'Faturamento: não realizado');
+  assert.equal(pending.props.children[0].props.texto, 'Estoque: Reservado');
   assert.equal(pending.props.children[2].props.texto, 'Nota fiscal: Com pendências');
 });

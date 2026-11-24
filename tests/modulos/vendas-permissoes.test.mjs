@@ -32,8 +32,8 @@ test('cabeçalho integrado mantém somente Início, marca e Ajustes', async () =
   ]);
   assert.doesNotMatch(integracao, /vendas-perfil|vendas-lab-tabela|Origem do catálogo|Atualizar catálogo/);
   assert.match(integracao, /companyId=\$\{encodeURIComponent\(empresaId\)\}/);
-  assert.match(integracao, /className="block h-screen min-h-\[620px\] w-full border-0 bg-white"/);
-  assert.match(sistema, /<header className="topbar">[\s\S]*className="module-exit"[\s\S]*className="module-brand"[\s\S]*className="topbar-actions"[\s\S]*module-settings-button/);
+  assert.match(integracao, /className="block h-full w-full border-0 bg-white"/);
+  assert.match(sistema, /<header ref={topbarRef} className="topbar">[\s\S]*className="module-exit"[\s\S]*className="module-brand"[\s\S]*className="topbar-actions"[\s\S]*module-settings-button/);
   assert.match(sistema, /const gestaoHref = managementCatalogBridge\?\.companyId/);
   assert.doesNotMatch(sistema, /AccessSessionSwitcher|Usuário em teste|prototype-pill|Protótipo local/);
 });

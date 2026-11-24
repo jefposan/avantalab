@@ -1,3 +1,18 @@
+# 3.2.0.515 — Vendas e Serviços: pedidos, recebimentos e interface
+
+- Indicadores compactos entre total e ações, na ordem estoque, faturamento e nota fiscal; pendentes em cinza claro e concluídos verdes.
+- Avisos acima do fundo e dos cards dos popups. Margens seguras, altura limitada e conteúdo rolável em telas baixas/mobile. Frame integrado acompanha a altura visível sem mínimo de 620px.
+- Pedidos atualizam Recebimentos após faturamento/cancelamento/devolução/restauração confirmados, antes da resposta de sucesso; consultas fiscais/estoque seguem em paralelo e respostas financeiras antigas são descartadas.
+- Pedidos oferecem Consignado: parcelas/vencimento desativados, validação compatível e faturamento sem gerar contas a receber automaticamente, com estoque e fiscal preservados.
+- Recebimentos sem o subtítulo de sincronização futura e sem o aviso Resumo comercial ou seu botão inativo.
+- Recebimentos substitui UUID por Data do pedido; datas do pedido e vencimento em dd/mm/aaaa, com data de origem consultada no servidor.
+- Filtro Em aberto considera saldo pendente, incluindo parcelas futuras, vencendo hoje, atrasadas e parcialmente recebidas.
+- Recebimentos: Estornar faturamento com confirmação do pedido inteiro, permissões e bloqueio de valores recebidos; preserva estoque/fiscal/histórico e permite refaturar sem nova baixa.
+- Estoque sem subtítulo introdutório e sem os blocos Controle operacional e Política ativa; regras de estoque preservadas.
+- Confirmação de estorno de faturamento com texto curto aprovado, sem mudança no funcionamento.
+- Cabeçalho fixo de Vendas e Serviços com compensação da altura real; acesso integrado limita a área do iframe ao espaço disponível, sem rolagem externa do cabeçalho.
+- Publicação conjunta autorizada pelo responsável; sem nova migração ou alteração de dados existentes.
+
 ## 3.2.0.514 — Vendas: restaurar pedido cancelado como rascunho
 
 - Pedidos cancelados exibem apenas Restaurar como rascunho no popup compacto aprovado. Aguarda confirmação real, bloqueia cliques repetidos e conserva o aviso em falha; o menu normal retorna depois da restauração.

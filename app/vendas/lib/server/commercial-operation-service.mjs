@@ -81,8 +81,8 @@ function normalizePayment(input = {}) {
   const installments = Math.min(120, Math.max(1, Number.parseInt(input.installments, 10) || 1));
   return {
     method: text(input.method, 40).toLowerCase(),
-    installments,
-    firstDueDate: validDate(input.firstDueDate) ? text(input.firstDueDate, 10) : '',
+    installments: text(input.method, 40).toLowerCase() === 'consignado' ? 0 : installments,
+    firstDueDate: text(input.method, 40).toLowerCase() !== 'consignado' && validDate(input.firstDueDate) ? text(input.firstDueDate, 10) : '',
     notes: text(input.notes, 500),
   };
 }
@@ -90,6 +90,7 @@ function normalizePayment(input = {}) {
 function normalizeDelivery(input = {}) {
   return {
     mode: text(input.mode, 40).toLowerCase(),
+    orderDate: validDate(input.orderDate) ? text(input.orderDate, 10) : '',
     expectedDate: validDate(input.expectedDate) ? text(input.expectedDate, 10) : '',
     postalCode: text(input.postalCode).replace(/\D/g, '').slice(0, 8),
     address: text(input.address, 240),
@@ -259,7 +260,7 @@ export async function prepareOperation({ input, context, customerResolver, catal
   if (type === 'orcamento' && validityDate && !validDate(validityDate)) return { errors: [error('AV-COMMERCIAL-VALIDITY', 'validityDate', 'Informe uma validade válida para o orçamento.')], warnings };
   const payment = normalizePayment(input.payment);
   if (!allowIncompleteDraft && !payment.method) return { errors: [error('AV-COMMERCIAL-PAYMENT', 'payment.method', 'Selecione a forma ou condição de pagamento.')], warnings };
-  if (!allowIncompleteDraft && !payment.firstDueDate) return { errors: [error('AV-COMMERCIAL-DUE-DATE', 'payment.firstDueDate', 'Informe uma data válida para o primeiro vencimento.')], warnings };
+  if (!allowIncompleteDraft && !(type === 'pedido' && payment.method === 'consignado') && !payment.firstDueDate) return { errors: [error('AV-COMMERCIAL-DUE-DATE', 'payment.firstDueDate', 'Informe uma data válida para o primeiro vencimento.')], warnings };
   const delivery = normalizeDelivery(input.delivery);
   if (input?.delivery?.expectedDate && !delivery.expectedDate) return { errors: [error('AV-COMMERCIAL-DELIVERY-DATE', 'delivery.expectedDate', 'Informe uma data de entrega válida.')], warnings };
   if (delivery.expectedDate && delivery.expectedDate < payment.firstDueDate && input?.delivery?.requireBeforePayment === true) return { errors: [error('AV-COMMERCIAL-DATE-SEQUENCE', 'delivery.expectedDate', 'Revise a sequência entre entrega e primeiro vencimento.')], warnings };

@@ -1,4 +1,24 @@
-<!-- ava-version: 3.2.0.514 -->
+<!-- ava-version: 3.2.0.515 -->
+
+> Revisão visual complementar 3.2.0.515: Cabeçalho de Vendas e Serviços Web fixo no topo; o conteúdo reserva sua altura real, inclusive ao redimensionar. Acesso integrado mantém rolagem no conteúdo do módulo, sem deslocar o cabeçalho pelo rodapé externo. Sem alteração de navegação ou dados.
+
+> Revisão textual complementar 3.2.0.515: confirmação de estorno de faturamento resumida, sem impacto operacional; bloqueio de valores recebidos e preservação de histórico continuam vigentes.
+
+> Revisão visual complementar 3.2.0.515: Estoque não exibe mais o subtítulo introdutório nem os blocos Controle operacional e Política ativa. Sem impacto operacional nas políticas, saldos, reservas ou movimentações.
+
+> Revisão complementar 3.2.0.515: Recebimentos → Ações → Estornar faturamento pede confirmação para o pedido inteiro, estorna todas as parcelas ativas e deixa o faturamento pendente em Vendas (etapa Em separação). Preserva estoque, nota fiscal e histórico; não desfaz pagamentos. Se houver valor recebido, estornar recebimento primeiro. Refaturar cria novas parcelas sem repetir a baixa de estoque. Exige editar vendas e estornar recebimentos.
+
+> Revisão complementar 3.2.0.515: Recebimentos → Em aberto inclui qualquer parcela com saldo pendente: futura, vence hoje, atrasada ou recebida parcialmente. Quitadas e totalmente estornadas ficam fora; os demais filtros mantêm a situação específica.
+
+> Revisão visual complementar 3.2.0.515: Recebimentos substitui o identificador técnico da parcela por Data do pedido. Pedido e vencimento usam dd/mm/aaaa. Datas ausentes aparecem como traço; o detalhe continua em Ações.
+
+> Revisão visual complementar 3.2.0.515: Recebimentos não exibe mais o subtítulo sobre sincronização futura nem o aviso Resumo comercial com botão inativo. Sem impacto operacional nos recebimentos.
+
+> Revisão complementar 3.2.0.515: Novo pedido → Forma de pagamento → Consignado: Parcelas e Primeiro vencimento ficam desativados e não são exigidos. Ao faturar, não gera parcelas automaticamente em Recebimentos. Trocar para uma forma comum reabilita os campos. Não muda automaticamente natureza da operação, CFOP ou regras fiscais.
+
+> Revisão complementar 3.2.0.515: Faturar, cancelar ou devolver pedido atualiza Recebimentos após a confirmação do servidor, antes de anunciar o sucesso na tela; consultas fiscais não bloqueiam essa atualização. Respostas antigas de Recebimentos são descartadas.
+
+> Revisão 3.2.0.515: Vendas e Serviços Web: indicadores na ordem estoque, faturamento e nota fiscal; concluídos verdes e pendentes em cinza claro. Avisos aparecem acima dos popups. Popups mantêm margem da área visível e rolagem interna; cabeçalho e fechamento continuam acessíveis.
 
 > Revisão 3.2.0.514: Vendas e Serviços → pedido Cancelado: Ações oferece somente Restaurar como rascunho, para quem pode editar vendas. A restauração confirmada devolve o mesmo pedido à lista como Rascunho; as opções normais do rascunho reaparecem conforme permissões. Não confirma nem fatura automaticamente, não recria parcelas ou movimenta estoque e preserva documentos fiscais e histórico. Falha ou tempo de espera não declara sucesso; consulte a lista antes de repetir. Pedidos com efeitos de cancelamento pendentes exigem conferência. Reconfirmar e faturar depois cria um novo ciclo de parcelas, mantendo as canceladas no histórico.
 

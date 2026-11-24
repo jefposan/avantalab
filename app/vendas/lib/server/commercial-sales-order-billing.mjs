@@ -169,15 +169,20 @@ export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {
         const order = await loadOrder(client, companyId, orderId);
         if (!order) throw coded('AV-SALES-BILLING-NOT-FOUND');
         if (Number(order.versao) !== expectedVersion) throw coded('AV-SALES-BILLING-CONFLICT');
-        if (order.situacao !== 'em_separacao' || !['em_separacao', 'sem_movimentacao'].includes(order.situacao_estoque)) {
+        if (order.situacao !== 'em_separacao' || !['em_separacao', 'sem_movimentacao', 'baixado'].includes(order.situacao_estoque)) {
           throw coded('AV-SALES-BILLING-STATE');
         }
 
+        const stockAlreadyPosted = order.situacao_estoque === 'baixado';
+        if (stockAlreadyPosted) {
+          const reversed = await client.query("select 1 from public.vendas_eventos where empresa_id=$1 and recurso_id=$2 and evento='pedido_faturamento_estornado' limit 1",[companyId,orderId]);
+          if (!reversed.rows.length) throw coded('AV-SALES-BILLING-STATE');
+        }
         const items = await loadItems(client, companyId, orderId);
         if (!items.length) throw coded('AV-SALES-BILLING-ITEMS');
         const reservations = await activeReservations(client, companyId, orderId);
         const reservationByItem = new Map(reservations.map((reservation) => [reservation.operacao_item_id, reservation]));
-        let controlled = items.filter((item) => item.tipo_item === 'produto' && (item.controla_estoque || reservationByItem.has(item.id)));
+        let controlled = stockAlreadyPosted ? [] : items.filter((item) => item.tipo_item === 'produto' && (item.controla_estoque || reservationByItem.has(item.id)));
         if (controlled.length !== reservations.length || controlled.some((item) => Number(reservationByItem.get(item.id)?.quantidade) !== Number(item.quantidade))) {
           throw coded('AV-SALES-BILLING-RESERVATION');
         }
@@ -234,15 +239,16 @@ export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {
 
         const payment = order.pagamento_retrato && typeof order.pagamento_retrato === 'object'
           ? order.pagamento_retrato : {};
-        const installmentCount = Number.parseInt(payment.installments, 10);
+        const consigned = clean(payment.method, 40).toLowerCase() === 'consignado';
+        const installmentCount = consigned ? 0 : Number.parseInt(payment.installments, 10);
         const firstDueDate = clean(payment.firstDueDate, 10);
         const totalCents = cents(order.total);
         if (!clean(payment.method, 40) || !Number.isInteger(installmentCount)
-          || installmentCount < 1 || installmentCount > 120 || !validDate(firstDueDate)
+          || (!consigned && (installmentCount < 1 || installmentCount > 120 || !validDate(firstDueDate)))
           || !totalCents || totalCents < installmentCount) {
           throw coded('AV-SALES-BILLING-PAYMENT');
         }
-        const baseCents = Math.floor(totalCents / installmentCount);
+        const baseCents = consigned ? 0 : Math.floor(totalCents / installmentCount);
         const receivableIds = [];
         for (let index = 0; index < installmentCount; index += 1) {
           const amountCents = index === installmentCount - 1
@@ -323,7 +329,7 @@ export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {
           set situacao='faturado',situacao_estoque=$3,situacao_fiscal=$4,
             faturado_em=now(),atualizado_por=$5
           where empresa_id=$1 and id=$2 returning versao
-        `, [companyId, orderId, controlled.length ? 'baixado' : 'sem_movimentacao',
+        `, [companyId, orderId, stockAlreadyPosted || controlled.length ? 'baixado' : 'sem_movimentacao',
           priorFiscalDraft ? order.situacao_fiscal : fiscalDraftId ? 'rascunho_criado' : 'nao_aplicavel', actorId]);
         const metadata = {
           stockConsumed: Number(stockConsumed.toFixed(3)),

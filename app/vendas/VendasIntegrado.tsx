@@ -198,6 +198,7 @@ function analisarPublicacaoRegrasFiscais(data: any) {
 export default function VendasIntegrado({ initialContext }: { initialContext?: ContextoNavegacaoModulo | null }) {
   const router = useRouter();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const recebimentosGenerationRef = useRef(0);
   const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('vendas'));
   const [empresaId, setEmpresaId] = useState(() => contextoInicial?.empresaId || '');
   const activeCompanyRef=useRef(empresaId);
@@ -334,7 +335,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   const carregarRecebimentos = useCallback(async (perfilId: string) => {
     const destination=iframeRef.current?.contentWindow;
     if(!destination||!UUID_PATTERN.test(perfilId))return false;
-    const send=(ok:boolean,records:unknown[],message='')=>activeCompanyRef.current===perfilId&&destination.postMessage({type:RECEIVABLE_SNAPSHOT_TYPE,ok,records,message},origemPrototipo);
+    const generation=++recebimentosGenerationRef.current;
+    const send=(ok:boolean,records:unknown[],message='')=>generation===recebimentosGenerationRef.current&&activeCompanyRef.current===perfilId&&destination===iframeRef.current?.contentWindow&&destination.postMessage({type:RECEIVABLE_SNAPSHOT_TYPE,ok,records,message},origemPrototipo);
     try{
       const {data}=await supabase.auth.getSession();const token=data.session?.access_token;
       if(!token){send(false,[],'Confirme novamente sua sessão na Gestão.');return false;}
@@ -935,9 +937,15 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível persistir o pedido.',payload); return; }
+            // O servidor já confirmou a transação. Entregar as parcelas antes do sucesso
+            // do pedido evita abrir Recebimentos com a lista anterior ao faturamento.
+            if (['faturado', 'cancelado', 'devolvido', 'restaurar', 'estornar_faturamento'].includes(target)) await carregarRecebimentos(empresaId);
+            if (activeCompanyRef.current !== empresaId || destination !== iframeRef.current?.contentWindow) return;
             destination.postMessage({ type: responseType, requestId, ok: true, customerId: payload.customerId, order: payload.order }, origemPrototipo);
-            if (payload.order?.fiscalDraftId) await carregarDocumentosFiscais(empresaId, token);
-            if (payload.order?.stockIntegrated) await Promise.all([carregarCatalogo(empresaId),carregarEstoque(empresaId)]);
+            await Promise.all([
+              ...(payload.order?.fiscalDraftId ? [carregarDocumentosFiscais(empresaId, token)] : []),
+              ...(payload.order?.stockIntegrated ? [carregarCatalogo(empresaId), carregarEstoque(empresaId)] : []),
+            ]);
             return;
           }
           if (event.data.type === COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE) {
@@ -1116,13 +1124,13 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
 
   const perfilPronto = Boolean(empresaId && perfilCadastro);
 
-  return <main className="flex min-h-screen flex-col bg-slate-100 text-slate-800">
+  return <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-slate-100 text-slate-800">
     <section className="relative min-h-0 flex-1" aria-label="Vendas e Serviços">
       {!empresaId ? erro ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <TransicaoNavegacaoInterna destino="Vendas e Serviços" empresa={contextoInicial?.empresa} /> : erro && !perfilPronto ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <>
-        <div aria-hidden={!perfilPronto || undefined} inert={!perfilPronto || undefined}><iframe ref={iframeRef} src={`/vendas/sistema?bridge=gestao&companyId=${encodeURIComponent(empresaId)}`} title="Vendas e Serviços" className="block h-screen min-h-[620px] w-full border-0 bg-white" onLoad={() => setIframePronto(true)} /></div>
+        <div className="absolute inset-0" aria-hidden={!perfilPronto || undefined} inert={!perfilPronto || undefined}><iframe ref={iframeRef} src={`/vendas/sistema?bridge=gestao&companyId=${encodeURIComponent(empresaId)}`} title="Vendas e Serviços" className="block h-full w-full border-0 bg-white" onLoad={() => setIframePronto(true)} /></div>
         <CarregamentoDadosModulo ativo={!perfilPronto || !iframePronto} titulo="Preparando Vendas e Serviços" mensagem="Carregando os dados do módulo…" corPrimaria={corPrimaria} temaEscuro={contextoInicial?.empresa.temaEscuro} />
       </>}
     </section>
-    <RodapeAvanta />
+    <RodapeAvanta className="shrink-0" />
   </main>;
 }

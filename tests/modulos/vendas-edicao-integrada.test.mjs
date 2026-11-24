@@ -48,6 +48,8 @@ async function runBridge({ target = 'salvo', authenticated = true, denied = fals
       return handleCommercialOrderWorkflowRequest({ request: new Request('https://app.example' + url, options), runtime, companyId });
     },
   };
+  sandbox.activeCompanyRef = { current: companyId };
+  sandbox.iframeRef = { current: { contentWindow: sandbox.destination } };
   await vm.runInNewContext(`(async () => {${bridgeBranch}})()`, sandbox);
   return { response, effects, requests };
 }

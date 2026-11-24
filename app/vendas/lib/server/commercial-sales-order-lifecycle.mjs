@@ -33,8 +33,8 @@ function publicError(error) {
     'AV-SALES-ORDER-LOCATION': ['stock', 'Selecione um local de estoque ativo para reservar os produtos.'],
     'AV-SALES-ORDER-BALANCE': ['stock', 'O estoque disponível é insuficiente para confirmar o pedido.'],
     'AV-SALES-ORDER-RESERVATION': ['stock', 'A reserva do pedido está incompleta ou inconsistente.'],
-    'AV-SALES-ORDER-RECEIVED': ['receivables', 'Existem valores recebidos. Abra Recebimentos e registre o estorno antes de cancelar ou devolver o pedido.'],
-    'AV-SALES-ORDER-FISCAL': ['fiscal', 'O documento fiscal está no ciclo de emissão. Abra a Central Fiscal e conclua o cancelamento fiscal antes de cancelar ou devolver o pedido.'],
+    'AV-SALES-ORDER-RECEIVED': ['receivables', 'Existem valores recebidos. Abra Recebimentos e registre o estorno antes de estornar o faturamento, cancelar ou devolver o pedido.'],
+    'AV-SALES-ORDER-FISCAL': ['fiscal', 'O documento fiscal está no ciclo de emissão. Abra a Central Fiscal e conclua o cancelamento fiscal antes de estornar o faturamento, cancelar ou devolver o pedido.'],
     'AV-SALES-ORDER-IDEMPOTENCY': ['idempotencyKey', 'Esta solicitação já foi usada para outra ação. Atualize o pedido.'],
     'AV-SALES-ORDER-STOCK-DONE': ['stock', 'Este pedido já possui lançamento de estoque. Atualize a lista; nenhuma baixa adicional foi feita.'],
     'AV-SALES-ORDER-STOCK-BALANCE': ['stock', 'Saldo disponível insuficiente no estoque principal. Confira entradas e reservas dos produtos antes de tentar novamente.'],
@@ -303,6 +303,29 @@ export function createPostgresCommercialSalesOrderLifecycleRepository({ pool } =
       });
     },
 
+    async reverseBilling({ companyId, actorId, orderId, expectedVersion, idempotencyKey }) {
+      return transaction(pool, async (client) => {
+        const event = 'pedido_faturamento_estornado';
+        const repeated = await alreadyDone(client, companyId, idempotencyKey, orderId, event);
+        if (repeated) return repeated;
+        const order = await loadOrder(client, companyId, orderId);
+        if (!order) throw coded('AV-SALES-ORDER-NOT-FOUND');
+        if (Number(order.versao) !== expectedVersion) throw coded('AV-SALES-ORDER-CONFLICT');
+        if (order.situacao !== 'faturado') throw coded('AV-SALES-ORDER-STATE');
+        const rows = (await client.query('select * from public.vendas_contas_receber where empresa_id=$1 and operacao_id=$2 for update',[companyId,orderId])).rows;
+        if (rows.some(row => Number(row.valor_recebido)-Number(row.valor_estornado)>0.001)) throw coded('AV-SALES-ORDER-RECEIVED');
+        for (const row of rows.filter(row => row.situacao !== 'cancelado')) {
+          await client.query("update public.vendas_contas_receber set situacao='cancelado',atualizado_por=$3 where empresa_id=$1 and id=$2",[companyId,row.id,actorId]);
+          await client.query(`insert into public.vendas_contas_receber_eventos(empresa_id,conta_receber_id,tipo,valor,meio_pagamento,descricao,chave_idempotencia,criado_por)
+            values($1,$2,'cancelamento',0,$3,'Faturamento estornado; estoque e documento fiscal preservados.',$4,$5)`,[companyId,row.id,row.meio_pagamento,`${idempotencyKey}:${row.id}`,actorId]);
+        }
+        const updated = await client.query("update public.vendas_operacoes set situacao='em_separacao',faturado_em=null,atualizado_por=$3 where empresa_id=$1 and id=$2 returning versao",[companyId,orderId,actorId]);
+        const metadata={operationVersion:Number(updated.rows[0].versao),stockPreserved:true,fiscalPreserved:true};
+        await recordEvent(client,{companyId,orderId,actorId,key:idempotencyKey,name:event,summary:'Faturamento estornado; pedido pendente de faturamento, estoque e fiscal preservados.',metadata});
+        return metadata;
+      });
+    },
+
     async reopen(input) {
       return this.cancel({ ...input, reopen: true });
     },
@@ -315,6 +338,7 @@ export function createPostgresCommercialSalesOrderLifecycleRepository({ pool } =
         const order = await loadOrder(client, companyId, orderId);
         if (!order) throw coded('AV-SALES-ORDER-NOT-FOUND');
         if (Number(order.versao) !== expectedVersion) throw coded('AV-SALES-ORDER-CONFLICT');
+        if (order.situacao_estoque === 'baixado') throw coded('AV-SALES-ORDER-STATE');
         if (!(reopen ? ['confirmado', 'em_separacao'] : ['salvo', 'confirmado', 'em_separacao']).includes(order.situacao)) throw coded('AV-SALES-ORDER-STATE');
         const reservations = await activeReservations(client, companyId, orderId);
         if (['reservado', 'em_separacao'].includes(order.situacao_estoque) && !reservations.length) {
@@ -385,7 +409,7 @@ export function createPostgresCommercialSalesOrderLifecycleRepository({ pool } =
         const order = await loadOrder(client, companyId, orderId);
         if (!order) throw coded('AV-SALES-ORDER-NOT-FOUND');
         if (Number(order.versao) !== expectedVersion) throw coded('AV-SALES-ORDER-CONFLICT');
-        if (order.situacao !== 'faturado') throw coded('AV-SALES-ORDER-STATE');
+        if (order.situacao !== 'faturado' && !(cancelInvoiced && order.situacao === 'em_separacao' && order.situacao_estoque === 'baixado')) throw coded('AV-SALES-ORDER-STATE');
 
         const fiscal = await client.query(`
           select r.id,e.state
@@ -492,6 +516,7 @@ export function createCommercialSalesOrderLifecycleService({ repository } = {}) 
     cancel: run('cancel', ['sales.cancel', 'stock.exit']),
     reopen: run('reopen', ['sales.edit', 'stock.exit']),
     restoreCanceled: run('restoreCanceled', ['sales.edit']),
+    reverseBilling: run('reverseBilling', ['sales.edit', 'receivables.refund']),
     cancelInvoiced: run('cancelInvoiced', ['sales.cancel', 'stock.adjust']),
     returnInvoiced: run('returnInvoiced', ['sales.cancel', 'stock.adjust', 'receivables.refund', 'fiscal.cancel']),
   });
