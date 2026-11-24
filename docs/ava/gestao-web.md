@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.512 -->
+<!-- ava-version: 3.2.0.513 -->
+
+> Revisão 3.2.0.513: Landing pública: Gestão Financeira aparece à esquerda e abre selecionada em avantalab.com.br. Laboratório de Marcas fica à direita e abre /laboratorio-de-marcas. /gestao-financeira continua disponível para links existentes; a referência canônica da Gestão é a raiz. Acesso e retorno OAuth continuam protegidos pelo componente compartilhado.
 
 > Revisão 3.2.0.512: a lista de Vendas Web mantém a razão social do cliente após salvar/recarregar, inclusive cancelados. Nome de exibição é alternativa apenas em registros sem razão social. Sem alteração dos históricos.
 

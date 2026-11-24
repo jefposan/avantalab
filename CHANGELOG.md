@@ -1,3 +1,9 @@
+## 3.2.0.513 — Landing: Gestão Financeira à esquerda e selecionada ao abrir
+
+- A página inicial abre Gestão Financeira, primeira opção à esquerda. Laboratório de Marcas fica à direita, com o conteúdo preservado em /laboratorio-de-marcas.
+- Mantém /gestao-financeira para links existentes; metadados, endereço canônico e sitemap acompanham a nova entrada. O cabeçalho compartilhado conserva a seleção acessível da área atual.
+- Implementação isolada da main oficial; sem incorporar alterações pendentes do checkout principal. Integração e publicação autorizadas pelo responsável.
+
 # 3.2.0.512 — Vendas: razão social na lista após salvar
 
 - A recarga das operações comerciais prioriza a razão social do retrato salvo do cliente, não o nome fantasia/de exibição; vale também para pedidos cancelados. Registros legados sem razão social conservam o nome disponível.

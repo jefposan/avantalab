@@ -132,7 +132,7 @@ const dadosEstruturadosLaboratorio = {
       '@type': 'WebPage',
       name: 'Laboratório de Marcas | AvantaLab',
       description: 'Do zero ao operacional: transformamos ideias em marcas prontas para entrar no mercado.',
-      url: siteUrl,
+      url: `${siteUrl}/laboratorio-de-marcas`,
       inLanguage: 'pt-BR',
       isPartOf: { '@type': 'WebSite', name: 'AvantaLab', url: siteUrl },
       mainEntity: {
@@ -145,7 +145,7 @@ const dadosEstruturadosLaboratorio = {
   ],
 };
 
-export function AvantaLandingPage({ contexto = 'laboratorio' }: { contexto?: 'laboratorio' | 'gestao' }) {
+export function AvantaLandingPage({ contexto = 'gestao' }: { contexto?: 'laboratorio' | 'gestao' }) {
   return (
     <>
       <RedirecionamentoPosOAuth />

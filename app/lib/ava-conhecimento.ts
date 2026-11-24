@@ -3061,3 +3061,6 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.510: Ao selecionar um destino em Na
 GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.510: No Vendas e Serviços, o aviso fiscal lateral aparece somente para homologação, consulta, validação e pendências. Produção disponível não exibe aviso; emissão e regras fiscais continuam iguais.';
 GUIAS.vendas += ' Revisão 3.2.0.511: PDF de pedido mostra logo e razão social, sem repetir nome fantasia. Sem logo, mostra nome fantasia. Não altera cadastro, estoque ou financeiro.';
 GUIAS['gestao-web'] += ' Revisão 3.2.0.512: Vendas exibe a razão social do retrato salvo do cliente após recarga, inclusive pedidos cancelados. Somente registros legados sem razão social usam nome de exibição. Não altera históricos.';
+
+// Revisão 3.2.0.513: Gestão Financeira como entrada da landing.
+GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.513: Landing pública: Gestão Financeira aparece à esquerda e abre selecionada em avantalab.com.br. Laboratório de Marcas fica à direita e abre /laboratorio-de-marcas. /gestao-financeira continua disponível para links existentes; a referência canônica da Gestão é a raiz. Acesso e retorno OAuth continuam protegidos pelo componente compartilhado.';

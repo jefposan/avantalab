@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.512 -->
+<!-- ava-version: 3.2.0.513 -->
+
+> Revisão 3.2.0.513: Sem impacto operacional nas telas autenticadas deste ambiente; a landing pública inicia em Gestão Financeira, à esquerda, com Laboratório de Marcas à direita em /laboratorio-de-marcas.
 
 > Revisão 3.2.0.512: sem impacto operacional nos aplicativos nativos.
 

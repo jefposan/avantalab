@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_AnBFgmKbLdTDS7ibyjityWhciaUw",
+  "baseDeploymentId": "dpl_EQNf8oqLWEMSj643h3346n3SqMXm",
   "migrations": [],
-  "version": "3.2.0.512",
-  "scope": "Vendas: manter razão social do cliente na lista após salvar ou recarregar"
+  "version": "3.2.0.513",
+  "scope": "Landing: Gestão Financeira à esquerda e selecionada ao abrir"
 }

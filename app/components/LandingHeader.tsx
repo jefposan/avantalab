@@ -61,8 +61,8 @@ export default function LandingHeader({ contexto }: { contexto: ContextoLanding 
           <Image src="/images/avantalab-positivo-com-slogan-20261110.webp" alt="AvantaLab" width={154} height={35} priority />
         </Link>
         <div className={styles.contextSwitcher} aria-label="Área do site">
-          <Link href="/" aria-current={contexto === 'laboratorio' ? 'page' : undefined}>Laboratório de marcas</Link>
-          <Link href="/gestao-financeira" aria-current={contexto === 'gestao' ? 'page' : undefined}>Gestão financeira</Link>
+          <Link href="/" aria-current={contexto === 'gestao' ? 'page' : undefined}>Gestão Financeira</Link>
+          <Link href="/laboratorio-de-marcas" aria-current={contexto === 'laboratorio' ? 'page' : undefined}>Laboratório de Marcas</Link>
         </div>
         {contexto === 'laboratorio' && <div className={`${landingStyles.navActions} ${styles.laboratorioActions}`}>
           <AcessoPublicoLink className={`${landingStyles.entrar} ${styles.laboratorioEntrar}`} modo="entrar">Entrar</AcessoPublicoLink>

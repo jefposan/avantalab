@@ -4,11 +4,11 @@ import { AvantaLandingPage } from '../components/AvantaLandingPage';
 export const metadata: Metadata = {
   title: 'Gestão financeira',
   description: 'Organize receitas, despesas, indicadores e a operação da empresa em uma única visão.',
-  alternates: { canonical: 'https://avantalab.com.br/gestao-financeira' },
+  alternates: { canonical: 'https://avantalab.com.br' },
   openGraph: {
     title: 'Gestão financeira para empresas | AvantaLab',
     description: 'Organize receitas, despesas, indicadores e a operação da empresa em uma única visão.',
-    url: 'https://avantalab.com.br/gestao-financeira',
+    url: 'https://avantalab.com.br',
     siteName: 'AvantaLab',
     locale: 'pt_BR',
     type: 'website',

@@ -9,9 +9,9 @@ export function loadPublicLanding(source,{shared}={}){
  const exports={};const defaultModule=defaultExport=>({__esModule:true,default:defaultExport});
  const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true,target:ts.ScriptTarget.ES2022}}).outputText;
  runInNewContext(code,{exports,require(name){
-  if(name==='react/jsx-runtime')return require(name);
+  if(name==='react/jsx-runtime'||name==='react')return require(name);
   if(name==='next/image')return defaultModule(({src,alt})=>React.createElement('img',{src,alt}));
-  if(name==='next/link')return defaultModule(({href,children,className})=>React.createElement('a',{href,className},children));
+  if(name==='next/link')return defaultModule(({href,children,...props})=>React.createElement('a',{href,...props},children));
   if(name.endsWith('avantavendas-download'))return downloads;
   if(name.endsWith('/AvantaLandingPage'))return {AvantaLandingPage:shared};
   if(name.endsWith('.module.css'))return defaultModule(new Proxy({},{get:(_,key)=>String(key)}));
