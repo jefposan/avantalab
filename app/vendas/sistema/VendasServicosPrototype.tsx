@@ -1,4 +1,5 @@
 'use client';
+import CommercialReports from './relatorios/CommercialReports';
 import SeletorModulos from '@/app/components/SeletorModulos';
 import {buildOrderPdf, copyOrderPdf, orderContactLink, orderMessage, orderStatusActions} from '../lib/order-tools';
 import {prepareOrderLogo,printOrderPdf} from '../lib/order-print';
@@ -210,6 +211,7 @@ type CreatedRecord = {
   customerId?: string;
   total: number;
   createdAt: string;
+  invoicedAt?: string;
   status?: 'Rascunho' | 'Confirmado' | 'Em separação' | 'Faturado' | 'Cancelado' | 'Devolvido' | 'Salvo' | 'Agendado' | 'Em execução' | 'Concluído';
   persistenceKey?: string;
   persistence?: { operationId: string; customerId: string; version: number; status: string; fiscalDraftId?: string };
@@ -3242,7 +3244,6 @@ function ClientsView({ companyId='',importOrigin='',brand='#003E73',priceTables,
       <Metric label="Faturamento da carteira" value={money(totalRevenue)} note="Operações cadastradas" tone="success"/>
       <Metric label="Cadastros a revisar" value={String(reviewed)} note="Dados fiscais incompletos" tone="warning"/>
     </div>
-    <div className="client-module-note"><Icon name="users" size={19}/><p><strong>Cadastro único para toda a operação.</strong> Os dados salvos aqui abastecem pedidos, orçamentos, serviços, cobrança e emissão fiscal.</p><Badge tone="info">CNPJ + CEP</Badge></div>
     <Panel title="Carteira de clientes" subtitle="Dados comerciais, fiscais, de cobrança e entrega">
       <SearchToolbar value={query} onChange={setQuery}><select aria-label="Status do cliente" value={status} onChange={(event) => setStatus(event.target.value)}><option>Todos</option><option>Ativo</option><option>Revisar cadastro</option><option>Inativo</option></select></SearchToolbar>
       <Table headers={['Cliente', 'CNPJ', 'Contato e cidade', 'Perfil fiscal', 'Histórico', 'Status', 'Ações']} minWidth={0} className="client-table">
@@ -5084,7 +5085,7 @@ function ReceivableDetailsDialog({ record, onClose }: { record: ReceivableRecord
   if (!record) return null;
   const status = receivableStatus(record, todayIso());
   const netReceived = Math.max(0, record.received - record.refunded);
-  return <Dialog open title={record.id} description={`Parcela ${record.installment} de ${record.origin} · ${record.client}`} onClose={onClose}>
+  return <Dialog open title={`${record.origin} - ${record.client}`} description={`Parcela ${record.installment}`} onClose={onClose}>
     <div className="dialog-body receivable-details">
       <div className="receivable-detail-summary"><div><span>Valor original</span><strong>{money(record.value)}</strong></div><div><span>Recebido líquido</span><strong>{money(netReceived)}</strong></div><div><span>Saldo atual</span><strong>{money(receivableBalance(record))}</strong></div><div><span>Situação</span><Badge tone={financialTone(status)}>{status}</Badge></div></div>
       <section><div className="client-section-heading"><h3>Dados da parcela</h3><p>Origem comercial e condição preservadas para auditoria.</p></div><dl className="receivable-definition-list"><div><dt>Cliente</dt><dd>{record.client}</dd></div><div><dt>Operação de origem</dt><dd>{record.origin}</dd></div><div><dt>Vencimento</dt><dd>{displayIsoDate(record.dueDate)}</dd></div><div><dt>Forma prevista</dt><dd>{record.method}</dd></div><div><dt>Valor estornado</dt><dd>{money(record.reversed)}</dd></div><div><dt>Recebimentos estornados</dt><dd>{money(record.refunded)}</dd></div></dl></section>
@@ -5127,7 +5128,7 @@ function ReceivableOperationDialog({ mode, records, initialId, connected, onClos
     <div className="dialog-body receivable-operation-form">
       <div className={`financial-operation-safety ${isRefund ? 'reversal' : ''}`}><Icon name={isRefund ? 'warning' : 'money'} size={19}/><p><strong>{connected ? 'Movimentação vinculada ao perfil.' : isRefund ? 'Estorno local e rastreável.' : 'Registro comercial local.'}</strong> {connected ? 'O histórico comercial e a entrada mensal serão atualizados; a conciliação bancária continua na Gestão Financeira.' : isRefund ? 'Nenhum valor será movimentado em conta bancária.' : 'A conciliação bancária continuará pendente na Gestão Financeira.'}</p></div>
       <div className="form-grid">
-        <label className="field field-wide"><span>Parcela *</span><select value={selected?.id ?? ''} onChange={(event) => selectRecord(event.target.value)}>{eligible.map((record) => <option key={record.id} value={record.id}>{record.id} · {record.client} · {record.origin} · saldo {money(mode === 'receber' ? receivableBalance(record) : record.received - record.refunded)}</option>)}</select></label>
+        <label className="field field-wide"><span>Parcela *</span><select value={selected?.id ?? ''} onChange={(event) => selectRecord(event.target.value)}>{eligible.map((record) => <option key={record.id} value={record.id}>{record.origin} · {record.client} · Parcela {record.installment} · saldo {money(mode === 'receber' ? receivableBalance(record) : record.received - record.refunded)}</option>)}</select></label>
         <label className="field"><span>{isRefund ? 'Valor a estornar *' : 'Valor recebido *'}</span><div className="input-prefix"><i>R$</i><input inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setError(''); }} aria-invalid={Boolean(error)} aria-describedby={error ? 'receivable-operation-error' : undefined}/></div></label>
         <label className="field"><span>{isRefund ? 'Data do estorno *' : 'Data do recebimento *'}</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)}/></label>
         <label className="field"><span>Forma</span><select value={method} onChange={(event) => setMethod(event.target.value)}><option>PIX</option><option>Boleto</option><option>Cartão</option><option>Transferência</option><option>Dinheiro</option><option>Outro</option></select></label>
@@ -5150,7 +5151,7 @@ function ReceivableRecordActions({ record, onDetails, onOperation, onReverseBill
     { label: 'Enviar cobrança', description: 'E-mail ou WhatsApp com link e documento da parcela', icon: 'mail', planned: true },
     { label: 'Gerar comprovante', description: 'Documento da empresa após integração financeira', icon: 'print', planned: true },
   ];
-  return <RecordActionsDialog title={`Ações de ${record.id}`} description={`${record.client} · ${record.origin}. O histórico financeiro nunca é apagado.`} actions={actions} triggerLabel={`Ações de ${record.id}`}/>;
+  return <RecordActionsDialog title={`Ações ${/^Pedido /i.test(record.origin)?'do pedido '+record.origin.replace(/^Pedido /i,''):'de '+record.origin} - ${record.client}`} description="" actions={actions} triggerLabel={`Ações de ${record.origin} - ${record.client}`}/>;
 }
 
 function ReceivablesView({ records, initialOrigin, connected, onReceive, onRefund, onReverseBilling }: { records: ReceivableRecord[]; initialOrigin: string; connected: boolean; onReverseBilling: (record:ReceivableRecord)=>Promise<ConfirmedSave>; onReceive: (input: ReceivableOperationInput) => Promise<ConfirmedSave>; onRefund: (input: ReceivableOperationInput) => Promise<ConfirmedSave> }) {
@@ -5192,7 +5193,7 @@ type ReportId = 'comercial' | 'produtos' | 'servicos' | 'estoque' | 'fiscal' | '
 type ReportPeriod = 'all' | '2026-08' | '2026-07';
 type ReportVisualRow = { label: string; detail: string; primary: string; secondary: string; value: number; badge?: string; tone?: 'success' | 'warning' | 'danger' | 'info' | 'neutral' };
 
-function ReportsView({ created, catalogRecords, movementRecords, receivableRecords, fiscalDrafts }: { created: CreatedRecord[]; catalogRecords: CatalogItem[]; movementRecords: StockMovementRecord[]; receivableRecords: ReceivableRecord[]; fiscalDrafts: FiscalDraftRecord[] }) {
+function ReportsOverview({ created, catalogRecords, movementRecords, receivableRecords, fiscalDrafts }: { created: CreatedRecord[]; catalogRecords: CatalogItem[]; movementRecords: StockMovementRecord[]; receivableRecords: ReceivableRecord[]; fiscalDrafts: FiscalDraftRecord[] }) {
   const { can } = useContext(PermissionContext);
   const [report, setReport] = useState<ReportId>('comercial');
   const [period, setPeriod] = useState<ReportPeriod>('all');
@@ -5257,15 +5258,11 @@ function ReportsView({ created, catalogRecords, movementRecords, receivableRecor
     window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
   };
   return <>
-    <PageHeading view="relatorios" action={<div className="period-control"><label>Período<select value={period} onChange={(event) => setPeriod(event.target.value as ReportPeriod)}><option value="all">Todo o histórico</option><option value="2026-08">Agosto de 2026</option><option value="2026-07">Julho de 2026</option></select></label><button type="button" className="button secondary" onClick={exportCsv} disabled={!activeRows.length || !can('reports.export')}><Icon name="document" size={16}/> Exportar CSV</button></div>}/>
-    <div className="report-data-source"><span><Icon name="chart" size={18}/></span><p><strong>Indicadores calculados com os registros disponíveis neste navegador.</strong><small>O período filtra operações, parcelas, movimentações e rascunhos; a posição de estoque sempre representa o saldo atual.</small></p><Badge tone="info">{periodLabel}</Badge></div>
-    <div className="report-selector" role="group" aria-label="Tipo de relatório">{reports.map(([id, title, description, icon]) => <button key={id} type="button" className={report === id ? 'active' : ''} aria-pressed={report === id} onClick={() => setReport(id)}><span><Icon name={icon}/></span><div><strong>{title}</strong><small>{description}</small></div></button>)}</div>
     <div className="metric-grid compact">{metricsByReport[report].filter(metric=>can('catalog.view_cost')||!/custo|margem|lucro|valor.*estoque/i.test(metric.label)).map((metric) => <Metric key={metric.label} {...metric}/>)}</div>
     <div className="content-grid reports">
       <Panel title={reports.find(([id]) => id === report)?.[1] ?? 'Relatório'} subtitle={`${activeRows.length} indicadores · ${periodLabel.toLocaleLowerCase('pt-BR')}`} action={activeRows.length ? <Badge tone="info">Atualizado</Badge> : undefined}>{activeRows.length ? <div className="report-data-list">{activeRows.map((row) => <article key={row.label}><div><strong>{row.label}</strong><small>{row.detail}</small></div><div className="report-row-values"><strong>{row.primary}</strong><small>{row.secondary}</small></div>{row.badge && <Badge tone={row.tone}>{row.badge}</Badge>}<span aria-hidden="true"><i style={{ width: `${maxValue > 0 ? Math.max(3, row.value / maxValue * 100) : 0}%` }}/></span></article>)}</div> : <EmptyState title="Sem dados para este relatório" description="Selecione outro período ou conclua operações do módulo para formar os indicadores."/>}</Panel>
       <Panel title="Leitura do período" subtitle="Sinais calculados, sem comparação fictícia"><div className="insight-list">{insightsByReport[report].filter(insight=>can('catalog.view_cost')||!/custo|margem|lucro/i.test(insight.title+' '+insight.description)).map((insight) => <div key={insight.title}><span className={insight.tone}><Icon name={insight.icon} size={17}/></span><p><strong>{insight.title}</strong><small>{insight.description}</small></p></div>)}</div></Panel>
     </div>
-    <div className="report-boundary"><Icon name="chart"/><p><strong>Relatórios financeiros completos permanecem na Gestão.</strong> Este módulo mostra somente indicadores com origem comercial; caixa realizado, bancos, conciliação, impostos efetivos e DRE usam o livro financeiro central.</p></div>
   </>;
 }
 
@@ -5988,6 +5985,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     observer?.observe(header);window.addEventListener('resize',measure);
     return()=>{observer?.disconnect();window.removeEventListener('resize',measure);};
   },[]);
+  const [reportResult,setReportResult]=useState(false);
+  const [reportEntry,setReportEntry]=useState(0);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [newMenu, setNewMenu] = useState(false);
   const [newType, setNewType] = useState<DocumentType | null>(null);
@@ -6390,6 +6389,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           const next = current.map((record) => record.id === pending.recordId ? {
             ...record,
             status,
+            invoicedAt: commercial.order.invoicedAt || (status==='Faturado'?now:undefined),
             persistence: {
               operationId: commercial.order.operationId,
               customerId: commercial.customerId,
@@ -6530,7 +6530,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         const records: CreatedRecord[] = event.data.operations.flatMap((operation: any) => {
           if (!operation?.id || !['orcamento', 'pedido', 'ordem_servico'].includes(operation.type)) return [];
           const items = Array.isArray(operation.items) ? operation.items : [];
-          const base = { id: `${operation.year}/${operation.number}`, type: operation.type as DocumentType, client: String(operation.customerSnapshot?.legalName || '').trim() || String(operation.customerSnapshot?.displayName || '').trim() || 'Cliente', total: Number(operation.total) || 0, createdAt: String(operation.createdAt || new Date().toISOString()), status: statusLabel(String(operation.status || 'salvo')), persistence: { operationId: operation.id, customerId: operation.customerId || '', version: Number(operation.version) || 1, status: String(operation.status || '') } };
+          const base = { id: `${operation.year}/${operation.number}`, type: operation.type as DocumentType, client: String(operation.customerSnapshot?.legalName || '').trim() || String(operation.customerSnapshot?.displayName || '').trim() || 'Cliente', total: Number(operation.total) || 0, createdAt: String(operation.createdAt || new Date().toISOString()), invoicedAt: String(operation.invoicedAt||''), status: statusLabel(String(operation.status || 'salvo')), persistence: { operationId: operation.id, customerId: operation.customerId || '', version: Number(operation.version) || 1, status: String(operation.status || '') } };
           if (operation.type === 'orcamento') return [{ ...base, quote: { number: base.id, validUntil: operation.validityDate ? String(operation.validityDate).split('-').reverse().join('/') : '', company: moduleSettings.company, client: base.client, clientDocument: String(operation.customerSnapshot?.document || ''), clientCity: String(operation.customerSnapshot?.address?.city || ''), items: items.map((line: any) => ({ sku: line.sku, name: line.name, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice) - Number(line.discountUnit || 0) })), subtotal: Number(operation.subtotalGross), discount: Number(operation.itemDiscount) + Number(operation.generalDiscount), freight: Number(operation.freight), total: Number(operation.total), notes: String(operation.customerNotes || ''), source: operation.channel === 'servicos' ? 'servicos' : 'vendas' } }];
           if (operation.type === 'pedido') return [{ ...base, status: operation.status === 'salvo' ? 'Rascunho' : base.status, order: {
             lines: items.map((line: any) => ({ catalogItemId: line.productId, sku: line.sku, name: line.name, kind: line.itemType === 'servico' ? 'servico' : 'produto', unit: line.unit, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice), unitDiscount: Number(line.discountUnit), cost: Number(line.costUnitSnapshot || 0) })),
@@ -7289,7 +7289,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     return 1;
   };
 
-  const navigate = (next: View) => { const required = viewPermission[next]; if (required && !authorize(required, `acessar ${viewInfo[next].title.toLocaleLowerCase('pt-BR')}`)) return; if (next !== 'novo_pedido') setStandaloneFiscal(false); if (next !== 'fiscal') setFiscalOrigin(null); if (next === 'recebimentos') setReceivableOrigin(''); if (next === 'estoque') setStockOrigin(''); setView(next); setMobileMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const navigate = (next: View) => { const required = viewPermission[next]; if (required && !authorize(required, `acessar ${viewInfo[next].title.toLocaleLowerCase('pt-BR')}`)) return; if (next !== 'novo_pedido') setStandaloneFiscal(false); if (next !== 'fiscal') setFiscalOrigin(null); if (next === 'recebimentos') setReceivableOrigin(''); if (next === 'estoque') setStockOrigin(''); if(next==='relatorios')setReportEntry(n=>n+1);setView(next); setMobileMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const openReceivables = (origin: string) => { if (!authorize('receivables.view', 'consultar recebimentos')) return; setFiscalOrigin(null); setReceivableOrigin(origin); setView('recebimentos'); setMobileMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const openStockMovements = (origin: string) => { if (!authorize('stock.view', 'consultar movimentações de estoque')) return; setFiscalOrigin(null); setStockOrigin(origin); setView('estoque'); setMobileMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const startFiscal = (origin: FiscalOrigin) => {
@@ -8151,7 +8151,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       cancelar: { status: 'Cancelado' as const, stockState: transition === 'devolver' ? 'Devolvido' as const : transition === 'liberar' ? 'Liberado' as const : record.order.stockState, label: 'Pedido cancelado', description: `${transition === 'devolver' ? 'A saída de estoque foi estornada.' : transition === 'liberar' ? 'A reserva foi liberada e retornou ao disponível.' : 'Cancelamento sem efeito de estoque.'}${reversedInstallments ? ` ${reversedInstallments} ${reversedInstallments === 1 ? 'parcela estornada' : 'parcelas estornadas'}.` : ''}${fiscalDraftCanceled ? ' Rascunho fiscal cancelado.' : ''}` },
       devolver: { status: 'Devolvido' as const, stockState: hasProducts ? 'Devolvido' as const : record.order.stockState, label: 'Devolução registrada', description: `${hasProducts ? 'Os produtos retornaram ao saldo físico e disponível.' : 'Pedido sem produto físico.'}${reversedInstallments ? ` ${reversedInstallments} ${reversedInstallments === 1 ? 'parcela e seu recebimento foram estornados' : 'parcelas e seus recebimentos foram estornados'}.` : ''}${fiscalDraftCanceled ? ' Rascunho fiscal cancelado sem transmissão.' : ''}` },
     }[action];
-    const next = created.map((item) => item.id === record.id ? { ...item, status: lifecycle.status, order: { ...record.order!, stockState: lifecycle.stockState }, events: [...(item.events ?? []), { date: now, label: lifecycle.label, description: lifecycle.description }] } : item);
+    const next = created.map((item) => item.id === record.id ? { ...item, status: lifecycle.status, invoicedAt: action==='faturar'?now:item.invoicedAt, order: { ...record.order!, stockState: lifecycle.stockState }, events: [...(item.events ?? []), { date: now, label: lifecycle.label, description: lifecycle.description }] } : item);
     setCreated(next);
     writeCompanyStorage(STORAGE_KEY, JSON.stringify({ version: 1, created: next }));
     setToast(`${lifecycle.label} em ${record.id}. ${lifecycle.description}`);
@@ -8366,7 +8366,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     window.location.assign(gestaoHref);
   };
 
-  return <PermissionContext.Provider value={{ can, user: activeUser, role: activeRole }}><div ref={commercialRootRef} className="commercial-app" style={{ '--av-profile-primary': profileColor, '--av-profile-on-primary': corEhClara(profileColor) ? '#0f172a' : '#ffffff' } as CSSProperties}>
+  return <PermissionContext.Provider value={{ can, user: activeUser, role: activeRole }}><div ref={commercialRootRef} className={`commercial-app${reportResult ? ' report-result-open' : ''}`} style={{ '--av-profile-primary': profileColor, '--av-profile-on-primary': corEhClara(profileColor) ? '#0f172a' : '#ffffff' } as CSSProperties}>
     <header ref={topbarRef} className="topbar">
       <div className="topbar-start">
         {managementContextReady && managementCatalogBridge?.companyId ? <SeletorModulos empresaId={managementCatalogBridge.companyId} moduloAtual="vendas" corPrimaria={profileColor} ocupado={editorSaving} alteracoesPendentes={view === 'novo_pedido'} descricaoPendencia={standaloneFiscal ? 'Existe uma nota fiscal não salva. Sair sem salvar perde os dados não salvos; Salvar e sair guarda o rascunho sem emitir.' : 'Existe um pedido não salvo. Sair sem salvar perde os dados não salvos; Salvar e sair guarda o rascunho sem confirmar o pedido.'} salvarAntesDeSair={async () => (await editorNavigationRef.current?.save()) === true} /> : <button type="button" onClick={retornarGestao} className="module-exit" aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16}/> Início</button>}
@@ -8474,7 +8474,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           }}
         />}
         {view === 'recebimentos' && <ReceivablesView onReverseBilling={reverseOrderBilling} records={receivableRecords} initialOrigin={receivableOrigin} connected={Boolean(managementCatalogBridge)} onReceive={receiveInstallment} onRefund={refundInstallment}/>}
-        {view === 'relatorios' && <ReportsView created={created} catalogRecords={catalogRecords} movementRecords={stockMovementRecords} receivableRecords={receivableRecords} fiscalDrafts={fiscalDraftRecords}/>}
+        {view === 'relatorios' && <CommercialReports key={`${managementCatalogBridge?.companyId||'local'}:${reportEntry}`} operations={created} clients={clientRecords} catalog={catalogRecords} receivables={receivableRecords} fiscalDrafts={fiscalDraftRecords} company={{name:moduleSettings.company.name,document:moduleSettings.company.document,color:profileColor,logoUrl:companyLogoUrl}} can={can} onResultChange={setReportResult} renderIcon={name=><Icon name={name as IconName}/>} overview={<ReportsOverview created={created} catalogRecords={catalogRecords} movementRecords={stockMovementRecords} receivableRecords={receivableRecords} fiscalDrafts={fiscalDraftRecords}/>}/>}
         {view === 'configuracoes' && (
           <SettingsView fiscalDefaultsContext={{companyId:managementCatalogBridge?.companyId||'',origin:managementBridgeOrigin||'',onSaved:()=>void loadRealFiscalEditor()}}
             settings={moduleSettings}

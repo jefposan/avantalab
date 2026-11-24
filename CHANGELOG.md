@@ -1,3 +1,16 @@
+# 3.2.0.516 — Relatórios configuráveis e ajustes de Clientes
+
+- Indicadores de estoque, faturamento e nota fiscal usam três posições fixas de mesma largura, inclusive quando a nota é clicável, mantendo o alinhamento vertical entre pedidos.
+- Recebimentos identifica ações pelo número comercial do pedido e cliente; UUID interno removido dos títulos, detalhes e opções visíveis de parcelas, preservando vínculos internos.
+- Relatórios com categorias e seis tipos comuns em Vendas; configuração separada do resultado, página de leitura ampla e Voltar preservando filtros.
+- Visão geral em cada entrada; filtros somente em memória, apagados por Limpar filtros ou ao sair da área/trocar de empresa.
+- Ao acessar um campo dos filtros por clique, toque ou teclado, o quadro de configuração desliza suavemente até abaixo do cabeçalho fixo; respeita a preferência do dispositivo por movimento reduzido.
+- Filtros de cliente, produto e serviço aparecem antes das datas, vazios com placeholder; digitar mostra sugestões, permite múltiplas seleções e, sem selecionar, inclui todos.
+- Seleções múltiplas, períodos, agrupamento, ordenação e colunas; valores calculados com registros autorizados, sem IA ou escrita comercial.
+- PDF paginado e Excel com identidade da empresa, cabeçalhos, moeda/datas, linhas alternadas e totais; ambos exportam o mesmo resultado completo e respeitam permissões.
+- Data de faturamento disponibilizada pelo retrato existente, sem migração; cancelamentos e devoluções excluídos dos rankings de vendas concluídas.
+- Removidos o aviso Cadastro único para toda a operação e o selo CNPJ + CEP. Sem alteração no cadastro ou nas integrações.
+
 # 3.2.0.515 — Vendas e Serviços: pedidos, recebimentos e interface
 
 - Indicadores compactos entre total e ações, na ordem estoque, faturamento e nota fiscal; pendentes em cinza claro e concluídos verdes.

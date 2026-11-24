@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_9woAkts53VMUT3fCNcfe9a1wF2rZ",
+  "baseDeploymentId": "dpl_8KGo7ajzddxjmPGDMaTLWRwQ56Lu",
   "migrations": [],
-  "version": "3.2.0.515",
-  "scope": "Vendas e Serviços: consignado, estorno de faturamento, recebimentos e cabeçalho fixo"
+  "version": "3.2.0.516",
+  "scope": "Vendas e Serviços: relatórios configuráveis com PDF e Excel, filtros e identificação dos pedidos"
 }

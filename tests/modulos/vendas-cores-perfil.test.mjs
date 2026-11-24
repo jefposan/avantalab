@@ -8,12 +8,13 @@ const source = readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx', 'u
 const ast = ts.createSourceFile('view.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 let styleExpression;
 function findStyle(node) {
-  if (ts.isJsxOpeningElement(node) && node.attributes.properties.some(attr => ts.isJsxAttribute(attr) && attr.name.getText(ast) === 'className' && attr.initializer?.getText(ast) === '"commercial-app"')) {
+  if (ts.isJsxOpeningElement(node) && node.attributes.properties.some(attr => ts.isJsxAttribute(attr) && attr.name.getText(ast) === 'className' && attr.initializer?.getText(ast).includes('commercial-app'))) {
     styleExpression = node.attributes.properties.find(attr => ts.isJsxAttribute(attr) && attr.name.getText(ast) === 'style').initializer.expression.getText(ast);
   }
   ts.forEachChild(node, findStyle);
 }
 findStyle(ast);
+assert.ok(styleExpression, 'O contêiner comercial deve expor as cores do perfil');
 const expression = ts.transpileModule(`module.exports = (${styleExpression});`, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
 const styleFor = profileColor => { const module = { exports: {} }; new Function('module', 'profileColor', 'corEhClara', expression)(module, profileColor, corEhClara); return module.exports; };
 

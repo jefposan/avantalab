@@ -18,6 +18,7 @@ function snapshot(operation, extra = {}) {
     year: operation.year,
     number: operation.number,
     version: operation.version,
+    invoicedAt: operation.invoicedAt,
     status: operation.status,
     stockStatus: operation.stockStatus,
     fiscalStatus: operation.fiscalStatus,

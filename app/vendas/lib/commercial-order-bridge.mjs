@@ -34,7 +34,7 @@ export function parseCommercialOrderWorkflowResponse(data) {
     requestId: clean(data.requestId), ok: true, message: '', customerId: UUID.test(clean(data.customerId)) ? clean(data.customerId) : '',
     order: Object.freeze({
       operationId: clean(order.operationId), year: Number(order.year) || 0, number: Number(order.number) || 0,
-      version: Number(order.version), status: clean(order.status), stockStatus: clean(order.stockStatus), fiscalStatus: clean(order.fiscalStatus),
+      version: Number(order.version), invoicedAt: clean(order.invoicedAt), status: clean(order.status), stockStatus: clean(order.stockStatus), fiscalStatus: clean(order.fiscalStatus),
       fiscalDraftId: UUID.test(clean(order.fiscalDraftId)) ? clean(order.fiscalDraftId) : '',
       fiscalDraftStatus: clean(order.fiscalDraftStatus), receivableCount: Math.max(0, Number(order.receivableCount) || 0), stockIntegrated: order.stockIntegrated === true,
     }),

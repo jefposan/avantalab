@@ -50,7 +50,7 @@ function mapOperation(row, items = []) {
     deliverySnapshot: row.entrega_retrato || {}, fiscalDocument: row.documento_fiscal_solicitado,
     fiscalStatus: row.situacao_fiscal, stockStatus: row.situacao_estoque,
     customerNotes: row.observacoes_cliente || '', internalNotes: row.observacoes_internas || '',
-    contentHash: row.conteudo_hash, version: Number(row.versao), createdBy: row.criado_por || '',
+    invoicedAt: text(row.faturado_em), contentHash: row.conteudo_hash, version: Number(row.versao), createdBy: row.criado_por || '',
     updatedBy: row.atualizado_por || '', createdAt: text(row.criado_em), updatedAt: text(row.atualizado_em), items,
   };
 }

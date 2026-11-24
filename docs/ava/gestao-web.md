@@ -1,4 +1,9 @@
-<!-- ava-version: 3.2.0.515 -->
+<!-- ava-version: 3.2.0.516 -->
+
+> Revisão local 3.2.0.516 — Relatórios de Vendas e Serviços: entrar pelo menu abre Visão geral. Escolher categoria e tipo abre somente configuração. Vendas oferece Pedidos, Orçamentos, Faturamento, Produtos mais vendidos, Produtos por cliente e Clientes que mais compram. Selecionar período, clientes, produtos, vendedores, pagamentos, situação, ordenação, agrupamento e colunas conforme o relatório. Gerar relatório abre página dedicada com resultado, Voltar, PDF e Excel. Voltar mantém as configurações; navegar entre tipos também conserva seus filtros dentro da área. Limpar filtros apaga as configurações; sair da área ou trocar de empresa elimina a sessão, e retornar abre Visão geral sem filtros anteriores. Filtros não ficam no armazenamento local ou no servidor. PDF A4 paisagem e Excel formatado usam o mesmo retrato e todos os registros do resultado; a tabela tem páginas de 50 linhas. Totais não são somente da página visível. Custos/margens e valores financeiros dependem dos acessos atuais, assim como exportação. Relatórios de vendas concluídas excluem cancelados/devolvidos; produtos aplicam descontos e não incluem frete nas receitas por item. Estoque representa posição atual. Nenhum relatório registra vendas, pagamentos ou movimentações.
+
+
+> Revisão local 3.2.0.516: Removido o aviso Cadastro único para toda a operação e o selo CNPJ + CEP da tela Clientes de Vendas e Serviços Web. Sem impacto operacional no cadastro.
 
 > Revisão visual complementar 3.2.0.515: Cabeçalho de Vendas e Serviços Web fixo no topo; o conteúdo reserva sua altura real, inclusive ao redimensionar. Acesso integrado mantém rolagem no conteúdo do módulo, sem deslocar o cabeçalho pelo rodapé externo. Sem alteração de navegação ou dados.
 
@@ -6563,3 +6568,11 @@ Revisão 3.2.0.480: preservação do telefone do emitente no DANFE; sem impacto 
 Revisão 3.2.0.481: download do DANFE validado pelo ambiente da emissão, independente do armazenamento; sem impacto operacional adicional.
 
 Revisão 3.2.0.482: geração do DANFE não invalida o link temporário pelo tempo de processamento; sem impacto operacional adicional.
+
+- Filtros de cliente, produto e serviço aparecem antes das datas, vazios com placeholder; digitar mostra sugestões, permite múltiplas seleções e, sem selecionar, inclui todos.
+
+- Ao acessar um campo dos filtros por clique, toque ou teclado, o quadro de configuração desliza suavemente até abaixo do cabeçalho fixo; respeita a preferência do dispositivo por movimento reduzido.
+
+- Indicadores de estoque, faturamento e nota fiscal usam três posições fixas de mesma largura, inclusive quando a nota é clicável, mantendo o alinhamento vertical entre pedidos.
+
+- Recebimentos identifica ações pelo número comercial do pedido e cliente; UUID interno removido dos títulos, detalhes e opções visíveis de parcelas, preservando vínculos internos.

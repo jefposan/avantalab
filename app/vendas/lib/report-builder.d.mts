@@ -1,0 +1,9 @@
+export type ReportFilters={from:string;to:string;clients:string[];products:string[];sellers:string[];statuses:string[];methods:string[];sort:string;group:string;columns:string[]};
+export type ReportDocument={id:string;title:string;columns:{id:string;label:string;format:string}[];rows:Record<string,string|number>[];totals:{records:number;value?:number;balance?:number};generatedAt:string;filters:ReportFilters;notes:string[]};
+export const REPORT_AREAS:string[][];
+export const REPORT_TYPES:{id:string;area:string;title:string;permission:string;cost?:boolean;financial?:boolean}[];
+export function freshReportFilters():ReportFilters;
+export function validateReportFilters(filters:ReportFilters):string;
+export function reportDate(record:any,id:string):string;
+export function reportFiltersSummary(filters:ReportFilters,labels?:Record<string,string>):string[];
+export function buildCommercialReport(input:{id:string;filters?:ReportFilters;operations?:any[];clients?:any[];catalog?:any[];receivables?:any[];fiscalDrafts?:any[];canViewCosts?:boolean;canViewFinancial?:boolean;today?:string}):ReportDocument;

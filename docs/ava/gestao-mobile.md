@@ -1,4 +1,8 @@
-<!-- ava-version: 3.2.0.515 -->
+<!-- ava-version: 3.2.0.516 -->
+
+> Revisão local 3.2.0.516: sem impacto operacional nos aplicativos independentes. Relatórios configuráveis pertencem exclusivamente a Vendas e Serviços Web, inclusive seu acesso em navegador mobile.
+
+> Revisão local 3.2.0.516: sem impacto operacional; remoção visual restrita ao aviso introdutório de Clientes em Vendas e Serviços Web.
 
 > Revisão visual complementar 3.2.0.515: sem impacto operacional; cabeçalho fixo ajustado somente em Vendas e Serviços Web.
 
