@@ -11,7 +11,7 @@ const branch=source.slice(source.indexOf('          if (event.data.type === COMM
 
 for(const target of ['faturado','cancelado','devolvido','restaurar','estornar_faturamento'])test(`${target}: parcelas confirmadas chegam antes do sucesso, sem aguardar fiscal/estoque`,async()=>{
   const calls=[],financial=deferred(),fiscal=deferred();
-  const destination={postMessage:message=>calls.push(message.ok?'success':'failure')};
+  const destination={postMessage:message=>calls.push(message.indicatorsOnly?'indicators':message.ok?'success':'failure')};
   const context={exports:{},event:{data:{type:'workflow',target}},COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE:'workflow',requestId:'request',responseType:'response',empresaId:'company',token:'session',origemPrototipo:'origin',URLSearchParams,activeCompanyRef:{current:'company'},iframeRef:{current:{contentWindow:destination}},destination,
     createCommercialOrderWorkflowRequest:value=>value,
     fetch:async()=>({ok:true,json:async()=>({ok:true,order:{fiscalDraftId:'draft',stockIntegrated:true}})}),
@@ -20,9 +20,9 @@ for(const target of ['faturado','cancelado','devolvido','restaurar','estornar_fa
   vm.runInNewContext(compile(`exports.run=async()=>{${branch}};`),context);
   const running=context.exports.run();
   await new Promise(r=>setImmediate(r));
-  assert.deepEqual(calls,['financial-start']);
+  assert.deepEqual(calls,['indicators','financial-start']);
   financial.resolve();await new Promise(r=>setImmediate(r));
-  assert.deepEqual(calls,['financial-start','snapshot','success','fiscal','catalog','stock']);
+  assert.deepEqual(calls,['indicators','financial-start','snapshot','success','fiscal','catalog','stock']);
   fiscal.resolve();await running;
 });
 
@@ -43,4 +43,26 @@ test('consulta anterior não sobrescreve snapshot novo nem falha apaga lista atu
   requests[2].reject(new Error('offline'));await failing;
   assert.equal(messages.length,2);
   assert.equal(messages[1].records[0].id,'confirmed-installment');
+});
+
+test('indicadores aplicam o retrato confirmado sem liberar a operação ou aguardar consultas',()=>{
+ const child=readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx','utf8');
+ const start=child.indexOf('        if(commercial.ok&&commercial.indicatorsOnly){');
+ const code=child.slice(start,child.indexOf('        window.clearTimeout(pending.timer);',start));
+ for(const [status,stockStatus] of [['faturado','baixado'],['em_separacao','reservado']]){
+  let records=[{id:'2026/1',status:'Em separação',persistence:{version:1},order:{stockState:'Sem movimentação'},events:[]}];
+  const context={exports:{},commercial:{ok:true,indicatorsOnly:true,customerId:'client',order:{status,stockStatus,operationId:'op',version:2,stockIntegrated:true}},pending:{recordId:'2026/1'},setCreated:fn=>records=fn(records)};
+  vm.runInNewContext(compile('exports.apply=()=>{'+code+'};'),context);context.exports.apply();
+  assert.equal(records[0].status,status==='faturado'?'Faturado':'Em separação');assert.equal(records[0].order.stockState,stockStatus==='baixado'?'Baixado':'Reservado');assert.equal(records[0].events.length,0);
+  records[0].persistence.version=3;const current=records[0];context.exports.apply();assert.equal(records[0],current,'resposta antiga não regride uma versão já confirmada');
+ }
+});
+test('atualizar catálogo após estoque preserva a interface e ignora retorno de outro perfil',async()=>{
+ const start=source.indexOf('    if(somenteDados){');const end=source.indexOf('    if (!perfilId) return;',start);const code=source.slice(start,end);
+ const response=deferred(),catalogs=[];
+ const context={exports:{},URLSearchParams,activeCompanyRef:{current:'company'},supabase:{auth:{getSession:async()=>({data:{session:{access_token:'session'}}})}},fetch:()=>response.promise,setCatalogo:value=>catalogs.push(value)};
+ vm.runInNewContext(compile('exports.refresh=async(perfilId,somenteDados)=>{'+code+'};'),context);
+ const running=context.exports.refresh('company',true);await new Promise(setImmediate);assert.deepEqual(catalogs,[],'não limpa o catálogo durante a consulta');
+ response.resolve({ok:true,json:async()=>({catalogo:{items:['new']}})});await running;assert.equal(catalogs.length,1);
+ context.activeCompanyRef.current='other';await context.exports.refresh('company',true);assert.equal(catalogs.length,1);
 });

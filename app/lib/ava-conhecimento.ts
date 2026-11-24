@@ -2416,7 +2416,9 @@ FINANCEIRO
 - Filtros de cliente, produto e serviço aparecem antes das datas, vazios com placeholder; digitar mostra sugestões, permite múltiplas seleções e, sem selecionar, inclui todos.
 - Indicadores de estoque, faturamento e nota fiscal usam três posições fixas de mesma largura, inclusive quando a nota é clicável, mantendo o alinhamento vertical entre pedidos.
 - Recebimentos identifica ações pelo número comercial do pedido e cliente; UUID interno removido dos títulos, detalhes e opções visíveis de parcelas, preservando vínculos internos.
-- Nas ações do pedido Web, Estornar baixa de estoque devolve produtos ao saldo sem alterar faturamento ou nota fiscal, com confirmação. Editar pedido fica inativo e explica o que falta estornar (estoque e/ou faturamento); depois dos estornos necessários, pode voltar ao rascunho. A consulta de estoque fica no menu Estoque.
+- Nas ações do pedido Web, Registrar devolução total foi removido para evitar duplicidade. Estornar baixa de estoque devolve produtos ao saldo sem alterar faturamento ou nota fiscal, com confirmação. Editar pedido fica inativo e explica o que falta estornar (estoque e/ou faturamento); depois dos estornos necessários, pode voltar ao rascunho. A consulta de estoque fica no menu Estoque.
+- Recebimentos Web oculta parcelas canceladas ou integralmente estornadas da lista e dos seletores, preservando histórico interno. Refaturar mostra as novas parcelas com situação própria, sem herdar Estornado. Estornos pendentes continuam visíveis.
+- SVGs de estoque e faturamento atualizam ao receber a confirmação do servidor, sem esperar consultas auxiliares. Verde continua significando operação confirmada.
 - Relatórios e gráficos dependem do perfil e período selecionados. Clicar em totais por categoria pode abrir os lançamentos que formam o valor.
 - Backup e restauração operam sobre o perfil ativo e devem ser usados com cautela; explique a opção exibida antes de orientar substituição de dados.
 
@@ -3094,3 +3096,5 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido 
 // Visão geral sem rótulo Operação de hoje; sem impacto operacional (3.2.0.517).
 
 // Vendas sem rótulo Ciclo comercial; sem impacto operacional (3.2.0.517).
+
+// Revisão 3.2.0.519: retirados blocos informativos adicionais da confirmação de etapas do pedido, sem impacto operacional.

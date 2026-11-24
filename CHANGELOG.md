@@ -1,3 +1,10 @@
+# 3.2.0.519 — Vendas e Serviços: recebimentos, indicadores e confirmações
+
+- Removida a ação Registrar devolução total do menu de pedidos; Estornar baixa de estoque já devolve os produtos ao saldo, mantendo estorno financeiro separado.
+- Indicadores do pedido atualizam com o retrato confirmado assim que a transação termina, sem esperar a consulta de Recebimentos. A liberação final continua após sincronizar parcelas. Atualização do catálogo após estoque preserva a interface e evita recarregar todo o perfil.
+- Confirmações de etapas do pedido sem os blocos Efeito previsto no estoque e aviso genérico de registro no perfil, tanto com estoque lançado quanto pendente.
+- Parcelas canceladas ou integralmente estornadas saem da lista, totais e seletores de Recebimentos; histórico preservado. Novo faturamento mostra somente parcelas válidas com situação própria. Estornos pendentes não são ocultados.
+
 # 3.2.0.518 — Pedidos: estorno de estoque e orientação da edição
 
 - Estornar baixa de estoque com confirmação; reposição única, transação, versão, permissões e histórico, preservando financeiro e fiscal. Sem migração de banco.

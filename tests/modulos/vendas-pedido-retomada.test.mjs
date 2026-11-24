@@ -32,6 +32,7 @@ test('menu real oferece edição e faturamento para confirmados e cancelamento t
     const props=sandbox.exports.menu({record:{id:'2026/1',type:'Pedido',status,fiscal:'Não definida',localRecord:{type:'pedido',status,order:{fiscalDocument:'nenhum',stockState,lines:[]}}}});
     const edit=props.actions.find(a=>a.label==='Editar pedido');assert.ok(edit);assert.equal(edit.disabled,expected.length>0);for(const reason of expected)assert.ok(edit.disabledLabel.includes(reason));
     assert.ok(!props.actions.some(a=>a.label==='Estoque e reserva'));
+    assert.ok(!props.actions.some(a=>a.label==='Registrar devolução total'));
     assert.equal(props.actions.some(a=>a.label==='Estornar baixa de estoque'),stockState==='Baixado');
   }
   assert.ok(!names('Cancelado').includes('Cancelar pedido'));

@@ -31,7 +31,7 @@ export function parseCommercialOrderWorkflowResponse(data) {
   const order = data.order;
   if (!order || !UUID.test(clean(order.operationId)) || !Number.isInteger(Number(order.version)) || Number(order.version) < 1 || !['salvo','confirmado','em_separacao','faturado','cancelado','devolvido'].includes(clean(order.status))) return null;
   return Object.freeze({
-    requestId: clean(data.requestId), ok: true, message: '', customerId: UUID.test(clean(data.customerId)) ? clean(data.customerId) : '',
+    requestId: clean(data.requestId), ok: true, indicatorsOnly: data.indicatorsOnly === true, message: '', customerId: UUID.test(clean(data.customerId)) ? clean(data.customerId) : '',
     order: Object.freeze({
       operationId: clean(order.operationId), year: Number(order.year) || 0, number: Number(order.number) || 0,
       version: Number(order.version), invoicedAt: clean(order.invoicedAt), status: clean(order.status), stockStatus: clean(order.stockStatus), fiscalStatus: clean(order.fiscalStatus),

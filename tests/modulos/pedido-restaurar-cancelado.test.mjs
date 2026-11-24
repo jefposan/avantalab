@@ -167,3 +167,18 @@ test('estorno de faturamento recusa valor recebido e acesso sem permissão, sem 
   assert.equal((await f.lifecycle.reverseBilling(command)).ok,false);assert.deepEqual(await f.load(),before);
  }finally{await f.db.close();}
 });
+
+test('três ciclos de faturamento e estorno usam parcelas e versões novas, sem repetir efeito no estoque',async()=>{
+ const f=await fixture();try{
+  const seen=new Set();
+  for(let cycle=0;cycle<3;cycle++){
+   const billed=await f.advance('faturado');assert.equal(billed.ok,true,JSON.stringify(billed.errors));
+   const active=(await f.db.query("select id from vendas_contas_receber where operacao_id=$1 and situacao<>'cancelado'",[f.orderId])).rows;
+   assert.equal(active.length,2);for(const row of active){assert.ok(!seen.has(row.id));seen.add(row.id);}
+   const reversed=await f.advance('estornar_faturamento');assert.equal(reversed.ok,true,JSON.stringify(reversed.errors));assert.equal(reversed.order.status,'em_separacao');
+   assert.equal((await f.db.query("select id from vendas_contas_receber where operacao_id=$1 and situacao<>'cancelado'",[f.orderId])).rows.length,0);
+   assert.equal(Number((await f.db.query('select saldo_fisico from vendas_estoque_saldos')).rows[0].saldo_fisico),8);
+  }
+  assert.equal((await f.db.query("select id from vendas_eventos where recurso_id=$1 and evento='pedido_faturamento_estornado'",[f.orderId])).rows.length,3);
+ }finally{await f.db.close();}
+});

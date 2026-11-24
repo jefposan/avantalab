@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.518 -->
+<!-- ava-version: 3.2.0.519 -->
+
+> Revisão 3.2.0.519: Recebimentos Web oculta parcelas integralmente estornadas ou canceladas da lista, totais e seletores. Refaturar exibe somente novas parcelas válidas, com sua situação própria. O histórico interno e estornos ainda pendentes permanecem preservados.
 
 > Revisão 3.2.0.518: Web: nas ações do pedido, Estornar baixa de estoque devolve as quantidades ao saldo físico, preserva faturamento/fiscal e exige confirmação. Editar pedido permanece inativo com orientação dos bloqueios: baixa de estoque e/ou faturamento; após os estornos necessários, reabrir para edição. Estoque e reserva foi removido das ações; consulta pelo menu Estoque.
 
@@ -6588,3 +6590,9 @@ Revisão 3.2.0.482: geração do DANFE não invalida o link temporário pelo tem
 - Revisão 3.2.0.517: Visão geral sem o rótulo Operação de hoje acima do título; sem impacto operacional.
 
 - Revisão 3.2.0.517: Vendas sem o rótulo Ciclo comercial acima do título; sem impacto operacional.
+
+- Revisão 3.2.0.519: retirada a ação Registrar devolução total do menu do pedido. Para devolver os produtos ao saldo, usar Estornar baixa de estoque; faturamento continua com estorno separado em Recebimentos.
+
+- Revisão 3.2.0.519: Indicadores do pedido atualizam com o retrato confirmado assim que a transação termina, sem esperar a consulta de Recebimentos. A liberação final continua após sincronizar parcelas. Atualização do catálogo após estoque preserva a interface e evita recarregar todo o perfil.
+
+- Revisão 3.2.0.519: confirmações das etapas do pedido sem os blocos Efeito previsto no estoque e aviso genérico do perfil empresarial; sem alteração nas operações.

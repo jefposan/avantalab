@@ -392,7 +392,18 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
     } catch { send(false, [], 'A conexão com os documentos comerciais está indisponível.'); return false; }
   }, [origemPrototipo]);
 
-  const carregarCatalogo = useCallback(async (perfilId: string) => {
+  const carregarCatalogo = useCallback(async (perfilId: string, somenteDados = false) => {
+    if(somenteDados){
+      if(!perfilId)return;
+      try{
+        const {data}=await supabase.auth.getSession();const token=data.session?.access_token;
+        if(!token)return;
+        const response=await fetch(`/api/modulos/vendas/catalogo?${new URLSearchParams({empresaId:perfilId})}`,{headers:{Authorization:`Bearer ${token}`},cache:'no-store'});
+        const payload=await response.json().catch(()=>({}));
+        if(response.ok&&payload.catalogo&&activeCompanyRef.current===perfilId)setCatalogo(payload.catalogo as CatalogoVendasDTO);
+      }catch{/* Preservar o catálogo atual quando a atualização em segundo plano falhar. */}
+      return;
+    }
     if (!perfilId) return;
     setErro('');
     setCatalogo(null);
@@ -937,6 +948,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.ok !== true) { fail(payload.message || 'Não foi possível persistir o pedido.',payload); return; }
+            if (activeCompanyRef.current !== empresaId || destination !== iframeRef.current?.contentWindow) return;
+            destination.postMessage({type:responseType,requestId,ok:true,indicatorsOnly:true,customerId:payload.customerId,order:payload.order},origemPrototipo);
             // O servidor já confirmou a transação. Entregar as parcelas antes do sucesso
             // do pedido evita abrir Recebimentos com a lista anterior ao faturamento.
             if (['faturado', 'cancelado', 'devolvido', 'restaurar', 'estornar_faturamento'].includes(target)) await carregarRecebimentos(empresaId);
@@ -944,7 +957,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             destination.postMessage({ type: responseType, requestId, ok: true, customerId: payload.customerId, order: payload.order }, origemPrototipo);
             await Promise.all([
               ...(payload.order?.fiscalDraftId ? [carregarDocumentosFiscais(empresaId, token)] : []),
-              ...(payload.order?.stockIntegrated ? [carregarCatalogo(empresaId), carregarEstoque(empresaId)] : []),
+              ...((payload.order?.stockIntegrated||['estoque','estornar_estoque','cancelado','devolvido'].includes(target)) ? [carregarCatalogo(empresaId,true), carregarEstoque(empresaId)] : []),
             ]);
             return;
           }
