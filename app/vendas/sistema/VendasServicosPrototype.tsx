@@ -1813,7 +1813,7 @@ type RecordAction = {
   label: string;
   description: string;
   icon: IconName;
-  onSelect?: () => void;
+  onSelect?: () => void | Promise<ConfirmedSave>;
   planned?: boolean;
   disabled?: boolean;
   disabledLabel?: string;
@@ -1896,28 +1896,41 @@ function groupCommercialRecordActions(actions: RecordAction[], can: (permission:
   };
 }
 
-function RecordActionsDialog({ title, description, actions, triggerLabel, compactOrder = false, recordStatus }: { title: string; description: string; actions: RecordAction[]; triggerLabel: string; compactOrder?: boolean; recordStatus?: string }) {
+function RecordActionsDialog({ title, description, actions, triggerLabel, compactOrder = false, recordStatus, singleAction = false }: { title: string; description: string; actions: RecordAction[]; triggerLabel: string; compactOrder?: boolean; recordStatus?: string; singleAction?: boolean }) {
   const [open, setOpen] = useState(false);
   const { can } = useContext(PermissionContext);
+  const [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const running = useRef(false);
   const sections = groupCommercialRecordActions(actions, can);
-  const select = (action: RecordAction) => { setOpen(false); action.onSelect?.(); };
+  const select = async (action: RecordAction) => {
+    if (!singleAction) { setOpen(false); action.onSelect?.(); return; }
+    if (running.current) return;
+    running.current = true; setBusy(true); setError('');
+    try {
+      const result = await action.onSelect?.();
+      if (result?.ok) setOpen(false);
+      else setError(result?.message || 'Não foi possível confirmar a restauração. Atualize a lista antes de tentar novamente.');
+    } catch { setError('Não foi possível confirmar a restauração. Atualize a lista antes de tentar novamente.'); }
+    finally { running.current = false; setBusy(false); }
+  };
   const brief: Record<string, string> = { 'Abrir pedido': 'Itens, valores e histórico', 'Editar pedido': 'Abrir o formulário completo', 'Continuar pedido': 'Retomar o formulário completo', 'Iniciar separação': 'Preparar os itens do pedido', 'Faturar pedido': 'Gerar contas; estoque opcional', 'Estoque e reserva': 'Consultar baixas e reservas', 'Abrir histórico fiscal': 'Consultar documentos e eventos', 'Abrir rascunho fiscal': 'Consultar dados e pendências fiscais' };
   return <>
-    <button type="button" className="row-action" aria-label={triggerLabel} onClick={() => setOpen(true)}><Icon name="chevron" size={18}/></button>
-    <Dialog open={open} title={title} description={description} titleExtra={recordStatus ? <Badge>{recordStatus}</Badge> : undefined} onClose={() => setOpen(false)}>
+    <button type="button" className="row-action" aria-label={triggerLabel} onClick={() => { setError(''); setOpen(true); }}><Icon name="chevron" size={18}/></button>
+    <Dialog open={open} title={title} description={description} titleExtra={recordStatus ? <Badge>{recordStatus}</Badge> : undefined} onClose={() => { if (!running.current) setOpen(false); }}>
       <>
-        <div className="dialog-body commercial-action-menu">
-          {sections.available.length > 0 && <section aria-label="Ações disponíveis"><h3>Ações disponíveis</h3><div className="record-action-options commercial-action-available">{sections.available.map((action) => <button type="button" key={action.label} onClick={() => select(action)}><span className="record-action-icon"><Icon name={action.icon} size={21}/></span><span><strong>{action.label}</strong><small>{(compactOrder && brief[action.label]) || action.description}</small></span><Icon name="chevron" size={14}/></button>)}</div></section>}
+        <div className="dialog-body commercial-action-menu" data-single-action={singleAction || undefined} aria-busy={busy}>
+          {error && <AvisoFormulario idMensagem="order-restore-error" titulo="Pedido não restaurado" mensagem={error}/>}
+          {sections.available.length > 0 && <section aria-label="Ações disponíveis">{!singleAction && <h3>Ações disponíveis</h3>}<div className="record-action-options commercial-action-available">{sections.available.map((action) => <button type="button" key={action.label} disabled={busy} onClick={() => void select(action)}><span className="record-action-icon"><Icon name={action.icon} size={21}/></span><span><strong>{busy && singleAction ? 'Restaurando…' : action.label}</strong><small>{(compactOrder && brief[action.label]) || action.description}</small></span><Icon name="chevron" size={14}/></button>)}</div></section>}
           {sections.unavailable.length > 0 && <div className="commercial-action-conditions">{sections.unavailable.map((action) => <div key={action.label}><span><Icon name={action.icon} size={16}/>{action.label}</span><Badge tone="neutral">{action.reason}</Badge></div>)}</div>}
           {sections.planned.length > 0 && <section className="commercial-action-planned-section" aria-label="Opções previstas"><h3>Opções previstas</h3><div className="record-action-options commercial-action-planned">{sections.planned.map((action) => <button type="button" key={action.label} disabled aria-label={`${action.label}: opção prevista`}><Icon name={action.icon} size={17}/><strong>{action.label}</strong></button>)}</div></section>}
         </div>
-        <footer className="dialog-footer commercial-action-footer"><div>{sections.destructive && <BotaoAcaoCompacto variante="destrutivo" disabled={sections.destructive.disabled} onClick={() => select(sections.destructive!)}><Icon name="close" size={16}/>{sections.destructive.label}</BotaoAcaoCompacto>}</div><BotaoAcaoCompacto variante="primario" onClick={() => setOpen(false)}>Fechar</BotaoAcaoCompacto></footer>
+        {!singleAction && <footer className="dialog-footer commercial-action-footer"><div>{sections.destructive && <BotaoAcaoCompacto variante="destrutivo" disabled={sections.destructive.disabled} onClick={() => select(sections.destructive!)}><Icon name="close" size={16}/>{sections.destructive.label}</BotaoAcaoCompacto>}</div><BotaoAcaoCompacto variante="primario" onClick={() => setOpen(false)}>Fechar</BotaoAcaoCompacto></footer>}
       </>
     </Dialog>
   </>;
 }
 
-function CommercialRecordActions({ onCopy, onTool, record, fiscalPrepareLoading, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onOpenLocal, onContinueOrder, onLifecycleRequest }: { onCopy?: (record:CreatedRecord)=>void; onTool?: (record:CreatedRecord, action:OrderTool)=>void; record: CommercialOperationRecord; fiscalPrepareLoading?: boolean; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onOpenLocal: (record: CreatedRecord) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycleRequest: (record: CreatedRecord, action: OrderLifecycleAction) => void }) {
+function CommercialRecordActions({ onRestore, onCopy, onTool, record, fiscalPrepareLoading, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onOpenLocal, onContinueOrder, onLifecycleRequest }: { onRestore?: (record:CreatedRecord)=>Promise<ConfirmedSave>; onCopy?: (record:CreatedRecord)=>void; onTool?: (record:CreatedRecord, action:OrderTool)=>void; record: CommercialOperationRecord; fiscalPrepareLoading?: boolean; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onOpenLocal: (record: CreatedRecord) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycleRequest: (record: CreatedRecord, action: OrderLifecycleAction) => void }) {
   const local = record.localRecord;
   const openDetails: RecordAction = local?.order
     ? { label: `Abrir ${record.type.toLocaleLowerCase('pt-BR')}`, description: 'Itens, valores, estoque e histórico do registro', icon: 'document', onSelect: () => onOpenLocal(local), permission: 'sales.view' }
@@ -1928,7 +1941,9 @@ function CommercialRecordActions({ onCopy, onTool, record, fiscalPrepareLoading,
     { label: 'Alterar status', description: 'Mudará a etapa com registro no histórico', icon: 'edit', planned: true },
   ];
   let actions: RecordAction[];
-  if (record.type === 'Orçamento') {
+  if (record.type === 'Pedido' && (record.status === 'Cancelado' || local?.status === 'Cancelado')) {
+    actions = [{ label: 'Restaurar como rascunho', description: 'Retorna este pedido ao status de rascunho.', icon: 'back', permission: 'sales.edit', disabled: !local?.order || !onRestore, disabledLabel: 'Atualize a lista do pedido', onSelect: local && onRestore ? () => onRestore(local) : undefined }];
+  } else if (record.type === 'Orçamento') {
     actions = [
       openDetails,
       { label: 'Converter em pedido', description: 'Levará cliente, itens e condições para um novo pedido', icon: 'sale', planned: true },
@@ -1991,7 +2006,7 @@ function CommercialRecordActions({ onCopy, onTool, record, fiscalPrepareLoading,
       ] as const).map(([label,description,icon,action])=>({label,description,icon,planned:!local?.order||!onTool,onSelect:local&&onTool?()=>onTool(local,action):undefined,permission:action==='status'?'sales.edit':'sales.view'})),
     ];
   }
-  return <RecordActionsDialog title={`Ações ${record.type === 'Pedido' ? 'do pedido' : 'de'} ${record.id}`} description={record.type === 'Pedido' ? record.client : `${record.type} de ${record.client}`} actions={actions} compactOrder={record.type === 'Pedido'} recordStatus={record.status} triggerLabel={`Ações de ${record.id}`}/>;
+  return <RecordActionsDialog title={`Ações ${record.type === 'Pedido' ? 'do pedido' : 'de'} ${record.id}`} description={record.type === 'Pedido' ? record.client : `${record.type} de ${record.client}`} actions={actions} singleAction={record.type === 'Pedido' && (record.status === 'Cancelado' || local?.status === 'Cancelado')} compactOrder={record.type === 'Pedido'} recordStatus={record.status} triggerLabel={`Ações de ${record.id}`}/>;
 }
 
 function NewServiceOrderView({ clientRecords, catalogRecords, settings, issuerRegistry, connected, initialClient = '', initialSku = '', onCancel, onCreated }: { clientRecords: ClientRecord[]; catalogRecords: CatalogItem[]; settings: ModuleSettings; issuerRegistry: FiscalIssuerRegistry; connected: boolean; initialClient?: string; initialSku?: string; onCancel: () => void; onCreated: (record: CreatedRecord) => void }) {
@@ -2658,7 +2673,7 @@ function CommercialRecordIndicators({ record, onFiscal }: { record: CommercialOp
   return <span className="commercial-indicators" role="group" aria-label="Situação da operação">{indicators.map((indicator) => <Tooltip key={indicator.key} texto={indicator.label} posicao="bottom">{indicator.key==='fiscal'&&onFiscal ? <button type="button" className="commercial-indicator-target" aria-label={`${indicator.label} · Abrir nota fiscal`} onClick={onFiscal}><CommercialIndicatorIcon indicator={indicator}/></button> : <span className="commercial-indicator-target" tabIndex={0} role="img" aria-label={indicator.label}><CommercialIndicatorIcon indicator={indicator}/></span>}</Tooltip>)}</span>;
 }
 
-function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, onCopy, created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle, onStockLaunch }: { companyLogoUrl?:string; paperSize?:'A4'|'A5'; company:CompanyProfile; clients:ClientRecord[]; onCopy:(record:CreatedRecord)=>void; created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void; onStockLaunch:(record:CreatedRecord)=>Promise<ConfirmedSave> }) {
+function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, onCopy, created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle, onStockLaunch, onRestoreOrder }: { companyLogoUrl?:string; paperSize?:'A4'|'A5'; company:CompanyProfile; clients:ClientRecord[]; onCopy:(record:CreatedRecord)=>void; created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void; onStockLaunch:(record:CreatedRecord)=>Promise<ConfirmedSave>; onRestoreOrder:(record:CreatedRecord)=>Promise<ConfirmedSave> }) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todas as situações');
   const [detailRecord, setDetailRecord] = useState<CreatedRecord | null>(null);
@@ -2717,7 +2732,7 @@ function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, on
         <td data-label="Cliente"><strong>{record.client}</strong></td>
         <td data-label="Situação"><Badge>{record.status}</Badge></td>
         <td data-label="Total" className="numeric"><strong>{money(record.total)}</strong></td>
-        <td data-label="Ações" className="commercial-actions-cell"><div className="commercial-row-actions"><CommercialRecordIndicators record={record} onFiscal={record.fiscalDraft ? ()=>onFiscalStart({id:record.id,client:record.client,item:`Pedido ${record.id}`,total:record.total,documentType:record.fiscalDraft!.documentType,sourceLabel:'Pedido'}) : undefined}/><CommercialRecordActions onCopy={onCopy} onTool={(record,action)=>action==='print'?void printDirect(record):setToolRequest({record,action})} record={record} fiscalPrepareLoading={record.fiscalDraft ? fiscalPrepareState[record.fiscalDraft.id]?.loading : false} onNavigate={onNavigate} onFiscalStart={onFiscalStart} onFiscalPrepare={onFiscalPrepare} onReceivables={onReceivables} onOpenLocal={setDetailRecord} onContinueOrder={onContinueOrder} onLifecycleRequest={(localRecord, action) => action==='estoque'?setStockRequest(localRecord):action === 'editar' ? onLifecycle(localRecord, action) : setLifecycleRequest({ record: localRecord, action })}/></div></td>
+        <td data-label="Ações" className="commercial-actions-cell"><div className="commercial-row-actions"><CommercialRecordIndicators record={record} onFiscal={record.fiscalDraft ? ()=>onFiscalStart({id:record.id,client:record.client,item:`Pedido ${record.id}`,total:record.total,documentType:record.fiscalDraft!.documentType,sourceLabel:'Pedido'}) : undefined}/><CommercialRecordActions onRestore={onRestoreOrder} onCopy={onCopy} onTool={(record,action)=>action==='print'?void printDirect(record):setToolRequest({record,action})} record={record} fiscalPrepareLoading={record.fiscalDraft ? fiscalPrepareState[record.fiscalDraft.id]?.loading : false} onNavigate={onNavigate} onFiscalStart={onFiscalStart} onFiscalPrepare={onFiscalPrepare} onReceivables={onReceivables} onOpenLocal={setDetailRecord} onContinueOrder={onContinueOrder} onLifecycleRequest={(localRecord, action) => action==='estoque'?setStockRequest(localRecord):action === 'editar' ? onLifecycle(localRecord, action) : setLifecycleRequest({ record: localRecord, action })}/></div></td>
       </tr>)}</></Table>
       {records.length === 0 && <EmptyState title="Nenhuma operação encontrada" description="Ajuste a busca ou limpe os filtros para ver as vendas."/>}
     </Panel>
@@ -6025,7 +6040,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const pendingFiscalValidationRef = useRef(new Map<string, { draftId: string; timer: number }>());
   const pendingFiscalNumberRef = useRef(new Map<string, { draftId: string; timer: number }>());
   const pendingFiscalIssueRef = useRef(new Map<string, { draftId: string; timer: number }>());
-  const pendingOrderWorkflowRef = useRef(new Map<string, { recordId: string; target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque'; timer: number; previous?: CreatedRecord; resolve?:(result:ConfirmedSave)=>void }>());
+  const pendingOrderWorkflowRef = useRef(new Map<string, { recordId: string; target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque' | 'restaurar'; timer: number; previous?: CreatedRecord; resolve?:(result:ConfirmedSave)=>void }>());
   const pendingServiceWorkflowRef = useRef(new Map<string, { recordId: string; action: 'start' | 'complete' | 'cancel' | 'reverse'; timer: number }>());
   const pendingReceivableRef = useRef(new Map<string, PendingConfirmedSave>());
   const pendingStockRef = useRef(new Map<string, PendingConfirmedSave>());
@@ -6364,15 +6379,15 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             order: record.order ? { ...record.order, stockState, reserveStock: commercial.order.stockIntegrated === true } : record.order,
             events: [...(record.events ?? []), {
               date: now,
-              label: pending.target==='estoque'?'Estoque lançado posteriormente':status === 'Faturado' ? 'Pedido faturado no repositório' : status === 'Em separação' ? 'Separação persistida' : status === 'Cancelado' ? 'Pedido cancelado' : status === 'Devolvido' ? 'Devolução registrada' : 'Pedido persistido',
-              description: pending.target==='estoque'?`Estoque em ${stockState.toLocaleLowerCase('pt-BR')}; valores, cobranças e fiscal preservados.`:status === 'Faturado'
+              label: pending.target==='restaurar'?'Pedido restaurado como rascunho':pending.target==='estoque'?'Estoque lançado posteriormente':status === 'Faturado' ? 'Pedido faturado no repositório' : status === 'Em separação' ? 'Separação persistida' : status === 'Cancelado' ? 'Pedido cancelado' : status === 'Devolvido' ? 'Devolução registrada' : 'Pedido persistido',
+              description: pending.target==='restaurar'?'Restaurado para edição; histórico, estoque, parcelas canceladas e documentos fiscais preservados.':pending.target==='estoque'?`Estoque em ${stockState.toLocaleLowerCase('pt-BR')}; valores, cobranças e fiscal preservados.`:status === 'Faturado'
                 ? `${commercial.order.receivableCount} ${commercial.order.receivableCount === 1 ? 'parcela registrada' : 'parcelas registradas'}${commercial.order.fiscalDraftId ? ' e rascunho fiscal criado.' : '.'}`
                 : commercial.order.stockIntegrated ? `Operação vinculada ao perfil ativo com estoque em ${stockState.toLocaleLowerCase('pt-BR')}.` : 'Operação vinculada ao perfil ativo sem item controlado em estoque.',
             }],
           } : record);
           return next;
         });
-        pending.resolve?.({ok:true,message:'Lançamento de estoque confirmado.'});
+        pending.resolve?.({ok:true,message:pending.target==='restaurar'?'Pedido restaurado como rascunho.':'Lançamento de estoque confirmado.'});
         if (pending.target === 'salvo' && pending.previous?.order) {
           const reopened: CreatedRecord = { ...pending.previous, status: 'Rascunho', persistence: { ...pending.previous.persistence, operationId: commercial.order.operationId, customerId: commercial.customerId || pending.previous.persistence?.customerId || '', version: commercial.order.version, status: 'salvo' }, order: { ...pending.previous.order, stockState: 'Sem movimentação' } };
           setEditingOrder(reopened);
@@ -6385,7 +6400,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           setView('novo_pedido');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        setToast(pending.target==='estoque'?`Lançamento confirmado: estoque ${stockState.toLocaleLowerCase('pt-BR')}.`:status === 'Rascunho' ? '' : status === 'Faturado'
+        setToast(pending.target==='restaurar'?'Pedido restaurado como rascunho.':pending.target==='estoque'?`Lançamento confirmado: estoque ${stockState.toLocaleLowerCase('pt-BR')}.`:status === 'Rascunho' ? '' : status === 'Faturado'
           ? 'Pedido faturado e persistido. A nota permaneceu como rascunho na Central Fiscal.'
           : status === 'Em separação' ? 'Separação registrada no repositório comercial.'
             : status === 'Cancelado' ? 'Pedido cancelado comercialmente. A situação da nota fiscal foi preservada.'
@@ -7645,7 +7660,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   };
   const createOperationReceivables = (record: CreatedRecord) => {
     const operation = record.order ?? record.serviceOrder;
-    if (!operation || receivableRecords.some((item) => item.origin === record.id)) return 0;
+    if (!operation || receivableRecords.some((item) => item.origin === record.id && item.reversed < item.value)) return 0;
     const schedule = createReceivableSchedule({
       total: record.total,
       installments: operation.installments || 1,
@@ -7885,10 +7900,10 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     });
   };
 
-  const syncCommercialOrder = (record: CreatedRecord, target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque', previous?: CreatedRecord, moveStock?: boolean, resolve?:(result:ConfirmedSave)=>void) => {
+  const syncCommercialOrder = (record: CreatedRecord, target: 'salvo' | 'confirmado' | 'em_separacao' | 'faturado' | 'cancelado' | 'devolvido' | 'estoque' | 'restaurar', previous?: CreatedRecord, moveStock?: boolean, resolve?:(result:ConfirmedSave)=>void) => {
     if (!record.order || !managementCatalogBridge || !managementBridgeOrigin || window.parent === window) return false;
     const failOrder=(message:string)=>{if(resolve)resolve({ok:false,message});else setToast(message);return true;};
-    if (target!=='estoque' && record.order.fiscalDocument === 'nfse') return failOrder('Pedido de venda não pode gerar NFS-e. Use uma ordem de serviço ou selecione NF-e.');
+    if (target!=='estoque' && target!=='restaurar' && record.order.fiscalDocument === 'nfse') return failOrder('Pedido de venda não pode gerar NFS-e. Use uma ordem de serviço ou selecione NF-e.');
     if ([...pendingOrderWorkflowRef.current.values()].some((pending) => pending.recordId === record.id)) {
       return failOrder('Este pedido já está sendo atualizado. Aguarde a conclusão.');
     }
@@ -7945,7 +7960,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     }, 15_000);
     pendingOrderWorkflowRef.current.set(requestId, { recordId: record.id, target, timer, previous: target === 'salvo' ? record : previous,resolve });
     window.parent.postMessage(message, managementBridgeOrigin);
-    setToast(target==='estoque'?'Registrando o estoque do pedido…':target === 'salvo' ? 'Abrindo o pedido para edição…' : target === 'faturado' ? 'Faturando o pedido no repositório comercial…' : target === 'em_separacao' ? 'Registrando a separação…' : target === 'cancelado' ? 'Cancelando o pedido e liberando a reserva…' : target === 'devolvido' ? 'Registrando devolução e estornos integrados…' : 'Persistindo e confirmando o pedido…');
+    setToast(target==='restaurar'?'Restaurando o pedido como rascunho…':target==='estoque'?'Registrando o estoque do pedido…':target === 'salvo' ? 'Abrindo o pedido para edição…' : target === 'faturado' ? 'Faturando o pedido no repositório comercial…' : target === 'em_separacao' ? 'Registrando a separação…' : target === 'cancelado' ? 'Cancelando o pedido e liberando a reserva…' : target === 'devolvido' ? 'Registrando devolução e estornos integrados…' : 'Persistindo e confirmando o pedido…');
     return true;
   };
   const syncSavedOperation = (record: CreatedRecord, previous?: CreatedRecord, resolve?: (result:ConfirmedSave)=>void) => {
@@ -8035,6 +8050,20 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const stockState=record.status==='Faturado'?'Baixado' as const:record.status==='Em separação'?'Em separação' as const:'Reservado' as const;
     const next=created.map(item=>item.id===record.id?{...item,order:{...record.order!,reserveStock:true,stockState},events:[...(item.events||[]),{date:new Date().toISOString(),label:'Estoque lançado posteriormente',description:`Estoque ${stockState.toLocaleLowerCase('pt-BR')}, sem alterar financeiro ou fiscal.`}]}:item);
     setCreated(next);writeCompanyStorage(STORAGE_KEY,JSON.stringify({version:1,created:next}));return {ok:true,message:'Estoque lançado na demonstração local.'};
+  };
+  const restoreCanceledOrder = async (record: CreatedRecord): Promise<ConfirmedSave> => {
+    if (!record.order || record.type !== 'pedido' || record.status !== 'Cancelado') return { ok: false, message: 'Atualize a lista e selecione um pedido cancelado.' };
+    if (!authorize('sales.edit', 'restaurar pedidos como rascunho')) return { ok: false, message: 'Seu acesso não permite restaurar este pedido.' };
+    if (managementCatalogBridge) {
+      if (!record.persistence?.operationId) return { ok: false, message: 'Atualize a lista antes de restaurar o pedido conectado.' };
+      return new Promise(resolve => { if (!syncCommercialOrder(record, 'restaurar', undefined, undefined, resolve)) resolve({ ok: false, message: 'Não foi possível conectar ao perfil. Atualize a lista.' }); });
+    }
+    if (['Reservado','Em separação','Baixado'].includes(record.order.stockState) || receivableRecords.some(item => item.origin === record.id && (item.reversed < item.value || item.received - item.refunded > 0.001))) return { ok: false, message: 'O cancelamento possui efeitos pendentes. Confira estoque e recebimentos antes de restaurar.' };
+    const restored: CreatedRecord = { ...record, status: 'Rascunho', order: { ...record.order, stockState: 'Sem movimentação', reserveStock: false }, events: [...(record.events || []), { date: new Date().toISOString(), label: 'Pedido restaurado como rascunho', description: 'Histórico e estornos preservados; confirme novamente após revisar.' }] };
+    const next = created.map(item => item.id === record.id ? restored : item);
+    writeCompanyStorage(STORAGE_KEY, JSON.stringify({ version: 1, created: next }));
+    setCreated(next);
+    return { ok: true, message: 'Pedido restaurado como rascunho.' };
   };
   const updateOrderLifecycle = (record: CreatedRecord, action: OrderLifecycleAction, moveStock?: boolean) => {
     if(action==='estoque'){void launchOrderStock(record);return;}
@@ -8356,6 +8385,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           onContinueOrder={continueOrder}
           onLifecycle={updateOrderLifecycle}
           onStockLaunch={launchOrderStock}
+          onRestoreOrder={restoreCanceledOrder}
         />}
         {view==='novo_pedido'&&standaloneFiscal&&!realFiscalEditor&&<section role="alert"><p>{editorError||'Carregando dados do perfil para a emissão…'}</p><BotaoAcaoCompacto onClick={()=>void loadRealFiscalEditor()}>Tentar novamente</BotaoAcaoCompacto></section>}
         {view === 'novo_pedido' && (!standaloneFiscal||realFiscalEditor) && <NewOrderView navigationRef={editorNavigationRef} onBusyChange={setEditorSaving} onSaveClient={saveClient} clientPriceTables={realFiscalEditor?.priceTables} fiscalEditor={standaloneFiscal?realFiscalEditor:undefined} companyId={managementCatalogBridge?.companyId || ''} key={standaloneFiscal ? 'nova-nota-avulsa' : editingOrder?.persistence?.operationId || editingOrder?.id || 'novo-pedido'} clientRecords={clientRecords} catalogRecords={standaloneFiscal ? catalogRecords.filter((item) => item.category !== 'Serviço') : catalogRecords} settings={moduleSettings} issuerRegistry={fiscalIssuerRegistry} connected={Boolean(managementCatalogBridge)} initialClient={commercialClient} initialSku={commercialSku} initialRecord={editingOrder} fiscalOnly={standaloneFiscal} onFiscalCreated={saveStandaloneFiscal} onFiscalCorrection={result=>{const key=fiscalCheckoutCorrection(result);if(!key||!authorize(fiscalCorrectionAction(key).permission,'corrigir a configuração fiscal'))return;if(key==='numbering'){fiscalNumberingTargetRef.current=result.draftId;setFiscalNumberingOpen(true);}else if(key==='certificado')setCertificateOpen(true);else if(key==='submission-status'&&result.draftId){setFiscalResultRequest({draftId:result.draftId,requestId:crypto.randomUUID()});setStandaloneFiscal(false);setView('fiscal');}}} onCancel={() => { setStandaloneFiscal(false); setEditingOrder(null); navigate(commercialReturnView); }} onCreated={createRecord}/>}

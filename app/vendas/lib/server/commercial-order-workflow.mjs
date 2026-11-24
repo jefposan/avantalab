@@ -3,7 +3,7 @@ export const COMMERCIAL_ORDER_WORKFLOW_REFERENCE = '2026-09-04';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY = /^[A-Za-z0-9:_-]{8,80}$/;
-const TARGETS = new Set(['salvo', 'confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido', 'estoque']);
+const TARGETS = new Set(['salvo', 'confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido', 'estoque', 'restaurar']);
 const clean = (value, max = 1000) => String(value ?? '').trim().slice(0, max);
 const digits = (value, max = 14) => clean(value).replace(/\D/g, '').slice(0, max);
 const issue = (code, field, message) => ({ code, field, message });
@@ -42,6 +42,7 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
       if (!TARGETS.has(normalizedTarget) || !KEY.test(key)) {
         return { ok: false, errors: [issue('AV-COMMERCIAL-WORKFLOW-INPUT', 'order', 'Atualize o pedido antes de continuar.')] };
       }
+      if(normalizedTarget==='restaurar'&&(!operationId||!Number.isInteger(order?.expectedVersion)||order.expectedVersion<1))return {ok:false,errors:[issue('AV-COMMERCIAL-WORKFLOW-INPUT','order','Atualize a lista e selecione um pedido cancelado já salvo.')]};
       if(normalizedTarget==='estoque'&&(!operationId||!Number.isInteger(order?.expectedVersion)||order.expectedVersion<1))return {ok:false,errors:[issue('AV-COMMERCIAL-WORKFLOW-INPUT','order','Atualize a lista e selecione um pedido já salvo para lançar o estoque.')]};
 
       let current;
@@ -92,6 +93,14 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
       };
 
       try {
+        if (normalizedTarget === 'restaurar') {
+          if (!lifecycleService.restoreCanceled) return { ok: false, errors: [issue('AV-COMMERCIAL-WORKFLOW-UNAVAILABLE', 'order', 'A restauração ainda não está disponível. Atualize a página.')] };
+          const restored = await lifecycleService.restoreCanceled({ context, orderId: current.id, expectedVersion: order.expectedVersion, idempotencyKey: `order:${key}:restore:${order.expectedVersion}` });
+          if (!restored?.ok) return { ok: false, errors: [firstError(restored, issue('AV-COMMERCIAL-WORKFLOW-RESTORE', 'order', 'Não foi possível restaurar o pedido.'))] };
+          await refresh();
+          if (current.status !== 'salvo') return { ok: false, errors: [issue('AV-COMMERCIAL-WORKFLOW-CONFLICT', 'status', 'O pedido já avançou após a restauração. Atualize a lista.')] };
+          return { ok: true, customerId: current.customerId, order: snapshot(current), errors: [] };
+        }
         if(normalizedTarget==='estoque'){
           if(!lifecycleService.postStock)return {ok:false,errors:[issue('AV-COMMERCIAL-WORKFLOW-UNAVAILABLE','stock','O lançamento posterior ainda não está disponível. Atualize a página.')]};
           const posted=await lifecycleService.postStock({context,orderId:current.id,localId:stockLocationId,expectedVersion:order.expectedVersion,idempotencyKey:`stock:${current.id}:${order.expectedVersion}`,allowNegativeStock:order?.allowNegativeStock===true});
@@ -100,7 +109,7 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
           return {ok:true,customerId:current.customerId,order:snapshot(current),errors:[]};
         }
         if (normalizedTarget === 'cancelado' && current.status === 'faturado') {
-          const canceled = await lifecycleService.cancelInvoiced({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:cancel-invoiced` });
+          const canceled = await lifecycleService.cancelInvoiced({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:cancel-invoiced:${current.version}` });
           if (!canceled?.ok) return { ok: false, errors: [firstError(canceled, issue('AV-COMMERCIAL-WORKFLOW-CANCEL', 'order', 'Não foi possível cancelar o pedido faturado.'))] };
           await refresh();
         }
@@ -110,12 +119,12 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
           await refresh();
         }
         if (normalizedTarget === 'cancelado' && ['salvo', 'confirmado', 'em_separacao'].includes(current.status)) {
-          const canceled = await lifecycleService.cancel({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:cancel` });
+          const canceled = await lifecycleService.cancel({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:cancel:${current.version}` });
           if (!canceled?.ok) return { ok: false, errors: [firstError(canceled, issue('AV-COMMERCIAL-WORKFLOW-CANCEL', 'order', 'Não foi possível cancelar o pedido.'))] };
           await refresh();
         }
         if (normalizedTarget === 'devolvido' && current.status === 'faturado') {
-          const returned = await lifecycleService.returnInvoiced({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:return` });
+          const returned = await lifecycleService.returnInvoiced({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:return:${current.version}` });
           if (!returned?.ok) return { ok: false, errors: [firstError(returned, issue('AV-COMMERCIAL-WORKFLOW-RETURN', 'order', 'Não foi possível registrar a devolução.'))] };
           await refresh();
         }
@@ -131,7 +140,7 @@ export function createCommercialOrderWorkflow({ customerRepository, customerServ
         }
         let billing = {};
         if (current.status === 'em_separacao' && normalizedTarget === 'faturado') {
-          const invoiced = await billingService.invoice({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:invoice`, moveStock: order?.moveStock !== false });
+          const invoiced = await billingService.invoice({ context, orderId: current.id, expectedVersion: current.version, idempotencyKey: `order:${key}:invoice:${current.version}`, moveStock: order?.moveStock !== false });
           if (!invoiced?.ok) return { ok: false, errors: [firstError(invoiced, issue('AV-COMMERCIAL-WORKFLOW-INVOICE', 'order', 'Não foi possível faturar o pedido.'))] };
           billing = invoiced.result || {};
           await refresh();

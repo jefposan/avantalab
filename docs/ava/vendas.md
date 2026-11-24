@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.513 -->
+<!-- ava-version: 3.2.0.514 -->
+
+> Revisão 3.2.0.514: Sem impacto operacional no aplicativo AvantaVendas ou no financeiro nativo. O módulo Vendas e Serviços Web responsivo passa a oferecer somente Restaurar como rascunho para pedidos cancelados; não há refaturamento automático.
 
 > Revisão 3.2.0.513: Sem impacto operacional nas telas autenticadas deste ambiente; a landing pública inicia em Gestão Financeira, à esquerda, com Laboratório de Marcas à direita em /laboratorio-de-marcas.
 

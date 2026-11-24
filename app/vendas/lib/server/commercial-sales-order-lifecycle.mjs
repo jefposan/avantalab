@@ -273,6 +273,36 @@ export function createPostgresCommercialSalesOrderLifecycleRepository({ pool } =
       });
     },
 
+    async restoreCanceled({ companyId, actorId, orderId, expectedVersion, idempotencyKey }) {
+      return transaction(pool, async client => {
+        const repeated = await alreadyDone(client, companyId, idempotencyKey, orderId, 'pedido_restaurado_rascunho');
+        if (repeated) return repeated;
+        const order = await loadOrder(client, companyId, orderId);
+        if (!order) throw coded('AV-SALES-ORDER-NOT-FOUND');
+        if (Number(order.versao) !== expectedVersion) throw coded('AV-SALES-ORDER-CONFLICT');
+        if (order.situacao !== 'cancelado') throw coded('AV-SALES-ORDER-STATE');
+        const active = await client.query("select id from public.vendas_estoque_reservas where empresa_id=$1 and operacao_id=$2 and situacao in ('ativa','consumida') for update", [companyId, orderId]);
+        if (active.rows.length || ['reservado','em_separacao','baixado'].includes(order.situacao_estoque)) throw coded('AV-SALES-ORDER-RESERVATION');
+        const receivables = (await client.query('select situacao,valor_recebido,valor_estornado from public.vendas_contas_receber where empresa_id=$1 and operacao_id=$2 for update', [companyId, orderId])).rows;
+        if (receivables.some(row => row.situacao !== 'cancelado' || Number(row.valor_recebido) - Number(row.valor_estornado) > 0.001)) throw coded('AV-SALES-ORDER-RECEIVED');
+        const previousItems = (await client.query('select * from public.vendas_operacao_itens where empresa_id=$1 and operacao_id=$2 order by posicao', [companyId, orderId])).rows;
+        await client.query(`update public.vendas_estoque_reservas r
+          set item_origem_retrato=to_jsonb(i),operacao_item_id=null
+          from public.vendas_operacao_itens i
+          where r.empresa_id=$1 and r.operacao_id=$2 and r.situacao in ('liberada','devolvida')
+            and i.empresa_id=r.empresa_id and i.id=r.operacao_item_id`, [companyId, orderId]);
+        const updated = await client.query(`update public.vendas_operacoes
+          set situacao='salvo',situacao_estoque='sem_movimentacao',cancelado_em=null,
+            confirmado_em=null,faturado_em=null,atualizado_por=$3
+          where empresa_id=$1 and id=$2 returning versao`, [companyId, orderId, actorId]);
+        const metadata = { previousStatus: order.situacao, previousStockStatus: order.situacao_estoque,
+          fiscalStatusPreserved: order.situacao_fiscal, previousItems, operationVersion: Number(updated.rows[0].versao) };
+        await recordEvent(client, { companyId, orderId, actorId, key: idempotencyKey,
+          name: 'pedido_restaurado_rascunho', summary: 'Pedido cancelado restaurado como rascunho; histórico, parcelas canceladas e documentos fiscais preservados.', metadata });
+        return { reused: false, event: 'pedido_restaurado_rascunho', ...metadata };
+      });
+    },
+
     async reopen(input) {
       return this.cancel({ ...input, reopen: true });
     },
@@ -461,6 +491,7 @@ export function createCommercialSalesOrderLifecycleService({ repository } = {}) 
     startSeparation: run('startSeparation', ['sales.edit', 'stock.exit']),
     cancel: run('cancel', ['sales.cancel', 'stock.exit']),
     reopen: run('reopen', ['sales.edit', 'stock.exit']),
+    restoreCanceled: run('restoreCanceled', ['sales.edit']),
     cancelInvoiced: run('cancelInvoiced', ['sales.cancel', 'stock.adjust']),
     returnInvoiced: run('returnInvoiced', ['sales.cancel', 'stock.adjust', 'receivables.refund', 'fiscal.cancel']),
   });

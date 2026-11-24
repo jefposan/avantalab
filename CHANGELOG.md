@@ -1,3 +1,10 @@
+## 3.2.0.514 — Vendas: restaurar pedido cancelado como rascunho
+
+- Pedidos cancelados exibem apenas Restaurar como rascunho no popup compacto aprovado. Aguarda confirmação real, bloqueia cliques repetidos e conserva o aviso em falha; o menu normal retorna depois da restauração.
+- Restaura o mesmo pedido com versão e permissão de edição verificadas, auditoria e idempotência, sem gerar parcelas, estoque ou nota fiscal. Mantém documentos e efeitos anteriores no histórico.
+- Migração permite conservar parcelas canceladas de ciclos anteriores e reservas devolvidas com retrato do item; novo faturamento só ocorre por ação posterior, com chave própria por versão. Sem executar restauração em pedidos reais durante testes.
+- Implementação e publicação autorizadas; checkout principal preservado em pasta isolada.
+
 ## 3.2.0.513 — Landing: Gestão Financeira à esquerda e selecionada ao abrir
 
 - A página inicial abre Gestão Financeira, primeira opção à esquerda. Laboratório de Marcas fica à direita, com o conteúdo preservado em /laboratorio-de-marcas.

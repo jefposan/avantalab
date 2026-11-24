@@ -3064,3 +3064,6 @@ GUIAS['gestao-web'] += ' Revisão 3.2.0.512: Vendas exibe a razão social do ret
 
 // Revisão 3.2.0.513: Gestão Financeira como entrada da landing.
 GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.513: Landing pública: Gestão Financeira aparece à esquerda e abre selecionada em avantalab.com.br. Laboratório de Marcas fica à direita e abre /laboratorio-de-marcas. /gestao-financeira continua disponível para links existentes; a referência canônica da Gestão é a raiz. Acesso e retorno OAuth continuam protegidos pelo componente compartilhado.';
+
+// Revisão 3.2.0.514: restaurar pedido cancelado sem refaturamento automático.
+GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido Cancelado: Ações oferece somente Restaurar como rascunho, para quem pode editar vendas. A restauração confirmada devolve o mesmo pedido à lista como Rascunho; as opções normais do rascunho reaparecem conforme permissões. Não confirma nem fatura automaticamente, não recria parcelas ou movimenta estoque e preserva documentos fiscais e histórico. Falha ou tempo de espera não declara sucesso; consulte a lista antes de repetir. Pedidos com efeitos de cancelamento pendentes exigem conferência. Reconfirmar e faturar depois cria um novo ciclo de parcelas, mantendo as canceladas no histórico.';

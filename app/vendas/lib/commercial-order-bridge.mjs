@@ -3,7 +3,7 @@ export const COMMERCIAL_ORDER_WORKFLOW_RESPONSE_TYPE = 'AVANTALAB_VENDAS_ORDER_W
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY = /^[A-Za-z0-9:_-]{8,120}$/;
-const TARGETS = new Set(['salvo', 'confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido', 'estoque']);
+const TARGETS = new Set(['salvo', 'confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido', 'estoque', 'restaurar']);
 const clean = (value) => String(value ?? '').trim();
 
 export function createCommercialOrderWorkflowRequest(input = {}) {
@@ -29,7 +29,7 @@ export function parseCommercialOrderWorkflowResponse(data) {
   if (!data || data.type !== COMMERCIAL_ORDER_WORKFLOW_RESPONSE_TYPE || !KEY.test(clean(data.requestId)) || typeof data.ok !== 'boolean') return null;
   if (!data.ok) return Object.freeze({ requestId: clean(data.requestId), ok: false, message: clean(data.message) || 'Não foi possível persistir o pedido.', code: clean(data.code).slice(0,100), field: clean(data.field).slice(0,160) });
   const order = data.order;
-  if (!order || !UUID.test(clean(order.operationId)) || !Number.isInteger(Number(order.version)) || Number(order.version) < 1 || !TARGETS.has(clean(order.status))) return null;
+  if (!order || !UUID.test(clean(order.operationId)) || !Number.isInteger(Number(order.version)) || Number(order.version) < 1 || !['salvo','confirmado','em_separacao','faturado','cancelado','devolvido'].includes(clean(order.status))) return null;
   return Object.freeze({
     requestId: clean(data.requestId), ok: true, message: '', customerId: UUID.test(clean(data.customerId)) ? clean(data.customerId) : '',
     order: Object.freeze({
