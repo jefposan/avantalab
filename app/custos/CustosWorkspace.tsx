@@ -162,7 +162,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType, ini
       </div>
       {aba === 'visao' && <VisaoGeral produtos={produtosDisponiveis} documento={documento} produtoAtivo={produtoAtivo} onSelecionar={selecionarProduto} onAbrir={() => abrirAba('produtos')} onAtualizar={() => void recarregar()} />}
       {aba === 'catalogos' && <CatalogosView onGerenciar={(id) => { setCatalogoFiltroId(id); abrirAba('produtos'); }} companyId={companyId} catalogos={catalogos} fornecedores={fornecedores} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onErro={setErro} />}
-      {aba === 'produtos' && <ProdutosView onVoltarCatalogos={() => abrirAba('catalogos')} catalogoFiltroId={catalogoFiltroId} onCatalogoFiltro={setCatalogoFiltroId} onProductCancel={onProductCancel} onProductBusyChange={onProductBusyChange} embeddedProduct={embeddedProduct} onProductSaved={onProductSaved} initialProductId={initialProductId} perfilFiscal={perfilFiscal} companyId={companyId} catalogoId={catalogoId} catalogos={catalogos} produtos={produtosDisponiveis} fornecedores={fornecedores} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} solicitacaoInicio={solicitacaoInicioProdutos} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onErro={setErro} />}
+      {aba === 'produtos' && <ProdutosView catalogoFiltroId={catalogoFiltroId} onCatalogoFiltro={setCatalogoFiltroId} onProductCancel={onProductCancel} onProductBusyChange={onProductBusyChange} embeddedProduct={embeddedProduct} onProductSaved={onProductSaved} initialProductId={initialProductId} perfilFiscal={perfilFiscal} companyId={companyId} catalogoId={catalogoId} catalogos={catalogos} produtos={produtosDisponiveis} fornecedores={fornecedores} tabelas={tabelasPreco} precos={precosTabela} setProdutos={setProdutos} documento={documento} produtoAtivoId={produtoAtivoId} initialNewType={initialNewType} solicitacaoInicio={solicitacaoInicioProdutos} onSelecionar={selecionarProduto} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} onEnviarImagem={enviarImagem} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onEdicaoPendente={setEdicaoPendente} onErro={setErro} />}
       {aba === 'precos' && <TabelasPrecosView companyId={companyId} catalogoId={catalogoId} produtos={produtosParaTabelas(produtosDisponiveis, catalogos)} tabelas={tabelasPreco} precos={precosTabela} podeEditar={access.podeEditar} onRecarregar={() => recarregar(true)} onErro={setErro} />}
       {aba === 'recursos' && <RecursosView catalogoId={catalogoId} documento={documento} produtos={produtosDisponiveis} fornecedores={fornecedores} setProdutos={setProdutos} onDocumento={salvarDocumento} onSalvarProduto={salvarProduto} podeEditar={access.podeEditar} onErro={setErro} />}
       {aba === 'simulacoes' && <SimulacoesView documento={documento} onDocumento={salvarDocumento} podeEditar={access.podeEditar} onErro={setErro} />}
@@ -371,9 +371,8 @@ function CatalogosView({ onGerenciar, companyId, catalogos, fornecedores, podeEd
   </>;
 }
 
-function ProdutosView({ onVoltarCatalogos, catalogoFiltroId, onCatalogoFiltro, perfilFiscal, companyId, catalogoId, catalogos, produtos, fornecedores, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, initialProductId, solicitacaoInicio, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onEdicaoPendente, onErro, embeddedProduct = false, onProductSaved, onProductCancel, onProductBusyChange }: {
+function ProdutosView({ catalogoFiltroId, onCatalogoFiltro, perfilFiscal, companyId, catalogoId, catalogos, produtos, fornecedores, tabelas, precos, setProdutos, documento, produtoAtivoId, initialNewType, initialProductId, solicitacaoInicio, onSelecionar, onDocumento, onSalvarProduto, onEnviarImagem, podeEditar, onRecarregar, onEdicaoPendente, onErro, embeddedProduct = false, onProductSaved, onProductCancel, onProductBusyChange }: {
   embeddedProduct?: boolean; onProductSaved?: (produto: ProdutoCustos) => void; onProductCancel?:()=>void; onProductBusyChange?:(busy:boolean)=>void;
-  onVoltarCatalogos: () => void;
   catalogoFiltroId: string; onCatalogoFiltro: (id: string) => void;
   perfilFiscal: object; companyId: string; catalogoId: string; catalogos: CatalogoEmpresa[]; produtos: ProdutoCustos[]; fornecedores: FornecedorCustos[]; tabelas: TabelaPreco[]; precos: PrecoTabelaItem[]; setProdutos: React.Dispatch<React.SetStateAction<ProdutoCustos[]>>;
   documento: DocumentoCustos; produtoAtivoId: string; initialNewType?: 'produto'; initialProductId?: string; solicitacaoInicio: number; onSelecionar: (id: string) => void;
@@ -710,7 +709,7 @@ function ProdutosView({ onVoltarCatalogos, catalogoFiltroId, onCatalogoFiltro, p
   if (modo === 'lista') return <>
     <div className={styles.productsPage}>
     <div id={cabecalhoListaId}>
-    <PageHeader title="Produtos e serviços" actions={<><button className={styles.secondaryButton} type="button" disabled={salvando || processandoLote} onClick={onVoltarCatalogos}>‹ Voltar</button><button className={styles.secondaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('servico')}>Novo serviço</button><button className={styles.primaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('produto')}>Novo produto</button></>} />
+    <PageHeader title="Produtos e serviços" actions={<><button className={styles.secondaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('servico')}>Novo serviço</button><button className={styles.primaryButton} type="button" disabled={!podeEditar} onClick={() => iniciar('produto')}>Novo produto</button></>} />
     </div>
     <section className={styles.panel}>
       <div className={styles.catalogListTools}>
@@ -738,7 +737,7 @@ function ProdutosView({ onVoltarCatalogos, catalogoFiltroId, onCatalogoFiltro, p
   </>;
 
   return <>
-    <PageHeader title={rascunho.id ? 'Editar produto ou serviço' : 'Novo produto ou serviço'} />
+    <PageHeader title={rascunho.id ? 'Editar produto ou serviço' : 'Novo produto ou serviço'} actions={<button className={styles.secondaryButton} type="button" disabled={salvando} onClick={voltarParaLista}>‹ Voltar</button>} />
     {!embeddedProduct && <ProductStrip produtos={produtos} ativoId={rascunho.id} documento={documento} onSelecionar={selecionarProdutoNoEditor} />}
     <fieldset className={styles.editor} disabled={!podeEditar || salvando}>
       <section className={styles.panel}><div className={styles.panelTitle}><div><h2>Identificação</h2></div><span className={`${styles.status} ${!rascunho.ativo ? styles.statusInactive : rascunho.disponivel_catalogo ? styles.statusPublished : styles.statusDraft}`}>{!rascunho.ativo ? 'Inativo' : rascunho.disponivel_catalogo ? 'No catálogo' : 'Em estudo'}</span></div>
