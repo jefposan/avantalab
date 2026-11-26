@@ -44,3 +44,9 @@ Aplicada a alternativa em duas colunas no componente funcional, após autorizaç
 Validação visual no componente real: desktop claro, celular claro e escuro; ativar/desativar, limpar seleção, escolha da origem e retorno da revisão conferidos. Transporte da revisão permanece simulado somente na rota de laboratório; nenhum dado real alterado. 85 testes pertinentes passaram; TypeScript, PADRÃO AVANTA, Ava e diff aprovados. Não repetido o build completo da 3.2.0.529 após esta alteração exclusivamente visual; o componente atualizado foi compilado no servidor local e passou na tipagem.
 
 Evidência final: `/Users/JEFF/avantalab/output/previas/importacao-precos/grade-compacta-local-desktop.jpg`. Migração remota e publicação continuam sem execução.
+
+## Publicação autorizada pelo titular
+
+Em 26/11/2026, após a autorização “publique”, a migração 20261126223000 foi aplicada e registrada no Supabase oficial qzewxhdkwettnlmkjoqd. Antes da execução, rotina inexistente e registro ausente; depois, rotina presente, migração registrada, execução concedida a authenticated e negada a anon. Nenhum preço ou cadastro de produto alterado na aplicação desta migração. Registro e criação da rotina realizados na mesma transação.
+
+Pacote usa como base a produção 3.2.0.527, deployment dpl_53YJrFMiWrrwnTw5mVbLLHV4Meys, conferido no alias oficial. Publicação contém somente a importação de preços e seus refinamentos; a impressão compacta de pedidos continua preservada no checkout anterior.

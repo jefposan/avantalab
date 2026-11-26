@@ -1,11 +1,11 @@
 {
-  "baseDeploymentId": "dpl_5eovFekPJxTq28WmApNWmHWk3XFq",
+  "baseDeploymentId": "dpl_53YJrFMiWrrwnTw5mVbLLHV4Meys",
   "migrations": [
     {
-      "path": "supabase/migrations/20261126210000_vendas_controle_estoque.sql",
-      "sha256": "e272cf1431afcb1080468e65b4cf236703dd33690fbf3adbdac5fd8c289a96b6"
+      "path": "supabase/migrations/20261126223000_custos_importar_somente_precos.sql",
+      "sha256": "5748563118ff58b9511e5f53482f8b26e2387d0b2d5b7afc83603cde2f2c5001"
     }
   ],
-  "version": "3.2.0.527",
-  "scope": "Módulos: resumos de Vendas no servidor, estoque e refinamentos visuais"
+  "version": "3.2.0.530",
+  "scope": "Custos: importação seletiva de preços com chaves por tabela e grade compacta"
 }
