@@ -2618,3 +2618,17 @@ button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }
   .order-inline-quantity .line-number-editor.horizontal-steppers { height: 44px; grid-template-columns: 44px minmax(0,1fr) 44px; }
   .order-inline-quantity .line-number-editor input, .order-inline-quantity .horizontal-steppers > button { height: 42px; }
 }
+
+.order-item-taxes { min-width: 0; margin-top: 4px; }
+.order-item-taxes > summary { display: flex; align-items: center; gap: 5px; width: fit-content; min-height: 28px; padding: 2px 4px; border-radius: 6px; color: var(--av-muted); font-size: 10px; cursor: pointer; list-style: none; }
+.order-item-taxes > summary::-webkit-details-marker { display: none; }
+.order-item-taxes > summary > svg { transform: rotate(90deg); transition: transform .15s ease; }
+.order-item-taxes[open] > summary > svg { transform: rotate(-90deg); }
+.order-item-taxes > summary:hover { color: var(--av-ink); background: var(--av-surface-soft); }
+.order-item-taxes > summary:focus-visible { outline: 2px solid var(--brand,var(--av-cyan)); outline-offset: 2px; }
+.order-item-taxes .tax-toggle-hide, .order-item-taxes[open] .tax-toggle-show { display: none; }
+.order-item-taxes[open] .tax-toggle-hide { display: inline; }
+.order-item-tax-pending { display: inline-flex; align-items: center; color: var(--av-warning); }
+.order-item-taxes .order-item-tax-summary { margin-top: 4px; }
+@media (pointer: coarse) { .order-item-taxes > summary { min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) { .order-item-taxes > summary > svg { transition: none; } }
