@@ -22,6 +22,9 @@ test('fluxo seletivo conserva cabeçalhos técnicos, compatibilidade v2, prévia
   assert.match(source,/Não atualizar esta tabela/);
   assert.match(source,/origensPorTabelaImportacao/);
   assert.match(source,/sugerirColunaPreco/);
+  assert.match(source,/Somente preço padrão/);
+  assert.match(source,/Limpar seleção/);
+  assert.match(source,/setCamposImportacao\(\[\]\)/);
   assert.match(source,/Escolher colunas do Excel/);
   assert.match(source,/AVANTALAB-CUSTOS-3/);
   assert.match(source,/AVANTALAB-CUSTOS-2/);
