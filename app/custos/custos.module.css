@@ -110,3 +110,14 @@
 .selectionHeader button,.rowAction,.moreButton,.contextMenu button,
 .resourcePickerResults button,.codeSuggestButton,.codeSuggestions button,
 .catalogImportActions button,.catalogImportActions a){border-radius:6px 12px 12px 12px}
+
+/* Importação de preços: uma coluna de origem pode alimentar várias tabelas. */
+.importMappingList{display:grid;gap:10px;margin-bottom:10px}
+.importMappingRow{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr) auto;gap:10px;align-items:end;padding:12px;border:1px solid var(--border);border-radius:6px 12px 12px 12px;background:var(--surface-soft)}
+.importMappingRow label{display:grid;gap:6px;min-width:0;font-size:12px;font-weight:600;color:var(--text)}
+.importMappingRow label>span{display:block}
+.importMappingRow select{width:100%;max-width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--border);border-radius:6px 12px 12px 12px;background:var(--surface);color:var(--text);font-size:13px}
+.importMappingRow select:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.importMappingArrow{align-self:end;display:grid;place-items:center;min-height:44px;font-size:18px;color:var(--muted)}
+.importMappingRow>button{min-height:44px;padding:8px 12px;align-self:end}
+@media(max-width:700px){.importMappingRow{grid-template-columns:minmax(0,1fr) auto;align-items:center}.importMappingRow label{grid-column:1/-1}.importMappingArrow{display:none}.importMappingRow>button{grid-column:1/-1;justify-self:end}}
