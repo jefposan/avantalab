@@ -24,7 +24,8 @@ test('menu aprovado preserva todas as ações e separa recurso previsto de condi
   const props = sandbox.exports.menu({ record: { id: '2026/1', type: 'Pedido', client: 'Cliente', status: 'Confirmado', fiscal: 'Cancelado', localRecord: { type: 'pedido', status: 'Confirmado', order: { fiscalDocument: 'nfe' } }, fiscalDraft: { status: 'Cancelado', documentType: 'nfe' } }, onLifecycleRequest: (_record, action) => { if (action === 'cancelar') canceled++; } });
   const all = sandbox.exports.groups(props.actions, () => true);
   assert.equal(props.compactOrder, true);
-  assert.equal(all.available.length, 5);
+  assert.equal(all.available.length, 4);
+  assert.ok(!props.actions.some(action=>action.label==='Iniciar separação'));
   assert.equal(all.planned.length, 6);
   const activeProps=sandbox.exports.menu({record:{id:'2026/1',type:'Pedido',client:'Cliente',status:'Confirmado',fiscal:'Não definida',localRecord:{type:'pedido',status:'Confirmado',order:{fiscalDocument:'nenhum'}}},onCopy(){},onTool(){}});
   const active=sandbox.exports.groups(activeProps.actions,()=>true);

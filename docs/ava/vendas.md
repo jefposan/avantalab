@@ -1,6 +1,6 @@
 <!-- ava-version: 3.2.0.526 -->
 
-> Revisão 3.2.0.526: Abrir emissão fiscal em Ações de Vendas abre a preparação automaticamente após confirmação do servidor, sem exigir um segundo clique. Erros preservam a tela atual.  Notas Fiscais exibe a razão social do destinatário, ou o nome completo da pessoa física, antes do nome de exibição. Documentos e retratos fiscais existentes não são alterados.
+> Revisão 3.2.0.526: Os ícones de estoque e faturamento em Vendas abrem as confirmações existentes quando elegíveis. O ícone fiscal abre a preparação ou documento vinculado; ações bloqueadas exibem tooltip curto com o motivo e não executam operações.  O menu Ações do pedido não oferece mais Iniciar separação.  Abrir emissão fiscal em Ações de Vendas abre a preparação automaticamente após confirmação do servidor, sem exigir um segundo clique. Erros preservam a tela atual.  Notas Fiscais exibe a razão social do destinatário, ou o nome completo da pessoa física, antes do nome de exibição. Documentos e retratos fiscais existentes não são alterados.
 
 > Revisão 3.2.0.525: A abertura da emissão fiscal envia JSON e chave de solicitação; respostas preservam o ambiente real em preparação, assinatura e continuação. O aviso fixo de homologação foi removido. Abrir a preparação não reserva número nem transmite.
 <!-- avantavendas-asset-revision: 215 -->

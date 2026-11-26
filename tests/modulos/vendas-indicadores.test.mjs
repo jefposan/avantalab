@@ -38,26 +38,33 @@ test('cancelamento comercial preserva nota autorizada e distingue estoque devolv
   assert.equal(indicators({ fiscalDraft: { status: 'Cancelado', remoteState: 'canceled' } })[2].mark, 'close');
 });
 
-test('cada indicador tem tooltip e foco independentes com somente seu estado atual', () => {
-  const jsxSandbox = { exports: {}, require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }), Tooltip: 'tooltip' };
+test('ícones elegíveis abrem suas confirmações; bloqueios têm tooltip oficial e não executam ações', () => {
+  let permissions = () => true;
+  const jsxSandbox = { exports: {}, require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }), Tooltip: 'tooltip', useContext: () => ({can: permissions}), PermissionContext: {} };
   const component = source.slice(source.indexOf('function commercialRecordIndicators('), source.indexOf('function SalesView('));
   vm.runInNewContext(ts.transpileModule(component + '\nexports.render = CommercialRecordIndicators;', { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS } }).outputText, jsxSandbox);
-  const tree = jsxSandbox.exports.render({ record: { status: 'Faturado', type: 'Pedido', stock: 'Baixado', fiscal: 'NF-e autorizada' } });
-  const group = tree;
-  assert.equal(group.props.role, 'group');
-  assert.equal(group.props.tabIndex, undefined);
-  assert.equal(group.props.children.length, 3);
-  const expected = ['Estoque: Baixado', 'Faturamento: realizado · não indica pagamento recebido', 'Nota fiscal: autorizada'];
-  group.props.children.forEach((tooltip, index) => {
-    assert.equal(tooltip.type, 'tooltip');
-    assert.equal(tooltip.props.texto, expected[index]);
-    assert.equal(tooltip.props.posicao, 'bottom');
-    assert.equal(tooltip.props.children.props.tabIndex, 0);
-    assert.equal(tooltip.props.children.props.role, 'img');
-    assert.equal(tooltip.props.children.props['aria-label'], expected[index]);
-  });
-  const pending = jsxSandbox.exports.render({ record: { status: 'Confirmado', type: 'Pedido', stock: 'Reservado', fiscal: 'NF-e prevista', fiscalDraft: { status: 'Com pendências' } } });
-  assert.equal(pending.props.children[1].props.texto, 'Faturamento: não realizado');
-  assert.equal(pending.props.children[0].props.texto, 'Estoque: Reservado');
-  assert.equal(pending.props.children[2].props.texto, 'Nota fiscal: Com pendências');
+  const local = {type:'pedido',status:'Confirmado',order:{stockState:'Sem movimentação',fiscalDocument:'nfe',lines:[{kind:'produto'}]}};
+  const record = {status:'Confirmado',type:'Pedido',stock:'Sem movimentação',fiscal:'NF-e prevista',localRecord:local};
+  const calls=[];
+  const render = patch => jsxSandbox.exports.render({record:{...record,...patch},onStock:()=>calls.push('estoque'),onBilling:()=>calls.push('faturamento'),onFiscal:()=>calls.push('fiscal')});
+  const tree=render({});
+  assert.equal(tree.props.role,'group');
+  assert.equal(calls.length,0,'renderizar não lança nem fatura');
+  for(const tooltip of tree.props.children){
+    assert.equal(tooltip.type,'tooltip');assert.equal(tooltip.props.posicao,'bottom');
+    const button=tooltip.props.children;assert.equal(button.type,'button');assert.equal(button.props['aria-disabled'],false);button.props.onClick();
+  }
+  assert.deepEqual(calls,['estoque','faturamento','fiscal']);
+  const completed=render({status:'Faturado',localRecord:{...local,status:'Faturado',order:{...local.order,stockState:'Baixado'}}});
+  for(const [index,reason] of [[0,'Estoque já lançado'],[1,'Pedido já faturado']]){
+    const tip=completed.props.children[index];assert.ok(tip.props.texto.includes(reason));assert.equal(tip.props.children.props['aria-disabled'],true);assert.equal(tip.props.children.props.onClick,undefined);
+  }
+  const canceled=render({status:'Cancelado',localRecord:{...local,status:'Cancelado'}});
+  canceled.props.children.forEach(tip=>assert.equal(tip.props.children.props.onClick,undefined));
+  const noFiscal=render({localRecord:{...local,order:{...local.order,fiscalDocument:'nenhum'}}});
+  assert.match(noFiscal.props.children[2].props.texto,/Defina o documento fiscal/);
+  const services=render({localRecord:{...local,order:{...local.order,lines:[{kind:'servico'}]}}});
+  assert.match(services.props.children[0].props.texto,/Pedido sem produtos/);
+  permissions=()=>false;
+  render({}).props.children.forEach(tip=>{assert.match(tip.props.texto,/Sem permissão/);assert.equal(tip.props.children.props.onClick,undefined);});
 });

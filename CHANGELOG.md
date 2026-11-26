@@ -1,5 +1,7 @@
-## 3.2.0.526 — Vendas: identificação do cliente e abertura fiscal
+## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
+- Tornar indicadores de estoque, faturamento e nota fiscal acionáveis conforme estado e permissões, com confirmações existentes e tooltip de impedimento.
+- Retirar Iniciar separação do menu Ações do pedido.
 - Abrir a preparação fiscal no primeiro clique após a confirmação do servidor, inclusive em pedidos ainda sem retrato fiscal. Falhas e respostas de outro documento não navegam.
 - Priorizar razão social ou nome completo do destinatário na coluna Cliente de Notas Fiscais, com fallback para registros antigos sem esses campos.
 - Somente apresentação; sem regravar notas, alterar XML, numeração ou ambiente.

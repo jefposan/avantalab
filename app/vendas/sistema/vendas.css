@@ -2604,3 +2604,5 @@ button.commercial-indicator-target { width:28px; min-width:28px; border:0; backg
 @media (max-width: 760px) {
   .module-financial-summary { grid-template-columns: repeat(4, minmax(140px, 1fr)); overflow-x: auto; padding-bottom: 4px; }
 }
+
+button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }

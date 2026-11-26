@@ -1894,7 +1894,7 @@ function groupCommercialRecordActions(actions: RecordAction[], can: (permission:
   const denied = (action: RecordAction) => Boolean((action.permission && !can(action.permission)) || action.permissions?.some((permission) => !can(permission)));
   const destructive = actions.find((action) => /^(Cancelar|Estornar)\b/.test(action.label) && action.label!=='Estornar baixa de estoque' && !action.planned);
   const remaining = actions.filter((action) => action !== destructive);
-  const rank = (action: RecordAction) => ['Continuar pedido', 'Abrir pedido', 'Editar pedido', 'Iniciar separação', 'Faturar pedido', 'Contas do pedido', 'Estoque e reserva'].indexOf(action.label);
+  const rank = (action: RecordAction) => ['Continuar pedido', 'Abrir pedido', 'Editar pedido', 'Faturar pedido', 'Contas do pedido', 'Estoque e reserva'].indexOf(action.label);
   return {
     available: remaining.filter((action) => !action.planned && (!action.disabled||action.label==='Editar pedido') && !denied(action)).sort((a, b) => (rank(a) < 0 ? 99 : rank(a)) - (rank(b) < 0 ? 99 : rank(b))),
     unavailable: remaining.filter((action) => !action.planned && ((action.disabled&&action.label!=='Editar pedido') || denied(action))).map((action) => ({ ...action, reason: denied(action) ? 'Sem acesso' : action.disabledLabel || 'Indisponível' })),
@@ -1921,7 +1921,7 @@ function RecordActionsDialog({ title, description, actions, triggerLabel, compac
     } catch { setError('Não foi possível confirmar a restauração. Atualize a lista antes de tentar novamente.'); }
     finally { running.current = false; setBusy(false); }
   };
-  const brief: Record<string, string> = { 'Abrir pedido': 'Itens, valores e histórico', 'Editar pedido': 'Abrir o formulário completo', 'Continuar pedido': 'Retomar o formulário completo', 'Iniciar separação': 'Preparar os itens do pedido', 'Faturar pedido': 'Gerar contas; estoque opcional', 'Estoque e reserva': 'Consultar baixas e reservas', 'Abrir histórico fiscal': 'Consultar documentos e eventos', 'Abrir rascunho fiscal': 'Consultar dados e pendências fiscais' };
+  const brief: Record<string, string> = { 'Abrir pedido': 'Itens, valores e histórico', 'Editar pedido': 'Abrir o formulário completo', 'Continuar pedido': 'Retomar o formulário completo', 'Faturar pedido': 'Gerar contas; estoque opcional', 'Estoque e reserva': 'Consultar baixas e reservas', 'Abrir histórico fiscal': 'Consultar documentos e eventos', 'Abrir rascunho fiscal': 'Consultar dados e pendências fiscais' };
   return <>
     <button type="button" className="row-action" aria-label={triggerLabel} onClick={() => { setError(''); setOpen(true); }}><Icon name="chevron" size={18}/></button>
     <Dialog open={open} title={title} description={description} titleExtra={recordStatus ? <Badge>{recordStatus}</Badge> : undefined} onClose={() => { if (!running.current) setOpen(false); }}>
@@ -1976,7 +1976,6 @@ function CommercialRecordActions({ onRestore, onCopy, onTool, record, fiscalPrep
     const editBlocks=[...(local?.order?.stockState==='Baixado'?['estornar a baixa de estoque']:[]),...(local?.status==='Faturado'?['estornar o faturamento em Recebimentos']:[]),...(!['Confirmado','Em separação','Faturado'].includes(local?.status||'')?['retornar o pedido a uma etapa editável']:[])];
     const lifecycleActions: RecordAction[] = local?.type === 'pedido' && local.order ? [
       ...(local.status!=='Rascunho'?[{label:'Editar pedido',description:'Abrir o formulário completo',icon:'edit' as IconName,disabled:editBlocks.length>0,disabledLabel:`Para editar, é necessário ${editBlocks.join(' e ')}.`,onSelect:()=>onLifecycleRequest(local,'editar' as OrderLifecycleAction),permissions:['sales.edit','stock.exit']}]:[]),
-      ...(local.status === 'Confirmado' ? [{ label: 'Iniciar separação', description: 'Mantém a reserva e registra o pedido em preparação', icon: 'stock' as IconName, onSelect: () => onLifecycleRequest(local, 'separar' as OrderLifecycleAction), permissions: ['sales.edit', 'stock.exit'] }] : []),
       ...(['Confirmado', 'Em separação'].includes(local.status ?? '') ? [
         { label: 'Faturar pedido', description: 'Gera as contas a receber e permite escolher a baixa de estoque', icon: 'check' as IconName, onSelect: () => onLifecycleRequest(local, 'faturar' as OrderLifecycleAction), permissions: ['sales.invoice', 'stock.exit', ...(local.order.fiscalDocument !== 'nenhum' ? ['fiscal.prepare'] : [])] },
       ] : []),
@@ -2682,9 +2681,32 @@ function CommercialIndicatorIcon({ indicator }: { indicator: ReturnType<typeof c
   </svg>;
 }
 
-function CommercialRecordIndicators({ record, onFiscal }: { record: CommercialOperationRecord; onFiscal?: () => void }) {
+function commercialIndicatorAvailability(record: CommercialOperationRecord, can: (permission: string) => boolean) {
+  const local = record.localRecord;
+  const order = local?.order;
+  const status = local?.status || record.status;
+  const operational = ['Confirmado', 'Em separação', 'Faturado'].includes(status);
+  const denied = (permissions: string[]) => permissions.some(permission => !can(permission));
+  const unavailable = !order ? 'Abra um pedido salvo' : status === 'Cancelado' ? 'Pedido cancelado' : status === 'Devolvido' ? 'Pedido devolvido' : !operational ? 'Confirme o pedido primeiro' : '';
+  const stock = unavailable || (denied(['sales.view', 'sales.edit', 'stock.exit']) ? 'Sem permissão para lançar estoque' : order?.stockState === 'Baixado' ? 'Estoque já lançado' : order?.stockState !== 'Sem movimentação' ? 'Estoque já movimentado ou reservado' : !order?.lines.some(line => line.kind === 'produto') ? 'Pedido sem produtos' : '');
+  const billing = unavailable || (status === 'Faturado' ? 'Pedido já faturado' : denied(['sales.invoice', 'stock.exit', ...(order?.fiscalDocument !== 'nenhum' ? ['fiscal.prepare'] : [])]) ? 'Sem permissão para faturar' : '');
+  const draft = record.fiscalDraft;
+  const fiscal = denied([draft?.emissionId ? 'fiscal.view' : 'fiscal.prepare']) ? 'Sem permissão fiscal' : draft ? '' : unavailable || (order?.fiscalDocument === 'nenhum' ? 'Defina o documento fiscal no pedido' : '');
+  return { stock, billing, fiscal };
+}
+
+function CommercialRecordIndicators({ record, onFiscal, onStock, onBilling }: { record: CommercialOperationRecord; onFiscal?: () => void; onStock?: () => void; onBilling?: () => void }) {
+  const { can } = useContext(PermissionContext);
   const indicators = commercialRecordIndicators(record);
-  return <span className="commercial-indicators" role="group" aria-label="Situação da operação">{indicators.map((indicator) => <Tooltip key={indicator.key} texto={indicator.label} posicao="bottom">{indicator.key==='fiscal'&&onFiscal ? <button type="button" className="commercial-indicator-target" aria-label={`${indicator.label} · Abrir nota fiscal`} onClick={onFiscal}><CommercialIndicatorIcon indicator={indicator}/></button> : <span className="commercial-indicator-target" tabIndex={0} role="img" aria-label={indicator.label}><CommercialIndicatorIcon indicator={indicator}/></span>}</Tooltip>)}</span>;
+  const availability = commercialIndicatorAvailability(record, can);
+  const actions = { stock: { label: 'Lançar no estoque', callback: onStock }, billing: { label: 'Faturar pedido', callback: onBilling }, fiscal: { label: 'Abrir nota fiscal', callback: onFiscal } };
+  return <span className="commercial-indicators" role="group" aria-label="Situação da operação">{indicators.map((indicator) => {
+    const key = indicator.key as keyof typeof actions;
+    const action = actions[key];
+    const reason = availability[key] || (!action.callback ? 'Ação indisponível para este pedido' : '');
+    const tooltip = reason ? `${key === 'stock' ? 'Estoque' : key === 'billing' ? 'Faturamento' : 'Nota fiscal'}: ${reason}` : `${indicator.label} · ${action.label}`;
+    return <Tooltip key={key} texto={tooltip} posicao="bottom"><button type="button" className="commercial-indicator-target" aria-label={tooltip} aria-disabled={Boolean(reason)} onClick={reason ? undefined : action.callback}><CommercialIndicatorIcon indicator={indicator}/></button></Tooltip>;
+  })}</span>;
 }
 
 function SalesView({ brand = '#003e73', companyLogoUrl = '', paperSize = 'A4', company, clients, onCopy, created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle, onStockLaunch, onStockReverse, onRestoreOrder }: { brand?: string; companyLogoUrl?:string; paperSize?:'A4'|'A5'; company:CompanyProfile; clients:ClientRecord[]; onCopy:(record:CreatedRecord)=>void; created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void; onStockLaunch:(record:CreatedRecord)=>Promise<ConfirmedSave>; onStockReverse:(record:CreatedRecord)=>Promise<ConfirmedSave>; onRestoreOrder:(record:CreatedRecord)=>Promise<ConfirmedSave> }) {
@@ -2751,7 +2773,7 @@ function SalesView({ brand = '#003e73', companyLogoUrl = '', paperSize = 'A4', c
         <td data-label="Cliente"><strong>{record.client}</strong></td>
         <td data-label="Situação"><Badge>{record.status}</Badge></td>
         <td data-label="Total" className="numeric"><strong>{money(record.total)}</strong></td>
-        <td data-label="Ações" className="commercial-actions-cell"><div className="commercial-row-actions"><CommercialRecordIndicators record={record} onFiscal={record.fiscalDraft ? ()=>onFiscalStart({id:record.id,client:record.client,item:`Pedido ${record.id}`,total:record.total,documentType:record.fiscalDraft!.documentType,sourceLabel:'Pedido'}) : undefined}/><CommercialRecordActions onRestore={onRestoreOrder} onCopy={onCopy} onTool={(record,action)=>action==='print'?void printDirect(record):setToolRequest({record,action})} record={record} fiscalPrepareLoading={record.fiscalDraft ? fiscalPrepareState[record.fiscalDraft.id]?.loading : false} onNavigate={onNavigate} onFiscalStart={onFiscalStart} onFiscalPrepare={onFiscalPrepare} onReceivables={onReceivables} onOpenLocal={setDetailRecord} onContinueOrder={onContinueOrder} onLifecycleRequest={(localRecord, action) => action==='estornar_estoque'?setStockReverseRequest(localRecord):action==='estoque'?setStockRequest(localRecord):action === 'editar' ? onLifecycle(localRecord, action) : setLifecycleRequest({ record: localRecord, action })}/></div></td>
+        <td data-label="Ações" className="commercial-actions-cell"><div className="commercial-row-actions"><CommercialRecordIndicators record={record} onStock={record.localRecord?.order ? ()=>setStockRequest(record.localRecord!) : undefined} onBilling={record.localRecord?.order ? ()=>setLifecycleRequest({record:record.localRecord!,action:'faturar'}) : undefined} onFiscal={record.localRecord?.order || record.fiscalDraft ? ()=>{if(record.fiscalDraft?.persistenceSource==='server' && !record.fiscalDraft.emissionId && record.fiscalDraft.documentType==='nfe')onFiscalPrepare(record.fiscalDraft);else onFiscalStart({id:record.id,client:record.client,item:`Pedido ${record.id}`,total:record.total,documentType:record.fiscalDraft?.documentType || (record.localRecord?.order?.fiscalDocument==='nfce'?'nfce':record.localRecord?.order?.fiscalDocument==='nfse'?'nfse':'nfe'),sourceLabel:'Pedido'});} : undefined}/><CommercialRecordActions onRestore={onRestoreOrder} onCopy={onCopy} onTool={(record,action)=>action==='print'?void printDirect(record):setToolRequest({record,action})} record={record} fiscalPrepareLoading={record.fiscalDraft ? fiscalPrepareState[record.fiscalDraft.id]?.loading : false} onNavigate={onNavigate} onFiscalStart={onFiscalStart} onFiscalPrepare={onFiscalPrepare} onReceivables={onReceivables} onOpenLocal={setDetailRecord} onContinueOrder={onContinueOrder} onLifecycleRequest={(localRecord, action) => action==='estornar_estoque'?setStockReverseRequest(localRecord):action==='estoque'?setStockRequest(localRecord):action === 'editar' ? onLifecycle(localRecord, action) : setLifecycleRequest({ record: localRecord, action })}/></div></td>
       </tr>)}</></Table>
       {records.length === 0 && <EmptyState title="Nenhuma operação encontrada" description="Ajuste a busca ou limpe os filtros para ver as vendas."/>}
     </Panel>
