@@ -2670,3 +2670,17 @@ button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }
 .topbar-start{display:grid;grid-template-columns:max-content max-content;align-items:center}
 .module-header-title{grid-column:1/-1;justify-self:start}
 @media(max-width:600px){.module-header-title{font-size:10px}}
+
+/* Botões seguem a quina menor da navegação de Custos, sem arredondar os cards. */
+.new-button,.new-menu button,.nav-group button,.button,
+.module-settings-button,.mobile-menu-button,.module-exit,
+.attention-list button,.row-action,.calendar-strip button,
+.segmented button,.settings-tabs button,.access-tabs button,
+.access-option-list > button,.access-option-list > .fiscal-rule-tooltip > button,
+.fiscal-matrix-validation li button,.homologation-workspace > aside > button,
+.integration-evaluation-workspace > aside > button,.catalog-options > button,
+.quote-file-options > button,.record-action-options > button,
+.record-action-options > .commercial-action-tooltip > button,
+.icon-button,.client-profile-trigger,.client-profile-options > button,
+.commercial-action-menu :is(.commercial-action-available > button,.commercial-action-available > .commercial-action-tooltip > button),
+.report-selected-items button{border-radius:6px 12px 12px 12px}

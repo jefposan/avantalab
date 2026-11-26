@@ -1,5 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
+- Padronizar botões de navegação, ações, formulários e menus de Custos e Vendas com raio de 6 px no superior esquerdo e 12 px nos demais, preservando pílulas e controles compostos.
 - Estender o cabeçalho com título em pílula acima de Navegar compacto a Projetos, Operações de Campo, Anúncios em marketplaces, Controle de Ponto e Conteúdo AvantaVendas, reutilizando a apresentação compartilhada.
 - Destacar os títulos dos módulos em pílulas com a cor da empresa acima do botão Navegar e reduzir Navegar para 26 px no desktop, com 8 px de espaço abaixo do título, mantendo 44 px em telas de toque.
 - Identificar Custos e Precificação e Vendas e Serviços no cabeçalho fixo, junto à navegação entre módulos.
