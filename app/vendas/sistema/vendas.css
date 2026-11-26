@@ -2338,7 +2338,7 @@ button.commercial-indicator-target { width:28px; min-width:28px; border:0; backg
 
 /* Linha aprovada: valores editáveis acima, identificação fiscal informativa abaixo. */
 .order-item.order-item-two-line { display: block; padding: 8px 4px 8px 10px; }
-.order-item-commercial { display: grid; grid-template-columns: minmax(110px,1fr) 44px 100px 100px 114px 56px; gap: 6px; align-items: center; min-width: 0; }
+.order-item-commercial { display: grid; grid-template-columns: minmax(110px,1fr) 120px 88px 88px 100px 56px; gap: 6px; align-items: center; min-width: 0; }
 .order-item-two-line .order-item-name { grid-area: auto; gap: 3px; }
 .order-item-two-line .order-item-name strong { font-size: 12px; font-weight: 600; line-height: 1.35; }
 .order-item-two-line .order-item-name small { font-size: 10px; line-height: 1.2; }
@@ -2364,11 +2364,11 @@ button.commercial-indicator-target { width:28px; min-width:28px; border:0; backg
 .order-product-registration { min-height: 200px; padding: 12px !important; }
 .dialog:has(.order-product-registration) { width: min(1120px,calc(100vw - 32px)); }
 @container order-items (min-width: 600px) and (max-width: 659px) {
-  .order-item-commercial { grid-template-columns: minmax(80px,1fr) 44px 88px 88px 96px 56px; }
+  .order-item-commercial { grid-template-columns: minmax(80px,1fr) 120px 80px 80px 88px 56px; }
   .order-inline-control input { font-size: 11px; }
 }
 @container order-items (max-width: 599px) {
-  .order-item-commercial { grid-template-columns: 44px repeat(3,minmax(0,1fr)); grid-template-areas: "name name name actions" "quantity price discount subtotal"; row-gap: 8px; }
+  .order-item-commercial { grid-template-columns: minmax(110px,1fr) minmax(80px,1fr) 56px; grid-template-areas: "name name actions" "quantity price price" "discount subtotal subtotal"; row-gap: 8px; }
   .order-item-commercial > .order-item-name { grid-area: name; }
   .order-item-commercial > .order-inline-field:nth-child(2) { grid-area: quantity; }
   .order-item-commercial > .order-inline-field:nth-child(3) { grid-area: price; }
@@ -2381,7 +2381,7 @@ button.commercial-indicator-target { width:28px; min-width:28px; border:0; backg
 @media (pointer: coarse) {
   .order-item-actions .icon-button { width: 44px; min-width: 44px; }
   @container order-items (min-width: 600px) {
-    .order-item-commercial { grid-template-columns: minmax(80px,1fr) 44px 90px 90px 100px 88px; }
+    .order-item-commercial { grid-template-columns: minmax(80px,1fr) 136px 80px 80px 90px 88px; }
   }
 }
 
@@ -2606,3 +2606,15 @@ button.commercial-indicator-target { width:28px; min-width:28px; border:0; backg
 }
 
 button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }
+
+/* Reutiliza o editor numérico com controles laterais na linha compacta do pedido. */
+.order-inline-quantity .line-editor-wrap { position: relative; display: block; height: 44px; min-width: 0; }
+.order-inline-quantity .line-editor-caption { position: absolute; top: 0; left: 0; color: var(--av-muted); font-size: 10px; line-height: 12px; font-weight: 500; }
+.order-inline-quantity .line-number-editor.horizontal-steppers { position: absolute; inset: 12px 0 0; display: grid; grid-template-columns: 32px minmax(0,1fr) 32px; height: 32px; border-radius: 8px; }
+.order-inline-quantity .line-number-editor input { width: 100%; min-width: 0; height: 30px; padding: 0 2px; font-size: 12px; text-align: center; }
+.order-inline-quantity .horizontal-steppers > button { min-width: 0; height: 30px; font-size: 17px; }
+@media (pointer: coarse) {
+  .order-inline-quantity, .order-inline-quantity .line-editor-wrap { height: 56px; }
+  .order-inline-quantity .line-number-editor.horizontal-steppers { height: 44px; grid-template-columns: 44px minmax(0,1fr) 44px; }
+  .order-inline-quantity .line-number-editor input, .order-inline-quantity .horizontal-steppers > button { height: 42px; }
+}

@@ -1376,7 +1376,6 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
   const [paymentDetails, setPaymentDetails] = useState(correction?.draft.paymentDetails || initialOrder?.paymentDetails || {integrationType:'',institutionDocument:'',authorizationCode:''});
   const [insurance, setInsurance] = useState(formatLineNumber(initialOrder?.commercialTotals.insurance ?? 0,true));
   const [otherExpenses, setOtherExpenses] = useState(formatLineNumber(initialOrder?.commercialTotals.other ?? 0,true));
-  const [quantityDrafts,setQuantityDrafts]=useState<Record<string,string>>({});
   const [itemTax, setItemTax] = useState<Record<string,{ncm:string;cfop?:string;noteItem?:NoteItemOverrides}>>(() => Object.fromEntries([...(initialRecord?.order?.lines||[]).filter(line=>line.cfop!==undefined||line.noteItem).map(line=>[line.sku,{ncm:line.noteItem?.ncm??catalogRecords.find(item=>item.sku===line.sku)?.ncm??'',cfop:line.cfop??line.noteItem?.cfop,noteItem:line.noteItem}]),...(correction?.draft.items || []).map(item=>[item.sku,{ncm:item.ncm,noteItem:item.noteItemOverrides,cfop:fiscalOnly?item.noteCfopOverride||undefined:correction?.draft.operationContext?.destination==='Fora da UF'?item.cfopInterstate:item.cfopInternal||item.cfopInterstate||''}])]));
   const [installments, setInstallments] = useState(String(initialOrder?.installments || settings.payments.defaultInstallments));
   const [firstDueDate, setFirstDueDate] = useState(() => initialOrder?.firstDueDate || isoAfterDays(settings.payments.firstDueDays));
@@ -1461,8 +1460,8 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
   const addItem = (item: CatalogItem) => {
     setLines((current) => {
       const existing = current.find((line) => line.sku === item.sku);
-      if (existing) return current.map((line) => line.sku === item.sku ? { ...line, quantity: line.quantity + 1 } : line);
-      return [...current, orderLineFromCatalog(item)];
+      if (existing) return [{ ...existing, quantity: existing.quantity + 1 }, ...current.filter(line => line.id !== existing.id)];
+      return [orderLineFromCatalog(item), ...current];
     });
     setSubmitted(false);
   };
@@ -1642,7 +1641,7 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
                 return <div className="order-item order-item-compact order-item-two-line" key={line.id} data-item-index={index}>
                   <div className="order-item-commercial">
                     <div className="order-item-name"><strong>{line.name}</strong><small>{line.sku} · {line.unit}</small>{insufficient&&<span className="field-error">Saldo ficará negativo até a entrada</span>}</div>
-                    <label className="order-inline-field order-inline-quantity"><span>Qtd.</span><div className="order-inline-control"><input name="itemQuantity" aria-label={`Quantidade de ${line.name}`} inputMode="decimal" value={quantityDrafts[line.id] ?? String(line.quantity).replace('.',',')} onChange={event=>{const raw=event.target.value;if(!/^[0-9]*[,.]?[0-9]*$/.test(raw))return;setQuantityDrafts(current=>({...current,[line.id]:raw}));const value=parseCommercialNumber(raw);if(value!==null)updateLine(line.id,{quantity:Math.max(0,value)});}} onBlur={()=>setQuantityDrafts(current=>{const next={...current};delete next[line.id];return next;})}/></div></label>
+                    <div className="order-inline-field order-inline-quantity"><LineNumberEditor label={`Quantidade de ${line.name}`} value={line.quantity} onChange={value=>updateLine(line.id,{quantity:value})} step={line.kind === 'servico' ? 0.5 : 1} showSteppers compact disabled={savingFiscal || fiscalAttemptLocked}/></div>
                     <label className="order-inline-field"><span>Valor unit. (R$)</span><div className="order-inline-control"><CampoMoeda name="itemPrice" aria-label={`Preço de ${line.name}`} value={formatLineNumber(line.unitPrice,true)} onChange={value=>updateLine(line.id,{unitPrice:commercialNumber(value)})}/></div></label>
                     <label className="order-inline-field"><span>Desconto (R$)</span><div className="order-inline-control"><CampoMoeda name="itemDiscount" aria-label={`Desconto de ${line.name}`} value={formatLineNumber(line.unitDiscount,true)} onChange={value=>updateLine(line.id,{unitDiscount:commercialNumber(value)})}/></div></label>
                     <div className="order-inline-field order-inline-subtotal"><span>Subtotal (R$)</span><div className="order-inline-control"><output aria-label={`Subtotal de ${line.name}`} style={{fontSize:`${fittedNumericFontSize(formatLineNumber(lineTotal,true),100,12,11)}px`}}>{formatLineNumber(lineTotal,true)}</output></div></div>
