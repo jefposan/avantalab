@@ -210,6 +210,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   const [documentosFiscais, setDocumentosFiscais] = useState<unknown[]>([]);
   const [erro, setErro] = useState('');
   const [iframePronto, setIframePronto] = useState(false);
+  const [dadosProntosEmpresa, setDadosProntosEmpresa] = useState('');
+  const [apresentacaoEmpresa, setApresentacaoEmpresa] = useState('');
   const origemPrototipo = useMemo(() => typeof window === 'undefined' ? '' : window.location.origin, []);
 
   const retornarParaGestao = useCallback(() => {
@@ -220,7 +222,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   }, [contextoInicial, empresaId, router]);
 
   const enviarCatalogo = useCallback(() => {
-    if (!perfilCadastro || !empresaId || !iframePronto || !iframeRef.current?.contentWindow) return;
+    if (!perfilCadastro || !empresaId || !iframePronto || !iframeRef.current?.contentWindow || (!catalogo && !erro)) return;
     const catalogoDoPerfil: CatalogoVendasDTO = catalogo ?? {
       versao: 1,
       origem: 'custos_precificacao',
@@ -240,7 +242,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       corPrimaria,
       logoUrl,
       catalogoDisponivel: Boolean(catalogo),
-      mensagem: catalogo ? '' : erro || 'O perfil foi carregado; o catálogo de Custos ainda está sendo consultado.',
+      mensagem: catalogo ? '' : erro,
     }, origemPrototipo);
   }, [catalogo, corPrimaria, empresaId, erro, iframePronto, logoUrl, origemPrototipo, perfilCadastro]);
 
@@ -406,6 +408,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
     }
     if (!perfilId) return;
     setErro('');
+    setDadosProntosEmpresa('');
+    setApresentacaoEmpresa('');
     setCatalogo(null);
     setLogoUrl('');
     setPerfilCadastro((current) => String(current?.empresa_id || '') === perfilId ? current : null);
@@ -423,8 +427,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       setPerfilCadastro(perfil.cadastro);
       setLogoUrl(String(perfil.logoUrl || ''));
       setCorPrimaria(typeof perfil.corPrimaria === 'string' && /^#[0-9a-f]{6}$/i.test(perfil.corPrimaria) ? perfil.corPrimaria : '#003e73');
-      if (iframeRef.current?.contentWindow) {
-        void Promise.all([
+      const dadosIniciais = Promise.allSettled([
           carregarDocumentosFiscais(perfilId, token),
           carregarPermissoes(perfilId),
           carregarRegrasFiscais(perfilId),
@@ -434,8 +437,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
           carregarClientes(perfilId),
           carregarFornecedores(perfilId),
           carregarOperacoes(perfilId),
-        ]);
-      }
+      ]);
       const parametros = new URLSearchParams({ empresaId: perfilId });
       const resposta = await fetch(`/api/modulos/vendas/catalogo?${parametros}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -445,9 +447,12 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível carregar o catálogo de Custos.');
       const proximo = json.catalogo as CatalogoVendasDTO;
       setCatalogo(proximo);
+      await aguardarComLimite(dadosIniciais, 90_000, 'O carregamento inicial demorou mais que o esperado. Tente novamente.');
     } catch (falha) {
       setCatalogo(null);
       setErro(falha instanceof Error ? falha.message : 'Não foi possível carregar o catálogo de Custos.');
+    } finally {
+      if (activeCompanyRef.current === perfilId) setDadosProntosEmpresa(perfilId);
     }
   }, [carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes]);
 
@@ -475,19 +480,28 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       }
       if (!ativo) return;
       setEmpresaId(solicitado);
+      if (!iframePronto) return;
       await carregarCatalogo(solicitado);
     };
     void iniciar();
     return () => { ativo = false; };
-  }, [carregarCatalogo]);
+  }, [carregarCatalogo, iframePronto]);
 
   useEffect(() => { enviarCatalogo(); }, [enviarCatalogo]);
   useEffect(() => { enviarDocumentosFiscais(); }, [enviarDocumentosFiscais]);
+  useEffect(() => {
+    if (!empresaId || dadosProntosEmpresa !== empresaId || !iframePronto) return;
+    iframeRef.current?.contentWindow?.postMessage({ type: 'AVANTALAB_VENDAS_PRESENTATION_REQUEST_V1', companyId: empresaId }, origemPrototipo);
+  }, [empresaId, dadosProntosEmpresa, iframePronto, origemPrototipo]);
 
   useEffect(() => {
     const receber = (event: MessageEvent) => {
       if (event.origin !== origemPrototipo || event.source !== iframeRef.current?.contentWindow) return;
       if (event.data?.type === RETURN_TO_MANAGEMENT_MESSAGE_TYPE) { retornarParaGestao(); return; }
+      if (event.data?.type === 'AVANTALAB_VENDAS_PRESENTATION_V1') {
+        if (event.data.companyId === empresaId && event.data.settled === true) setApresentacaoEmpresa(empresaId);
+        return;
+      }
       if (event.data?.type === 'AVANTALAB_VENDAS_CATALOGO_READY_V1') { setIframePronto(true); return; }
       if (event.data?.type === ACCESS_READY_MESSAGE_TYPE) { void carregarPermissoes(empresaId); return; }
       if (event.data?.type === FISCAL_RULES_READY_TYPE) { void carregarRegrasFiscais(empresaId); return; }
@@ -1138,12 +1152,14 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, empresaId, origemPrototipo, retornarParaGestao]);
 
   const perfilPronto = Boolean(empresaId && perfilCadastro);
+  const paginaPronta = perfilPronto && iframePronto && dadosProntosEmpresa === empresaId && apresentacaoEmpresa === empresaId;
 
   return <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-slate-100 text-slate-800">
     <section className="relative min-h-0 flex-1" aria-label="Vendas e Serviços">
-      {!empresaId ? erro ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <TransicaoNavegacaoInterna destino="Vendas e Serviços" empresa={contextoInicial?.empresa} /> : erro && !perfilPronto ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <>
-        <div className="absolute inset-0" aria-hidden={!perfilPronto || undefined} inert={!perfilPronto || undefined}><iframe ref={iframeRef} src={`/vendas/sistema?bridge=gestao&companyId=${encodeURIComponent(empresaId)}`} title="Vendas e Serviços" className="block h-full w-full border-0 bg-white" onLoad={() => setIframePronto(true)} /></div>
-        <CarregamentoDadosModulo ativo={!perfilPronto || !iframePronto} titulo="Preparando Vendas e Serviços" mensagem="Carregando os dados do módulo…" corPrimaria={corPrimaria} temaEscuro={contextoInicial?.empresa.temaEscuro} />
+      {!empresaId ? erro ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <TransicaoNavegacaoInterna destino="Vendas e Serviços" empresa={contextoInicial?.empresa} /> : erro && (!perfilPronto || dadosProntosEmpresa === empresaId) ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <>
+        <div className="absolute inset-0" aria-hidden={!paginaPronta || undefined} inert={!paginaPronta || undefined}><iframe ref={iframeRef} src={`/vendas/sistema?bridge=gestao&companyId=${encodeURIComponent(empresaId)}`} title="Vendas e Serviços" className="block h-full w-full border-0 bg-white" onLoad={() => setIframePronto(true)} /></div>
+        {!paginaPronta && <div className="absolute inset-0 z-10 bg-slate-100" aria-hidden="true" />}
+        <CarregamentoDadosModulo ativo={!paginaPronta} titulo="Preparando Vendas e Serviços" mensagem="Carregando os dados do módulo…" corPrimaria={corPrimaria} temaEscuro={contextoInicial?.empresa.temaEscuro} />
       </>}
     </section>
     <RodapeAvanta className="shrink-0" />

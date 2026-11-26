@@ -6066,6 +6066,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [supplierRecords, setSupplierRecords] = useState<SupplierRecord[]>([]);
   const [catalogRecords, setCatalogRecords] = useState<CatalogItem[]>(() => inventory.map((item) => normalizeCatalogTaxProfile(item) as CatalogItem));
   const [managementCatalogBridge, setManagementCatalogBridge] = useState<ManagementCatalogBridge | null>(null);
+  const [presentationVersion, setPresentationVersion] = useState(0);
   const [managementBridgeOrigin, setManagementBridgeOrigin] = useState('');
   const [accessBridgeState, setAccessBridgeState] = useState<AccessBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '' });
   const [fiscalRulesBridgeState, setFiscalRulesBridgeState] = useState<FiscalRulesBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', configuration: null });
@@ -6121,6 +6122,14 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const managementProfileReady = !integratedManagementRuntime || Boolean(managementCatalogBridge?.company);
   const managementAccessReady = !integratedManagementRuntime || accessBridgeState.available;
   const managementContextReady = managementProfileReady && managementAccessReady;
+  useEffect(() => {
+    if (!presentationVersion || !integratedManagementRuntime || !managementCatalogBridge?.companyId || !managementProfileReady || !accessBridgeState.integrated || accessBridgeState.loading || !fiscalCertificateBridgeState.integrated || fiscalCertificateBridgeState.loading || !managementBridgeOrigin) return;
+    let paint = 0;
+    const frame = requestAnimationFrame(() => { paint = requestAnimationFrame(() => {
+      window.parent.postMessage({ type: 'AVANTALAB_VENDAS_PRESENTATION_V1', companyId: managementCatalogBridge.companyId, settled: true }, managementBridgeOrigin);
+    }); });
+    return () => { cancelAnimationFrame(frame); cancelAnimationFrame(paint); };
+  }, [presentationVersion, integratedManagementRuntime, managementCatalogBridge, managementProfileReady, accessBridgeState.integrated, accessBridgeState.loading, fiscalCertificateBridgeState.integrated, fiscalCertificateBridgeState.loading, managementBridgeOrigin]);
   const sidebarFiscalStatus = useMemo(() => {
     if (currentFiscalConfig.certificateValid && fiscalCertificateBridgeState.execution?.productionTransmissionAllowed) return null;
     if (currentFiscalConfig.certificateValid && fiscalCertificateBridgeState.execution?.transmissionAllowed) return { title: 'NF-e de teste disponível', detail: 'Somente homologação, sem valor fiscal' };
@@ -6702,6 +6711,10 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       if (fiscalDocuments) {
         const persisted = fiscalDocuments.documents.map(mapPersistedFiscalDocument);
         setFiscalDraftRecords((current) => [...persisted, ...current.filter((draft) => draft.persistenceSource !== 'server' && !persisted.some((record) => record.originId === draft.originId && record.documentType === draft.documentType && record.sourceLabel === draft.sourceLabel))]);
+        return;
+      }
+      if (event.data?.type === 'AVANTALAB_VENDAS_PRESENTATION_REQUEST_V1' && event.data.companyId === new URLSearchParams(window.location.search).get('companyId')) {
+        setPresentationVersion((current) => current + 1);
         return;
       }
       const connected = parseManagementCatalogMessage(event.data);
