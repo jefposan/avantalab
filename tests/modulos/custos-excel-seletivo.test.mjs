@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { CAMPOS_EXCEL, camposPresentesExcel, limitarPatchExcel, agruparColunasRevisao } from '../../app/custos/excel-seletivo.ts';
+import { sugerirColunaPreco, validarMapeamentosImportacao, montarAtualizacaoPrecos } from '../../app/custos/mapeamento-importacao-precos.ts';
 
 test('colunas ausentes e campos técnicos nunca entram no patch; texto vazio e zero são preservados',()=>{
   const campos=camposPresentesExcel(['Código','Nome','Marca','Custo'],['marca']);
@@ -18,8 +19,9 @@ test('fluxo seletivo conserva cabeçalhos técnicos, compatibilidade v2, prévia
   const source=readFileSync('app/custos/TabelasPrecosView.tsx','utf8');
   assert.match(source,/Selecionar colunas da importação/);
   assert.match(source,/revisarImportacaoSelecionada/);
-  assert.match(source,/Não importar/);
-  assert.match(source,/destinosPrecosImportacao/);
+  assert.match(source,/Não atualizar esta tabela/);
+  assert.match(source,/origensPorTabelaImportacao/);
+  assert.match(source,/sugerirColunaPreco/);
   assert.match(source,/Escolher colunas do Excel/);
   assert.match(source,/AVANTALAB-CUSTOS-3/);
   assert.match(source,/AVANTALAB-CUSTOS-2/);
@@ -28,6 +30,38 @@ test('fluxo seletivo conserva cabeçalhos técnicos, compatibilidade v2, prévia
   assert.match(source,/<RevisaoImportacao colunas=\{importacao.colunas\}/);
   assert.match(source,/indiceAliquotaIss >= 0 \? XLSX.utils.encode_col\(indiceAliquotaIss\) : null/);
   assert.match(source,/name === 'Metadados' \? 2 : 0/);
+});
+
+test('cada tabela sugere sua coluna de mesmo nome, com possibilidade de alterar e repetir uma origem',()=>{
+  const colunas = [
+    {codigo:'__FONTE_PADRAO__',cabecalho:'Preço padrão'},
+    {codigo:'DISTRIBUIDOR',cabecalho:'Preço · Distribuidor'},
+    {codigo:'SALAO',cabecalho:'Preço · Salão'},
+    {codigo:'REVENDA',cabecalho:'Preço · Revenda'},
+  ];
+  assert.equal(sugerirColunaPreco({codigo:'SALAO',nome:'Salão',padrao:false},colunas),'Preço · Salão');
+  assert.equal(sugerirColunaPreco({codigo:'DISTRIBUIDOR',nome:'Distribuidor',padrao:false},colunas),'Preço · Distribuidor');
+  assert.equal(sugerirColunaPreco({codigo:'PADRAO',nome:'Principal',padrao:true},colunas),'Preço padrão');
+  assert.equal(sugerirColunaPreco({codigo:'PROMO',nome:'Promoção',padrao:false},colunas),'');
+  const mapeamentos = [
+    {origem:'Preço · Distribuidor',destino:'DISTRIBUIDOR'},
+    {origem:'Preço · Distribuidor',destino:'SALAO'},
+  ];
+  assert.equal(validarMapeamentosImportacao(mapeamentos,colunas.map(coluna=>coluna.cabecalho),['DISTRIBUIDOR','SALAO']),null);
+  assert.match(String(validarMapeamentosImportacao([
+    {origem:'Preço · Distribuidor',destino:'SALAO'},
+    {origem:'Preço · Revenda',destino:'SALAO'},
+  ],colunas.map(coluna=>coluna.cabecalho),['DISTRIBUIDOR','SALAO'])),/só pode ser atualizada uma vez/);
+  const atualizados = montarAtualizacaoPrecos(
+    [{id:'id-produto-1',sku:'C1.0',atualizado_em:'2026-11-01T00:00:00Z'}],
+    [{produto_id:'id-produto-1',sku:'C1.0',cabecalho:'Preço · Distribuidor',preco:27.5}],
+    mapeamentos,'PADRAO',
+  );
+  assert.deepEqual(atualizados.precos, [
+    {produto_id:'id-produto-1',sku:'C1.0',tabela_codigo:'DISTRIBUIDOR',preco:27.5},
+    {produto_id:'id-produto-1',sku:'C1.0',tabela_codigo:'SALAO',preco:27.5},
+  ]);
+  assert.equal('preco_venda' in atualizados.produtos[0],false);
 });
 
 test('revisão agrupa colunas sem repetir prefixo de preço e mantém nomes distintos',()=>{
