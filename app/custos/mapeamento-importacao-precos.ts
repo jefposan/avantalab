@@ -1,9 +1,19 @@
-// O mesmo preço de origem pode atualizar várias tabelas de destino.
-// Um destino aparece somente uma vez para evitar sobrescritas ambíguas.
+// A tabela de DESTINO determina o campo que será atualizado; uma mesma
+// coluna do Excel pode ser reutilizada em quantas tabelas o usuário escolher.
 export type MapeamentoImportacaoPreco = {
-  id: number;
   origem: string;
   destino: string;
+};
+
+export type ColunaPrecoDisponivel = {
+  codigo: string;
+  cabecalho: string;
+};
+
+export type TabelaPrecoDestino = {
+  codigo: string;
+  nome: string;
+  padrao: boolean;
 };
 
 export type ValorOrigemPreco = {
@@ -12,6 +22,25 @@ export type ValorOrigemPreco = {
   cabecalho: string;
   preco: number;
 };
+
+const normalizarRotulo = (valor: string) => String(valor ?? '').normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR')
+  .replace(/\bpreco(?:s)?\b/g, ' ')
+  .replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+
+export function sugerirColunaPreco(
+  tabela: TabelaPrecoDestino,
+  colunasDisponiveis: ColunaPrecoDisponivel[],
+): string {
+  const candidatos = tabela.padrao ? ['preco padrao', 'padrao'] : [tabela.nome, tabela.codigo];
+  for (const nome of candidatos) {
+    const identificador = normalizarRotulo(nome);
+    const equivalente = colunasDisponiveis.find((coluna) => normalizarRotulo(coluna.cabecalho) === identificador
+      || normalizarRotulo(coluna.codigo) === identificador);
+    if (equivalente) return equivalente.cabecalho;
+  }
+  return '';
+}
 
 export function validarMapeamentosImportacao(
   mapeamentos: MapeamentoImportacaoPreco[],
@@ -22,10 +51,10 @@ export function validarMapeamentosImportacao(
   const destinosPermitidos = new Set(tabelasDisponiveis);
   const destinosUsados = new Set<string>();
   for (const item of mapeamentos) {
-    if (!item.origem || !item.destino) return 'Escolha a coluna do Excel e a tabela de destino para cada linha.';
+    if (!item.origem || !item.destino) return 'Escolha uma coluna de origem para cada tabela selecionada.';
     if (!origens.has(item.origem)) return `A coluna ${item.origem} não existe no arquivo.`;
     if (!destinosPermitidos.has(item.destino)) return `A tabela ${item.destino} não está disponível.`;
-    if (destinosUsados.has(item.destino)) return 'Cada tabela de destino só pode aparecer uma vez. Você pode repetir a coluna de origem.';
+    if (destinosUsados.has(item.destino)) return 'Cada tabela de destino só pode ser atualizada uma vez por importação.';
     destinosUsados.add(item.destino);
   }
   return null;
