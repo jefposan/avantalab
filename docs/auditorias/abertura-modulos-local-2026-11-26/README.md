@@ -35,3 +35,9 @@ Conferidos em novembro: vendido 10.212,65; a receber 6.574,35; recebido 0,00; cu
 A migração de estoque do pacote, 20261126210000, foi aplicada no projeto Supabase qzewxhdkwettnlmkjoqd pelo SQL Editor e registrada em schema_migrations. Verificação devolveu vendas_estoque_controle_ativo, default true, NOT NULL, versão 20261126210000. Sem atualização/exclusão de saldos, mínimos ou reservas.
 
 Validação final local: 472 testes direcionados de Vendas aprovados; TypeScript, PADRÃO AVANTA 1.24.0 e Ava 3.2.0.527 aprovados. Harnesses de interface atualizados para o editor oficial de quantidade e os novos estados de carregamento, preservando verificações de correção fiscal e de gravação.
+
+## Gate remoto e correção das verificações
+
+Primeiro envio 3.2.0.527: commit b69fbf6d, deployment dpl_4b2WS29fPRtA3TYGBeNjiJj4Zo9S. Máquina efetiva iad1, 8 CPUs e 16 GiB, 610 arquivos de teste em 4 processos. Suíte: 3.298 testes, 3.287 aprovados, 5 falhas e 6 ignorados; 144,3 s. Sem promoção.
+
+As cinco falhas exigiam a assinatura antiga do cabeçalho, a condição antiga de Preparando e Voltar na lista de produtos, contrárias aos ajustes solicitados. Foram atualizadas para conferir título em pílula, prontidão completa e Voltar somente no editor. O teste de retorno também executa o controlador real e verifica confirmação quando há edição pendente. Os 74 testes dos arquivos afetados passaram localmente antes de novo envio. Não houve alteração de produto nessa correção.

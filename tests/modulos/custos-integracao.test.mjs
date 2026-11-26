@@ -136,7 +136,7 @@ test('Hierarquia e vigência são reconfirmadas no servidor e no banco', () => {
 
 test('Cabeçalho de Custos segue Projetos, retorna ao início autorizado e alterna o tema do perfil', () => {
   assert.match(cliente, /Voltar ao início do AvantaLab/);
-  assert.match(cliente, /<ModuloHeader empresa=\{access\.empresa\} onBack=\{voltar\}/);
+  assert.match(cliente, /<ModuloHeader moduleTitle="Custos e Precificação" empresa=\{access\.empresa\} onBack=\{voltar\}/);
   assert.match(cabecalhoModulo, /className = styles\.moduleLogo/);
   assert.match(cliente, /Abrir ajustes de Custos e Precificação/);
   assert.match(cliente, /\/api\/modulos\/custos\/ajustes/);
@@ -459,7 +459,7 @@ test('módulos mantêm a estrutura visível e cobrem apenas os dados até estare
   assert.match(workspace, /<CarregamentoDadosModulo ativo=\{carregando\}/);
   assert.match(projetos, /<CarregamentoDadosModulo ativo=\{carregandoDados\}/);
   assert.match(recebimentosClient, /<CarregamentoDadosModulo ativo=\{carregando\}/);
-  assert.match(vendasIntegrado, /<CarregamentoDadosModulo ativo=\{!perfilPronto \|\| !iframePronto\}/);
+  assert.match(vendasIntegrado, /<CarregamentoDadosModulo ativo=\{!paginaPronta\}/);
 });
 
 test('tipografia dos módulos usa tons neutros e preserva a cor de perfil para ações', () => {
@@ -481,7 +481,7 @@ test('tipografia dos módulos usa tons neutros e preserva a cor de perfil para a
 });
 
 test('todos os cabeçalhos dos módulos exibem a logo do perfil ou o nome como alternativa', () => {
-  assert.match(cliente, /<ModuloHeader empresa=\{access\.empresa\}/);
+  assert.match(cliente, /<ModuloHeader moduleTitle="Custos e Precificação" empresa=\{access\.empresa\}/);
   assert.match(cabecalhoModulo, /empresa\.logoUrl\s*\?\s*<AdaptiveModuleLogo[\s\S]*?src=\{empresa\.logoUrl\}/);
   assert.match(cabecalhoModulo, /function cropNeutralLogoMargins\(image: HTMLImageElement\)/);
   assert.match(cabecalhoModulo, /getImageData\(0, 0, sampleWidth, sampleHeight\)/);

@@ -325,8 +325,8 @@ test('contas conectadas inicia recolhido a cada abertura, sem ocultar ações ne
 });
 
 test('marketplaces and costs reuse the same company header and return action', () => {
-  assert.match(client, /<ModuloHeader empresa=\{\{ \.\.\.empresa, temaEscuro: effectiveDark \}\} onBack=\{voltar\}/);
-  assert.match(read('app/custos/CustosClient.tsx'), /<ModuloHeader empresa=\{access.empresa\}/);
+  assert.match(client, /<ModuloHeader moduleTitle="Anúncios em marketplaces" empresa=\{\{ \.\.\.empresa, temaEscuro: effectiveDark \}\} onBack=\{voltar\}/);
+  assert.match(read('app/custos/CustosClient.tsx'), /<ModuloHeader moduleTitle="Custos e Precificação" empresa=\{access.empresa\}/);
   assert.match(client, /solicitarRetornoAoModuloHospedeiro/);
   assert.match(client, /moduloId=marketplaces/);
   assert.match(read('app/components/ModuloHeader.tsx'), /app\/custos\/custos.module.css/);
