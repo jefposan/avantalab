@@ -16,6 +16,10 @@ test('colunas ausentes e campos técnicos nunca entram no patch; texto vazio e z
 
 test('fluxo seletivo conserva cabeçalhos técnicos, compatibilidade v2, prévia e nova tentativa real',()=>{
   const source=readFileSync('app/custos/TabelasPrecosView.tsx','utf8');
+  assert.match(source,/Selecionar colunas da importação/);
+  assert.match(source,/revisarImportacaoSelecionada/);
+  assert.match(source,/Não importar/);
+  assert.match(source,/destinosPrecosImportacao/);
   assert.match(source,/Escolher colunas do Excel/);
   assert.match(source,/AVANTALAB-CUSTOS-3/);
   assert.match(source,/AVANTALAB-CUSTOS-2/);
@@ -85,7 +89,8 @@ test('PostgreSQL: atualização parcial multicatálogo, preço isolado, empresa,
     await rpc([row(p1),row(p2)],[preco(p1,0),preco(p2,15)],true);
     assert.deepEqual((await db.query('select * from vendas_mobile_catalogo_produtos order by id')).rows,antes);
     assert.deepEqual((await db.query('select preco::float from custos_tabela_preco_itens order by produto_id')).rows.map(r=>r.preco),[0,15]);
-    await assert.rejects(rpc([row(p1)],[preco(p1,9)],true),/alterado após a exportação/);
+    await rpc([row(p1)],[preco(p1,9)],true);
+    assert.equal(Number((await db.query('select preco from custos_tabela_preco_itens where produto_id=$1',[p1])).rows[0].preco),9);
     await assert.rejects(rpc([row(p3)],[],true),/não localizado/);
     await assert.rejects(rpc([row(p1,{catalogo_id:c2})]),/não permitidos/);
     await assert.rejects(rpc([row(p1),row(p1)]),/IDs de produto repetidos/);
@@ -98,8 +103,10 @@ test('PostgreSQL: atualização parcial multicatálogo, preço isolado, empresa,
     assert.equal(depois[0].marca,''); assert.equal(Number(depois[0].preco_venda),12);
     assert.equal(Number(depois[0].preco_custo),5); assert.equal(depois[0].catalogo_id,c1);
     assert.equal(depois[1].descricao,'Nova'); assert.equal(depois[1].catalogo_id,c2);
-    assert.equal((await db.query('select count(*)::int n from custos_tabela_preco_historico')).rows[0].n,3);
-    await assert.rejects(rpc([row(p1,{marca:'velha'})],[],true),/alterado no sistema/);
+    assert.equal((await db.query('select count(*)::int n from custos_tabela_preco_historico')).rows[0].n,4);
+    await rpc([row(p1,{preco_venda:14})],[],true);
+    assert.equal(Number((await db.query('select preco_venda from vendas_mobile_catalogo_produtos where id=$1',[p1])).rows[0].preco_venda),14);
+    assert.equal((await db.query('select marca from vendas_mobile_catalogo_produtos where id=$1',[p1])).rows[0].marca,'');
     await db.exec(`create or replace function custos_pode_acessar_empresa(uuid,boolean) returns boolean language sql as 'select false';`);
     await assert.rejects(rpc([row(p1)]),/Sem permissão/);
   } finally { await db.close(); }
