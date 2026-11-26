@@ -43,7 +43,7 @@ begin
     where jsonb_typeof(x) is distinct from 'object' or coalesce(x->>'id','') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') then
     raise exception 'Mantenha os IDs internos dos produtos exportados.';
   end if;
-  if p_exportado_em is null then raise exception 'Mantenha a data de exportação da planilha.'; end if;
+  -- Arquivos de terceiros podem não ter metadados de exportação; identificação por ID/SKU foi resolvida e validada pelo servidor.
   if exists(select 1 from jsonb_array_elements(p_produtos) x group by x->>'id' having count(*)>1) then
     raise exception 'A planilha possui IDs de produto repetidos.';
   end if;
