@@ -418,29 +418,27 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       const { data } = await aguardarComLimite(supabase.auth.getSession(), 10_000, 'A confirmação da sessão demorou mais que o esperado. Tente novamente.');
       const token = data.session?.access_token;
       if (!token) throw new Error('Entre na Gestão para utilizar o laboratório integrado.');
-      const respostaPerfil = await aguardarComLimite(fetch(`/api/modulos/vendas/perfil?empresaId=${encodeURIComponent(perfilId)}`, {
-        headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
-      }), 20_000, 'A confirmação do perfil demorou mais que o esperado. Tente novamente.');
-      const perfil = await respostaPerfil.json().catch(() => ({}));
+      // Cada API valida o acesso: iniciar leituras independentes em paralelo, sem liberar a tela antecipadamente.
+      const dadosIniciais = Promise.allSettled([
+        carregarPermissoes(perfilId), carregarRecebimentos(perfilId), carregarOperacoes(perfilId),
+      ]);
+      const parametros = new URLSearchParams({ empresaId: perfilId });
+      const [respostaPerfil, resposta] = await Promise.all([
+        aguardarComLimite(fetch(`/api/modulos/vendas/perfil?${parametros}`, {
+          headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
+        }), 20_000, 'A confirmação do perfil demorou mais que o esperado. Tente novamente.'),
+        aguardarComLimite(fetch(`/api/modulos/vendas/catalogo?${parametros}`, {
+          headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
+        }), 30_000, 'O catálogo demorou mais que o esperado. Tente novamente.'),
+      ]);
+      const [perfil, json] = await Promise.all([respostaPerfil.json().catch(() => ({})), resposta.json().catch(() => ({}))]);
       if (!respostaPerfil.ok || perfil.tipoPerfil !== 'empresa' || !perfil.cadastro) {
         throw new Error(perfil.mensagem || 'Complete o cadastro do perfil empresarial antes de usar o módulo.');
       }
+      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível carregar o catálogo de Custos.');
       setPerfilCadastro(perfil.cadastro);
       setLogoUrl(String(perfil.logoUrl || ''));
       setCorPrimaria(typeof perfil.corPrimaria === 'string' && /^#[0-9a-f]{6}$/i.test(perfil.corPrimaria) ? perfil.corPrimaria : '#003e73');
-      // A Visão geral depende do acesso, catálogo e resumos comerciais, não dos históricos das outras abas.
-      const dadosIniciais = Promise.allSettled([
-        carregarPermissoes(perfilId),
-        carregarRecebimentos(perfilId),
-        carregarOperacoes(perfilId),
-      ]);
-      const parametros = new URLSearchParams({ empresaId: perfilId });
-      const resposta = await fetch(`/api/modulos/vendas/catalogo?${parametros}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: 'no-store',
-      });
-      const json = await resposta.json().catch(() => ({}));
-      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível carregar o catálogo de Custos.');
       const proximo = json.catalogo as CatalogoVendasDTO;
       setCatalogo(proximo);
       await aguardarComLimite(dadosIniciais, 30_000, 'O carregamento inicial demorou mais que o esperado. Tente novamente.');

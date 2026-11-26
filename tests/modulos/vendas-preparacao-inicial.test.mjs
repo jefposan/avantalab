@@ -14,7 +14,7 @@ function loader({failCatalog=false}={}){
  fetch:async url=>url.includes('/perfil?')?{ok:true,json:async()=>({tipoPerfil:'empresa',cadastro:{empresa_id:'company'}})}:failCatalog?Promise.reject(Error('Catálogo indisponível')):catalog.promise};
  for(const key of ['Erro','Catalogo','LogoUrl','PerfilCadastro','CorPrimaria','DadosProntosEmpresa','ApresentacaoEmpresa'])env['set'+key]=v=>state[key]=typeof v==='function'?v(state[key]):v;
  for(const name of ['DocumentosFiscais','RegrasFiscais','PerfilFiscal','Recebimentos','Estoque','Clientes','Fornecedores','Operacoes'])env['carregar'+name]=async()=>{};
- env.carregarPermissoes=()=>permission.promise;
+ env.carregarPermissoes=()=>{state.permissionStarted=true;return permission.promise;};
  const start=parent.indexOf('  const carregarCatalogo = useCallback('),end=parent.indexOf('\n  useEffect(',start);
  run(parent.slice(start,end)+'\nexports.load=carregarCatalogo;',env);
  return {state,catalog,permission,load:env.exports.load};
@@ -53,4 +53,12 @@ test('históricos lentos de outras abas não bloqueiam a Visão geral',async()=>
  assert.equal(h.state.DadosProntosEmpresa,'company');
  const start=parent.indexOf('const dadosIniciais ='),end=parent.indexOf('const parametros =',start);
  assert.doesNotMatch(parent.slice(start,end),/carregarEstoque|carregarClientes|carregarFornecedores|carregarDocumentosFiscais|carregarPerfilFiscal/);
+});
+
+test('permissões e resumos começam antes de o catálogo responder, sem abrir a página antes deles',async()=>{
+ const h=loader(),pending=h.load('company');await tick();
+ assert.equal(h.state.permissionStarted,true,'permissões iniciadas enquanto o catálogo está pendente');
+ assert.equal(h.state.DadosProntosEmpresa,'');
+ h.permission.resolve(true);await tick();assert.equal(h.state.DadosProntosEmpresa,'','catálogo ainda pendente');
+ h.catalog.resolve({ok:true,json:async()=>({catalogo:{itens:[]}})});await pending;assert.equal(h.state.DadosProntosEmpresa,'company');
 });
