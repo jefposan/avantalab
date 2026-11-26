@@ -20,6 +20,15 @@ import styles from './custos.module.css';
 import { CAMPOS_EXCEL, camposPresentesExcel, limitarPatchExcel } from './excel-seletivo';
 import RevisaoImportacao from './RevisaoImportacao';
 
+type SelecaoImportacaoPendente = {
+  arquivoNome: string;
+  exportadoEm: string | null;
+  produtos: Array<Record<string, unknown>>;
+  precos: Array<Record<string, unknown>>;
+  campos: string[];
+  colunasPrecos: Array<{ codigo: string; cabecalho: string }>;
+};
+
 type ImportacaoPendente = {
   arquivoNome: string;
   exportadoEm: string | null;
@@ -94,6 +103,9 @@ export default function TabelasPrecosView({
   const [editandoTabela, setEditandoTabela] = useState<Partial<TabelaPreco> | null>(null);
   const [processando, setProcessando] = useState(false);
   const [importacao, setImportacao] = useState<ImportacaoPendente | null>(null);
+  const [selecaoImportacao, setSelecaoImportacao] = useState<SelecaoImportacaoPendente | null>(null);
+  const [camposImportacao, setCamposImportacao] = useState<string[]>([]);
+  const [destinosPrecosImportacao, setDestinosPrecosImportacao] = useState<Record<string, string>>({});
   const [exportacaoAberta, setExportacaoAberta] = useState(false);
   const [erroExportacao, setErroExportacao] = useState('');
   const [camposExportacao, setCamposExportacao] = useState<string[]>([]);
@@ -261,7 +273,7 @@ export default function TabelasPrecosView({
 
   const lerArquivo = async (arquivo: File) => {
     ultimoArquivo.current = arquivo;
-    setImportacao(null); setErroImportacao(''); setProcessando(true); onErro('');
+    setImportacao(null); setSelecaoImportacao(null); setErroImportacao(''); setProcessando(true); onErro('');
     try {
       const XLSX = await import('xlsx');
       const livro = XLSX.read(await arquivo.arrayBuffer(), { type: 'array', cellDates: true });
@@ -323,7 +335,7 @@ export default function TabelasPrecosView({
         return colunasPrecosMetadados.flatMap((coluna) => {
           if (!Object.prototype.hasOwnProperty.call(linha, coluna.cabecalho)) return [];
           const preco = numeroPlanilhaOpcional(valorLinha(linha, coluna.cabecalho), `${coluna.cabecalho}, produto ${sku}`);
-          return preco === null ? [] : [{ sku, produto_id: String(valorLinha(linha, 'ID interno (não alterar)') || '').trim(), tabela_codigo: coluna.codigo, preco }];
+          return preco === null ? [] : [{ sku, produto_id: String(valorLinha(linha, 'ID interno (não alterar)') || '').trim(), tabela_codigo: coluna.codigo, cabecalho: coluna.cabecalho, preco }];
         });
       });
       const abaPrecosLegados = livro.Sheets['Tabelas de preços'];
@@ -340,10 +352,71 @@ export default function TabelasPrecosView({
       if (!produtosImportados.length) throw new Error('A planilha não contém produtos para validar.');
       if (!camposEditaveis.length && !precosImportados.length) throw new Error('Nenhuma coluna editável preenchida. Selecione campos ou tabelas ao exportar.');
       const exportadoEm = String(linhasMetadados.find((linha) => linha[0] === 'exportado_em')?.[1] || '').trim() || null;
-      const resumo = await importarCadastroProdutosPrecos(companyId, catalogoId, arquivo.name, exportadoEm, produtosImportados, precosImportados, false);
-      setImportacao({ arquivoNome: arquivo.name, exportadoEm, produtos: produtosImportados, precos: precosImportados, resumo, colunas: [...CAMPOS_EXCEL.filter(([campo]) => camposEditaveis.includes(campo)).map(([, titulo]) => titulo), ...colunasPrecosMetadados.filter((coluna) => cabecalhosArquivo.includes(coluna.cabecalho)).map((coluna) => coluna.cabecalho)] });
+      const colunasPrecos = colunasPrecosMetadados.length
+        ? colunasPrecosMetadados.filter((coluna) => cabecalhosArquivo.includes(coluna.cabecalho))
+        : [...new Set(precosLegados.map((preco) => String(preco.tabela_codigo)))].map((codigo) => ({ codigo, cabecalho: `Preço · ${codigo}` }));
+      const destinos = Object.fromEntries(colunasPrecos.map((coluna) => [
+        coluna.cabecalho,
+        tabelas.find((tabela) => !tabela.padrao && tabela.codigo === coluna.codigo)?.codigo || '',
+      ]));
+      setCamposImportacao([]);
+      setDestinosPrecosImportacao(destinos);
+      setSelecaoImportacao({
+        arquivoNome: arquivo.name, exportadoEm, produtos: produtosImportados, precos: precosImportados,
+        campos: camposEditaveis, colunasPrecos,
+      });
     } catch (falha) { setErroImportacao(falha instanceof Error ? falha.message : 'Não foi possível ler a planilha.'); }
     finally { setProcessando(false); if (inputArquivo.current) inputArquivo.current.value = ''; }
+  };
+
+  const revisarImportacaoSelecionada = async () => {
+    if (!selecaoImportacao) return;
+    const destinos = selecaoImportacao.colunasPrecos
+      .map((coluna) => ({ coluna, destino: destinosPrecosImportacao[coluna.cabecalho] || '' }))
+      .filter((entrada) => entrada.destino);
+    const destinosRepetidos = destinos.map(({ destino }) => destino);
+    if (new Set(destinosRepetidos).size !== destinosRepetidos.length) {
+      setErroImportacao('Selecione apenas uma coluna de origem para cada tabela de preços.');
+      return;
+    }
+    if (!camposImportacao.length && !destinos.length) {
+      setErroImportacao('Selecione ao menos uma coluna para importar.');
+      return;
+    }
+    const produtosSelecionados = selecaoImportacao.produtos.map((produto) => limitarPatchExcel(produto, camposImportacao));
+    const precosSelecionados = selecaoImportacao.precos.flatMap((preco) => {
+      const coluna = destinos.find((entrada) => entrada.coluna.cabecalho === (
+        preco.cabecalho || `Preço · ${preco.tabela_codigo}`
+      ));
+      if (!coluna) return [];
+      return [{
+        sku: preco.sku,
+        produto_id: preco.produto_id,
+        tabela_codigo: coluna.destino,
+        preco: preco.preco,
+      }];
+    });
+    setProcessando(true); setErroImportacao(''); onErro('');
+    try {
+      const resumo = await importarCadastroProdutosPrecos(
+        companyId, catalogoId, selecaoImportacao.arquivoNome, selecaoImportacao.exportadoEm,
+        produtosSelecionados, precosSelecionados, false,
+      );
+      setImportacao({
+        arquivoNome: selecaoImportacao.arquivoNome,
+        exportadoEm: selecaoImportacao.exportadoEm,
+        produtos: produtosSelecionados,
+        precos: precosSelecionados,
+        resumo,
+        colunas: [
+          ...CAMPOS_EXCEL.filter(([campo]) => camposImportacao.includes(campo)).map(([, titulo]) => String(titulo)),
+          ...destinos.map(({ destino }) => `Preço · ${tabelas.find((tabela) => tabela.codigo === destino)?.nome || destino}`),
+        ],
+      });
+      setSelecaoImportacao(null);
+    } catch (falha) {
+      setErroImportacao(falha instanceof Error ? falha.message : 'Não foi possível validar as colunas selecionadas.');
+    } finally { setProcessando(false); }
   };
 
   const confirmarImportacao = async () => {
@@ -471,6 +544,40 @@ export default function TabelasPrecosView({
 
     <Modal open={Boolean(editandoTabela)} onClose={() => !processando && setEditandoTabela(null)} title={editandoTabela?.id ? 'Ajustar tabela de preços' : 'Nova tabela de preços'} description={editandoTabela?.id ? 'Altere o nome, a descrição ou a disponibilidade desta tabela.' : 'Informe somente um nome para identificar a nova tabela.'}>
       {editandoTabela && <div className={styles.priceTableForm}><label>Nome<input autoFocus minLength={2} value={editandoTabela.nome || ''} maxLength={80} onChange={(evento) => setEditandoTabela({ ...editandoTabela, nome: evento.target.value })} /></label>{editandoTabela.id && <label>Descrição<textarea rows={3} value={editandoTabela.descricao || ''} onChange={(evento) => setEditandoTabela({ ...editandoTabela, descricao: evento.target.value })} /></label>}{editandoTabela.id && !editandoTabela.padrao && <label className={styles.checkboxLine}><input type="checkbox" checked={editandoTabela.ativo !== false} onChange={(evento) => setEditandoTabela({ ...editandoTabela, ativo: evento.target.checked })} />Tabela ativa</label>}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} onClick={() => setEditandoTabela(null)} disabled={processando}>Cancelar</button><button type="button" className={styles.primaryButton} onClick={() => void gravarTabela()} disabled={processando || (editandoTabela.nome?.trim().length || 0) < 2}>Salvar tabela</button></div></div>}
+    </Modal>
+
+    <Modal open={Boolean(selecaoImportacao)} onClose={() => !processando && setSelecaoImportacao(null)} title="Selecionar colunas da importação" description={selecaoImportacao?.arquivoNome || ''} wide compact headerTone="accent">
+      {selecaoImportacao && <div className={styles.exportSelection}>
+        <p>Escolha quais dados da planilha substituirão os cadastrados. Datas antigas não impedem a atualização após sua confirmação. Nenhuma coluna não selecionada será modificada.</p>
+        <section aria-label="Campos do cadastro para importação">
+          <div className={styles.exportGroupHeader}><strong>Dados do cadastro <span>· {camposImportacao.length} selecionado(s)</span></strong></div>
+          <div className={styles.exportColumnGrid}>
+            {CAMPOS_EXCEL.filter(([campo]) => selecaoImportacao.campos.includes(campo)).map(([campo, titulo]) =>
+              <label key={campo}><input type="checkbox" checked={camposImportacao.includes(campo)} disabled={processando}
+                onChange={() => setCamposImportacao((atuais) => atuais.includes(campo) ? atuais.filter((item) => item !== campo) : [...atuais, campo])} />{titulo}</label>)}
+          </div>
+        </section>
+        <section aria-label="Mapeamento das tabelas de preços">
+          <div className={styles.exportGroupHeader}><strong>Preços das tabelas</strong></div>
+          <p>Para cada coluna de origem, escolha uma tabela de destino ou ignore-a. Cada tabela pode receber uma única coluna.</p>
+          <div className={styles.exportColumnGrid}>
+            {selecaoImportacao.colunasPrecos.map((coluna) =>
+              <label key={coluna.cabecalho} style={{display:'grid',gap:6,alignItems:'start'}}>
+                <span>{coluna.cabecalho}</span>
+                <select aria-label={`Destino de ${coluna.cabecalho}`} value={destinosPrecosImportacao[coluna.cabecalho] || ''} disabled={processando}
+                  onChange={(evento) => setDestinosPrecosImportacao((atuais) => ({ ...atuais, [coluna.cabecalho]: evento.target.value }))}>
+                  <option value="">Não importar</option>
+                  {tabelas.filter((tabela) => !tabela.padrao).map((tabela) => <option key={tabela.id} value={tabela.codigo}>{tabela.nome}</option>)}
+                </select>
+              </label>)}
+          </div>
+        </section>
+        {erroImportacao && <p className={styles.repriceError} role="alert">{erroImportacao}</p>}
+        <footer className={styles.formActions}>
+          <button type="button" className={styles.secondaryButton} disabled={processando} onClick={() => setSelecaoImportacao(null)}>Cancelar</button>
+          <button type="button" className={styles.primaryButton} disabled={processando} onClick={() => void revisarImportacaoSelecionada()}>{processando ? 'Validando…' : 'Revisar importação'}</button>
+        </footer>
+      </div>}
     </Modal>
 
     <Modal open={Boolean(importacao)} onClose={() => !processando && setImportacao(null)} title="Revisar importação" description={importacao?.arquivoNome || ''} wide compact>
