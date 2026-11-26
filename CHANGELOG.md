@@ -1,3 +1,12 @@
+# 3.2.0.523 — AvantaVendas: retornar comprovantes ao fluxo anterior
+
+## 3.2.0.523-av215 - Preservar próximas gravações e reparo pontual
+
+- Retirados o reprocessamento geral, o bloco/botão Atualizar conferência e a rolagem adicional no rodapé. Tela e imagem retornam ao comportamento anterior à av214.
+- Mantidas as proteções das próximas gravações, preservação do retrato em edição/reenvio e registro de inclusão. Sem reverter migrações aplicadas, RLS, proteção de contexto ou outbox.
+- Reparo pontual da Duda é conservado. Nenhum lançamento ou backup excluído ou regravado nesta entrega.
+- Preparado localmente; publicação pendente.
+
 # 3.2.0.522 — AvantaVendas: fluxo geral de conferência dos comprovantes
 
 ## 3.2.0.522-av214 - Linha histórica comum por inclusão original

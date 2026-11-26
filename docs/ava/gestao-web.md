@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.522 -->
+<!-- ava-version: 3.2.0.523 -->
+
+> Revisão 3.2.0.523: sem impacto operacional na Gestão Web; retorno do comprovante restrito ao AvantaVendas independente.
 
 > Revisão 3.2.0.522: sem impacto operacional na Gestão Web; fluxo geral de conferência histórica restrito ao AvantaVendas independente.
 

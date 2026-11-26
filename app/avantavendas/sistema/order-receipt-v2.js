@@ -104,8 +104,7 @@
     texto(ctx, conteudoLimitado, LARGURA / 2, y, { tamanho: 28, peso: 700, cor: paleta.forte, alinhamento: 'center' });
   }
 
-  async function criarCanvas({ empresa = 'AvantaLab', cliente = 'Cliente não informado', data = 'Data não informada', saldoAnterior = 'R$ 0,00', saldoAnteriorCredito = false, valorPedido = 'R$ 0,00', saldoAtual = 'R$ 0,00', saldoHistoricoPendente = false, desconto = '', tipo = 'pedido', titulo = 'Comprovante de pedido', itens = [] } = {}) {
-    if (saldoHistoricoPendente) { saldoAnterior = 'Em conferência'; saldoAtual = 'Em conferência'; saldoAnteriorCredito = false; }
+  async function criarCanvas({ empresa = 'AvantaLab', cliente = 'Cliente não informado', data = 'Data não informada', saldoAnterior = 'R$ 0,00', saldoAnteriorCredito = false, valorPedido = 'R$ 0,00', saldoAtual = 'R$ 0,00', desconto = '', tipo = 'pedido', titulo = 'Comprovante de pedido', itens = [] } = {}) {
     // Aceitar também o rótulo anterior durante a transição de cache do PWA.
     const consignado = tipo === 'consignado' || titulo === 'Pedido consignado' || titulo === 'Comprovante de consignado';
     const paleta = consignado ? PALETA_CONSIGNADO : PALETA_PEDIDO;
@@ -156,7 +155,7 @@
     retangulo(ctx, 236, 326, 608, 82, 26, paleta.sucessoFundo, paleta.sucessoBorda); icone(ctx, 'confirmado', 288, 367, 44, paleta.sucessoIcone); texto(ctx, consignado ? 'Consignado registrado com sucesso!' : 'Pedido registrado com sucesso!', 570, 367, { tamanho: 24, peso: 800, cor: paleta.sucesso, alinhamento: 'center', largura: 460, linhaBase: 'middle' });
 
     if (!consignado) {
-      card(ctx, yResumo, alturaResumo, '', saldoHistoricoPendente ? 'SALDO HISTÓRICO EM CONFERÊNCIA' : 'RESUMO FINANCEIRO', paleta); fundoDeValor(ctx, yResumo + 72, 86, paleta.suave); texto(ctx, 'Saldo anterior', 180, yResumo + 125, { tamanho: 26, peso: 600, cor: '#425675' });
+      card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO', paleta); fundoDeValor(ctx, yResumo + 72, 86, paleta.suave); texto(ctx, 'Saldo anterior', 180, yResumo + 125, { tamanho: 26, peso: 600, cor: '#425675' });
       if (saldoAnteriorCredito) {
         // Reservar espaço à esquerda do valor, inclusive para moedas longas.
         ctx.font = '800 31px Arial, sans-serif';

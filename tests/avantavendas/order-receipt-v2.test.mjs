@@ -24,18 +24,6 @@ function canvasDeTeste() {
   return { canvas: { width: 0, height: 0, getContext: () => contexto }, preenchimentos, textos, posicoes: contexto.posicoes };
 }
 
-test('pedido em conferência mantém valor e itens, sem exibir saldos presumidos', async () => {
-  const codigo = await readFile(new URL('../../app/avantavendas/sistema/order-receipt-v2.js', import.meta.url), 'utf8');
-  const {canvas,textos}=canvasDeTeste();
-  class ImagemFalsa {set src(v){queueMicrotask(()=>this.onerror?.());}}
-  const window={};vm.runInNewContext(codigo,{window,document:{createElement:()=>canvas},Image:ImagemFalsa,Object,Promise,encodeURIComponent,queueMicrotask});
-  await window.OrderReceiptV2.criarCanvas({saldoHistoricoPendente:true,saldoAnterior:'R$ 999,00',saldoAtual:'R$ 888,00',valorPedido:'R$ 56,00',itens:[{principal:'Produto',valor:'R$ 56,00'}]});
-  assert.ok(textos.includes('SALDO HISTÓRICO EM CONFERÊNCIA'));
-  assert.equal(textos.filter(t=>t==='Em conferência').length,2);
-  assert.ok(textos.includes('R$ 56,00'));assert.ok(textos.includes('Produto'));
-  assert.ok(!textos.includes('R$ 999,00'));assert.ok(!textos.includes('R$ 888,00'));
-});
-
 test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', async () => {
   const codigo = await readFile(new URL('../../app/avantavendas/sistema/order-receipt-v2.js', import.meta.url), 'utf8');
   const { canvas, preenchimentos, textos } = canvasDeTeste();
@@ -63,7 +51,7 @@ test('OrderReceiptV2 mantém itens, bonificações e valores já formatados', as
   assert.match(codigo, /'Saldo atual', 276, ySaldo \+ 137/);
   assert.match(codigo, /card\(ctx, yPedido, alturaCardPedido, '', consignado \? 'CONSIGNADO REGISTRADO' : 'PEDIDO REGISTRADO', paleta\)/);
   assert.match(codigo, /card\(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO', paleta\)/);
-  assert.match(codigo, /saldoHistoricoPendente \? 'SALDO HISTÓRICO EM CONFERÊNCIA' : 'RESUMO FINANCEIRO'/);
+  assert.match(codigo, /card\(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO', paleta\)/);
   assert.match(codigo, /const alturaResumo = 184/);
   assert.match(codigo, /if \(temDesconto\).*'Desconto concedido'.*yPedido \+ 208/s);
   assert.doesNotMatch(codigo, /'Desconto concedido'.*yResumo/s);

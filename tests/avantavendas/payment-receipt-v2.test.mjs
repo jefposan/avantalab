@@ -13,17 +13,6 @@ function contextoDeCanvas() {
   return { ctx, textos };
 }
 
-test('pagamento em conferência não reutiliza saldos inválidos na imagem compartilhada',async()=>{
- const codigo=await readFile(new URL('../../app/avantavendas/sistema/payment-receipt-v2.js',import.meta.url),'utf8');
- const {ctx,textos}=contextoDeCanvas();const canvas={getContext:()=>ctx};const window={};
- class ImagemFalsa{set src(v){queueMicrotask(()=>this.onerror?.());}}
- vm.runInNewContext(codigo,{window,document:{createElement:()=>canvas},Image:ImagemFalsa,Object,Promise,encodeURIComponent,queueMicrotask});
- await window.PaymentReceiptV2.criarCanvas({saldoHistoricoPendente:true,saldoAnterior:'R$ 999,00',saldoAtual:'R$ 888,00',valorPago:'R$ 50,00',desconto:'R$ 6,00'});
- assert.ok(textos.includes('Saldo histórico em conferência'));assert.equal(textos.filter(t=>t==='Em conferência').length,2);
- assert.ok(textos.includes('R$ 50,00'));assert.ok(textos.includes('R$ 6,00'));
- assert.ok(!textos.includes('R$ 999,00'));assert.ok(!textos.includes('R$ 888,00'));
-});
-
 test('PaymentReceiptV2 compõe o comprovante com os valores formatados sem cálculo próprio', async () => {
   const codigo = await readFile(
     new URL('../../app/avantavendas/sistema/payment-receipt-v2.js', import.meta.url),

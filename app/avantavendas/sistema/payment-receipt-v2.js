@@ -178,8 +178,7 @@
     texto(ctx, conteudoLimitado, LARGURA / 2, y, { tamanho: 28, peso: 700, cor: '#0A2F6B', alinhamento: 'center' });
   }
 
-  async function criarCanvas({ empresa = 'AvantaLab', cliente = 'Cliente não informado', data = 'Data não informada', saldoAnterior = 'R$ 0,00', valorPago = 'R$ 0,00', saldoAtual = 'R$ 0,00', saldoHistoricoPendente = false, formaPagamento = 'Não informado', desconto = '', rotuloValorPago = 'Valor pago' } = {}) {
-    if (saldoHistoricoPendente) { saldoAnterior = 'Em conferência'; saldoAtual = 'Em conferência'; }
+  async function criarCanvas({ empresa = 'AvantaLab', cliente = 'Cliente não informado', data = 'Data não informada', saldoAnterior = 'R$ 0,00', valorPago = 'R$ 0,00', saldoAtual = 'R$ 0,00', formaPagamento = 'Não informado', desconto = '', rotuloValorPago = 'Valor pago' } = {}) {
     const clienteExibido = primeiroNomeClienteComprovante(cliente);
     const ySaldoAnterior = 440;
     const alturaSaldoAnterior = 112;
@@ -216,7 +215,7 @@
 
     // Saldo anterior é uma informação isolada, não um resumo financeiro.
     retangulo(ctx, 44, ySaldoAnterior, 992, alturaSaldoAnterior, 34, '#FFFFFF', COR_BORDA_CARD);
-    texto(ctx, saldoHistoricoPendente ? 'Saldo histórico em conferência' : 'Saldo anterior', 112, ySaldoAnterior + 70, { tamanho: saldoHistoricoPendente ? 22 : 28, peso: 600, cor: '#425675', largura: 440 });
+    texto(ctx, 'Saldo anterior', 112, ySaldoAnterior + 70, { tamanho: 28, peso: 600, cor: '#425675' });
     texto(ctx, saldoAnterior, 968, ySaldoAnterior + 70, { tamanho: 35, peso: 800, cor: '#0A2F6B', alinhamento: 'right', largura: 390 });
 
     card(ctx, yPagamento, alturaCardPagamento, '', 'PAGAMENTO REGISTRADO'); fundoDeValor(ctx, yPagamento + 72, temDesconto ? 238 : 180, PALETA_PAGAMENTO.valor);

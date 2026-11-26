@@ -13,19 +13,17 @@ test('compartilhamento distingue consignado, pedido e não altera os dados', asy
     const original = JSON.stringify(venda);
     let recebido, compartilhamento;
     const ctx = vm.createContext({
-      backendAtivo: false,
       state: { vendas: [venda], clientes: [{ id: 'cliente', nome: 'Jeff Ferreira' }] },
       window: { OrderReceiptV2: { criarCanvas: async dados => { recebido = dados; return 'canvas'; } } },
       resumoComprovantePedido: () => {
         assert.equal(consignado, false, 'consignação não consulta saldos para compartilhar');
-        return { status: 'confirmado', saldoAnterior: 0, creditoAnterior: 22, saldoAtual: 34, creditoAtual: 0 };
+        return { saldoAnterior: 0, creditoAnterior: 22, saldoAtual: 34 };
       },
       itemPedidoBonificado: () => false, detalheQuantidadeItemComprovante: () => '6 × R$ 63,00',
       pedidoEhConsignado: () => consignado, nomeEmpresaParaComprovantes: () => 'Bóra Bebidas',
       moeda: valor => Number(valor).toFixed(2), dataComprovante: x => x,
       compartilharCanvasComprovante: async (...args) => { compartilhamento = args; return true; }, fecharSheet() {},
     });
-    vm.runInContext(fonte.slice(fonte.indexOf('function valorHistoricoComprovante('), fonte.indexOf('function avisoHistoricoComprovanteHtml(')), ctx);
     vm.runInContext(funcao('compartilharPedido', 'compartilharPagamento'), ctx);
     assert.equal(await ctx.compartilharPedido(venda.id), true);
     assert.equal(recebido.tipo, consignado ? 'consignado' : 'pedido');

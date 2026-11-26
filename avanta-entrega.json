@@ -1,7 +1,7 @@
 {
   "baseDeploymentId": "dpl_J8fYvpstu9sMfz3yYUx4ape2BmE1",
-  "migrations": [{ "path": "supabase/migrations/20261126180000_preservar_ordem_inclusao_comprovantes.sql", "sha256": "0c903e3b04b30ae3c627874c47bd4e7fa5136783736eb52215fd1dd9bda2633d" }],
-  "version": "3.2.0.522",
-  "scope": "AvantaVendas: conferência histórica geral por inclusão original; tela e compartilhamento; edição não muda a ordem financeira",
-  "releaseStatus": "publicação e migração autorizadas pelo titular; promoção automática condicionada ao build completo aprovado"
+  "migrations": [],
+  "version": "3.2.0.523",
+  "scope": "AvantaVendas: retornar visual e leitura dos comprovantes ao fluxo anterior; preservar próximas gravações e reparo da Duda",
+  "releaseStatus": "preparado localmente; sem migração, publicação ou reversão de dados; reconferir main e base antes de eventual envio"
 }
