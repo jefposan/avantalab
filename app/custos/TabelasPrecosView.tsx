@@ -622,7 +622,23 @@ export default function TabelasPrecosView({
           </div>
         </section>
         <section aria-label="Colunas de preços para cada tabela">
-          <div className={styles.exportGroupHeader}><strong>Destino dos preços</strong></div>
+          <div className={styles.exportGroupHeader}><strong>Destino dos preços</strong>
+            <div className={styles.importMappingQuickActions}>
+              <button type="button" className={styles.secondaryButton} disabled={processando}
+                onClick={() => setOrigensPorTabelaImportacao({})}>Limpar seleção</button>
+              <button type="button" className={styles.secondaryButton} disabled={processando}
+                onClick={() => {
+                  const tabelaPadrao = tabelas.find((tabela) => tabela.padrao);
+                  const colunaPadrao = selecaoImportacao.colunasPrecos.find((coluna) =>
+                    coluna.cabecalho === 'Preço padrão' || sugerirColunaPreco(
+                      {codigo:'PADRAO',nome:'Padrão',padrao:true},[coluna],
+                    ) === coluna.cabecalho);
+                  setCamposImportacao([]);
+                  setOrigensPorTabelaImportacao(tabelaPadrao && colunaPadrao
+                    ? {[tabelaPadrao.codigo]: colunaPadrao.cabecalho} : {});
+                }}>Somente preço padrão</button>
+            </div>
+          </div>
           <p>Os produtos são associados pelo Código e conferidos pelo Nome quando há códigos repetidos. Para cada tabela do AvantaLab, escolha a coluna de preços do Excel. O sistema sugere automaticamente as colunas de mesmo nome; você pode trocar a origem e utilizá-la em várias tabelas.</p>
           <div className={styles.importMappingList}>
             {tabelas.filter((tabela) => tabela.ativo || tabela.padrao).map((tabela) =>
@@ -645,7 +661,7 @@ export default function TabelasPrecosView({
                 </label>
               </div>)}
           </div>
-          <p>Uma coluna alimenta todos os produtos correspondentes da tabela selecionada. Células vazias não alteram valores. Cada tabela recebe no máximo uma coluna, mas a mesma coluna pode alimentar várias tabelas.</p>
+          <p>Selecione <strong>Não atualizar esta tabela</strong> para preservar seus preços, ou use <strong>Limpar seleção</strong> para começar do zero. A opção <strong>Somente preço padrão</strong> desmarca as demais tabelas e os campos cadastrais. Células vazias não alteram valores.</p>
         </section>
         {erroImportacao && <p className={styles.repriceError} role="alert">{erroImportacao}</p>}
         <footer className={styles.formActions}>
