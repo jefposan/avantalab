@@ -1,3 +1,8 @@
+## 3.2.0.526 — Vendas: razão social na Central Fiscal
+
+- Priorizar razão social ou nome completo do destinatário na coluna Cliente de Notas Fiscais, com fallback para registros antigos sem esses campos.
+- Somente apresentação; sem regravar notas, alterar XML, numeração ou ambiente.
+
 ## 3.2.0.525 — Vendas: restaurar o contrato da emissão fiscal
 
 - Corrigir JSON e idempotência da ponte fiscal de abertura, validação, reserva, continuação e cancelamento confirmado.

@@ -1,3 +1,4 @@
+// Revisão 3.2.0.526: Notas Fiscais exibe a razão social do destinatário, ou o nome completo da pessoa física, antes do nome de exibição. Documentos e retratos fiscais existentes não são alterados.
 // Revisão 3.2.0.525: A abertura da emissão fiscal envia JSON e chave de solicitação; respostas preservam o ambiente real em preparação, assinatura e continuação. O aviso fixo de homologação foi removido. Abrir a preparação não reserva número nem transmite.
 // Revisão 3.2.0.524: Notas Fiscais, Clientes, Produtos e serviços, Estoque e Recebimentos usam a mesma linha de resumos compactos de Serviços, com largura distribuída e rolagem horizontal em telas pequenas.
 // Revisão 3.2.0.524: Na Visão geral, os cards compactos mostram Total vendido, A receber, Receita recebida e Custos, nesta ordem; Custos respeita a permissão existente.

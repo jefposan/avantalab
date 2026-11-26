@@ -58,7 +58,7 @@ function mapDocument(row) {
     originType: text(row.origem_tipo, 40),
     documentType: text(row.documento_tipo, 20),
     draftStatus: row.rascunho_cancelado_em ? 'cancelado' : text(row.rascunho_situacao, 40),
-    client: text(customer.displayName || customer.name || customer.legalName, 180),
+    client: text(customer.legalName, 180) || text(customer.name, 180) || text(customer.displayName, 180),
     clientDocument: text(customer.document, 20),
     clientCity: text(customer.address?.city || customer.city, 120),
     total: number(totals.total),

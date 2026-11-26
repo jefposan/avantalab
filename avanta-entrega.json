@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_2tuh7ydf3E7tmahBPdNh1bNDqofB",
+  "baseDeploymentId": "dpl_5eovFekPJxTq28WmApNWmHWk3XFq",
   "migrations": [],
-  "version": "3.2.0.525",
-  "scope": "Vendas: restaurar abertura fiscal e preservar ambiente de produção"
+  "version": "3.2.0.526",
+  "scope": "Vendas: exibir razão social do cliente em Notas Fiscais"
 }
