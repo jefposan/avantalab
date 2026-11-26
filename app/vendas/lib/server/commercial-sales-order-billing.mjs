@@ -187,6 +187,7 @@ export function createPostgresCommercialSalesOrderBillingRepository({ pool } = {
           throw coded('AV-SALES-BILLING-RESERVATION');
         }
 
+        if(controlled.length||reservations.length){const control=(await client.query("select coalesce((to_jsonb(e)->>'vendas_estoque_controle_ativo')::boolean,true) enabled from public.empresas e where id=$1",[companyId])).rows[0];if(control?.enabled===false)throw coded('AV-STOCK-CONTROL-DISABLED');}
         let stockReleased = 0;
         if (moveStock === false) {
           for (const reservation of reservations) {

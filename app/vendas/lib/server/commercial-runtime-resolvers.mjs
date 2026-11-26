@@ -28,7 +28,7 @@ export function createPostgresCommercialCatalogResolver({ pool } = {}) {
       select item.*,
         exists(
           select 1 from public.vendas_estoque_saldos saldo
-          where saldo.empresa_id=$1 and saldo.produto_id=item.id and coalesce((to_jsonb(saldo)->>'controle_ativo')::boolean,true) and coalesce((select (to_jsonb(e)->>'vendas_estoque_controle_ativo')::boolean from public.empresas e where e.id=$1),true)
+          where saldo.empresa_id=$1 and saldo.produto_id=item.id and coalesce((select (to_jsonb(e)->>'vendas_estoque_controle_ativo')::boolean from public.empresas e where e.id=$1),true)
         ) as controla_estoque
       from public.vendas_mobile_catalogo_produtos item
       join public.vendas_mobile_catalogos catalog on catalog.id=item.catalogo_id

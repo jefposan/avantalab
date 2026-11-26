@@ -1,7 +1,7 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
 - Adicionar configuração de mínimo por produto, avisos de reposição no sino e atalho ao campo de quantidade na entrada.
-- Adicionar controles individual e geral da empresa em Vendas e Serviços, com confirmação, proteção de reservas e preservação do histórico. Migração aditiva preparada, não aplicada no remoto.
+- Uma única chave de controle em Ajustes, sem chaves por produto/pedido. Desligar e religar preservam saldos, mínimos, reservas e histórico. Operação sem seletores de locais e com textos curtos. Migração preparada, não aplicada no remoto.
 - Renomear a coluna Operação de Produtos e serviços para Estoque, inclusive no layout mobile.
 - Compactar mais o espaço entre colunas e eliminar folgas internas antes de Ações no desktop, sem mudar larguras.
 - Reduzir somente o padding horizontal entre colunas de Produtos e serviços, mantendo larguras e ordem.

@@ -3,9 +3,9 @@
   "migrations": [
     {
       "path": "supabase/migrations/20261126210000_vendas_controle_estoque.sql",
-      "sha256": "062f9effe059c02c7e5d647870dc71ee6c2905eb5bad765aeecbbb4c85ef940f"
+      "sha256": "e272cf1431afcb1080468e65b4cf236703dd33690fbf3adbdac5fd8c289a96b6"
     }
   ],
   "version": "3.2.0.526",
-  "scope": "Vendas: refinamentos comerciais, mínimo de estoque, avisos e controle por produto e empresa"
+  "scope": "Vendas: refinamentos comerciais, mínimo e avisos de estoque com chave única da empresa"
 }

@@ -173,14 +173,16 @@ test('PostgreSQL: pedido sem controle confirma, separa e fatura com saldo zero, 
   } finally { await db.close(); }
 });
 
-test('tela mantém escolha de estoque ponta a ponta e layout compacto restrito ao pedido', () => {
+test('tela usa chave geral e preserva retratos antigos e layout compacto do pedido', () => {
   const source = readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
   const css = readFileSync('app/vendas/sistema/vendas.css', 'utf8');
   assert.match(source, /reserveStock: incomingRecord.order.reserveStock === true && managementCatalogBridge.stockIntegrated/);
   assert.match(source, /reserveStock: record.order.reserveStock === true/);
   assert.match(source, /reserveStockDefault: false/);
   assert.match(source, /const insufficient = reserveStock &&/);
-  assert.match(source, /Controlar estoque neste pedido/);
+  assert.doesNotMatch(source, /Controlar estoque neste pedido/);
+  assert.match(source, /const reserveStock = stockControlEnabled && requestedReserveStock/);
+  assert.match(source, /ChaveAtivacao aria-label="Controlar estoque"/);
   assert.match(source, /order-item order-item-compact/);
   assert.match(css, /grid-template-areas: "name controls result remove"/);
   assert.match(css, /order-item-compact .order-item-name strong[^}]+white-space: normal; overflow-wrap: anywhere/);

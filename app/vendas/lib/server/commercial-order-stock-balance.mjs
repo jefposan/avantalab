@@ -20,7 +20,7 @@ export async function loadOrderStockBalance(client,{companyId,localId,productId,
 }
 
 export async function assertStockControlActive(client,companyId,balance) {
- if(!balance||!Object.hasOwn(balance,'controle_ativo'))return;
- const company=(await client.query('select vendas_estoque_controle_ativo enabled from public.empresas where id=$1',[companyId])).rows[0];
- if(balance.controle_ativo===false||company?.enabled===false)throw Object.assign(Error('AV-STOCK-CONTROL-DISABLED'),{code:'AV-STOCK-CONTROL-DISABLED'});
+ if(!balance)return;
+ const company=(await client.query("select coalesce((to_jsonb(e)->>'vendas_estoque_controle_ativo')::boolean,true) enabled from public.empresas e where id=$1",[companyId])).rows[0];
+ if(company?.enabled===false)throw Object.assign(Error('AV-STOCK-CONTROL-DISABLED'),{code:'AV-STOCK-CONTROL-DISABLED'});
 }
