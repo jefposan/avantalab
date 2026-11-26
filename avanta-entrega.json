@@ -1,7 +1,7 @@
 {
-  "baseDeploymentId": "dpl_J8fYvpstu9sMfz3yYUx4ape2BmE1",
+  "baseDeploymentId": "dpl_HV4gY55G9JJJ8tJw9auei1PykfSZ",
   "migrations": [],
   "version": "3.2.0.523",
   "scope": "AvantaVendas: retornar visual e leitura dos comprovantes ao fluxo anterior; preservar próximas gravações e reparo da Duda",
-  "releaseStatus": "preparado localmente; sem migração, publicação ou reversão de dados; reconferir main e base antes de eventual envio"
+  "releaseStatus": "publicação autorizada; retorno pontual dos comprovantes, sem migração ou reversão de dados"
 }
