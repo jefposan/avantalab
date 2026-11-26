@@ -2337,7 +2337,7 @@ button.commercial-indicator-target { width:28px; min-width:28px; border:0; backg
 @media(max-width:600px){.fiscal-note-identity,.fiscal-note-files{grid-template-columns:1fr}.fiscal-note-cancel{max-width:100%}.fiscal-note-outcome strong{font-size:15px}}
 
 /* Linha aprovada: valores editáveis acima, identificação fiscal informativa abaixo. */
-.order-item.order-item-two-line { display: block; padding: 8px 4px 8px 10px; }
+.order-item.order-item-two-line { display: block; padding: 8px 4px 3px 10px; }
 .order-item-commercial { display: grid; grid-template-columns: minmax(110px,1fr) 120px 88px 88px 100px 56px; gap: 6px; align-items: center; min-width: 0; }
 .order-item-two-line .order-item-name { grid-area: auto; gap: 3px; }
 .order-item-two-line .order-item-name strong { font-size: 12px; font-weight: 600; line-height: 1.35; }
@@ -2619,8 +2619,8 @@ button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }
   .order-inline-quantity .line-number-editor input, .order-inline-quantity .horizontal-steppers > button { height: 42px; }
 }
 
-.order-item-taxes { min-width: 0; margin-top: 4px; }
-.order-item-taxes > summary { display: flex; align-items: center; gap: 5px; width: fit-content; min-height: 28px; padding: 2px 4px; border-radius: 6px; color: var(--av-muted); font-size: 10px; cursor: pointer; list-style: none; }
+.order-item-taxes { min-width: 0; margin-top: 1px; }
+.order-item-taxes > summary { display: flex; align-items: center; gap: 5px; width: fit-content; min-height: 22px; padding: 0 4px; border-radius: 6px; color: var(--av-muted); font-size: 10px; cursor: pointer; list-style: none; }
 .order-item-taxes > summary::-webkit-details-marker { display: none; }
 .order-item-taxes > summary > svg { transform: rotate(90deg); transition: transform .15s ease; }
 .order-item-taxes[open] > summary > svg { transform: rotate(-90deg); }

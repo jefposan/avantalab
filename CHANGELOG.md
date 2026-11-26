@@ -1,5 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
+- Reduzir a margem inferior e a altura do controle Tributos nos itens, preservando o alvo de toque.
 - Recolher tributos por padrão em cada produto, com controle independente acessível e indicador de pendência fiscal.
 - Ordenar itens de pedido pelo último adicionado e reutilizar o editor de quantidade com botões laterais, preservando quantidades fracionadas e compactando valores/subtotal.
 - Adicionar modo local opt-in de consulta autenticada à API oficial, sem senha SQL, sem cache e com todas as escritas de Vendas/Fiscal bloqueadas; inativo em produção e na Vercel.
