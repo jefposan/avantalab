@@ -149,8 +149,8 @@ export default function ModuloHeader({ empresa, onBack, returnLabel = 'Início',
   const back = <button type="button" onClick={onBack} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</button>;
   return <header data-product-focus-navigation={productFocusNavigation || undefined} className={`${styles.root} ${styles.moduleHeader} ${empresa.temaEscuro ? styles.dark : ''} ${className}`} style={{ '--custos-brand': empresa.corPrimaria, minHeight: 'var(--module-header-height)' } as CSSProperties}>
     {moduleTitle ? <div className={styles.moduleHeaderStart}>
-      {navigation ?? (returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back)}
       <span className={styles.moduleHeaderTitle}>{moduleTitle}</span>
+      {navigation ?? (returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back)}
     </div> : (navigation ?? (returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back))}
     <div className={styles.moduleIdentity}>
       {empresa.logoUrl ? <AdaptiveModuleLogo key={empresa.logoUrl} src={empresa.logoUrl} alt={empresa.nome} frameClassName={styles.moduleLogoFrame} /> : <span>{empresa.nome}</span>}

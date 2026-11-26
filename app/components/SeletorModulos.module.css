@@ -69,3 +69,7 @@
 .trigger.dark { background: #152536; color: #f1f5f9; border-color: color-mix(in srgb, var(--seletor-brand) 35%, #425367); }
 @media (max-width: 480px) { .trigger { padding: 8px 9px; gap: 6px; font-size: 12px; } }
 @media (prefers-reduced-motion: reduce) { .panel, .trigger { scroll-behavior: auto; } }
+
+/* Cabeçalho compacto solicitado para Custos e Vendas; toque preserva 44 px. */
+.trigger.compact{min-height:32px;padding:5px 10px;font-size:12px}
+@media(pointer:coarse){.trigger.compact{min-height:44px}}

@@ -3114,4 +3114,4 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido 
 
 // Revisão visual 3.2.0.526: resumos cadastrais e financeiros de Custos compactados como Vendas; sem impacto operacional.
 
-// Revisão 3.2.0.526: Custos e Precificação e Vendas e Serviços exibem o nome do módulo no cabeçalho fixo.
+// Revisão 3.2.0.526: Custos e Precificação e Vendas e Serviços exibem o nome do módulo em pílula colorida no cabeçalho fixo, acima de Navegar compacto.

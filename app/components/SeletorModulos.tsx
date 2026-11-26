@@ -11,7 +11,7 @@ import ModalConfirmacao from './ModalConfirmacao';
 import CarregamentoDadosModulo from './CarregamentoDadosModulo';
 import styles from './SeletorModulos.module.css';
 
-type Props = { empresaId: string; moduloAtual: string; darkMode?: boolean; corPrimaria?: string; ocupado?: boolean; alteracoesPendentes?: boolean; salvarAntesDeSair?: () => Promise<boolean>; descricaoPendencia?: string };
+type Props = { compact?: boolean; empresaId: string; moduloAtual: string; darkMode?: boolean; corPrimaria?: string; ocupado?: boolean; alteracoesPendentes?: boolean; salvarAntesDeSair?: () => Promise<boolean>; descricaoPendencia?: string };
 const icons: Record<string, string> = { dashboard: 'grid', ponto: 'calendar', vendas_mobile: 'people', recebimentos_presencial: 'map', projetos: 'layout', custos: 'barcode', vendas: 'shoppingBag', marketplaces: 'storefront' };
 
 /** Apresentação apenas: o controlador revalida cada destino antes da navegação. */
@@ -26,7 +26,7 @@ export function ListaDestinosNavegacao({ opcoes, moduloAtual, bloqueado, onSelec
   </Fragment>)}</>;
 }
 
-export default function SeletorModulos({ empresaId, moduloAtual, darkMode = false, corPrimaria = '#003E73', ocupado = false, alteracoesPendentes = false, salvarAntesDeSair, descricaoPendencia }: Props) {
+export default function SeletorModulos({ compact = false, empresaId, moduloAtual, darkMode = false, corPrimaria = '#003E73', ocupado = false, alteracoesPendentes = false, salvarAntesDeSair, descricaoPendencia }: Props) {
   const [aberto, setAberto] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
@@ -134,7 +134,7 @@ export default function SeletorModulos({ empresaId, moduloAtual, darkMode = fals
   }
 
   return <>
-    <button ref={botao} type="button" className={`${styles.trigger} ${darkMode ? styles.dark : ''}`} style={tema} aria-label="Navegar" aria-expanded={aberto} aria-controls={aberto ? id : undefined} disabled={!empresaId || ocupado || carregando} title={ocupado ? 'Aguarde a conclusão da operação' : 'Navegar entre Dashboard e módulos'} onClick={() => { if (aberto) { pedido.current += 1; setAberto(false); } else { setErro(''); setAberto(true); } }}>
+    <button ref={botao} type="button" className={`${styles.trigger} ${compact ? styles.compact : ''} ${darkMode ? styles.dark : ''}`} style={tema} aria-label="Navegar" aria-expanded={aberto} aria-controls={aberto ? id : undefined} disabled={!empresaId || ocupado || carregando} title={ocupado ? 'Aguarde a conclusão da operação' : 'Navegar entre Dashboard e módulos'} onClick={() => { if (aberto) { pedido.current += 1; setAberto(false); } else { setErro(''); setAberto(true); } }}>
       <Icon name="grid" size={18} /><span>Navegar</span><Icon name="chevron" size={14} />
     </button>
     {aberto && createPortal(<nav data-product-focus-navigation id={id} ref={painel} tabIndex={-1} aria-label="Navegar para" className={`${styles.panel} ${darkMode ? styles.dark : ''}`} style={{ ...tema, ...posicao }}>
