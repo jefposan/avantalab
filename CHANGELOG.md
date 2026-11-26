@@ -1,3 +1,13 @@
+# 3.2.0.520 — AvantaVendas: preservar saldo histórico dos pedidos
+
+## 3.2.0.520-av213 - Retrato financeiro e reenvios
+
+- Editar/reenviar um pedido com retrato financeiro preserva débito/crédito anteriores; somente seu próprio total recalcula o saldo final. Outro pedido posterior não vira saldo anterior.
+- Reenvio usa o mesmo identificador sem repetir o pedido no estado local. Migração aditiva protege o retrato no banco inclusive em reenvios de clientes antigos, sem alterar permissões/RLS nem regravar saldos já existentes.
+- Novos pedidos registram horário real de inclusão no servidor em `registrado_em`, independente da data comercial; edições não mudam esse horário. Legados ficam sem horário, sem backfill fictício.
+- Retrato legado zerado sem crédito identificável não inventa crédito/débito; mantém seu saldo e exige conferência para alterar total. Consignados continuam sem resumo de dívida.
+- Não corrige automaticamente comprovantes antigos já inconsistentes; exige revisão da origem. Sem exclusão/alteração direta de vendas, pagamentos ou descontos existentes.
+
 # 3.2.0.519 — Vendas e Serviços: recebimentos, indicadores e confirmações
 
 - Removida a ação Registrar devolução total do menu de pedidos; Estornar baixa de estoque já devolve os produtos ao saldo, mantendo estorno financeiro separado.

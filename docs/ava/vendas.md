@@ -1,4 +1,7 @@
-<!-- ava-version: 3.2.0.519 -->
+<!-- ava-version: 3.2.0.520 -->
+<!-- avantavendas-asset-revision: 213 -->
+
+> Revisão 3.2.0.520-av213: Editar ou reenviar pedido com retrato financeiro conserva o saldo anterior e o crédito original; outro pedido posterior não entra nesse saldo. O saldo final histórico acompanha somente o total do próprio pedido, não o saldo atual do cadastro. Proteção também no banco para clientes antigos. Novos pedidos têm horário real de inclusão do servidor, independente da data comercial; legados não recebem horário inventado. Crédito legado indeterminado exige conferência antes de mudar total; edição sem mudar total conserva o saldo zerado. Reenvio não duplica o pedido no estado local. Consignados, pagamentos e descontos preservados. Comprovantes antigos já inconsistentes exigem revisão específica; esta entrega não os zera nem os corrige automaticamente.
 
 > Revisão 3.2.0.519: Sem impacto operacional nos aplicativos independentes; ocultação de parcelas estornadas restrita a Recebimentos Web.
 

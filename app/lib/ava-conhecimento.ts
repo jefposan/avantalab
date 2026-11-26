@@ -1,3 +1,4 @@
+// Revisão 3.2.0.520-av213: AvantaVendas preserva débito/crédito anteriores ao editar/reenviar pedido; só o total do próprio pedido muda o saldo final histórico. Comprovantes antigos inconsistentes exigem revisão, sem correção automática. Crédito legado indeterminado exige conferência para alterar valor. Novos pedidos guardam horário real do servidor separado da data comercial. Gestão Web/Mobile sem impacto.
 // Revisão local 3.2.0.516: aviso introdutório de Clientes removido; sem impacto operacional.
 // Revisão visual 3.2.0.515: cabeçalho Web de Vendas e Serviços fixo, com espaço pela altura real e rolagem do módulo independente do rodapé externo. Sem mudança operacional.
 // Revisão textual 3.2.0.515: confirmação de estorno resumida; sem mudança nas regras ou orientação operacional.
@@ -2749,6 +2750,7 @@ export function guiaOperacionalAva(valor: string | null | undefined) {
 - Exportar relatório: Menu → Exportar relatório → escolha ano/mês com dados, conteúdo e PDF ou Excel.
 - Projetos, Custos e Vendas e Serviços são módulos Web; não invente seus menus dentro deste aplicativo.`,
     vendas: `FLUXOS ESSENCIAIS — AVANTAVENDAS (não confundir com Gestão ou ERP)
+Pedido com retrato financeiro preserva saldo/crédito anteriores ao editar ou reenviar; pedido posterior não vira saldo anterior. O saldo final do comprovante é histórico, diferente do saldo atual do cadastro. Crédito legado indeterminado exige conferência para alterar total, sem inventar valores. A versão 3.2.0.520-av213 não repara automaticamente comprovantes antigos inconsistentes nem altera pagamentos existentes.
 - Pedido: abra o cliente ou Pedidos → Novo pedido; selecione cliente, produtos e quantidades e confira antes de confirmar.
 - Pagamento: no card do cliente, toque Pagamento; informe valor, data e forma e confirme no formulário.
 - Conteúdo comercial e destino financeiro são vínculos independentes; conectar catálogo não envia automaticamente o resultado à Gestão.

@@ -9510,10 +9510,11 @@ async function finalizarPedidoCliente() {
   }
   let mutacaoIniciada = false;
   try {
-    let financeiroAnterior = saldoFinanceiroCliente(rascunho.clienteId, rascunho.editandoId || '');
+    const pedidoPersistenciaId = rascunho.editandoId || rascunho.idPersistencia || '';
+    let financeiroAnterior = saldoFinanceiroCliente(rascunho.clienteId, pedidoPersistenciaId);
     if (backendAtivo && navigator.onLine) {
       try {
-        financeiroAnterior = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId, rascunho.editandoId || '');
+        financeiroAnterior = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId, pedidoPersistenciaId);
       } catch (error) {
         if (!erroTemporarioPersistencia(error)) {
           toast(erroSessaoExpiradaVendas(error)
@@ -9523,10 +9524,30 @@ async function finalizarPedidoCliente() {
         }
       }
     }
+    // Editar ou reenviar não transforma vendas posteriores em dívida anterior.
+    // Usar o retrato confirmado do próprio pedido, nunca o saldo atual da cliente.
+    const pedidoPersistido = pedidoPersistenciaId && state.vendas.find((item) => item.id === pedidoPersistenciaId && item.cliente_id === rascunho.clienteId);
+    const metadadosPersistidos = metadadosPedido(pedidoPersistido);
+    if (pedidoPersistido && !pedidoEhConsignado(pedidoPersistido)
+      && Object.hasOwn(metadadosPersistidos, 'saldo_anterior') && Object.hasOwn(metadadosPersistidos, 'saldo_final')) {
+      const original = resumoComprovantePedido(pedidoPersistido);
+      financeiroAnterior = { debito: original.saldoAnterior, credito: original.creditoAnterior };
+    }
     const saldoLiquidoAnterior = financeiroAnterior.debito - financeiroAnterior.credito;
-    const saldoAtual = rascunho.tipo === 'consignado'
+    let saldoAtual = rascunho.tipo === 'consignado'
       ? financeiroAnterior.debito
       : Math.max(0, saldoLiquidoAnterior + totais.total);
+    const creditoLegadoIndeterminado = pedidoPersistido && !pedidoEhConsignado(pedidoPersistido) && rascunho.tipo !== 'consignado'
+      && !Object.hasOwn(metadadosPersistidos, 'credito_anterior')
+      && metadadosPersistidos.saldo_anterior === 0 && metadadosPersistidos.saldo_final === 0
+      && Number(pedidoPersistido.total) > 0;
+    if (creditoLegadoIndeterminado) {
+      if (Math.round(Number(pedidoPersistido.total) * 100) !== Math.round(totais.total * 100)) {
+        toast('O crédito original deste pedido antigo precisa ser conferido antes de alterar seu valor.');
+        return;
+      }
+      saldoAtual = 0;
+    }
     const custoTotalPedido = rascunho.itens.reduce((soma, item) => {
       const produto = state.produtos.find((registro) => registro.id === item.produto_id);
       return soma + Number(item.quantidade || 0) * Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
@@ -9551,7 +9572,7 @@ async function finalizarPedidoCliente() {
         // outras vendas como se ele pertencesse a este consignado.
         ...(rascunho.tipo === 'consignado' ? {} : {
           saldo_anterior: financeiroAnterior.debito,
-          credito_anterior: financeiroAnterior.credito,
+          ...(creditoLegadoIndeterminado ? {} : { credito_anterior: financeiroAnterior.credito }),
           saldo_final: saldoAtual,
         }),
       }),
@@ -9572,7 +9593,7 @@ async function finalizarPedidoCliente() {
         )
       : venda;
     aplicarEstoquesConfirmadosPedido(salvo);
-    state.vendas = rascunho.editandoId
+    state.vendas = state.vendas.some((item) => item.id === salvo.id)
       ? state.vendas.map((item) => item.id === salvo.id ? salvo : item)
       : [salvo, ...state.vendas];
     if (backendAtivo && !mutacaoPendenteOfflineVendas(salvo)) {

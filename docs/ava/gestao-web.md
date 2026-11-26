@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.519 -->
+<!-- ava-version: 3.2.0.520 -->
+
+> Revisão 3.2.0.520: sem impacto operacional na Gestão Web; preservação do retrato financeiro restrita ao AvantaVendas independente.
 
 > Revisão 3.2.0.519: Recebimentos Web oculta parcelas integralmente estornadas ou canceladas da lista, totais e seletores. Refaturar exibe somente novas parcelas válidas, com sua situação própria. O histórico interno e estornos ainda pendentes permanecem preservados.
 

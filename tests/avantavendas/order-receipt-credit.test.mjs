@@ -117,3 +117,38 @@ for (const credito of [22, 56, 100]) {
     assert.equal(ctx.resumoComprovantePedido(salvo).creditoAnterior, credito);
   });
 }
+
+for (const modo of ['edicao', 'reenvio']) {
+  for (const total of [500, 450]) {
+    test(`${modo}: Duda preserva saldo anterior zero após outro pedido de 1110; total ${total}`, async () => {
+      const primeiro = pedido({ saldo_anterior: 0, credito_anterior: 0, saldo_final: 500 }, 500);
+      const segundo = pedido({ saldo_anterior: 500, saldo_final: 1610 }, 1110, { id: 'segundo' });
+      const antigo = pedido(null, 1389.5, { id: 'antigo' });
+      const pagamentos = [{ id: 'quitacao', cliente_id: 'cliente', valor: 1200, desconto: 189.5 }];
+      const ctx = fluxo([primeiro, segundo, antigo], pagamentos);
+      const outrosAntes = JSON.stringify([segundo, antigo, pagamentos]);
+      const avisos = [];
+      Object.assign(ctx, {
+        backendAtivo: false, navigator: { onLine: false }, document: { getElementById: () => null },
+        valor: () => '2026-11-19', toast: (s) => avisos.push(s), traduzErro: (e) => e.message,
+        totaisPedidoClienteRascunho: () => ({ subtotal: total, desconto: 0, total }),
+        iniciarMutacaoDadosVendas() {}, finalizarMutacaoDadosVendas() {}, aplicarEstoquesConfirmadosPedido() {},
+        confirmarMutacaoDadosVendas: async () => {}, atualizarDashboardAposLancamento: async () => {},
+        render() {}, abrirPedidoCliente() {}, restaurarPesquisaClientesDoLancamento() {}, mutacaoPendenteOfflineVendas: () => false,
+      });
+      vm.runInContext(`let pedidoClienteSalvando = false; let pedidoClienteRascunho = {
+        clienteId:'cliente', tipo:'venda', ${modo === 'edicao' ? "editandoId:'pedido'" : "idPersistencia:'pedido'"},
+        itens:[{quantidade:1,preco:${total}}]
+      };`, ctx);
+      vm.runInContext(trecho('async function finalizarPedidoCliente()', 'function abrirEditarPedido('), ctx);
+      await ctx.finalizarPedidoCliente();
+      assert.deepEqual(avisos, modo === 'edicao' ? ['Pedido atualizado.'] : []);
+      assert.equal(ctx.state.vendas.length, 3, 'reenvio não duplica no estado');
+      const resumo = ctx.resumoComprovantePedido(ctx.state.vendas.find((v) => v.id === 'pedido'));
+      assert.equal(resumo.saldoAnterior, 0);
+      assert.equal(resumo.saldoAtual, total);
+      assert.equal(JSON.stringify([ctx.state.vendas[1], ctx.state.vendas[2], ctx.state.pagamentos]), outrosAntes);
+      assert.equal(ctx.saldoFinanceiroCliente('cliente').debito, total + 1110);
+    });
+  }
+}

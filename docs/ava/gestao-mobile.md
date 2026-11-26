@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.519 -->
+<!-- ava-version: 3.2.0.520 -->
+
+> Revisão 3.2.0.520: sem impacto operacional na Gestão Mobile; preservação do retrato financeiro restrita ao AvantaVendas independente.
 
 > Revisão 3.2.0.519: Sem impacto operacional nos aplicativos independentes; ocultação de parcelas estornadas restrita a Recebimentos Web.
 
