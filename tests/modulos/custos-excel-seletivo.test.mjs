@@ -14,16 +14,20 @@ test('colunas ausentes e campos técnicos nunca entram no patch; texto vazio e z
   assert.equal(new Set(CAMPOS_EXCEL.map(([campo])=>campo)).size,CAMPOS_EXCEL.length);
 });
 
-test('fluxo seletivo conserva cabeçalhos técnicos, compatibilidade v2, prévia e nova tentativa real',()=>{
-  const source=readFileSync('app/custos/TabelasPrecosView.tsx','utf8');
-  assert.match(source,/Escolher colunas do Excel/);
-  assert.match(source,/AVANTALAB-CUSTOS-3/);
-  assert.match(source,/AVANTALAB-CUSTOS-2/);
-  assert.match(source,/limitarPatchExcel/);
-  assert.match(source,/ultimoArquivo.current\) void lerArquivo\(ultimoArquivo.current\)/);
-  assert.match(source,/<RevisaoImportacao colunas=\{importacao.colunas\}/);
-  assert.match(source,/indiceAliquotaIss >= 0 \? XLSX.utils.encode_col\(indiceAliquotaIss\) : null/);
-  assert.match(source,/name === 'Metadados' \? 2 : 0/);
+test('exportação mantém formato e campos técnicos; importação de preços usa seleção e revisão exclusivas',()=>{
+ const source=readFileSync('app/custos/TabelasPrecosView.tsx','utf8');
+ const parser=readFileSync('app/custos/importacao-precos.ts','utf8');
+ const modal=readFileSync('app/custos/ImportarPrecosModal.tsx','utf8');
+ assert.match(source,/Escolher colunas do Excel/);
+ assert.match(source,/AVANTALAB-CUSTOS-3/);
+ assert.match(parser,/AVANTALAB-CUSTOS-2/);
+ assert.match(source,/<ImportarPrecosModal/);
+ assert.match(modal,/<ChaveAtivacao/);
+ assert.match(modal,/Voltar à seleção/);
+ assert.match(modal,/Confirmar importação/);
+ assert.doesNotMatch(modal,/Somente preço padrão/);
+ assert.match(source,/indiceAliquotaIss >= 0 \? XLSX.utils.encode_col\(indiceAliquotaIss\) : null/);
+ assert.match(source,/name === 'Metadados' \? 2 : 0/);
 });
 
 test('revisão agrupa colunas sem repetir prefixo de preço e mantém nomes distintos',()=>{

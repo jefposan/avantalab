@@ -1,3 +1,11 @@
+## 3.2.0.529 — Custos: importação seletiva de preços (local, não publicada)
+
+- Remover da seleção o bloco com nome do arquivo e identificação de colunas.
+- Chave oficial por tabela, seleção da coluna de origem, reutilização de uma coluna em vários destinos e Limpar seleção à esquerda de Cancelar; sem botão Somente padrão nem contagem no rodapé da seleção.
+- Leitura de arquivos antigos AvantaLab v2/v3 e externos, identificação por código e ID quando presente, desambiguação segura e bloqueio de ocorrências.
+- Revisão com preços atuais/novos e confirmação transacional exclusiva de preços; histórico, valores vazios/zero, dados cadastrais e proteção contra alterações após a revisão preservados.
+- Migração aditiva `20261126223000_custos_importar_somente_precos.sql`, validada em PostgreSQL local isolado; não aplicada ao Supabase remoto.
+
 ## 3.2.0.527 — Vendas e Custos: resumos no servidor, abertura rápida e refinamentos
 
 - Calcular os resumos comerciais no servidor com projeções mínimas, sem enviar históricos, eventos ou detalhes de cada pedido para abrir a Visão geral; filtros de período, permissões, estornos e custos preservados.

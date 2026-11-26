@@ -329,3 +329,13 @@ export async function enviarImagemProduto(empresaId: string, arquivo: File) {
   if (error) throw new Error('Não foi possível enviar a imagem.');
   return supabase.storage.from('vendas-produtos').getPublicUrl(caminho).data.publicUrl;
 }
+
+export type RevisaoPrecosImportados = {
+ revisao:string;alterados:number;preservados:number;produtos:number;aplicado:boolean;
+ mudancas:Array<{produto_id:string;sku:string;tabela_id:string;tabela:string;padrao:boolean;anterior:number;novo:number}>;
+};
+export async function importarSomentePrecos(empresaId:string,arquivo:string,precos:import('./importacao-precos').PrecoImportado[],revisao:string|null=null){
+ const {data,error}=await supabase.rpc('custos_importar_somente_precos_rpc',{p_empresa_id:empresaId,p_arquivo_nome:arquivo,p_precos:precos,p_revisao:revisao});
+ if(error)throw Error(error.code==='PGRST202'?'A importação de preços precisa da atualização de banco desta versão.':error.message||'Não foi possível conferir os preços.');
+ return data as RevisaoPrecosImportados;
+}

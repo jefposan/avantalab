@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.527 -->
+<!-- ava-version: 3.2.0.529 -->
+
+> Revisão 3.2.0.529: Custos > Tabelas de preços > Importar Excel abre Importar preços: ative cada tabela desejada e selecione sua coluna. Todas começam desativadas. Limpar seleção desativa todas. Revisar importação mostra os valores atuais e novos; Confirmar importação grava somente preços. Arquivos antigos e externos usam Código e Nome, sem criação de produtos. Campos cadastrais, fiscais e estoque são preservados. Célula vazia mantém preço, zero substitui. Mudanças após revisão exigem nova revisão. Tabelas sem preço próprio mantêm a herança do padrão.
 
 > Revisão 3.2.0.527: Sem impacto operacional no manual; resumos e refinamentos dos módulos Web registrados no manual de Vendas.
 

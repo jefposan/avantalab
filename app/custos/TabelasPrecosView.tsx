@@ -9,25 +9,17 @@ import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
 import BotaoExpandirCard from '@/app/components/BotaoExpandirCard';
 import { formatarMoeda, formatarMoedaDigitada, moedaDigitadaParaNumero, normalizarTexto } from '@/app/lib/formatters';
 import {
-  aplicarReajusteTabelas, importarCadastroProdutosPrecos, salvarPrecoTabela, salvarTabelaPreco,
+  aplicarReajusteTabelas, salvarPrecoTabela, salvarTabelaPreco,
 } from './repository';
 import {
   calcularPrecoReajustado, colunasExportacaoTabelasPreco, gerarCodigoTecnicoTabelaPreco, precoEfetivoTabela,
-  type PrecoTabelaItem, type ProdutoCustos, type ResumoImportacaoCadastro, type ResultadoReajusteTabelas,
+  type PrecoTabelaItem, type ProdutoCustos, type ResultadoReajusteTabelas,
   type TabelaPreco, type TipoReajusteTabela,
 } from './types';
 import styles from './custos.module.css';
-import { CAMPOS_EXCEL, camposPresentesExcel, limitarPatchExcel } from './excel-seletivo';
-import RevisaoImportacao from './RevisaoImportacao';
-
-type ImportacaoPendente = {
-  arquivoNome: string;
-  exportadoEm: string | null;
-  produtos: Array<Record<string, unknown>>;
-  precos: Array<Record<string, unknown>>;
-  resumo: ResumoImportacaoCadastro;
-  colunas: string[];
-};
+import { CAMPOS_EXCEL } from './excel-seletivo';
+import dynamic from 'next/dynamic';
+const ImportarPrecosModal = dynamic(() => import('./ImportarPrecosModal'), { ssr: false });
 
 const cabecalhosProdutos = [
   'ID interno (não alterar)', 'Código', 'Tipo', 'Nome', 'Marca', 'Categoria', 'Descrição',
@@ -38,33 +30,6 @@ const cabecalhosProdutos = [
   'Município da prestação', 'Alíquota ISS', 'Atualizado em (não alterar)',
 ] as const;
 const simNao = (valor: boolean) => valor ? 'Sim' : 'Não';
-const booleanoPlanilha = (valor: unknown, padrao: boolean) => {
-  const texto = String(valor ?? '').trim().toLocaleLowerCase('pt-BR');
-  if (!texto) return padrao;
-  if (['sim', 's', 'true', '1', 'ativo'].includes(texto)) return true;
-  if (['não', 'nao', 'n', 'false', '0', 'inativo'].includes(texto)) return false;
-  return padrao;
-};
-const numeroPlanilha = (valor: unknown) => {
-  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0;
-  const texto = String(valor ?? '').trim().replace(/R\$/gi, '').replace(/\s/g, '');
-  if (!texto) return 0;
-  const normalizado = texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto;
-  const numero = Number(normalizado);
-  return Number.isFinite(numero) ? numero : 0;
-};
-const numeroPlanilhaOpcional = (valor: unknown, contexto: string) => {
-  if (valor === null || valor === undefined || String(valor).trim() === '') return null;
-  if (typeof valor === 'number') {
-    if (Number.isFinite(valor)) return valor;
-    throw new Error(`Valor inválido em ${contexto}.`);
-  }
-  const texto = String(valor).trim().replace(/R\$/gi, '').replace(/\s/g, '');
-  const normalizado = texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto;
-  const numero = Number(normalizado);
-  if (!Number.isFinite(numero)) throw new Error(`Valor inválido em ${contexto}.`);
-  return numero;
-};
 const percentualDigitado = (valor: string) => {
   const limpo = valor.replace('.', ',').replace(/[^\d,]/g, '');
   const [inteiro = '', ...decimais] = limpo.split(',');
@@ -75,7 +40,6 @@ const percentualParaNumero = (valor: string) => {
   return Number.isFinite(numero) ? numero : 0;
 };
 const formatarPercentual = (valor: number) => valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const valorLinha = (linha: Record<string, unknown>, cabecalho: string) => linha[cabecalho];
 
 export default function TabelasPrecosView({
   companyId, catalogoId, produtos, tabelas, precos, podeEditar, onRecarregar, onErro,
@@ -93,7 +57,7 @@ export default function TabelasPrecosView({
   const [busca, setBusca] = useState('');
   const [editandoTabela, setEditandoTabela] = useState<Partial<TabelaPreco> | null>(null);
   const [processando, setProcessando] = useState(false);
-  const [importacao, setImportacao] = useState<ImportacaoPendente | null>(null);
+  const [arquivoImportacao, setArquivoImportacao] = useState<File | null>(null);
   const [exportacaoAberta, setExportacaoAberta] = useState(false);
   const [erroExportacao, setErroExportacao] = useState('');
   const [camposExportacao, setCamposExportacao] = useState<string[]>([]);
@@ -104,8 +68,6 @@ export default function TabelasPrecosView({
   const todosCamposCadastro = camposCadastro.every(([campo]) => camposExportacao.includes(campo));
   const colunasTabelasExportacao = colunasExportacaoTabelasPreco(tabelas);
   const todasTabelasExportacao = camposExportacao.includes('preco_venda') && colunasTabelasExportacao.every((coluna) => tabelasExportacao.includes(coluna.codigo));
-  const [erroImportacao, setErroImportacao] = useState('');
-  const ultimoArquivo = useRef<File | null>(null);
   const [reajusteAberto, setReajusteAberto] = useState(false);
   const [reajusteEtapa, setReajusteEtapa] = useState<'edicao' | 'revisao' | 'resultado'>('edicao');
   const [reajusteTipo, setReajusteTipo] = useState<TipoReajusteTabela>('percentual');
@@ -259,104 +221,6 @@ export default function TabelasPrecosView({
     finally { setProcessando(false); }
   };
 
-  const lerArquivo = async (arquivo: File) => {
-    ultimoArquivo.current = arquivo;
-    setImportacao(null); setErroImportacao(''); setProcessando(true); onErro('');
-    try {
-      const XLSX = await import('xlsx');
-      const livro = XLSX.read(await arquivo.arrayBuffer(), { type: 'array', cellDates: true });
-      const abaProdutos = livro.Sheets['Produtos'];
-      if (!abaProdutos) throw new Error('Use uma planilha exportada pelo AvantaLab, com a aba Produtos.');
-      const linhasProdutos = XLSX.utils.sheet_to_json<Record<string, unknown>>(abaProdutos, { defval: '' });
-      const abaMetadados = livro.Sheets['Metadados'];
-      const linhasMetadados = abaMetadados ? XLSX.utils.sheet_to_json<Array<unknown>>(abaMetadados, { header: 1, defval: '' }) : [];
-      const formato = String(linhasMetadados.find((linha) => linha[0] === 'formato')?.[1] || '');
-      if (!['AVANTALAB-CUSTOS-2', 'AVANTALAB-CUSTOS-3'].includes(formato)) throw new Error('Use uma planilha exportada pelo AvantaLab.');
-      const empresaArquivo = String(linhasMetadados.find((linha) => linha[0] === 'empresa_id')?.[1] || '');
-      if (empresaArquivo && empresaArquivo !== companyId) throw new Error('Esta planilha pertence a outra empresa.');
-      const cabecalhosArquivo = (XLSX.utils.sheet_to_json<unknown[]>(abaProdutos, { header: 1 })[0] || []).map(String);
-      if (new Set(cabecalhosArquivo).size !== cabecalhosArquivo.length) throw new Error('A planilha possui cabeçalhos repetidos.');
-      const camposEditaveis = camposPresentesExcel(cabecalhosArquivo, formato === 'AVANTALAB-CUSTOS-3'
-        ? linhasMetadados.filter((linha) => linha[0] === 'campo_editavel').map((linha) => String(linha[1])) : undefined);
-      const colunasPrecosMetadados = linhasMetadados.filter((linha) => String(linha[0]).trim() === 'tabela_preco').map((linha) => ({
-        codigo: String(linha[1] || '').trim().toUpperCase(),
-        cabecalho: String(linha[3] || '').trim(),
-      })).filter((coluna) => coluna.codigo && coluna.cabecalho);
-      const produtosImportados = linhasProdutos.filter((linha) => Object.values(linha).some((valor) => String(valor).trim())).map((linha, indice) => {
-        if (!String(valorLinha(linha, 'ID interno (não alterar)') || '').trim() || !String(valorLinha(linha, 'Código') || '').trim()) throw new Error(`Linha ${indice + 2}: mantenha o ID e o Código do produto exportado.`);
-        for (const [campo, titulo] of CAMPOS_EXCEL) {
-          if (!camposEditaveis.includes(campo)) continue;
-          const valor = valorLinha(linha, titulo);
-          if (['preco_custo', 'preco_venda', 'aliquota_iss'].includes(campo)) {
-            if (numeroPlanilhaOpcional(valor, `${titulo}, linha ${indice + 2}`) === null && campo !== 'preco_venda') throw new Error(`Linha ${indice + 2}: preencha ${titulo}, ou remova a coluna.`);
-          }
-          if (['ativo', 'disponivel_catalogo'].includes(campo) && !['sim', 'não', 'nao', 's', 'n', 'true', 'false', '1', '0', 'ativo', 'inativo'].includes(String(valor).trim().toLowerCase())) throw new Error(`Linha ${indice + 2}: use Sim ou Não em ${titulo}.`);
-          if (campo === 'tipo_item' && !['produto', 'serviço', 'servico'].includes(String(valor).trim().toLowerCase())) throw new Error(`Linha ${indice + 2}: use Produto ou Serviço.`);
-        }
-        return limitarPatchExcel({
-        id: String(valorLinha(linha, 'ID interno (não alterar)') || '').trim(),
-        sku: String(valorLinha(linha, 'Código') || '').trim().toUpperCase(),
-        tipo_item: String(valorLinha(linha, 'Tipo') || '').toLocaleLowerCase('pt-BR').startsWith('serv') ? 'servico' : 'produto',
-        nome: String(valorLinha(linha, 'Nome') || '').trim(), marca: String(valorLinha(linha, 'Marca') || '').trim(),
-        categoria: String(valorLinha(linha, 'Categoria') || '').trim(), descricao: String(valorLinha(linha, 'Descrição') || '').trim(),
-        preco_custo: numeroPlanilha(valorLinha(linha, 'Custo')), preco_venda: numeroPlanilhaOpcional(valorLinha(linha, 'Preço padrão'), 'Preço padrão'),
-        unidade: String(valorLinha(linha, 'Unidade') || '').trim(), codigo_barras: String(valorLinha(linha, 'Código de barras') || '').trim(),
-        ativo: booleanoPlanilha(valorLinha(linha, 'Ativo'), true),
-        disponivel_catalogo: String(valorLinha(linha, 'Disponível no catálogo') ?? '').trim() ? booleanoPlanilha(valorLinha(linha, 'Disponível no catálogo'), true) : undefined,
-        ncm: String(valorLinha(linha, 'NCM') || '').trim(), cest: String(valorLinha(linha, 'CEST') || '').trim(),
-        origem_mercadoria: String(valorLinha(linha, 'Origem') || '').trim(), unidade_tributavel: String(valorLinha(linha, 'Unidade tributável') || '').trim(),
-        cfop_padrao: String(valorLinha(linha, 'CFOP padrão') || '').trim(), cst: String(valorLinha(linha, 'CST') || '').trim(),
-        csosn: String(valorLinha(linha, 'CSOSN') || '').trim(), cst_pis: String(valorLinha(linha, 'CST PIS') || '').trim(),
-        cst_cofins: String(valorLinha(linha, 'CST COFINS') || '').trim(), cst_ibs_cbs: String(valorLinha(linha, 'CST IBS/CBS') || '').trim(),
-        classificacao_ibs_cbs: String(valorLinha(linha, 'Classificação IBS/CBS') || '').trim(),
-        codigo_tributacao_nacional: String(valorLinha(linha, 'Código tributação nacional') || '').trim(),
-        codigo_tributacao_municipal: String(valorLinha(linha, 'Código tributação municipal') || '').trim(),
-        nbs: String(valorLinha(linha, 'NBS') || '').trim(), item_lc116: String(valorLinha(linha, 'Item LC 116') || '').trim(),
-        municipio_prestacao: String(valorLinha(linha, 'Município da prestação') || '').trim(),
-        aliquota_iss: numeroPlanilha(valorLinha(linha, 'Alíquota ISS')),
-        atualizado_em: String(valorLinha(linha, 'Atualizado em (não alterar)') || '').trim(),
-        }, camposEditaveis);
-      });
-      const precosColunas = linhasProdutos.flatMap((linha) => {
-        const sku = String(valorLinha(linha, 'Código') || '').trim().toUpperCase();
-        if (!sku) return [];
-        return colunasPrecosMetadados.flatMap((coluna) => {
-          if (!Object.prototype.hasOwnProperty.call(linha, coluna.cabecalho)) return [];
-          const preco = numeroPlanilhaOpcional(valorLinha(linha, coluna.cabecalho), `${coluna.cabecalho}, produto ${sku}`);
-          return preco === null ? [] : [{ sku, produto_id: String(valorLinha(linha, 'ID interno (não alterar)') || '').trim(), tabela_codigo: coluna.codigo, preco }];
-        });
-      });
-      const abaPrecosLegados = livro.Sheets['Tabelas de preços'];
-      const linhasPrecosLegados = abaPrecosLegados
-        ? XLSX.utils.sheet_to_json<Record<string, unknown>>(abaPrecosLegados, { defval: '' })
-        : [];
-      const precosLegados = linhasPrecosLegados.filter((linha) => String(valorLinha(linha, 'Código do produto')).trim()).map((linha) => ({
-        sku: String(valorLinha(linha, 'Código do produto') || '').trim().toUpperCase(),
-        tabela_codigo: String(valorLinha(linha, 'Código da tabela') || '').trim().toUpperCase(),
-        produto_id: produtosImportados.find((produto) => produto.sku === String(valorLinha(linha, 'Código do produto') || '').trim().toUpperCase())?.id,
-        preco: numeroPlanilhaOpcional(valorLinha(linha, 'Preço'), 'Preço na tabela legada'),
-      }));
-      const precosImportados = colunasPrecosMetadados.length ? precosColunas : precosLegados.filter((preco) => preco.preco !== null);
-      if (!produtosImportados.length) throw new Error('A planilha não contém produtos para validar.');
-      if (!camposEditaveis.length && !precosImportados.length) throw new Error('Nenhuma coluna editável preenchida. Selecione campos ou tabelas ao exportar.');
-      const exportadoEm = String(linhasMetadados.find((linha) => linha[0] === 'exportado_em')?.[1] || '').trim() || null;
-      const resumo = await importarCadastroProdutosPrecos(companyId, catalogoId, arquivo.name, exportadoEm, produtosImportados, precosImportados, false);
-      setImportacao({ arquivoNome: arquivo.name, exportadoEm, produtos: produtosImportados, precos: precosImportados, resumo, colunas: [...CAMPOS_EXCEL.filter(([campo]) => camposEditaveis.includes(campo)).map(([, titulo]) => titulo), ...colunasPrecosMetadados.filter((coluna) => cabecalhosArquivo.includes(coluna.cabecalho)).map((coluna) => coluna.cabecalho)] });
-    } catch (falha) { setErroImportacao(falha instanceof Error ? falha.message : 'Não foi possível ler a planilha.'); }
-    finally { setProcessando(false); if (inputArquivo.current) inputArquivo.current.value = ''; }
-  };
-
-  const confirmarImportacao = async () => {
-    if (!importacao) return;
-    setProcessando(true); setErroImportacao(''); onErro('');
-    try {
-      await importarCadastroProdutosPrecos(companyId, catalogoId, importacao.arquivoNome, importacao.exportadoEm, importacao.produtos, importacao.precos, true);
-      setImportacao(null);
-      await onRecarregar();
-    } catch (falha) { setErroImportacao(falha instanceof Error ? falha.message : 'Não foi possível aplicar a planilha.'); }
-    finally { setProcessando(false); }
-  };
-
   const gravarTabela = async () => {
     if (!editandoTabela) return;
     setProcessando(true); onErro('');
@@ -375,13 +239,13 @@ export default function TabelasPrecosView({
 
   return <>
     <header className={styles.pageHeader}><div><h1>Tabelas de preços</h1></div><div className={styles.headerActions}>
-      <input ref={inputArquivo} type="file" accept=".xlsx,.xls" hidden onChange={(evento) => { const arquivo = evento.target.files?.[0]; if (arquivo) void lerArquivo(arquivo); }} />
+      <input ref={inputArquivo} type="file" accept=".xlsx,.xls" hidden onChange={(evento) => { const arquivo = evento.target.files?.[0]; if (arquivo) setArquivoImportacao(arquivo); evento.target.value = ''; }} />
       <button type="button" aria-label="Importar Excel" className={`${styles.secondaryButton} ${styles.spreadsheetAction}`} disabled={!podeEditar || processando} onClick={() => inputArquivo.current?.click()}><span className={styles.spreadsheetActionIcon}><Icon name="upload" size={17} /></span><span className={styles.spreadsheetActionText}><strong>Importar</strong><small>Excel</small></span></button>
       <button type="button" aria-label="Exportar Excel" className={`${styles.secondaryButton} ${styles.spreadsheetAction}`} disabled={processando} onClick={() => { setCamposExportacao([]); setTabelasExportacao(tabelaAtiva && !tabelaAtiva.padrao ? [tabelaAtiva.codigo] : []); if (tabelaAtiva?.padrao) setCamposExportacao(['preco_venda']); setExportacaoAberta(true); }}><span className={styles.spreadsheetActionIcon}><Icon name="download" size={17} /></span><span className={styles.spreadsheetActionText}><strong>Exportar</strong><small>Excel</small></span></button>
       <button type="button" className={`${styles.secondaryButton} ${styles.repriceAction}`} disabled={!podeEditar || processando || !tabelasDisponiveisReajuste.length} onClick={abrirReajuste}><Icon name="trendUp" size={17} />Reajuste</button>
       <button type="button" className={styles.primaryButton} disabled={!podeEditar || processando} onClick={() => setEditandoTabela({ nome: '', ativo: true })}>Nova tabela</button>
     </div></header>
-    {erroImportacao && !importacao && <div className={styles.importError} role="alert"><span>{erroImportacao}</span><button type="button" disabled={processando} onClick={() => { if (ultimoArquivo.current) void lerArquivo(ultimoArquivo.current); }}>Tentar novamente</button><button type="button" disabled={processando} onClick={() => inputArquivo.current?.click()}>Escolher outro arquivo</button></div>}
+
     <Modal open={exportacaoAberta} onClose={() => !processando && setExportacaoAberta(false)} title="Escolher colunas do Excel" description="Exporte somente o que deseja alterar. Os demais dados serão preservados." wide compact headerTone="accent">
       <div className={styles.exportSelection}>
         {erroExportacao && <p className={styles.repriceError} role="alert">{erroExportacao}</p>}
@@ -473,9 +337,7 @@ export default function TabelasPrecosView({
       {editandoTabela && <div className={styles.priceTableForm}><label>Nome<input autoFocus minLength={2} value={editandoTabela.nome || ''} maxLength={80} onChange={(evento) => setEditandoTabela({ ...editandoTabela, nome: evento.target.value })} /></label>{editandoTabela.id && <label>Descrição<textarea rows={3} value={editandoTabela.descricao || ''} onChange={(evento) => setEditandoTabela({ ...editandoTabela, descricao: evento.target.value })} /></label>}{editandoTabela.id && !editandoTabela.padrao && <label className={styles.checkboxLine}><input type="checkbox" checked={editandoTabela.ativo !== false} onChange={(evento) => setEditandoTabela({ ...editandoTabela, ativo: evento.target.checked })} />Tabela ativa</label>}<div className={styles.formActions}><button type="button" className={styles.secondaryButton} onClick={() => setEditandoTabela(null)} disabled={processando}>Cancelar</button><button type="button" className={styles.primaryButton} onClick={() => void gravarTabela()} disabled={processando || (editandoTabela.nome?.trim().length || 0) < 2}>Salvar tabela</button></div></div>}
     </Modal>
 
-    <Modal open={Boolean(importacao)} onClose={() => !processando && setImportacao(null)} title="Revisar importação" description={importacao?.arquivoNome || ''} wide compact>
-      {importacao && <RevisaoImportacao colunas={importacao.colunas} resumo={importacao.resumo} processando={processando} erro={erroImportacao} onCancelar={() => setImportacao(null)} onConfirmar={() => void confirmarImportacao()} />}
-    </Modal>
+    {arquivoImportacao && <ImportarPrecosModal key={`${companyId}:${arquivoImportacao.name}:${arquivoImportacao.lastModified}`} arquivo={arquivoImportacao} companyId={companyId} produtos={produtos} tabelas={tabelas} podeEditar={podeEditar} onClose={()=>setArquivoImportacao(null)} onRecarregar={onRecarregar} />}
   </>;
 }
 

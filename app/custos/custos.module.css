@@ -110,3 +110,9 @@
 .selectionHeader button,.rowAction,.moreButton,.contextMenu button,
 .resourcePickerResults button,.codeSuggestButton,.codeSuggestions button,
 .catalogImportActions button,.catalogImportActions a){border-radius:6px 12px 12px 12px}
+
+/* Importação de preços integrada ao modal oficial. */
+.importPriceTable td{height:58px;font-size:13px}.importPriceTable th:first-child{width:38%}.importPriceTable th:nth-child(2),.importPriceTable td:nth-child(2){width:86px;text-align:center}.importPriceTable select{height:36px;font-size:13px}.importPriceInactive td:first-child{color:var(--muted)}.importPriceInactive strong{font-weight:500}.importPriceHint{margin:0}.importPriceFooter{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--border)}.importPriceFooter p{margin:0}.importPriceFooter>div{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.importPriceIssues{max-height:180px;overflow:auto;padding:12px;border:1px solid var(--border);border-radius:var(--quadrant-small-radius);font-size:12px}.importPriceIssues ul{padding-left:18px}.importPriceReview{max-height:300px;overflow:auto}.importPriceReview table{width:100%;border-collapse:collapse}.importPriceReview th,.importPriceReview td{padding:8px;border-bottom:1px solid var(--border);font-size:12px;text-align:left}.importPriceReview th{position:sticky;top:0;background:var(--surface-soft)}
+@media(max-width:600px){.importPriceFooter{align-items:stretch;flex-direction:column}.importPriceTable th:first-child{width:34%}.importPriceTable th:nth-child(2),.importPriceTable td:nth-child(2){width:65px}.importPriceTable select{min-width:130px}}
+
+.dark .importPriceScope{--av-action-on-brand:var(--bg)}.dark .importPriceScope [role="dialog"]>header{background:var(--surface-soft)}.dark .importPriceScope [role="dialog"]>header :is(h2,p,button){color:var(--text)}

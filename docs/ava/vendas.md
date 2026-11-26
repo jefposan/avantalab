@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.527 -->
+<!-- ava-version: 3.2.0.529 -->
+
+> Revisão 3.2.0.529: Sem impacto operacional neste ambiente; importação seletiva de preços restrita a Custos e Precificação Web.
 
 > Revisão 3.2.0.527: Visão geral de Vendas usa resumos calculados no servidor, por período e permissões; históricos completos carregam em segundo plano. Ajustes visuais de Custos, Vendas e cabeçalhos dos módulos incluídos nesta publicação.
 

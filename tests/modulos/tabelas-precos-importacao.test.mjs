@@ -49,15 +49,22 @@ test('exportação cria uma coluna identificável para cada tabela adicional', (
   ]);
 });
 
-test('cadastro exporta e importa produtos e preços com prévia e proteção concorrente', () => {
+test('exportação preservada e importação de preços usa modal próprio com revisão concorrente', () => {
+  const modal=readFileSync('app/custos/ImportarPrecosModal.tsx','utf8');
+  const parser=readFileSync('app/custos/importacao-precos.ts','utf8');
+  const sql=readFileSync('supabase/migrations/20261126223000_custos_importar_somente_precos.sql','utf8');
   assert.match(workspace, /id: 'precos', rotulo: 'Tabelas de preços'/);
   assert.match(tabelas, /Exportar Excel/);
   assert.match(tabelas, /Importar Excel/);
-  assert.match(tabelas, /Revisar importação/);
+  assert.match(modal, /Revisar importação/);
+  assert.match(tabelas, /<ImportarPrecosModal/);
+  assert.match(modal, /<ChaveAtivacao/);
   assert.match(tabelas, /<Icon name="upload" size=\{17\} \/>/);
   assert.match(tabelas, /<Icon name="download" size=\{17\} \/>/);
-  assert.match(tabelas, /AVANTALAB-CUSTOS-2/);
-  assert.match(tabelas, /precosLegados/);
+  assert.match(parser, /AVANTALAB-CUSTOS-2/);
+  assert.match(parser, /Tabelas de preços/);
+  assert.match(sql, /mudaram após a revisão/);
+  assert.match(repositorio, /custos_importar_somente_precos_rpc/);
   assert.match(tabelas, /Células vazias não alteram o preço já cadastrado/);
   assert.doesNotMatch(tabelas, /book_append_sheet\(livro, planilhaPrecos, 'Tabelas de preços'\)/);
   assert.match(tabelas, /ID interno \(não alterar\)/);

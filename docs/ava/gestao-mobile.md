@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.527 -->
+<!-- ava-version: 3.2.0.529 -->
+
+> Revisão 3.2.0.529: Sem impacto operacional neste ambiente; importação seletiva de preços restrita a Custos e Precificação Web.
 
 > Revisão 3.2.0.527: Sem impacto operacional no manual; resumos e refinamentos dos módulos Web registrados no manual de Vendas.
 
