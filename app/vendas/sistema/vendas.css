@@ -417,7 +417,7 @@ td strong { color: #293c4e; font-size: 10.7px; }
 
 .catalog-table { overflow-x: clip; }
 .catalog-table table { width: 100%; min-width: 0 !important; table-layout: fixed; }
-.catalog-table th, .catalog-table td { padding-inline: 4px; overflow: hidden; }
+.catalog-table th, .catalog-table td { padding-inline: 2px; overflow: hidden; }
 .catalog-table th:nth-child(1) { width: 23%; }
 .catalog-table th:nth-child(2) { width: 22%; }
 .catalog-table th:nth-child(3) { width: 19%; }
@@ -2633,3 +2633,9 @@ button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }
 .order-item-taxes .order-item-tax-summary { margin-top: 4px; }
 @media (pointer: coarse) { .order-item-taxes > summary { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { .order-item-taxes > summary > svg { transition: none; } }
+
+@media (min-width: 1181px) {
+  .catalog-table th:nth-child(6), .catalog-table td:nth-child(6) { padding-right: 0; }
+  .catalog-table th:nth-child(7) { padding-inline: 0; text-align: left; }
+  .catalog-actions-cell .row-action { margin-inline: 0 auto; }
+}
