@@ -2664,3 +2664,7 @@ button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }
 .report-config-form, .report-totals > div, .report-full-table {
   border-radius: calc(var(--av-radius) / 2) var(--av-radius) var(--av-radius) var(--av-radius);
 }
+
+.topbar-start{flex-wrap:wrap;row-gap:3px;min-width:0}
+.module-header-title{flex-basis:100%;color:var(--av-text-strong);font-size:12px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
+@media(max-width:600px){.module-header-title{font-size:10px}}

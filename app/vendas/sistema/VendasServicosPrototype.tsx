@@ -8462,6 +8462,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       <div className="topbar-start">
         {managementContextReady && managementCatalogBridge?.companyId ? <SeletorModulos empresaId={managementCatalogBridge.companyId} moduloAtual="vendas" corPrimaria={profileColor} ocupado={editorSaving} alteracoesPendentes={view === 'novo_pedido'} descricaoPendencia={standaloneFiscal ? 'Existe uma nota fiscal não salva. Sair sem salvar perde os dados não salvos; Salvar e sair guarda o rascunho sem emitir.' : 'Existe um pedido não salvo. Sair sem salvar perde os dados não salvos; Salvar e sair guarda o rascunho sem confirmar o pedido.'} salvarAntesDeSair={async () => (await editorNavigationRef.current?.save()) === true} /> : <button type="button" onClick={retornarGestao} className="module-exit" aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16}/> Início</button>}
         <button type="button" className="mobile-menu-button" onClick={() => setMobileMenu(true)} aria-label="Abrir menu"><Icon name="menu"/></button>
+        <span className="module-header-title">Vendas e Serviços</span>
       </div>
       <div className="module-brand">
         {companyLogoUrl

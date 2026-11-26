@@ -3113,3 +3113,5 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido 
 // Revisão visual 3.2.0.526: cards de Vendas usam o raio assimétrico oficial; sem impacto operacional.
 
 // Revisão visual 3.2.0.526: resumos cadastrais e financeiros de Custos compactados como Vendas; sem impacto operacional.
+
+// Revisão 3.2.0.526: Custos e Precificação e Vendas e Serviços exibem o nome do módulo no cabeçalho fixo.

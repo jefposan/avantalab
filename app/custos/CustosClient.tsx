@@ -108,7 +108,7 @@ export default function CustosClient({ companyId, initialNewType, initialProduct
   </main>;
 
   return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{ '--custos-brand': access.empresa.corPrimaria } as React.CSSProperties}>
-    <ModuloHeader empresa={access.empresa} onBack={voltar} returnLabel={returnLabel} returnAriaLabel={returnAriaLabel} navigation={<SeletorModulos empresaId={companyId} moduloAtual="custos" corPrimaria={access.empresa.corPrimaria} darkMode={access.empresa.temaEscuro} alteracoesPendentes={edicaoPendente} ocupado={gravandoProduto || atualizandoTema} />}>
+    <ModuloHeader moduleTitle="Custos e Precificação" empresa={access.empresa} onBack={voltar} returnLabel={returnLabel} returnAriaLabel={returnAriaLabel} navigation={<SeletorModulos empresaId={companyId} moduloAtual="custos" corPrimaria={access.empresa.corPrimaria} darkMode={access.empresa.temaEscuro} alteracoesPendentes={edicaoPendente} ocupado={gravandoProduto || atualizandoTema} />}>
         {access.podeGerenciarModulo && <button type="button" className={styles.moduleSettingsButton} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Custos e Precificação" title="Ajustes"><Icon name="settings" size={18} /></button>}
         {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
     </ModuloHeader>

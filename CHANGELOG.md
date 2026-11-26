@@ -1,5 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
+- Identificar Custos e Precificação e Vendas e Serviços no cabeçalho fixo, junto à navegação entre módulos.
 - Compactar também Custos diretos, Custos indiretos, Custo unitário e Venda interna calculada, reutilizando o mesmo estilo dos resumos iniciais.
 - Compactar os quatro resumos da Visão geral de Custos e Precificação para a mesma densidade de Vendas: 76 px de altura mínima, fontes e espaçamentos equivalentes.
 - Unificar os cantos dos cards de Vendas e Serviços com o padrão oficial: 7 px no superior esquerdo e 14 px nos demais, mantendo o aspecto retangular, preservando a altura compacta.

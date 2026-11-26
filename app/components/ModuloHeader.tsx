@@ -16,6 +16,7 @@ type Props = {
   className?: string;
   productFocusNavigation?: boolean;
   navigation?: ReactNode;
+  moduleTitle?: string;
 };
 
 const LOGO_SAMPLE_LIMIT = 256;
@@ -144,10 +145,13 @@ export function AdaptiveModuleLogo({ src, alt, className = styles.moduleLogo, fr
 }
 
 /** Reuses the consolidated module header, including its responsive/dark styles. */
-export default function ModuloHeader({ empresa, onBack, returnLabel = 'Início', returnAriaLabel = 'Voltar ao início do AvantaLab', returnTooltip, returnTooltipPosition = 'top', children, className = '', productFocusNavigation = false, navigation }: Props) {
+export default function ModuloHeader({ empresa, onBack, returnLabel = 'Início', returnAriaLabel = 'Voltar ao início do AvantaLab', returnTooltip, returnTooltipPosition = 'top', children, className = '', productFocusNavigation = false, navigation, moduleTitle }: Props) {
   const back = <button type="button" onClick={onBack} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</button>;
   return <header data-product-focus-navigation={productFocusNavigation || undefined} className={`${styles.root} ${styles.moduleHeader} ${empresa.temaEscuro ? styles.dark : ''} ${className}`} style={{ '--custos-brand': empresa.corPrimaria, minHeight: 'var(--module-header-height)' } as CSSProperties}>
-    {navigation ?? (returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back)}
+    {moduleTitle ? <div className={styles.moduleHeaderStart}>
+      {navigation ?? (returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back)}
+      <span className={styles.moduleHeaderTitle}>{moduleTitle}</span>
+    </div> : (navigation ?? (returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back))}
     <div className={styles.moduleIdentity}>
       {empresa.logoUrl ? <AdaptiveModuleLogo key={empresa.logoUrl} src={empresa.logoUrl} alt={empresa.nome} frameClassName={styles.moduleLogoFrame} /> : <span>{empresa.nome}</span>}
     </div>
