@@ -19,6 +19,7 @@ declare
   campos text[];
   atribuicoes text;
   anterior numeric;
+  preco_cadastrado boolean;
   valor numeric;
   atualizados integer := 0;
   precos_atualizados integer := 0;
@@ -118,10 +119,13 @@ begin
     -- Os preços escolhidos pelo usuário prevalecem sobre ajustes posteriores à exportação.
     -- A gravação continua seletiva, bloqueada por linha e auditada no histórico.
     select preco into anterior from public.custos_tabela_preco_itens where tabela_preco_id=tabela.id and produto_id=produto.id;
-    -- Na prévia, o preço padrão selecionado ainda não foi gravado.
+    preco_cadastrado:=found;
+    -- Mesmo quando o valor coincide com o preço herdado da tabela padrão,
+    -- é necessário criar o preço específico da tabela de destino escolhida.
+    -- Assim, atualizações futuras da tabela padrão não modificam o preço importado.
     select value into linha from jsonb_array_elements(p_produtos) where value->>'id'=item->>'produto_id';
     anterior:=coalesce(anterior,(linha->>'preco_venda')::numeric,produto.preco_venda,0);
-    if anterior is distinct from round(valor,2) then
+    if not preco_cadastrado or anterior is distinct from round(valor,2) then
       precos_atualizados:=precos_atualizados+1;
       if p_aplicar then
         insert into public.custos_tabela_preco_itens(tabela_preco_id,produto_id,preco)
