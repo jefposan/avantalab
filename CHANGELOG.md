@@ -1,6 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
-- Unificar os cantos dos cards de Vendas e Serviços com o padrão oficial: 14 px no superior esquerdo e 28 px nos demais, preservando a altura compacta.
+- Unificar os cantos dos cards de Vendas e Serviços com o padrão oficial: 7 px no superior esquerdo e 14 px nos demais, mantendo o aspecto retangular, preservando a altura compacta.
 - Adicionar configuração de mínimo por produto, avisos de reposição no sino e atalho ao campo de quantidade na entrada.
 - Uma única chave de controle em Ajustes, sem chaves por produto/pedido. Desligar e religar preservam saldos, mínimos, reservas e histórico. Operação sem seletores de locais e com textos curtos. Migração preparada, não aplicada no remoto.
 - Renomear a coluna Operação de Produtos e serviços para Estoque, inclusive no layout mobile.
