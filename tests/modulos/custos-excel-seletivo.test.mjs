@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { CAMPOS_EXCEL, camposPresentesExcel, limitarPatchExcel, agruparColunasRevisao } from '../../app/custos/excel-seletivo.ts';
-import { sugerirColunaPreco, validarMapeamentosImportacao, montarAtualizacaoPrecos } from '../../app/custos/mapeamento-importacao-precos.ts';
+import { sugerirColunaPreco, validarMapeamentosImportacao, montarAtualizacaoPrecos, identificarProdutosDoExcel } from '../../app/custos/mapeamento-importacao-precos.ts';
 
 test('colunas ausentes e campos técnicos nunca entram no patch; texto vazio e zero são preservados',()=>{
   const campos=camposPresentesExcel(['Código','Nome','Marca','Custo'],['marca']);
@@ -64,6 +64,38 @@ test('cada tabela sugere sua coluna de mesmo nome, com possibilidade de alterar 
   assert.equal('preco_venda' in atualizados.produtos[0],false);
 });
 
+test('planilha externa identifica produtos por Código e Nome, sem admitir ambiguidades',()=>{
+  const atual='2026-11-26T14:00:00Z';
+  const produtos=[
+    {id:'A',sku:'C1.0',nome:'C1 Creme',atualizado_em:atual},
+    {id:'B',sku:'C2',nome:'Outro Produto',atualizado_em:atual},
+    {id:'C',sku:'C2',nome:'Produto Alternativo',atualizado_em:atual},
+  ];
+  assert.deepEqual(identificarProdutosDoExcel([
+    {codigo:'c1.0',nome:'Nome antigo do produto'},
+    {codigo:'C2',nome:'Produto Alternativo'},
+  ],produtos),[
+    {id:'A',sku:'C1.0',atualizado_em:atual},
+    {id:'C',sku:'C2',atualizado_em:atual},
+  ]);
+  assert.throws(()=>identificarProdutosDoExcel([{codigo:'C2',nome:'Sem correspondência'}],produtos),/Produto não encontrado/);
+  assert.throws(()=>identificarProdutosDoExcel([{codigo:'C1.0',nome:'Produto'},{codigo:'C1.0',nome:'Produto'}],produtos),/mais de uma vez/);
+  const mapeamentos=[
+    {origem:'SALÃO',destino:'SALAO'},
+    {origem:'SALÃO',destino:'ATACADO'},
+  ];
+  const resultado=montarAtualizacaoPrecos(
+    [{id:'A',sku:'C1.0',atualizado_em:atual}],
+    [{produto_id:'A',sku:'C1.0',cabecalho:'SALÃO',preco:'R$ 1.234,56'},
+     {produto_id:'A',sku:'C1.0',cabecalho:'NÃO ESCOLHIDA',preco:'valor inválido'}],
+    mapeamentos,'PADRAO',
+  );
+  assert.deepEqual(resultado.precos.map((preco)=>({tabela:preco.tabela_codigo,valor:preco.preco})),[
+    {tabela:'SALAO',valor:1234.56},{tabela:'ATACADO',valor:1234.56},
+  ]);
+  assert.equal('preco_venda' in resultado.produtos[0],false);
+});
+
 test('revisão agrupa colunas sem repetir prefixo de preço e mantém nomes distintos',()=>{
   assert.deepEqual(agruparColunasRevisao(['Nome','Preço padrão','Preço · ATACADO','Custo','Preço · ATACADO','Preço · ATACADO (2)']),{cadastro:['Nome','Custo'],precos:['Preço padrão','ATACADO','ATACADO (2)']});
   const source=readFileSync('app/custos/RevisaoImportacao.tsx','utf8');
@@ -97,7 +129,7 @@ test('PostgreSQL: atualização parcial multicatálogo, preço isolado, empresa,
   const data='2026-11-01T00:00:00Z',exportado='2026-11-18T00:00:00Z';
   const row=(id,patch={})=>({id,sku:'T001',atualizado_em:data,...patch});
   const preco=(id,valor)=>({produto_id:id,sku:'T001',tabela_codigo:'ATACADO',preco:valor});
-  const rpc=(produtos,precos=[],aplicar=false)=>db.query('select custos_importar_produtos_precos_seletivo_rpc($1,$2,$3,$4,$5,$6,$7) resultado',[empresa,c1,'teste.xlsx',exportado,JSON.stringify(produtos),JSON.stringify(precos),aplicar]);
+  const rpc=(produtos,precos=[],aplicar=false,exportadoEm=exportado)=>db.query('select custos_importar_produtos_precos_seletivo_rpc($1,$2,$3,$4,$5,$6,$7) resultado',[empresa,c1,'teste.xlsx',exportadoEm,JSON.stringify(produtos),JSON.stringify(precos),aplicar]);
   try {
     await db.exec(`create role anon;create role authenticated;create schema auth;
       create function auth.uid() returns uuid language sql as 'select null::uuid';
@@ -116,6 +148,7 @@ test('PostgreSQL: atualização parcial multicatálogo, preço isolado, empresa,
       ('${p3}','${c3}','T001','Outro','produto','Marca','Descrição',7,20,0,true,true,null,'${data}');
       insert into custos_tabelas_preco values('${tabela}','${empresa}','ATACADO','Atacado',false),('${padrao}','${empresa}','PADRAO','Padrão',true);`);
     await db.exec(readFileSync('supabase/migrations/20261119010000_custos_excel_seletivo_multicatalogo.sql','utf8'));
+    await db.exec(readFileSync('supabase/migrations/20261126193000_custos_excel_importar_planilhas_antigas.sql','utf8'));
     const antes=(await db.query('select * from vendas_mobile_catalogo_produtos order by id')).rows;
     assert.equal((await rpc([row(p1),row(p2)],[preco(p1,0),preco(p2,15)])).rows[0].resultado.precos_atualizados,2);
     assert.deepEqual((await db.query('select * from vendas_mobile_catalogo_produtos order by id')).rows,antes);
@@ -138,9 +171,13 @@ test('PostgreSQL: atualização parcial multicatálogo, preço isolado, empresa,
     assert.equal(Number(depois[0].preco_custo),5); assert.equal(depois[0].catalogo_id,c1);
     assert.equal(depois[1].descricao,'Nova'); assert.equal(depois[1].catalogo_id,c2);
     assert.equal((await db.query('select count(*)::int n from custos_tabela_preco_historico')).rows[0].n,4);
+    await db.exec(`insert into custos_tabelas_preco values ('40000000-0000-4000-8000-000000000003','${empresa}','SALAO','Salão',false)`);
+    await rpc([row(p1)],[{...preco(p1,12),tabela_codigo:'SALAO'}],true,null);
+    assert.equal(Number((await db.query("select preco from custos_tabela_preco_itens where produto_id=$1 and tabela_preco_id='40000000-0000-4000-8000-000000000003'",[p1])).rows[0].preco),12);
     await rpc([row(p1,{preco_venda:14})],[],true);
     assert.equal(Number((await db.query('select preco_venda from vendas_mobile_catalogo_produtos where id=$1',[p1])).rows[0].preco_venda),14);
     assert.equal((await db.query('select marca from vendas_mobile_catalogo_produtos where id=$1',[p1])).rows[0].marca,'');
+    assert.equal(Number((await db.query("select preco from custos_tabela_preco_itens where produto_id=$1 and tabela_preco_id='40000000-0000-4000-8000-000000000003'",[p1])).rows[0].preco),12);
     await db.exec(`create or replace function custos_pode_acessar_empresa(uuid,boolean) returns boolean language sql as 'select false';`);
     await assert.rejects(rpc([row(p1)]),/Sem permissão/);
   } finally { await db.close(); }
