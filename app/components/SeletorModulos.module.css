@@ -71,5 +71,5 @@
 @media (prefers-reduced-motion: reduce) { .panel, .trigger { scroll-behavior: auto; } }
 
 /* Cabeçalho compacto solicitado para Custos e Vendas; toque preserva 44 px. */
-.trigger.compact{min-height:32px;padding:5px 10px;font-size:12px}
+.trigger.compact{min-height:26px;padding:3px 10px;font-size:12px}
 @media(pointer:coarse){.trigger.compact{min-height:44px}}

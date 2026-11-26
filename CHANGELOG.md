@@ -1,6 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
-- Destacar os títulos dos módulos em pílulas com a cor da empresa acima do botão Navegar e reduzir Navegar para 32 px no desktop, mantendo 44 px em telas de toque.
+- Destacar os títulos dos módulos em pílulas com a cor da empresa acima do botão Navegar e reduzir Navegar para 26 px no desktop, com 8 px de espaço abaixo do título, mantendo 44 px em telas de toque.
 - Identificar Custos e Precificação e Vendas e Serviços no cabeçalho fixo, junto à navegação entre módulos.
 - Compactar também Custos diretos, Custos indiretos, Custo unitário e Venda interna calculada, reutilizando o mesmo estilo dos resumos iniciais.
 - Compactar os quatro resumos da Visão geral de Custos e Precificação para a mesma densidade de Vendas: 76 px de altura mínima, fontes e espaçamentos equivalentes.

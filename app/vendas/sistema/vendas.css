@@ -2665,7 +2665,7 @@ button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }
   border-radius: calc(var(--av-radius) / 2) var(--av-radius) var(--av-radius) var(--av-radius);
 }
 
-.topbar-start{flex-wrap:wrap;row-gap:3px;min-width:0}
+.topbar-start{flex-wrap:wrap;row-gap:8px;min-width:0}
 .module-header-title{display:inline-flex;align-items:center;max-width:100%;padding:4px 10px;border:1px solid color-mix(in srgb,var(--av-profile-primary) 32%,var(--av-border));border-radius:999px;background:color-mix(in srgb,var(--av-profile-primary) 15%,var(--av-surface));color:var(--av-text-strong);font-size:12px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
 .topbar-start{display:grid;grid-template-columns:max-content max-content;align-items:center}
 .module-header-title{grid-column:1/-1;justify-self:start}
