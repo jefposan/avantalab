@@ -6,7 +6,7 @@
 - Edição não passa o lançamento para o final. Comprovantes seguintes refletem a alteração na posição original. Excluir e cadastrar novamente cria nova inclusão; data comercial e atualização não ordenam o cálculo. Precisão de microssegundos preservada.
 - Sequência antiga sem prova, cache sem conferência, divergência ou sincronização pendente mostram Saldo histórico em conferência, sem saldos numéricos presumidos na tela ou no arquivo compartilhado. Valor e itens permanecem. Atualizar conferência consulta somente a cliente na conta ativa; fechamento/troca de perfil não ressuscitam a tela antiga.
 - Migração aditiva de gatilhos conserva a inclusão de pagamentos e de pedidos legados com timestamp original recuperável durante edições futuras; sem backfill, alteração de RLS ou escrita financeira em massa. Data comercial permanece separada.
-- Preparado e testado localmente; migração não aplicada e publicação não realizada nesta etapa. Não altera a Gestão ou envia binários às lojas.
+- Publicação e migração autorizadas pelo titular, com liberação condicionada ao build completo aprovado. Não altera a Gestão ou envia binários às lojas.
 
 ## 3.2.0.521 — Vendas: corrigir identificação, navegação e resumos financeiros
 

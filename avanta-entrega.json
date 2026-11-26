@@ -1,7 +1,7 @@
 {
-  "baseDeploymentId": "dpl_211WxYwuwwYg4TbEWmRto888xZW6",
+  "baseDeploymentId": "dpl_J8fYvpstu9sMfz3yYUx4ape2BmE1",
   "migrations": [{ "path": "supabase/migrations/20261126180000_preservar_ordem_inclusao_comprovantes.sql", "sha256": "0c903e3b04b30ae3c627874c47bd4e7fa5136783736eb52215fd1dd9bda2633d" }],
   "version": "3.2.0.522",
   "scope": "AvantaVendas: conferência histórica geral por inclusão original; tela e compartilhamento; edição não muda a ordem financeira",
-  "releaseStatus": "local-testado; publicação e aplicação de migração não realizadas; reconferir main, versão e base de produção antes do envio"
+  "releaseStatus": "publicação e migração autorizadas pelo titular; promoção automática condicionada ao build completo aprovado"
 }
