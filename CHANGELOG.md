@@ -1,5 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
+- Renomear a coluna Operação de Produtos e serviços para Estoque, inclusive no layout mobile.
 - Compactar mais o espaço entre colunas e eliminar folgas internas antes de Ações no desktop, sem mudar larguras.
 - Reduzir somente o padding horizontal entre colunas de Produtos e serviços, mantendo larguras e ordem.
 - Centralizar horizontalmente o título e conteúdo da coluna Sincronização.

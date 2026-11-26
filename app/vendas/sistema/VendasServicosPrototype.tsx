@@ -3331,7 +3331,7 @@ function CatalogView({ catalogRecords, onSave, onNavigate, onOpenCosts, onNewOrd
         <select aria-label="Situação comercial" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>Todos</option><option>Ativo</option><option>Pausado</option></select>
         <select aria-label="Situação fiscal" value={fiscalFilter} onChange={(event) => setFiscalFilter(event.target.value)}><option>Todos</option><option>Base pronta</option><option>A revisar</option><option>IBS/CBS pendente</option></select>
       </SearchToolbar>
-      <Table headers={['Produto ou serviço', 'Valores publicados', 'Operação', 'Fiscal', 'Sincronização', 'Status', 'Ações']} minWidth={0} className="catalog-table">
+      <Table headers={['Produto ou serviço', 'Valores publicados', 'Estoque', 'Fiscal', 'Sincronização', 'Status', 'Ações']} minWidth={0} className="catalog-table">
         <>{records.map((item) => {
           const margin = item.price ? (item.price - item.cost) / item.price * 100 : 0;
           const isService = item.category === 'Serviço';
@@ -3339,7 +3339,7 @@ function CatalogView({ catalogRecords, onSave, onNavigate, onOpenCosts, onNewOrd
           return <tr key={item.sku}>
             <td data-label="Item"><div className="catalog-item-cell"><strong>{item.name}</strong><small>{item.sku} · {item.category} · {item.unit}</small></div></td>
             <td data-label="Valores"><div className="catalog-values-cell"><span><small>Custo</small><strong>{money(item.cost)}</strong></span><span><small>Venda</small><strong>{money(item.price)}</strong></span><Badge tone="success">{percent(margin)}</Badge></div></td>
-            <td data-label="Operação"><div className="catalog-operation-cell"><strong>{isService ? 'Sem estoque físico' : `${item.available} ${item.unit} disponíveis`}</strong><small>{isService ? 'Usado em orçamento, pedido e OS' : `${item.reserved} ${item.unit} reservados · mínimo ${item.minimum}`}</small></div></td>
+            <td data-label="Estoque"><div className="catalog-operation-cell"><strong>{isService ? 'Sem estoque físico' : `${item.available} ${item.unit} disponíveis`}</strong><small>{isService ? 'Usado em orçamento, pedido e OS' : `${item.reserved} ${item.unit} reservados · mínimo ${item.minimum}`}</small></div></td>
             <td data-label="Fiscal"><div className="catalog-fiscal-cell"><Badge tone={taxEvaluation.coreReady ? 'success' : 'warning'}>{taxEvaluation.coreReady ? 'Base pronta' : taxEvaluation.status}</Badge><small>IBS/CBS {taxEvaluation.reformReady ? 'revisado' : 'pendente'} · {taxEvaluation.completion}%</small></div></td>
             <td data-label="Sincronização"><div className="catalog-sync-cell"><Badge tone={item.syncStatus === 'Sincronizado' ? 'success' : 'warning'}>{item.syncStatus}</Badge><small>{displayIsoDate(item.syncedAt?.slice(0, 10) || '')}</small></div></td>
             <td data-label="Status"><Badge tone={item.saleStatus === 'Ativo' ? 'success' : 'neutral'}>{item.saleStatus}</Badge></td>
