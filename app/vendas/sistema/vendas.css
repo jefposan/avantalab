@@ -435,7 +435,8 @@ td strong { color: #293c4e; font-size: 10.7px; }
 .catalog-values-cell > span:not(.badge) small { color: var(--av-muted); font-size: 8px; }
 .catalog-values-cell > span:not(.badge) strong { overflow: hidden; min-width: 0; color: #293c4e; font-size: 9.5px; font-variant-numeric: tabular-nums; text-overflow: clip; white-space: nowrap; }
 .catalog-values-cell > .badge { grid-column: 1 / -1; }
-.catalog-sync-cell { justify-items: start; }
+.catalog-sync-cell { justify-items: center; text-align: center; }
+.catalog-table th:nth-child(5), .catalog-table td:nth-child(5) { text-align: center; }
 .catalog-actions-cell { padding-inline: 0 !important; }
 .catalog-actions-cell .row-action { margin-inline: auto; }
 
