@@ -9,7 +9,7 @@ import { supabase } from '@/app/lib/supabase';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
-import { AdaptiveModuleLogo } from '@/app/components/ModuloHeader';
+import { AdaptiveModuleLogo, ModuleHeaderNavigation } from '@/app/components/ModuloHeader';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { useProjectCollection } from './hooks/useProjectCollection';
 import { SupabaseProjectRepository } from './services/supabase-repository';
@@ -47,9 +47,11 @@ function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId
   corPrimaria?: string;
 }) {
   return <header className={styles.moduleHeader}>
-    {returnCompanyId ? <SeletorModulos empresaId={returnCompanyId} moduloAtual="projetos" ocupado={navigationBlocked} darkMode={darkMode} corPrimaria={corPrimaria} /> : onReturn
+    <ModuleHeaderNavigation title="Projetos" corPrimaria={corPrimaria} darkMode={darkMode}>
+    {returnCompanyId ? <SeletorModulos compact empresaId={returnCompanyId} moduloAtual="projetos" ocupado={navigationBlocked} darkMode={darkMode} corPrimaria={corPrimaria} /> : onReturn
       ? <button type="button" onClick={onReturn} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</button>
       : <Link href={`/gestao?inicio=1&empresaId=${encodeURIComponent(returnCompanyId)}`} className={styles.moduleExit} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</Link>}
+    </ModuleHeaderNavigation>
     <div className={styles.moduleIdentity}>
       {companyLogoUrl ? <AdaptiveModuleLogo key={companyLogoUrl} src={companyLogoUrl} alt={companyName} className={styles.companyLogo} /> : <span>{companyName}</span>}
     </div>

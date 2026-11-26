@@ -7,7 +7,7 @@ import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
-import { AdaptiveModuleLogo } from '@/app/components/ModuloHeader';
+import { AdaptiveModuleLogo, ModuleHeaderNavigation } from '@/app/components/ModuloHeader';
 import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
 import { Icon } from '@/app/projetos/components/Icon';
@@ -100,7 +100,9 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
       style={{ '--cp': acesso.empresa.corPrimaria } as CSSProperties}
     >
       <header className={styles.cabecalhoModulo}>
-        {empresaId ? <SeletorModulos empresaId={empresaId} moduloAtual="recebimentos_presencial" corPrimaria={acesso.empresa.corPrimaria} darkMode={acesso.empresa.temaEscuro} ocupado={operacaoEmAndamento} /> : <button type="button" onClick={retornarInicio} className={styles.botaoInicio} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</button>}
+        <ModuleHeaderNavigation title="Operações de Campo" corPrimaria={acesso.empresa.corPrimaria} darkMode={acesso.empresa.temaEscuro}>
+        {empresaId ? <SeletorModulos compact empresaId={empresaId} moduloAtual="recebimentos_presencial" corPrimaria={acesso.empresa.corPrimaria} darkMode={acesso.empresa.temaEscuro} ocupado={operacaoEmAndamento} /> : <button type="button" onClick={retornarInicio} className={styles.botaoInicio} aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16} /> Início</button>}
+        </ModuleHeaderNavigation>
         <div className={styles.identidadeModulo}>
           {acesso.empresa.logoUrl
             ? <AdaptiveModuleLogo key={acesso.empresa.logoUrl} src={acesso.empresa.logoUrl} alt={acesso.empresa.nome} className={styles.logoEmpresaModulo} />

@@ -7,6 +7,7 @@ import Calculadora from '@/app/components/Calculadora';
 import AcessosUsuarioCampos from '@/app/components/AcessosUsuarioCampos';
 import SeloPerfilEmUso from '@/app/components/SeloPerfilEmUso';
 import ModuloHeader from '@/app/components/ModuloHeader';
+import SeletorModulos from '@/app/components/SeletorModulos';
 import { buscarAcessosUsuario } from '@/app/modulos/MeusModulos';
 import { anunciarMudancaAcessos } from '@/app/lib/navegacao-acessos-cliente';
 import { destinoAposLogin, liberacoesDoVinculo } from '@/app/lib/acessos-usuario';
@@ -8297,7 +8298,7 @@ if (!mounted || carregandoSistema || authLoading || loginSocialEmAndamento) {
 
 if (areaIntegradaRestrita && acessoLiberado) {
   return <main className={`min-h-dvh ${darkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
-    <ModuloHeader empresa={{ nome: nomeEmpresaAtual, corPrimaria, temaEscuro: darkMode, logoUrl }} onBack={() => router.push(`/modulos?empresaId=${encodeURIComponent(empresaId || '')}&retorno=1`)} returnAriaLabel="Voltar para Meus módulos" />
+    <ModuloHeader moduleTitle={areaIntegradaRestrita === 'ponto' ? 'Controle de Ponto' : 'Conteúdo AvantaVendas'} navigation={empresaId ? <SeletorModulos compact empresaId={empresaId} moduloAtual={areaIntegradaRestrita} corPrimaria={corPrimaria} darkMode={darkMode} /> : undefined} empresa={{ nome: nomeEmpresaAtual, corPrimaria, temaEscuro: darkMode, logoUrl }} onBack={() => router.push(`/modulos?empresaId=${encodeURIComponent(empresaId || '')}&retorno=1`)} returnAriaLabel="Voltar para Meus módulos" />
     {areaIntegradaRestrita === 'ponto' ? renderizarPonto() : renderizarConteudoVendas()}
     {renderizarAviso()}
     <ModalConfirmacao aberto={modalConfirmacaoAberto} titulo={tituloConfirmacao} mensagem={mensagemConfirmacao} textoConfirmar={textoConfirmarConfirmacao} variante={varianteConfirmacao} carregando={confirmacaoCarregando} textoCancelar={textoCancelarConfirmacao} corPrimaria={corPrimaria} textoSobreCorPrimaria={textoSobreCorPrimaria} aoCancelar={fecharConfirmacao} aoConfirmar={confirmarAcao} />

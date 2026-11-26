@@ -3115,3 +3115,5 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido 
 // Revisão visual 3.2.0.526: resumos cadastrais e financeiros de Custos compactados como Vendas; sem impacto operacional.
 
 // Revisão 3.2.0.526: Custos e Precificação e Vendas e Serviços exibem o nome do módulo em pílula colorida no cabeçalho fixo, 8 px acima de Navegar compacto de 26 px no desktop.
+
+// Revisão 3.2.0.526: Projetos, Campo, Marketplaces, Ponto e Conteúdo AvantaVendas usam título em pílula acima de Navegar compacto no Web.

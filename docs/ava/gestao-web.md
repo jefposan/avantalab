@@ -1,6 +1,6 @@
 <!-- ava-version: 3.2.0.526 -->
 
-> Revisão 3.2.0.526: Nome do módulo destacado em pílula colorida no topo, 8 px acima do botão Navegar compacto de 26 px no desktop. Resumos cadastrais e financeiros da Visão geral de Custos e Precificação compactados como em Vendas, sem mudança de indicadores ou operação. Sem impacto operacional; ajuste restrito à identificação do cliente na Central Fiscal Web.
+> Revisão 3.2.0.526: Cabeçalhos dos módulos Web identificados por título em pílula e Navegar compacto abaixo, com intervalo de 8 px; as permissões e os destinos continuam sendo validados pelo seletor compartilhado. Nome do módulo destacado em pílula colorida no topo, 8 px acima do botão Navegar compacto de 26 px no desktop. Resumos cadastrais e financeiros da Visão geral de Custos e Precificação compactados como em Vendas, sem mudança de indicadores ou operação. Sem impacto operacional; ajuste restrito à identificação do cliente na Central Fiscal Web.
 
 > Revisão 3.2.0.525: Sem impacto operacional; correção restrita à abertura fiscal em Vendas Web.
 

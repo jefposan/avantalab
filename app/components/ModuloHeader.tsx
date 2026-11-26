@@ -144,14 +144,21 @@ export function AdaptiveModuleLogo({ src, alt, className = styles.moduleLogo, fr
   return frameClassName ? <div className={frameClassName}>{logo}</div> : logo;
 }
 
+/** Identificação e navegação compartilhadas pelos cabeçalhos dos módulos. */
+export function ModuleHeaderNavigation({ title, children, corPrimaria, darkMode = false }: { title: string; children: ReactNode; corPrimaria: string; darkMode?: boolean }) {
+  return <div className={styles.moduleHeaderStart} style={{ '--brand': corPrimaria, '--text': darkMode ? '#e5edf2' : '#142538', '--surface': darkMode ? '#101b28' : '#fff', '--border': darkMode ? '#2a3d4c' : '#dce5eb' } as CSSProperties}>
+    <span className={styles.moduleHeaderTitle}>{title}</span>
+    {children}
+  </div>;
+}
+
 /** Reuses the consolidated module header, including its responsive/dark styles. */
 export default function ModuloHeader({ empresa, onBack, returnLabel = 'Início', returnAriaLabel = 'Voltar ao início do AvantaLab', returnTooltip, returnTooltipPosition = 'top', children, className = '', productFocusNavigation = false, navigation, moduleTitle }: Props) {
   const back = <button type="button" onClick={onBack} className={styles.moduleExit} aria-label={returnAriaLabel}><Icon name="back" size={16} /> {returnLabel}</button>;
   return <header data-product-focus-navigation={productFocusNavigation || undefined} className={`${styles.root} ${styles.moduleHeader} ${empresa.temaEscuro ? styles.dark : ''} ${className}`} style={{ '--custos-brand': empresa.corPrimaria, minHeight: 'var(--module-header-height)' } as CSSProperties}>
-    {moduleTitle ? <div className={styles.moduleHeaderStart}>
-      <span className={styles.moduleHeaderTitle}>{moduleTitle}</span>
+    {moduleTitle ? <ModuleHeaderNavigation title={moduleTitle} corPrimaria={empresa.corPrimaria} darkMode={empresa.temaEscuro}>
       {navigation ?? (returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back)}
-    </div> : (navigation ?? (returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back))}
+    </ModuleHeaderNavigation> : (navigation ?? (returnTooltip ? <Tooltip texto={returnTooltip} posicao={returnTooltipPosition}>{back}</Tooltip> : back))}
     <div className={styles.moduleIdentity}>
       {empresa.logoUrl ? <AdaptiveModuleLogo key={empresa.logoUrl} src={empresa.logoUrl} alt={empresa.nome} frameClassName={styles.moduleLogoFrame} /> : <span>{empresa.nome}</span>}
     </div>
