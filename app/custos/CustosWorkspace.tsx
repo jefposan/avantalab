@@ -210,7 +210,7 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
   const calculo = produtoAtivo ? calcularComposicao(documento.composicoes[produtoAtivo.id] || composicaoVazia(), documento.recursos) : null;
   return <>
     <PageHeader title="Visão geral" description="Situação atual dos cadastros, custos e publicação no catálogo." actions={<button className={styles.secondaryButton} type="button" onClick={onAtualizar}>Atualizar dados</button>} />
-    <section className={styles.metrics}>
+    <section className={`${styles.metrics} ${styles.overviewMetrics}`}>
       <Metric accent label="Produtos e serviços" value={String(produtos.length)} detail={`${produtos.filter((p) => p.tipo_item === 'produto').length} produtos · ${produtos.filter((p) => p.tipo_item === 'servico').length} serviços`} />
       <Metric label="No catálogo" value={String(publicados)} detail="Ativos e disponíveis para divulgação" />
       <Metric label="Em estudo" value={String(emEstudo)} detail="Ainda não publicados no catálogo" />

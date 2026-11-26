@@ -1,6 +1,6 @@
 <!-- ava-version: 3.2.0.526 -->
 
-> Revisão 3.2.0.526: Sem impacto operacional; ajuste restrito à identificação do cliente na Central Fiscal Web.
+> Revisão 3.2.0.526: Resumos da Visão geral de Custos e Precificação compactados como em Vendas, sem mudança de indicadores ou operação. Sem impacto operacional; ajuste restrito à identificação do cliente na Central Fiscal Web.
 
 > Revisão 3.2.0.525: Sem impacto operacional; correção restrita à abertura fiscal em Vendas Web.
 

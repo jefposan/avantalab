@@ -3111,3 +3111,5 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido 
 // Revisão 3.2.0.519: retirados blocos informativos adicionais da confirmação de etapas do pedido, sem impacto operacional.
 
 // Revisão visual 3.2.0.526: cards de Vendas usam o raio assimétrico oficial; sem impacto operacional.
+
+// Revisão visual 3.2.0.526: resumos iniciais de Custos compactados como Vendas; sem impacto operacional.
