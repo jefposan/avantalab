@@ -18,11 +18,9 @@ export function monthPeriod(year: number, month: number): SalePeriod {
   return { start: `${prefix}-01`, end: `${prefix}-${new Date(year, month + 1, 0).getDate()}` };
 }
 
-export default function SalesFilters({ period, onPeriodChange, group, onGroupChange, counts, total, dark, brand, notices }: {
+export function SalesPeriodFilter({ period, onPeriodChange, dark, brand, notices, statusFilter, showAll = true }: {
   period: SalePeriod; onPeriodChange: (period: SalePeriod) => void;
-  group: SaleGroup | ''; onGroupChange: (group: SaleGroup | '') => void;
-  counts: Record<SaleGroup, number>; total: number; dark: boolean; brand: string;
-  notices?: ReactNode;
+  dark: boolean; brand: string; notices?: ReactNode; statusFilter?: ReactNode; showAll?: boolean;
 }) {
   const [reference, setReference] = useState(() => ({ ano: new Date().getFullYear(), mes: new Date().getMonth() }));
   const [open, setOpen] = useState(false);
@@ -44,14 +42,11 @@ export default function SalesFilters({ period, onPeriodChange, group, onGroupCha
         <span id="sales-period-heading" className={styles.headerGroupLabel}>Período das vendas</span>
         {notices && <div className={styles.headerPeriodNotices}>{notices}</div>}
         <div className={styles.salesDateFilters} data-mode={!period.start ? 'all' : custom ? 'custom' : 'month'}>
-        <FiltroCompetencia referencia={reference} todos={!period.start} onMudarMes={moveMonth} onMostrarTodos={() => onPeriodChange({ start: '', end: '' })} todosLabel="Todo o período" tooltipPosition="bottom" />
+        <FiltroCompetencia referencia={reference} todos={!period.start} onMudarMes={moveMonth} onMostrarTodos={() => onPeriodChange({ start: '', end: '' })} mostrarTodos={showAll} todosLabel="Todo o período" tooltipPosition="bottom" />
         <Tooltip texto={custom ? `Vendas de ${dateLabel(period.start)} a ${dateLabel(period.end)}` : 'Escolher data inicial e final'} posicao="bottom"><button type="button" className={`${styles.refreshSales} ${styles.headerDateButton}`} aria-label={custom ? `Selecionar datas: ${dateLabel(period.start)} a ${dateLabel(period.end)}` : 'Selecionar datas'} aria-haspopup="dialog" aria-expanded={open} aria-pressed={custom} onClick={() => { setDraft(period.start ? period : month); setError(''); setOpen(true); }}><Icon name="calendar" size={16} /><span>{custom ? `${dateLabel(period.start)} – ${dateLabel(period.end)}` : 'Selecionar datas'}</span></button></Tooltip>
         </div>
       </div>
-      <MarketplaceSelect label="Situação das vendas" ariaLabel="Filtrar situação das vendas" leadingIcon={<Icon name="filter" size={16} />} detailAsBadge tooltipText="Filtrar vendas por situação" tooltipPosition="bottom" value={group} placeholder="Todas as situações" className={styles.salesStatusFilter} onChange={(value) => onGroupChange(value as SaleGroup | '')} options={[
-        { value: '', label: 'Todas', detail: String(total) },
-        ...orderedSaleGroups(counts).map(({ value, label }) => ({ value, label, detail: String(counts[value]) })),
-      ]} />
+      {statusFilter}
     </div>
     <CardExpandidoModal aberto={open} rotulo="Selecionar período de vendas" onFechar={() => setOpen(false)}>
       <div className={`${styles.salesPeriodTheme} ${dark ? styles.dark : ''}`} style={{ '--brand': brand } as CSSProperties}>
@@ -74,4 +69,18 @@ export default function SalesFilters({ period, onPeriodChange, group, onGroupCha
       </div>
     </CardExpandidoModal>
   </>;
+}
+
+export default function SalesFilters({ period, onPeriodChange, group, onGroupChange, counts, total, dark, brand, notices }: {
+  period: SalePeriod; onPeriodChange: (period: SalePeriod) => void;
+  group: SaleGroup | ''; onGroupChange: (group: SaleGroup | '') => void;
+  counts: Record<SaleGroup, number>; total: number; dark: boolean; brand: string;
+  notices?: ReactNode;
+}) {
+  return <SalesPeriodFilter period={period} onPeriodChange={onPeriodChange} dark={dark} brand={brand} notices={notices} statusFilter={
+    <MarketplaceSelect label="Situação das vendas" ariaLabel="Filtrar situação das vendas" leadingIcon={<Icon name="filter" size={16} />} detailAsBadge tooltipText="Filtrar vendas por situação" tooltipPosition="bottom" value={group} placeholder="Todas as situações" className={styles.salesStatusFilter} onChange={(value) => onGroupChange(value as SaleGroup | '')} options={[
+        { value: '', label: 'Todas', detail: String(total) },
+        ...orderedSaleGroups(counts).map(({ value, label }) => ({ value, label, detail: String(counts[value]) })),
+      ]} />
+  } />;
 }

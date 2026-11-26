@@ -1,3 +1,11 @@
+## 3.2.0.524 — Vendas: ordenar módulos e padronizar seleção de período
+
+- Notas Fiscais, Clientes, Produtos e serviços, Estoque e Recebimentos usam a mesma linha de resumos compactos de Serviços, com largura distribuída e rolagem horizontal em telas pequenas.
+- Na Visão geral, os cards compactos mostram Total vendido, A receber, Receita recebida e Custos, nesta ordem; Custos respeita a permissão existente.
+- Visão geral inclui Nova nota fiscal nas ações rápidas; o botão abre o formulário avulso existente e respeita a permissão fiscal.prepare.
+- Visão geral comercial e Vendas reutilizam o seletor de período de Anúncios ao lado de Novo pedido, iniciando no mês atual, com setas e intervalo personalizado, sem Todo o período.
+- Ordenar os módulos pelo nome em português, incluindo futuras inclusões. Dashboard permanece separado no topo.
+
 # 3.2.0.523 — AvantaVendas: retornar comprovantes ao fluxo anterior
 
 ## 3.2.0.523-av215 - Preservar próximas gravações e reparo pontual

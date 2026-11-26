@@ -775,6 +775,7 @@
 .headerToolbar .salesDateFilters > [aria-label="Filtro por competência"] > div > span[aria-hidden="true"] { background: var(--header-filter-border); }
 .headerToolbar .salesDateFilters button { font-size: 12px; font-weight: 500; }
 .headerToolbar .headerDateButton { display: inline-flex; align-items: center; gap: 6px; width: 160px; color: var(--header-filter-text); font-weight: 500; }
+.headerDateButton { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .headerDateButton svg { flex: 0 0 16px; }
 .headerDateButton > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .headerToolbar .salesStatusFilter { display: grid; grid-template-rows: 14px auto; gap: 3px; width: 180px; padding-left: 12px; border-left: 1px solid #dbe3ee; }

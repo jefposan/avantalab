@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.523 -->
+<!-- ava-version: 3.2.0.524 -->
+
+> Revisão 3.2.0.524: sem impacto operacional nos aplicativos independentes. Ordenação do seletor de módulos Web.
 
 > Revisão 3.2.0.523: sem impacto operacional na Gestão Mobile; retorno do comprovante restrito ao AvantaVendas independente.
 

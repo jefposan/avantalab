@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.523 -->
+<!-- ava-version: 3.2.0.524 -->
+
+> Revisão 3.2.0.524: Notas Fiscais, Clientes, Produtos e serviços, Estoque e Recebimentos usam a mesma linha de resumos compactos de Serviços, com largura distribuída e rolagem horizontal em telas pequenas.  Na Visão geral, os cards compactos mostram Total vendido, A receber, Receita recebida e Custos, nesta ordem; Custos respeita a permissão existente.  Visão geral inclui Nova nota fiscal nas ações rápidas; o botão abre o formulário avulso existente e respeita a permissão fiscal.prepare.  Visão geral comercial e Vendas reutilizam o seletor de período de Anúncios ao lado de Novo pedido, iniciando no mês atual, com setas e intervalo personalizado, sem Todo o período.  O menu Navegar mantém Dashboard no topo e ordena os módulos alfabeticamente pelo nome, incluindo novos módulos.
 
 > Revisão 3.2.0.523: sem impacto operacional na Gestão Web; retorno do comprovante restrito ao AvantaVendas independente.
 

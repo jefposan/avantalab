@@ -1,5 +1,7 @@
-<!-- ava-version: 3.2.0.523 -->
+<!-- ava-version: 3.2.0.524 -->
 <!-- avantavendas-asset-revision: 215 -->
+
+> Revisão 3.2.0.524: Notas Fiscais, Clientes, Produtos e serviços, Estoque e Recebimentos usam a mesma linha de resumos compactos de Serviços, com largura distribuída e rolagem horizontal em telas pequenas.  Na Visão geral, os cards compactos mostram Total vendido, A receber, Receita recebida e Custos, nesta ordem; Custos respeita a permissão existente.  Visão geral inclui Nova nota fiscal nas ações rápidas; o botão abre o formulário avulso existente e respeita a permissão fiscal.prepare.  Visão geral comercial e Vendas reutilizam o seletor de período de Anúncios ao lado de Novo pedido, iniciando no mês atual, com setas e intervalo personalizado, sem Todo o período.  O menu Navegar mantém Dashboard no topo e ordena os módulos alfabeticamente pelo nome, incluindo novos módulos.
 
 > Revisão 3.2.0.523-av215: Por decisão do titular, retorna ao comportamento dos comprovantes anterior ao fluxo geral da revisão av214. Sem bloco/botão Atualizar conferência, saldo em conferência ou scroll adicional no rodapé. Não reprocessa todos os comprovantes antigos; usa o retrato financeiro já gravado quando existe. Permanecem as proteções das próximas gravações contra recálculo em edição/reenvio, o registro de inclusão e o reparo pontual da Duda. Proteções de contexto e outbox preservadas. Não altera nem exclui lançamentos ou reverte migrações já aplicadas. As notas da revisão av214 abaixo são históricas e foram substituídas por esta decisão. Preparado localmente, ainda não publicado.
 

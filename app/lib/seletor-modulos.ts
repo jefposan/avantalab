@@ -17,7 +17,7 @@ export function opcoesSeletorModulos(perfis: PerfilSeletorModulos[], empresaId: 
     && moduloPermitidoParaPapel(modulo.id, perfil.perfil)).map(modulo => ({
     id: modulo.id, nome: modulo.nome, descricao: modulo.descricao,
     href: hrefModulo(modulo.id, empresaId),
-  }));
+  })).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
 }
 
 /** Dashboard é uma concessão independente dos módulos e nunca um fallback. */

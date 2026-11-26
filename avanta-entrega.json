@@ -1,7 +1,6 @@
 {
-  "baseDeploymentId": "dpl_HV4gY55G9JJJ8tJw9auei1PykfSZ",
+  "baseDeploymentId": "dpl_G4pMgBFw8wkvViyKXw5AFxogXAiZ",
   "migrations": [],
-  "version": "3.2.0.523",
-  "scope": "AvantaVendas: retornar visual e leitura dos comprovantes ao fluxo anterior; preservar próximas gravações e reparo da Duda",
-  "releaseStatus": "publicação autorizada; retorno pontual dos comprovantes, sem migração ou reversão de dados"
+  "version": "3.2.0.524",
+  "scope": "Vendas: navegação alfabética, período compartilhado, nova nota fiscal e resumos compactos"
 }

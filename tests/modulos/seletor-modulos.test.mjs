@@ -27,7 +27,7 @@ test('acionador mantém rótulo Navegar, grade e seta independente do módulo at
 
 test('seletor limita opções ao perfil consultado, sem concessões de outra empresa', () => {
   const lista = opcoesSeletorModulos([perfil('outra', ['vendas']), perfil('atual', ['custos', 'projetos', 'custos', 'inventado'])], 'atual');
-  assert.deepEqual(lista.map(item => item.id), ['projetos', 'custos']);
+  assert.deepEqual(lista.map(item => item.id), ['custos', 'projetos']);
   assert.ok(lista.every(item => item.href.endsWith('?empresaId=atual')));
   assert.deepEqual(opcoesSeletorModulos([perfil('outra', ['custos'])], 'atual'), []);
 });
@@ -131,4 +131,27 @@ test('menu compacto mantém medidas de layout e cálculo do portal consistentes'
   assert.match(code, /Math.min\(320, window.innerWidth - 16\)/);
   assert.match(css, /\.panel > button \{[\s\S]*?min-height: 44px/);
   assert.doesNotMatch(code, /Disponíveis neste perfil/);
+});
+
+test('módulos são ordenados pelo nome em português e Dashboard permanece separado no topo', () => {
+  const ids = registro.REGISTRO_MODULOS.map(modulo => modulo.id);
+  const atual = { ...perfil('empresa', ids), dashboard: true };
+  const options = opcoesNavegacao([atual], 'empresa');
+  assert.equal(options[0].id, 'dashboard');
+  const names = options.slice(1).map(option => option.nome);
+  assert.deepEqual(names, [...names].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })));
+  assert.equal(options.filter(option => option.id === 'custos').length, 1);
+});
+
+test('novo módulo entra na posição alfabética sem depender da ordem de cadastro', () => {
+  const modules = registro.REGISTRO_MODULOS;
+  const source = modules.find(module => module.id === 'custos');
+  const added = { ...source, id: 'novo-modulo', nome: 'Água e operações' };
+  modules.push(added);
+  try {
+    const options = opcoesSeletorModulos([perfil('empresa', ['projetos', 'novo-modulo', 'custos'])], 'empresa');
+    assert.deepEqual(options.map(option => option.id), ['novo-modulo', 'custos', 'projetos']);
+  } finally {
+    modules.pop();
+  }
 });
