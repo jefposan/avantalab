@@ -2,5 +2,5 @@
   "baseDeploymentId": "dpl_5eovFekPJxTq28WmApNWmHWk3XFq",
   "migrations": [],
   "version": "3.2.0.526",
-  "scope": "Vendas: exibir razão social do cliente em Notas Fiscais"
+  "scope": "Vendas: razão social na Central Fiscal e preparação no primeiro clique"
 }

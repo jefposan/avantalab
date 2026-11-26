@@ -6600,6 +6600,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         const message = prepared.emission.reused ? `Emissão já existente localizada em ${environmentLabel}.` : `Emissão fiscal aberta em ${environmentLabel}. Agora valide os dados fiscais.`;
         setFiscalPrepareState((current) => ({ ...current, [pending.draftId]: { loading: false, message } }));
         setToast(message);
+        setFiscalResumeId(pending.draftId);
+        setView('fiscal');
         return;
       }
       const validated = parseFiscalValidateResponse(event.data);
@@ -7387,6 +7389,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         if (success) {
           setFiscalDraftRecords((current) => current.filter((item) => item.id !== draft.id));
           setFiscalResumeId(savedId);
+          setView('fiscal');
         } else setToast(message);
       };
       window.parent.postMessage({ type: STANDALONE_FISCAL_SAVE_REQUEST_TYPE, requestId, document: { originOrderId: operationId, expectedVersion } }, managementBridgeOrigin, [channel.port2]);
