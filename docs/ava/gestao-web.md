@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.526 -->
+<!-- ava-version: 3.2.0.527 -->
+
+> Revisão 3.2.0.527: Sem impacto operacional no manual; resumos e refinamentos dos módulos Web registrados no manual de Vendas.
 
 > Revisão 3.2.0.526: Menu de ações dos produtos mantém Editar cadastro, Editar listas de preços e Excluir cadastro empilhados dentro do painel. Voltar fica no editor de produto ou serviço e retorna à listagem; se houver mudanças não salvas, solicita a confirmação existente. A listagem não tem Voltar para Catálogos. Páginas de Custos exibem apenas o título e as ações no cabeçalho de conteúdo, sem descrição e sem repetir o nome do módulo; a pílula superior permanece. Botões de Custos e Vendas com a quina superior esquerda menor, sem alteração de operação. Cabeçalhos dos módulos Web identificados por título em pílula e Navegar compacto abaixo, com intervalo de 8 px; as permissões e os destinos continuam sendo validados pelo seletor compartilhado. Nome do módulo destacado em pílula colorida no topo, 8 px acima do botão Navegar compacto de 26 px no desktop. Resumos cadastrais e financeiros da Visão geral de Custos e Precificação compactados como em Vendas, sem mudança de indicadores ou operação. Sem impacto operacional; ajuste restrito à identificação do cliente na Central Fiscal Web.
 

@@ -1,4 +1,6 @@
 'use client';
+import type {CommercialOverview} from '../lib/server/commercial-overview.mjs';
+import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
 import { stockMinimumNotices } from '../lib/stock-minimum-notices.mjs';
 import { SalesPeriodFilter, monthPeriod } from '@/app/marketplaces/SalesFilters';
 import type { SalePeriod } from '@/app/modules/marketplaces/sales-status';
@@ -2614,13 +2616,18 @@ function QuoteView({ source, clientRecords, catalogRecords, settings, connected,
   </>;
 }
 
-function Dashboard({ stockControlEnabled = true, brand = '#003e73', onNew, onNavigate, connected, created, receivableRecords, catalogRecords }: { stockControlEnabled?:boolean; brand?: string; onNew: (type: NewActionType) => void; onNavigate: (view: View) => void; connected: boolean; created: CreatedRecord[]; receivableRecords: ReceivableRecord[]; catalogRecords: CatalogItem[] }) {
+function Dashboard({ stockControlEnabled = true, brand = '#003e73', onNew, onNavigate, connected, created, receivableRecords, catalogRecords, summary, summaryError, onSummaryPeriod }: { summary:CommercialOverview|null; summaryError:string; onSummaryPeriod:(period:SalePeriod)=>void; stockControlEnabled?:boolean; brand?: string; onNew: (type: NewActionType) => void; onNavigate: (view: View) => void; connected: boolean; created: CreatedRecord[]; receivableRecords: ReceivableRecord[]; catalogRecords: CatalogItem[] }) {
   const {can}=useContext(PermissionContext);
   const [period, setPeriod] = useState<SalePeriod>(monthPeriod(new Date().getFullYear(), new Date().getMonth()));
+  useEffect(() => {
+    if(connected&&summary&&(summary.start!==period.start||summary.end!==period.end))onSummaryPeriod(period);
+  },[connected,summary,period.start,period.end,onSummaryPeriod]);
   const periodOperations = created.filter(record => (!period.start || (record.order?.orderDate || record.createdAt).slice(0, 10) >= period.start) && (!period.end || (record.order?.orderDate || record.createdAt).slice(0, 10) <= period.end));
   const periodReceivables = receivableRecords.filter(record => (!period.start || (record.orderDate || record.createdAt).slice(0, 10) >= period.start) && (!period.end || (record.orderDate || record.createdAt).slice(0, 10) <= period.end));
   if (connected) {
-    const snapshot = calculateCommercialReport({ operations: periodOperations, receivables: periodReceivables, catalog: catalogRecords, movements: [], fiscalDrafts: [], todayIso: new Date().toISOString().slice(0, 10) });
+    const heading=<PageHeading view="painel" action={<div className="heading-actions commercial-period-actions"><SalesPeriodFilter period={period} onPeriodChange={setPeriod} brand={brand} dark={false} showAll={false}/><button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button></div>}/>;
+    if(!summary||summary.start!==period.start||summary.end!==period.end)return <>{heading}{summaryError?<AvisoFormulario titulo="Resumos indisponíveis" mensagem={summaryError} idMensagem="overview-error"><button className="button secondary" type="button" onClick={()=>onSummaryPeriod(period)}>Tentar novamente</button></AvisoFormulario>:<CarregamentoDadosModulo ativo variante="local" titulo="Atualizando resumos" mensagem="Consultando o período…"/>}</>;
+    const snapshot={...summary,stockLowItems:catalogRecords.filter(item=>item.trackStock&&stockStatus(item.available,item.minimum)!=='normal').length};
     const integratedQuickActions = dashboardNewOptions.filter((option) => option.type !== 'venda');
     return <>
       <PageHeading view="painel" action={<div className="heading-actions commercial-period-actions"><SalesPeriodFilter period={period} onPeriodChange={setPeriod} brand={brand} dark={false} showAll={false}/><button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button></div>}/>
@@ -2628,10 +2635,10 @@ function Dashboard({ stockControlEnabled = true, brand = '#003e73', onNew, onNav
         <Metric label="Total vendido" value={money(snapshot.revenue)} note="Operações concluídas"/>
         <Metric label="A receber" value={money(snapshot.openReceivables)} note={snapshot.overdueReceivables ? `${money(snapshot.overdueReceivables)} em atraso` : 'Sem valores em atraso'} tone="cyan"/>
         <Metric label="Receita recebida" value={money(snapshot.receivedNet)} note="Recebimentos líquidos"/>
-        {can('catalog.view_cost') && <Metric label="Custos" value={money(snapshot.cost)} note="Das operações concluídas"/>}
+        {can('catalog.view_cost') && <Metric label="Custos" value={money(snapshot.cost||0)} note="Das operações concluídas"/>}
       </div>
       <section className="quick-actions" aria-label="Ações rápidas">{integratedQuickActions.map((option) => <button type="button" key={option.type} onClick={() => onNew(option.type)}><span><Icon name={option.icon}/></span><div><strong>{option.type === 'nfe' ? 'Nova nota fiscal' : `Novo ${option.title.toLocaleLowerCase('pt-BR')}`}</strong><small>{option.description}</small></div><Icon name="chevron" size={17}/></button>)}</section>
-      <div className="dashboard-grid"><Panel title="Operação comercial" subtitle="Registros persistidos no perfil"><div className="pipeline">{[['Orçamentos', periodOperations.filter((item) => item.type === 'orcamento').length], ['Pedidos', periodOperations.filter((item) => item.type === 'pedido').length], ['Serviços', periodOperations.filter((item) => item.type === 'ordem_servico').length], ['Faturados', periodOperations.filter((item) => item.status === 'Faturado').length]].map(([label, count], index) => <div key={String(label)}><span className={`pipeline-icon pipeline-${index}`}><Icon name={index === 0 ? 'document' : index === 2 ? 'service' : 'sale'} size={18}/></span><div><strong>{label}</strong><small>Perfil empresarial</small></div><b>{count}</b></div>)}</div></Panel><Panel title="Atenção necessária" subtitle="Prioridades atuais"><div className="attention-list">{stockControlEnabled&&<button type="button" onClick={() => onNavigate('estoque')}><i className="dot warning"/><span><strong>{snapshot.stockLowItems} itens com atenção</strong><small>Saldo disponível e estoque mínimo</small></span><Badge tone="warning">Estoque</Badge></button>}<button type="button" onClick={() => onNavigate('recebimentos')}><i className="dot warning"/><span><strong>{money(snapshot.overdueReceivables)} em atraso</strong><small>Parcelas vencidas do perfil</small></span><Badge tone="warning">Cobrança</Badge></button></div></Panel></div>
+      <div className="dashboard-grid"><Panel title="Operação comercial" subtitle="Registros persistidos no perfil"><div className="pipeline">{[['Orçamentos',summary.counts.quotes],['Pedidos',summary.counts.orders],['Serviços',summary.counts.services],['Faturados',summary.counts.invoiced]].map(([label, count], index) => <div key={String(label)}><span className={`pipeline-icon pipeline-${index}`}><Icon name={index === 0 ? 'document' : index === 2 ? 'service' : 'sale'} size={18}/></span><div><strong>{label}</strong><small>Perfil empresarial</small></div><b>{count}</b></div>)}</div></Panel><Panel title="Atenção necessária" subtitle="Prioridades atuais"><div className="attention-list">{stockControlEnabled&&<button type="button" onClick={() => onNavigate('estoque')}><i className="dot warning"/><span><strong>{snapshot.stockLowItems} itens com atenção</strong><small>Saldo disponível e estoque mínimo</small></span><Badge tone="warning">Estoque</Badge></button>}<button type="button" onClick={() => onNavigate('recebimentos')}><i className="dot warning"/><span><strong>{money(snapshot.overdueReceivables)} em atraso</strong><small>Parcelas vencidas do perfil</small></span><Badge tone="warning">Cobrança</Badge></button></div></Panel></div>
     </>;
   }
   const maxRevenue = Math.max(...monthlyRevenue.map(([, value]) => value));
@@ -6067,6 +6074,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [catalogRecords, setCatalogRecords] = useState<CatalogItem[]>(() => inventory.map((item) => normalizeCatalogTaxProfile(item) as CatalogItem));
   const [managementCatalogBridge, setManagementCatalogBridge] = useState<ManagementCatalogBridge | null>(null);
   const [presentationVersion, setPresentationVersion] = useState(0);
+  const [overviewSummary,setOverviewSummary]=useState<CommercialOverview|null>(null);
+  const [overviewError,setOverviewError]=useState('');
   const [managementBridgeOrigin, setManagementBridgeOrigin] = useState('');
   const [accessBridgeState, setAccessBridgeState] = useState<AccessBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '' });
   const [fiscalRulesBridgeState, setFiscalRulesBridgeState] = useState<FiscalRulesBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', configuration: null });
@@ -6122,14 +6131,19 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const managementProfileReady = !integratedManagementRuntime || Boolean(managementCatalogBridge?.company);
   const managementAccessReady = !integratedManagementRuntime || accessBridgeState.available;
   const managementContextReady = managementProfileReady && managementAccessReady;
+  const requestOverview=useCallback((period:SalePeriod)=>{
+    if(managementBridgeOrigin&&managementCatalogBridge?.companyId)window.parent.postMessage({type:'AVANTALAB_VENDAS_OVERVIEW_REQUEST_V1',companyId:managementCatalogBridge.companyId,start:period.start,end:period.end},managementBridgeOrigin);
+  },[managementBridgeOrigin,managementCatalogBridge?.companyId]);
+  useEffect(()=>{if(view==='painel'&&overviewSummary)requestOverview({mode:'range',start:overviewSummary.start,end:overviewSummary.end} as SalePeriod);},[view]);
+
   useEffect(() => {
-    if (!presentationVersion || !integratedManagementRuntime || !managementCatalogBridge?.companyId || !managementProfileReady || !accessBridgeState.integrated || accessBridgeState.loading || !managementBridgeOrigin) return;
+    if ((!overviewSummary&&!overviewError) || !presentationVersion || !integratedManagementRuntime || !managementCatalogBridge?.companyId || !managementProfileReady || !accessBridgeState.integrated || accessBridgeState.loading || !managementBridgeOrigin) return;
     let paint = 0;
     const frame = requestAnimationFrame(() => { paint = requestAnimationFrame(() => {
       window.parent.postMessage({ type: 'AVANTALAB_VENDAS_PRESENTATION_V1', companyId: managementCatalogBridge.companyId, settled: true }, managementBridgeOrigin);
     }); });
     return () => { cancelAnimationFrame(frame); cancelAnimationFrame(paint); };
-  }, [presentationVersion, integratedManagementRuntime, managementCatalogBridge, managementProfileReady, accessBridgeState.integrated, accessBridgeState.loading, managementBridgeOrigin]);
+  }, [overviewSummary, overviewError, presentationVersion, integratedManagementRuntime, managementCatalogBridge, managementProfileReady, accessBridgeState.integrated, accessBridgeState.loading, managementBridgeOrigin]);
   const sidebarFiscalStatus = useMemo(() => {
     if (integratedManagementRuntime && (!fiscalCertificateBridgeState.integrated || fiscalCertificateBridgeState.loading)) return null;
     if (currentFiscalConfig.certificateValid && fiscalCertificateBridgeState.execution?.productionTransmissionAllowed) return null;
@@ -6716,6 +6730,12 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       }
       if (event.data?.type === 'AVANTALAB_VENDAS_PRESENTATION_REQUEST_V1' && event.data.companyId === new URLSearchParams(window.location.search).get('companyId')) {
         setPresentationVersion((current) => current + 1);
+        return;
+      }
+      if(event.data?.type==='AVANTALAB_VENDAS_OVERVIEW_V1'&&event.data.companyId===new URLSearchParams(window.location.search).get('companyId')){
+        const summary=event.data.summary;
+        if(summary&&/^\d{4}-\d{2}-\d{2}$/.test(summary.start)&&/^\d{4}-\d{2}-\d{2}$/.test(summary.end)&&['revenue','openReceivables','receivedNet','overdueReceivables'].every(key=>typeof summary[key]==='number'&&Number.isFinite(summary[key]))&&summary.counts){setOverviewSummary(summary);setOverviewError('');}
+        else if(summary===null)setOverviewError(String(event.data.message||'Não foi possível calcular os resumos.'));
         return;
       }
       const connected = parseManagementCatalogMessage(event.data);
@@ -8504,7 +8524,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         {managementProfileReady && !managementAccessReady && <section className="access-blocked-state"><span><Icon name={accessBridgeState.loading ? 'clock' : 'warning'} size={24}/></span><h1>{accessBridgeState.loading ? 'Confirmando seu acesso' : 'Acesso não confirmado'}</h1><p>{accessBridgeState.message || 'A Gestão precisa confirmar seu vínculo e suas permissões antes de liberar os dados comerciais.'}</p></section>}
         {managementContextReady && !activeUser?.active && <section className="access-blocked-state"><span><Icon name="warning" size={24}/></span><h1>Acesso bloqueado</h1><p>{activeUser?.name ?? 'Este usuário'} não pode operar o sistema. Peça a reativação ao Gestor ou Administrador.</p></section>}
         {managementContextReady && activeUser?.active && <>
-        {view === 'painel' && <Dashboard stockControlEnabled={stockControls.enabled} brand={profileColor} onNew={openNew} onNavigate={navigate} connected={Boolean(managementCatalogBridge)} created={created} receivableRecords={receivableRecords} catalogRecords={catalogRecords}/>}
+        {view === 'painel' && <Dashboard summary={overviewSummary} summaryError={overviewError} onSummaryPeriod={requestOverview} stockControlEnabled={stockControls.enabled} brand={profileColor} onNew={openNew} onNavigate={navigate} connected={Boolean(managementCatalogBridge)} created={created} receivableRecords={receivableRecords} catalogRecords={catalogRecords}/>}
         {view === 'vendas' && <SalesView stockControlEnabled={stockControls.enabled} brand={profileColor}
           companyLogoUrl={companyLogoUrl}
           paperSize={moduleSettings.commercial.orderPrintPaper||'A4'}

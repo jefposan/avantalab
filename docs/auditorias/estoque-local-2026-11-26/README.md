@@ -12,3 +12,7 @@ Entrega ainda não publicada. Banco remoto não alterado.
 - O laboratório continua em modo de consulta: POST/PATCH/PUT/DELETE de Vendas/Fiscal não são encaminhados ao servidor oficial. Portanto salvar na inspeção com dados reais permanece bloqueado; gravações foram validadas somente em PGlite.
 
 Antes de futura publicação autorizada: reconciliar main e deployment vigentes, conferir e aplicar a migração declarada pelo procedimento oficial e executar o gate completo. Não publicar sem nova solicitação do titular.
+
+## Aplicação para publicação 3.2.0.527
+
+Migração 20261126210000 aplicada e registrada no Supabase atual pelo SQL Editor. Coluna vendas_estoque_controle_ativo confirmada com default true e NOT NULL. Nenhum saldo, mínimo, reserva ou histórico alterado.

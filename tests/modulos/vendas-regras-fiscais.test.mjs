@@ -51,12 +51,12 @@ test('laboratório encaminha publicação pelo pai sem entregar token ao iframe'
 test('falha do catálogo não esconde os ajustes fiscais do módulo', async () => {
   const source = await readFile(labUrl, 'utf8');
   assert.match(source, /if \(!perfilId\) return;/);
-  assert.match(source, /carregarDocumentosFiscais\(perfilId, token\)/);
+  assert.match(source, /carregarDocumentosFiscais\(empresaId, data\.session\.access_token\)/);
   assert.match(source, /carregarPermissoes\(perfilId\)/);
-  assert.match(source, /carregarRegrasFiscais\(perfilId\)/);
+  assert.match(source, /carregarRegrasFiscais\(empresaId\)/);
   assert.match(source, /!empresaId \?[^]*: <TransicaoNavegacaoInterna/);
-  assert.match(source, /<CarregamentoDadosModulo ativo=\{!perfilPronto \|\| !iframePronto\}/);
-  assert.match(source, /setPerfilCadastro\(perfil\.cadastro\)[^]*fetch\(`\/api\/modulos\/vendas\/catalogo/);
+  assert.match(source, /<CarregamentoDadosModulo ativo=\{!paginaPronta\}/);
+  assert.match(source, /setPerfilCadastro\(perfil\.cadastro\)[^]*if\(catalogResult\.status==='rejected'\)throw catalogResult\.reason/);
   assert.doesNotMatch(source, /!catalogo \?[^]*: <iframe/);
 });
 

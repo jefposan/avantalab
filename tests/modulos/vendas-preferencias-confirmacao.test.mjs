@@ -38,7 +38,7 @@ test('popup oficial de progresso mantém o card montado e inativo durante a grav
  const component=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='SettingsDialog').getText(ast);
  let index=0;
  const element=(type,props)=>({type,props});
- const scope={exports:{},require:()=>({jsx:element,jsxs:element,Fragment:'fragment'}),useState:initial=>[++index===3?true:initial,()=>{}],useRef:x=>({current:x}),useEffect:()=>{},FiscalDefaultsPanel:'FiscalDefaultsPanel',Dialog:'SettingsDialogCard',ModalConfirmacao:'OfficialProgressPopup',Icon:'Icon',BotaoAcaoCompacto:'Button',CampoMoeda:'CampoMoeda'};
+ const scope={exports:{},require:()=>({jsx:element,jsxs:element,Fragment:'fragment'}),useState:initial=>[++index===5?true:initial,()=>{}],useRef:x=>({current:x}),useEffect:()=>{},FiscalDefaultsPanel:'FiscalDefaultsPanel',Dialog:'SettingsDialogCard',ModalConfirmacao:'OfficialProgressPopup',Icon:'Icon',BotaoAcaoCompacto:'Button',CampoMoeda:'CampoMoeda'};
  vm.runInNewContext(ts.transpileModule(component+'\nexports.render=SettingsDialog;',{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,scope);
  const settings={company:{},commercial:{},fiscal:{documentScope:['nfe'],fiscalResponsible:'',taxReviewConfirmed:false,taxReformReviewConfirmed:false}};
  const tree=scope.exports.render({section:'fiscal',settings,onClose:()=>{},onSave:async()=>true});

@@ -1,4 +1,8 @@
-## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
+## 3.2.0.527 — Vendas e Custos: resumos no servidor, abertura rápida e refinamentos
+
+- Calcular os resumos comerciais no servidor com projeções mínimas, sem enviar históricos, eventos ou detalhes de cada pedido para abrir a Visão geral; filtros de período, permissões, estornos e custos preservados.
+- Medições locais: Vendas 3,8–4,4 s com resumo no servidor, contra 6,5 s na otimização anterior; Custos 4,7 s na comparação atual. Sem transmissão fiscal de teste.
+- Aplicar e registrar a migração aditiva 20261126210000_vendas_controle_estoque no Supabase atual, preservando dados anteriores.
 
 - Paralelizar cadastro empresarial, catálogo, permissões e resumos de Vendas, mantendo todas as validações de acesso e a liberação somente com os dados iniciais prontos. Comparação local registrada.
 - Agilizar a abertura: aguardar somente acesso, catálogo e resumos da Visão geral; carregar estoque, clientes, fornecedores e detalhes fiscais após apresentar a página e evitar consultas duplicadas no handshake.
@@ -14,7 +18,7 @@
 - Compactar os quatro resumos da Visão geral de Custos e Precificação para a mesma densidade de Vendas: 76 px de altura mínima, fontes e espaçamentos equivalentes.
 - Unificar os cantos dos cards de Vendas e Serviços com o padrão oficial: 7 px no superior esquerdo e 14 px nos demais, mantendo o aspecto retangular, preservando a altura compacta.
 - Adicionar configuração de mínimo por produto, avisos de reposição no sino e atalho ao campo de quantidade na entrada.
-- Uma única chave de controle em Ajustes, sem chaves por produto/pedido. Desligar e religar preservam saldos, mínimos, reservas e histórico. Operação sem seletores de locais e com textos curtos. Migração preparada, não aplicada no remoto.
+- Uma única chave de controle em Ajustes, sem chaves por produto/pedido. Desligar e religar preservam saldos, mínimos, reservas e histórico. Operação sem seletores de locais e com textos curtos. Migração aplicada e registrada no Supabase na preparação desta publicação.
 - Renomear a coluna Operação de Produtos e serviços para Estoque, inclusive no layout mobile.
 - Compactar mais o espaço entre colunas e eliminar folgas internas antes de Ações no desktop, sem mudar larguras.
 - Reduzir somente o padding horizontal entre colunas de Produtos e serviços, mantendo larguras e ordem.

@@ -23,3 +23,15 @@ Vendas ainda inicializa a tela em iframe e consulta operações e recebimentos p
 ## Verificação
 
 Testes direcionados da preparação inicial, checagem TypeScript, PADRÃO AVANTA e Ava. Código espelhado no checkout que atende localhost:3000. Produção preservada.
+
+## Resumos no servidor — 3.2.0.527
+
+GET `/api/modulos/vendas/commercial/overview` autentica a sessão e a liberação do módulo, plano e permissões granulares, pagina somente as colunas necessárias no Supabase e calcula os totais no servidor. Não carrega eventos financeiros, nomes/endereços de clientes, anexos ou todos os detalhes de cada operação na resposta; o cliente recebe apenas totais e contagens. Custo é omitido quando negado. Não cria tabelas nem migração para os resumos.
+
+Na mesma sessão real, após recompilar e aquecer as rotas: Vendas 3.847 ms e 4.397 ms; Custos 4.685 ms. Comparação anterior de Vendas: 6.534 ms. São amostras locais, não garantia de latência de produção.
+
+Conferidos em novembro: vendido 10.212,65; a receber 6.574,35; recebido 0,00; custos 3.805,18; 21 pedidos e 14 faturados. Coincidem com a projeção anterior. Selecionar outubro e retornar a novembro atualizou os totais corretamente. Nenhuma operação comercial foi criada pela validação.
+
+A migração de estoque do pacote, 20261126210000, foi aplicada no projeto Supabase qzewxhdkwettnlmkjoqd pelo SQL Editor e registrada em schema_migrations. Verificação devolveu vendas_estoque_controle_ativo, default true, NOT NULL, versão 20261126210000. Sem atualização/exclusão de saldos, mínimos ou reservas.
+
+Validação final local: 472 testes direcionados de Vendas aprovados; TypeScript, PADRÃO AVANTA 1.24.0 e Ava 3.2.0.527 aprovados. Harnesses de interface atualizados para o editor oficial de quantidade e os novos estados de carregamento, preservando verificações de correção fiscal e de gravação.

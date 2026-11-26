@@ -15,6 +15,7 @@ function loader({failCatalog=false}={}){
  for(const key of ['Erro','Catalogo','LogoUrl','PerfilCadastro','CorPrimaria','DadosProntosEmpresa','ApresentacaoEmpresa'])env['set'+key]=v=>state[key]=typeof v==='function'?v(state[key]):v;
  for(const name of ['DocumentosFiscais','RegrasFiscais','PerfilFiscal','Recebimentos','Estoque','Clientes','Fornecedores','Operacoes'])env['carregar'+name]=async()=>{};
  env.carregarPermissoes=()=>{state.permissionStarted=true;return permission.promise;};
+ env.carregarResumo=()=>permission.promise;
  const start=parent.indexOf('  const carregarCatalogo = useCallback('),end=parent.indexOf('\n  useEffect(',start);
  run(parent.slice(start,end)+'\nexports.load=carregarCatalogo;',env);
  return {state,catalog,permission,load:env.exports.load};
@@ -26,14 +27,14 @@ test('catálogo e permissões lentos mantêm a preparação; catálogo vazio vá
  h.permission.resolve(true);await pending;assert.equal(h.state.DadosProntosEmpresa,'company');assert.equal(h.state.Erro,'');
 });
 test('falha real no catálogo encerra a espera e permite a tela de erro',async()=>{
- const h=loader({failCatalog:true});await h.load('company');assert.equal(h.state.DadosProntosEmpresa,'company');assert.equal(h.state.Erro,'Catálogo indisponível');h.permission.resolve(false);
+ const h=loader({failCatalog:true});await h.load('company');assert.equal(h.state.DadosProntosEmpresa,'company');assert.equal(h.state.Erro,'Catálogo indisponível');assert.equal(h.state.PerfilCadastro.empresa_id,'company','ajustes continuam acessíveis com perfil confirmado');h.permission.resolve(false);
 });
 test('apresentação aguarda acesso e dois frames; certificado em consulta não bloqueia a Visão geral',()=>{
- const start=child.indexOf("  useEffect(() => {\n    if (!presentationVersion || !integratedManagementRuntime || !managementCatalogBridge?.companyId"),end=child.indexOf('  const sidebarFiscalStatus',start);
+ const start=child.indexOf("  useEffect(() => {\n    if ((!overviewSummary&&!overviewError) || !presentationVersion || !integratedManagementRuntime || !managementCatalogBridge?.companyId"),end=child.indexOf('  const sidebarFiscalStatus',start);
  assert.ok(start>0&&end>start);
  for(const scenario of ['requestPending','accessPending','certificatePending','denied','ready']){
   const frames=[],messages=[];
-  const env={presentationVersion:scenario==='requestPending'?0:1,integratedManagementRuntime:true,managementCatalogBridge:{companyId:'company'},managementProfileReady:true,accessBridgeState:{integrated:true,loading:scenario==='accessPending',available:scenario==='ready'},fiscalCertificateBridgeState:{integrated:true,loading:scenario==='certificatePending'},managementBridgeOrigin:'http://localhost:3000',useEffect:fn=>fn(),requestAnimationFrame:fn=>(frames.push(fn),frames.length),cancelAnimationFrame:()=>{},window:{parent:{postMessage:(message,origin)=>messages.push({message,origin})}}};
+  const env={overviewSummary:{start:'2026-11-01'},overviewError:'',presentationVersion:scenario==='requestPending'?0:1,integratedManagementRuntime:true,managementCatalogBridge:{companyId:'company'},managementProfileReady:true,accessBridgeState:{integrated:true,loading:scenario==='accessPending',available:scenario==='ready'},fiscalCertificateBridgeState:{integrated:true,loading:scenario==='certificatePending'},managementBridgeOrigin:'http://localhost:3000',useEffect:fn=>fn(),requestAnimationFrame:fn=>(frames.push(fn),frames.length),cancelAnimationFrame:()=>{},window:{parent:{postMessage:(message,origin)=>messages.push({message,origin})}}};
   run(child.slice(start,end),env);assert.equal(messages.length,0);
   if(scenario==='requestPending'||scenario==='accessPending')assert.equal(frames.length,0);
   else {frames.shift()();assert.equal(messages.length,0);frames.shift()();assert.equal(messages[0].message.settled,true);assert.equal(messages[0].message.companyId,'company');assert.equal(messages[0].origin,'http://localhost:3000');assert.equal(env.accessBridgeState.available,scenario==='ready');}

@@ -17,6 +17,7 @@ export async function proxyLocalCommercialRead(request, { environment = process.
     || url.port !== '3000' || !url.pathname.startsWith(PREFIX)) return null;
   if (request.method !== 'GET') return reply(403, 'Ambiente local somente para consulta. Gravações, reservas e transmissão fiscal estão bloqueadas.');
   const path = url.pathname.slice(PREFIX.length);
+  if (path === 'commercial/overview') return null; // Nova leitura local: autenticação e cálculo no próprio servidor.
   if (!READ_PATHS.has(path) && !/^fiscal\/status\/[0-9a-f-]{36}$/i.test(path)) return reply(403, 'Consulta indisponível neste ambiente local.');
   const authorization = request.headers.get('authorization') || '';
   if (!/^Bearer \S+$/i.test(authorization)) return reply(401, 'Confirme sua sessão para consultar os dados reais.');

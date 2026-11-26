@@ -6,6 +6,6 @@
       "sha256": "e272cf1431afcb1080468e65b4cf236703dd33690fbf3adbdac5fd8c289a96b6"
     }
   ],
-  "version": "3.2.0.526",
-  "scope": "Vendas: refinamentos comerciais, mínimo e avisos de estoque com chave única da empresa"
+  "version": "3.2.0.527",
+  "scope": "Módulos: resumos de Vendas no servidor, estoque e refinamentos visuais"
 }
