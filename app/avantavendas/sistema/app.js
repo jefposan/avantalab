@@ -587,6 +587,8 @@ let produtosAtualizando = false;
 let timerAtualizacaoCatalogo = null;
 let dadosOperacionaisCarregando = false;
 let revisaoDadosOperacionais = 0;
+let contextoHistoricoComprovantesConferido = '';
+const clientesHistoricoComprovantesConferidos = new Set();
 let revisaoNavegacaoManual = 0;
 let mutacoesDadosEmAndamento = 0;
 let filaCacheVendas = Promise.resolve();
@@ -1284,6 +1286,8 @@ async function limparTodosCachesVendasUsuario(usuarioId = state.usuario?.id) {
 }
 
 function restaurarCacheVendas(cache) {
+  contextoHistoricoComprovantesConferido = '';
+  clientesHistoricoComprovantesConferidos.clear();
   const dados = cache?.dados;
   if (!dados || !Array.isArray(dados.produtos) || !Array.isArray(dados.clientes) || !Array.isArray(dados.vendas) || !Array.isArray(dados.pagamentos)) return false;
   state.produtos = dados.produtos;
@@ -4265,7 +4269,11 @@ async function atualizarDashboardAposLancamento() {
 
 async function reconciliarFinanceiroCliente(clienteId, confirmados = {}) {
   if (!backendAtivo || !clienteId) return;
+  const revisaoConta = revisaoContaVendasAtiva;
+  const contaId = contaVendasDoContextoAtual();
+  const revisaoAntesDaConferencia = revisaoDadosOperacionais;
   const dados = await window.VendasDb.loadClientFinancial(clienteId);
+  if (!contextoContaVendasPermaneceAtual(revisaoConta, contaId) || revisaoAntesDaConferencia !== revisaoDadosOperacionais) return false;
   // A réplica de leitura pode levar alguns instantes para devolver uma gravação
   // já confirmada pela RPC. Preservamos exatamente a resposta confirmada para
   // não transformar essa pequena latência em um falso erro financeiro.
@@ -4277,13 +4285,17 @@ async function reconciliarFinanceiroCliente(clienteId, confirmados = {}) {
     : (dados.pagamentos || []);
   state.vendas = [
     ...vendasConfirmadas,
-    ...(state.vendas || []).filter((item) => item.cliente_id !== clienteId),
+    ...(state.vendas || []).filter((item) => item.cliente_id !== clienteId
+      || (item.__avantaPendenteOffline && !vendasConfirmadas.some((r) => r.id === item.id))),
   ];
   state.pagamentos = [
     ...pagamentosConfirmados,
-    ...(state.pagamentos || []).filter((item) => item.cliente_id !== clienteId),
+    ...(state.pagamentos || []).filter((item) => item.cliente_id !== clienteId
+      || (item.__avantaPendenteOffline && !pagamentosConfirmados.some((r) => r.id === item.id))),
   ];
   revisaoDadosOperacionais += 1;
+  clientesHistoricoComprovantesConferidos.add(`${chaveContextoHistoricoComprovante()}:${clienteId}`);
+  return true;
 }
 
 function valoresMonetariosConferem(valorA, valorB) {
@@ -4469,6 +4481,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
         state.clientes = dados.clientes;
         state.vendas = dados.vendas;
         state.pagamentos = dados.pagamentos || [];
+        contextoHistoricoComprovantesConferido = chaveContextoHistoricoComprovante();
         state.agendaItens = normalizarAgendaItensServidor(dados.agenda || []);
         if (!state.agendaItens.length && agendaLocalLegada.length && backendAtivo && window.VendasDb?.saveAgendaItem) {
           await migrarAgendaLocalLegadaParaServidor(agendaLocalLegada);
@@ -9530,7 +9543,7 @@ async function finalizarPedidoCliente() {
     const metadadosPersistidos = metadadosPedido(pedidoPersistido);
     if (pedidoPersistido && !pedidoEhConsignado(pedidoPersistido)
       && Object.hasOwn(metadadosPersistidos, 'saldo_anterior') && Object.hasOwn(metadadosPersistidos, 'saldo_final')) {
-      const original = resumoComprovantePedido(pedidoPersistido);
+      const original = retratoOriginalPedido(pedidoPersistido);
       financeiroAnterior = { debito: original.saldoAnterior, credito: original.creditoAnterior };
     }
     const saldoLiquidoAnterior = financeiroAnterior.debito - financeiroAnterior.credito;
@@ -9554,6 +9567,7 @@ async function finalizarPedidoCliente() {
     }, 0);
     const venda = {
       id: rascunho.editandoId || rascunho.idPersistencia || uuidPersistenciaVendas(),
+      ...(pedidoPersistido?.registrado_em ? { registrado_em: pedidoPersistido.registrado_em } : {}),
       cliente_id: rascunho.clienteId,
       status: rascunho.status || 'concluida',
       subtotal: totais.subtotal,
@@ -10121,7 +10135,8 @@ function abrirPagamentoClienteDetalhe(pagamentoId, retornoClienteId = '', retorn
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
   const descontoHtml = Number(pagamento.desconto || 0) > 0 ? `<div><span>Desconto concedido</span><b>${moeda(pagamento.desconto)}</b></div>` : '';
-  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Forma de pagamento</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div>${descontoHtml}<div class="payment-paid-highlight"><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}','detalhe')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPagamentoCliente('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div>${avisoHistoricoComprovanteHtml(resumo, 'pagamento', pagamentoId, retornoClienteId, retornoAba, retornoPagina)}<section class="payment-detail-summary receipt-detail-summary"><div><span>Saldo anterior</span><b>${valorHistoricoComprovante(resumo)}</b></div><div><span>Forma de pagamento</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div>${descontoHtml}<div class="payment-paid-highlight"><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${valorHistoricoComprovante(resumo, true)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}','detalhe')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPagamentoCliente('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
+  if (backendAtivo && !historicoComprovanteConferido(pagamento.cliente_id)) void conferirHistoricoDoComprovante('pagamento', pagamentoId, retornoClienteId, retornoAba, retornoPagina);
 }
 
 function abrirPedidoCliente(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
@@ -10141,7 +10156,8 @@ function abrirPedidoCliente(pedidoId, retornoClienteId = '', retornoAba = '', re
     const totalItem = bonificado ? 0 : Number(item.total ?? Number(item.quantidade || 0) * preco);
     return `<div class="receipt-order-row ${bonificado ? 'is-bonus' : ''}"><div class="receipt-order-product"><b>${escapeHtml(item.produto_nome)}</b>${bonificado ? '<em>Bonificado</em>' : ''}</div><span class="receipt-order-quantity">${Number(item.quantidade || 0)}</span><span class="receipt-order-price">${bonificado ? '—' : moeda(preco)}</span><strong class="receipt-order-total">${moeda(totalItem)}</strong></div>`;
   }).join('') || '<p class="muted">Sem itens registrados.</p>';
-  sheet(`<div class="sheet-header"><div><h2>Comprovante de pedido</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header><div class="receipt-order-scroll">${itensHtml}</div></section><div class="receipt-order-footer"><section class="receipt-balance-summary"><div><span>Saldo anterior</span>${saldoAnteriorPedidoHtml(resumo)}</div>${descontoHtml}<div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button></div>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pedido</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header><div class="receipt-order-scroll">${itensHtml}</div></section><div class="receipt-order-footer">${avisoHistoricoComprovanteHtml(resumo, 'pedido', pedidoId, retornoClienteId, retornoAba, retornoPagina)}<section class="receipt-balance-summary"><div><span>Saldo anterior</span>${saldoAnteriorPedidoHtml(resumo)}</div>${descontoHtml}<div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${valorHistoricoComprovante(resumo, true)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button></div>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
+  if (backendAtivo && !historicoComprovanteConferido(venda.cliente_id)) void conferirHistoricoDoComprovante('pedido', pedidoId, retornoClienteId, retornoAba, retornoPagina);
 }
 
 function abrirConsignadoCliente(venda, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
@@ -10363,7 +10379,158 @@ function metadadosPedido(venda) {
   } catch { return {}; }
 }
 
+// Motor único e somente de leitura. A posição financeira é a inclusão, não a
+// data comercial editável, a posição da lista ou a última alteração.
+function calcularHistoricoComprovante({ tipo, registro, vendas = [], pagamentos = [], contaId = '', dadosCompletos = true }) {
+  const pendente = (motivo) => ({ status: 'conferencia', motivo, saldoAnterior: null, creditoAnterior: null, saldoAtual: null, creditoAtual: null });
+  if (!dadosCompletos) return pendente('Atualize a conferência para consultar o histórico completo no servidor.');
+  if (!registro?.id || !registro.cliente_id) return pendente('O lançamento não tem identificação histórica suficiente.');
+  const conta = String(contaId || registro.conta_id || '');
+  if (conta && String(registro.conta_id || '') !== conta) return pendente('O lançamento não pertence à conta ativa.');
+  const numero = (valor) => {
+    if (!['number', 'string'].includes(typeof valor) || String(valor).trim() === '' || !Number.isFinite(Number(valor))) return null;
+    const centavos = Math.round(Number(valor) * 100);
+    return Number.isSafeInteger(centavos) && centavos >= 0 ? centavos : null;
+  };
+  const tempo = (valor) => {
+    if (!valor) return null;
+    const texto = String(valor);
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/i.test(texto)) return null;
+    const dia = new Date(`${texto.slice(0, 10)}T00:00:00Z`);
+    if (!Number.isFinite(dia.getTime()) || dia.toISOString().slice(0, 10) !== texto.slice(0, 10)) return null;
+    const n = new Date(valor).getTime();
+    const micros = Number((String(valor).match(/\.\d{3}(\d{1,3})/)?.[1] || '').padEnd(3, '0'));
+    const preciso = n * 1000 + micros;
+    return Number.isSafeInteger(preciso) && preciso > 0 ? preciso : null;
+  };
+  const normalizarForma = (valor) => String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  const evento = (r, categoria) => {
+    const forma = normalizarForma(r.forma_pagamento);
+    const cancelado = ['cancelada', 'cancelado'].includes(normalizarForma(r.status));
+    const debito = categoria === 'pedido' && !forma.includes('consign') && (!forma || forma === 'venda' || forma.includes('a prazo'));
+    const valor = numero(categoria === 'pedido' ? r.total : r.valor);
+    const desconto = numero(r.desconto ?? 0);
+    let inclusao = tempo(r.registrado_em);
+    if (!inclusao && categoria === 'pagamento') inclusao = tempo(r.criado_em);
+    if (!inclusao && categoria === 'pedido') {
+      const criado = tempo(r.criado_em);
+      let metadados = {};
+      try { metadados = JSON.parse(String(r.observacoes || '{}')) || {}; } catch { /* texto livre legado */ }
+      const dataComercialDaInterface = metadados.avantalab_pedido === true && !metadados.origem_migracao;
+      // Antigos pedidos da interface usavam meio-dia para a data comercial.
+      // Esse horário não prova inclusão e nunca desempata a sequência.
+      if (criado && !dataComercialDaInterface) {
+        const partes = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(criado / 1000));
+        const hora = partes.filter((p) => ['hour', 'minute', 'second'].includes(p.type)).map((p) => p.value).join(':');
+        if (hora !== '12:00:00' || criado % 1000000 !== 0) inclusao = criado;
+      }
+    }
+    // A atualização não ordena eventos: só pode provar que um legado já
+    // existia ANTES de uma inclusão posterior. Nunca é tratada como criação.
+    const existiaAte = inclusao ?? tempo(r.atualizado_em);
+    return { id: `${categoria}:${r.id}`, inclusao, existiaAte,
+      delta: cancelado || (categoria === 'pedido' && !debito) ? 0 : valor === null || desconto === null ? null : categoria === 'pedido' ? valor : -(valor + desconto),
+      cancelado };
+  };
+  const alvo = evento(registro, tipo);
+  if (alvo.cancelado) return pendente('Lançamento cancelado: não representa débito ou crédito ativo.');
+  if (alvo.delta === null) return pendente('Há valores históricos inválidos que precisam ser conferidos.');
+  const vistos = new Map();
+  let anterior = 0;
+  for (const [categoria, lista] of [['pedido', vendas], ['pagamento', pagamentos]]) {
+    for (const r of lista) {
+      if (r.cliente_id !== registro.cliente_id || (conta && r.conta_id && String(r.conta_id) !== conta)) continue;
+      if (r.__avantaPendenteOffline) return pendente('Há lançamento aguardando sincronização. Aguarde a confirmação do servidor.');
+      if (conta && !r.conta_id) return pendente('Há lançamento sem conta confirmada no histórico.');
+      if (!r.id) return pendente('Há lançamento sem identificação confirmada no histórico.');
+      const e = evento(r, categoria);
+      const assinatura = JSON.stringify([e.inclusao, e.existiaAte, e.delta, e.cancelado]);
+      if (vistos.has(e.id)) {
+        if (vistos.get(e.id) !== assinatura) return pendente('Existem versões divergentes do mesmo lançamento.');
+        continue;
+      }
+      vistos.set(e.id, assinatura);
+      if (e.id === alvo.id) {
+        if (assinatura !== JSON.stringify([alvo.inclusao, alvo.existiaAte, alvo.delta, alvo.cancelado])) return pendente('O lançamento mudou durante a conferência. Atualize o histórico.');
+        continue;
+      }
+      if (e.delta === null) return pendente('Há valores históricos inválidos que precisam ser conferidos.');
+      if (e.delta === 0) continue;
+      let antes;
+      if (alvo.inclusao !== null && e.inclusao !== null && alvo.inclusao !== e.inclusao) antes = e.inclusao < alvo.inclusao;
+      else if (alvo.inclusao !== null && e.existiaAte !== null && e.existiaAte < alvo.inclusao) antes = true;
+      else if (e.inclusao !== null && alvo.existiaAte !== null && alvo.existiaAte < e.inclusao) antes = false;
+      else return pendente('Há lançamentos antigos sem uma sequência de inclusão comprovada.');
+      if (antes) anterior += e.delta;
+      if (!Number.isSafeInteger(anterior)) return pendente('O valor acumulado excede o limite seguro de cálculo.');
+    }
+  }
+  if (!vistos.has(alvo.id)) return pendente('O lançamento não está no histórico completo consultado.');
+  const atual = anterior + alvo.delta;
+  if (!Number.isSafeInteger(atual)) return pendente('O valor acumulado excede o limite seguro de cálculo.');
+  return { status: 'confirmado', motivo: '', saldoAnterior: Math.max(0, anterior) / 100,
+    creditoAnterior: Math.max(0, -anterior) / 100, saldoAtual: Math.max(0, atual) / 100, creditoAtual: Math.max(0, -atual) / 100 };
+}
+
+function chaveContextoHistoricoComprovante() {
+  return `${revisaoContaVendasAtiva}:${state.usuario?.id || ''}:${contaVendasDoContextoAtual()}`;
+}
+
+function historicoComprovanteConferido(clienteId) {
+  if (typeof backendAtivo === 'undefined' || !backendAtivo) return true;
+  const chave = chaveContextoHistoricoComprovante();
+  return contextoHistoricoComprovantesConferido === chave || clientesHistoricoComprovantesConferidos.has(`${chave}:${clienteId}`);
+}
+
+function resumoHistoricoDoComprovante(tipo, registro) {
+  return calcularHistoricoComprovante({ tipo, registro, vendas: state.vendas || [], pagamentos: state.pagamentos || [],
+    contaId: state.contaVendasAtiva?.id || registro?.conta_id || '', dadosCompletos: historicoComprovanteConferido(registro?.cliente_id) });
+}
+
 function resumoComprovantePedido(venda) {
+  return pedidoEhConsignado(venda) ? null : resumoHistoricoDoComprovante('pedido', venda);
+}
+
+function valorHistoricoComprovante(resumo, atual = false) {
+  if (resumo.status !== 'confirmado') return 'Em conferência';
+  const credito = atual ? resumo.creditoAtual : resumo.creditoAnterior;
+  const valor = credito > 0 ? credito : atual ? resumo.saldoAtual : resumo.saldoAnterior;
+  return `${credito > 0 ? 'CRÉDITO ' : ''}${moeda(valor)}`;
+}
+
+function avisoHistoricoComprovanteHtml(resumo, tipo, id, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
+  if (resumo.status === 'confirmado') return '';
+  return `<div class="receipt-history-notice" role="status"><b>Saldo histórico em conferência</b><p>${escapeHtml(resumo.motivo)}</p><p>O valor do lançamento está preservado. Os saldos não são presumidos.</p><button type="button" class="ghost" data-conferir-historico onclick="conferirHistoricoDoComprovante('${tipo}','${id}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Atualizar conferência</button></div>`;
+}
+
+async function conferirHistoricoDoComprovante(tipo, id, retornoClienteId = '', retornoAba = '', retornoPagina = 0, reabrir = true) {
+  const registro = (tipo === 'pedido' ? state.vendas : state.pagamentos || []).find((r) => r.id === id);
+  if (!registro || !backendAtivo) return false;
+  const chave = chaveContextoHistoricoComprovante();
+  const painel = document.getElementById('sheetBackdrop');
+  const botao = document.querySelector('[data-conferir-historico]');
+  if (botao) { botao.disabled = true; botao.textContent = 'Conferindo…'; }
+  try {
+    const confirmado = await reconciliarFinanceiroCliente(registro.cliente_id);
+    if (!confirmado || chave !== chaveContextoHistoricoComprovante()) return false;
+    if (reabrir && painel && botao && painel === document.getElementById('sheetBackdrop') && painel.contains(botao)) {
+      if (tipo === 'pedido') abrirPedidoCliente(id, retornoClienteId, retornoAba, retornoPagina);
+      else abrirPagamentoClienteDetalhe(id, retornoClienteId, retornoAba, retornoPagina);
+    }
+    return true;
+  } catch (error) {
+    if (chave === chaveContextoHistoricoComprovante()) {
+      contextoHistoricoComprovantesConferido = '';
+      clientesHistoricoComprovantesConferidos.delete(`${chave}:${registro.cliente_id}`);
+      if (reabrir) toast('Não foi possível conferir o histórico. Tente novamente.', { tipo: 'erro' });
+    }
+    return false;
+  } finally {
+    if (botao?.isConnected) { botao.disabled = false; botao.textContent = 'Atualizar conferência'; }
+  }
+}
+
+function retratoOriginalPedido(venda) {
   // Um consignado não tem resumo de dívida. Não usar seu retrato legado nem
   // substituí-lo pelo saldo de hoje: ambos podem pertencer a outras vendas.
   if (pedidoEhConsignado(venda)) return null;
@@ -10395,10 +10562,11 @@ function resumoComprovantePedido(venda) {
 }
 
 function saldoAnteriorPedidoHtml(resumo) {
+  if (resumo.status === 'conferencia') return '<b>Em conferência</b>';
   if (resumo.creditoAnterior > 0) {
     return `<b class="receipt-previous-credit"><span class="receipt-credit-badge">CRÉDITO</span><span>${moeda(resumo.creditoAnterior)}</span></b>`;
   }
-  return `<b>${moeda(resumo.saldoAnterior)}</b>`;
+  return `<b>${valorHistoricoComprovante(resumo)}</b>`;
 }
 
 function resumoFinanceiroParaConfirmarPagamento(pagamento) {
@@ -10416,15 +10584,7 @@ function resumoFinanceiroParaConfirmarPagamento(pagamento) {
 }
 
 function resumoComprovantePagamento(pagamento) {
-  if (pagamento?.comprovante_financeiro_confirmado) {
-    return {
-      saldoAnterior: Number(pagamento.saldo_anterior || 0),
-      saldoAtual: Number(pagamento.saldo_final || 0),
-    };
-  }
-  // Registros antigos sem retrato confirmado usam apenas a soma atual dos
-  // lançamentos ativos. O comprovante nunca depende de data ou horário.
-  return resumoFinanceiroParaConfirmarPagamento(pagamento);
+  return resumoHistoricoDoComprovante('pagamento', pagamento);
 }
 
 function caminhoRetanguloArredondado(ctx, x, y, largura, altura, raio) {
@@ -10603,9 +10763,13 @@ function detalheQuantidadeItemComprovante(item) {
 }
 
 async function compartilharPedido(pedidoId) {
+  const contextoHistorico = backendAtivo ? chaveContextoHistoricoComprovante() : '';
+  const clienteHistoricoId = state.vendas.find((r) => r.id === pedidoId)?.cliente_id;
+  if (backendAtivo && !historicoComprovanteConferido(clienteHistoricoId)) await conferirHistoricoDoComprovante('pedido', pedidoId, '', '', 0, false);
   const venda = state.vendas.find((item) => item.id === pedidoId);
   if (!venda) return false;
   await window.__avantalabCarregarComprovantesVendas?.().catch(() => undefined);
+  if (backendAtivo && contextoHistorico !== chaveContextoHistoricoComprovante()) return false;
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
   const consignado = pedidoEhConsignado(venda);
   const resumo = consignado ? null : resumoComprovantePedido(venda);
@@ -10623,9 +10787,10 @@ async function compartilharPedido(pedidoId) {
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(venda.criado_em),
     ...(!consignado ? {
-      saldoAnterior: moeda(resumo.creditoAnterior > 0 ? resumo.creditoAnterior : resumo.saldoAnterior),
+      saldoAnterior: resumo.status === 'confirmado' ? moeda(resumo.creditoAnterior > 0 ? resumo.creditoAnterior : resumo.saldoAnterior) : 'Em conferência',
       saldoAnteriorCredito: resumo.creditoAnterior > 0,
-      saldoAtual: moeda(resumo.saldoAtual),
+      saldoAtual: valorHistoricoComprovante(resumo, true),
+      saldoHistoricoPendente: resumo.status !== 'confirmado',
     } : {}),
     valorPedido: moeda(venda.total),
     desconto: desconto > 0 ? moeda(desconto) : '',
@@ -10645,7 +10810,7 @@ async function compartilharPedido(pedidoId) {
       temaEtiqueta: 'verde',
       linhas,
       resumo: [
-        ...(!consignado ? [{ rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior, credito: dadosComprovante.saldoAnteriorCredito }] : []),
+        ...(!consignado ? [{ rotulo: dadosComprovante.saldoHistoricoPendente ? 'Saldo histórico em conferência' : 'Saldo anterior', valor: dadosComprovante.saldoAnterior, credito: dadosComprovante.saldoAnteriorCredito }] : []),
         { rotulo: consignado ? 'Valor do consignado' : 'Valor do pedido', valor: dadosComprovante.valorPedido, destaque: 'principal', tituloDestaque: consignado ? 'Consignado registrado' : 'Pedido registrado', ...(desconto > 0 ? { complemento: { rotulo: 'Desconto concedido', valor: dadosComprovante.desconto } } : {}) },
         ...(!consignado ? [{ rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' }] : []),
       ],
@@ -10656,9 +10821,13 @@ async function compartilharPedido(pedidoId) {
 }
 
 async function compartilharPagamento(pagamentoId) {
+  const contextoHistorico = backendAtivo ? chaveContextoHistoricoComprovante() : '';
+  const clienteHistoricoId = (state.pagamentos || []).find((r) => r.id === pagamentoId)?.cliente_id;
+  if (backendAtivo && !historicoComprovanteConferido(clienteHistoricoId)) await conferirHistoricoDoComprovante('pagamento', pagamentoId, '', '', 0, false);
   const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
   if (!pagamento) return false;
   await window.__avantalabCarregarComprovantesVendas?.().catch(() => undefined);
+  if (backendAtivo && contextoHistorico !== chaveContextoHistoricoComprovante()) return false;
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
   const desconto = Number(pagamento.desconto || 0);
@@ -10666,11 +10835,12 @@ async function compartilharPagamento(pagamentoId) {
     empresa: nomeEmpresaParaComprovantes(),
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(pagamento.data_pagamento),
-    saldoAnterior: moeda(resumo.saldoAnterior),
+    saldoAnterior: valorHistoricoComprovante(resumo),
+    saldoHistoricoPendente: resumo.status !== 'confirmado',
     // O desconto é uma linha própria do pagamento registrado; não deve ser
     // incorporado ao valor efetivamente recebido.
     valorPago: moeda(pagamento.valor),
-    saldoAtual: moeda(resumo.saldoAtual),
+    saldoAtual: valorHistoricoComprovante(resumo, true),
     formaPagamento: pagamento.forma_pagamento || 'Não informado',
     desconto: desconto > 0 ? moeda(desconto) : '',
     rotuloValorPago: 'Valor pago',
@@ -10687,7 +10857,7 @@ async function compartilharPagamento(pagamentoId) {
       resumoSemTitulo: true,
       ocultarDetalhes: true,
       resumo: [
-        { rotulo: 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
+        { rotulo: dadosComprovante.saldoHistoricoPendente ? 'Saldo histórico em conferência' : 'Saldo anterior', valor: dadosComprovante.saldoAnterior },
         { rotulo: dadosComprovante.rotuloValorPago, subtitulo: `Forma de pagamento: ${dadosComprovante.formaPagamento}`, valor: dadosComprovante.valorPago, destaque: 'principal', tituloDestaque: 'Pagamento registrado', ...(desconto > 0 ? { complemento: { rotulo: 'Desconto concedido', valor: dadosComprovante.desconto } } : {}) },
         { rotulo: 'Saldo atual', valor: dadosComprovante.saldoAtual, destaque: 'saldo' },
       ],

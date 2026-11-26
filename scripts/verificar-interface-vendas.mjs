@@ -433,7 +433,7 @@ exigir(
     && comprovantePedido.includes("alinhamento: 'center', largura: 460, linhaBase: 'middle'")
     && comprovantePedido.includes("card(ctx, yPedido, alturaCardPedido, '', consignado ? 'CONSIGNADO REGISTRADO' : 'PEDIDO REGISTRADO', paleta)")
     && comprovantePedido.includes("card(ctx, ySaldo, alturaCardValor, '', 'SITUAÇÃO APÓS O LANÇAMENTO', paleta)")
-    && comprovantePedido.includes("card(ctx, yResumo, alturaResumo, '', 'RESUMO FINANCEIRO', paleta)")
+    && comprovantePedido.includes("card(ctx, yResumo, alturaResumo, '', saldoHistoricoPendente ? 'SALDO HISTÓRICO EM CONFERÊNCIA' : 'RESUMO FINANCEIRO', paleta)")
     && comprovantePedido.includes('const alturaResumo = 184')
     && comprovantePedido.includes("'Desconto concedido', 276, yPedido + 208")
     && comprovantePedido.includes('const altura = yRodape + MARGEM_INFERIOR_RODAPE;')

@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.521 -->
+<!-- ava-version: 3.2.0.522 -->
+
+> Revisão 3.2.0.522: sem impacto operacional na Gestão Web; fluxo geral de conferência histórica restrito ao AvantaVendas independente.
 
 > Revisão 3.2.0.521: Vendas Web oferece filtro por mês e total vendido nos pedidos, amplia o resultado financeiro na Visão geral e permite abrir os estornos pelas ações do pedido. Recebimentos prioriza razão social. A confirmação de troca de módulo aparece sobre a tela.
 

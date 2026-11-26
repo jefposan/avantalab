@@ -4,6 +4,8 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const fonte = readFileSync(new URL('../../app/avantavendas/sistema/app.js', import.meta.url), 'utf8');
+// Compatibilidade do retrato usado na persistência/edição. A leitura dos
+// comprovantes não confia nele: é coberta em historico-comprovantes.test.mjs.
 function trecho(inicio, fim) {
   const primeiro = fonte.indexOf(inicio);
   const ultimo = fonte.indexOf(fim, primeiro);
@@ -30,7 +32,7 @@ test('pedido antigo da imagem recupera crédito de 22 sem alterar retrato de dé
   const venda = pedido({ saldo_anterior: 0, saldo_final: 34 });
   const original = JSON.stringify(venda);
   const ctx = fluxo([], [{ id: 'posterior', cliente_id: 'cliente', valor: 999, data_pagamento: '2026-10-11' }]);
-  const resumo = ctx.resumoComprovantePedido(venda);
+  const resumo = ctx.retratoOriginalPedido(venda);
   assert.equal(resumo.creditoAnterior, 22);
   assert.equal(resumo.saldoAnterior, 0);
   assert.equal(resumo.saldoAtual, 34);
@@ -42,35 +44,35 @@ test('pedido antigo da imagem recupera crédito de 22 sem alterar retrato de dé
 
 test('crédito explícito é conservado mesmo quando cobre todo o pedido', () => {
   const ctx = fluxo();
-  const resumo = ctx.resumoComprovantePedido(pedido({ saldo_anterior: 0, credito_anterior: 100, saldo_final: 0 }));
+  const resumo = ctx.retratoOriginalPedido(pedido({ saldo_anterior: 0, credito_anterior: 100, saldo_final: 0 }));
   assert.equal(resumo.creditoAnterior, 100);
   assert.equal(resumo.saldoAtual, 0);
 });
 
 test('crédito anterior explícito não é recalculado a partir do saldo atual', () => {
   const ctx = fluxo();
-  assert.equal(ctx.resumoComprovantePedido(pedido({ saldo_anterior: 0, credito_anterior: 22, saldo_final: 34 })).creditoAnterior, 22);
-  assert.equal(ctx.resumoComprovantePedido(pedido({ saldo_anterior: 0, credito_anterior: 0, saldo_final: 34 })).creditoAnterior, 0);
+  assert.equal(ctx.retratoOriginalPedido(pedido({ saldo_anterior: 0, credito_anterior: 22, saldo_final: 34 })).creditoAnterior, 22);
+  assert.equal(ctx.retratoOriginalPedido(pedido({ saldo_anterior: 0, credito_anterior: 0, saldo_final: 34 })).creditoAnterior, 0);
 });
 
 test('débito anterior continua igual e não recebe etiqueta de crédito', () => {
   const ctx = fluxo();
-  const resumo = ctx.resumoComprovantePedido(pedido({ saldo_anterior: 15, saldo_final: 71 }));
+  const resumo = ctx.retratoOriginalPedido(pedido({ saldo_anterior: 15, saldo_final: 71 }));
   assert.equal(resumo.saldoAnterior, 15);
   assert.equal(resumo.creditoAnterior, 0);
   assert.doesNotMatch(ctx.saldoAnteriorPedidoHtml(resumo), /CRÉDITO/);
 });
 
 test('diferença monetária recuperada é arredondada em centavos', () => {
-  assert.equal(fluxo().resumoComprovantePedido(pedido({ saldo_anterior: 0, saldo_final: 0.1 }, 0.3)).creditoAnterior, 0.2);
+  assert.equal(fluxo().retratoOriginalPedido(pedido({ saldo_anterior: 0, saldo_final: 0.1 }, 0.3)).creditoAnterior, 0.2);
 });
 
 test('saldo zero antigo não inventa um crédito sem informação suficiente', () => {
-  assert.equal(fluxo().resumoComprovantePedido(pedido({ saldo_anterior: 0, saldo_final: 0 })).creditoAnterior, 0);
+  assert.equal(fluxo().retratoOriginalPedido(pedido({ saldo_anterior: 0, saldo_final: 0 })).creditoAnterior, 0);
 });
 
 test('consignado não oferece um resumo de dívida ou crédito', () => {
-  assert.equal(fluxo().resumoComprovantePedido(pedido({ saldo_anterior: 0, saldo_final: 34 }, 56, { forma_pagamento: 'Consignado' })), null);
+  assert.equal(fluxo().retratoOriginalPedido(pedido({ saldo_anterior: 0, saldo_final: 34 }, 56, { forma_pagamento: 'Consignado' })), null);
 });
 
 test('pedido sem retrato usa histórico anterior e ignora pagamentos posteriores ou de outro cliente', () => {
@@ -80,7 +82,7 @@ test('pedido sem retrato usa histórico anterior e ignora pagamentos posteriores
     { id: 'depois', cliente_id: 'cliente', valor: 1000, data_pagamento: '2026-10-11' },
     { id: 'outra-conta', cliente_id: 'outro', valor: 1000, data_pagamento: '2026-10-09' },
   ]);
-  const resumo = ctx.resumoComprovantePedido(venda);
+  const resumo = ctx.retratoOriginalPedido(venda);
   assert.equal(resumo.creditoAnterior, 22);
   assert.equal(resumo.saldoAtual, 34);
 });
@@ -114,7 +116,7 @@ for (const credito of [22, 56, 100]) {
     assert.equal(metadados.saldo_final, Math.max(0, 56 - credito));
     assert.equal(salvo.total, 56);
     assert.equal(salvo.itens[0].total, 56);
-    assert.equal(ctx.resumoComprovantePedido(salvo).creditoAnterior, credito);
+    assert.equal(ctx.retratoOriginalPedido(salvo).creditoAnterior, credito);
   });
 }
 
@@ -144,7 +146,7 @@ for (const modo of ['edicao', 'reenvio']) {
       await ctx.finalizarPedidoCliente();
       assert.deepEqual(avisos, modo === 'edicao' ? ['Pedido atualizado.'] : []);
       assert.equal(ctx.state.vendas.length, 3, 'reenvio não duplica no estado');
-      const resumo = ctx.resumoComprovantePedido(ctx.state.vendas.find((v) => v.id === 'pedido'));
+      const resumo = ctx.retratoOriginalPedido(ctx.state.vendas.find((v) => v.id === 'pedido'));
       assert.equal(resumo.saldoAnterior, 0);
       assert.equal(resumo.saldoAtual, total);
       assert.equal(JSON.stringify([ctx.state.vendas[1], ctx.state.vendas[2], ctx.state.pagamentos]), outrosAntes);

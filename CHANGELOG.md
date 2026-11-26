@@ -1,3 +1,13 @@
+# 3.2.0.522 — AvantaVendas: fluxo geral de conferência dos comprovantes
+
+## 3.2.0.522-av214 - Linha histórica comum por inclusão original
+
+- Comprovantes antigos e novos de pedidos/pagamentos são recalculados na leitura por inclusão original, em centavos, por conta e cliente. Créditos/descontos preservados, sem confiar em saldos gravados nem usar o saldo atual do cadastro.
+- Edição não passa o lançamento para o final. Comprovantes seguintes refletem a alteração na posição original. Excluir e cadastrar novamente cria nova inclusão; data comercial e atualização não ordenam o cálculo. Precisão de microssegundos preservada.
+- Sequência antiga sem prova, cache sem conferência, divergência ou sincronização pendente mostram Saldo histórico em conferência, sem saldos numéricos presumidos na tela ou no arquivo compartilhado. Valor e itens permanecem. Atualizar conferência consulta somente a cliente na conta ativa; fechamento/troca de perfil não ressuscitam a tela antiga.
+- Migração aditiva de gatilhos conserva a inclusão de pagamentos e de pedidos legados com timestamp original recuperável durante edições futuras; sem backfill, alteração de RLS ou escrita financeira em massa. Data comercial permanece separada.
+- Preparado e testado localmente; migração não aplicada e publicação não realizada nesta etapa. Não altera a Gestão ou envia binários às lojas.
+
 ## 3.2.0.521 — Vendas: corrigir identificação, navegação e resumos financeiros
 
 - Vendas Web oferece filtro por mês e total vendido nos pedidos, amplia o resultado financeiro na Visão geral e permite abrir os estornos pelas ações do pedido. Recebimentos prioriza razão social. A confirmação de troca de módulo aparece sobre a tela.
