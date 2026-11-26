@@ -19,7 +19,7 @@ import {
 import styles from './custos.module.css';
 import { CAMPOS_EXCEL, camposPresentesExcel, limitarPatchExcel } from './excel-seletivo';
 import RevisaoImportacao from './RevisaoImportacao';
-import { montarAtualizacaoPrecos, sugerirColunaPreco, validarMapeamentosImportacao, type MapeamentoImportacaoPreco, type ValorOrigemPreco } from './mapeamento-importacao-precos';
+import { identificarProdutosDoExcel, montarAtualizacaoPrecos, sugerirColunaPreco, validarMapeamentosImportacao, type MapeamentoImportacaoPreco, type ValorOrigemPreco } from './mapeamento-importacao-precos';
 
 type SelecaoImportacaoPendente = {
   arquivoNome: string;
@@ -279,17 +279,66 @@ export default function TabelasPrecosView({
     try {
       const XLSX = await import('xlsx');
       const livro = XLSX.read(await arquivo.arrayBuffer(), { type: 'array', cellDates: true });
-      const abaProdutos = livro.Sheets['Produtos'];
-      if (!abaProdutos) throw new Error('Use uma planilha exportada pelo AvantaLab, com a aba Produtos.');
+      const normalizarCabecalho = (valor: unknown) => String(valor ?? '').normalize('NFD')
+        .replace(/[\u0300-\u036f]/g,'').trim().toLocaleLowerCase('pt-BR');
+      const abaProdutos = livro.Sheets['Produtos'] || livro.SheetNames
+        .filter((nome) => nome !== 'Metadados')
+        .map((nome) => livro.Sheets[nome])
+        .find((aba) => {
+          const titulos = (XLSX.utils.sheet_to_json<unknown[]>(aba, {header:1})[0] || []).map(normalizarCabecalho);
+          return titulos.includes('codigo') && (titulos.includes('nome') || titulos.includes('produto'));
+        });
+      if (!abaProdutos) throw new Error('Use uma planilha com as colunas Código e Nome do produto.');
       const linhasProdutos = XLSX.utils.sheet_to_json<Record<string, unknown>>(abaProdutos, { defval: '' });
       const abaMetadados = livro.Sheets['Metadados'];
       const linhasMetadados = abaMetadados ? XLSX.utils.sheet_to_json<Array<unknown>>(abaMetadados, { header: 1, defval: '' }) : [];
       const formato = String(linhasMetadados.find((linha) => linha[0] === 'formato')?.[1] || '');
-      if (!['AVANTALAB-CUSTOS-2', 'AVANTALAB-CUSTOS-3'].includes(formato)) throw new Error('Use uma planilha exportada pelo AvantaLab.');
-      const empresaArquivo = String(linhasMetadados.find((linha) => linha[0] === 'empresa_id')?.[1] || '');
-      if (empresaArquivo && empresaArquivo !== companyId) throw new Error('Esta planilha pertence a outra empresa.');
       const cabecalhosArquivo = (XLSX.utils.sheet_to_json<unknown[]>(abaProdutos, { header: 1 })[0] || []).map(String);
       if (new Set(cabecalhosArquivo).size !== cabecalhosArquivo.length) throw new Error('A planilha possui cabeçalhos repetidos.');
+      const arquivoAvantaLab = ['AVANTALAB-CUSTOS-2', 'AVANTALAB-CUSTOS-3'].includes(formato);
+      if (!arquivoAvantaLab) {
+        if (abaMetadados) throw new Error('Os metadados do AvantaLab estão inválidos. Use a exportação original.');
+        const colunaCodigo = cabecalhosArquivo.find((titulo) => ['codigo','sku'].includes(normalizarCabecalho(titulo)));
+        const colunaNome = cabecalhosArquivo.find((titulo) => ['nome','produto'].includes(normalizarCabecalho(titulo)));
+        if (!colunaCodigo || !colunaNome) throw new Error('A planilha deve conter Código e Nome.');
+        const linhasValidas = linhasProdutos.filter((linha) => Object.values(linha)
+          .some((valor) => String(valor ?? '').trim()));
+        const produtosImportados = identificarProdutosDoExcel(
+          linhasValidas.map((linha) => ({codigo:valorLinha(linha,colunaCodigo),nome:valorLinha(linha,colunaNome)})),
+          produtos,
+        );
+        const colunasPrecos = cabecalhosArquivo.filter((titulo) =>
+          titulo !== colunaCodigo && titulo !== colunaNome && !/^(?:id interno|atualizado em)/i.test(normalizarCabecalho(titulo))
+          && linhasValidas.some((linha) => {
+            const valor = valorLinha(linha,titulo);
+            if (valor === undefined || valor === null || String(valor).trim() === '') return false;
+            try { return numeroPlanilhaOpcional(valor, titulo) !== null; } catch { return false; }
+          }),
+        ).map((cabecalho) => ({codigo: cabecalho.toLocaleUpperCase('pt-BR'), cabecalho}));
+        if (!colunasPrecos.length) throw new Error('Não foram encontradas colunas numéricas de preços no Excel.');
+        const precosImportados = linhasValidas.flatMap((linha, indice) => colunasPrecos.map((coluna) => ({
+          sku:produtosImportados[indice].sku,
+          produto_id:produtosImportados[indice].id,
+          cabecalho:coluna.cabecalho,
+          preco:valorLinha(linha,coluna.cabecalho),
+        })));
+        setCamposImportacao([]);
+        setOrigensPorTabelaImportacao(Object.fromEntries(
+          tabelas.filter((tabela) => tabela.ativo || tabela.padrao).map((tabela) =>
+            [tabela.codigo,sugerirColunaPreco(tabela,colunasPrecos)]),
+        ));
+        setSelecaoImportacao({
+          arquivoNome:arquivo.name,
+          exportadoEm:null,
+          produtos:produtosImportados,
+          precos:precosImportados,
+          campos:[],
+          colunasPrecos,
+        });
+        return;
+      }
+      const empresaArquivo = String(linhasMetadados.find((linha) => linha[0] === 'empresa_id')?.[1] || '');
+      if (empresaArquivo && empresaArquivo !== companyId) throw new Error('Esta planilha pertence a outra empresa.');
       const camposEditaveis = camposPresentesExcel(cabecalhosArquivo, formato === 'AVANTALAB-CUSTOS-3'
         ? linhasMetadados.filter((linha) => linha[0] === 'campo_editavel').map((linha) => String(linha[1])) : undefined);
       const colunasPrecosMetadados = linhasMetadados.filter((linha) => String(linha[0]).trim() === 'tabela_preco').map((linha) => ({
@@ -574,7 +623,7 @@ export default function TabelasPrecosView({
         </section>
         <section aria-label="Colunas de preços para cada tabela">
           <div className={styles.exportGroupHeader}><strong>Destino dos preços</strong></div>
-          <p>O sistema identificou os produtos pelas colunas Código e Nome. Para cada tabela de preços do AvantaLab, escolha de qual coluna do Excel serão retirados os valores. Quando os nomes correspondem, a coluna já vem sugerida. Você pode alterar a escolha e utilizar a mesma coluna em várias tabelas.</p>
+          <p>Os produtos são associados pelo Código e conferidos pelo Nome quando há códigos repetidos. Para cada tabela do AvantaLab, escolha a coluna de preços do Excel. O sistema sugere automaticamente as colunas de mesmo nome; você pode trocar a origem e utilizá-la em várias tabelas.</p>
           <div className={styles.importMappingList}>
             {tabelas.filter((tabela) => tabela.ativo || tabela.padrao).map((tabela) =>
               <div key={tabela.id} className={styles.importMappingRow}>
