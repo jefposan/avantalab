@@ -1,5 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
+- Reduzir somente o padding horizontal entre colunas de Produtos e serviços, mantendo larguras e ordem.
 - Centralizar horizontalmente o título e conteúdo da coluna Sincronização.
 - Exibir somente dd/mm/aaaa na data da coluna Sincronização em Produtos e serviços.
 - Adicionar regressão de troca de cliente SP → RJ → MG → SP, preservando exceções fiscais e cadastros.
