@@ -218,7 +218,7 @@ function VisaoGeral({ produtos, documento, produtoAtivo, onSelecionar, onAbrir, 
     </section>
     <ProductStrip produtos={produtos} ativoId={produtoAtivo?.id || ''} documento={documento} onSelecionar={onSelecionar} />
     {produtoAtivo && calculo ? <>
-      <section className={styles.metrics}>
+      <section className={`${styles.metrics} ${styles.overviewMetrics}`}>
         <Metric label="Custos diretos" value={formatarMoeda(calculo.direto)} detail={`${calculo.linhas.length} componentes`} />
         <Metric label="Custos indiretos" value={formatarMoeda(calculo.indireto)} detail={`${(documento.composicoes[produtoAtivo.id]?.indiretos || 0).toFixed(2)}% sobre os diretos`} />
         <Metric accent label="Custo unitário" value={formatarMoeda(calculo.total)} detail="Composição vigente" />
