@@ -1,5 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
+- Exibir somente dd/mm/aaaa na data da coluna Sincronização em Produtos e serviços.
 - Adicionar regressão de troca de cliente SP → RJ → MG → SP, preservando exceções fiscais e cadastros.
 - Corrigir herança dos padrões fiscais no pedido comum e resolver CFOP com as mesmas regras da emissão, respeitando destino e exceções; indicar ausência de cliente/UF.
 - Reduzir a margem inferior e a altura do controle Tributos nos itens, preservando o alvo de toque.
