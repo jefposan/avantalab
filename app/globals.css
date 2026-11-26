@@ -240,8 +240,10 @@ nav {
   min-width: 0;
 }
 
+:root { --av-card-radius: 14px 28px 28px 28px; }
+
 .card-radius-avantalab {
-  border-radius: 14px 28px 28px 28px !important;
+  border-radius: var(--av-card-radius) !important;
 }
 
 .avanta-loading-glass {
