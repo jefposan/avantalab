@@ -7,6 +7,7 @@ import styles from './RevisaoImportacao.module.css';
 
 type Props = {
   colunas: string[];
+  correspondencias?: Array<{ origem: string; destino: string }>;
   resumo: ResumoImportacaoCadastro;
   processando: boolean;
   erro: string;
@@ -14,7 +15,7 @@ type Props = {
   onConfirmar: () => void;
 };
 
-export default function RevisaoImportacao({ colunas, resumo, processando, erro, onCancelar, onConfirmar }: Props) {
+export default function RevisaoImportacao({ colunas, correspondencias = [], resumo, processando, erro, onCancelar, onConfirmar }: Props) {
   const erroId = useId();
   const grupos = agruparColunasRevisao(colunas);
   const camposComValorObrigatorio = ['Custo', 'Alíquota ISS', 'Ativo', 'Disponível no catálogo', 'Tipo'];
@@ -27,6 +28,12 @@ export default function RevisaoImportacao({ colunas, resumo, processando, erro, 
         {grupo.itens.map((titulo) => <li key={titulo}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10 3 3 7-7" /></svg><span>{titulo}</span></li>)}
       </ul>
     </section>)}
+    {correspondencias.length > 0 && <section aria-label="Mapeamento confirmado">
+      <div className={styles.sectionTitle}><h3>Origem e destino dos preços</h3><span>{correspondencias.length} correspondência(s)</span></div>
+      <ul className={styles.tags}>
+        {correspondencias.map(({ origem, destino }) => <li key={`${origem}::${destino}`}><span>{origem} → {destino}</span></li>)}
+      </ul>
+    </section>}
     <section className={styles.totals} aria-label="Resumo das alterações">
       <div><strong>{resumo.produtos_atualizados.toLocaleString('pt-BR')}</strong><span>cadastros a atualizar<small>dados e preço padrão</small></span></div>
       <div><strong>{resumo.precos_atualizados.toLocaleString('pt-BR')}</strong><span>preços a atualizar<small>tabelas adicionais</small></span></div>
