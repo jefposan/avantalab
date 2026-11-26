@@ -1,3 +1,10 @@
+## 3.2.0.525 — Vendas: restaurar o contrato da emissão fiscal
+
+- Corrigir JSON e idempotência da ponte fiscal de abertura, validação, reserva, continuação e cancelamento confirmado.
+- Preservar produção e homologação nas respostas de preparação, assinatura e emissão, inclusive recuperação sem retransmissão.
+- Remover descrição fixa de homologação do cartão de abertura; mensagens usam o ambiente retornado pelo servidor.
+- Sem migração, alteração de configuração fiscal ou transmissão de teste.
+
 ## 3.2.0.524 — Vendas: ordenar módulos e padronizar seleção de período
 
 - Notas Fiscais, Clientes, Produtos e serviços, Estoque e Recebimentos usam a mesma linha de resumos compactos de Serviços, com largura distribuída e rolagem horizontal em telas pequenas.

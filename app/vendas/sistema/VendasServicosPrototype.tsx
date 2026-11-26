@@ -1995,7 +1995,7 @@ function CommercialRecordActions({ onRestore, onCopy, onTool, record, fiscalPrep
         : { label: 'Contas a receber', description: 'As parcelas serão criadas quando o pedido for faturado', icon: 'money', disabled: true, disabledLabel: 'Disponíveis após o faturamento' },
       ...(local?.order && ['Confirmado','Em separação','Faturado'].includes(local.status||'') && local.order.stockState==='Sem movimentação' && local.order.lines.some(line=>line.kind==='produto') ? [{label:'Lançar no estoque',description:local.status==='Faturado'?'Registrar a baixa dos produtos deste pedido':'Ativar a reserva dos produtos; baixa ao faturar',icon:'stock' as IconName,onSelect:()=>onLifecycleRequest(local,'estoque'),permissions:['sales.view','sales.edit','stock.exit']}] : []),
       ...(fiscalDraft?.persistenceSource === 'server' && fiscalDraft.documentType === 'nfe' && !fiscalDraft.emissionId
-        ? [{ label: fiscalPrepareLoading ? 'Abrindo emissão…' : 'Abrir emissão fiscal', description: 'Cria o vínculo privado da NF-e em homologação, sem validar XML, reservar número ou transmitir', icon: 'fiscal' as IconName, onSelect: () => onFiscalPrepare(fiscalDraft), disabled: fiscalPrepareLoading, disabledLabel: 'Abrindo', permission: 'fiscal.prepare' }]
+        ? [{ label: fiscalPrepareLoading ? 'Abrindo emissão…' : 'Abrir emissão fiscal', description: 'Abre a preparação da NF-e no ambiente fiscal configurado.', icon: 'fiscal' as IconName, onSelect: () => onFiscalPrepare(fiscalDraft), disabled: fiscalPrepareLoading, disabledLabel: 'Abrindo', permission: 'fiscal.prepare' }]
         : []),
       fiscalDraft
         ? { label: fiscalDraft.status === 'Cancelado' ? 'Abrir histórico fiscal' : 'Abrir rascunho fiscal', description: fiscalDraft.status === 'Cancelado' ? 'Consulta a conferência e o motivo do cancelamento' : 'Consulta os dados, as pendências e os eventos vinculados', icon: 'fiscal', onSelect: () => onFiscalStart({ id: record.id, client: record.client, item: `Pedido ${record.id}`, total: record.total, documentType: fiscalDraft.documentType, sourceLabel: 'Pedido' }) }
@@ -6594,9 +6594,10 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           remoteState: prepared.emission.state,
           remoteVersion: prepared.emission.version,
           updatedAt: now,
-          events: [...draft.events, { date: now, label: prepared.emission.reused ? 'Emissão localizada' : 'Emissão aberta', description: 'Ciclo fiscal aberto em homologação. Os dados ainda não foram validados no XSD; nenhum número foi reservado e nenhuma transmissão foi realizada.', user: 'Sistema' }],
+          events: [...draft.events, { date: now, label: prepared.emission.reused ? 'Emissão localizada' : 'Emissão aberta', description: `Ciclo fiscal aberto em ${prepared.emission.environment === 'producao' ? 'produção' : 'homologação'}.`, user: 'Sistema' }],
         } : draft));
-        const message = prepared.emission.reused ? 'Emissão já existente localizada em homologação.' : 'Emissão fiscal aberta em homologação. Agora valide os dados fiscais.';
+        const environmentLabel = prepared.emission.environment === 'producao' ? 'produção' : 'homologação';
+        const message = prepared.emission.reused ? `Emissão já existente localizada em ${environmentLabel}.` : `Emissão fiscal aberta em ${environmentLabel}. Agora valide os dados fiscais.`;
         setFiscalPrepareState((current) => ({ ...current, [pending.draftId]: { loading: false, message } }));
         setToast(message);
         return;
@@ -7402,7 +7403,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     const requestId = `prepare:${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
     const message = createFiscalPrepareRequest({ requestId, draftId: draft.id });
     if (!message) { setToast('Atualize a Central Fiscal e tente novamente.'); return; }
-    setFiscalPrepareState((current) => ({ ...current, [draft.id]: { loading: true, message: 'Abrindo a emissão fiscal em homologação…' } }));
+    setFiscalPrepareState((current) => ({ ...current, [draft.id]: { loading: true, message: 'Abrindo a emissão fiscal…' } }));
     const timer = window.setTimeout(() => {
       pendingFiscalPrepareRef.current.delete(requestId);
       setFiscalPrepareState((current) => ({ ...current, [draft.id]: { loading: false, message: 'A preparação demorou mais que o esperado. Tente novamente.' } }));

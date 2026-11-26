@@ -23,7 +23,7 @@ function publicResult(result) {
     emissionId: text(result?.emissionId),
     documentType: 'nfe',
     model: '55',
-    environment: 'homologacao',
+    environment: text(result?.environment),
     state: text(result?.state),
     version: Number(result?.version),
     series: text(result?.series),

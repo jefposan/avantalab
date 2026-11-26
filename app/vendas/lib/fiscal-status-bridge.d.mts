@@ -37,7 +37,7 @@ export type FiscalPreparedEmission = {
   orderId: string;
   documentType: 'nfe';
   model: '55';
-  environment: 'homologacao';
+  environment: 'homologacao' | 'producao';
   state: string;
   version: number;
   reused: boolean;
@@ -125,9 +125,9 @@ export type FiscalNumberedEmission = FiscalPreparedEmission & Readonly<{ state: 
 export function parseFiscalNumberResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; emission: Readonly<FiscalNumberedEmission> }> | null;
 export type FiscalSigningReadyEmission = FiscalPreparedEmission & Readonly<{ state: 'number_reserved'; series: string; number: number; documentReadyForA1Signature: true; schemaValid: true; realCertificateInspected: false; realSignatureAttempted: false; signed: false; persisted: false; transmitted: false; xmlReturned: false; sensitiveMaterialReturned: false }>;
 export function parseFiscalSigningReadinessResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; emission: Readonly<FiscalSigningReadyEmission> }> | null;
-export type FiscalSignedEmission = Readonly<{ emissionId: string; documentType: 'nfe'; model: '55'; environment: 'homologacao'; state: 'signed'; version: number; series: string; number: number; signed: true; persisted: true; artifactRegistered: true; realCertificateInspected: true; signatureVerified: true; signedXsdValid: true; transmitted: false; signedContentReturned: false; sensitiveMaterialReturned: false }>;
+export type FiscalSignedEmission = Readonly<{ emissionId: string; documentType: 'nfe'; model: '55'; environment: 'homologacao' | 'producao'; state: 'signed'; version: number; series: string; number: number; signed: true; persisted: true; artifactRegistered: true; realCertificateInspected: true; signatureVerified: true; signedXsdValid: true; transmitted: false; signedContentReturned: false; sensitiveMaterialReturned: false }>;
 export function parseFiscalSignResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; emission: FiscalSignedEmission }> | null;
-export type FiscalIssuedEmission = Readonly<{ emissionId: string; documentType: 'nfe'; model: '55'; environment: 'homologacao'; state: 'authorized' | 'processing' | 'rejected'; version: number; series: string; number: number; signed: true; persisted: true; submitted: true; transmitted: true; authorized: boolean; processing: boolean; rejected: boolean; statusCode: string; statusReason: string; protocolStored: boolean; receiptConsultationPending: boolean; externalContentReturned: false; sensitiveMaterialReturned: false }>;
+export type FiscalIssuedEmission = Readonly<{ emissionId: string; documentType: 'nfe'; model: '55'; environment: 'homologacao' | 'producao'; state: 'authorized' | 'processing' | 'rejected'; version: number; series: string; number: number; signed: true; persisted: true; submitted: true; transmitted: true; authorized: boolean; processing: boolean; rejected: boolean; statusCode: string; statusReason: string; protocolStored: boolean; receiptConsultationPending: boolean; externalContentReturned: false; sensitiveMaterialReturned: false }>;
 export function parseFiscalIssueResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string } | { requestId: string; ok: true; emission: FiscalIssuedEmission }> | null;
 export type FiscalCorrectedEmission = Readonly<{ savedOnly?: boolean; emissionId: string; draftId: string; orderId: string; state: 'draft' | 'prepared' | 'number_reserved' | 'rejected'; version: number; series: string; number: number; correctionRevision: number; correctionPrepared: boolean; sameNumberPreserved: true; previousAttemptPreserved: true; requiresNewSignature: true; automaticTransmission: false; certificateInspected: false; signed: false; transmitted: false }>;
 export function parseFiscalCorrectionResponse(data: unknown): Readonly<{ requestId: string; ok: false; message: string;code?:string;field?:string } | { requestId: string; ok: true; emission: FiscalCorrectedEmission }> | null;

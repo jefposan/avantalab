@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_G4pMgBFw8wkvViyKXw5AFxogXAiZ",
+  "baseDeploymentId": "dpl_2tuh7ydf3E7tmahBPdNh1bNDqofB",
   "migrations": [],
-  "version": "3.2.0.524",
-  "scope": "Vendas: navegação alfabética, período compartilhado, nova nota fiscal e resumos compactos"
+  "version": "3.2.0.525",
+  "scope": "Vendas: restaurar abertura fiscal e preservar ambiente de produção"
 }

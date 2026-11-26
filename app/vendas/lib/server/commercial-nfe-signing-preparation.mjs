@@ -206,6 +206,7 @@ export function createCommercialNfeSigningPreparationService({
           ok: true,
           result: {
             emissionId: data.emission.id,
+            environment: data.emission.environment,
             draftId: data.emission.draftId,
             orderId: data.emission.originId,
             state: data.emission.state,

@@ -24,7 +24,7 @@ export function createCommercialNfeAutomaticIssuanceService({ signingPreparation
         return { ok: false, errors: [issue('AV-NFE-AUTOMATIC-CONFLICT', 'expectedVersion', 'A emissão foi alterada. Atualize a Central Fiscal antes de continuar.')] };
       }
       if (['authorized', 'processing', 'rejected'].includes(clean(current.state))) {
-        return { ok: true, result: { emissionId, state: clean(current.state), version: Number(current.version), series: clean(current.series), number: Number(current.number), signed: true, persisted: true, submitted: true, transmitted: true, authorized: current.state === 'authorized', processing: current.state === 'processing', rejected: current.state === 'rejected', statusCode: clean(current.statusCode), statusReason: clean(current.statusReason), protocolStored: current.state === 'authorized', receiptConsultationPending: current.state === 'processing', externalContentReturned: false, sensitiveMaterialReturned: false }, errors: [] };
+        return { ok: true, result: { emissionId, environment: clean(current.environment), state: clean(current.state), version: Number(current.version), series: clean(current.series), number: Number(current.number), signed: true, persisted: true, submitted: true, transmitted: true, authorized: current.state === 'authorized', processing: current.state === 'processing', rejected: current.state === 'rejected', statusCode: clean(current.statusCode), statusReason: clean(current.statusReason), protocolStored: current.state === 'authorized', receiptConsultationPending: current.state === 'processing', externalContentReturned: false, sensitiveMaterialReturned: false }, errors: [] };
       }
       let signedResult;
       if (current.state === 'signed') {
@@ -50,6 +50,7 @@ export function createCommercialNfeAutomaticIssuanceService({ signingPreparation
         ok: true,
         result: {
           emissionId: clean(submitted.result?.emissionId),
+          environment: clean(current.environment || signedResult?.environment),
           state: clean(submitted.result?.state),
           version: Number(submitted.result?.version),
           series: clean(signedResult?.series),

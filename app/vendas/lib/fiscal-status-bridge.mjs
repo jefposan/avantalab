@@ -342,7 +342,7 @@ export function parseFiscalNumberResponse(data) {
   const number = Number(data.emission?.number);
   if (![emissionId, draftId, orderId].every((value) => UUID_PATTERN.test(value))
     || emissionId !== draftId || text(data.emission?.documentType) !== 'nfe'
-    || text(data.emission?.model) !== '55' || text(data.emission?.environment) !== 'homologacao'
+    || text(data.emission?.model) !== '55' || !['homologacao', 'producao'].includes(text(data.emission?.environment))
     || text(data.emission?.state) !== 'number_reserved' || !Number.isSafeInteger(version) || version < 2
     || !series || !Number.isSafeInteger(number) || number < 1
     || data.emission?.numberReserved !== true || data.emission?.certificateInspected !== false
@@ -351,7 +351,7 @@ export function parseFiscalNumberResponse(data) {
     requestId: id,
     ok: true,
     emission: Object.freeze({
-      emissionId, draftId, orderId, documentType: 'nfe', model: '55', environment: 'homologacao',
+      emissionId, draftId, orderId, documentType: 'nfe', model: '55', environment: text(data.emission?.environment),
       state: 'number_reserved', version, series, number, reused: data.emission?.reused === true,
       numberReserved: true, certificateInspected: false, signed: false, transmitted: false,
     }),
@@ -371,7 +371,7 @@ export function parseFiscalSigningReadinessResponse(data) {
   const number = Number(data.emission?.number);
   if (![emissionId, draftId, orderId].every((value) => UUID_PATTERN.test(value))
     || emissionId !== draftId || text(data.emission?.documentType) !== 'nfe'
-    || text(data.emission?.model) !== '55' || text(data.emission?.environment) !== 'homologacao'
+    || text(data.emission?.model) !== '55' || !['homologacao', 'producao'].includes(text(data.emission?.environment))
     || text(data.emission?.state) !== 'number_reserved' || !Number.isSafeInteger(version) || version < 3
     || !series || !Number.isSafeInteger(number) || number < 1
     || data.emission?.documentReadyForA1Signature !== true || data.emission?.schemaValid !== true
@@ -382,7 +382,7 @@ export function parseFiscalSigningReadinessResponse(data) {
     requestId: id,
     ok: true,
     emission: Object.freeze({
-      emissionId, draftId, orderId, documentType: 'nfe', model: '55', environment: 'homologacao',
+      emissionId, draftId, orderId, documentType: 'nfe', model: '55', environment: text(data.emission?.environment),
       state: 'number_reserved', version, series, number, documentReadyForA1Signature: true,
       schemaValid: true, realCertificateInspected: false, realSignatureAttempted: false,
       signed: false, persisted: false, transmitted: false, xmlReturned: false, sensitiveMaterialReturned: false,
@@ -400,7 +400,7 @@ export function parseFiscalSignResponse(data) {
   const series = text(data.emission?.series);
   const number = Number(data.emission?.number);
   if (!UUID_PATTERN.test(emissionId) || text(data.emission?.documentType) !== 'nfe'
-    || text(data.emission?.model) !== '55' || text(data.emission?.environment) !== 'homologacao'
+    || text(data.emission?.model) !== '55' || !['homologacao', 'producao'].includes(text(data.emission?.environment))
     || text(data.emission?.state) !== 'signed' || !Number.isSafeInteger(version) || version < 2
     || !series || !Number.isSafeInteger(number) || number < 1
     || data.emission?.signed !== true || data.emission?.persisted !== true
@@ -412,7 +412,7 @@ export function parseFiscalSignResponse(data) {
     requestId: id,
     ok: true,
     emission: Object.freeze({
-      emissionId, documentType: 'nfe', model: '55', environment: 'homologacao', state: 'signed',
+      emissionId, documentType: 'nfe', model: '55', environment: text(data.emission?.environment), state: 'signed',
       version, series, number, signed: true, persisted: true, artifactRegistered: true,
       realCertificateInspected: true, signatureVerified: true, signedXsdValid: true,
       transmitted: false, signedContentReturned: false, sensitiveMaterialReturned: false,
@@ -431,7 +431,7 @@ export function parseFiscalIssueResponse(data) {
   const series = text(data.emission?.series);
   const number = Number(data.emission?.number);
   if (!UUID_PATTERN.test(emissionId) || text(data.emission?.documentType) !== 'nfe'
-    || text(data.emission?.model) !== '55' || text(data.emission?.environment) !== 'homologacao'
+    || text(data.emission?.model) !== '55' || !['homologacao', 'producao'].includes(text(data.emission?.environment))
     || !['authorized', 'processing', 'rejected'].includes(state) || !Number.isSafeInteger(version) || version < 2
     || !series || !Number.isSafeInteger(number) || number < 1 || data.emission?.signed !== true
     || data.emission?.persisted !== true || data.emission?.submitted !== true || data.emission?.transmitted !== true
@@ -440,7 +440,7 @@ export function parseFiscalIssueResponse(data) {
     requestId: id,
     ok: true,
     emission: Object.freeze({
-      emissionId, documentType: 'nfe', model: '55', environment: 'homologacao', state, version, series, number,
+      emissionId, documentType: 'nfe', model: '55', environment: text(data.emission?.environment), state, version, series, number,
       signed: true, persisted: true, submitted: true, transmitted: true,
       authorized: data.emission?.authorized === true, processing: data.emission?.processing === true,
       rejected: data.emission?.rejected === true, statusCode: text(data.emission?.statusCode),
@@ -519,7 +519,7 @@ export function parseFiscalPrepareResponse(data) {
   const version = Number(data.emission?.version);
   if (![emissionId, draftId, orderId].every((value) => UUID_PATTERN.test(value))
     || emissionId !== draftId || documentType !== 'nfe' || model !== '55'
-    || environment !== 'homologacao' || !state || !Number.isSafeInteger(version) || version < 1) return null;
+    || !['homologacao', 'producao'].includes(environment) || !state || !Number.isSafeInteger(version) || version < 1) return null;
   return Object.freeze({
     requestId: id,
     ok: true,
@@ -539,7 +539,7 @@ export function parseFiscalValidateResponse(data) {
   const candidateNumber = integer(data.emission?.candidateNumber);
   if (![emissionId, draftId, orderId].every((value) => UUID_PATTERN.test(value))
     || emissionId !== draftId || text(data.emission?.documentType) !== 'nfe'
-    || text(data.emission?.model) !== '55' || text(data.emission?.environment) !== 'homologacao'
+    || text(data.emission?.model) !== '55' || !['homologacao', 'producao'].includes(text(data.emission?.environment))
     || text(data.emission?.state) !== 'prepared' || !Number.isSafeInteger(version) || version < 2
     || data.emission?.schemaValid !== true || data.emission?.numberReserved !== false
     || data.emission?.certificateInspected !== false || data.emission?.signed !== false
@@ -548,7 +548,7 @@ export function parseFiscalValidateResponse(data) {
     requestId: id,
     ok: true,
     emission: Object.freeze({
-      emissionId, draftId, orderId, documentType: 'nfe', model: '55', environment: 'homologacao',
+      emissionId, draftId, orderId, documentType: 'nfe', model: '55', environment: text(data.emission?.environment),
       state: 'prepared', version, reused: data.emission?.reused === true,
       schemaValid: true, candidateSeries: text(data.emission?.candidateSeries), candidateNumber,
       numberReserved: false, certificateInspected: false, signed: false, transmitted: false,

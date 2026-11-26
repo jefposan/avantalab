@@ -67,6 +67,7 @@ export function createCommercialNfeSigningService({
           ok: true,
           result: {
             emissionId: committed.emission.id,
+            environment: data.emission.environment,
             state: committed.emission.state,
             version: committed.emission.version,
             series: committed.emission.series,

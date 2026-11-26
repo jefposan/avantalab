@@ -998,7 +998,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const params = new URLSearchParams({ companyId: empresaId });
             const response = await fetch(`/api/modulos/vendas/fiscal/documents/${encodeURIComponent(draftId)}/prepare?${params}`, {
               method: 'POST',
-              headers: { Authorization: `Bearer ${token}` },
+              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idempotencyKey: requestId }),
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
@@ -1013,7 +1014,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const params = new URLSearchParams({ companyId: empresaId });
             const response = await fetch(`/api/modulos/vendas/fiscal/documents/${encodeURIComponent(draftId)}/validate?${params}`, {
               method: 'POST',
-              headers: { Authorization: `Bearer ${token}` },
+              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idempotencyKey: requestId }),
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
@@ -1033,7 +1035,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const response = await fetch(`/api/modulos/vendas/fiscal/documents/${encodeURIComponent(emissionId)}/number?${params}`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ expectedVersion }),
+              body: JSON.stringify({ expectedVersion, idempotencyKey: requestId }),
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
@@ -1089,7 +1091,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const response = await fetch(`/api/modulos/vendas/fiscal/documents/${encodeURIComponent(emissionId)}/cancel?${params}`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ expectedVersion, justification }),
+              body: JSON.stringify({ expectedVersion, justification, idempotencyKey: requestId, confirmation: 'CANCELAR_NFE_AUTORIZADA' }),
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));
@@ -1109,7 +1111,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
             const response = await fetch(`/api/modulos/vendas/fiscal/documents/${encodeURIComponent(emissionId)}/continue?${params}`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ expectedVersion }),
+              body: JSON.stringify({ expectedVersion, idempotencyKey: requestId }),
               cache: 'no-store',
             });
             const payload = await response.json().catch(() => ({}));

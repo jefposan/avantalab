@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.524 -->
+<!-- ava-version: 3.2.0.525 -->
+
+> Revisão 3.2.0.525: Sem impacto operacional; correção restrita à abertura fiscal em Vendas Web.
 
 > Revisão 3.2.0.524: sem impacto operacional nos aplicativos independentes. Ordenação do seletor de módulos Web.
 
