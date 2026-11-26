@@ -1,3 +1,4 @@
+import { assertStockControlActive } from './commercial-order-stock-balance.mjs';
 export const COMMERCIAL_SERVICE_STOCK_REFERENCE = '2026-09-03';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -88,6 +89,7 @@ export function createPostgresCommercialServiceStockRepository({ pool } = {}) {
         for (const material of rows) {
           const balanceResult = await client.query('select * from public.vendas_estoque_saldos where empresa_id=$1 and local_id=$2 and produto_id=$3 for update', [companyId, localId, material.produto_id]);
           const balance = balanceResult.rows[0];
+          await assertStockControlActive(client,companyId,balance);
           if (!balance || (!balance.permite_negativo && Number(balance.saldo_fisico) - Number(balance.saldo_reservado) < Number(material.quantidade_prevista))) throw coded('AV-SERVICE-STOCK-BALANCE');
           const before = Number(balance.saldo_reservado), quantity = Number(material.quantidade_prevista), after = before + quantity;
           await client.query('update public.vendas_estoque_saldos set saldo_reservado=$3 where empresa_id=$1 and id=$2', [companyId, balance.id, after]);

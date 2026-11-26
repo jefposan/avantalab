@@ -12,8 +12,15 @@ export async function loadOrderStockBalance(client,{companyId,localId,productId,
       on conflict(empresa_id,local_id,produto_id) do nothing`,[companyId,localId,productId]);
     balance=await load();
   }
+  await assertStockControlActive(client,companyId,balance);
   if(balance&&allowNegativeStock&&!balance.permite_negativo&&Math.round((Number(balance.saldo_fisico)-Number(balance.saldo_reservado))*1000)<Math.round(Number(quantity)*1000)){
     balance=(await client.query('update public.vendas_estoque_saldos set permite_negativo=true where empresa_id=$1 and id=$2 returning *',[companyId,balance.id])).rows[0];
   }
   return balance;
+}
+
+export async function assertStockControlActive(client,companyId,balance) {
+ if(!balance||!Object.hasOwn(balance,'controle_ativo'))return;
+ const company=(await client.query('select vendas_estoque_controle_ativo enabled from public.empresas where id=$1',[companyId])).rows[0];
+ if(balance.controle_ativo===false||company?.enabled===false)throw Object.assign(Error('AV-STOCK-CONTROL-DISABLED'),{code:'AV-STOCK-CONTROL-DISABLED'});
 }

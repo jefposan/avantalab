@@ -1,0 +1,1 @@
+export function stockMinimumNotices<T extends {category?:string;trackStock?:boolean;catalogItemId?:string;minimum:number;available:number}>(products:T[],controls?:{enabled?:boolean;disabledProductIds?:string[]}):T[];

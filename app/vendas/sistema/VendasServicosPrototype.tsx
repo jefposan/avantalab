@@ -1,4 +1,5 @@
 'use client';
+import { stockMinimumNotices } from '../lib/stock-minimum-notices.mjs';
 import { SalesPeriodFilter, monthPeriod } from '@/app/marketplaces/SalesFilters';
 import type { SalePeriod } from '@/app/modules/marketplaces/sales-status';
 import CommercialReports from './relatorios/CommercialReports';
@@ -171,7 +172,7 @@ import {
 } from './vendas-servicos-runtime';
 
 type View = 'painel' | 'vendas' | 'novo_pedido' | 'novo_orcamento' | 'nova_ordem_servico' | 'servicos' | 'clientes' | 'catalogo' | 'estoque' | 'fiscal' | 'recebimentos' | 'relatorios' | 'configuracoes';
-type IconName = 'home' | 'sale' | 'service' | 'users' | 'box' | 'stock' | 'fiscal' | 'money' | 'chart' | 'settings' | 'plus' | 'search' | 'menu' | 'close' | 'chevron' | 'warning' | 'check' | 'clock' | 'document' | 'calendar' | 'arrow' | 'back' | 'copy' | 'print' | 'mail' | 'whatsapp' | 'tag' | 'edit' | 'image';
+type IconName = 'bell' | 'home' | 'sale' | 'service' | 'users' | 'box' | 'stock' | 'fiscal' | 'money' | 'chart' | 'settings' | 'plus' | 'search' | 'menu' | 'close' | 'chevron' | 'warning' | 'check' | 'clock' | 'document' | 'calendar' | 'arrow' | 'back' | 'copy' | 'print' | 'mail' | 'whatsapp' | 'tag' | 'edit' | 'image';
 type NewActionType = DocumentType | 'cliente' | 'fornecedor' | 'produto';
 type SupplierRecord = { id: string; name: string; document: string; contactName: string; email: string; phone: string; active: boolean; persistence?: { integrated: boolean; version: number } };
 type ConfirmedSave = { ok: boolean; message: string; code?: string; field?: string; draftId?: string; savedRecord?: CreatedRecord; correctedEmission?: {emissionId:string;version:number;state:string} };
@@ -745,6 +746,7 @@ type OrderLine = {
   fiscalStatus: string;
 };
 
+type StockControlState = {enabled:boolean;disabledProductIds:string[]};
 type CatalogItem = CatalogItemRecord & CatalogTaxProfile & { catalogItemId?: string; stockLocationId?: string; allowNegativeStock?: boolean };
 type PaymentMethod = 'pix' | 'boleto' | 'cartao' | 'prazo' | 'consignado';
 type CompanyProfile = typeof activeCompany & {
@@ -999,6 +1001,7 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     service: <><path d="m14.7 6.3 3-3a4 4 0 0 1-5 5l-7.4 7.4a2.1 2.1 0 1 0 3 3l7.4-7.4a4 4 0 0 0 5-5l-3 3"/></>,
     users: <><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.2a4 4 0 0 1 0 7.6"/></>,
     box: <><path d="m3 7 9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></>,
+    bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></>,
     stock: <><path d="M4 4h16v5H4zM4 9h16v11H4z"/><path d="M9 13h6"/></>,
     fiscal: <><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></>,
     money: <><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M7 10h.01M17 15h.01"/><circle cx="12" cy="12.5" r="2.5"/></>,
@@ -1301,7 +1304,7 @@ const ProductRegistration = dynamic(()=>import('../../custos/CustosClient'),{ssr
 
 type NoteCorrection = { draft: FiscalDraftRecord; status: FiscalEmissionStatus; onSave: (note: Record<string, unknown>, issue: boolean) => Promise<ConfirmedSave> };
 
-function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEditor, companyFiscalDefaults, correction, onSaveClient, clientPriceTables, clientRecords, catalogRecords, settings, issuerRegistry, connected, initialClient = '', initialSku = '', initialRecord = null, fiscalOnly = false, onFiscalCreated, onFiscalCorrection, onCancel, onCreated }: { navigationRef?: { current: EditorNavigation | null }; onBusyChange?: (busy:boolean)=>void; companyId?: string; fiscalEditor?: FiscalNoteEditorOptions; companyFiscalDefaults?: Pick<FiscalNoteEditorOptions, 'companyCfops' | 'companyTaxes'>; correction?: NoteCorrection; onSaveClient?: (client: ClientRecord) => Promise<ConfirmedSave>; clientPriceTables?: FiscalNoteEditorOptions['priceTables']; clientRecords: ClientRecord[]; catalogRecords: CatalogItem[]; settings: ModuleSettings; issuerRegistry: FiscalIssuerRegistry; connected: boolean; initialClient?: string; initialSku?: string; initialRecord?: CreatedRecord | null; fiscalOnly?: boolean; onFiscalCreated?: (record: CreatedRecord, issue?: boolean, keepOpen?: boolean) => Promise<ConfirmedSave>; onFiscalCorrection?: (result: ConfirmedSave) => void; onCancel: () => void; onCreated: CreatedRecordHandler }) {
+function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEditor, companyFiscalDefaults, stockControlEnabled = true, correction, onSaveClient, clientPriceTables, clientRecords, catalogRecords, settings, issuerRegistry, connected, initialClient = '', initialSku = '', initialRecord = null, fiscalOnly = false, onFiscalCreated, onFiscalCorrection, onCancel, onCreated }: { navigationRef?: { current: EditorNavigation | null }; onBusyChange?: (busy:boolean)=>void; companyId?: string; fiscalEditor?: FiscalNoteEditorOptions; companyFiscalDefaults?: Pick<FiscalNoteEditorOptions, 'companyCfops' | 'companyTaxes'>; stockControlEnabled?:boolean; correction?: NoteCorrection; onSaveClient?: (client: ClientRecord) => Promise<ConfirmedSave>; clientPriceTables?: FiscalNoteEditorOptions['priceTables']; clientRecords: ClientRecord[]; catalogRecords: CatalogItem[]; settings: ModuleSettings; issuerRegistry: FiscalIssuerRegistry; connected: boolean; initialClient?: string; initialSku?: string; initialRecord?: CreatedRecord | null; fiscalOnly?: boolean; onFiscalCreated?: (record: CreatedRecord, issue?: boolean, keepOpen?: boolean) => Promise<ConfirmedSave>; onFiscalCorrection?: (result: ConfirmedSave) => void; onCancel: () => void; onCreated: CreatedRecordHandler }) {
   const [draftIdentity,setDraftIdentity]=useState(()=>({id:initialRecord?.id||`PED-${Date.now().toString().slice(-6)}`,persistenceKey:initialRecord?.persistenceKey||crypto.randomUUID()}));
   const savedRecordRef=useRef<CreatedRecord|null>(initialRecord);
   const finishBusyRef=useRef(false);
@@ -1382,7 +1385,8 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
   const [freight, setFreight] = useState(() => formatLineNumber(initialOrder?.commercialTotals.freight ?? 0, true));
   const [globalDiscount, setGlobalDiscount] = useState(() => formatLineNumber(initialOrder?.commercialTotals.orderDiscount ?? 0, true));
   const [fulfillment, setFulfillment] = useState(initialOrder?.fulfillment || 'Entrega');
-  const [reserveStock, setReserveStock] = useState(fiscalOnly ? false : initialOrder?.reserveStock ?? settings.commercial.reserveStockDefault);
+  const [requestedReserveStock, setReserveStock] = useState(fiscalOnly ? false : initialOrder?.reserveStock ?? settings.commercial.reserveStockDefault);
+  const reserveStock = stockControlEnabled && requestedReserveStock;
   const [savingFiscal, setSavingFiscal] = useState(false);
   const fiscalAttemptLocked=Boolean(correction && ['signed','submitted','processing'].includes(correction.status.state) && !(correction.status.state==='signed' && correction.status.statusCode==='217'));
   const formRef=useRef<HTMLDivElement>(null);
@@ -1677,7 +1681,7 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
         {!fiscalEditor&&<section className="order-card" aria-labelledby="order-stock-fiscal-title">
           <header><div><h2 id="order-stock-fiscal-title">{fiscalOnly ? 'Preparação fiscal' : 'Estoque e preparação fiscal'}</h2><p>{fiscalOnly ? 'O emissor e as regras fiscais pertencem ao perfil empresarial ativo.' : 'Defina a reserva e o documento fiscal previsto para a operação.'}</p></div></header>
           <div className="order-card-body order-form-grid">
-            {!fiscalOnly && <label className="order-check field-wide"><input type="checkbox" checked={reserveStock} onChange={(event) => setReserveStock(event.target.checked)}/><span><strong>Controlar estoque neste pedido</strong><small>{reserveStock ? 'Reserva ao confirmar e baixa ao faturar. Saldo insuficiente ficará negativo e será compensado pelas próximas entradas.' : 'Pedido e NF-e sem reserva ou baixa no AvantaLab. Use quando o estoque é controlado em outro sistema.'}</small></span></label>}
+            {!fiscalOnly && <label className="order-check field-wide"><input type="checkbox" checked={reserveStock} disabled={!stockControlEnabled} onChange={(event) => setReserveStock(event.target.checked)}/><span><strong>Controlar estoque neste pedido</strong><small>{reserveStock ? 'Reserva ao confirmar e baixa ao faturar. Saldo insuficiente ficará negativo e será compensado pelas próximas entradas.' : 'Pedido e NF-e sem reserva ou baixa no AvantaLab. Use quando o estoque é controlado em outro sistema.'}</small></span></label>}
             <label className="field"><span>Documento fiscal previsto</span><select value={fiscalDocument} disabled={fiscalOnly} onChange={(event) => setFiscalDocument(event.target.value as typeof fiscalDocument)}>{(fiscalOnly || enabledFiscalDocuments.includes('nfe')) && <option value="nfe">NF-e</option>}{!fiscalOnly && enabledFiscalDocuments.includes('nfce') && <option value="nfce">NFC-e</option>}{!fiscalOnly && enabledFiscalDocuments.includes('nfse') && <option value="nfse">NFS-e</option>}{!fiscalOnly && <option value="nenhum">Não definido</option>}</select></label>
             {(!fiscalOnly || correction) && <label className="field"><span>Natureza da operação</span><select value={operationNature} onChange={(event) => setOperationNature(event.target.value)}><option>Venda de mercadoria</option><option>Venda para consumidor final</option><option>Prestação de serviço</option><option>Remessa futura</option></select></label>}
             <div className="order-fiscal-note field-wide"><Icon name="fiscal" size={18}/><p><strong>{fiscalOnly ? 'Preparação da NF-e.' : 'Documento apenas previsto.'}</strong> {fiscalOnly ? 'O emissor, a natureza e a tributação serão aplicados pelas regras fiscais do perfil. Revise na Central Fiscal antes de transmitir.' : 'A empresa ativa e a rota fiscal serão aplicadas automaticamente quando a nota for preparada.'} {issuerError || issuerRouteNotice || ''}</p></div>
@@ -3428,7 +3432,7 @@ function StockMovementForm({ mode, products, suppliers, initialItem, settings, o
       <div className="form-grid">
         <label className="field field-wide"><span>Produto *</span><select value={sku} onChange={(event) => { setSku(event.target.value); setSubmitted(false); }}>{products.map((item) => <option key={item.sku} value={item.sku}>{item.sku} · {item.name} · disponível {item.available} {item.unit}</option>)}</select></label>
         <label className="field"><span>Tipo de movimentação</span><select value={nature} onChange={(event) => setNature(event.target.value)}>{(mode === 'entrada' ? entryTypes : exitTypes).map((type) => <option key={type}>{type}</option>)}</select></label>
-        <label className="field"><span>Quantidade *</span><input inputMode="decimal" value={quantity} onChange={(event) => { setQuantity(event.target.value); setSubmitted(false); }} aria-invalid={submitted && !(commercialNumber(quantity) > 0)}/></label>
+        <label className="field"><span>Quantidade *</span><input autoFocus inputMode="decimal" value={quantity} onChange={(event) => { setQuantity(event.target.value); setSubmitted(false); }} aria-invalid={submitted && !(commercialNumber(quantity) > 0)}/></label>
         <label className="field"><span>Data da movimentação *</span><input type="date" value={date} onChange={(event) => { setDate(event.target.value); setSubmitted(false); }} aria-invalid={submitted && !date}/></label>
         <label className="field"><span>Local de estoque</span><select value={location} onChange={(event) => setLocation(event.target.value)}>{settings.stock.locations.map((item) => <option key={item}>{item}</option>)}</select></label>
         <label className="field"><span>Documento ou referência{settings.stock.requireMovementReference ? ' *' : ''}</span><input value={reference} onChange={(event) => { setReference(event.target.value); setSubmitted(false); }} placeholder={mode === 'entrada' ? 'NF, pedido de compra ou produção' : 'Requisição, ocorrência ou devolução'} aria-invalid={submitted && settings.stock.requireMovementReference && !reference.trim()}/></label>
@@ -3535,17 +3539,43 @@ function StockMovementDetails({ movement, onClose }: { movement: StockMovementRe
   </Dialog>;
 }
 
-function StockItemActions({ item, onEntry, onExit, onInventory, onHistory }: { item: CatalogItem; onEntry: () => void; onExit: () => void; onInventory: () => void; onHistory: () => void }) {
+function StockControlDialog({request,onClose,onSave}:{request:{item?:CatalogItem;enabled:boolean}|null;onClose:()=>void;onSave:(item:CatalogItem|undefined,enabled:boolean)=>Promise<ConfirmedSave>}) {
+ const [busy,setBusy]=useState(false),[error,setError]=useState('');const running=useRef(false);
+ if(!request)return null;
+ const save=async()=>{if(running.current)return;running.current=true;setBusy(true);setError('');try{const result=await onSave(request.item,request.enabled);if(result.ok)onClose();else setError(result.message||'Não foi possível alterar o controle.');}catch{setError('Não foi possível confirmar a configuração. Atualize antes de tentar novamente.');}finally{running.current=false;setBusy(false);}};
+ return <Dialog open title={`${request.enabled?'Ativar':'Desativar'} controle de estoque`} description={request.item?request.item.name:'Empresa ativa · Vendas e Serviços'} onClose={()=>{if(!running.current)onClose();}}><div className="dialog-body"><p>{request.enabled?'Voltar a controlar novas reservas, movimentações e alertas.':'Interromper novas reservas, movimentações e avisos de reposição neste escopo.'} Saldos e histórico serão preservados.</p>{!request.enabled&&<p>Reservas pendentes precisam ser concluídas ou liberadas antes da desativação.</p>}{error&&<AvisoFormulario idMensagem="stock-control-error" titulo="Controle não alterado" mensagem={error}/>}</div><footer className="dialog-footer"><BotaoAcaoCompacto disabled={busy} onClick={onClose}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" disabled={busy} onClick={()=>void save()}>{busy?'Salvando…':'Confirmar'}</BotaoAcaoCompacto></footer></Dialog>;
+}
+
+function StockMinimumDialog({item,onClose,onSave}:{item:CatalogItem|null;onClose:()=>void;onSave:(item:CatalogItem,minimum:number)=>Promise<ConfirmedSave>}) {
+  const [value,setValue]=useState(()=>String(item?.minimum??0).replace('.',','));
+  const [busy,setBusy]=useState(false),[error,setError]=useState('');
+  const running=useRef(false);
+  if(!item)return null;
+  const save=async()=>{
+    if(running.current)return;
+    const normalized=value.trim().replace(',','.');const minimum=Number(normalized);
+    if(!/^\d+(?:\.\d{1,3})?$/.test(normalized)||!Number.isFinite(minimum)){setError('Informe uma quantidade igual ou maior que zero, com até três casas decimais.');return;}
+    running.current=true;setBusy(true);setError('');
+    try{const result=await onSave(item,minimum);if(result.ok)onClose();else setError(result.message||'Não foi possível atualizar o estoque mínimo.');}
+    catch{setError('Não foi possível confirmar a atualização. Atualize o catálogo antes de tentar novamente.');}
+    finally{running.current=false;setBusy(false);}
+  };
+  return <Dialog open title="Configurar estoque mínimo" description={`${item.sku} · ${item.name}`} onClose={()=>{if(!running.current)onClose();}}><div className="dialog-body"><label className="field"><span>Estoque mínimo ({item.unit})</span><input autoFocus inputMode="decimal" value={value} disabled={busy} aria-invalid={Boolean(error)} onChange={event=>{setValue(event.target.value);setError('');}}/></label><p className="field-help">Define o limite usado nos alertas de reposição. Zero remove o limite mínimo. Não altera o saldo físico nem as reservas.</p>{error&&<AvisoFormulario idMensagem="stock-minimum-error" titulo="Mínimo não atualizado" mensagem={error}/>}</div><footer className="dialog-footer"><BotaoAcaoCompacto variante="secundario" disabled={busy} onClick={onClose}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto variante="primario" disabled={busy} onClick={()=>void save()}>{busy?'Salvando…':'Salvar estoque mínimo'}</BotaoAcaoCompacto></footer></Dialog>;
+}
+
+function StockItemActions({ item, onEntry, onExit, onInventory, onHistory, onMinimum, onControl, controlEnabled = true, globalControlEnabled = true }: { item: CatalogItem; onEntry: () => void; onExit: () => void; onInventory: () => void; onHistory: () => void; onMinimum: () => void; onControl:()=>void; controlEnabled?:boolean; globalControlEnabled?:boolean }) {
   const actions: RecordAction[] = [
     { label: 'Registrar entrada', description: 'Compra, produção, devolução ou ajuste positivo', icon: 'plus', onSelect: onEntry, permission: 'stock.entry' },
     { label: 'Registrar saída manual', description: 'Consumo, perda, devolução ou ajuste negativo', icon: 'arrow', onSelect: onExit, permission: 'stock.exit' },
     { label: 'Contar estoque', description: 'Inventário com divergência e saldo resultante', icon: 'stock', onSelect: onInventory, permission: 'stock.inventory' },
+    { label: controlEnabled?'Desativar controle de estoque':'Ativar controle de estoque', description:'Preservar saldos e histórico deste produto',icon:'settings',onSelect:onControl,permission:'stock.adjust' },
+    { label: 'Configurar estoque mínimo', description: 'Definir a quantidade para alertas de reposição', icon: 'settings', onSelect: onMinimum, permission: 'stock.adjust' },
     { label: 'Ver movimentações', description: 'Filtra o histórico deste produto', icon: 'clock', onSelect: onHistory },
   ];
-  return <RecordActionsDialog title={`Estoque de ${item.sku}`} description={`${item.name}. Saldo físico ${item.current} ${item.unit}, reservado ${item.reserved} ${item.unit} e disponível ${item.available} ${item.unit}.`} actions={actions} triggerLabel={`Ações de estoque de ${item.name}`}/>;
+  return <RecordActionsDialog title={`Estoque de ${item.sku}`} description={`${item.name}. Saldo físico ${item.current} ${item.unit}, reservado ${item.reserved} ${item.unit} e disponível ${item.available} ${item.unit}.`} actions={actions.map(action=>(!controlEnabled||!globalControlEnabled)&&['Registrar entrada','Registrar saída manual','Contar estoque'].includes(action.label)?{...action,disabled:true,disabledLabel:'Controle de estoque desativado'}:action)} triggerLabel={`Ações de estoque de ${item.name}`}/>;
 }
 
-function InventoryView({ catalogRecords, movementRecords, suppliers, settings, initialOrigin = '', onClearOrigin, onSave }: { catalogRecords: CatalogItem[]; movementRecords: StockMovementRecord[]; suppliers: SupplierRecord[]; settings: ModuleSettings; initialOrigin?: string; onClearOrigin: () => void; onSave: (item: CatalogItem, movement: StockMovementRecord) => Promise<ConfirmedSave> }) {
+function InventoryView({ catalogRecords, movementRecords, suppliers, settings, initialOrigin = '', onClearOrigin, onSave, onSaveMinimum, controls = {enabled:true,disabledProductIds:[]}, onControl, alertTarget }: { catalogRecords: CatalogItem[]; movementRecords: StockMovementRecord[]; suppliers: SupplierRecord[]; settings: ModuleSettings; initialOrigin?: string; onClearOrigin: () => void; onSave: (item: CatalogItem, movement: StockMovementRecord) => Promise<ConfirmedSave>; onSaveMinimum: (item:CatalogItem,minimum:number)=>Promise<ConfirmedSave>; controls?:StockControlState; onControl:(item:CatalogItem,enabled:boolean)=>void; alertTarget?:{sku:string;requestId:string}|null }) {
   const { can } = useContext(PermissionContext);
   const products = catalogRecords.filter((item) => item.category !== 'Serviço' && item.trackStock);
   const [query, setQuery] = useState('');
@@ -3557,7 +3587,9 @@ function InventoryView({ catalogRecords, movementRecords, suppliers, settings, i
   const [movementItem, setMovementItem] = useState<CatalogItem | null>(null);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [inventoryItem, setInventoryItem] = useState<CatalogItem | null>(null);
+  const [minimumItem,setMinimumItem]=useState<CatalogItem|null>(null);
   const [detailMovement, setDetailMovement] = useState<StockMovementRecord | null>(null);
+  useEffect(()=>{if(!alertTarget)return;const item=products.find(item=>item.sku===alertTarget.sku);if(!item)return;setQuery(item.sku);if(can('stock.entry')&&controls.enabled&&!controls.disabledProductIds.includes(item.catalogItemId||'')){setMovementItem(item);setMovementMode('entrada');}},[alertTarget?.requestId]);
   const normalizedQuery = normalizeSearch(query);
   const positionRecords = products.filter((item) => {
     const status = stockStatus(item.available, item.minimum);
@@ -3573,12 +3605,12 @@ function InventoryView({ catalogRecords, movementRecords, suppliers, settings, i
     return matchesQuery && matchesType && matchesLocation;
   });
   const locationOptions = [...new Set([...settings.stock.locations, ...movementRecords.map((movement) => movement.location).filter(Boolean)])];
-  const low = products.filter((item) => stockStatus(item.available, item.minimum) !== 'normal');
+  const low = products.filter((item) => controls.enabled && !controls.disabledProductIds.includes(item.catalogItemId||'') && stockStatus(item.available, item.minimum) !== 'normal');
   const openMovement = (mode: StockMovementMode, item: CatalogItem | null = null) => { setMovementItem(item); setMovementMode(mode); };
   const openInventory = (item: CatalogItem | null = null) => { setInventoryItem(item); setInventoryOpen(true); };
   const filterHistory = (item: CatalogItem) => { setMovementQuery(item.sku); window.setTimeout(() => document.getElementById('stock-movements')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); };
   return <>
-    <PageHeading view="estoque" action={<div className="heading-actions"><button type="button" className="button secondary" disabled={!can('stock.inventory')} onClick={() => openInventory()}>Novo inventário</button><button type="button" className="button primary" disabled={!can('stock.entry')} onClick={() => openMovement('entrada')}><Icon name="plus" size={18}/> Registrar entrada</button></div>}/>
+    <PageHeading view="estoque" action={<div className="heading-actions"><button type="button" className="button secondary" disabled={!can('stock.inventory')||!controls.enabled} onClick={() => openInventory()}>Novo inventário</button><button type="button" className="button primary" disabled={!can('stock.entry')||!controls.enabled} onClick={() => openMovement('entrada')}><Icon name="plus" size={18}/> Registrar entrada</button></div>}/>
     {initialOrigin && <div className="stock-origin-filter" role="status"><span><Icon name="service" size={17}/><span><strong>Consumo vinculado a {initialOrigin}</strong><small>A relação de movimentações foi filtrada a partir da ordem de serviço.</small></span></span><button type="button" className="button secondary" onClick={() => { setMovementQuery(''); onClearOrigin(); }}>Mostrar todas</button></div>}
     <div className="metric-grid module-financial-summary"><Metric label="Itens controlados" value={String(products.length)} note={`${settings.stock.locations.length} locais configurados`}/><Metric label="Valor disponível" value={money(products.reduce((sum, item) => sum + Math.max(0, item.available) * item.cost, 0))} note="Pelo custo publicado" tone="cyan"/><Metric label="Reservado em pedidos" value={`${products.reduce((sum, item) => sum + item.reserved, 0)} un`} note="Saldo comprometido" tone="success"/><Metric label="Abaixo do mínimo" value={String(low.length)} note="Reposição necessária" tone="warning"/></div>
     {low.length > 0 && <Panel title="Reposição necessária" subtitle="Produtos abaixo do mínimo ou sem disponibilidade" className="stock-attention-panel"><div className="stock-attention-list">{low.map((item) => <div key={item.sku}><span className="dot warning"/><div><strong>{item.name}</strong><small>{item.available} {item.unit} disponíveis · mínimo {item.minimum} {item.unit}</small></div><Badge tone="warning">Faltam {Math.max(0, item.minimum - item.available)} {item.unit}</Badge><button type="button" className="button secondary" onClick={() => openMovement('entrada', item)}>Registrar entrada</button></div>)}</div></Panel>}
@@ -3591,11 +3623,11 @@ function InventoryView({ catalogRecords, movementRecords, suppliers, settings, i
         <td data-label="Disponível" className="numeric"><strong>{item.available} {item.unit}</strong></td>
         <td data-label="Mínimo e situação"><div className="stock-status-cell"><span>Mínimo {item.minimum} {item.unit}</span><Badge tone={status === 'normal' ? 'success' : status === 'baixo' ? 'warning' : 'danger'}>{status === 'normal' ? 'Normal' : status === 'baixo' ? 'Baixo' : 'Sem estoque'}</Badge></div></td>
         <td data-label="Valor disponível" className="numeric"><strong>{money(Math.max(0, item.available) * item.cost)}</strong><small>{money(item.cost)} / {item.unit}</small></td>
-        <td data-label="Ações" className="stock-actions-cell"><StockItemActions item={item} onEntry={() => openMovement('entrada', item)} onExit={() => openMovement('saida', item)} onInventory={() => openInventory(item)} onHistory={() => filterHistory(item)}/></td>
+        <td data-label="Ações" className="stock-actions-cell"><StockItemActions item={item} onEntry={() => openMovement('entrada', item)} onExit={() => openMovement('saida', item)} onInventory={() => openInventory(item)} onHistory={() => filterHistory(item)} onMinimum={() => {if(can('stock.adjust'))setMinimumItem(item);}} controlEnabled={!controls.disabledProductIds.includes(item.catalogItemId||'')} globalControlEnabled={controls.enabled} onControl={()=>onControl(item,controls.disabledProductIds.includes(item.catalogItemId||''))}/></td>
       </tr>; })}</></Table>
       {positionRecords.length === 0 && <EmptyState title="Nenhum produto encontrado" description="Ajuste a busca ou a situação para consultar a posição de estoque."/>}
     </Panel>
-    <Panel title="Movimentações" subtitle="Histórico com origem, documento, local, usuário e saldo resultante" action={<button type="button" className="button secondary" disabled={!can('stock.exit')} onClick={() => openMovement('saida')}>Registrar saída manual</button>}>
+    <Panel title="Movimentações" subtitle="Histórico com origem, documento, local, usuário e saldo resultante" action={<button type="button" className="button secondary" disabled={!can('stock.exit')||!controls.enabled} onClick={() => openMovement('saida')}>Registrar saída manual</button>}>
       <div id="stock-movements" className="stock-scroll-anchor"/>
       <SearchToolbar value={movementQuery} onChange={setMovementQuery} placeholder="Buscar por origem, produto, documento, local ou parceiro"><select aria-label="Tipo de movimentação" value={movementFilter} onChange={(event) => setMovementFilter(event.target.value)}><option value="Todos">Todos os tipos</option><option value="entrada">Entradas</option><option value="saida">Saídas</option><option value="reserva">Reservas</option><option value="inventario">Inventários</option></select><select aria-label="Local de estoque" value={locationFilter} onChange={(event) => setLocationFilter(event.target.value)}><option>Todos os locais</option>{locationOptions.map((location) => <option key={location}>{location}</option>)}</select></SearchToolbar>
       <Table headers={['Data e origem', 'Movimentação', 'Produto', 'Quantidade e saldo', 'Local e responsável', 'Documento/parceiro', 'Ações']} minWidth={0} className="stock-movement-table"><>{filteredMovements.map((movement) => <tr key={movement.id}>
@@ -3631,6 +3663,7 @@ function InventoryView({ catalogRecords, movementRecords, suppliers, settings, i
         onSave={onSave}
       />
     )}
+    {minimumItem&&<StockMinimumDialog key={minimumItem.sku} item={minimumItem} onClose={()=>setMinimumItem(null)} onSave={onSaveMinimum}/>}
     <StockMovementDetails movement={detailMovement} onClose={() => setDetailMovement(null)}/>
   </>;
 }
@@ -5310,7 +5343,7 @@ function splitTeam(value: string) {
 
 type FiscalDefaultsContext={companyId:string;origin:string;onSaved?:()=>void};
 
-function SettingsDialog({ fiscalDefaultsContext,section, settings, onClose, onSave, onSaveCompany, onOpenNumbering, onOpenRules, suspended = false }: { fiscalDefaultsContext?:FiscalDefaultsContext;section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany?: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onOpenNumbering?: () => void; onOpenRules?:()=>void; suspended?: boolean }) {
+function SettingsDialog({ stockControlContext, fiscalDefaultsContext,section, settings, onClose, onSave, onSaveCompany, onOpenNumbering, onOpenRules, suspended = false }: { stockControlContext?:{enabled:boolean;canEdit:boolean;open:()=>void}; fiscalDefaultsContext?:FiscalDefaultsContext;section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany?: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onOpenNumbering?: () => void; onOpenRules?:()=>void; suspended?: boolean }) {
   const [draft, setDraft] = useState(settings);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -5480,6 +5513,7 @@ function SettingsDialog({ fiscalDefaultsContext,section, settings, onClose, onSa
         <label className="field"><span>Duração padrão</span><select value={draft.services.defaultDurationMinutes} onChange={(event) => updateServices({ defaultDurationMinutes: Number(event.target.value) })}><option value={30}>30 minutos</option><option value={60}>1 hora</option><option value={90}>1h30</option><option value={120}>2 horas</option><option value={240}>4 horas</option><option value={480}>8 horas</option></select></label>
       </div>}
       {section === 'estoque' && <div className="settings-form-stack">
+        {stockControlContext&&<section className="settings-form-section"><div className="client-section-heading"><h3>Controle geral de estoque</h3><p>Somente a empresa ativa em Vendas e Serviços. Configurações individuais ficam nas ações dos produtos em Estoque.</p></div><Badge tone={stockControlContext.enabled?'success':'neutral'}>{stockControlContext.enabled?'Ativado':'Desativado'}</Badge><BotaoAcaoCompacto disabled={!stockControlContext.canEdit} onClick={()=>{onClose();stockControlContext.open();}}>{stockControlContext.enabled?'Desativar controle de estoque':'Ativar controle de estoque'}</BotaoAcaoCompacto></section>}
         <div className="stock-settings-note"><Icon name="stock" size={19}/><p><strong>Saldos permanecem consolidados nesta etapa.</strong><small>O local escolhido será gravado nas novas movimentações. O controle de saldo separado por depósito será a evolução futura.</small></p></div>
         <section className="settings-form-section"><div className="client-section-heading"><h3>Locais e rastreabilidade</h3><p>Cadastros disponíveis nas entradas, saídas, inventários e movimentos automáticos.</p></div><div className="form-grid">
           <label className="field field-wide"><span>Locais de estoque (um por linha)</span><textarea rows={5} value={draft.stock.locations.join('\n')} onChange={(event) => updateStock({ locations: splitTeam(event.target.value) })}/></label>
@@ -5944,7 +5978,7 @@ type SettingsTarget = SettingsSection | 'acessos' | 'matriz' | 'certificado' | n
 type SettingsGroupId = 'empresa-notas' | 'operacao' | 'equipe-acessos' | 'integracoes';
 type SettingsItem = { title: string; description: string; icon: IconName; status: string; target: SettingsTarget };
 
-function SettingsView({ fiscalDefaultsContext,settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveCompany, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate, onOpenNumbering, numberingOpen = false }: { fiscalDefaultsContext?:FiscalDefaultsContext;settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void; onOpenNumbering?: () => void; numberingOpen?: boolean }) {
+function SettingsView({ stockControlContext,fiscalDefaultsContext,settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveCompany, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate, onOpenNumbering, numberingOpen = false }: { stockControlContext?:{enabled:boolean;canEdit:boolean;open:()=>void}; fiscalDefaultsContext?:FiscalDefaultsContext;settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void; onOpenNumbering?: () => void; numberingOpen?: boolean }) {
   const [section, setSection] = useState<SettingsSection | null>(null);
   const [accessOpen, setAccessOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
@@ -6002,7 +6036,7 @@ function SettingsView({ fiscalDefaultsContext,settings, connected, canEdit, canV
         return <button type="button" key={title} onClick={() => openTarget(target)} disabled={unavailable} title={!target ? 'Disponível quando a integração for conectada' : unavailable ? 'Seu perfil não permite alterar este ajuste' : undefined}><span><Icon name={icon}/></span><div><strong>{title}</strong><small>{description}</small><Badge tone={unavailable ? 'neutral' : attention ? 'warning' : 'neutral'}>{unavailable && target ? 'Sem acesso' : status}</Badge></div><Icon name={!unavailable ? 'chevron' : 'clock'} size={17}/></button>;
       })}</div>
     </section>
-    <SettingsDialog fiscalDefaultsContext={fiscalDefaultsContext} onSaveCompany={onSaveCompany} suspended={numberingOpen||matrixOpen} onOpenRules={canConfigureFiscal?()=>setMatrixOpen(true):undefined} onOpenNumbering={onOpenNumbering} section={section} settings={settings} onClose={() => setSection(null)} onSave={onSave}/>
+    <SettingsDialog stockControlContext={stockControlContext} fiscalDefaultsContext={fiscalDefaultsContext} onSaveCompany={onSaveCompany} suspended={numberingOpen||matrixOpen} onOpenRules={canConfigureFiscal?()=>setMatrixOpen(true):undefined} onOpenNumbering={onOpenNumbering} section={section} settings={settings} onClose={() => setSection(null)} onSave={onSave}/>
     <FiscalMatrixDialog open={matrixOpen} matrix={settings.fiscal.matrix} documentScope={settings.fiscal.documentScope} taxReviewConfirmed={settings.fiscal.taxReviewConfirmed} taxReformReviewConfirmed={settings.fiscal.taxReformReviewConfirmed} bridge={fiscalRulesBridge} readOnly={!canConfigureFiscal || (fiscalRulesBridge.integrated && !fiscalRulesBridge.writable)} onClose={() => setMatrixOpen(false)} onSave={onSaveFiscalMatrix}/>
     <AccessSettingsDialog open={accessOpen} settings={settings} bridge={accessBridge} readOnly={!canManageAccess || (accessBridge.integrated && !accessBridge.writable)} onClose={() => setAccessOpen(false)} onSave={(next) => { onSaveAccess(next); setAccessOpen(false); }}/>
   </>;
@@ -6068,6 +6102,11 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [fiscalProfileBridgeState, setFiscalProfileBridgeState] = useState<FiscalProfileBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', profile: null });
   const [fiscalCertificateBridgeState, setFiscalCertificateBridgeState] = useState<FiscalCertificateBridgeState>({ integrated: false, available: false, writable: false, loading: false, message: '', certificate: null, execution: null });
   const [fiscalPrepareState, setFiscalPrepareState] = useState<Record<string, { loading: boolean; message: string }>>({});
+  const [stockControls,setStockControls]=useState<StockControlState>({enabled:true,disabledProductIds:[]});
+  const [stockNoticesOpen,setStockNoticesOpen]=useState(false);
+  const [stockAlertTarget,setStockAlertTarget]=useState<{sku:string;requestId:string}|null>(null);
+  const [stockControlRequest,setStockControlRequest]=useState<{item?:CatalogItem;enabled:boolean}|null>(null);
+  useEffect(()=>{setStockControls({enabled:true,disabledProductIds:[]});setStockNoticesOpen(false);setStockAlertTarget(null);setStockControlRequest(null);},[managementCatalogBridge?.companyId]);
   const [stockMovementRecords, setStockMovementRecords] = useState<StockMovementRecord[]>(stockMoves);
   const [receivableRecords, setReceivableRecords] = useState<ReceivableRecord[]>(initialReceivables);
   const [moduleSettings, setModuleSettings] = useState<ModuleSettings>(defaultModuleSettings);
@@ -6519,7 +6558,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         return;
       }
       const stockSnapshot=parseStockSnapshot(event.data);
-      if(stockSnapshot){if(!stockSnapshot.ok){setStockMovementRecords([]);setToast(stockSnapshot.message||'Não foi possível carregar o histórico de estoque.');return;}setStockMovementRecords(stockSnapshot.movements.map((row:any)=>({id:String(row.id),date:row.date?`${String(row.date).split('-').reverse().join('/')} 12:00`:new Date(row.createdAt).toLocaleString('pt-BR'),createdAt:String(row.createdAt||''),origin:String(row.document||row.id),type:String(row.type||'Movimentação'),direction:Number(row.quantity)<0?'saida':'entrada',sku:String(row.sku||''),item:String(row.item||''),quantity:Number(row.quantity)||0,balance:Number(row.physicalAfter)||0,user:String(row.actor||'Sistema'),location:String(row.location||'Estoque principal'),partner:String(row.partner?.name||row.partner?.document||''),document:String(row.document||''),lot:String(row.lot||''),expiry:String(row.expiry||''),notes:String(row.notes||'')})));return;}
+      if(stockSnapshot){if(!stockSnapshot.ok){setStockMovementRecords([]);setToast(stockSnapshot.message||'Não foi possível carregar o histórico de estoque.');return;}setStockControls(stockSnapshot.controls||{enabled:true,disabledProductIds:[]});setStockMovementRecords(stockSnapshot.movements.map((row:any)=>({id:String(row.id),date:row.date?`${String(row.date).split('-').reverse().join('/')} 12:00`:new Date(row.createdAt).toLocaleString('pt-BR'),createdAt:String(row.createdAt||''),origin:String(row.document||row.id),type:String(row.type||'Movimentação'),direction:Number(row.quantity)<0?'saida':'entrada',sku:String(row.sku||''),item:String(row.item||''),quantity:Number(row.quantity)||0,balance:Number(row.physicalAfter)||0,user:String(row.actor||'Sistema'),location:String(row.location||'Estoque principal'),partner:String(row.partner?.name||row.partner?.document||''),document:String(row.document||''),lot:String(row.lot||''),expiry:String(row.expiry||''),notes:String(row.notes||'')})));return;}
       const stockMove=parseStockMoveResponse(event.data);if(stockMove){const pending=pendingStockRef.current.get(stockMove.requestId);if(!pending)return;window.clearTimeout(pending.timer);pendingStockRef.current.delete(stockMove.requestId);const result={ok:stockMove.ok,message:stockMove.message||(stockMove.ok?'Movimentação de estoque registrada.':'Não foi possível movimentar o estoque.')};pending.resolve(result);setToast(result.message);return;}
       const customerSnapshot = parsePartySnapshot(event.data, CUSTOMER_SNAPSHOT_TYPE, 'customers');
       if (customerSnapshot) { if (!customerSnapshot.ok) { setClientRecords([]); setToast(customerSnapshot.message || 'Não foi possível carregar os clientes do perfil.'); return; } setClientRecords(customerSnapshot.records as ClientRecord[]); return; }
@@ -7700,6 +7739,26 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       return next;
     });
   };
+  const saveStockControl=async(item:CatalogItem|undefined,enabled:boolean):Promise<ConfirmedSave>=>{
+    if(!authorize('stock.adjust','alterar controle de estoque')||!item&&!authorize('settings.edit','alterar controle geral'))return {ok:false,message:'Sem permissão para alterar este controle.'};
+    if(!managementCatalogBridge||!managementBridgeOrigin||window.parent===window)return {ok:false,message:'Abra a configuração pelo perfil empresarial.'};
+    const requestId=`control:${crypto.randomUUID()}`;
+    const request=createStockMoveRequest({requestId,idempotencyKey:requestId,productId:item?.catalogItemId||managementCatalogBridge.companyId,localId:item?.stockLocationId||managementCatalogBridge.companyId,mode:'control',scope:item?'product':'company',enabled,expectedEnabled:item?!stockControls.disabledProductIds.includes(item.catalogItemId||''):stockControls.enabled});
+    if(!request)return {ok:false,message:'Atualize o catálogo antes de configurar o controle.'};
+    const result=await new Promise<ConfirmedSave>(resolve=>{const timer=window.setTimeout(()=>{pendingStockRef.current.delete(requestId);resolve({ok:false,message:'A confirmação demorou. Atualize antes de tentar novamente.'});},15_000);pendingStockRef.current.set(requestId,{timer,resolve});window.parent.postMessage(request,managementBridgeOrigin);});
+    if(result.ok)setStockControls(current=>item?{...current,disabledProductIds:enabled?current.disabledProductIds.filter(id=>id!==item.catalogItemId):[...new Set([...current.disabledProductIds,item.catalogItemId!])]}:{...current,enabled});return result;
+  };
+  const saveStockMinimum = async (item:CatalogItem,minimum:number):Promise<ConfirmedSave> => {
+    if(!authorize('stock.adjust','configurar estoque mínimo'))return {ok:false,message:'Seu acesso não permite configurar o estoque mínimo.'};
+    if(!managementCatalogBridge){setCatalogRecords(current=>{const next=current.map(record=>record.sku===item.sku?{...record,minimum}:record);writeCompanyStorage(CATALOG_STORAGE_KEY,JSON.stringify({version:3,catalog:next}));return next;});return {ok:true,message:'Estoque mínimo atualizado.'};}
+    if(!managementBridgeOrigin||window.parent===window||!item.catalogItemId||!item.stockLocationId)return {ok:false,message:'Atualize o catálogo e selecione um produto vinculado ao estoque principal.'};
+    const requestId=`minimum:${crypto.randomUUID()}`;
+    const request=createStockMoveRequest({requestId,productId:item.catalogItemId,localId:item.stockLocationId,idempotencyKey:requestId,mode:'minimum',minimum,expectedMinimum:item.minimum});
+    if(!request)return {ok:false,message:'Não foi possível preparar a configuração do mínimo.'};
+    const result=await new Promise<ConfirmedSave>(resolve=>{const timer=window.setTimeout(()=>{pendingStockRef.current.delete(requestId);resolve({ok:false,message:'A confirmação demorou. Atualize o catálogo antes de tentar novamente.'});},15_000);pendingStockRef.current.set(requestId,{timer,resolve});window.parent.postMessage(request,managementBridgeOrigin);});
+    if(result.ok)setCatalogRecords(current=>current.map(record=>record.catalogItemId===item.catalogItemId&&record.stockLocationId===item.stockLocationId?{...record,minimum}:record));
+    return result;
+  };
   const saveStockMovement = async (item: CatalogItem, movement: StockMovementRecord): Promise<ConfirmedSave> => {
     if (managementCatalogBridge) {
       if(!managementCatalogBridge.stockIntegrated||!managementBridgeOrigin||window.parent===window){const message='Configure o estoque principal deste perfil antes de movimentar.';setToast(message);return {ok:false,message};}
@@ -8411,6 +8470,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     return true;
   };
 
+  const stockNotices=can('stock.view')?stockMinimumNotices(catalogRecords,stockControls):[];
   const visibleNewOptions = newOptions.filter((option) => can(newPermission[option.type] ?? '')
     && (!managementCatalogBridge || !['venda', 'nfce', 'nfse'].includes(option.type))
     && (!['nfe', 'nfce', 'nfse'].includes(option.type) || moduleSettings.fiscal.documentScope.includes(option.type as FiscalDocumentType)));
@@ -8440,9 +8500,12 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           : <span>{managementProfileReady ? moduleSettings.company.name : 'Carregando perfil empresarial'}</span>}
       </div>
       <div className="topbar-actions">
+        {managementContextReady&&can('stock.view')&&<Tooltip texto="Avisos de estoque" posicao="bottom"><button type="button" className="module-settings-button stock-notice-bell" aria-label={`Avisos de estoque: ${stockNotices.length}`} onClick={()=>setStockNoticesOpen(true)}><Icon name="bell" size={18}/>{stockNotices.length>0&&<small>{stockNotices.length>99?'99+':stockNotices.length}</small>}</button></Tooltip>}
         {managementContextReady && can('settings.view') && <button type="button" className="module-settings-button" onClick={() => navigate('configuracoes')} aria-label="Abrir ajustes de Vendas e Serviços" title="Ajustes"><Icon name="settings" size={18}/></button>}
       </div>
     </header>
+    {stockNoticesOpen&&<Dialog open title="Avisos de estoque" description="Produtos que atingiram ou ficaram abaixo do mínimo disponível." onClose={()=>setStockNoticesOpen(false)}><div className="dialog-body"><div className="record-action-options">{stockNotices.map(item=><button type="button" key={item.catalogItemId||item.sku} onClick={()=>{setStockNoticesOpen(false);navigate('estoque');setStockAlertTarget({sku:item.sku,requestId:crypto.randomUUID()});}}><span className="record-action-icon"><Icon name="warning" size={18}/></span><span><strong>{item.name}</strong><small>Disponível {item.available} {item.unit} · mínimo {item.minimum} {item.unit}</small><small>{can('stock.entry')?'Conferir e corrigir':'Conferir produto'}</small></span><Icon name="chevron" size={14}/></button>)}</div>{!stockNotices.length&&<EmptyState title="Nenhum aviso de estoque" description="Os produtos controlados estão acima do mínimo ou não possuem limite definido."/>}</div><footer className="dialog-footer"><BotaoAcaoCompacto onClick={()=>setStockNoticesOpen(false)}>Fechar</BotaoAcaoCompacto></footer></Dialog>}
+    {stockControlRequest&&<StockControlDialog key={`${stockControlRequest.item?.sku||'company'}:${stockControlRequest.enabled}`} request={stockControlRequest} onClose={()=>setStockControlRequest(null)} onSave={saveStockControl}/>}
     {newMenu && <button type="button" className="new-selection-backdrop" data-av-popup-open="true" aria-label="Fechar opções de novo cadastro" onClick={() => setNewMenu(false)}/>}
     <div className="app-body">
       {mobileMenu && <button className="nav-backdrop" data-av-popup-open="true" type="button" aria-label="Fechar menu" onClick={() => setMobileMenu(false)}/>}
@@ -8489,7 +8552,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           onRestoreOrder={restoreCanceledOrder}
         />}
         {view==='novo_pedido'&&standaloneFiscal&&!realFiscalEditor&&<section role="alert"><p>{editorError||'Carregando dados do perfil para a emissão…'}</p><BotaoAcaoCompacto onClick={()=>void loadRealFiscalEditor()}>Tentar novamente</BotaoAcaoCompacto></section>}
-        {view === 'novo_pedido' && (!standaloneFiscal||realFiscalEditor) && <NewOrderView navigationRef={editorNavigationRef} onBusyChange={setEditorSaving} onSaveClient={saveClient} clientPriceTables={realFiscalEditor?.priceTables} companyFiscalDefaults={realFiscalEditor} fiscalEditor={standaloneFiscal?realFiscalEditor:undefined} companyId={managementCatalogBridge?.companyId || ''} key={standaloneFiscal ? 'nova-nota-avulsa' : editingOrder?.persistence?.operationId || editingOrder?.id || 'novo-pedido'} clientRecords={clientRecords} catalogRecords={standaloneFiscal ? catalogRecords.filter((item) => item.category !== 'Serviço') : catalogRecords} settings={moduleSettings} issuerRegistry={fiscalIssuerRegistry} connected={Boolean(managementCatalogBridge)} initialClient={commercialClient} initialSku={commercialSku} initialRecord={editingOrder} fiscalOnly={standaloneFiscal} onFiscalCreated={saveStandaloneFiscal} onFiscalCorrection={result=>{const key=fiscalCheckoutCorrection(result);if(!key||!authorize(fiscalCorrectionAction(key).permission,'corrigir a configuração fiscal'))return;if(key==='numbering'){fiscalNumberingTargetRef.current=result.draftId;setFiscalNumberingOpen(true);}else if(key==='certificado')setCertificateOpen(true);else if(key==='submission-status'&&result.draftId){setFiscalResultRequest({draftId:result.draftId,requestId:crypto.randomUUID()});setStandaloneFiscal(false);setView('fiscal');}}} onCancel={() => { setStandaloneFiscal(false); setEditingOrder(null); navigate(commercialReturnView); }} onCreated={createRecord}/>}
+        {view === 'novo_pedido' && (!standaloneFiscal||realFiscalEditor) && <NewOrderView navigationRef={editorNavigationRef} onBusyChange={setEditorSaving} onSaveClient={saveClient} clientPriceTables={realFiscalEditor?.priceTables} companyFiscalDefaults={realFiscalEditor} stockControlEnabled={stockControls.enabled} fiscalEditor={standaloneFiscal?realFiscalEditor:undefined} companyId={managementCatalogBridge?.companyId || ''} key={standaloneFiscal ? 'nova-nota-avulsa' : editingOrder?.persistence?.operationId || editingOrder?.id || 'novo-pedido'} clientRecords={clientRecords} catalogRecords={standaloneFiscal ? catalogRecords.filter((item) => item.category !== 'Serviço') : catalogRecords.map(item=>stockControls.disabledProductIds.includes(item.catalogItemId||'')?{...item,trackStock:false}:item)} settings={moduleSettings} issuerRegistry={fiscalIssuerRegistry} connected={Boolean(managementCatalogBridge)} initialClient={commercialClient} initialSku={commercialSku} initialRecord={editingOrder} fiscalOnly={standaloneFiscal} onFiscalCreated={saveStandaloneFiscal} onFiscalCorrection={result=>{const key=fiscalCheckoutCorrection(result);if(!key||!authorize(fiscalCorrectionAction(key).permission,'corrigir a configuração fiscal'))return;if(key==='numbering'){fiscalNumberingTargetRef.current=result.draftId;setFiscalNumberingOpen(true);}else if(key==='certificado')setCertificateOpen(true);else if(key==='submission-status'&&result.draftId){setFiscalResultRequest({draftId:result.draftId,requestId:crypto.randomUUID()});setStandaloneFiscal(false);setView('fiscal');}}} onCancel={() => { setStandaloneFiscal(false); setEditingOrder(null); navigate(commercialReturnView); }} onCreated={createRecord}/>}
         {view === 'novo_orcamento' && <QuoteView source={quoteSource} clientRecords={clientRecords} catalogRecords={catalogRecords} settings={moduleSettings} connected={Boolean(managementCatalogBridge)} initialClient={commercialClient} initialSku={commercialSku} onCancel={() => navigate(commercialReturnView)} onCreated={createRecord}/>}
         {view === 'nova_ordem_servico' && <NewServiceOrderView clientRecords={clientRecords} catalogRecords={catalogRecords} settings={moduleSettings} issuerRegistry={fiscalIssuerRegistry} connected={Boolean(managementCatalogBridge)} initialClient={serviceClient} initialSku={serviceSku} onCancel={() => navigate(serviceReturnView)} onCreated={createRecord}/>}
         {view === 'servicos' && <ServicesView created={created} connected={Boolean(managementCatalogBridge)} clients={clientRecords} catalogRecords={catalogRecords} fiscalDrafts={fiscalDraftRecords} company={moduleSettings.company} onNew={openNew} onQuote={() => openQuote('servicos')} onNavigate={navigate} onFiscalStart={startFiscal} onReceivables={openReceivables} onStock={openStockMovements} onLifecycle={updateServiceLifecycle} onExecutionSave={saveServiceExecution} onOpenAttachment={openServiceAttachment} onNotify={setToast}/>} 
@@ -8504,6 +8567,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             initialOrigin={stockOrigin}
             onClearOrigin={() => setStockOrigin('')}
             onSave={saveStockMovement}
+            onSaveMinimum={saveStockMinimum}
+            controls={stockControls} alertTarget={stockAlertTarget} onControl={(item,enabled)=>setStockControlRequest({item,enabled})}
           />
         )}
         {view === 'fiscal' && <FiscalView onSaveClient={saveClient} fiscalEditor={realFiscalEditor} editorError={editorError} onReloadEditor={()=>void loadRealFiscalEditor()}
@@ -8539,7 +8604,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         {view === 'recebimentos' && <ReceivablesView onReverseBilling={reverseOrderBilling} records={receivableRecords} initialOrigin={receivableOrigin} connected={Boolean(managementCatalogBridge)} onReceive={receiveInstallment} onRefund={refundInstallment}/>}
         {view === 'relatorios' && <CommercialReports key={`${managementCatalogBridge?.companyId||'local'}:${reportEntry}`} operations={created} clients={clientRecords} catalog={catalogRecords} receivables={receivableRecords} fiscalDrafts={fiscalDraftRecords} company={{name:moduleSettings.company.name,document:moduleSettings.company.document,color:profileColor,logoUrl:companyLogoUrl}} can={can} onResultChange={setReportResult} renderIcon={name=><Icon name={name as IconName}/>} overview={<ReportsOverview created={created} catalogRecords={catalogRecords} movementRecords={stockMovementRecords} receivableRecords={receivableRecords} fiscalDrafts={fiscalDraftRecords}/>}/>}
         {view === 'configuracoes' && (
-          <SettingsView fiscalDefaultsContext={{companyId:managementCatalogBridge?.companyId||'',origin:managementBridgeOrigin||'',onSaved:()=>void loadRealFiscalEditor()}}
+          <SettingsView stockControlContext={{enabled:stockControls.enabled,canEdit:can('settings.edit')&&can('stock.adjust'),open:()=>setStockControlRequest({enabled:!stockControls.enabled})}} fiscalDefaultsContext={{companyId:managementCatalogBridge?.companyId||'',origin:managementBridgeOrigin||'',onSaved:()=>void loadRealFiscalEditor()}}
             settings={moduleSettings}
             connected={managementCatalogBridge?.catalogAvailable === true}
             canEdit={can('settings.edit')}

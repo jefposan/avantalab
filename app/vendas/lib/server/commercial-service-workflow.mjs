@@ -1,3 +1,4 @@
+import { assertStockControlActive } from './commercial-order-stock-balance.mjs';
 import {sanitizarCnpj} from '../../../../lib/consultas/validators/cnpj.ts';
 import { createHash, randomUUID } from 'node:crypto';
 
@@ -127,6 +128,7 @@ async function reserveMaterials(client, { companyId, actorId, orderId, localId, 
   for (const material of materials) {
     const balance = (await client.query('select * from public.vendas_estoque_saldos where empresa_id=$1 and local_id=$2 and produto_id=$3 for update', [companyId, localId, material.produto_id])).rows[0];
     const planned = Number(material.quantidade_prevista);
+    await assertStockControlActive(client,companyId,balance);
     if (!balance || (!balance.permite_negativo && Number(balance.saldo_fisico) - Number(balance.saldo_reservado) < planned)) throw coded('AV-SERVICE-WORKFLOW-STOCK');
     const before = Number(balance.saldo_reservado); const after = before + planned;
     await client.query('update public.vendas_estoque_saldos set saldo_reservado=$3 where empresa_id=$1 and id=$2', [companyId, balance.id, after]);
@@ -199,6 +201,7 @@ export function createPostgresCommercialServiceWorkflowRepository({ pool } = {})
           if (!(used >= 0) || used > planned) throw coded('AV-SERVICE-WORKFLOW-MATERIALS');
           if (material.origem === 'catalogo') {
             let balance = material.reserva_id ? material : (await client.query('select s.*,null::uuid reserva_id,0::numeric reserva_quantidade from public.vendas_estoque_saldos s where s.empresa_id=$1 and s.local_id=$2 and s.produto_id=$3 for update', [companyId, completion.localId, material.produto_id])).rows[0];
+            await assertStockControlActive(client,companyId,balance);
             if (!balance) throw coded('AV-SERVICE-WORKFLOW-STOCK');
             const physical = Number(balance.saldo_fisico); const held = Number(balance.saldo_reservado); const reserved = Number(balance.reserva_quantidade || 0);
             if (used > (reserved || used) || held < reserved || (!balance.permite_negativo && physical < used)) throw coded('AV-SERVICE-WORKFLOW-STOCK');
