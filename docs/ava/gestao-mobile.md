@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.529 -->
+<!-- ava-version: 3.2.0.530 -->
+
+> Revisão 3.2.0.530: Sem impacto operacional; compactação visual da importação de preços no módulo Custos Web.
 
 > Revisão 3.2.0.529: Sem impacto operacional neste ambiente; importação seletiva de preços restrita a Custos e Precificação Web.
 

@@ -36,3 +36,11 @@ Não publicado, não sincronizado com GitHub. Não confundir esta implementaçã
 Consulta somente de leitura confirmou `origin/main` no SHA de base e o domínio oficial ainda associado a `dpl_53YJrFMiWrrwnTw5mVbLLHV4Meys`, versão 3.2.0.527. Nenhuma publicação realizada.
 
 A pedido do titular, uma alternativa em duas colunas foi renderizada separadamente em `/Users/JEFF/avantalab/output/previas/importacao-precos/proposta-duas-colunas.jpg`. É uma proposta visual, ainda não aplicada ao componente funcional; preserva a decisão pendente sobre a compactação.
+
+## Compactação aprovada — 3.2.0.530
+
+Aplicada a alternativa em duas colunas no componente funcional, após autorização do titular. Desktop: 800 px de modal e duas colunas de 377 px, 11 itens com 50 px cada em seis linhas, lista de 340 px (antes aproximadamente 638 px). Celular de 390 px: uma coluna de 320 px, sem overflow horizontal da página. O texto visual Ativo/Inativo foi ocultado somente nesta grade; a chave oficial continua nativa, com nome e estado acessíveis e área de interação de 44 px. Seletores usam 44 px em dispositivos de toque.
+
+Validação visual no componente real: desktop claro, celular claro e escuro; ativar/desativar, limpar seleção, escolha da origem e retorno da revisão conferidos. Transporte da revisão permanece simulado somente na rota de laboratório; nenhum dado real alterado. 85 testes pertinentes passaram; TypeScript, PADRÃO AVANTA, Ava e diff aprovados. Não repetido o build completo da 3.2.0.529 após esta alteração exclusivamente visual; o componente atualizado foi compilado no servidor local e passou na tipagem.
+
+Evidência final: `/Users/JEFF/avantalab/output/previas/importacao-precos/grade-compacta-local-desktop.jpg`. Migração remota e publicação continuam sem execução.

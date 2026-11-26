@@ -1,3 +1,8 @@
+## 3.2.0.530 — Custos: seleção compacta de preços (local, não publicada)
+
+- Duas tabelas por linha no desktop e uma no celular; nome, chave oficial e seletor lado a lado, sem repetir Ativo/Inativo visualmente. Foco, estado acessível e alvo de toque preservados.
+- Modal de 800 px, linhas compactas e mesmas regras de revisão, confirmação e preservação cadastral.
+
 ## 3.2.0.529 — Custos: importação seletiva de preços (local, não publicada)
 
 - Remover da seleção o bloco com nome do arquivo e identificação de colunas.
