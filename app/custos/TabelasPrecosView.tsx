@@ -19,7 +19,7 @@ import {
 import styles from './custos.module.css';
 import { CAMPOS_EXCEL, camposPresentesExcel, limitarPatchExcel } from './excel-seletivo';
 import RevisaoImportacao from './RevisaoImportacao';
-import { montarAtualizacaoPrecos, validarMapeamentosImportacao, type MapeamentoImportacaoPreco, type ValorOrigemPreco } from './mapeamento-importacao-precos';
+import { montarAtualizacaoPrecos, sugerirColunaPreco, validarMapeamentosImportacao, type MapeamentoImportacaoPreco, type ValorOrigemPreco } from './mapeamento-importacao-precos';
 
 type SelecaoImportacaoPendente = {
   arquivoNome: string;
@@ -107,8 +107,7 @@ export default function TabelasPrecosView({
   const [importacao, setImportacao] = useState<ImportacaoPendente | null>(null);
   const [selecaoImportacao, setSelecaoImportacao] = useState<SelecaoImportacaoPendente | null>(null);
   const [camposImportacao, setCamposImportacao] = useState<string[]>([]);
-  const [mapeamentosPrecosImportacao, setMapeamentosPrecosImportacao] = useState<MapeamentoImportacaoPreco[]>([]);
-  const proximoIdMapeamentoImportacao = useRef(1);
+  const [origensPorTabelaImportacao, setOrigensPorTabelaImportacao] = useState<Record<string, string>>({});
   const [exportacaoAberta, setExportacaoAberta] = useState(false);
   const [erroExportacao, setErroExportacao] = useState('');
   const [camposExportacao, setCamposExportacao] = useState<string[]>([]);
@@ -373,8 +372,10 @@ export default function TabelasPrecosView({
           : [...new Set(precosLegados.map((preco) => String(preco.tabela_codigo)))].map((codigo) => ({ codigo, cabecalho: `Preço · ${codigo}` }))),
       ];
       setCamposImportacao([]);
-      proximoIdMapeamentoImportacao.current = 2;
-      setMapeamentosPrecosImportacao([{ id: 1, origem: '', destino: '' }]);
+      setOrigensPorTabelaImportacao(Object.fromEntries(
+        tabelas.filter((tabela) => tabela.ativo || tabela.padrao).map((tabela) =>
+          [tabela.codigo, sugerirColunaPreco(tabela, colunasPrecos)]),
+      ));
       setSelecaoImportacao({
         arquivoNome: arquivo.name, exportadoEm, produtos: produtosImportados, precos: todosValoresPrecos,
         campos: camposEditaveis.filter((campo) => campo !== 'preco_venda'), colunasPrecos,
@@ -385,7 +386,12 @@ export default function TabelasPrecosView({
 
   const revisarImportacaoSelecionada = async () => {
     if (!selecaoImportacao) return;
-    const mapeamentos = mapeamentosPrecosImportacao.filter((item) => item.origem || item.destino);
+    const mapeamentos: MapeamentoImportacaoPreco[] = tabelas
+      .filter((tabela) => tabela.ativo || tabela.padrao)
+      .flatMap((tabela) => {
+        const origem = origensPorTabelaImportacao[tabela.codigo] || '';
+        return origem ? [{ origem, destino: tabela.codigo }] : [];
+      });
     const destinosPermitidos = tabelas.filter((tabela) => tabela.ativo || tabela.padrao).map((tabela) => tabela.codigo);
     const erroMapeamento = validarMapeamentosImportacao(
       mapeamentos, selecaoImportacao.colunasPrecos.map((coluna) => coluna.cabecalho), destinosPermitidos,
@@ -566,40 +572,31 @@ export default function TabelasPrecosView({
                 onChange={() => setCamposImportacao((atuais) => atuais.includes(campo) ? atuais.filter((item) => item !== campo) : [...atuais, campo])} />{titulo}</label>)}
           </div>
         </section>
-        <section aria-label="Mapeamento das tabelas de preços">
-          <div className={styles.exportGroupHeader}><strong>Correspondências de preços <span>· {mapeamentosPrecosImportacao.length} linha(s)</span></strong></div>
-          <p>Em cada linha, escolha uma coluna do Excel e a tabela que receberá o valor. Repita a mesma coluna de origem para preencher várias tabelas. Cada destino pode aparecer uma única vez.</p>
+        <section aria-label="Colunas de preços para cada tabela">
+          <div className={styles.exportGroupHeader}><strong>Destino dos preços</strong></div>
+          <p>O sistema identificou os produtos pelas colunas Código e Nome. Para cada tabela de preços do AvantaLab, escolha de qual coluna do Excel serão retirados os valores. Quando os nomes correspondem, a coluna já vem sugerida. Você pode alterar a escolha e utilizar a mesma coluna em várias tabelas.</p>
           <div className={styles.importMappingList}>
-            {mapeamentosPrecosImportacao.map((item, indice) => <div key={item.id} className={styles.importMappingRow}>
-              <label>
-                <span>Coluna do Excel · {indice + 1}</span>
-                <select aria-label={`Coluna do Excel da correspondência ${indice + 1}`} value={item.origem} disabled={processando}
-                  onChange={(evento) => setMapeamentosPrecosImportacao((atuais) =>
-                    atuais.map((atual) => atual.id === item.id ? { ...atual, origem: evento.target.value } : atual))}>
-                  <option value="">Selecionar coluna</option>
-                  {selecaoImportacao.colunasPrecos.map((coluna) => <option key={coluna.cabecalho} value={coluna.cabecalho}>{coluna.cabecalho}</option>)}
-                </select>
-              </label>
-              <span aria-hidden="true" className={styles.importMappingArrow}>→</span>
-              <label>
-                <span>Tabela de destino</span>
-                <select aria-label={`Tabela de destino da correspondência ${indice + 1}`} value={item.destino} disabled={processando}
-                  onChange={(evento) => setMapeamentosPrecosImportacao((atuais) =>
-                    atuais.map((atual) => atual.id === item.id ? { ...atual, destino: evento.target.value } : atual))}>
-                  <option value="">Selecionar tabela</option>
-                  {tabelas.filter((tabela) => tabela.ativo || tabela.padrao).map((tabela) =>
-                    <option key={tabela.id} value={tabela.codigo}>{tabela.nome}{tabela.padrao ? ' (padrão)' : ''}</option>)}
-                </select>
-              </label>
-              <button type="button" className={styles.secondaryButton} disabled={processando || mapeamentosPrecosImportacao.length === 1}
-                aria-label={`Remover correspondência ${indice + 1}`} onClick={() => setMapeamentosPrecosImportacao((atuais) => atuais.filter((atual) => atual.id !== item.id))}>Remover</button>
-            </div>)}
+            {tabelas.filter((tabela) => tabela.ativo || tabela.padrao).map((tabela) =>
+              <div key={tabela.id} className={styles.importMappingRow}>
+                <div className={styles.importMappingDestination}>
+                  <span>Tabela de preços no AvantaLab</span>
+                  <strong>{tabela.nome}{tabela.padrao ? ' (padrão)' : ''}</strong>
+                </div>
+                <span aria-hidden="true" className={styles.importMappingArrow}>←</span>
+                <label>
+                  <span>Coluna de preços do Excel</span>
+                  <select aria-label={`Coluna do Excel para a tabela ${tabela.nome}`}
+                    value={origensPorTabelaImportacao[tabela.codigo] || ''} disabled={processando}
+                    onChange={(evento) => setOrigensPorTabelaImportacao((atuais) =>
+                      ({ ...atuais, [tabela.codigo]: evento.target.value }))}>
+                    <option value="">Não atualizar esta tabela</option>
+                    {selecaoImportacao.colunasPrecos.map((coluna) =>
+                      <option key={coluna.cabecalho} value={coluna.cabecalho}>{coluna.cabecalho}</option>)}
+                  </select>
+                </label>
+              </div>)}
           </div>
-          <button type="button" className={styles.secondaryButton} disabled={processando ||
-            mapeamentosPrecosImportacao.length >= tabelas.filter((tabela) => tabela.ativo || tabela.padrao).length}
-            onClick={() => setMapeamentosPrecosImportacao((atuais) => [...atuais, { id: proximoIdMapeamentoImportacao.current++, origem: '', destino: '' }])}>
-            + Adicionar correspondência
-          </button>
+          <p>Uma coluna alimenta todos os produtos correspondentes da tabela selecionada. Células vazias não alteram valores. Cada tabela recebe no máximo uma coluna, mas a mesma coluna pode alimentar várias tabelas.</p>
         </section>
         {erroImportacao && <p className={styles.repriceError} role="alert">{erroImportacao}</p>}
         <footer className={styles.formActions}>
