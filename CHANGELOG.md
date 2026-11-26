@@ -1,5 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
+- Corrigir o menu de ações de produtos: opções empilhadas dentro do painel, sem herdar a linha sem quebra da tabela.
 - Mover Voltar da listagem de Produtos e serviços para o editor do cadastro, retornando à lista com a confirmação existente para alterações pendentes.
 - Simplificar os cabeçalhos de todas as páginas de Custos e Precificação: somente título e ações, sem repetição do nome do módulo ou descrição. A pílula do cabeçalho permanece.
 - Padronizar botões de navegação, ações, formulários e menus de Custos e Vendas com raio de 6 px no superior esquerdo e 12 px nos demais, preservando pílulas e controles compostos.

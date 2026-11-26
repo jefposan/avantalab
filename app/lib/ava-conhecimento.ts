@@ -3123,3 +3123,5 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido 
 // Revisão visual 3.2.0.526: cabeçalhos de conteúdo de Custos exibem somente título e ações; identificação do módulo permanece na pílula superior.
 
 // Revisão 3.2.0.526: Voltar em Produtos e serviços fica no editor e retorna à listagem, preservando a confirmação de alterações pendentes; removido da listagem.
+
+// Revisão visual 3.2.0.526: ações de produtos de Custos empilhadas dentro do menu; sem alteração funcional.
