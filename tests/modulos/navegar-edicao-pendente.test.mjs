@@ -21,7 +21,7 @@ function fixture(save=async()=>true,{allowed=true,busy=false}={}) {
 test('Navegar permanece ativo com edição e oferece três ações explícitas',()=>{
  const f=fixture();assert.equal(f.render()[0].props.disabled,false);
  const modal=f.open();assert.equal(modal.aberto,true);assert.equal(modal.textoCancelar,'Cancelar');assert.equal(modal.textoConfirmar,'Salvar e sair');assert.equal(modal.acaoAdicional.texto,'Sair sem salvar');assert.deepEqual(f.calls,[]);
- modal.aoCancelar();assert.equal(f.render().at(-1).props.aberto,false);assert.deepEqual(f.locations,[]);
+ modal.aoCancelar();assert.equal(f.render().at(-1),'');assert.deepEqual(f.locations,[]);
 });
 test('sair sem salvar não grava e revalida destino/sessão',async()=>{
  const f=fixture();f.open().acaoAdicional.aoClicar();await new Promise(setImmediate);
@@ -34,7 +34,7 @@ test('salvar e sair aguarda gravação e bloqueia clique repetido e descarte con
  reply(true);await pending;assert.deepEqual(f.calls,['save','access','session']);assert.equal(f.locations.length,1);
 });
 test('falha/validação mantém formulário e não tenta navegar',async()=>{
- const f=fixture(async()=>false);await f.open().aoConfirmar();assert.deepEqual(f.calls,['save']);assert.deepEqual(f.locations,[]);assert.equal(f.render().at(-1).props.aberto,false);
+ const f=fixture(async()=>false);await f.open().aoConfirmar();assert.deepEqual(f.calls,['save']);assert.deepEqual(f.locations,[]);assert.equal(f.render().at(-1),'');
  const broken=fixture(async()=>{throw Error('rede');});await broken.open().aoConfirmar();assert.deepEqual(broken.locations,[]);assert.deepEqual(broken.calls,['save']);
 });
 test('perda de acesso após salvar nunca autoriza troca e ocupado real continua protegido',async()=>{

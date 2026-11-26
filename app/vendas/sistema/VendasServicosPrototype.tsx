@@ -1986,6 +1986,7 @@ function CommercialRecordActions({ onRestore, onCopy, onTool, record, fiscalPrep
       ...(local?.status === 'Rascunho' && local.order ? [{ label: 'Continuar pedido', description: 'Reabre este rascunho para revisar itens, condições e confirmar', icon: 'edit' as IconName, onSelect: () => onContinueOrder(local), permission: 'sales.edit' }] : []),
       openDetails,
       ...lifecycleActions,
+      ...(local?.status === 'Faturado' ? [{ label: 'Estornar lançamentos', description: 'Abrir as parcelas do pedido para estornar faturamento ou recebimentos', icon: 'back' as IconName, onSelect: () => onReceivables(record.id), permission: 'receivables.refund' }] : []),
       { label: 'Copiar pedido', description: 'Novo rascunho, sem copiar estoque, financeiro ou histórico', icon: 'copy', planned: !local?.order||!onCopy, onSelect:local&&onCopy?()=>onCopy(local):undefined, permission:'sales.create' },
       financialAvailable
         ? { label: 'Contas do pedido', description: 'Parcelas, recebimentos e possíveis estornos', icon: 'money', onSelect: () => onReceivables(record.id), permission: 'receivables.view' }
@@ -2608,16 +2609,24 @@ function QuoteView({ source, clientRecords, catalogRecords, settings, connected,
   </>;
 }
 
+function CommercialPeriodFilter({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return <div className="search-toolbar"><label className="field"><span>Mês das operações</span><input type="month" aria-label="Período dos resultados" value={value} onChange={event => onChange(event.target.value)}/></label><BotaoAcaoCompacto onClick={() => onChange('')}>Todo o período</BotaoAcaoCompacto></div>;
+}
+
 function Dashboard({ onNew, onNavigate, connected, created, receivableRecords, catalogRecords }: { onNew: (type: NewActionType) => void; onNavigate: (view: View) => void; connected: boolean; created: CreatedRecord[]; receivableRecords: ReceivableRecord[]; catalogRecords: CatalogItem[] }) {
   const {can}=useContext(PermissionContext);
+  const [period, setPeriod] = useState('');
+  const periodOperations = created.filter(record => !period || (record.order?.orderDate || record.createdAt).slice(0, 7) === period);
+  const periodReceivables = receivableRecords.filter(record => !period || (record.orderDate || record.createdAt).slice(0, 7) === period);
   if (connected) {
-    const snapshot = calculateCommercialReport({ operations: created, receivables: receivableRecords, catalog: catalogRecords, movements: [], fiscalDrafts: [], todayIso: new Date().toISOString().slice(0, 10) });
+    const snapshot = calculateCommercialReport({ operations: periodOperations, receivables: periodReceivables, catalog: catalogRecords, movements: [], fiscalDrafts: [], todayIso: new Date().toISOString().slice(0, 10) });
     const integratedQuickActions = dashboardNewOptions.filter((option) => option.type !== 'venda');
     return <>
       <PageHeading view="painel" action={<button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button>}/>
-      <div className="metric-grid"><Metric label="Receita recebida" value={money(snapshot.receivedNet)} note="Recebimentos líquidos"/><Metric label="A receber" value={money(snapshot.openReceivables)} note={`${snapshot.overdueReceivables ? money(snapshot.overdueReceivables) : 'Sem valores'} em atraso`} tone="cyan"/>{can('catalog.view_cost')&&<Metric label="Margem estimada" value={percent(snapshot.marginPercent)} note="Custos publicados no catálogo" tone="success"/>}<Metric label="Atenções de estoque" value={String(snapshot.stockLowItems)} note="Itens abaixo do mínimo" tone="warning"/></div>
+      <CommercialPeriodFilter value={period} onChange={setPeriod}/>
+      <div className="metric-grid"><Metric label="Total vendido" value={money(snapshot.revenue)} note="Operações concluídas"/>{can('catalog.view_cost') && <><Metric label="Custos" value={money(snapshot.cost)} note="Das operações concluídas"/><Metric label="Resultado bruto" value={money(snapshot.grossProfit)} note="Vendas menos custos"/></>}<Metric label="Receita recebida" value={money(snapshot.receivedNet)} note="Recebimentos líquidos"/><Metric label="A receber" value={money(snapshot.openReceivables)} note={`${snapshot.overdueReceivables ? money(snapshot.overdueReceivables) : 'Sem valores'} em atraso`} tone="cyan"/>{can('catalog.view_cost')&&<Metric label="Margem estimada" value={percent(snapshot.marginPercent)} note="Custos publicados no catálogo" tone="success"/>}<Metric label="Atenções de estoque" value={String(snapshot.stockLowItems)} note="Itens abaixo do mínimo" tone="warning"/></div>
       <section className="quick-actions" aria-label="Ações rápidas">{integratedQuickActions.map((option) => <button type="button" key={option.type} onClick={() => onNew(option.type)}><span><Icon name={option.icon}/></span><div><strong>Novo {option.title.toLocaleLowerCase('pt-BR')}</strong><small>{option.description}</small></div><Icon name="chevron" size={17}/></button>)}</section>
-      <div className="dashboard-grid"><Panel title="Operação comercial" subtitle="Registros persistidos no perfil"><div className="pipeline">{[['Orçamentos', created.filter((item) => item.type === 'orcamento').length], ['Pedidos', created.filter((item) => item.type === 'pedido').length], ['Serviços', created.filter((item) => item.type === 'ordem_servico').length], ['Faturados', created.filter((item) => item.status === 'Faturado').length]].map(([label, count], index) => <div key={String(label)}><span className={`pipeline-icon pipeline-${index}`}><Icon name={index === 0 ? 'document' : index === 2 ? 'service' : 'sale'} size={18}/></span><div><strong>{label}</strong><small>Perfil empresarial</small></div><b>{count}</b></div>)}</div></Panel><Panel title="Atenção necessária" subtitle="Prioridades atuais"><div className="attention-list"><button type="button" onClick={() => onNavigate('estoque')}><i className="dot warning"/><span><strong>{snapshot.stockLowItems} itens com atenção</strong><small>Saldo disponível e estoque mínimo</small></span><Badge tone="warning">Estoque</Badge></button><button type="button" onClick={() => onNavigate('recebimentos')}><i className="dot warning"/><span><strong>{money(snapshot.overdueReceivables)} em atraso</strong><small>Parcelas vencidas do perfil</small></span><Badge tone="warning">Cobrança</Badge></button></div></Panel></div>
+      <div className="dashboard-grid"><Panel title="Operação comercial" subtitle="Registros persistidos no perfil"><div className="pipeline">{[['Orçamentos', periodOperations.filter((item) => item.type === 'orcamento').length], ['Pedidos', periodOperations.filter((item) => item.type === 'pedido').length], ['Serviços', periodOperations.filter((item) => item.type === 'ordem_servico').length], ['Faturados', periodOperations.filter((item) => item.status === 'Faturado').length]].map(([label, count], index) => <div key={String(label)}><span className={`pipeline-icon pipeline-${index}`}><Icon name={index === 0 ? 'document' : index === 2 ? 'service' : 'sale'} size={18}/></span><div><strong>{label}</strong><small>Perfil empresarial</small></div><b>{count}</b></div>)}</div></Panel><Panel title="Atenção necessária" subtitle="Prioridades atuais"><div className="attention-list"><button type="button" onClick={() => onNavigate('estoque')}><i className="dot warning"/><span><strong>{snapshot.stockLowItems} itens com atenção</strong><small>Saldo disponível e estoque mínimo</small></span><Badge tone="warning">Estoque</Badge></button><button type="button" onClick={() => onNavigate('recebimentos')}><i className="dot warning"/><span><strong>{money(snapshot.overdueReceivables)} em atraso</strong><small>Parcelas vencidas do perfil</small></span><Badge tone="warning">Cobrança</Badge></button></div></Panel></div>
     </>;
   }
   const maxRevenue = Math.max(...monthlyRevenue.map(([, value]) => value));
@@ -2677,6 +2686,8 @@ function CommercialRecordIndicators({ record, onFiscal }: { record: CommercialOp
 }
 
 function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, onCopy, created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle, onStockLaunch, onStockReverse, onRestoreOrder }: { companyLogoUrl?:string; paperSize?:'A4'|'A5'; company:CompanyProfile; clients:ClientRecord[]; onCopy:(record:CreatedRecord)=>void; created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void; onStockLaunch:(record:CreatedRecord)=>Promise<ConfirmedSave>; onStockReverse:(record:CreatedRecord)=>Promise<ConfirmedSave>; onRestoreOrder:(record:CreatedRecord)=>Promise<ConfirmedSave> }) {
+  const [period, setPeriod] = useState('');
+  const inPeriod = (record: CreatedRecord) => !period || (record.order?.orderDate || record.createdAt).slice(0, 7) === period;
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todas as situações');
   const [detailRecord, setDetailRecord] = useState<CreatedRecord | null>(null);
@@ -2699,8 +2710,8 @@ function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, on
     }catch(error){if(generation===printGeneration.current)onNotify(error instanceof Error?error.message:'Não foi possível abrir a impressão. Tente novamente.');}
     finally{printingRef.current=false;}
   };
-  const localQuotes = created.filter((item) => item.type === 'orcamento' && item.quote);
-  const localOperations = created.filter((item) => ['pedido', 'venda'].includes(item.type));
+  const localQuotes = created.filter((item) => item.type === 'orcamento' && item.quote && inPeriod(item));
+  const localOperations = created.filter((item) => ['pedido', 'venda'].includes(item.type) && inPeriod(item));
   const records = useMemo<CommercialOperationRecord[]>(() => {
     const localRows: CommercialOperationRecord[] = localOperations.map((record) => {
       const fiscalDraft = fiscalDrafts.find((draft) => draft.originId === record.id);
@@ -2720,16 +2731,18 @@ function SalesView({ companyLogoUrl = '', paperSize = 'A4', company, clients, on
     });
     return [...localRows, ...(connected ? [] : commercialRecords)].filter((record) => {
       const matchesQuery = normalizeSearch(`${record.id} ${record.client} ${record.status} ${record.type}`).includes(normalizeSearch(query));
+      const matchesRecordPeriod = !period || record.date.split('/').reverse().join('-').slice(0, 7) === period;
       const matchesStatus = statusFilter === 'Todas as situações' || record.status === statusFilter;
-      return matchesQuery && matchesStatus;
+      return matchesQuery && matchesStatus && matchesRecordPeriod;
     });
-  }, [connected, localOperations, fiscalDrafts, query, statusFilter]);
+  }, [connected, localOperations, fiscalDrafts, query, statusFilter, period]);
   const awaitingBilling = localOperations.filter((record) => ['Confirmado', 'Em separação'].includes(record.status ?? '')).reduce((sum, record) => sum + record.total, 0);
   return <>
     <PageHeading view="vendas" action={<div className="heading-actions"><button type="button" className="button secondary" onClick={() => onNew('orcamento')}>Novo orçamento</button><button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button></div>}/>
-    <div className="metric-grid compact"><Metric label="Pedidos" value={String(localOperations.length)} note="Registros do perfil"/><Metric label="Ticket médio" value={money(localOperations.length ? localOperations.reduce((sum, item) => sum + item.total, 0) / localOperations.length : 0)} note="Pedidos registrados" tone="cyan"/><Metric label="Orçamentos" value={String(localQuotes.length)} note="Propostas salvas" tone="success"/><Metric label="Aguardando faturar" value={money(awaitingBilling)} note="Pedidos confirmados" tone="warning"/></div>
+    <CommercialPeriodFilter value={period} onChange={setPeriod}/>
+    <div className="metric-grid compact"><Metric label="Total vendido" value={money(localOperations.filter(record => record.status === 'Faturado').reduce((sum, record) => sum + record.total, 0))} note="Pedidos faturados"/><Metric label="Pedidos" value={String(localOperations.length)} note="Registros do perfil"/><Metric label="Ticket médio" value={money(localOperations.length ? localOperations.reduce((sum, item) => sum + item.total, 0) / localOperations.length : 0)} note="Pedidos registrados" tone="cyan"/><Metric label="Orçamentos" value={String(localQuotes.length)} note="Propostas salvas" tone="success"/><Metric label="Aguardando faturar" value={money(awaitingBilling)} note="Pedidos confirmados" tone="warning"/></div>
     <Panel title="Vendas" subtitle="Pedidos locais aparecem aqui com reserva, separação, baixa e devolução rastreáveis">
-      <SearchToolbar value={query} onChange={setQuery}><select aria-label="Situação" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>Todas as situações</option><option>Rascunho</option><option>Confirmado</option><option>Em separação</option><option>Faturado</option><option>Cancelado</option><option>Devolvido</option><option>Enviado</option></select><select aria-label="Período"><option>Últimos 30 dias</option><option>Este mês</option><option>Este ano</option></select></SearchToolbar>
+      <SearchToolbar value={query} onChange={setQuery}><select aria-label="Situação" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>Todas as situações</option><option>Rascunho</option><option>Confirmado</option><option>Em separação</option><option>Faturado</option><option>Cancelado</option><option>Devolvido</option><option>Enviado</option></select></SearchToolbar>
       <Table headers={['Número', 'Data', 'Cliente', 'Situação', 'Total', 'Ações']} minWidth={0} className="commercial-operations-table"><>{records.map((record) => <tr key={record.id}>
         <td data-label="Número"><button type="button" className="row-link" onClick={() => record.localRecord && setDetailRecord(record.localRecord)}>{record.id}</button><small className="commercial-record-type">{record.type}</small></td>
         <td data-label="Data">{record.date}</td>

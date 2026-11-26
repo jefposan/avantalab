@@ -1,6 +1,6 @@
 {
-  "baseDeploymentId": "dpl_5BAnqLNGip5Cm2WnT1aHAtiwhoaZ",
-  "migrations": [{ "path": "supabase/migrations/20261126150000_preservar_retrato_pedido_vendas.sql", "sha256": "b1534fdbb1639e169eb3d1c30b07766dc3d6ebc8dc4a3665f313db412565e766" }],
-  "version": "3.2.0.520",
-  "scope": "AvantaVendas: saldo histórico preservado em edições e reenvios; horário real de inclusão; sem reparo automático de comprovantes antigos"
+  "baseDeploymentId": "dpl_211WxYwuwwYg4TbEWmRto888xZW6",
+  "migrations": [],
+  "version": "3.2.0.521",
+  "scope": "Vendas: razão social nos recebimentos, confirmação de navegação, acesso aos estornos e resumos financeiros por mês"
 }

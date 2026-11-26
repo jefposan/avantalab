@@ -1,3 +1,4 @@
+// Revisão 3.2.0.521: Vendas Web oferece filtro por mês e total vendido nos pedidos, amplia o resultado financeiro na Visão geral e permite abrir os estornos pelas ações do pedido. Recebimentos prioriza razão social. A confirmação de troca de módulo aparece sobre a tela.
 // Revisão 3.2.0.520-av213: AvantaVendas preserva débito/crédito anteriores ao editar/reenviar pedido; só o total do próprio pedido muda o saldo final histórico. Comprovantes antigos inconsistentes exigem revisão, sem correção automática. Crédito legado indeterminado exige conferência para alterar valor. Novos pedidos guardam horário real do servidor separado da data comercial. Gestão Web/Mobile sem impacto.
 // Revisão local 3.2.0.516: aviso introdutório de Clientes removido; sem impacto operacional.
 // Revisão visual 3.2.0.515: cabeçalho Web de Vendas e Serviços fixo, com espaço pela altura real e rolagem do módulo independente do rodapé externo. Sem mudança operacional.

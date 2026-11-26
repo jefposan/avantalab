@@ -1,3 +1,7 @@
+## 3.2.0.521 — Vendas: corrigir identificação, navegação e resumos financeiros
+
+- Vendas Web oferece filtro por mês e total vendido nos pedidos, amplia o resultado financeiro na Visão geral e permite abrir os estornos pelas ações do pedido. Recebimentos prioriza razão social. A confirmação de troca de módulo aparece sobre a tela.
+
 # 3.2.0.520 — AvantaVendas: preservar saldo histórico dos pedidos
 
 ## 3.2.0.520-av213 - Retrato financeiro e reenvios

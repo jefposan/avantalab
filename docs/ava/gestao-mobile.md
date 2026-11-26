@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.520 -->
+<!-- ava-version: 3.2.0.521 -->
+
+> Revisão 3.2.0.521: sem impacto operacional nos aplicativos independentes. Ajustes restritos a Vendas Web.
 
 > Revisão 3.2.0.520: sem impacto operacional na Gestão Mobile; preservação do retrato financeiro restrita ao AvantaVendas independente.
 

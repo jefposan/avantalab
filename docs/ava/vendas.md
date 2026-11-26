@@ -1,5 +1,7 @@
-<!-- ava-version: 3.2.0.520 -->
+<!-- ava-version: 3.2.0.521 -->
 <!-- avantavendas-asset-revision: 213 -->
+
+> Revisão 3.2.0.521: Vendas Web oferece filtro por mês e total vendido nos pedidos, amplia o resultado financeiro na Visão geral e permite abrir os estornos pelas ações do pedido. Recebimentos prioriza razão social. A confirmação de troca de módulo aparece sobre a tela.
 
 > Revisão 3.2.0.520-av213: Editar ou reenviar pedido com retrato financeiro conserva o saldo anterior e o crédito original; outro pedido posterior não entra nesse saldo. O saldo final histórico acompanha somente o total do próprio pedido, não o saldo atual do cadastro. Proteção também no banco para clientes antigos. Novos pedidos têm horário real de inclusão do servidor, independente da data comercial; legados não recebem horário inventado. Crédito legado indeterminado exige conferência antes de mudar total; edição sem mudar total conserva o saldo zerado. Reenvio não duplica o pedido no estado local. Consignados, pagamentos e descontos preservados. Comprovantes antigos já inconsistentes exigem revisão específica; esta entrega não os zera nem os corrige automaticamente.
 
