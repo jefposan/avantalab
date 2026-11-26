@@ -1,5 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
+- Agilizar a abertura: aguardar somente acesso, catálogo e resumos da Visão geral; carregar estoque, clientes, fornecedores e detalhes fiscais após apresentar a página e evitar consultas duplicadas no handshake.
 - Manter Preparando Vendas e Serviços até concluir acesso, catálogo, dados iniciais e apresentação do módulo; ocultar o conteúdo intermediário e mostrar falhas reais com opção de tentar novamente.
 - Corrigir o menu de ações de produtos: opções empilhadas dentro do painel, sem herdar a linha sem quebra da tabela.
 - Mover Voltar da listagem de Produtos e serviços para o editor do cadastro, retornando à lista com a confirmação existente para alterações pendentes.

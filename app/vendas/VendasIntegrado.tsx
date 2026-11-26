@@ -212,6 +212,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   const [iframePronto, setIframePronto] = useState(false);
   const [dadosProntosEmpresa, setDadosProntosEmpresa] = useState('');
   const [apresentacaoEmpresa, setApresentacaoEmpresa] = useState('');
+  const complementaresEmpresaRef = useRef('');
   const origemPrototipo = useMemo(() => typeof window === 'undefined' ? '' : window.location.origin, []);
 
   const retornarParaGestao = useCallback(() => {
@@ -427,16 +428,11 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       setPerfilCadastro(perfil.cadastro);
       setLogoUrl(String(perfil.logoUrl || ''));
       setCorPrimaria(typeof perfil.corPrimaria === 'string' && /^#[0-9a-f]{6}$/i.test(perfil.corPrimaria) ? perfil.corPrimaria : '#003e73');
+      // A Visão geral depende do acesso, catálogo e resumos comerciais, não dos históricos das outras abas.
       const dadosIniciais = Promise.allSettled([
-          carregarDocumentosFiscais(perfilId, token),
-          carregarPermissoes(perfilId),
-          carregarRegrasFiscais(perfilId),
-          carregarPerfilFiscal(perfilId),
-          carregarRecebimentos(perfilId),
-          carregarEstoque(perfilId),
-          carregarClientes(perfilId),
-          carregarFornecedores(perfilId),
-          carregarOperacoes(perfilId),
+        carregarPermissoes(perfilId),
+        carregarRecebimentos(perfilId),
+        carregarOperacoes(perfilId),
       ]);
       const parametros = new URLSearchParams({ empresaId: perfilId });
       const resposta = await fetch(`/api/modulos/vendas/catalogo?${parametros}`, {
@@ -447,7 +443,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível carregar o catálogo de Custos.');
       const proximo = json.catalogo as CatalogoVendasDTO;
       setCatalogo(proximo);
-      await aguardarComLimite(dadosIniciais, 90_000, 'O carregamento inicial demorou mais que o esperado. Tente novamente.');
+      await aguardarComLimite(dadosIniciais, 30_000, 'O carregamento inicial demorou mais que o esperado. Tente novamente.');
     } catch (falha) {
       setCatalogo(null);
       setErro(falha instanceof Error ? falha.message : 'Não foi possível carregar o catálogo de Custos.');
@@ -503,6 +499,8 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
         return;
       }
       if (event.data?.type === 'AVANTALAB_VENDAS_CATALOGO_READY_V1') { setIframePronto(true); return; }
+      // O handshake inicial já dispara a carga centralizada; não duplicar os mesmos históricos.
+      if (dadosProntosEmpresa !== empresaId && [ACCESS_READY_MESSAGE_TYPE, FISCAL_RULES_READY_TYPE, FISCAL_PROFILE_READY_TYPE, RECEIVABLE_READY_TYPE, STOCK_READY_TYPE, CUSTOMER_READY_TYPE, SUPPLIER_READY_TYPE, OPERATION_READY_TYPE].includes(event.data?.type)) return;
       if (event.data?.type === ACCESS_READY_MESSAGE_TYPE) { void carregarPermissoes(empresaId); return; }
       if (event.data?.type === FISCAL_RULES_READY_TYPE) { void carregarRegrasFiscais(empresaId); return; }
       if (event.data?.type === FISCAL_PROFILE_READY_TYPE) { void carregarPerfilFiscal(empresaId); return; }
@@ -1149,10 +1147,25 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
     };
     window.addEventListener('message', receber);
     return () => window.removeEventListener('message', receber);
-  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, empresaId, origemPrototipo, retornarParaGestao]);
+  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, dadosProntosEmpresa, empresaId, origemPrototipo, retornarParaGestao]);
 
   const perfilPronto = Boolean(empresaId && perfilCadastro);
   const paginaPronta = perfilPronto && iframePronto && dadosProntosEmpresa === empresaId && apresentacaoEmpresa === empresaId;
+  useEffect(() => {
+    if (!paginaPronta || complementaresEmpresaRef.current === empresaId) return;
+    complementaresEmpresaRef.current = empresaId;
+    let ativo = true;
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!ativo || !data.session?.access_token || activeCompanyRef.current !== empresaId) return;
+      await Promise.allSettled([
+        carregarDocumentosFiscais(empresaId, data.session.access_token), carregarRegrasFiscais(empresaId), carregarPerfilFiscal(empresaId),
+        carregarEstoque(empresaId), carregarClientes(empresaId), carregarFornecedores(empresaId),
+      ]);
+    })();
+    return () => { ativo = false; };
+  }, [paginaPronta, empresaId, carregarDocumentosFiscais, carregarRegrasFiscais, carregarPerfilFiscal, carregarEstoque, carregarClientes, carregarFornecedores]);
+
 
   return <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-slate-100 text-slate-800">
     <section className="relative min-h-0 flex-1" aria-label="Vendas e Serviços">

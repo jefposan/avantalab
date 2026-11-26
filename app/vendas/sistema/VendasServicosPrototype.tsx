@@ -6123,14 +6123,15 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const managementAccessReady = !integratedManagementRuntime || accessBridgeState.available;
   const managementContextReady = managementProfileReady && managementAccessReady;
   useEffect(() => {
-    if (!presentationVersion || !integratedManagementRuntime || !managementCatalogBridge?.companyId || !managementProfileReady || !accessBridgeState.integrated || accessBridgeState.loading || !fiscalCertificateBridgeState.integrated || fiscalCertificateBridgeState.loading || !managementBridgeOrigin) return;
+    if (!presentationVersion || !integratedManagementRuntime || !managementCatalogBridge?.companyId || !managementProfileReady || !accessBridgeState.integrated || accessBridgeState.loading || !managementBridgeOrigin) return;
     let paint = 0;
     const frame = requestAnimationFrame(() => { paint = requestAnimationFrame(() => {
       window.parent.postMessage({ type: 'AVANTALAB_VENDAS_PRESENTATION_V1', companyId: managementCatalogBridge.companyId, settled: true }, managementBridgeOrigin);
     }); });
     return () => { cancelAnimationFrame(frame); cancelAnimationFrame(paint); };
-  }, [presentationVersion, integratedManagementRuntime, managementCatalogBridge, managementProfileReady, accessBridgeState.integrated, accessBridgeState.loading, fiscalCertificateBridgeState.integrated, fiscalCertificateBridgeState.loading, managementBridgeOrigin]);
+  }, [presentationVersion, integratedManagementRuntime, managementCatalogBridge, managementProfileReady, accessBridgeState.integrated, accessBridgeState.loading, managementBridgeOrigin]);
   const sidebarFiscalStatus = useMemo(() => {
+    if (integratedManagementRuntime && (!fiscalCertificateBridgeState.integrated || fiscalCertificateBridgeState.loading)) return null;
     if (currentFiscalConfig.certificateValid && fiscalCertificateBridgeState.execution?.productionTransmissionAllowed) return null;
     if (currentFiscalConfig.certificateValid && fiscalCertificateBridgeState.execution?.transmissionAllowed) return { title: 'NF-e de teste disponível', detail: 'Somente homologação, sem valor fiscal' };
     if (currentFiscalConfig.certificateValid && fiscalCertificateBridgeState.execution?.statusServiceReady) return { title: 'Certificado fiscal ativo', detail: 'Consulta de homologação disponível' };
@@ -6138,7 +6139,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     if (fiscalCertificateBridgeState.loading) return { title: 'Situação fiscal em consulta', detail: 'Aguarde a verificação da empresa' };
     if (fiscalCertificateBridgeState.certificate?.certificateInstalled) return { title: 'Certificado em validação', detail: 'Produção bloqueada com segurança' };
     return { title: 'Fiscal não conectado', detail: 'Produção bloqueada com segurança' };
-  }, [currentFiscalConfig.certificateValid, fiscalCertificateBridgeState.certificate?.certificateInstalled, fiscalCertificateBridgeState.execution?.productionTransmissionAllowed, fiscalCertificateBridgeState.execution?.statusServiceReady, fiscalCertificateBridgeState.execution?.transmissionAllowed, fiscalCertificateBridgeState.loading]);
+  }, [integratedManagementRuntime, fiscalCertificateBridgeState.integrated, currentFiscalConfig.certificateValid, fiscalCertificateBridgeState.certificate?.certificateInstalled, fiscalCertificateBridgeState.execution?.productionTransmissionAllowed, fiscalCertificateBridgeState.execution?.statusServiceReady, fiscalCertificateBridgeState.execution?.transmissionAllowed, fiscalCertificateBridgeState.loading]);
   const activeUser = moduleSettings.access.users.find((user) => user.id === activeUserId) ?? (integratedManagementRuntime ? null : moduleSettings.access.users[0] ?? null);
   const activeRole = moduleSettings.access.roles.find((role) => role.id === activeUser?.roleId) ?? null;
   const effectivePermissions = useMemo(() => resolveEffectivePermissions({ rolePermissions: activeRole?.permissions ?? [], overrides: activeUser?.overrides ?? {}, permissionIds: allPermissionIds }), [activeRole, activeUser]);

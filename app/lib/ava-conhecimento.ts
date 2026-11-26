@@ -3127,3 +3127,5 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido 
 // Revisão visual 3.2.0.526: ações de produtos de Custos empilhadas dentro do menu; sem alteração funcional.
 
 // Revisão 3.2.0.526: abertura de Vendas mantém Preparando até concluir acesso, catálogo, dados iniciais e apresentação; falhas reais permitem tentar novamente.
+
+// Revisão 3.2.0.526: Vendas abre com acesso, catálogo e resumos prontos; estoque, clientes, fornecedores e detalhes fiscais carregam depois, em segundo plano.

@@ -28,14 +28,14 @@ test('catálogo e permissões lentos mantêm a preparação; catálogo vazio vá
 test('falha real no catálogo encerra a espera e permite a tela de erro',async()=>{
  const h=loader({failCatalog:true});await h.load('company');assert.equal(h.state.DadosProntosEmpresa,'company');assert.equal(h.state.Erro,'Catálogo indisponível');h.permission.resolve(false);
 });
-test('a página sinaliza apresentação só após acesso, certificado e dois frames; negação não concede acesso',()=>{
+test('apresentação aguarda acesso e dois frames; certificado em consulta não bloqueia a Visão geral',()=>{
  const start=child.indexOf("  useEffect(() => {\n    if (!presentationVersion || !integratedManagementRuntime || !managementCatalogBridge?.companyId"),end=child.indexOf('  const sidebarFiscalStatus',start);
  assert.ok(start>0&&end>start);
  for(const scenario of ['requestPending','accessPending','certificatePending','denied','ready']){
   const frames=[],messages=[];
   const env={presentationVersion:scenario==='requestPending'?0:1,integratedManagementRuntime:true,managementCatalogBridge:{companyId:'company'},managementProfileReady:true,accessBridgeState:{integrated:true,loading:scenario==='accessPending',available:scenario==='ready'},fiscalCertificateBridgeState:{integrated:true,loading:scenario==='certificatePending'},managementBridgeOrigin:'http://localhost:3000',useEffect:fn=>fn(),requestAnimationFrame:fn=>(frames.push(fn),frames.length),cancelAnimationFrame:()=>{},window:{parent:{postMessage:(message,origin)=>messages.push({message,origin})}}};
   run(child.slice(start,end),env);assert.equal(messages.length,0);
-  if(scenario.endsWith('Pending'))assert.equal(frames.length,0);
+  if(scenario==='requestPending'||scenario==='accessPending')assert.equal(frames.length,0);
   else {frames.shift()();assert.equal(messages.length,0);frames.shift()();assert.equal(messages[0].message.settled,true);assert.equal(messages[0].message.companyId,'company');assert.equal(messages[0].origin,'http://localhost:3000');assert.equal(env.accessBridgeState.available,scenario==='ready');}
  }
 });
@@ -46,4 +46,11 @@ test('confirmação de apresentação rejeita origem, janela e empresa diferente
  const valid={origin:env.origemPrototipo,source:sender,data:{type:'AVANTALAB_VENDAS_PRESENTATION_V1',companyId:'company',settled:true}};
  for(const event of [{...valid,origin:'https://other.invalid'},{...valid,source:{}},{...valid,data:{...valid.data,companyId:'other'}},{...valid,data:{...valid.data,settled:false}}])env.exports.receive(event);
  assert.equal(received.length,0);env.exports.receive(valid);assert.deepEqual(received,['company']);
+});
+
+test('históricos lentos de outras abas não bloqueiam a Visão geral',async()=>{
+ const h=loader(),pending=h.load('company');h.catalog.resolve({ok:true,json:async()=>({catalogo:{itens:[]}})});h.permission.resolve(true);await pending;
+ assert.equal(h.state.DadosProntosEmpresa,'company');
+ const start=parent.indexOf('const dadosIniciais ='),end=parent.indexOf('const parametros =',start);
+ assert.doesNotMatch(parent.slice(start,end),/carregarEstoque|carregarClientes|carregarFornecedores|carregarDocumentosFiscais|carregarPerfilFiscal/);
 });
