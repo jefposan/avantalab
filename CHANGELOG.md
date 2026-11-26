@@ -1,5 +1,6 @@
 ## 3.2.0.526 — Vendas: refinamentos de identificação e ações fiscais
 
+- Adicionar modo local opt-in de consulta autenticada à API oficial, sem senha SQL, sem cache e com todas as escritas de Vendas/Fiscal bloqueadas; inativo em produção e na Vercel.
 - Tornar indicadores de estoque, faturamento e nota fiscal acionáveis conforme estado e permissões, com confirmações existentes e tooltip de impedimento.
 - Retirar Iniciar separação do menu Ações do pedido.
 - Abrir a preparação fiscal no primeiro clique após a confirmação do servidor, inclusive em pedidos ainda sem retrato fiscal. Falhas e respostas de outro documento não navegam.

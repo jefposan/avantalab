@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { proxyLocalCommercialRead } from './app/vendas/lib/server/local-commercial-read-proxy.mjs';
 import { protegerApiPorLiberacao } from './app/lib/acessos-usuario-servidor';
 
 export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    try { return await protegerApiPorLiberacao(request) || NextResponse.next(); }
+    try { return await protegerApiPorLiberacao(request) || await proxyLocalCommercialRead(request) || NextResponse.next(); }
     catch { return NextResponse.json({ mensagem: 'Não foi possível verificar suas liberações. Tente novamente.' }, { status: 503 }); }
   }
   const host = (
