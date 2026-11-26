@@ -41,3 +41,19 @@ test('seleção oficial não libera UF, tipo, revisão fiscal ou operação sem 
  const pending=createCommercialFiscalRuleResolver({repository:{getPublished:async()=>({...configuration,taxReviewConfirmed:false})}});assert.equal((await pending(base)).valid,false);
  const wrongManual=await resolve({...base,items:[{...base.items[0],fiscal:{...base.items[0].fiscal,noteCfopOverride:'5102'}}]});assert.equal(wrongManual.valid,false);
 });
+
+test('trocar cliente SP → RJ → MG → SP recalcula a herança sem alterar exceções do produto ou da nota',()=>{
+ const products=[{sku:'herdado',useCompanyFiscal:true,cfopInternal:'5101',cfopInterstate:'6101'},{sku:'excecao',useCompanyFiscal:false,cfopInternal:'5101',cfopInterstate:'6101'}];
+ const before=structuredClone(products);
+ const defaults={internal:'5102',interstate:'6102'};
+ const results=[];
+ for(const state of ['SP','RJ','MG','SP']){
+  const destination=state==='SP'?'Dentro da UF':'Fora da UF';
+  const context={operation:'Venda',destination,recipientProfile:'Não contribuinte',consumerFinal:'Sim',presence:'Não presencial',issuePurpose:'Normal'};
+  const operationCfop=configuredNoteCfop({matrix,context,nature:'Venda de mercadoria',defaults});
+  results.push(products.map(product=>noteItemCfop({product,operationCfop,destination})));
+  assert.equal(noteItemCfop({manual:'6108',product:products[0],operationCfop,destination}),'6108','exceção explícita da nota continua visível para validação');
+ }
+ assert.deepEqual(results,[['5102','5101'],['6102','6101'],['6102','6101'],['5102','5101']]);
+ assert.deepEqual(products,before,'trocar cliente não regrava o cadastro do produto');
+});
