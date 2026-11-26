@@ -3119,3 +3119,5 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido 
 // Revisão 3.2.0.526: Projetos, Campo, Marketplaces, Ponto e Conteúdo AvantaVendas usam título em pílula acima de Navegar compacto no Web.
 
 // Revisão visual 3.2.0.526: botões de Custos e Vendas usam quina superior esquerda menor; sem impacto operacional.
+
+// Revisão visual 3.2.0.526: cabeçalhos de conteúdo de Custos exibem somente título e ações; identificação do módulo permanece na pílula superior.
