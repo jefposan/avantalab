@@ -20,8 +20,62 @@ export type ValorOrigemPreco = {
   produto_id: string;
   sku: string;
   cabecalho: string;
-  preco: number;
+  preco: unknown;
 };
+
+export type ProdutoIdentificacao = {
+  id: string;
+  sku: string;
+  nome: string;
+  atualizado_em: string;
+};
+
+const normalizarIdentificacao = (valor: unknown) => String(valor ?? '').normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '').trim().toLocaleUpperCase('pt-BR').replace(/\s+/g, ' ');
+
+export function identificarProdutosDoExcel(
+  linhas: Array<{ codigo: unknown; nome: unknown }>,
+  produtosDaEmpresa: ProdutoIdentificacao[],
+): Array<{ id: string; sku: string; atualizado_em: string }> {
+  const porCodigo = new Map<string, ProdutoIdentificacao[]>();
+  for (const produto of produtosDaEmpresa) {
+    const codigo = normalizarIdentificacao(produto.sku);
+    const candidatos = porCodigo.get(codigo) || [];
+    candidatos.push(produto);
+    porCodigo.set(codigo,candidatos);
+  }
+  const idsUsados = new Set<string>();
+  return linhas.map((linha, indice) => {
+    const codigo = normalizarIdentificacao(linha.codigo);
+    const nome = normalizarIdentificacao(linha.nome);
+    if (!codigo || !nome) throw new Error(`Linha ${indice + 2}: informe Código e Nome do produto.`);
+    const encontrados = porCodigo.get(codigo) || [];
+    const candidatos = encontrados.length <= 1 ? encontrados : encontrados.filter((produto) =>
+      normalizarIdentificacao(produto.nome) === nome);
+    if (candidatos.length !== 1) {
+      throw new Error(`Linha ${indice + 2}: ${candidatos.length ? 'Código/Nome ambíguos' : 'Produto não encontrado'} (${codigo}). Confira antes de importar.`);
+    }
+    const produto = candidatos[0];
+    if (idsUsados.has(produto.id)) throw new Error(`O produto ${codigo} aparece mais de uma vez no Excel.`);
+    idsUsados.add(produto.id);
+    return {id:produto.id,sku:produto.sku,atualizado_em:produto.atualizado_em};
+  });
+}
+
+function converterPrecoOrigem(valor: unknown, contexto: string): number | null {
+  if (valor === null || valor === undefined || String(valor).trim() === '') return null;
+  if (typeof valor === 'number') {
+    if (Number.isFinite(valor) && valor >= 0) return valor;
+    throw new Error(`Preço inválido em ${contexto}.`);
+  }
+  const texto = String(valor).trim().replace(/^R\$\s*/i,'').replace(/\s/g,'');
+  const moeda = texto.includes(',') ? texto.replace(/\./g,'').replace(',','.') : texto;
+  const numero = Number(moeda);
+  if (!/^-?\d+(?:\.\d+)?$/.test(moeda) || !Number.isFinite(numero) || numero < 0) {
+    throw new Error(`Preço inválido em ${contexto}.`);
+  }
+  return numero;
+}
 
 const normalizarRotulo = (valor: string) => String(valor ?? '').normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR')
@@ -68,11 +122,14 @@ export function montarAtualizacaoPrecos(
 ) {
   const patches = produtos.map((produto) => ({ ...produto }));
   const indiceProduto = new Map(patches.map((produto) => [String(produto.id || ''), produto]));
-  const porColuna = new Map<string, ValorOrigemPreco[]>();
+  const origensSelecionadas = new Set(mapeamentos.map((item) => item.origem));
+  const porColuna = new Map<string, Array<ValorOrigemPreco & { preco: number }>>();
   for (const valor of valoresOrigem) {
-    if (!Number.isFinite(valor.preco) || valor.preco < 0) throw new Error(`Valor inválido em ${valor.cabecalho} para o produto ${valor.sku}.`);
+    if (!origensSelecionadas.has(valor.cabecalho)) continue;
+    const preco = converterPrecoOrigem(valor.preco, `${valor.cabecalho} para o produto ${valor.sku}`);
+    if (preco === null) continue;
     const encontrados = porColuna.get(valor.cabecalho) || [];
-    encontrados.push(valor);
+    encontrados.push({...valor, preco});
     porColuna.set(valor.cabecalho, encontrados);
   }
   const precos: Array<Record<string, unknown>> = [];
