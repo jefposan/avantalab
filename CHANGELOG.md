@@ -1,6 +1,7 @@
-# 3.2.0.565 — Vendas e Serviços: carregar clientes em segundo plano
+# 3.2.0.565 — Vendas e Serviços: carregar clientes em segundo plano e salvar o controle de estoque
 
 - Antecipa a consulta de clientes com páginas maiores e prioridade baixa. O seletor do pedido indica a espera, preserva o termo digitado e permite tentar novamente se a consulta falhar.
+- Corrige a gravação da chave Controlar estoque com permissão restrita à configuração por empresa e mensagem específica de falha.
 
 # 3.2.0.564 — Vendas e Serviços e Marketplaces: formas de pagamento, troca de tabela de preços e avisos de anúncios
 

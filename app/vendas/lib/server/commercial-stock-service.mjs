@@ -5,6 +5,13 @@ function validDate(v){const m=DATE.exec(clean(v,10));if(!m)return false;const [y
 function quantity(v){const raw=clean(v).replace(/\s/g,'').replace(',','.');if(!/^\d+(?:\.\d{1,3})?$/.test(raw))return null;const n=Number(raw);return Number.isFinite(n)?Number(n.toFixed(3)):null;}
 function access(context,permission){if(!context||!UUID.test(clean(context.companyId))||!UUID.test(clean(context.actorId)))return issue('AV-STOCK-SESSION','session','Confirme novamente a sessão e o perfil empresarial.');if(context.moduleId&&context.moduleId!=='vendas')return issue('AV-STOCK-MODULE','module','O acesso não pertence ao módulo Vendas e Serviços.');if(!context.active||!context.moduleActive||context.effectivePermissions?.[permission]!==true)return issue('AV-STOCK-PERMISSION','permission','Seu acesso não permite movimentar o estoque.');return null;}
 function publicError(e){const known={'AV-STOCK-CONTROL-DISABLED':['control','O controle de estoque está desativado para esta empresa ou produto.'],'AV-STOCK-NOT-FOUND':['product','Produto ou local de estoque não localizado neste perfil.'],'AV-STOCK-BALANCE':['quantity','A movimentação compromete o saldo físico ou reservado.'],'AV-STOCK-IDEMPOTENCY':['idempotencyKey','Esta solicitação já foi utilizada com outros dados.'],'AV-STOCK-DATE':['date','A data da movimentação não pode estar no futuro.']}[e?.code];return known?issue(e.code,known[0],known[1]):issue('AV-STOCK-STORAGE','storage','Não foi possível movimentar o estoque. Tente novamente.');}
+function publicControlError(error) {
+  const code = error?.code;
+  if (code === 'AV-STOCK-NOT-FOUND') return issue(code, 'control', 'Empresa não localizada para alterar o controle de estoque.');
+  if (code === 'AV-STOCK-CONTROL-CONFLICT') return issue(code, 'control', 'O controle mudou em outra tela. Atualize antes de salvar.');
+  if (code === 'AV-STOCK-CONTROL-RESERVED') return issue(code, 'control', 'Existem quantidades reservadas. Conclua ou libere as reservas antes de desativar o controle.');
+  return issue('AV-STOCK-CONTROL-STORAGE', 'control', 'Não foi possível salvar o controle de estoque. Tente novamente.');
+}
 async function tx(pool,work){for(let i=0;i<3;i+=1){const c=await pool.connect();try{await c.query('begin');await c.query('set transaction isolation level serializable');const r=await work(c);await c.query('commit');return r;}catch(e){try{await c.query('rollback');}catch{}if(!['40001','40P01'].includes(e?.code)||i===2)throw e;}finally{c.release();}}}
 const map=(r)=>({id:r.id,createdAt:clean(r.criado_em),date:clean(r.data_movimentacao||r.criado_em).slice(0,10),productId:r.produto_id,sku:clean(r.sku),item:clean(r.nome),type:clean(r.tipo),quantity:Number(r.quantidade),physicalBefore:Number(r.saldo_fisico_anterior),physicalAfter:Number(r.saldo_fisico_final),reservedBefore:Number(r.saldo_reservado_anterior),reservedAfter:Number(r.saldo_reservado_final),partner:r.parceiro_retrato||{},document:clean(r.documento_referencia),lot:clean(r.lote),expiry:clean(r.validade),notes:clean(r.observacoes),location:clean(r.local_nome),actor:clean(r.responsavel_nome)});
 export function createPostgresCommercialStockRepository({pool}={}){if(!pool?.connect||!pool?.query)throw new TypeError('Informe o pool PostgreSQL server-side.');return Object.freeze({
@@ -15,12 +22,16 @@ export function createPostgresCommercialStockRepository({pool}={}){if(!pool?.con
   },
   async setControl({companyId,enabled,expectedEnabled}) {
     return tx(pool,async client=>{
-      const company=(await client.query('select * from public.empresas where id=$1 for update',[companyId])).rows[0];
-      if(!company)throw coded('AV-STOCK-NOT-FOUND');
-      const current=company.vendas_estoque_controle_ativo!==false;
-      if(current!==expectedEnabled&&current!==enabled)throw coded('AV-STOCK-MINIMUM-CONFLICT');
-      if(current!==enabled)await client.query('update public.empresas set vendas_estoque_controle_ativo=$2 where id=$1',[companyId,enabled]);
-      return {reused:current===enabled,control:{scope:'company',enabled}};
+      const company = (await client.query('select vendas_estoque_controle_ativo as enabled from public.empresas where id=$1 for update', [companyId])).rows[0];
+      if (!company) throw coded('AV-STOCK-NOT-FOUND');
+      const current = company.enabled;
+      const reused = current === enabled;
+      if (!reused) {
+        if (current !== expectedEnabled) throw coded('AV-STOCK-CONTROL-CONFLICT');
+        const updated = await client.query('update public.empresas set vendas_estoque_controle_ativo=$2 where id=$1 returning vendas_estoque_controle_ativo as enabled', [companyId, enabled]);
+        if (updated.rows[0]?.enabled !== enabled) throw coded('AV-STOCK-CONTROL-STORAGE');
+      }
+      return { reused, control: { scope: 'company', enabled } };
     });
   },
   async setMinimum({companyId,productId,localId,minimum,expectedMinimum}) {
@@ -42,7 +53,7 @@ export function createCommercialStockService({repository}={}){if(!repository?.li
     if(scope==='company'&&context.effectivePermissions?.['settings.edit']!==true)return {ok:false,errors:[issue('AV-STOCK-PERMISSION','permission','Seu acesso não permite alterar o controle geral.')]};
     if(scope!=='company'||typeof enabled!=='boolean'||typeof expectedEnabled!=='boolean')return {ok:false,errors:[issue('AV-STOCK-CONTROL-INPUT','control','Revise o controle de estoque selecionado.')]};
     try{return {ok:true,...await repository.setControl({companyId:context.companyId,productId:clean(productId),scope,enabled,expectedEnabled}),errors:[]};}
-    catch(e){return {ok:false,errors:[e?.code==='AV-STOCK-CONTROL-RESERVED'?issue(e.code,'control','Existem quantidades reservadas. Conclua ou libere as reservas antes de desativar o controle.'):e?.code==='AV-STOCK-MINIMUM-CONFLICT'?issue(e.code,'control','O controle mudou em outra tela. Atualize antes de salvar.'):publicError(e)]};}
+    catch (error) { return { ok: false, errors: [publicControlError(error)] }; }
   },
   async setMinimum({context,productId,localId,minimum,expectedMinimum}={}) {
     const denied=access(context,'stock.adjust');if(denied)return {ok:false,errors:[denied]};

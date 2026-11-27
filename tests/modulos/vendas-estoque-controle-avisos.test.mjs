@@ -33,3 +33,57 @@ test('chave única desliga e religa com reservas existentes sem alterar saldos, 
  assert.deepEqual((await db.query('select * from vendas_estoque_saldos order by id')).rows,before,'reativar recupera os mesmos dados');
  }finally{await db.close();}
 });
+
+test('API grava a chave com o papel restrito e preserva as demais colunas e empresas', async () => {
+ const {handleCommercialStockRequest}=await import('../../app/vendas/lib/server/commercial-stock-http.mjs');
+ const db=new PGlite();
+ try {
+  await db.exec(`
+   create role avanta_vendas_runtime;
+   create table public.empresas(id uuid primary key, nome text not null);
+   insert into public.empresas values ('${companyId}','Empresa autorizada'),('${other}','Outra empresa');
+   alter table public.empresas enable row level security;
+   grant select on public.empresas to avanta_vendas_runtime;
+   create policy empresas_vendas_runtime on public.empresas for all to avanta_vendas_runtime
+     using (id = '${companyId}') with check (id = '${companyId}');
+  `);
+  await db.exec(readFileSync('supabase/migrations/20261126210000_vendas_controle_estoque.sql','utf8'));
+  const query=(sql,args)=>db.query(sql,args);
+  const stockService=createCommercialStockService({repository:createPostgresCommercialStockRepository({pool:{
+   query,connect:async()=>({query,release(){}}),
+  }})});
+  const runtime={configured:true,stockService,accessResolver:{resolve:async(_request,{companyId})=>({
+   authenticated:true,
+   boundary:{companyId,userId:actorId,moduleId:'vendas',userActive:true,membershipActive:true,companyActive:true,moduleActive:true},
+   effectivePermissions:context.effectivePermissions,
+  })}};
+  const change=(id,enabled,expectedEnabled)=>handleCommercialStockRequest({
+   companyId:id,runtime,
+   request:new Request(`https://local.test/stock?companyId=${id}`,{method:'POST',body:JSON.stringify({mode:'control',scope:'company',enabled,expectedEnabled})}),
+  });
+
+  await db.exec('set role avanta_vendas_runtime');
+  const failure=await change(companyId,false,true);
+  assert.equal(failure.status,503);
+  assert.deepEqual(await failure.json(),{
+   ok:false,code:'AV-STOCK-CONTROL-STORAGE',message:'Não foi possível salvar o controle de estoque. Tente novamente.',
+  });
+
+  await db.exec('reset role');
+  await db.exec(readFileSync('supabase/migrations/20261127223000_vendas_controle_estoque_runtime.sql','utf8'));
+  await db.exec('set role avanta_vendas_runtime');
+  const disabled=await change(companyId,false,true);
+  assert.equal(disabled.status,200);
+  assert.deepEqual((await disabled.json()).control,{scope:'company',enabled:false});
+  assert.equal((await change(companyId,false,true)).status,200);
+  assert.equal((await change(other,false,true)).status,404);
+  await assert.rejects(db.query("update public.empresas set nome='Outra' where id=$1",[companyId]),error=>error.code==='42501');
+  const enabled=await change(companyId,true,false);
+  assert.equal(enabled.status,200);
+  assert.deepEqual((await enabled.json()).control,{scope:'company',enabled:true});
+
+  await db.exec('reset role');
+  const rows=(await db.query('select nome, vendas_estoque_controle_ativo as enabled from public.empresas order by id')).rows;
+  assert.deepEqual(rows,[{nome:'Empresa autorizada',enabled:true},{nome:'Outra empresa',enabled:true}]);
+ } finally { await db.close(); }
+});
