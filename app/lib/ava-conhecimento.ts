@@ -3186,3 +3186,11 @@ GUIAS['gestao-web'] += ' Revisão 3.2.0.550: Serviços e Notas Fiscais têm seta
 // Revisão 3.2.0.551: sem impacto operacional; largura estável dos seletores mensais compartilhados.
 
 GUIAS['gestao-web'] += ' Revisão 3.2.0.552: ao salvar forma de pagamento e parcelas em Recebimentos, a lista e o pedido recebem os dados confirmados pela própria resposta, sem esperar recargas gerais. A confirmação continua dependendo de gravação bem-sucedida; em falha, revise a mensagem e repita com a mesma solicitação protegida.';
+
+GUIAS['gestao-web'] += '\nATUALIZAÇÃO 3.2.0.553: Vendas e Serviços → Ajustes → Integrações → Gestão financeira: Enviar para receitas, ativo por padrão por empresa. Alterar a chave salva automaticamente; há somente Fechar. Vendas faturadas e serviços concluídos entram no mês do pedido; cancelamentos/estorno de faturamento retiram o resultado e recebimentos não duplicam receita. Desligar retira o consolidado do módulo; reativar recompõe sem alterar entradas manuais ou documentos. Laboratório local simula a configuração sem escrever no financeiro real.\n';
+
+GUIAS['gestao-web'] += '\nVenda Avantalab: entrada automática de Vendas e Serviços, sem edição/exclusão na Gestão. Competência é mês/ano da venda, independente do pagamento; alterações pelo módulo de origem.\n';
+
+// Laboratório 3.2.0.553: a projeção de Venda Avantalab é visível na Gestão local, com dados reais em leitura, sem gravar entradas de produção.
+
+GUIAS['gestao-web'] += '\nGestão Web: a troca de mês preserva a área Receitas/Despesas expandida. Sair dos lançamentos restaura Despesas para a próxima abertura de mês.\n';

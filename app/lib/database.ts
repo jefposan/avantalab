@@ -1,3 +1,4 @@
+import {localRevenueLabActive,revenueLabKey,loadLocalRevenue,mergeLocalRevenueEntries,mergeLocalRevenueTotals} from '../vendas/lib/local-revenue-overlay.mjs';
 import { supabase } from './supabase';
 import type { LiberacoesUsuario } from './acessos-usuario';
 import {
@@ -597,6 +598,13 @@ export async function buscarFaturamentos(empresaId: string, ano: number) {
     return [];
   }
 
+  if(localRevenueLabActive()&&localStorage.getItem(revenueLabKey(empresaId))){
+    const {data:session}=await supabase.auth.getSession();const token=session.session?.access_token;
+    if(!token)throw Error('Confirme sua sessão para conferir a integração financeira local.');
+    const [projected,previous]=await Promise.all([loadLocalRevenue({companyId:empresaId,year:ano,token}),supabase.from('faturamentos_entradas').select('*').eq('empresa_id',empresaId).eq('ano',ano).eq('tipo_obs','vendas_servicos_sistema')]);
+    if(previous.error)throw Error('Não foi possível conferir as entradas anteriores de Vendas.');
+    return mergeLocalRevenueTotals(data||[],previous.data||[],projected);
+  }
   return data;
 }
 export async function buscarFaturamentosEntradas(
@@ -621,6 +629,12 @@ export async function buscarFaturamentosEntradas(
     return [];
   }
 
+  if(localRevenueLabActive()&&localStorage.getItem(revenueLabKey(empresaId))){
+    const {data:session}=await supabase.auth.getSession();const token=session.session?.access_token;
+    if(!token)throw Error('Confirme sua sessão para conferir a integração financeira local.');
+    const projected=await loadLocalRevenue({companyId:empresaId,year:ano,token});
+    return mergeLocalRevenueEntries(data||[],projected,empresaId,ano,centroCustoId);
+  }
   return data || [];
 }
 

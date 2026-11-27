@@ -1,4 +1,12 @@
-<!-- ava-version: 3.2.0.552 -->
+<!-- ava-version: 3.2.0.553 -->
+
+> Revisão 3.2.0.553 — Gestão Web: trocar o mês mantém Receitas ou Despesas expandida. Sair dos lançamentos redefine o foco para Despesas na próxima abertura; sem mudança própria nos aplicativos nativos e em Vendas.
+
+> Revisão do laboratório 3.2.0.553: a Gestão no localhost mostra Venda Avantalab calculada das vendas reais consultadas, no mês da venda. A chave de Vendas atualiza as abas locais automaticamente. São dados de visualização, sem gravar entradas em produção; o aviso local identifica esse modo.
+
+> Revisão 3.2.0.553 — Entradas: Venda Avantalab é automática e protegida, sem editar/apagar na Gestão Web/mobile. Usa mês e ano da venda (data do pedido; na ausência, cadastro no fuso de São Paulo), não o mês do pagamento. Corrigir a venda ou a chave de integração no módulo de origem.
+
+> Revisão 3.2.0.553: Vendas e Serviços Web → Ajustes → Integrações → Gestão financeira tem a chave Enviar para receitas, ativa por padrão. Alterar salva automaticamente por empresa; somente Fechar. Envia vendas faturadas/serviços concluídos, exclui canceladas e não duplica no recebimento. Desligar retira o consolidado do módulo das entradas mensais; reativar recompõe, sem alterar entradas manuais. No laboratório local, a configuração é simulada e não muda entradas reais. Aplicativos nativos sem mudança própria.
 
 > Revisão 3.2.0.552: sem impacto operacional no aplicativo mobile; confirmação mais rápida da alteração de pagamento em Recebimentos Web.
 

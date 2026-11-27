@@ -1,3 +1,13 @@
+## 3.2.0.553 — Vendas e Gestão: integração financeira e navegação mensal
+
+- Ajustes → Integrações → Gestão financeira: chave Enviar para receitas, ativa por padrão. Alterar salva automaticamente por empresa; somente Fechar, sem Bruto/Líquido e sem botão Salvar.
+- Persistência versionada, permissões settings.view/edit e conflito de edição. Abertura e reinstalação preservam a escolha.
+- Entrada mensal de vendas faturadas/serviços concluídos, por competência do pedido. Cancelamento/estorno de faturamento retira resultado; recebimento não duplica receita. Desligar/reativar recompõe somente o consolidado do módulo, preservando entradas manuais e documentos.
+- Entrada automática identificada como Venda Avantalab, sem edição/exclusão na Gestão Web/mobile e protegida no banco. Testes locais confirmam competência da venda, incluindo virada de ano e fuso de São Paulo.
+- Laboratório local: a chave agora reflete na Gestão local com vendas reais consultadas, entradas e totais do mês coerentes e atualização entre abas. Nenhuma escrita financeira em produção.
+- Gestão: trocar mês preserva o card Receitas/Despesas em foco; sair dos lançamentos restaura Despesas para a próxima abertura.
+- Migração 20261127040000 validada em PostgreSQL; consolidação recompõe a soma das entradas para evitar duplicação por gatilhos financeiros existentes. Laboratório simula somente essa configuração e mantém os dados reais sem escrita.
+
 # 3.2.0.552 — Recebimentos: aplicar alteração sem recargas gerais
 
 - Salvamento devolve os recebimentos e o pagamento da operação confirmados na transação; tela atualiza antes da confirmação ao formulário.

@@ -1,3 +1,4 @@
+import {createCommercialRevenueRepository} from './commercial-revenue.mjs';
 import {createCommercialPolicyRepository} from './commercial-policy.mjs';
 import {createPendingFiscalDraftRepository} from './pending-fiscal-draft.mjs';
 import { createSupabaseFiscalBackup } from './supabase-fiscal-backup.mjs';
@@ -505,6 +506,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
       }),
       serviceOrderService,
       receivableService: createCommercialReceivableService({ repository: createPostgresCommercialReceivableRepository({ pool }) }),
+      commercialRevenueRepository:createCommercialRevenueRepository({pool}),
       stockService: createCommercialStockService({ repository: createPostgresCommercialStockRepository({ pool }) }),
       supplierService: createCommercialSupplierService({ repository: createPostgresCommercialSupplierRepository({ pool }) }),
     });

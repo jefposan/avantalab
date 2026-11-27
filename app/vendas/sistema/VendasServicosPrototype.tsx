@@ -1,4 +1,5 @@
 'use client';
+import FinanceRevenueSettings from '../components/FinanceRevenueSettings';
 import {mergeConfirmedReceivables,applyConfirmedOperationPayment,reconcileConfirmedOperationSnapshot} from '../lib/confirmed-receivable-snapshot.mjs';
 import {matchesCommercialListPeriod} from '../lib/commercial-list-period.mjs';
 import BotaoProximoScroll from '@/app/components/BotaoProximoScroll';
@@ -6004,7 +6005,7 @@ function CertificateDigitalDialog({ open, company, bridge, onClose, onRequestCom
   </Dialog>;
 }
 
-type SettingsTarget = SettingsSection | 'acessos' | 'matriz' | 'certificado' | null;
+type SettingsTarget = SettingsSection | 'acessos' | 'matriz' | 'certificado' | 'financeiro' | null;
 type SettingsGroupId = 'empresa-notas' | 'operacao' | 'equipe-acessos' | 'integracoes';
 type SettingsItem = { title: string; description: string; icon: IconName; status: string; target: SettingsTarget };
 
@@ -6013,6 +6014,9 @@ function SettingsView({ stockControlContext,fiscalDefaultsContext,settings, conn
   const [accessOpen, setAccessOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
   const [activeGroupId, setActiveGroupId] = useState<SettingsGroupId>('empresa-notas');
+  const [financeOpen, setFinanceOpen] = useState(false);
+  const [localApproval, setLocalApproval] = useState(false);
+  useEffect(() => { setLocalApproval(process.env.NODE_ENV !== 'production' && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)); }, []);
   const matrixValidation = validateFiscalMatrix(settings.fiscal.matrix, settings.fiscal.documentScope);
   const companyRegistration = evaluateCertificateCompanyRegistration(settings.company);
   const fiscalSeriesByDocument: Record<FiscalDocumentType, string> = { nfe: settings.fiscal.nfeSeries, nfce: settings.fiscal.nfceSeries, nfse: settings.fiscal.nfseSeries };
@@ -6041,13 +6045,14 @@ function SettingsView({ stockControlContext,fiscalDefaultsContext,settings, conn
     ] },
     { id: 'integracoes', label: 'Integrações', title: 'Conexões com outros módulos', description: 'Vínculos que evitam recadastro e mantêm as informações sincronizadas.', items: [
       { title: 'Catálogo e custos', description: 'Produtos, serviços, custos e preços publicados', icon: 'box', status: connected ? 'Conectado' : 'Planejada', target: null },
-      { title: 'Gestão financeira', description: 'Recebimentos líquidos lançados por competência', icon: 'chart', status: connected ? 'Conectado' : 'Planejada', target: null },
+      { title: 'Gestão financeira', description: 'Envio dos resultados para as entradas mensais', icon: 'chart', status: 'Configurar', target: 'financeiro' },
     ] },
   ];
   const activeGroup = settingsGroups.find((group) => group.id === activeGroupId) ?? settingsGroups[0];
   const isUnavailable = (target: SettingsTarget) => !target || (target === 'acessos' ? !canViewAccess : target === 'matriz' || target === 'certificado' ? !canConfigureFiscal : !canEdit);
   const openTarget = (target: SettingsTarget) => {
-    if (target === 'acessos') setAccessOpen(true);
+    if (target === 'financeiro') setFinanceOpen(true);
+    else if (target === 'acessos') setAccessOpen(true);
     else if (target === 'matriz') setMatrixOpen(true);
     else if (target === 'certificado') onOpenCertificate();
     else if (target) setSection(target);
@@ -6066,6 +6071,7 @@ function SettingsView({ stockControlContext,fiscalDefaultsContext,settings, conn
         return <button type="button" key={title} onClick={() => openTarget(target)} disabled={unavailable} title={!target ? 'Disponível quando a integração for conectada' : unavailable ? 'Seu perfil não permite alterar este ajuste' : undefined}><span><Icon name={icon}/></span><div><strong>{title}</strong><small>{description}</small><Badge tone={unavailable ? 'neutral' : attention ? 'warning' : 'neutral'}>{unavailable && target ? 'Sem acesso' : status}</Badge></div><Icon name={!unavailable ? 'chevron' : 'clock'} size={17}/></button>;
       })}</div>
     </section>
+    {financeOpen && <Dialog open title="Gestão financeira" description="" onClose={() => setFinanceOpen(false)}><div className="dialog-body"><FinanceRevenueSettings companyId={fiscalDefaultsContext?.companyId || ''} origin={fiscalDefaultsContext?.origin || ''} localLab={localApproval}/></div><footer className="dialog-footer"><BotaoAcaoCompacto onClick={() => setFinanceOpen(false)}>Fechar</BotaoAcaoCompacto></footer></Dialog>}
     <SettingsDialog stockControlContext={stockControlContext} fiscalDefaultsContext={fiscalDefaultsContext} onSaveCompany={onSaveCompany} suspended={numberingOpen||matrixOpen} onOpenRules={canConfigureFiscal?()=>setMatrixOpen(true):undefined} onOpenNumbering={onOpenNumbering} section={section} settings={settings} onClose={() => setSection(null)} onSave={onSave}/>
     <FiscalMatrixDialog open={matrixOpen} matrix={settings.fiscal.matrix} documentScope={settings.fiscal.documentScope} taxReviewConfirmed={settings.fiscal.taxReviewConfirmed} taxReformReviewConfirmed={settings.fiscal.taxReformReviewConfirmed} bridge={fiscalRulesBridge} readOnly={!canConfigureFiscal || (fiscalRulesBridge.integrated && !fiscalRulesBridge.writable)} onClose={() => setMatrixOpen(false)} onSave={onSaveFiscalMatrix}/>
     <AccessSettingsDialog open={accessOpen} settings={settings} bridge={accessBridge} readOnly={!canManageAccess || (accessBridge.integrated && !accessBridge.writable)} onClose={() => setAccessOpen(false)} onSave={(next) => { onSaveAccess(next); setAccessOpen(false); }}/>

@@ -1,4 +1,5 @@
 'use client';
+import {localRevenueLabActive,revenueLabKey} from '../vendas/lib/local-revenue-overlay.mjs';
 
 import CampoBusca from '@/app/components/CampoBusca';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
@@ -1150,6 +1151,12 @@ const [carregandoCentroCusto, setCarregandoCentroCusto] = useState(false);
 const [modalCentrosCusto, setModalCentrosCusto] = useState(false);
 const [centroCustoSalvando, setCentroCustoSalvando] = useState(false);
 const [revisaoDadosFinanceiros, setRevisaoDadosFinanceiros] = useState(0);
+useEffect(()=>{
+ if(!localRevenueLabActive()||!empresaId)return;
+ const refresh=(event:StorageEvent)=>{if(event.key===revenueLabKey(empresaId))setRevisaoDadosFinanceiros(value=>value+1);};
+ window.addEventListener('storage',refresh);return()=>window.removeEventListener('storage',refresh);
+},[empresaId]);
+
 const [entradaFaturamentoDia, setEntradaFaturamentoDia] = useState('');
 const [entradaFaturamentoOrigem, setEntradaFaturamentoOrigem] = useState('');
 const [entradaFaturamentoValor, setEntradaFaturamentoValor] = useState('');
@@ -2374,7 +2381,7 @@ useEffect(() => {
 
     // Mantém a receita consolidada do Vendas Mobile atualizada a cada acesso
     // ao perfil, sem bloquear o restante do carregamento caso o módulo não exista.
-    await Promise.all([
+    if(!localRevenueLabActive()) await Promise.all([
       supabase.rpc('atualizar_receita_vendas_mobile_gestao_rpc', { p_empresa_id: empresaId }),
       garantirFixasDoMesAtual(empresaId),
     ]);
@@ -2846,7 +2853,7 @@ useEffect(() => {
 }, [abaAtiva, mesAtivo, mounted, acessoLiberado]);
 
 useEffect(() => {
-  if (mesAtivo) setBlocoAtivo('despesa');
+  if (!mesAtivo) setBlocoAtivo('despesa');
 }, [mesAtivo]);
 
 useEffect(() => {
@@ -5623,7 +5630,7 @@ Deseja excluir TODAS as parcelas ou apenas esta?`,
 };
 
 const excluirEntradaFaturamento = async (entrada: TabelaEntradaFaturamento) => {
-  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema' || entrada.tipo === 'marketplace_sistema') {
+  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema' || entrada.tipo === 'marketplace_sistema' || entrada.tipo === 'vendas_servicos_sistema') {
     abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser excluída no Gestão.');
     return;
   }
@@ -5819,7 +5826,7 @@ const handleEntradaFaturamentoValorChange = (
 };
 
 const iniciarEdicaoEntradaFaturamento = (entrada: TabelaEntradaFaturamento) => {
-  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema' || entrada.tipo === 'marketplace_sistema') {
+  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema' || entrada.tipo === 'marketplace_sistema' || entrada.tipo === 'vendas_servicos_sistema') {
     abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser editada no Gestão.');
     return;
   }
@@ -6366,7 +6373,7 @@ const aceitarReceitaPrevistaHoje = async (entrada: TabelaEntradaFaturamento) => 
     abrirAviso('Acesso não permitido', 'Você não tem permissão para editar lançamentos.');
     return;
   }
-  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema' || entrada.tipo === 'marketplace_sistema') {
+  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema' || entrada.tipo === 'marketplace_sistema' || entrada.tipo === 'vendas_servicos_sistema') {
     abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser alterada no Gestão.');
     return;
   }
@@ -6627,7 +6634,7 @@ const recarregarDadosFinanceirosAtual = async () => {
   const ano = Number(anoSelecionado);
   const contextoCentroCustoId = centrosCustoAtivo ? centroCustoSelecionadoId : undefined;
   if (centrosCustoAtivo && !contextoCentroCustoId) return;
-  await garantirFixasDoMesAtual(empresaId);
+  if(!localRevenueLabActive()) await garantirFixasDoMesAtual(empresaId);
   const [
     despesasBanco,
     lancamentosBanco,
@@ -11981,6 +11988,7 @@ if (validacaoTelefoneObrigatoria) {
       />
 
       {/* RENDERIZAÇÃO CONDICIONAL DAS TELAS */}
+      {localRevenueLabActive()&&<p role="status" className="mx-4 my-2 text-xs">Laboratório local: receitas de Vendas calculadas com dados reais, sem gravar no financeiro de produção.</p>}
       {(carregandoPerfil || carregandoCentroCusto || erroDadosFinanceiros) && <div role={erroDadosFinanceiros ? 'alert' : 'status'} aria-live="polite" className={`mx-4 my-2 rounded-lg px-3 py-2 text-xs ${darkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`}>
         {erroDadosFinanceiros || 'Atualizando dados deste perfil… Você pode navegar pelas abas.'}
         {erroDadosFinanceiros && <button type="button" className="ml-3 min-h-11 underline" onClick={() => { const empresa = empresasDoUsuario.find(e => e.id === empresaId); if (empresa) void carregarEmpresaSelecionada(empresa).catch(() => undefined); }}>Tentar novamente</button>}
