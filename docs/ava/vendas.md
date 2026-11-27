@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.564.01 -->
+<!-- ava-version: 3.2.0.564.02 -->
+
+> Revisão 3.2.0.564.02: Sem impacto operacional. Alinhamento do valor de Primeiro vencimento (dias) em Vendas e Serviços.
 
 > Revisão 3.2.0.564.01: Em Vendas e Serviços → Ajustes → Pagamentos, escolha de 1 a 10 em Parcelas padrão. O valor preenche novos pedidos e ordens de serviço.
 

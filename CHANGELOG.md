@@ -1,3 +1,7 @@
+# 3.2.0.564.02 — Vendas e Serviços: centralizar número de dias do primeiro vencimento
+
+- Centraliza horizontalmente o valor de Primeiro vencimento (dias) em Ajustes → Pagamentos.
+
 # 3.2.0.564.01 — Vendas e Serviços: alinhar os campos de Pagamentos
 
 - Coloca Forma padrão, Parcelas padrão e Primeiro vencimento na mesma linha em telas largas. Oferece de 1 a 10 parcelas em Ajustes, pedidos e ordens de serviço.

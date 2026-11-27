@@ -2687,6 +2687,8 @@ button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }
 .commercial-action-menu :is(.commercial-action-available > button,.commercial-action-available > .commercial-action-tooltip > button),
 .report-selected-items button{border-radius:6px 12px 12px 12px}
 
+.payment-defaults-grid input[type="number"] { text-align: center; }
+
 @media (min-width: 641px) {
   .form-grid.payment-defaults-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .form-grid.receivable-terms-grid { grid-template-columns: minmax(0,1.2fr) minmax(110px,.7fr) minmax(0,1fr); }
