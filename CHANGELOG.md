@@ -1,3 +1,7 @@
+# 3.2.0.564.01 — Vendas e Serviços: alinhar os campos de Pagamentos
+
+- Coloca Forma padrão, Parcelas padrão e Primeiro vencimento na mesma linha em telas largas. Oferece de 1 a 10 parcelas em Ajustes, pedidos e ordens de serviço.
+
 # 3.2.0.564 — Vendas e Serviços: cadastro de formas de pagamento
 
 - Pagamentos permite ativar, desativar e adicionar formas por empresa. Pedidos mostram as formas ativas. Filtros de Vendas, Recebimentos e Relatórios incluem formas ativas e valores históricos. Consignado preserva o lançamento sem parcelas nem vencimento.

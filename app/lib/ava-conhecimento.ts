@@ -1,3 +1,4 @@
+// Revisão 3.2.0.564.01: Parcelas padrão em Ajustes → Pagamentos oferece de 1 a 10 e preenche novos pedidos e ordens de serviço.
 // Revisão 3.2.0.564: Ajustes > Pagamentos em Vendas e Serviços permite cadastrar e ativar formas por empresa. Formas inativas continuam nos filtros quando usadas no histórico.
 // Revisão 3.2.0.563: Vendas e Serviços imprime o pedido no modelo compacto A4/A5 com campos de recebimento, conforme Ajustes > Comercial.
 // Revisão 3.2.0.562: Marketplaces Web: Consultar pendências fica ao lado de Atualizar. O período é ajustado pelas setas de mês ou por Selecionar datas. As vendas são consultadas no card Vendas.
@@ -3221,3 +3222,5 @@ GUIAS['gestao-web'] += '\nGestão Web: a troca de mês preserva a área Receitas
 
 GUIAS['gestao-web'] += ' Despesas programadas, inclusive fixas e parcelas, ficam previstas até confirmação explícita; vencer só gera pendência. Salvar edição não confirma. Não orientar baixa automática por data.';
 GUIAS['gestao-mobile'] += ' Despesas programadas, inclusive fixas e parcelas, permanecem previstas até confirmar; vencer só gera pendência.';
+
+GUIAS['gestao-web'] += ' Em Vendas e Serviços → Ajustes → Pagamentos, selecione de 1 a 10 em Parcelas padrão e salve. O valor preenche novos pedidos e ordens de serviço. Pedidos consignados continuam sem parcelas.';

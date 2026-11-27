@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.564 -->
+<!-- ava-version: 3.2.0.564.01 -->
+
+> Revisão 3.2.0.564.01: Em Vendas e Serviços → Ajustes → Pagamentos, escolha de 1 a 10 em Parcelas padrão. O valor preenche novos pedidos e ordens de serviço.
 
 > Revisão 3.2.0.564: Em Vendas e Serviços → Ajustes → Pagamentos, adicione uma forma ou altere sua chave e salve. Novos pedidos usam as formas ativas. Filtros também encontram formas inativas usadas no histórico. Consignado fica sem parcelas e vencimento.
 
