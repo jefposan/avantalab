@@ -1,3 +1,7 @@
+# 3.2.0.564.03 — Vendas e Serviços: confirmar o recálculo ao trocar tabela de preços
+
+- Compara os preços dos itens do pedido ao trocar a tabela do cliente. Quando houver diferença, permite atualizar todos os itens ou manter os preços já lançados.
+
 # 3.2.0.564.02 — Vendas e Serviços: centralizar número de dias do primeiro vencimento
 
 - Centraliza horizontalmente o valor de Primeiro vencimento (dias) em Ajustes → Pagamentos.

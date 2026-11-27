@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.564.02 -->
+<!-- ava-version: 3.2.0.564.03 -->
+
+> Revisão 3.2.0.564.03: Sem impacto operacional na Gestão Mobile.
 
 > Revisão 3.2.0.564.02: Sem impacto operacional. Alinhamento do valor de Primeiro vencimento (dias) em Vendas e Serviços.
 

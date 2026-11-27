@@ -1438,8 +1438,22 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
   const selectedPriceTable=pricing?.priceTables.find(table=>table.id===noteFields.priceTableId);
   const pricingUnavailable=Boolean((connected&&selectedClient?.priceTableId&&!pricing)||(pricing&&!selectedPriceTable));
   const pricedCatalog=pricingUnavailable?[]:pricing?catalogRecords.map(item=>({...item,price:priceFromTable(item,selectedPriceTable)})):catalogRecords;
-  const requestPriceTable=(id:string)=>{if(id===noteFields.priceTableId)return;if(lines.length){setPendingTable(id);return;}patchNoteFields({priceTableId:id});};
-  const applyPriceTable=(reprice:boolean)=>{if(!pendingTable||!pricing)return;if(reprice)setLines(current=>repriceNoteLines(current,catalogRecords,pricing.priceTables.find(table=>table.id===pendingTable)));patchNoteFields({priceTableId:pendingTable});setPendingTable(null);};
+  const requestPriceTable = (id: string) => {
+    if (id === noteFields.priceTableId) return;
+    const table = pricing?.priceTables.find(candidate => candidate.id === id);
+    if (table && repriceNoteLines(lines, catalogRecords, table).some((line, index) => line !== lines[index])) {
+      setPendingTable(id);
+      return;
+    }
+    patchNoteFields({priceTableId:id});
+  };
+  const applyPriceTable = (reprice: boolean) => {
+    if (!pendingTable) return;
+    const table = pricing?.priceTables.find(candidate => candidate.id === pendingTable);
+    if (reprice && table) setLines(current => repriceNoteLines(current, catalogRecords, table));
+    patchNoteFields({priceTableId:pendingTable});
+    setPendingTable(null);
+  };
   useEffect(()=>{
     if(!pricing||pricingInitialized.current)return;
     pricingInitialized.current=true;
@@ -1622,12 +1636,34 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
   useEffect(() => () => { onBusyChange?.(false); }, [onBusyChange]);
 
   return <>
-    <ModalConfirmacao aberto={pendingTable!==null} titulo="Aplicar nova lista de preços?" variante="alerta" corPrimaria={fiscalEditor?.primaryColor} darkMode={fiscalEditor?.dark} mensagem="Escolha se a nova lista deve recalcular os itens já adicionados ou valer somente para novos itens." textoCancelar="Cancelar troca" textoConfirmar="Recalcular itens" aoCancelar={()=>setPendingTable(null)} aoConfirmar={()=>applyPriceTable(true)} acaoAdicional={{texto:'Aplicar somente aos novos itens',aoClicar:()=>applyPriceTable(false)}}/>
+    <ModalConfirmacao
+      aberto={pendingTable!==null}
+      titulo="Aplicar a nova tabela aos itens?"
+      variante="alerta"
+      corPrimaria={pricing?.primaryColor}
+      darkMode={pricing?.dark}
+      mensagem="A nova tabela muda o preço de itens deste pedido. Deseja atualizar os itens já lançados?"
+      textoCancelar={fiscalEditor ? 'Cancelar troca' : 'Manter preços atuais'}
+      textoConfirmar="Aplicar a todos os itens"
+      aoCancelar={() => fiscalEditor ? setPendingTable(null) : applyPriceTable(false)}
+      aoConfirmar={() => applyPriceTable(true)}
+      acaoAdicional={fiscalEditor ? {texto:'Aplicar somente aos novos itens',aoClicar:()=>applyPriceTable(false)} : undefined}
+    />
 
     {customerFormOpen && <ClientFormDialog priceTables={clientPriceTables || fiscalEditor?.priceTables} open client={editingCustomer} clientRecords={clientRecords} sellers={settings.commercial.sellers} defaultSeller={settings.commercial.defaultSeller} connected={connected} onClose={() => {setCustomerFormOpen(false);setEditingCustomer(null);}} onSave={async client => {
       if (!onSaveClient) return {ok:false,message:'A edição do cliente não está disponível.'};
       const result = await onSaveClient(client);
-      if (result.ok) { setClientName(client.legalName || client.name); setSelectedClientId(clientRecords.some(item=>item.id===client.id)?client.id:''); setSubmitted(false); setValidationFocus(null); setFiscalSaveError(''); setFiscalSaveIssue(null); }
+      if (result.ok) {
+        setClientName(client.legalName || client.name);
+        setSelectedClientId(clientRecords.some(item => item.id === client.id) ? client.id : '');
+        setSubmitted(false);
+        setValidationFocus(null);
+        setFiscalSaveError('');
+        setFiscalSaveIssue(null);
+        if (pricing && (!editingCustomer || (client.priceTableId || '') !== (editingCustomer.priceTableId || ''))) {
+          requestPriceTable(client.priceTableId || pricing.defaultPriceTableId || 'standard');
+        }
+      }
       return result;
     }}/>}
     {editingNoteItemId&&(()=>{

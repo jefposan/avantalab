@@ -39,3 +39,21 @@ test('opções fiscais e recálculo priorizam identidade do produto e não confu
  assert.equal(priceFromTable(catalog[0],t),0);assert.equal(priceFromTable(catalog[1],t),80);
  const changed=repriceNoteLines(lines,catalog,t);assert.deepEqual(changed,[{...lines[0],unitPrice:80}]);assert.equal(lines[0].unitPrice,109);
 });
+
+test('a troca de tabela só sinaliza linhas com preço diferente e mantém quantidades e descontos', () => {
+  const catalog = [
+    { catalogItemId: 'a', sku: 'A', price: 10 },
+    { catalogItemId: 'b', sku: 'B', price: 20 },
+  ];
+  const lines = [
+    { catalogItemId: 'a', sku: 'A', unitPrice: 10, quantity: 3, unitDiscount: 2 },
+    { catalogItemId: 'b', sku: 'B', unitPrice: 20, quantity: 1, unitDiscount: 0 },
+    { catalogItemId: 'removed', sku: 'B', unitPrice: 15, quantity: 2, unitDiscount: 1 },
+  ];
+  const same = repriceNoteLines(lines, catalog, { prices: { A: 10, B: 20 } });
+  assert.ok(same.every((line, index) => line === lines[index]));
+  const changed = repriceNoteLines(lines, catalog, { prices: { A: 12, B: 19 } });
+  assert.deepEqual(changed, [{ ...lines[0], unitPrice: 12 }, { ...lines[1], unitPrice: 19 }, lines[2]]);
+  assert.equal(changed[2], lines[2]);
+  assert.equal(lines[0].unitPrice, 10);
+});
