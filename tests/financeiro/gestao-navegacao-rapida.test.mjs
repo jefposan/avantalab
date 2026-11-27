@@ -68,7 +68,7 @@ test('falha de configuração encerra busy, mantém dados limpos e oferece erro 
   assert.equal(efeitos.find(e => e[0] === 'setLancamentos')?.[1].length, 0);
 });
 
-test('carga financeira inicia leituras em paralelo e descarta resultado após nova geração', async () => {
+for (const laboratorio of [false, true]) test(`carga financeira inicia leituras em paralelo e descarta resultado após nova geração (laboratório: ${laboratorio})`, async () => {
   const inicio = fonte.indexOf('useEffect(() => {', fonte.indexOf('// 2. Carrega Dados Financeiros do Ano pelo Supabase'));
   const fim = fonte.indexOf('\nuseEffect(() => {', inicio + 1);
   const efeito = fonte.slice(inicio, fim);
@@ -80,7 +80,8 @@ test('carga financeira inicia leituras em paralelo e descarta resultado após no
     anoSelecionado: '2026', centrosCustoAtivo: false, centroCustoSelecionadoId: '', revisaoDadosFinanceiros: 0,
     cargaPerfilRef: { current: 1 }, contextoFinanceiroRef: { current: '' },
     useEffect: fn => { encerrar = fn(); },
-    supabase: { rpc: async () => ({}) }, garantirFixasDoMesAtual: async () => {},
+    localRevenueLabActive: () => laboratorio,
+    supabase: { rpc: async () => { assert.equal(laboratorio,false,'laboratório não executa sincronização em produção'); return {}; } }, garantirFixasDoMesAtual: async () => { assert.equal(laboratorio,false,'laboratório não gera despesas em produção'); },
   };
   for (const nome of ['buscarLancamentos', 'buscarCaixinhaMovimentos', 'buscarFaturamentos', 'buscarFaturamentosEntradas']) contexto[nome] = () => new Promise(resolve => pendentes.set(nome, resolve));
   for (const nome of new Set(efeito.match(/\bset[A-Z]\w+/g))) contexto[nome] = value => efeitos.push([nome, value]);
