@@ -1,20 +1,9 @@
-# 3.2.0.564.03 — Vendas e Serviços e Marketplaces: formas de pagamento, troca de tabela de preços e avisos de anúncios
+# 3.2.0.564 — Vendas e Serviços e Marketplaces: formas de pagamento, troca de tabela de preços e avisos de anúncios
 
-- Em Pagamentos, permite cadastrar e ativar formas por empresa, inclusive Consignado. Alinha os três campos padrão e oferece de 1 a 10 parcelas.
+- Em Pagamentos, permite cadastrar formas por empresa e ativar ou desativar todas as opções, inclusive Consignado. Pedidos mostram as formas ativas e os filtros incluem valores do histórico. Consignado permanece sem parcelas e vencimento.
+- Alinha os três campos padrão em telas largas, centraliza o valor do primeiro vencimento e oferece de 1 a 10 parcelas em Ajustes, pedidos e ordens de serviço.
 - Compara os preços dos itens do pedido ao trocar a tabela do cliente. Quando houver diferença, permite atualizar todos os itens ou manter os preços já lançados.
-- Em Marketplaces, o painel Avisos identifica a conta e o motivo da pendência. Conferir anúncio abre o código na conta correta e Conferir conta abre a lista filtrada.
-
-# 3.2.0.564.02 — Vendas e Serviços: centralizar número de dias do primeiro vencimento
-
-- Centraliza horizontalmente o valor de Primeiro vencimento (dias) em Ajustes → Pagamentos.
-
-# 3.2.0.564.01 — Vendas e Serviços: alinhar os campos de Pagamentos
-
-- Coloca Forma padrão, Parcelas padrão e Primeiro vencimento na mesma linha em telas largas. Oferece de 1 a 10 parcelas em Ajustes, pedidos e ordens de serviço.
-
-# 3.2.0.564 — Vendas e Serviços: cadastro de formas de pagamento
-
-- Pagamentos permite ativar, desativar e adicionar formas por empresa. Pedidos mostram as formas ativas. Filtros de Vendas, Recebimentos e Relatórios incluem formas ativas e valores históricos. Consignado preserva o lançamento sem parcelas nem vencimento.
+- Em Marketplaces, o painel Avisos identifica conta e motivo. Conferir anúncio abre o código na conta correta e Conferir conta abre a lista filtrada.
 
 # 3.2.0.563 — Gestão, Marketplaces e Vendas: navegação, cabeçalho e impressão de pedidos
 

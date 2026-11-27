@@ -1,6 +1,6 @@
 {
   "baseDeploymentId": "dpl_DKD1PWfMJK7th48cddyhfNjURFGm",
-  "version": "3.2.0.564.03",
+  "version": "3.2.0.564",
   "scope": "Vendas e Serviços e Marketplaces: formas de pagamento, troca de tabela de preços e avisos de anúncios",
   "migrations": [
     {

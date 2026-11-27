@@ -1,12 +1,6 @@
-<!-- ava-version: 3.2.0.564.03 -->
+<!-- ava-version: 3.2.0.564 -->
 
-> Revisão 3.2.0.564.03: Ao alterar a tabela de preços durante um pedido, a confirmação aparece somente se o preço de algum item mudar. Aplicar a todos os itens atualiza os preços do pedido. Manter preços atuais usa a nova tabela para os próximos itens. Em Anúncios em marketplaces → Avisos, use Conferir anúncio para um código identificado ou Conferir conta para abrir a lista filtrada.
-
-> Revisão 3.2.0.564.02: Sem impacto operacional. Alinhamento do valor de Primeiro vencimento (dias) em Vendas e Serviços.
-
-> Revisão 3.2.0.564.01: Em Vendas e Serviços → Ajustes → Pagamentos, escolha de 1 a 10 em Parcelas padrão. O valor preenche novos pedidos e ordens de serviço.
-
-> Revisão 3.2.0.564: Em Vendas e Serviços → Ajustes → Pagamentos, adicione uma forma ou altere sua chave e salve. Novos pedidos usam as formas ativas. Filtros também encontram formas inativas usadas no histórico. Consignado fica sem parcelas e vencimento.
+> Revisão 3.2.0.564: Em Vendas e Serviços → Ajustes → Pagamentos, adicione ou ative formas por empresa e salve. Novos pedidos usam as formas ativas e os filtros incluem valores do histórico. Consignado fica sem parcelas e vencimento. Parcelas padrão oferece de 1 a 10. Ao trocar a tabela de preços durante o pedido, confirme a atualização dos itens se algum preço mudar. Manter preços atuais aplica a nova tabela somente aos próximos itens. Em Anúncios em marketplaces → Avisos, use Conferir anúncio para um código identificado ou Conferir conta para abrir a lista filtrada.
 
 > Revisão 3.2.0.563: A impressão de pedidos de Vendas e Serviços usa o layout compacto. As orientações para navegar entre módulos e consultar pendências de Marketplaces seguem as revisões anteriores.
 
