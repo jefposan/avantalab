@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.565 -->
+<!-- ava-version: 3.2.0.566 -->
+
+> Revisão 3.2.0.566: Sem impacto operacional na Gestão Mobile. Atualização manual de preços de consignados e tratamento de demoras restritos ao AvantaVendas.
 
 > Revisão 3.2.0.565: Sem impacto operacional na Gestão Mobile. Alteração visual do menu de Custos e Precificação sem impacto operacional neste ambiente.
 

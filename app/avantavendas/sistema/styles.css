@@ -3571,6 +3571,23 @@ html.dark-theme:has(.login-screen) body {
 .relatorio-produtos > summary { flex: 0 0 auto; }
 .relatorio-produtos > .relatorio-conteudo { min-height: 0; max-height: calc(var(--relatorio-produtos-altura,calc(100dvh - 180px)) - var(--relatorio-produtos-header,48px) - 2px); overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
 .relatorio-produtos > .relatorio-conteudo:focus-visible { outline: 2px solid #1687d9; outline-offset: -2px; }
+.order-editing-backdrop .sheet-header:has(.consignment-price-refresh) { align-items: center; gap: 8px; }
+.order-editing-backdrop .sheet-header:has(.consignment-price-refresh) > div { flex: 1; min-width: 0; }
+.order-editing-backdrop .sheet-header .consignment-price-refresh { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 6px 10px; border: 1px solid rgba(255,255,255,.55); border-radius: 12px; background: rgba(255,255,255,.16); color: #fff; font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.consignment-price-refresh .svg-icon { display: block; width: 18px; height: 18px; }
+.consignment-price-refresh:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.consignment-price-refresh:disabled { opacity: .7; }
+.consignment-price-confirmation .primary { color: #fff; background: #8450ad; }
+.consignment-price-confirmation .sheet { max-height: calc(100dvh - 36px - var(--vendas-safe-top, 0px) - var(--vendas-safe-bottom, 0px)); overflow-y: auto; }
+.consignment-price-confirmation .access-validation-icon { color: #65318a; background: #f1e8f8; }
+.consignment-price-confirmation .access-validation-dialog { gap: 12px; }
+@media (max-width: 360px) {
+  .order-editing-backdrop .sheet-header:has(.consignment-price-refresh) { flex-wrap: wrap; }
+  .order-editing-backdrop .sheet-header:has(.consignment-price-refresh) > div { flex-basis: calc(100% - 56px); order: 0; }
+  .order-editing-backdrop .sheet-header:has(.consignment-price-refresh) .close { order: 1; }
+  .order-editing-backdrop .sheet-header .consignment-price-refresh { order: 2; margin-left: auto; }
+}
+
 /* Mesma paleta do comprovante e da visualização, somente no rascunho consignado. */
 .consignment-transaction-backdrop .transaction-type-switch button.active,
 .consignment-transaction-backdrop .discount-mode button.active { color: #fff; background: var(--consignment-accent); box-shadow: 0 5px 12px color-mix(in srgb, var(--consignment-accent) 22%, transparent); }

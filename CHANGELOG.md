@@ -1,3 +1,12 @@
+# 3.2.0.566 — AvantaVendas: atualizar preços de consignados sob confirmação e corrigir avisos de leitura
+
+## 3.2.0.566-av216 - Atualização manual no consignado e avisos contextuais
+
+- Botão Atualizar preços no cabeçalho da edição do consignado ativo. Consulta fresca do catálogo da conta, comparação em centavos e confirmação; sem diferenças, pop-up Sem preços para atualizar.
+- Muda somente preços de itens não bonificados no rascunho. Salvar pedido continua sendo a única gravação; cancelar descarta. Preserva quantidades, descontos, data, registro de inclusão, vendas anteriores e comprovantes. Correspondência por ID, SKU único ou nome único quando sem SKU; casos ausentes/ambíguos/sem preço válido são informados e mantidos.
+- Leituras de segundo plano com falha temporária preservam a tela, sinalizam atualização pendente e tentam novamente. Erros de consultas substituídas não contaminam a atual; timers são limpos. Acesso inicial e falhas reais de autorização/gravação mantêm avisos.
+- Sem migração, alteração de RLS ou publicação nesta etapa. Gestão Web/Mobile preservadas.
+
 # 3.2.0.565 — Vendas e Serviços e Custos e Precificação: busca de clientes, controle de estoque e menu lateral fixo
 
 - Antecipa a consulta de clientes com páginas maiores e prioridade baixa. O seletor do pedido indica a espera, preserva o termo digitado e permite tentar novamente se a consulta falhar.

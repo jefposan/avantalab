@@ -1,11 +1,7 @@
 {
-  "baseDeploymentId": "dpl_FQ1HtERwoRRiMb9NsWdPMfmQvU7i",
-  "version": "3.2.0.565",
-  "scope": "Vendas e Serviços e Custos e Precificação: busca de clientes, controle de estoque e menu lateral fixo",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261127223000_vendas_controle_estoque_runtime.sql",
-      "sha256": "dcbcfc77ba71eb981db9e56a71467238d35b93336dbb40becaf89e34650ebfb5"
-    }
-  ]
+  "baseDeploymentId": null,
+  "version": "3.2.0.566",
+  "scope": "AvantaVendas: atualização manual de preços do consignado e avisos de leitura em segundo plano",
+  "migrations": [],
+  "releaseStatus": "implementado localmente; não publicado; reconferir main, versão e produção antes de enviar"
 }

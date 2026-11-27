@@ -194,6 +194,7 @@ let retomadaVendasPendente = null;
 let timerRetomadaVendas = null;
 let ultimaAtualizacaoRetomadaVendas = 0;
 let sincronizacaoRetomadaAguardandoTela = false;
+let contaLeituraPendenteVendas = '';
 let complementosAcessoVendasPendente = null;
 let ultimaAtualizacaoComplementosVendas = 0;
 const CONTEXTO_RETOMADA_VENDAS_PREFIXO = 'avantalab.vendas_mobile.retomada.v1.';
@@ -1592,7 +1593,10 @@ function avisoRedeOfflineVendas() {
 }
 
 function botaoPendenciasSincronizacaoVendas() {
-  if (!quantidadePendenciasSincronizacaoVendas) return '';
+  if (!quantidadePendenciasSincronizacaoVendas) {
+    if (!contaLeituraPendenteVendas || contaLeituraPendenteVendas !== contaVendasDoContextoAtual()) return '';
+    return `<span class="sync-pending-header-button" role="status" aria-label="Atualização dos dados pendente. Os dados anteriores estão preservados." title="Atualização dos dados pendente — dados anteriores preservados">${svgIconEstavel('clock')}</span>`;
+  }
   const quantidade = quantidadePendenciasSincronizacaoVendas;
   const rotulo = `${quantidade} alteração${quantidade === 1 ? '' : 'ões'} aguardando sincronização`;
   return `<button type="button" class="sync-pending-header-button" onclick="abrirPendenciasSincronizacaoVendas()" aria-label="${rotulo}" title="${rotulo}">${svgIconEstavel('database')}<i>${quantidade}</i></button>`;
@@ -4363,10 +4367,11 @@ async function reenviarPendenciasVendas() {
 }
 
 function comLimiteDeTempo(promessa, mensagem = 'A conexão com o AvantaLab demorou mais que o esperado. Tente novamente.', limiteMs = 15000) {
+  let timer;
   return Promise.race([
     promessa,
-    new Promise((_, rejeitar) => window.setTimeout(() => rejeitar(new Error(mensagem)), limiteMs)),
-  ]);
+    new Promise((_, rejeitar) => { timer = window.setTimeout(() => rejeitar(Object.assign(new Error(mensagem), { code: 'AVANTA_TIMEOUT' })), limiteMs); }),
+  ]).finally(() => window.clearTimeout(timer));
 }
 
 function contaVendasDoContextoAtual() {
@@ -4422,6 +4427,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
   const revisaoContaAoIniciar = revisaoContaVendasAtiva;
   const contaAoIniciar = contaVendasDoContextoAtual();
   const requisicaoAtual = ++requisicaoCarregamentoBackendVendas;
+  let erroDesteCarregamento = '';
   carregandoBackend = mostrarCarregamento;
   if (mostrarCarregamento) render();
   try {
@@ -4500,13 +4506,23 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       await window.VendasDb.assinarAtualizacoesCatalogo?.(agendarAtualizacaoCatalogoPublicado, dados.user);
       if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
       await salvarCacheVendas();
+      if (requisicaoAtual !== requisicaoCarregamentoBackendVendas || !contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaDaResposta)) return;
       ultimaAtualizacaoRetomadaVendas = Date.now();
+      contaLeituraPendenteVendas = '';
     }
   } catch (error) {
-    if (!contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) return;
+    if (requisicaoAtual !== requisicaoCarregamentoBackendVendas || !contextoContaVendasPermaneceAtual(revisaoContaAoIniciar, contaAoIniciar)) return;
     console.error(error);
+    if (retomada && state.autenticado && !erroSessaoExpiradaVendas(error)
+      && ![401, 403].includes(Number(error?.status)) && erroTemporarioPersistencia(error)) {
+      sincronizacaoRetomadaAguardandoTela = true;
+      contaLeituraPendenteVendas = contaAoIniciar;
+      atualizarAcoesCabecalhoSistemaVendas();
+      agendarTentativaRedeVendas();
+      return; // Falha de leitura em segundo plano não é falha de lançamento.
+    }
     if (!preservarTelaAtual) state.autenticado = false;
-    state.erroBackend = traduzErro(error);
+    erroDesteCarregamento = traduzErro(error);
   } finally {
     if (requisicaoAtual !== requisicaoCarregamentoBackendVendas) return;
     carregandoBackend = false;
@@ -4517,10 +4533,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
     if (!retomada || !state.autenticado || !state.acessoVendas || state.premiumVendasBloqueado || state.moduloVendasAtivo === false || podeAplicarDadosRetomadaVendas()) render();
     else sincronizacaoRetomadaAguardandoTela = true;
     if (!manterPreparacaoAteRecursos) liberarAlturaPreparacao();
-    if (state.erroBackend) {
-      if (!retomada) toast(state.erroBackend, { tipo: 'erro' });
-      state.erroBackend = '';
-    }
+    if (erroDesteCarregamento) toast(erroDesteCarregamento, { tipo: 'erro' });
   }
 }
 
@@ -4836,7 +4849,7 @@ async function atualizarVinculoAprovadoAutomaticamente() {
         render();
       }
     } else {
-      await carregarDadosBackend(false, false, true);
+      await carregarDadosBackend(false, false, true, true);
     }
     const empresaAtualId = state.vinculoComercialAtivo?.empresa_id || '';
     if (state.autenticado && empresaAtualId && (forcarAtualizacao || aguardavaAprovacao || empresaAtualId !== empresaAnteriorId)) {
@@ -7911,15 +7924,47 @@ function abrirAvisoUsuarioContaVendasNaoEncontrado() {
   abrirAvisoSobreSheetVendas('Usuário não encontrado', 'Confira o email/usuário e tente novamente.', 'contaVendasUsuarioEmail');
 }
 
-function abrirAvisoSobreSheetVendas(titulo, mensagem, campoId = '') {
+function abrirAvisoSobreSheetVendas(titulo, mensagem, campoId = '', opcoes = {}) {
   if (document.getElementById('salesSheetAlertBackdrop')) return;
   const wrap = document.createElement('div');
   wrap.id = 'salesSheetAlertBackdrop';
   wrap.className = 'account-user-alert-backdrop';
   wrap.__campoRetorno = campoId;
+  wrap.__focoRetorno = document.activeElement;
   wrap.innerHTML = `<section class="sheet account-user-alert-card"><div class="access-validation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="salesSheetAlertTitle" aria-describedby="salesSheetAlertMessage"><div class="access-validation-icon" aria-hidden="true">${svgIcon('warning')}</div><h2 id="salesSheetAlertTitle">${escapeHtml(titulo)}</h2><p id="salesSheetAlertMessage" class="account-user-alert-instruction">${escapeHtml(mensagem)}</p><button id="salesSheetAlertBack" type="button" class="primary" onclick="fecharAvisoSobreSheetVendas()">Voltar</button></div></section>`;
   document.body.appendChild(wrap);
-  requestAnimationFrame(() => document.getElementById('salesSheetAlertBack')?.focus());
+  if (opcoes.confirmar) {
+    wrap.classList.add('consignment-price-confirmation');
+    const voltar = wrap.querySelector('#salesSheetAlertBack');
+    voltar.textContent = 'Cancelar';
+    const confirmar = document.createElement('button');
+    confirmar.type = 'button';
+    confirmar.className = 'primary';
+    confirmar.textContent = 'Atualizar preços';
+    confirmar.addEventListener('click', () => {
+      fecharAvisoSobreSheetVendas();
+      opcoes.confirmar();
+    });
+    voltar.before(confirmar);
+  }
+  if (opcoes.icone) {
+    wrap.querySelector('.access-validation-icon').innerHTML = svgIconEstavel(opcoes.icone);
+    if (opcoes.icone === 'rotate-ccw') wrap.classList.add('consignment-price-confirmation');
+  }
+  wrap.__sheetOrigem = document.getElementById('sheetBackdrop');
+  wrap.__inertAnterior = wrap.__sheetOrigem?.inert || false;
+  if (wrap.__sheetOrigem) wrap.__sheetOrigem.inert = true;
+  wrap.addEventListener('click', (event) => { if (event.target === wrap) fecharAvisoSobreSheetVendas(); });
+  wrap.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); fecharAvisoSobreSheetVendas(); }
+    if (event.key === 'Tab') {
+      const botoes = [...wrap.querySelectorAll('button:not(:disabled)')];
+      const indice = botoes.indexOf(document.activeElement);
+      event.preventDefault();
+      botoes[(indice + (event.shiftKey ? -1 : 1) + botoes.length) % botoes.length]?.focus();
+    }
+  });
+  document.getElementById('salesSheetAlertBack')?.focus();
 }
 
 function fecharAvisoUsuarioContaVendasNaoEncontrado() {
@@ -7929,9 +7974,11 @@ function fecharAvisoUsuarioContaVendasNaoEncontrado() {
 function fecharAvisoSobreSheetVendas() {
   const aviso = document.getElementById('salesSheetAlertBackdrop');
   const campoId = aviso?.__campoRetorno || '';
+  if (aviso?.__sheetOrigem?.isConnected) aviso.__sheetOrigem.inert = aviso.__inertAnterior;
+  const foco = aviso?.__focoRetorno;
   aviso?.remove();
-  if (!campoId) return;
-  requestAnimationFrame(() => document.getElementById(campoId)?.focus({ preventScroll: true }));
+  if (!campoId) { if (foco?.isConnected) foco.focus({ preventScroll: true }); return; }
+  document.getElementById(campoId)?.focus({ preventScroll: true });
 }
 
 async function adicionarUsuarioContaVendas() {
@@ -9200,7 +9247,7 @@ function mostrarCardPedidoCliente() {
     ? rascunho.itens.map((item, indice) => `<article id="pedidoItemRascunho${indice}" class="order-draft-item ${item.bonificado ? 'order-draft-bonus' : ''}"><div class="order-draft-copy"><b>${escapeHtml(item.produto_nome)}</b><small><span id="pedidoItemResumo${indice}">${item.quantidade} × ${moeda(item.preco)}</span> ${item.bonificado ? '<em>Bonificado</em>' : ''}</small></div><div class="order-draft-quantity"><button type="button" onclick="ajustarItemPedidoCliente(${indice},-1)" aria-label="Diminuir quantidade de ${escapeAttr(item.produto_nome)}">−</button><strong id="pedidoItemQuantidade${indice}">${item.quantidade}</strong><button type="button" onclick="ajustarItemPedidoCliente(${indice},1)" aria-label="Aumentar quantidade de ${escapeAttr(item.produto_nome)}">+</button></div><strong class="order-draft-total" id="pedidoItemTotal${indice}">${item.bonificado ? moeda(0) : moeda(item.quantidade * item.preco)}</strong><button type="button" class="order-draft-remove" onclick="removerItemPedidoCliente(${indice})" aria-label="Excluir ${escapeAttr(item.produto_nome)}">×</button></article>`).join('')
     : '<p class="transaction-empty">Nenhum item inserido.</p>';
   sheet(`
-    <div class="sheet-header"><div><h2>${rascunho.editandoId ? 'Editar pedido' : 'Novo pedido'}</h2><p class="muted small">${rascunho.permitirSelecaoCliente ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button type="button" class="close" onclick="${rascunho.editandoId ? `cancelarEdicaoPedido('${rascunho.editandoId}')` : 'fecharSheet(event)'}">×</button></div>
+    <div class="sheet-header"><div><h2>${rascunho.editandoId ? 'Editar pedido' : 'Novo pedido'}</h2><p class="muted small">${rascunho.permitirSelecaoCliente ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div>${podeAtualizarPrecosConsignado(rascunho) ? `<button id="atualizarPrecosConsignadoBotao" type="button" class="consignment-price-refresh" onclick="atualizarPrecosConsignado()">${svgIconEstavel('rotate-ccw')}<span>Atualizar preços</span></button>` : ''}<button type="button" class="close" onclick="${rascunho.editandoId ? `cancelarEdicaoPedido('${rascunho.editandoId}')` : 'fecharSheet(event)'}">×</button></div>
     <div class="order-transaction-layout">
       <div class="order-transaction-fixed">
         ${rascunho.permitirSelecaoCliente ? campoBuscaClienteLancamento('pedido', rascunho.clienteId, rascunho.clienteBusca) : ''}
@@ -9225,6 +9272,85 @@ function mostrarCardPedidoCliente() {
     <footer class="client-transaction-footer ${rascunho.editandoId ? 'order-edit-footer' : ''}">${rascunho.editandoId ? `<button type="button" class="ghost" onclick="cancelarEdicaoPedido('${rascunho.editandoId}')">Cancelar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${rascunho.editandoId}')">Excluir</button>` : ''}<button id="finalizarPedidoClienteBotao" type="button" class="primary transaction-confirm-button" onclick="finalizarPedidoCliente()">${rascunho.editandoId ? 'Salvar pedido' : 'Finalizar pedido'} <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b></button></footer>
   `, `sheet-backdrop-centered client-transaction-backdrop order-transaction-backdrop${rascunho.tipo === 'consignado' ? ' consignment-transaction-backdrop' : ''}${rascunho.editandoId ? ' order-editing-backdrop' : ''}`);
   if (rascunho.permitirSelecaoCliente && !rascunho.clienteId) focarBuscaClienteLancamento('pedido');
+}
+
+function podeAtualizarPrecosConsignado(rascunho) {
+  if (!rascunho) return false;
+  const original = state.vendas.find((pedido) => pedido.id === rascunho?.editandoId && pedido.cliente_id === rascunho.clienteId);
+  return Boolean(rascunho?.tipo === 'consignado' && original && pedidoConsignadoAtivo(original));
+}
+
+// Compara sem alterar itens, cadastro ou histórico. ID é prioritário; substitutos
+// só são aceitos por SKU único, ou nome único quando não existe SKU no item.
+function compararPrecosConsignado(itens, produtos, contaId) {
+  const ativos = produtos.filter((produto) => produto.ativo !== false && (!produto.conta_id || String(produto.conta_id) === contaId));
+  const chave = (valor) => normalizar(String(valor || '')).trim().replace(/\s+/g, ' ');
+  const alteracoes = [], pendentes = [];
+  itens.forEach((item, indice) => {
+    if (item.bonificado) return;
+    let candidatos = item.produto_id ? ativos.filter((produto) => produto.id === item.produto_id) : [];
+    if (!candidatos.length) {
+      const sku = chave(item.produto_sku);
+      const nome = chave(item.produto_nome);
+      candidatos = sku ? ativos.filter((produto) => chave(produto.sku) === sku)
+        : nome ? ativos.filter((produto) => chave(produto.nome) === nome) : [];
+    }
+    const produto = candidatos.length === 1 ? candidatos[0] : null;
+    const preco = produto?.preco;
+    if (preco == null || preco === '' || !Number.isFinite(Number(preco)) || Number(preco) < 0) {
+      pendentes.push(item.produto_nome || 'Produto sem identificação');
+      return;
+    }
+    const novoPreco = Math.round(Number(preco) * 100) / 100;
+    if (Math.round(Number(item.preco) * 100) !== Math.round(novoPreco * 100)) alteracoes.push({ indice, preco: novoPreco });
+  });
+  return { alteracoes, pendentes };
+}
+
+async function atualizarPrecosConsignado() {
+  const rascunho = pedidoClienteRascunho;
+  if (!podeAtualizarPrecosConsignado(rascunho) || pedidoClienteSalvando || rascunho.atualizandoPrecos) return;
+  const botao = document.getElementById('atualizarPrecosConsignadoBotao');
+  const sheetOrigem = document.getElementById('sheetBackdrop');
+  const revisao = revisaoContaVendasAtiva;
+  const contaId = contaVendasDoContextoAtual();
+  const itensAntes = JSON.stringify(rascunho.itens);
+  const contextoValido = () => pedidoClienteRascunho === rascunho && sheetOrigem?.isConnected
+    && contextoContaVendasPermaneceAtual(revisao, contaId) && podeAtualizarPrecosConsignado(rascunho)
+    && JSON.stringify(rascunho.itens) === itensAntes && !pedidoClienteSalvando;
+  rascunho.atualizandoPrecos = true;
+  if (botao) { botao.disabled = true; botao.setAttribute('aria-busy', 'true'); botao.querySelector('span').textContent = 'Conferindo…'; }
+  try {
+    if (!backendAtivo || !navigator.onLine || !window.VendasDb?.listarCatalogoVendas) throw new Error('Conecte-se à internet para consultar os preços atuais.');
+    const catalogo = await comLimiteDeTempo(window.VendasDb.listarCatalogoVendas(), 'Não foi possível consultar os preços atuais. Tente novamente.');
+    if (!contextoValido()) return;
+    if (!Array.isArray(catalogo?.produtos)) throw new Error('A tabela de preços não pôde ser conferida. Tente novamente.');
+    const plano = compararPrecosConsignado(rascunho.itens, catalogo.produtos, contaId);
+    const pendencias = plano.pendentes.length ? ` Produtos sem correspondência única ou sem preço válido mantêm o valor anterior: ${plano.pendentes.join(', ')}.` : '';
+    if (!plano.alteracoes.length) {
+      abrirAvisoSobreSheetVendas('Sem preços para atualizar', `Nenhum preço diferente foi encontrado nos produtos conferidos.${pendencias}`, 'atualizarPrecosConsignadoBotao', { icone: 'rotate-ccw' });
+      return;
+    }
+    abrirAvisoSobreSheetVendas('Confirma a atualização de preços?', `Atualizar os preços deste consignado para a tabela atual? ${plano.alteracoes.length} produto(s) com preços diferentes. As alterações só serão gravadas em Salvar pedido.${pendencias}`, 'atualizarPrecosConsignadoBotao', {
+      icone: 'rotate-ccw',
+      confirmar: () => {
+        if (!contextoValido()) return;
+        plano.alteracoes.forEach(({ indice, preco }) => { rascunho.itens[indice].preco = preco; });
+        // Mantém data, quantidades, bonificações e desconto do formulário.
+        rascunho.data = valor('pedidoClienteData') || rascunho.data;
+        const scroll = sheetOrigem.querySelector('.order-draft-scroll')?.scrollTop || 0;
+        mostrarCardPedidoCliente();
+        const lista = document.querySelector('#sheetBackdrop .order-draft-scroll');
+        if (lista) lista.scrollTop = scroll;
+        document.getElementById('atualizarPrecosConsignadoBotao')?.focus({ preventScroll: true });
+      },
+    });
+  } catch (error) {
+    if (contextoValido()) abrirAvisoSobreSheetVendas('Não foi possível consultar os preços', traduzErro(error), 'atualizarPrecosConsignadoBotao');
+  } finally {
+    rascunho.atualizandoPrecos = false;
+    if (botao?.isConnected) { botao.disabled = false; botao.removeAttribute('aria-busy'); botao.querySelector('span').textContent = 'Atualizar preços'; }
+  }
 }
 
 function selecionarTipoPedidoCliente(tipo) {
@@ -9501,6 +9627,7 @@ function atualizarTotaisPedidoClienteNoDom() {
 async function finalizarPedidoCliente() {
   const rascunho = pedidoClienteRascunho;
   if (!rascunho || pedidoClienteSalvando) return;
+  if (rascunho.atualizandoPrecos) return;
   if (!state.clientes.some((cliente) => cliente.id === rascunho?.clienteId)) { toast('Selecione o cliente do pedido.'); return; }
   if (!rascunho?.itens.length) { toast('Insira ao menos um item no pedido.'); return; }
   const totais = totaisPedidoClienteRascunho();
@@ -12113,6 +12240,7 @@ function sheet(html, backdropClass = '') {
 }
 
 function fecharSheet(evento = null, descartarRetorno = false) {
+  if (document.getElementById('salesSheetAlertBackdrop')) fecharAvisoSobreSheetVendas();
   evento?.preventDefault?.();
   evento?.stopPropagation?.();
   const sheetAtual = document.getElementById('sheetBackdrop');
@@ -12425,6 +12553,7 @@ window.inserirItemPedidoCliente = inserirItemPedidoCliente;
 window.removerItemPedidoCliente = removerItemPedidoCliente;
 window.atualizarDescontoPedidoCliente = atualizarDescontoPedidoCliente;
 window.finalizarPedidoCliente = finalizarPedidoCliente;
+window.atualizarPrecosConsignado = atualizarPrecosConsignado;
 window.abrirPagamentoCliente = abrirPagamentoCliente;
 window.atualizarResumoPagamentoCliente = atualizarResumoPagamentoCliente;
 window.confirmarPagamentoCliente = confirmarPagamentoCliente;

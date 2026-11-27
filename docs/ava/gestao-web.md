@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.565 -->
+<!-- ava-version: 3.2.0.566 -->
+
+> Revisão 3.2.0.566: Sem impacto operacional na Gestão Web. Atualização manual de preços de consignados e tratamento de demoras restritos ao AvantaVendas.
 
 > Revisão 3.2.0.565: Ao digitar no campo Cliente de um pedido antes de a lista chegar, aguarde o aviso Carregando clientes. A busca preserva o texto e mostra os resultados quando a lista chega. Em caso de falha, use Tentar novamente. Em Vendas e Serviços → Ajustes → Estoque, a chave Controlar estoque salva a configuração do perfil e informa se a gravação falhar. O menu de Custos e Precificação fica fixo durante a rolagem em telas largas.
 

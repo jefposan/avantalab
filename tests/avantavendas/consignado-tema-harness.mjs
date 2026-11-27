@@ -3,13 +3,13 @@ import ts from 'typescript';
 
 const fonte = readFileSync(new URL('../../app/avantavendas/sistema/app.js', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('app.js', fonte, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
-const nomes = ['mostrarCardPedidoCliente', 'selecionarTipoPedidoCliente', 'totaisPedidoClienteRascunho', 'abrirConsignadoCliente'];
+const nomes = ['mostrarCardPedidoCliente', 'podeAtualizarPrecosConsignado', 'pedidoConsignadoAtivo', 'pedidoEhConsignado', 'selecionarTipoPedidoCliente', 'totaisPedidoClienteRascunho', 'abrirConsignadoCliente'];
 const funcoes = ast.statements.filter(s => ts.isFunctionDeclaration(s) && nomes.includes(s.name?.text));
 if (funcoes.length !== nomes.length) throw new Error('Função do formulário não localizada.');
 
 // Mesmas funções e marcação do aplicativo; somente dados e persistência são fictícios.
 export const roteiroTemaConsignado = `
-var state = { clientes: [{ id: 'cliente-qa', nome: 'Cliente de teste' }] };
+var state = { clientes: [{ id: 'cliente-qa', nome: 'Cliente de teste' }], vendas: [] };
 var pedidoClienteRascunho;
 var ultimaTela;
 function escapeHtml(v) { return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
@@ -22,6 +22,8 @@ function campoBuscaClienteLancamento() { return ''; }
 function focarBuscaClienteLancamento() {}
 function dataComprovante(data) { return data; }
 function svgIcon() { return ''; }
+function svgIconEstavel() { return ''; }
+function normalizar(v) { return String(v || '').toLowerCase(); }
 function sheet(html, classes) { ultimaTela = { html, classes }; }
 ${funcoes.map(s => s.getText(ast)).join('\n')}
 function prepararPedidoQa(tipo = 'venda', editando = false, quantidadeItens = 2) {
