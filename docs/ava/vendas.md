@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.553 -->
+<!-- ava-version: 3.2.0.554 -->
+
+> Revisão 3.2.0.554: Sem impacto operacional nos aplicativos independentes; ajuste do cabeçalho restrito à Gestão Web.
 
 > Revisão 3.2.0.553 — Gestão Web: trocar o mês mantém Receitas ou Despesas expandida. Sair dos lançamentos redefine o foco para Despesas na próxima abertura; sem mudança própria nos aplicativos nativos e em Vendas.
 
@@ -6333,3 +6335,5 @@ Revisão 3.2.0.480: preservação do telefone do emitente no DANFE; sem impacto 
 Revisão 3.2.0.481: download do DANFE validado pelo ambiente da emissão, independente do armazenamento; sem impacto operacional adicional.
 
 Revisão 3.2.0.482: geração do DANFE não invalida o link temporário pelo tempo de processamento; sem impacto operacional adicional.
+
+- Revisão 3.2.0.554: Sem impacto operacional no AvantaVendas; regra de confirmação alterada apenas na Gestão Financeira Web/Mobile.

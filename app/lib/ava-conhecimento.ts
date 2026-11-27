@@ -3194,3 +3194,20 @@ GUIAS['gestao-web'] += '\nVenda Avantalab: entrada automática de Vendas e Servi
 // Laboratório 3.2.0.553: a projeção de Venda Avantalab é visível na Gestão local, com dados reais em leitura, sem gravar entradas de produção.
 
 GUIAS['gestao-web'] += '\nGestão Web: a troca de mês preserva a área Receitas/Despesas expandida. Sair dos lançamentos restaura Despesas para a próxima abertura de mês.\n';
+
+// Revisão 3.2.0.554: Gestão Web mantém cabeçalho fixo no topo e espaço correspondente; conteúdo abaixo rola, sem alteração das ações.
+
+// Revisão 3.2.0.554: resumos mensais compactados visualmente; sem impacto operacional.
+
+// Revisão 3.2.0.554: seletor mensal e Despesas fixas compactados visualmente, sem impacto operacional.
+
+// Revisão 3.2.0.554: seletor mensal com largura estável, sem impacto operacional.
+
+// Revisão 3.2.0.554: seletor mensal com nome completo e largura estável.
+
+// Revisão 3.2.0.554: setas mensais mais estreitas; sem impacto operacional.
+
+// Revisão 3.2.0.554: área central mensal refinada visualmente, sem impacto operacional.
+
+GUIAS['gestao-web'] += ' Despesas programadas, inclusive fixas e parcelas, ficam previstas até confirmação explícita; vencer só gera pendência. Salvar edição não confirma. Não orientar baixa automática por data.';
+GUIAS['gestao-mobile'] += ' Despesas programadas, inclusive fixas e parcelas, permanecem previstas até confirmar; vencer só gera pendência.';

@@ -30,6 +30,7 @@ test('inclusão/exclusão atômicas: parcelas, recibos, concorrência, totais e 
     await db.exec(readFileSync('supabase/migrations/20261020190000_edicoes_financeiras_idempotentes.sql','utf8'));
     const antes=(await db.query('select to_jsonb(l) r from lancamentos l')).rows;
     await db.exec(readFileSync('supabase/migrations/20261020210000_movimentos_financeiros_mobile.sql','utf8'));
+    await db.exec(readFileSync('supabase/migrations/20261127140000_despesas_parceladas_confirmacao.sql','utf8'));
     const depois=(await db.query('select to_jsonb(l)-\'operacao_mobile_id\'-\'operacao_mobile_indice\' r from lancamentos l')).rows;
     assert.deepEqual(depois,antes);
     let n=0;const id=()=>`10000000-0000-4000-8000-${String(++n).padStart(12,'0')}`;
@@ -38,6 +39,7 @@ test('inclusão/exclusão atômicas: parcelas, recibos, concorrência, totais e 
     await assert.rejects(enviar(id(),'despesa','incluir',despesa),/não autorizado/);
     await db.query("select set_config('request.user',$1,false)",[usuario]);
     const op=id(),r=await enviar(op,'despesa','incluir',despesa);
+    assert.ok(r.registros.every(l=>l.status==='prevista'&&l.tipo_obs==='parcela'),'parcelas não se efetivam automaticamente no servidor');
     assert.deepEqual(r.registros.map(l=>[l.ano,l.mes,l.dia,l.descricao]),[[2026,'DEZEMBRO',31,'Plano (1/3)'],[2027,'JANEIRO',31,'Plano (2/3)'],[2027,'FEVEREIRO',28,'Plano (3/3)']]);
     assert.deepEqual(await enviar(op,'despesa','incluir',despesa),r);
     assert.equal((await db.query('select count(*)::int n from lancamentos')).rows[0].n,4);

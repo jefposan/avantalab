@@ -1,5 +1,5 @@
 'use client';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import Tooltip from './Tooltip';
 
 interface Aviso {
@@ -101,6 +101,7 @@ export default function AppHeader({
   // Indicador deslizante do menu (a "pilula" que escorrega ate a aba ativa)
   const navRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const [alturaHeader, setAlturaHeader] = useState(0);
   const seletorCentroCustoRef = useRef<HTMLDivElement>(null);
   const [indicador, setIndicador] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [listaCentroCustoAberta, setListaCentroCustoAberta] = useState(false);
@@ -124,11 +125,15 @@ export default function AppHeader({
     return () => window.removeEventListener('resize', calcular);
   }, [abaAtiva]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const header = headerRef.current;
-    if (!header || !onHeaderHeightChange) return;
+    if (!header) return;
 
-    const atualizarAltura = () => onHeaderHeightChange(Math.ceil(header.getBoundingClientRect().height));
+    const atualizarAltura = () => {
+      const altura = Math.ceil(header.getBoundingClientRect().height);
+      setAlturaHeader(altura);
+      onHeaderHeightChange?.(altura);
+    };
     atualizarAltura();
     const observador = new ResizeObserver(atualizarAltura);
     observador.observe(header);
@@ -350,11 +355,13 @@ export default function AppHeader({
         </div>
       )}
 
+      {/* Compensa a altura real do cabeçalho fixo, inclusive após zoom e quebra de linha. */}
+      <div aria-hidden="true" className="print-ocultar shrink-0" style={{ height: alturaHeader }} />
       {/* ── HEADER PRINCIPAL ── */}
       <header
         id={headerId}
         ref={headerRef}
-        className={`print-ocultar ${bgCard} sticky top-0 ${listaCentroCustoAberta ? 'z-[8600]' : 'z-[900]'} w-full max-w-full overflow-visible border-b px-3 py-2 shadow-[0_4px_18px_rgba(15,23,42,0.10)] sm:px-4 lg:px-6 xl:px-8 xl:py-[14px] relative`}
+        className={`print-ocultar ${bgCard} fixed inset-x-0 top-0 ${listaCentroCustoAberta ? 'z-[8600]' : 'z-[900]'} w-full max-w-full overflow-visible border-b px-3 py-2 shadow-[0_4px_18px_rgba(15,23,42,0.10)] sm:px-4 lg:px-6 xl:px-8 xl:py-[14px]`}
         style={{ borderBottomColor: darkMode ? '#334155' : 'transparent', borderBottomWidth: '1px' }}
       >
         <div className="mx-auto flex min-h-[68px] w-full min-w-0 max-w-7xl items-center gap-3 px-0 sm:min-h-[72px] sm:gap-4 xl:min-h-[88px] xl:gap-6 xl:px-8">

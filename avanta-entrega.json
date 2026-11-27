@@ -1,11 +1,11 @@
 {
-  "baseDeploymentId": "dpl_AnC68WiQPicyvp76yioFjMb6wsYt",
-  "version": "3.2.0.553",
-  "scope": "Vendas e Gestão: envio automático ao financeiro com entrada protegida e preservação da área expandida ao trocar mês",
+  "baseDeploymentId": "dpl_2WcGitPW9UQS9h8rsATcYGNa6bGD",
+  "version": "3.2.0.554",
+  "scope": "Gestão: cabeçalho fixo, faixa mensal compacta e confirmação de despesas programadas",
   "migrations": [
     {
-      "path": "supabase/migrations/20261127040000_vendas_receitas_configuracao.sql",
-      "sha256": "02ef7ad49a452a96db3621e3e193e6ecfb29d8dd847bedc340ce423c2d478048"
+      "path": "supabase/migrations/20261127140000_despesas_parceladas_confirmacao.sql",
+      "sha256": "b4598a52757a12834c7cafc0b0b06bce04956e9b7439cb6d4c480cc4059f200c"
     }
   ]
 }

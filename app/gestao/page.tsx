@@ -300,10 +300,6 @@ function despesaProjetada(
     && (lancamento.status === 'prevista' || dataFutura(ano, mesIndice, lancamento.dia));
 }
 
-// Tipos que pedem confirmacao na data (parcela NAO pede).
-function tipoPedeConfirmacao(tipo: string | null | undefined): boolean {
-  return tipo === 'previsto' || tipo === 'fixa';
-}
 
 type ParcelamentoEditavel = {
   descricaoBase: string;
@@ -4356,7 +4352,6 @@ const solicitarExclusaoAporteCaixinha = (movimento: { id: string; lancamentoId: 
 const despesasAConfirmar = lancamentos.filter(
   (l) =>
     l.status === 'prevista' &&
-    tipoPedeConfirmacao(l.tipo) &&
     !dataFutura(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
 );
 
@@ -5283,10 +5278,10 @@ const executarParcelamento = async () => {
 
     const ehFuturo = dataFutura(anoParc, idxMes, parseInt(formDia));
     const ehParcelado = totalParcelas > 1;
-    // Parcela: valor e data definidos -> nao pede confirmacao (so badge).
+    // Parcelas programadas permanecem previstas até a confirmação explícita.
     // Avulso futuro: "previsto" -> pede confirmacao na data.
     const tipoLanc = ehParcelado ? 'parcela' : (ehFuturo ? 'previsto' : null);
-    const statusLanc = (!ehParcelado && ehFuturo) ? 'prevista' : null;
+    const statusLanc = (ehParcelado || ehFuturo) ? 'prevista' : null;
 
     const salvo = await salvarLancamento({
       empresaId: empresaId as string,
@@ -12004,11 +11999,11 @@ if (validacaoTelefoneObrigatoria) {
     {/* ESQUERDA: MÊS COM SETAS + DESPESAS FIXAS */}
     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
       {/* MÊS SELECIONADO */}
-      <div className="flex min-w-0 flex-col items-center gap-1">
+      <div className="flex max-w-full min-w-0 shrink-0 flex-col items-center gap-0.5">
         <span className="text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">
           Mês do lançamento
         </span>
-        <div className="flex min-w-0 items-stretch overflow-hidden rounded-xl bg-white shadow-[0_4px_14px_rgba(0,0,0,0.18)]">
+        <div className="flex min-h-11 w-[304px] max-w-full min-w-0 shrink-0 items-stretch overflow-hidden rounded-xl sm:min-h-9 bg-white shadow-[0_4px_14px_rgba(0,0,0,0.18)]">
           <button
             type="button"
             onClick={() => {
@@ -12020,7 +12015,7 @@ if (validacaoTelefoneObrigatoria) {
               }
             }}
             disabled={meses.indexOf(mesAtivo) === 0}
-            className="flex shrink-0 items-center justify-center px-3.5 transition hover:bg-slate-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-25"
+            className="flex shrink-0 items-center justify-center px-2 transition hover:bg-slate-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-25"
             style={{ color: corPrimaria }}
             aria-label="Mês anterior"
           >
@@ -12031,11 +12026,11 @@ if (validacaoTelefoneObrigatoria) {
 
           <div className="w-px shrink-0 bg-slate-200" />
 
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-4 py-2 sm:min-w-[168px]">
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-3 py-1">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} className="h-4 w-4 shrink-0 opacity-70" style={{ color: corPrimaria }}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" />
             </svg>
-            <span className="truncate text-base font-black uppercase tracking-wide sm:text-lg" style={{ color: corPrimaria }}>
+            <span className="shrink-0 whitespace-nowrap text-base font-black uppercase tracking-wide sm:text-lg" style={{ color: corPrimaria }}>
               {mesAtivo}
             </span>
             <span className="shrink-0 text-sm font-bold text-slate-400 sm:text-base">
@@ -12056,7 +12051,7 @@ if (validacaoTelefoneObrigatoria) {
               }
             }}
             disabled={meses.indexOf(mesAtivo) === meses.length - 1}
-            className="flex shrink-0 items-center justify-center px-3.5 transition hover:bg-slate-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-25"
+            className="flex shrink-0 items-center justify-center px-2 transition hover:bg-slate-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-25"
             style={{ color: corPrimaria }}
             aria-label="Próximo mês"
           >
@@ -12069,14 +12064,14 @@ if (validacaoTelefoneObrigatoria) {
 
       {/* DESPESAS FIXAS */}
       <div className="flex flex-wrap items-end justify-center gap-2">
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-0.5">
           <span className="text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">
             Repetem todo mês
           </span>
           <button
             type="button"
             onClick={abrirModalDespesasFixas}
-            className="flex h-9 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-black/15 px-3 text-xs font-black uppercase tracking-wide text-white transition hover:bg-black/25 sm:w-auto cursor-pointer"
+            className="flex h-11 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-black/15 px-3 text-xs font-black uppercase tracking-wide text-white transition hover:bg-black/25 sm:h-8 sm:w-auto cursor-pointer"
             title="Gerenciar despesas fixas"
           >
             <span>⚙</span>
@@ -12090,16 +12085,16 @@ if (validacaoTelefoneObrigatoria) {
     {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
     <div className="flex min-w-0 max-w-full flex-1 flex-col items-end gap-1.5 overflow-visible">
       <div className="grid w-full max-w-[650px] grid-cols-2 items-stretch justify-end gap-1.5 min-[1180px]:grid-cols-5">
-  <div className="col-span-2 h-10 min-w-0 rounded-md bg-white px-2 py-1 text-left min-[1180px]:col-span-1 shadow-sm border border-white/20">
+  <div className="col-span-2 h-9 min-w-0 rounded-md bg-white px-2 py-1 text-left min-[1180px]:col-span-1 shadow-sm border border-white/20">
   <div className="mb-1 flex items-center justify-between gap-2">
-    <span className="min-w-0 truncate text-[9px] font-bold uppercase text-slate-500">
+    <span className="min-w-0 truncate text-[9px] leading-tight font-bold uppercase text-slate-500">
   {mostrarBarraComparativoDespesas
     ? `Vs. ${mesAnteriorParaAnalise}`
     : 'Vs. mês ant.'}
 </span>
 
     <span
-      className="shrink-0 text-[9px] font-black"
+      className="shrink-0 text-[9px] leading-tight font-black"
       style={{
         color: mostrarBarraComparativoDespesas
           ? corBarraDespesas
@@ -12128,42 +12123,42 @@ if (validacaoTelefoneObrigatoria) {
 </div>
 
   {/* Total Despesas */}
-  <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1.5 text-right shadow-sm border border-white/20">
-    <span className="block truncate text-[9px] font-bold uppercase text-slate-500">
+  <div className="h-9 min-w-0 rounded-md bg-white px-2 py-1 text-right shadow-sm border border-white/20">
+    <span className="block truncate text-[9px] leading-tight font-bold uppercase text-slate-500">
       Total Despesas
     </span>
-    <span className="block truncate text-[10px] font-black text-red-500">
+    <span className="block truncate text-[10px] leading-tight font-black text-red-500">
       {formatarMoeda(totalDespesasMes)}
     </span>
   </div>
 
   {/* Total Faturado */}
-  <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1.5 text-right shadow-sm border border-white/20">
-    <span className="block truncate text-[9px] font-bold uppercase text-slate-500">
+  <div className="h-9 min-w-0 rounded-md bg-white px-2 py-1 text-right shadow-sm border border-white/20">
+    <span className="block truncate text-[9px] leading-tight font-bold uppercase text-slate-500">
       Total faturado
     </span>
-    <span className="block truncate text-[10px] font-black text-emerald-600">
+    <span className="block truncate text-[10px] leading-tight font-black text-emerald-600">
       {formatarMoeda(faturamentoDoMesAtual)}
     </span>
   </div>
   {/* Saldo do Mês */}
-  <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1.5 text-right shadow-sm border border-white/20">
-    <span className="block truncate text-[9px] font-bold uppercase text-slate-500">
+  <div className="h-9 min-w-0 rounded-md bg-white px-2 py-1 text-right shadow-sm border border-white/20">
+    <span className="block truncate text-[9px] leading-tight font-bold uppercase text-slate-500">
       Saldo do Mês
     </span>
     <span
-      className={`block truncate text-[10px] font-black ${
+      className={`block truncate text-[10px] leading-tight font-black ${
         lucroOperacional >= 0 ? 'text-emerald-600' : 'text-red-500'
       }`}
     >
       {formatarMoeda(lucroOperacional)}
     </span>
   </div>
-  <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1.5 text-right shadow-sm border border-white/20">
-    <span className="block truncate text-[9px] font-bold uppercase text-slate-500">
+  <div className="h-9 min-w-0 rounded-md bg-white px-2 py-1 text-right shadow-sm border border-white/20">
+    <span className="block truncate text-[9px] leading-tight font-bold uppercase text-slate-500">
       Previsto
     </span>
-    <span className={`block truncate text-[10px] font-black ${previstoDoMes >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+    <span className={`block truncate text-[10px] leading-tight font-black ${previstoDoMes >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
       {formatarMoeda(previstoDoMes)}
     </span>
   </div>

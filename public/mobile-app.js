@@ -4629,15 +4629,10 @@
     return item && item.status !== 'cancelada' && (item.status === 'prevista' || ehDespesaFutura(mesIndice, item.dia));
   }
 
-  // Tipos que pedem confirmacao na data (parcela NAO pede).
-  function tipoPedeConfirmacao(tipo) {
-    return tipo === 'previsto' || tipo === 'fixa';
-  }
-
   // A partir da data programada, o aviso permanece ate a confirmacao,
   // edicao ou exclusao. Itens vencidos sao apresentados como pendentes.
   function ehDespesaAConfirmar(item) {
-    return item && item.status === 'prevista' && tipoPedeConfirmacao(item.tipo) && !ehDespesaFutura(indiceMes(item.mes), item.dia);
+    return item && item.status === 'prevista' && !ehDespesaFutura(indiceMes(item.mes), item.dia);
   }
 
   // Receita prevista segue a mesma janela diaria do card compartilhado.
@@ -10614,7 +10609,7 @@
       if (!Number.isInteger(totalParcelas) || totalParcelas < 1 || totalParcelas > 120) { setErroLancamentoMobile('Informe até 120 parcelas.'); return; }
       var dados = { ano: periodo.ano, mes: periodo.mes, dia: dia, valor: valor, despesa_nome: nome,
         descricao: formatarDescricao(descricao), centro_custo_id: centroCustoId, parcelas: totalParcelas,
-        prevista: totalParcelas === 1 && dataFutura(periodo.ano, periodo.indice, dia) };
+        prevista: totalParcelas > 1 || dataFutura(periodo.ano, periodo.indice, dia) };
       var projecoes = [];
       for (var p = 0; p < totalParcelas; p++) {
         var ano = periodo.ano + Math.floor((periodo.indice + p) / 12), mes = meses[(periodo.indice + p) % 12];

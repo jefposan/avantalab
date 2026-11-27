@@ -1,3 +1,13 @@
+# 3.2.0.554 — Gestão: cabeçalho fixo, faixa mensal e confirmação de despesas
+
+- Setas laterais do seletor mensal mais estreitas, liberando espaço central sem mudar a largura total.
+- Seletor mensal com largura fixa de 304px, limitada ao espaço disponível em telas pequenas; nome completo do mês sem reticências e sem deslocar setas nem controles.
+- Seletor do mês e Despesas fixas com menor altura visual no desktop e espaçamento menor nos rótulos; alvos de toque mobile preservados.
+- Resumos da faixa mensal compactados de 40px para 36px, mantendo valores, tamanho das fontes e controles do mês.
+- Despesas programadas, inclusive fixas e parcelas, permanecem previstas até confirmação explícita; card de pendências inclui qualquer despesa prevista vencida. Web e Mobile coerentes; migração aditiva do RPC Mobile e sem conversão retroativa de dados realizados.
+- AppHeader ancorado no topo; eliminada a combinação conflitante sticky/relative. Conteúdo reserva a altura real medida do cabeçalho, incluindo redimensionamento e zoom, preservando ações e camadas existentes.
+- Prévia localhost:3000 recebe somente AppHeader; demais alterações locais preservadas. Publicação autorizada pelo responsável.
+
 ## 3.2.0.553 — Vendas e Gestão: integração financeira e navegação mensal
 
 - Ajustes → Integrações → Gestão financeira: chave Enviar para receitas, ativa por padrão. Alterar salva automaticamente por empresa; somente Fechar, sem Bruto/Líquido e sem botão Salvar.

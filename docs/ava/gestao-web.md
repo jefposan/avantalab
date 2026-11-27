@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.553 -->
+<!-- ava-version: 3.2.0.554 -->
+
+> Revisão 3.2.0.554: Cabeçalho da Gestão Web permanece fixo no topo; somente o conteúdo abaixo rola. Espaço do cabeçalho acompanha tamanho de tela e zoom.
 
 > Revisão 3.2.0.553 — Gestão Web: trocar o mês mantém Receitas ou Despesas expandida. Sair dos lançamentos redefine o foco para Despesas na próxima abertura; sem mudança própria nos aplicativos nativos e em Vendas.
 
@@ -6668,3 +6670,17 @@ Revisão 3.2.0.482: geração do DANFE não invalida o link temporário pelo tem
 - Revisão 3.2.0.519: Indicadores do pedido atualizam com o retrato confirmado assim que a transação termina, sem esperar a consulta de Recebimentos. A liberação final continua após sincronizar parcelas. Atualização do catálogo após estoque preserva a interface e evita recarregar todo o perfil.
 
 - Revisão 3.2.0.519: confirmações das etapas do pedido sem os blocos Efeito previsto no estoque e aviso genérico do perfil empresarial; sem alteração nas operações.
+
+- Revisão 3.2.0.554: cards de resumo da faixa mensal com menor altura, sem impacto operacional.
+
+- Revisão 3.2.0.554: seletor de mês e Despesas fixas compactados na faixa mensal; sem mudança das ações.
+
+- Revisão 3.2.0.554: seletor mensal mantém largura ao trocar o mês, sem impacto operacional.
+
+- Revisão 3.2.0.554: largura do seletor mensal ampliada para exibir mês e ano completos, sem reticências.
+
+- Revisão 3.2.0.554: setas laterais do mês compactadas para ampliar a área central; sem impacto operacional.
+
+- Revisão 3.2.0.554: área central mensal refinada com largura fixa menor e menos espaçamento lateral.
+
+- Revisão 3.2.0.554: Despesas fixas e parceladas programadas não são efetivadas pela passagem da data. Permanecem previstas e, ao vencer, pendentes de confirmação até Confirmar na data ou Aceitar hoje. Salvar edição preserva previsão. Lançamentos avulsos atuais informados diretamente continuam sendo registros manuais.
