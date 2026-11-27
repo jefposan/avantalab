@@ -3,7 +3,7 @@
   "migrations": [
     {
       "path": "supabase/migrations/20261127010000_vendas_consignado_saldo_recebivel.sql",
-      "sha256": "360a386773fda6e85882652ab655d18defdd7a41d758334392b7a9d09ef2527e"
+      "sha256": "ddd2e512e9bc65acdfb365194e53ef71c7c4f728fc0bad277c7ec7dab4f6d9d9"
     }
   ],
   "version": "3.2.0.551",
