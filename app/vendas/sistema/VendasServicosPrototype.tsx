@@ -1,4 +1,5 @@
 'use client';
+import {mergeConfirmedReceivables,applyConfirmedOperationPayment,reconcileConfirmedOperationSnapshot} from '../lib/confirmed-receivable-snapshot.mjs';
 import {matchesCommercialListPeriod} from '../lib/commercial-list-period.mjs';
 import BotaoProximoScroll from '@/app/components/BotaoProximoScroll';
 import {orderFinancialStatus} from '../lib/order-financial-status.mjs';
@@ -6139,6 +6140,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   useEffect(()=>{setStockControls({enabled:true,disabledProductIds:[]});setStockNoticesOpen(false);setStockAlertTarget(null);},[managementCatalogBridge?.companyId]);
   const [stockMovementRecords, setStockMovementRecords] = useState<StockMovementRecord[]>(stockMoves);
   const [receivableRecords, setReceivableRecords] = useState<ReceivableRecord[]>(initialReceivables);
+  const confirmedPaymentsRef=useRef(new Map<string,Parameters<typeof applyConfirmedOperationPayment>[1]>());
   const [financialState,setFinancialState]=useState<'loading'|'ready'|'error'>(integratedManagementRuntime?'loading':'ready');
   const [moduleSettings, setModuleSettings] = useState<ModuleSettings>(defaultModuleSettings);
   const [realFiscalEditor,setRealFiscalEditor]=useState<FiscalNoteEditorOptions>();
@@ -6393,6 +6395,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     setStockMovementRecords([]);
     setReceivableRecords([]);
     setFinancialState('loading');
+    confirmedPaymentsRef.current.clear();
     setFiscalDraftRecords([]);
     setAccessBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando permissões na Gestão…' });
     setFiscalRulesBridgeState({ integrated: true, available: false, writable: false, loading: true, message: 'Consultando regras fiscais na Gestão…', configuration: null });
@@ -6587,11 +6590,18 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         if(!receivableSnapshot.ok){setFinancialState('error');setReceivableRecords([]);setToast(receivableSnapshot.message||'Não foi possível carregar os recebimentos do perfil.');return;}
         setFinancialState('ready');
         const eventType=(value:string):ReceivableEvent['type']=>value==='alteracao_condicoes'?'Alteração de pagamento':value==='recebimento'?'Recebimento':value==='estorno_recebimento'?'Estorno de recebimento':value==='estorno_parcela'||value==='cancelamento'?'Estorno da parcela':'Geração';
-        setReceivableRecords(receivableSnapshot.records.map((row:any)=>({
+        const confirmedRecords:ReceivableRecord[]=receivableSnapshot.records.map((row:any)=>({
           id:row.id,operationType:row.operationType,orderDate:row.orderDate,dueDate:row.dueDate,client:row.clientName||'Cliente',origin:row.originLabel||row.operationId,method:paymentMethodLabel(row.method),installment:`${row.installment}/${row.installmentCount}`,value:row.original,received:row.received,reversed:row.status==='cancelado'?row.original:0,refunded:row.refunded,createdAt:row.createdAt,status:row.status,
           events:(Array.isArray(row.events)?row.events:[]).map((entry:any)=>({date:entry.createdAt||`${entry.date}T12:00:00-03:00`,type:eventType(String(entry.type||'')),amount:Number(entry.amount)||0,method:paymentMethodLabel(entry.method),account:String(entry.account||''),user:'Sistema',description:String(entry.description||'Movimentação financeira registrada.')})),
           persistence:{operationId:row.operationId,version:row.version},
-        })));
+        }));
+        if(receivableSnapshot.scope==='operation'){
+          setReceivableRecords(current=>mergeConfirmedReceivables(current,confirmedRecords,receivableSnapshot.operationId));
+          const previous=confirmedPaymentsRef.current.get(receivableSnapshot.operationId);
+          const operation=previous&&previous.version>receivableSnapshot.operation.version?previous:receivableSnapshot.operation;
+          confirmedPaymentsRef.current.set(operation.id,operation);
+          setCreated(current=>applyConfirmedOperationPayment(current,operation));
+        }else setReceivableRecords(confirmedRecords);
         return;
       }
       const receivableMove=parseReceivableMoveResponse(event.data);
@@ -6676,7 +6686,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
           const scheduled = String(service.scheduledAt || '');
           return [{ ...base, serviceOrder: { lines: items.filter((line: any) => line.itemType === 'servico').map((line: any) => ({ sku: line.sku, name: line.name, kind: 'servico', unit: line.unit, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice), cost: Number(line.costUnitSnapshot || 0), municipalServiceCode: String(line.fiscalSnapshot?.municipalServiceCode || ''), fiscalStatus: line.fiscalReady ? 'Completo' : 'Revisar' })), scheduledDate: scheduled.slice(0, 10), scheduledTime: scheduled.slice(11, 16), durationMinutes: Number(service.expectedDurationMinutes || 60), technician: String(service.technicianName || ''), location: String(service.executionLocation || ''), contactName: String(service.onSiteContact || ''), paymentMethod: String(operation.paymentSnapshot?.method || ''), installments: Number(operation.paymentSnapshot?.installments ?? 1), firstDueDate: String(operation.paymentSnapshot?.firstDueDate || ''), fiscalDocument: operation.fiscalDocument === 'nfse' ? 'nfse' : 'nenhum', internalNotes: String(operation.internalNotes || ''), customerNotes: String(operation.customerNotes || ''), completionNotes: String(service.completionNotes || ''), startedAt: String(service.startedAt || ''), completedAt: String(service.completedAt || ''), actualDurationMinutes: Number(service.actualDurationMinutes || 0), materials: (Array.isArray(service.materials) ? service.materials : []).map((material: any) => ({ id: String(material.id), catalogItemId: String(material.productId || ''), sku: String(material.sku || ''), name: String(material.name || ''), quantity: Number(material.usedQuantity || material.plannedQuantity || 0), unit: String(material.unit || 'un'), source: material.origin === 'catalogo' ? 'Catálogo' : material.origin === 'cliente' ? 'Cliente' : 'Externo', cost: Number(material.costUnitSnapshot || 0) })), checklist: (Array.isArray(service.checklist) ? service.checklist : []).map((item: any) => ({ id: String(item.id), label: String(item.description || ''), complete: item.completed === true })), attachments: (Array.isArray(service.attachments) ? service.attachments : []).map((item: any) => ({ id: String(item.id), name: String(item.name || ''), type: String(item.type || 'application/octet-stream'), size: Number(item.size || 0), checksum: String(item.checksum || ''), addedAt: String(item.addedAt || '') })), acceptance: { status: service.acceptanceStatus === 'aceito' ? 'Aceito' : service.acceptanceStatus === 'recusado' ? 'Recusado' : 'Pendente', acceptedBy: String(service.acceptedBy || ''), acceptedAt: String(service.acceptedAt || ''), notes: String(service.acceptanceNotes || '') }, materialStockState: operation.stockStatus === 'baixado' ? 'Baixado' : operation.stockStatus === 'devolvido' ? 'Estornado' : operation.stockStatus === 'reservado' ? 'Pendente' : 'Não aplicável', laborCostTotal: Number(service.laborCost || 0), materialCostTotal: Number(service.materialCost || 0), actualCostTotal: Number(service.actualCost || 0) } }];
         });
-        setCreated(records);
+        setCreated(current=>reconcileConfirmedOperationSnapshot(current,records,[...confirmedPaymentsRef.current.values()]));
         return;
       }
       const prepared = parseFiscalPrepareResponse(event.data);

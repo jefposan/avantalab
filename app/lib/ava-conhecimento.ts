@@ -3184,3 +3184,5 @@ GUIAS['gestao-web'] += ' Revisão 3.2.0.549: Voltar ao topo fica no canto inferi
 GUIAS['gestao-web'] += ' Revisão 3.2.0.550: Serviços e Notas Fiscais têm setas de mês e Selecionar datas no topo, sem Todo o período. O intervalo inclui os dois limites. Em Serviços vale o agendamento; em Notas, a data exibida na lista. Os resumos acompanham o período; filtros não emitem nem reservam número.';
 
 // Revisão 3.2.0.551: sem impacto operacional; largura estável dos seletores mensais compartilhados.
+
+GUIAS['gestao-web'] += ' Revisão 3.2.0.552: ao salvar forma de pagamento e parcelas em Recebimentos, a lista e o pedido recebem os dados confirmados pela própria resposta, sem esperar recargas gerais. A confirmação continua dependendo de gravação bem-sucedida; em falha, revise a mensagem e repita com a mesma solicitação protegida.';

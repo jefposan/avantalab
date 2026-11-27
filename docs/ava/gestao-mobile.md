@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.551 -->
+<!-- ava-version: 3.2.0.552 -->
+
+> Revisão 3.2.0.552: sem impacto operacional no aplicativo mobile; confirmação mais rápida da alteração de pagamento em Recebimentos Web.
 
 > Revisão 3.2.0.551: sem impacto operacional; seletores mensais compartilhados mantêm largura constante ao mudar mês ou ano, inclusive na variante compacta.
 

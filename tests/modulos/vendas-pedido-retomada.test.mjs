@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
+import {reconcileConfirmedOperationSnapshot} from '../../app/vendas/lib/confirmed-receivable-snapshot.mjs';
 import { handleCommercialOperationRequest } from '../../app/vendas/lib/server/commercial-operation-http.mjs';
 import { createCommercialOrderWorkflow } from '../../app/vendas/lib/server/commercial-order-workflow.mjs';
 
@@ -42,14 +43,16 @@ test('menu real oferece edição e faturamento para confirmados e cancelamento t
 test('recarga do servidor trata pedido salvo como rascunho e preserva estados posteriores', async () => {
   const source = await readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
   const start = source.indexOf('const statusLabel =', source.indexOf('if (event.data?.type === OPERATION_SNAPSHOT_TYPE'));
-  const end = source.indexOf('setCreated(records);', start) + 'setCreated(records);'.length;
+  const setter='setCreated(current=>reconcileConfirmedOperationSnapshot(current,records,[...confirmedPaymentsRef.current.values()]));';
+  const end = source.indexOf(setter, start) + setter.length;
+  assert.ok(end>start);
   let records;
   vm.runInNewContext(ts.transpileModule(source.slice(start, end), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, {
     event: { data: { operations: ['salvo', 'rascunho', 'confirmado', 'em_separacao', 'faturado', 'cancelado', 'devolvido'].map((status, index) => ({
       id: `${operationId}-${index}`, type: 'pedido', status, stockStatus: ['sem_movimentacao', 'sem_movimentacao', 'reservado', 'em_separacao', 'baixado', 'liberado', 'devolvido'][index], year: 2026, number: index + 1, version: 4,
       customerId, customerSnapshot: { displayName: 'Sandra' }, total: 99, items: [{ productId: companyId, sku: 'P01', name: 'Produto', quantity: 1, unitPrice: 99, discountUnit: 0 }],
     })) } },
-    setCreated: value => { records = value; },
+    reconcileConfirmedOperationSnapshot,confirmedPaymentsRef:{current:new Map()},setCreated: value => { records = typeof value==='function'?value(records||[]):value; },
   });
   assert.deepEqual(Array.from(records, record => record.status), ['Rascunho', 'Rascunho', 'Confirmado', 'Em separação', 'Faturado', 'Cancelado', 'Devolvido']);
   assert.deepEqual(Array.from(records, record => record.order.stockState), ['Sem movimentação', 'Sem movimentação', 'Reservado', 'Em separação', 'Baixado', 'Liberado', 'Devolvido']);
@@ -63,7 +66,9 @@ test('recarga do servidor trata pedido salvo como rascunho e preserva estados po
 test('recarga mostra razão social e não nome fantasia, inclusive em vendas canceladas, sem alterar o retrato salvo', async () => {
   const source = await readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8');
   const start = source.indexOf('const statusLabel =', source.indexOf('if (event.data?.type === OPERATION_SNAPSHOT_TYPE'));
-  const end = source.indexOf('setCreated(records);', start) + 'setCreated(records);'.length;
+  const setter='setCreated(current=>reconcileConfirmedOperationSnapshot(current,records,[...confirmedPaymentsRef.current.values()]));';
+  const end = source.indexOf(setter, start) + setter.length;
+  assert.ok(end>start);
   const snapshots = [
     {legalName:'  Sergio Ramos Roberto Figueiredo  ',displayName:'DRIMARY'},
     {legalName:'Nome civil do cliente',displayName:'Fantasia'},
@@ -74,7 +79,7 @@ test('recarga mostra razão social e não nome fantasia, inclusive em vendas can
   const operations = snapshots.map((customerSnapshot,index)=>({id:`${operationId}-${index}`,type:'pedido',status:index===0?'cancelado':'faturado',year:2026,number:index+1,total:1039.5,customerId,customerSnapshot,items:[]}));
   const original = structuredClone(operations);let records;
   vm.runInNewContext(ts.transpileModule(source.slice(start,end),{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText,{
-    event:{data:{operations}},setCreated:value=>{records=value;},
+    event:{data:{operations}},reconcileConfirmedOperationSnapshot,confirmedPaymentsRef:{current:new Map()},setCreated:value=>{records=typeof value==='function'?value(records||[]):value;},
   });
   assert.deepEqual(Array.from(records,r=>r.client),['Sergio Ramos Roberto Figueiredo','Nome civil do cliente','Legado sem razão social','Legado com nome disponível','Cliente']);
   assert.equal(records[0].status,'Cancelado');assert.equal(records[0].total,1039.5);

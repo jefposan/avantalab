@@ -1,0 +1,3 @@
+export function mergeConfirmedReceivables<T extends {id:string;persistence?:{operationId:string;version:number}}>(current:T[],incoming:T[],operationId:string):T[];
+export function applyConfirmedOperationPayment<T extends {persistence?:{operationId:string;version:number};order?:object;serviceOrder?:object}>(current:T[],operation:{id:string;version:number;payment:{method:string;installments:number;firstDueDate:string}}):T[];
+export function reconcileConfirmedOperationSnapshot<T extends {persistence?:{operationId:string;version:number};order?:object;serviceOrder?:object}>(current:T[],incoming:T[],confirmed:Array<{id:string;version:number;payment:{method:string;installments:number;firstDueDate:string}}>):T[];

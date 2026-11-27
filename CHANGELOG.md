@@ -1,3 +1,9 @@
+# 3.2.0.552 — Recebimentos: aplicar alteração sem recargas gerais
+
+- Salvamento devolve os recebimentos e o pagamento da operação confirmados na transação; tela atualiza antes da confirmação ao formulário.
+- Removida a espera pelas recargas de recebimentos e pedidos no caminho atual; compatibilidade antiga recarrega em paralelo.
+- Respostas antigas não regridem versões, outras operações são preservadas e dados financeiros respeitam a permissão de visualização.
+
 # 3.2.0.551 — Seletores: manter largura na troca do mês
 
 - Largura fixa da área de mês/ano no estilo compartilhado e na variante compacta, evitando deslocamento das setas e dos campos vizinhos.

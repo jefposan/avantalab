@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.551 -->
+<!-- ava-version: 3.2.0.552 -->
+
+> Revisão 3.2.0.552: Alterar pagamento e parcelas em Recebimentos Web atualiza a tela assim que o servidor confirma a gravação, sem aguardar a recarga de todos os recebimentos e pedidos. Falhas não simulam sucesso; repetição, versões e isolamento por empresa permanecem protegidos.
 
 > Revisão 3.2.0.551: sem impacto operacional; seletores mensais compartilhados mantêm largura constante ao mudar mês ou ano, inclusive na variante compacta.
 

@@ -4,7 +4,19 @@ export const RECEIVABLE_MOVE_REQUEST_TYPE='AVANTALAB_VENDAS_RECEIVABLE_MOVE_REQU
 export const RECEIVABLE_MOVE_RESPONSE_TYPE='AVANTALAB_VENDAS_RECEIVABLE_MOVE_RESPONSE_V1';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY=/^[A-Za-z0-9:_-]{8,120}$/;const clean=(v)=>String(v??'').trim();
-export function parseReceivableSnapshot(data){if(!data||data.type!==RECEIVABLE_SNAPSHOT_TYPE||typeof data.ok!=='boolean')return null;if(!data.ok)return {ok:false,message:clean(data.message),records:[]};if(!Array.isArray(data.records))return null;const records=data.records.filter((x)=>x&&UUID.test(clean(x.id))&&UUID.test(clean(x.operationId))&&Number(x.version)>0).map((x)=>({...x,id:clean(x.id),operationId:clean(x.operationId),version:Number(x.version),original:Number(x.original)||0,received:Number(x.received)||0,refunded:Number(x.refunded)||0,balance:Number(x.balance)||0}));return {ok:true,message:'',records};}
+export function parseReceivableSnapshot(data){
+ if(!data||data.type!==RECEIVABLE_SNAPSHOT_TYPE||typeof data.ok!=='boolean')return null;
+ if(!data.ok)return {ok:false,message:clean(data.message),records:[]};
+ if(!Array.isArray(data.records))return null;
+ const records=data.records.filter(x=>x&&UUID.test(clean(x.id))&&UUID.test(clean(x.operationId))&&Number.isSafeInteger(Number(x.version))&&Number(x.version)>0).map(x=>({...x,id:clean(x.id),operationId:clean(x.operationId),version:Number(x.version),original:Number(x.original)||0,received:Number(x.received)||0,refunded:Number(x.refunded)||0,balance:Number(x.balance)||0}));
+ if(data.scope==='operation'){
+  const id=clean(data.operationId),operation=data.operation;
+  if(!UUID.test(id)||operation?.id!==id||!Number.isSafeInteger(operation?.version)||operation.version<1||!operation.payment||typeof operation.payment!=='object'||Array.isArray(operation.payment)||typeof operation.payment.method!=='string'||!Number.isSafeInteger(operation.payment.installments)||operation.payment.installments<0||operation.payment.installments>120||typeof operation.payment.firstDueDate!=='string'||records.length!==data.records.length||!records.length||records.length>500||records.some(r=>r.operationId!==id)||new Set(records.map(r=>r.id)).size!==records.length)return null;
+  return {ok:true,message:'',records,scope:'operation',operationId:id,operation};
+ }
+ return {ok:true,message:'',records};
+}
+
 export function createReceivableMoveRequest(input={}){const requestId=clean(input.requestId),receivableId=clean(input.receivableId),idempotencyKey=clean(input.idempotencyKey),type=clean(input.type);if(!KEY.test(requestId)||!UUID.test(receivableId)||!KEY.test(idempotencyKey)||!['recebimento','estorno_recebimento'].includes(type)||!Number.isInteger(Number(input.expectedVersion))||Number(input.expectedVersion)<1)return null;return {type:RECEIVABLE_MOVE_REQUEST_TYPE,requestId,receivableId,expectedVersion:Number(input.expectedVersion),idempotencyKey,operationType:type,amount:input.amount,date:clean(input.date),method:clean(input.method),account:clean(input.account),description:clean(input.description)};}
 export function parseReceivableMoveResponse(data){if(!data||data.type!==RECEIVABLE_MOVE_RESPONSE_TYPE||!KEY.test(clean(data.requestId))||typeof data.ok!=='boolean')return null;if(!data.ok)return {requestId:clean(data.requestId),ok:false,message:clean(data.message)};if(!data.receivable||!UUID.test(clean(data.receivable.id)))return null;return {requestId:clean(data.requestId),ok:true,message:clean(data.message),receivable:data.receivable};}
 

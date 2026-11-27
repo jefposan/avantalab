@@ -1,11 +1,6 @@
 {
-  "baseDeploymentId": "dpl_HwV6h7QdNvgkWQf8Rz82RN96pgVF",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261127010000_vendas_consignado_saldo_recebivel.sql",
-      "sha256": "ddd2e512e9bc65acdfb365194e53ef71c7c4f728fc0bad277c7ec7dab4f6d9d9"
-    }
-  ],
-  "version": "3.2.0.551",
-  "scope": "Vendas e Serviços: financeiro dos pedidos, saldos consignados, filtros e períodos, retorno ao topo e seletores estáveis"
+  "baseDeploymentId": "dpl_E2Jhac4vR2mV11ak4bmQp95zTMGF",
+  "migrations": [],
+  "version": "3.2.0.552",
+  "scope": "Recebimentos: aplicar alteração de pagamento na resposta confirmada, sem recarregar todo o módulo"
 }
