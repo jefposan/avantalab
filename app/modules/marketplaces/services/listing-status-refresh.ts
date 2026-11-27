@@ -23,13 +23,18 @@ export async function refreshKnownListingStatuses(db:SupabaseClient,connection:S
   if(page.error)throw new MarketplaceError(503,'database','Não foi possível consultar os anúncios cadastrados.');
   let cursor=state?.cursor||null,count=0,cycleFailed=state?.cursor?!!state.cycle_failed:false;
   let issue:string|null=state?.issue||null;
+  const failedListings = new Set<string>(state?.cursor ? state.failed_listing_ids || [] : []);
   for(const row of page.data||[]){
    if(Date.now()>deadline-10_000)break;
    try{
     const item=objectValue(await mlRequest(db,connection,`/items/${row.provider_listing_id}`));
     if(item.id!==row.provider_listing_id||String(item.seller_id)!==connection.seller_reference)throw new Error('Identidade divergente');
     await saveListing(db,connection,item,false);count++;
-   }catch{cycleFailed=true;issue='listing_refresh_partial';}
+   } catch {
+     cycleFailed = true;
+     issue = 'listing_refresh_partial';
+     failedListings.add(row.provider_listing_id);
+    }
    // Falha isolada não trava os demais; este ID será tentado no próximo ciclo.
    cursor=row.id;
   }
@@ -38,7 +43,7 @@ export async function refreshKnownListingStatuses(db:SupabaseClient,connection:S
   const progress=await db.from('marketplace_listing_status_checks').upsert({empresa_id:connection.empresa_id,connection_id:connection.id,
    cursor:complete?null:cursor,checked_at:new Date().toISOString(),cycle_failed:cycleFailed,
    last_completed_at:complete&&!cycleFailed?new Date().toISOString():state?.last_completed_at||null,
-   issue:complete&&!cycleFailed?null:issue},{onConflict:'connection_id'});
+   failed_listing_ids:[...failedListings],issue:complete&&!cycleFailed?null:issue},{onConflict:'connection_id'});
   if(progress.error)throw new MarketplaceError(503,'database','Não foi possível salvar o progresso da conferência.');
   return{count,complete,partial:cycleFailed};
  }finally{

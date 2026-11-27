@@ -31,6 +31,7 @@ export function watchMarketplaceNoticeOpening(page: HTMLElement, target: NoticeT
       if(!error&&!Array.from(result.querySelectorAll<HTMLElement>('[data-marketplace-detail]')).some(row=>(row.dataset.marketplaceDetail||'').endsWith(`:${target.productId}`)))return;
       stop();if(error)failed(error);else ready();return;
     }
+    if (target.panel !== 'listing' || !target.listingId) return;
     const row = Array.from(page.querySelectorAll<HTMLElement>('[data-marketplace-detail]')).find(node => {
       const key = node.dataset.marketplaceDetail || '';
       return key === `announced:${target.listingId}` || key.endsWith(`|${target.listingId}`);
@@ -42,7 +43,8 @@ export function watchMarketplaceNoticeOpening(page: HTMLElement, target: NoticeT
   function schedule() { if(stopped)return;if(target.panel==='stock'){check();return;}if(!frame)frame=requestAnimationFrame(check); }
   function result(event: Event) {
     const detail = (event as CustomEvent<{key:string;error?:string}>).detail;
-    if (stopped || target.panel !== 'stock' || detail?.key !== target.key) return;
+    if (stopped || detail?.key !== target.key) return;
+    if (target.panel === 'listing' && target.listingId && !detail.error) return;
     stop(); if (detail.error) failed(detail.error); else ready();
   }
   const observer = new MutationObserver(schedule);

@@ -1,6 +1,6 @@
 <!-- ava-version: 3.2.0.564.03 -->
 
-> Revisão 3.2.0.564.03: Ao alterar a tabela de preços durante um pedido, a confirmação aparece somente se o preço de algum item mudar. Aplicar a todos os itens atualiza os preços do pedido. Manter preços atuais usa a nova tabela para os próximos itens.
+> Revisão 3.2.0.564.03: Ao alterar a tabela de preços durante um pedido, a confirmação aparece somente se o preço de algum item mudar. Aplicar a todos os itens atualiza os preços do pedido. Manter preços atuais usa a nova tabela para os próximos itens. Em Anúncios em marketplaces → Avisos, use Conferir anúncio para um código identificado ou Conferir conta para abrir a lista filtrada.
 
 > Revisão 3.2.0.564.02: Sem impacto operacional. Alinhamento do valor de Primeiro vencimento (dias) em Vendas e Serviços.
 

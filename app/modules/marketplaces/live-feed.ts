@@ -1,5 +1,5 @@
 export type SaleAlert = { id: string; sale_id?: string; kind?: 'new_sale' | 'pending_dispatch'; connection_id: string; provider: string; listing_id: string; title: string; quantity: number; sold_at: string; order_id: string; account_name: string; permalink: string | null };
-export type InventoryNotice = { id: string; source: 'sale' | 'stock' | 'account'; code: string; productId: string | null; productName: string | null; ean: string | null; listingId: string | null; accountName: string | null; connectionId?: string | null; orderId: string | null; provider: string; nextAttemptAt?: string | null; candidateProducts?:Array<{id:string;name:string;ean:string|null;sku?:string|null}> };
+export type InventoryNotice = { id: string; source: 'sale' | 'stock' | 'account'; code: string; productId: string | null; productName: string | null; ean: string | null; listingId: string | null; accountName: string | null; connectionId?: string | null; orderId: string | null; provider: string; nextAttemptAt?: string | null; checkedAt?: string; candidateProducts?:Array<{id:string;name:string;ean:string|null;sku?:string|null}> };
 export type MarketplaceLiveFeed = { alerts: SaleAlert[]; pendingStock: number; pendingSales: number; issues: Array<{ issue: string; total: number }>; notices?: InventoryNotice[]; noticesUnavailable?: boolean; noticeDismissalsUnavailable?: boolean; checkedAt?: string; updatedAt: string | null; workerFinishedAt: string | null; workerHealthy: boolean; enabled: boolean };
 const cancellationInventoryIssues = new Set(['cancelled_requires_manual_return', 'cancelled_stock_review']);
 const informationalInventoryIssues = new Set([
@@ -41,6 +41,7 @@ const messages: Record<string, string> = {
   listing_quality_low: 'Este anúncio tem qualidade abaixo de 70 no Mercado Livre. Confira os objetivos e revise as melhorias sugeridas.',
   import_stock_review:'Estoque a confirmar. Confira o saldo Online e use Confirmar saldo nos detalhes do produto.',
   listing_refresh_partial:'Há anúncios desta conta sem conferência recente. O sistema tentará novamente; os últimos dados confirmados foram preservados.',
+  listing_status_unconfirmed:'A última conferência não confirmou o status deste anúncio. O sistema tentará novamente.',
   listing_pause_unconfirmed:'Pausa ainda não confirmada pelo marketplace. Confira a situação do anúncio; não repita o envio antes da releitura.',
   listing_resume_unconfirmed:'Reativação ainda não confirmada pelo marketplace. Confira a situação do anúncio.',
   listing_close_unconfirmed:'Encerramento ainda não confirmado pelo marketplace. Confira a situação do anúncio.',

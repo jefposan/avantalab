@@ -46,8 +46,17 @@ export async function readInventoryNotices(db: SupabaseClient, company: string):
     return { productId:text(product?.id), productName:text(product?.name) || text(listing?.title), ean:text(product?.ean) || saleItemEan(listing?.ean), listingId:text(link?.provider_listing_id || row.listing_id), connectionId:text(accountId), accountName:text(labels.find(item=>item.connection_id===accountId)?.local_label) || text(account?.seller_name), orderId:text(row.order_id), provider };
   };
   const notices: InventoryNotice[] = [];
-  const statusChecks=await inventoryRows((from,to)=>read('marketplace_listing_status_checks','connection_id,issue').not('issue','is',null).order('connection_id').range(from,to));
-  for(const row of statusChecks)notices.push({id:`listing-status:${row.connection_id}`,source:'account',code:'listing_refresh_partial',...identity(row)});
+  const statusChecks=await inventoryRows((from,to)=>read('marketplace_listing_status_checks','connection_id,issue,checked_at,failed_listing_ids').not('issue','is',null).order('connection_id').range(from,to));
+  for (const row of statusChecks) {
+    const checkedAt = typeof row.checked_at === 'string' && Number.isFinite(Date.parse(row.checked_at)) ? row.checked_at : undefined;
+    const ids = Array.isArray(row.failed_listing_ids) ? row.failed_listing_ids.filter((id): id is string => typeof id === 'string' && Boolean(id)) : [];
+    if (!ids.length) {
+      notices.push({id:`listing-status:${row.connection_id}`,source:'account',code:'listing_refresh_partial',checkedAt,...identity(row)});
+    }
+    for (const id of ids) {
+      notices.push({id:`listing-status:${row.connection_id}:${id}`,source:'account',code:'listing_status_unconfirmed',checkedAt,...identity({...row,listing_id:id})});
+    }
+  }
   for(const row of imports)notices.push({id:`import:${row.connection_id}:${row.provider_listing_id}`,source:'account',code:String(row.issue),...identity({...row,listing_id:row.provider_listing_id}),productName:text(row.title),candidateProducts:products.filter(p=>Array.isArray(row.candidate_product_ids)&&row.candidate_product_ids.includes(p.id)).map(p=>({id:String(p.id),name:String(p.name),ean:text(p.ean),sku:text(p.sku)}))});
   const actions=await inventoryRows((from,to)=>read('marketplace_listing_actions','id,connection_id,provider_listing_id,action,status').in('status',['requested','uncertain']).order('id').range(from,to));
   for(const action of actions){

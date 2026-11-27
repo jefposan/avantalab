@@ -1,6 +1,15 @@
 {
-  "baseDeploymentId": "dpl_EXdemR3orKWZSzbUUe9iA3PZnEYs",
-  "version": "3.2.0.563",
-  "scope": "Gestão, Marketplaces e Vendas: navegação contínua, cabeçalho compacto e impressão de pedidos",
-  "migrations": []
+  "baseDeploymentId": "dpl_DKD1PWfMJK7th48cddyhfNjURFGm",
+  "version": "3.2.0.564.03",
+  "scope": "Vendas e Serviços e Marketplaces: formas de pagamento, troca de tabela de preços e avisos de anúncios",
+  "migrations": [
+    {
+      "path": "supabase/migrations/20261127170000_vendas_formas_pagamento.sql",
+      "sha256": "974ad55c03096c188341a1528796944ff1caad50056ac93d15c3e31d60cdacac"
+    },
+    {
+      "path": "supabase/migrations/20261127210000_marketplace_listing_status_notice_targets.sql",
+      "sha256": "544d8c1955443a33c0f95ef61f1cb37acfd4554648dc548d04fb1a81a7f433cf"
+    }
+  ]
 }

@@ -58,6 +58,19 @@ test('alerta abre somente por clique, fecha durante atualização e renova conta
   assert.equal(panel().props.aberto,false);assert.deepEqual(adjusted,[notice]);
   assert.equal(feed.notices.length,1,'abrir não resolve/apaga a pendência');
   assert.equal(reads,1,'conferir não dispara atualização ou sincronização');
+  const accountNotice={...notice,id:'listing-account',source:'account',code:'listing_refresh_partial',productId:null};
+  const listingNotice={...accountNotice,id:'listing-item',code:'listing_status_unconfirmed',listingId:'MLB123'};
+  for (const [item,label] of [[accountNotice,'Conferir conta'],[listingNotice,'Conferir anúncio']]) {
+    feed={...feed,notices:[item]};
+    open();render();
+    assert.equal(panel().props.aberto,true);
+    tree=exports.InventoryNoticeList(find(n=>n.type===exports.InventoryNoticeList).props);
+    find(n=>n.props?.children===label).props.onClick();render();
+    assert.equal(adjusted.at(-1),item);
+    assert.equal(panel().props.aberto,false);
+  }
+  assert.equal(reads,1,'abrir anúncio ou conta também é somente navegação');
+
   window.dispatchEvent(new CustomEvent('avanta:marketplace-notices-refresh-state',{detail:{companyId:'company',loading:false,error:''}}));
   const cancelled={...notice,id:'sale:1',source:'sale',code:'cancelled_requires_manual_return'};
   feed={...feed,notices:[notice,cancelled]};

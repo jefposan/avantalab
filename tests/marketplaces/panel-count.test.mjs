@@ -18,7 +18,9 @@ test('Anunciados usa total exato da seleção, não linhas da página, e descart
  const make=new Function('env',`with(env){return ${expression};}`);
  const listingConfirmations={current:createListingConfirmationTracker()};
  const state={},listController={current:null},requests=[],confirmedListingCount={current:{scope:'',total:0}},backgroundSignature={current:''};
- function load(accountId,request){return make({qualityFilter:'',noticeListing:undefined,listingConfirmations,mergeConfirmedListings,mergeConfirmedGroups,listController,confirmedListingCount,backgroundSignature,listingDisplaySignature:data=>JSON.stringify(data),marketplace:'mercado_livre',marketplaceIntegrated:p=>['mercado_livre','magalu'].includes(p),companyId:'company',accountId,query:'',status:'',order:'desc',page:1,URLSearchParams,AbortController,Error,
+ function load(accountId,request,noticeListing){return make({qualityFilter:'',noticeListing,
+  reportMarketplaceNoticeOpening:(key,error)=>state.notice={key,error},setExpandedState:value=>state.expanded=value,
+  listingRowKey:(_provider,_connection,id)=>id,requestAnimationFrame(){},listingConfirmations,mergeConfirmedListings,mergeConfirmedGroups,listController,confirmedListingCount,backgroundSignature,listingDisplaySignature:data=>JSON.stringify(data),marketplace:'mercado_livre',marketplaceIntegrated:p=>['mercado_livre','magalu'].includes(p),companyId:'company',accountId,query:'',status:'',order:'desc',page:1,URLSearchParams,AbortController,Error,
   setListingGroups:v=>state.groups=v,setListingTotal:v=>state.listingTotal=v,setRows:v=>state.rows=v,setRowsFilter:v=>state.filter=v,setRowsAccountId:v=>state.account=v,setTotal:v=>state.total=v,setTotalScope:v=>state.scope=v,setError:v=>state.error=v,setSyncNotice(){},setLoading:v=>state.loading=v,
   marketplaceClientRequest:async(path,...args)=>{requests.push(path);return request(path,...args);}})();}
  await load('',async()=>({listings:Array(25).fill({}),total:120}));
@@ -37,6 +39,26 @@ test('Anunciados usa total exato da seleção, não linhas da página, e descart
  listingConfirmations.current.confirm({companyId:'company',connectionId:'account-c',listing:{id:'MLB123',price:155.9,status:'active',substatus:[]}});
  finishOldPrice({listings:[{connectionId:'account-c',status:'active',snapshot:{id:'MLB123',price:173.2,status:'active',substatus:[]}}],total:null});await reading;
  assert.equal(state.rows[0].snapshot.price,155.9,'consulta anterior não restaura o preço antigo');assert.equal(state.total,123,'confirmação mantém o total exato da seleção');
+
+
+ const lastRequest = () => new URLSearchParams(requests.at(-1).split('?')[1]);
+ const target = {key:'pending', connectionId:'jeff'};
+ const row = {connectionId:'jeff',snapshot:{id:'MLB123'}};
+ await load('',async()=>({listings:[row],total:1}),target);
+ assert.equal(lastRequest().get('connectionId'),'jeff');
+ assert.equal(lastRequest().has('scope'),false);
+ assert.equal(lastRequest().has('listingId'),false);
+ assert.deepEqual(state.rows,[row]);
+ assert.deepEqual(state.notice,{key:'pending',error:undefined});
+
+ await load('jeff',async()=>({listings:[row],total:1}),{...target,listingId:'MLB123'});
+ assert.equal(lastRequest().get('listingId'),'MLB123');
+ assert.equal(lastRequest().get('connectionId'),'jeff');
+ assert.deepEqual(state.expanded,{accountId:'jeff',id:'MLB123'});
+ state.expanded=undefined;
+ await load('jeff',async()=>({listings:[{...row,connectionId:'other'}],total:1}),{...target,listingId:'MLB123'});
+ assert.equal(state.expanded,undefined,'o mesmo código em outra conta não abre');
+ assert.match(state.notice.error,/outra conta/);
 
  const ui=readFileSync('app/marketplaces/Anunciados.tsx','utf8');
  assert.match(ui,/totalScope === countScope \? displayedTotal : null/);assert.match(ui,/Anunciados · \{announcedCount\}/);

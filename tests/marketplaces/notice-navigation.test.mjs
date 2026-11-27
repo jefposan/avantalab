@@ -16,6 +16,12 @@ test('pedido e anúncio respeitam plataforma/conta e não escolhem item desconhe
  assert.equal(inventoryNoticeTarget({...notice,source:'account',productId:null,connectionId:null}),null);
  assert.equal(inventoryNoticeTarget({...notice,source:'account',productId:null,listingId:null,orderId:null}),null);
 });
+test('falha de conferência aponta a conta ou o anúncio identificado',()=>{
+ const base={...notice,source:'account',code:'listing_refresh_partial',productId:null,listingId:null,orderId:null};
+ assert.deepEqual(inventoryNoticeTarget(base),{key:'notice',provider:'mercado_livre',connectionId:'account',panel:'listing'});
+ assert.equal(inventoryNoticeTarget({...base,connectionId:null}),null);
+ assert.equal(inventoryNoticeTarget({...base,code:'listing_status_unconfirmed',listingId:'MLB1'}).listingId,'MLB1');
+});
 test('aviso abre revisão, não modal de sincronização; navegação usa leitura autenticada e identificadores exatos',()=>{
  const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
  const notices=read('app/marketplaces/InventoryNotices.tsx');

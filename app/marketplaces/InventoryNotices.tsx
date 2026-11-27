@@ -27,13 +27,22 @@ export function InventoryNoticeList({feed, unavailable, error = '', onAdjust, co
       {feed?.noticeDismissalsUnavailable && <p role="alert">Não foi possível verificar quais avisos já foram dispensados. Atualize os avisos para consultar a lista completa.</p>}
       {!!feed?.pendingSales && <p>{feed.pendingSales} notificação(ões) de venda aguardando leitura. Os produtos ainda serão identificados.</p>}
       {feed?.notices?.map(notice=>{
+        const target = inventoryNoticeTarget(notice);
+        const title = notice.code === 'listing_refresh_partial' ? 'Conferência de anúncios incompleta'
+          : notice.code === 'listing_status_unconfirmed' ? 'Status do anúncio não confirmado'
+          : notice.productName || (notice.listingId ? 'Pendência no anúncio' : notice.orderId ? 'Pendência no pedido' : 'Pendência de sincronização');
+        const action = target?.panel === 'listing' ? (target.listingId ? 'Conferir anúncio' : 'Conferir conta')
+          : target?.panel === 'sale' ? 'Conferir pedido'
+          : notice.code === 'zero_stock_review' ? 'Confirmar saldo zero'
+          : notice.code === 'out_of_stock' ? 'Ver estoque'
+          : notice.code === 'zero_stock_pause_pending' ? 'Conferir pausa' : 'Conferir e ajustar';
         const dismissLabel = onDismiss && inventoryNoticeDismissAction(notice);
         return <article className={styles.inventoryNotice} key={notice.id}>
-          <strong>{notice.productName || (notice.source==='account'?'Pendência da conta — produto ainda não identificado':'Produto ainda não identificado')}</strong>
-          <small>{[notice.productName ? `EAN: ${notice.ean || 'Não informado'}` : null,providerName(notice.provider),notice.accountName,notice.listingId && `Anúncio ${notice.listingId}`,notice.orderId && `Pedido #${notice.orderId}`].filter(Boolean).join(' · ')}</small>
+          <strong>{title}</strong>
+          <small>{[notice.productName ? `EAN: ${notice.ean || 'Não informado'}` : null,providerName(notice.provider),notice.accountName,notice.listingId && `Anúncio ${notice.listingId}`,notice.orderId && `Pedido #${notice.orderId}`,notice.checkedAt && `Última conferência da conta: ${new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'}).format(new Date(notice.checkedAt))}`].filter(Boolean).join(' · ')}</small>
           <span>{inventoryIssueMessage(notice.code)}</span>
           <div className={styles.inventoryNoticeActions}>
-            {notice.candidateProducts?.length&&companyId?<ImportStockChoice notice={notice} companyId={companyId} canManage={canManage} onAdjust={onAdjust}/>:inventoryNoticeTarget(notice)&&onAdjust&&<BotaoAcaoCompacto onClick={()=>onAdjust(notice)}>{notice.code==='zero_stock_review'?'Confirmar saldo zero':notice.code==='out_of_stock'?'Ver estoque':notice.code==='zero_stock_pause_pending'?'Conferir pausa':'Conferir e ajustar'}</BotaoAcaoCompacto>}
+            {notice.candidateProducts?.length&&companyId?<ImportStockChoice notice={notice} companyId={companyId} canManage={canManage} onAdjust={onAdjust}/>:target&&onAdjust&&<BotaoAcaoCompacto variante={target.panel==='listing'&&target.listingId?'primario':undefined} onClick={()=>onAdjust(notice)}>{action}</BotaoAcaoCompacto>}
             {dismissLabel && <BotaoAcaoCompacto
               disabled={Boolean(dismissing) || feed.noticeDismissalsUnavailable}
               aria-label={dismissLabel === 'OK' ? 'OK, dispensar aviso de cancelamento' : undefined}

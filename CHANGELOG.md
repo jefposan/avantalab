@@ -1,6 +1,8 @@
-# 3.2.0.564.03 — Vendas e Serviços: confirmar o recálculo ao trocar tabela de preços
+# 3.2.0.564.03 — Vendas e Serviços e Marketplaces: formas de pagamento, troca de tabela de preços e avisos de anúncios
 
+- Em Pagamentos, permite cadastrar e ativar formas por empresa, inclusive Consignado. Alinha os três campos padrão e oferece de 1 a 10 parcelas.
 - Compara os preços dos itens do pedido ao trocar a tabela do cliente. Quando houver diferença, permite atualizar todos os itens ou manter os preços já lançados.
+- Em Marketplaces, o painel Avisos identifica a conta e o motivo da pendência. Conferir anúncio abre o código na conta correta e Conferir conta abre a lista filtrada.
 
 # 3.2.0.564.02 — Vendas e Serviços: centralizar número de dias do primeiro vencimento
 

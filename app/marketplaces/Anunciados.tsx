@@ -4,6 +4,7 @@ import {usePanelExpansion,type PanelExpansionProps} from './panel-expansion';
 
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import CampoBusca from '@/app/components/CampoBusca';
+import { reportMarketplaceNoticeOpening } from './notice-opening';
 import type { NoticeTarget } from '@/app/modules/marketplaces/notice-navigation';
 import { MARKETPLACE_DETAIL_NAVIGATION, shouldDismissMarketplaceDetail, notifyProductStockChanged, PRODUCT_LISTINGS_REMOVED, PRODUCT_REFERENCE_CHANGED, CATALOG_CONTENT_CHANGED, LISTING_CONFIRMED, notifyListingConfirmed } from './product-stock-events';
 import {createListingConfirmationTracker,mergeConfirmedListings,mergeConfirmedGroups,type ListingConfirmation} from './listing-confirmation';
@@ -147,7 +148,7 @@ export default function Anunciados({ noticeTarget, companyId, percentages=null, 
   useEffect(()=>{
     if(!noticeTarget || noticeTarget.panel!=='listing' || noticeTarget.provider!==marketplace || consumedNotice.current===noticeTarget.key || acting)return;
     consumedNotice.current=noticeTarget.key;
-    setPanelExpanded(true);setCopyingListing(null);setExpanded('');setQuery('');setStatus('');setPageSelection({accountId:noticeTarget.connectionId || '',page:1});setAccountId(noticeTarget.connectionId || '');setNoticeListing(noticeTarget);
+    setPanelExpanded(true);setCopyingListing(null);setExpanded('');setQuery('');setStatus('');setQualityFilter('');setPageSelection({accountId:noticeTarget.connectionId || '',page:1});setAccountId(noticeTarget.connectionId || '');setNoticeListing(noticeTarget);
     requestAnimationFrame(()=>{if(panel.current)scrollMarketplacePageTop(panel.current);});
   },[noticeTarget,marketplace,acting,syncing]);
   const account = scopedAccounts.find((candidate) => candidate.id === activeAccountId);
@@ -216,7 +217,14 @@ export default function Anunciados({ noticeTarget, companyId, percentages=null, 
     if(!silent)setLoading(true);
     try {
       const params = new URLSearchParams({ empresaId: companyId, marketplace, ...(accountId ? { connectionId: accountId } : { scope: 'all' }), q: query, status, order, quality:qualityFilter, page: String(page),grouped:'1' });
-      if(noticeListing?.listingId){params.set('listingId',noticeListing.listingId);params.set('connectionId',noticeListing.connectionId!);params.delete('scope');params.set('page','1');}
+      if (noticeListing?.connectionId) {
+        params.set('connectionId', noticeListing.connectionId);
+        params.delete('scope');
+        if (noticeListing.listingId) {
+          params.set('listingId', noticeListing.listingId);
+          params.set('page', '1');
+        }
+      }
       const scope=JSON.stringify([companyId,marketplace,accountId,query,status,qualityFilter,noticeListing?.listingId]);
       if(recount || confirmedListingCount.current.scope!==scope){
         const countParams=new URLSearchParams(params);countParams.set('countOnly','1');
@@ -229,14 +237,27 @@ export default function Anunciados({ noticeTarget, companyId, percentages=null, 
       let data = await marketplaceClientRequest(`anunciados?${params}`, undefined, controller.signal);
       const confirmed=listingConfirmations.current.updatesSince(companyId,readSequence);
       if(confirmed.length)data={...data,listings:mergeConfirmedListings(data.listings,confirmed),groups:mergeConfirmedGroups(data.groups||[],confirmed)};
-      if(!controller.signal.aborted && noticeListing){
+      if (!controller.signal.aborted && noticeListing?.connectionId &&
+          data.listings.some((row: Row) => row.connectionId !== noticeListing.connectionId)) {
+        throw new Error('A consulta retornou anúncios de outra conta. Tente novamente.');
+      }
+      if(!controller.signal.aborted && noticeListing?.listingId){
         const found=data.listings.find((row:Row)=>row.connectionId===noticeListing.connectionId && row.snapshot.id===noticeListing.listingId);
         if(!found)throw new Error('O anúncio desta pendência não foi encontrado na conta indicada.');
         setExpandedState({accountId:noticeListing.connectionId!,id:listingRowKey(marketplace,found.connectionId,found.snapshot.id)});
         requestAnimationFrame(()=>{if(panel.current)scrollMarketplacePageTop(panel.current);});
       }
       if (!controller.signal.aborted) { setRows(data.listings);setListingGroups(data.groups||[]);if(Number.isSafeInteger(data.listingTotal))setListingTotal(data.listingTotal); setRowsFilter(JSON.stringify([query,status,order,qualityFilter,page,noticeListing?.listingId])); setRowsAccountId(JSON.stringify([companyId,marketplace,accountId])); if(data.total!=null){confirmedListingCount.current={scope,total:data.total};setTotal(data.total);} backgroundSignature.current=listingDisplaySignature({...data,total:confirmedListingCount.current.total}); setTotalScope(scope); if(!silent)setError(''); }
-    } catch (failure) { if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : 'Falha ao carregar anúncios.'); }
+      if (!controller.signal.aborted && noticeListing && !noticeListing.listingId) {
+        reportMarketplaceNoticeOpening(noticeListing.key);
+      }
+    } catch (failure) {
+      if (!controller.signal.aborted) {
+        const message = failure instanceof Error ? failure.message : 'Falha ao carregar anúncios.';
+        setError(message);
+        if (noticeListing) reportMarketplaceNoticeOpening(noticeListing.key, message);
+      }
+    }
     finally { if (!controller.signal.aborted && !silent) setLoading(false); }
   }, [companyId, marketplace, accountId, query, status, order, qualityFilter, page,noticeListing]);
   const loadListRef = useRef(loadList);
@@ -380,7 +401,7 @@ export default function Anunciados({ noticeTarget, companyId, percentages=null, 
         };
 
   return <section ref={panel} data-marketplace-page-card="" className={`${styles.panel} ${styles.listingsPanel}`} aria-labelledby="announced-title">
-    {noticeListing&&<div role="status">Anúncio da pendência <BotaoAcaoCompacto disabled={acting} onClick={()=>{setNoticeListing(undefined);setExpanded('');}}>Voltar à lista</BotaoAcaoCompacto></div>}
+    {noticeListing&&<div role="status">{noticeListing.listingId ? 'Anúncio da pendência' : 'Anúncios da conta da pendência'} <BotaoAcaoCompacto disabled={acting} onClick={()=>{setNoticeListing(undefined);setExpanded('');}}>Voltar à lista</BotaoAcaoCompacto></div>}
     <div className={`${styles.panelHeading} ${!panelExpanded ? styles.panelHeadingCollapsed : ''}`}><div><h2 id="announced-title" tabIndex={-1}>Anunciados · {announcedCount} produtos / {totalScope===countScope&&listingTotal!=null?listingTotal:'…'} anúncios</h2></div><div className={styles.panelHeadingActions}>{reorderHandle}<MarketplaceSelect label="" ariaLabel="Conta dos anúncios" className={styles.announcedAccountFilter} value={accountId} placeholder="Todas as contas" options={[{ value: '', label: 'Todas as contas' }, ...scopedAccounts.filter(salesAccountAvailable).map(candidate => ({ value: candidate.id, label: accountDisplayName(candidate) }))]} disabled={loading || acting} onChange={value => { setNoticeListing(undefined);setAccountId(value); setPageSelection({ accountId: value, page: 1 }); setSyncNotice(''); setError(''); }} /><DateOrderButton context="Anunciados" order={order} disabled={loading || acting} onChange={(value) => { setOrder(value); setPage(1); }} /><Tooltip texto="Atualizar anúncios das contas selecionadas"><BotaoAcaoCompacto disabled={!connectedSignature || syncing || acting} onClick={() => void synchronize()}>{syncing ? 'Atualizando…' : 'Atualizar'}</BotaoAcaoCompacto></Tooltip><BotaoExpandirCard variante="painel" somenteIcone modo="lista" contexto="Anunciados" controlsId="announced-content" expandido={panelExpanded} onClick={() => setPanelExpanded((current) => !current)} corPrimaria={brand} darkMode={dark} /></div></div>
     <div id="announced-content" hidden={!panelExpanded} aria-busy={loading}>
     <div className={`${styles.listingFilters} ${marketplace==='mercado_livre'?styles.listingFiltersWithQuality:''}`}>

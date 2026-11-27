@@ -8,6 +8,7 @@ export function inventoryNoticeTarget(notice: InventoryNotice): NoticeTarget | n
   if (['product_not_linked','variation_not_linked'].includes(notice.code) && notice.listingId && notice.connectionId) return { ...base, panel:'listing', listingId:notice.listingId };
   if (notice.orderId && notice.connectionId) return { ...base, panel: 'sale', orderId: notice.orderId };
   if (notice.listingId && notice.connectionId) return { ...base, panel: 'listing', listingId: notice.listingId };
+  if (notice.code === 'listing_refresh_partial' && notice.connectionId) return { ...base, panel: 'listing' };
   if (notice.productId) return { ...base, panel: 'stock', productId: notice.productId };
   return null;
 }

@@ -243,6 +243,7 @@ test('falha isolada preserva situação, avança cursor sem bloquear demais e s�
  globalThis.fetch=async(url,options)=>{assert.equal(options.method,'GET');const id=new URL(url).pathname.split('/').pop();if(fail&&id==='MLB5324521000')return Response.json({}, {status:404});return Response.json({id,seller_id:123,status:'paused',title:'Produto',price:100});};
  await refreshKnownListingStatuses(db,connection);assert.equal(db.tables.marketplace_listings[0].status,'active');assert.equal(db.tables.marketplace_listings[1].status,'paused');
  await refreshKnownListingStatuses(db,connection);assert.equal(db.tables.marketplace_listings[8].status,'paused');assert.equal(db.tables.marketplace_listing_status_checks[0].issue,'listing_refresh_partial');assert.equal(db.tables.marketplace_listing_status_checks[0].last_completed_at,null);
+ assert.deepEqual(db.tables.marketplace_listing_status_checks[0].failed_listing_ids,['MLB5324521000']);
  fail=false;await refreshKnownListingStatuses(db,connection);await refreshKnownListingStatuses(db,connection);assert.equal(db.tables.marketplace_listings[0].status,'paused');assert.equal(db.tables.marketplace_listing_status_checks[0].issue,null);
 }));
 test('tentativa incompatível relê e persiste exclusão antes de recusar pausa; sem PUT nem recibo falso',()=>environment(async()=>{
