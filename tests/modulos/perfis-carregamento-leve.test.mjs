@@ -148,7 +148,8 @@ function client({selected=null,fetcher}={}) {
   const React={useState(initial){const i=cursor++;if(states[i]===undefined)states[i]=initial;return[states[i],v=>{states[i]=typeof v==='function'?v(states[i]):v;}];},useEffect(fn){effects.push(fn);},useSyncExternalStore(){return null;}};
   const mod=load('app/modulos/MeusModulos.tsx',{
     react:React,'react/jsx-runtime':{jsx:()=>null,jsxs:()=>null},'next/navigation':{useRouter:()=>({})},'@/app/lib/supabase':{supabase:{auth:{getSession:async()=>({data:{session:{access_token:'ficticio',user:{id:'u'}}}})}}},
-    '@/app/lib/acessos-usuario':{},'@/app/lib/sessao-acesso-cliente':{},'@/app/lib/retorno-modulos':{guardarPreviaModulos:()=>stored++},'@/app/lib/navegacao-modulos':{},'@/app/lib/modulos-registro':registry,'@/app/components/TelaCarregandoAcesso':{},'@/app/components/SelecaoModulos':{},
+    '@/app/lib/acessos-usuario':{},'@/app/lib/sessao-acesso-cliente':{},'@/app/lib/retorno-modulos':{guardarPreviaModulos:()=>stored++},'@/app/lib/navegacao-modulos':{},'@/app/lib/modulos-registro':registry,'@/app/lib/origem-preparacao':load('app/lib/origem-preparacao.ts'),
+    '@/app/components/TransicaoNavegacaoInterna':{},'@/app/components/TelaCarregandoAcesso':{},'@/app/components/SelecaoModulos':{},
   },{fetch:fetcher});
   return {mod,states,effects,stored:()=>stored};
 }
@@ -167,7 +168,7 @@ test('cliente pede listas leves e nunca recupera concessões antigas ao preserva
 test('imagem atrasada não restaura permissões nem grava prévia após troca de perfil',async()=>{
   for(const cancel of [false,true]) {
     let finish;const pending=new Promise(resolve=>{finish=resolve;});
-    const c=client({selected:profile(),fetcher:()=>pending});c.mod.default();const cleanup=c.effects[0]();
+    const c=client({selected:profile(),fetcher:()=>pending});c.mod.default({});const cleanup=c.effects[0]();
     c.states[1]=cancel?{...profile(),empresa:{...profile().empresa,id:'outra'}}:{...profile(),dashboard:false,modulos:[]};
     if(cancel)cleanup();
     finish(Response.json({perfis:[{...profile(),empresa:{...profile().empresa,logoUrl:'imagem',logoAdiada:false}}]}));

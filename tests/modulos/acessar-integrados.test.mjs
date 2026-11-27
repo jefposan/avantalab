@@ -10,9 +10,9 @@ test('cards instalados dos módulos integrados oferecem Acessar', () => {
 test('fecha catálogo e reutiliza abertura do menu sem contornar permissões', () => {
   assert.match(page, /!modulosAtivos.includes\(moduloId\)/);
   assert.match(page, /if \(moduloId === 'ponto'\) \{\s+if \(!podeGerenciarPonto\)/);
-  assert.match(page, /setModalModulos\(false\);\s+abrirPontoIntegrado\(\)/);
+  assert.match(page, /setModalModulos\(false\);\s+navegarParaModulo\(moduloId, '\/gestao\?areaModulo=ponto', empresaId\)/);
   assert.match(page, /if \(moduloId === 'vendas_mobile'\) \{\s+if \(!podeAcessarVendasMobileWeb\)/);
-  assert.match(page, /setModalModulos\(false\);\s+abrirConteudoVendasIntegrado\(\)/);
-  assert.match(page, /onClick=\{abrirPontoIntegrado\}/);
-  assert.match(page, /onClick=\{abrirConteudoVendasIntegrado\}/);
+  assert.match(page, /setModalModulos\(false\);\s+navegarParaModulo\(moduloId, '\/gestao\?areaModulo=vendas_mobile', empresaId\)/);
+  assert.match(page, /onClick=\{\(\) => acessarModuloInstalado\('ponto'\)\}/);
+  assert.match(page, /onClick=\{\(\) => acessarModuloInstalado\('vendas_mobile'\)\}/);
 });

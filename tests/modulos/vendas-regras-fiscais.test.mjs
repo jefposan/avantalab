@@ -52,11 +52,12 @@ test('falha do catálogo não esconde os ajustes fiscais do módulo', async () =
   const source = await readFile(labUrl, 'utf8');
   assert.match(source, /if \(!perfilId\) return;/);
   assert.match(source, /carregarDocumentosFiscais\(empresaId, data\.session\.access_token\)/);
-  assert.match(source, /carregarPermissoes\(perfilId\)/);
+  assert.match(source, /if \(!empresaId\) return;\s*void carregarPermissoes\(empresaId\)/);
   assert.match(source, /carregarRegrasFiscais\(empresaId\)/);
-  assert.match(source, /!empresaId \?[^]*: <TransicaoNavegacaoInterna/);
-  assert.match(source, /<CarregamentoDadosModulo ativo=\{!paginaPronta\}/);
-  assert.match(source, /setPerfilCadastro\(perfil\.cadastro\)[^]*if\(catalogResult\.status==='rejected'\)throw catalogResult\.reason/);
+  assert.match(source, /!mostrarVendas && <TransicaoNavegacaoInterna/);
+  assert.match(source, /const mostrarVendas = heroPronta && perfilPronto/);
+  assert.match(source, /await Promise\.allSettled\(\[\s*carregarCatalogo\(empresaId\), carregarDocumentosFiscais\(empresaId, data\.session\.access_token\), carregarRegrasFiscais\(empresaId\)/);
+  assert.match(source, /setErroCatalogo\(error instanceof Error/);
   assert.doesNotMatch(source, /!catalogo \?[^]*: <iframe/);
 });
 

@@ -197,10 +197,11 @@ test('recarga de operações recompõe itens e toda a execução da ordem de ser
 });
 
 test('perfil integrado mantém indicadores reais nas páginas e menu sem contadores', async () => {
-  const [source, integrated, page] = await Promise.all([
+  const [source, integrated, page, wrapper] = await Promise.all([
     readFile(new URL('../../app/vendas/sistema/VendasServicosPrototype.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../app/vendas/VendasIntegrado.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../app/vendas/sistema/page.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../app/vendas/page.tsx', import.meta.url), 'utf8'),
   ]);
   assert.doesNotMatch(source, /const displayCount|const salesRecordCount|const serviceRecordCount|const fiscalDocumentCount/);
   assert.match(source, /<Metric label="Documentos" value=\{String\(periodDrafts.length\)\}/);
@@ -210,7 +211,7 @@ test('perfil integrado mantém indicadores reais nas páginas e menu sem contado
   const nav = source.match(/<nav aria-label="Navegação comercial">[\s\S]*?<\/nav>/)?.[0];
   assert.ok(nav);assert.doesNotMatch(nav, /displayCount/);assert.doesNotMatch(nav,/<small/);
   assert.match(source, /connected\.company\) setFiscalIssuerRegistry\(createFiscalIssuerRegistry\(connected\.company\)\)/);
-  assert.match(source, /integratedQuickActions = dashboardNewOptions\.filter\(\(option\) => option\.type !== 'venda'\)/);
+  assert.match(source, /integratedQuickActions = dashboardNewOptions\.filter\(option => option\.type !== 'venda'\)/);
   assert.match(source, /!managementCatalogBridge \|\| !\['venda', 'nfce', 'nfse'\]\.includes\(option\.type\)/);
   assert.match(source, /onFiscalCreated=\{saveStandaloneFiscal\}/);
   assert.match(source, /connected \? 'Pedido no perfil ativo\.' : 'Ambiente de demonstração\.'/);
@@ -220,7 +221,8 @@ test('perfil integrado mantém indicadores reais nas páginas e menu sem contado
   assert.match(source, /managementAccessReady = !integratedManagementRuntime \|\| accessBridgeState\.available/);
   assert.match(source, /let parentOrigin = window\.location\.origin/);
   assert.match(source, /if \(document\.referrer\) parentOrigin = new URL\(document\.referrer\)\.origin/);
-  assert.match(integrated, /setPerfilCadastro\(\(current\) => String\(current\?\.empresa_id \|\| ''\) === perfilId \? current : null\)/);
+  assert.match(wrapper, /<VendasIntegrado key=\{empresaId \|\| 'vendas'\} initialCompanyId=\{empresaId\}/);
+  assert.match(integrated, /if \(controller\.signal\.aborted\) return;\s*setPerfilCadastro\(perfil\.cadastro\)/);
   assert.match(integrated, /aguardarComLimite\(fetch\(`\/api\/modulos\/vendas\/perfil/);
   assert.doesNotMatch(integrated, /buscarEmpresasDoUsuario/);
   assert.match(integrated, /UUID_PATTERN\.test\(solicitado\)/);
@@ -228,9 +230,9 @@ test('perfil integrado mantém indicadores reais nas páginas e menu sem contado
   assert.match(integrated, /aguardarComLimite\(supabase\.auth\.getSession\(\), 10_000/);
   assert.match(integrated, /20_000, 'A confirmação do perfil demorou mais que o esperado/);
   assert.match(integrated, />Tentar novamente<\/button>/);
-  assert.match(integrated, /if \(!paginaPronta \|\| complementaresEmpresaRef\.current === empresaId\) return;[\s\S]*await Promise\.allSettled/);
-  assert.match(integrated, /!empresaId \? erro \? <div/);
-  assert.match(integrated, /<CarregamentoDadosModulo ativo=\{!paginaPronta\}/);
+  assert.match(integrated, /if \(!perfilComAplicativo \|\| complementaresEmpresaRef\.current === empresaId\) return;[\s\S]*await Promise\.allSettled/);
+  assert.match(integrated, /falhaAbertura \? \([\s\S]*<div role="alert">/);
+  assert.match(integrated, /!mostrarVendas && <TransicaoNavegacaoInterna/);
   assert.match(integrated, /<TransicaoNavegacaoInterna destino="Vendas e Serviços"/);
   assert.match(page, /integratedManagementRuntime=\{bridge === 'gestao' \|\| bridge === 'gestao-local'\}/);
 });

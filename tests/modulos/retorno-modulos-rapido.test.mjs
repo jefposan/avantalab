@@ -23,7 +23,7 @@ test('clique navega antes da rede e transporta a identidade já carregada', () =
   const funcao = fonte.slice(fonte.indexOf('  function abrir('), fonte.indexOf('  async function sair('));
   const eventos = [];
   const contexto = {
-    perfil: perfil('restrita'), previa: null, opening: '',
+    perfil: perfil('restrita'), previa: null, opening: '', entradaEmCurso: false,
     setOpening() {}, setError() {},
     REGISTRO_MODULOS: [{ id: 'projetos', permissoes: { administrador: 'administrar' } }],
     prepararNavegacaoModulo: c => eventos.push(['previa', c]),

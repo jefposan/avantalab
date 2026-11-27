@@ -26,12 +26,12 @@ test('loading compartilha dez pontos decorativos, cor contextual e tamanho compa
 });
 test('conferência de cadastro/plano mantém a mesma cena, sem remover os gates',()=>{
  const source=read('app/gestao/page.tsx');
- const start=source.indexOf('if (acessoLiberado && empresaId && (!cadastroPerfilCarregado');
+ const start=source.indexOf('if (preparandoCadastroPerfil)');
  const end=source.indexOf('// Cobrança: Empresa sem assinatura',start);
  const gate=source.slice(start,end);
  assert.ok(start>0&&end>start);
- assert.match(gate,/COBRANCA_ATIVA && !estadoCarregado/);
- assert.match(gate,/return <TelaCarregandoAcesso preparandoAcesso mensagem="Aguarde um instante\."/);
+ assert.match(source,/const preparandoCadastroPerfil = Boolean\(acessoLiberado && empresaId && \(!cadastroPerfilCarregado \|\| \(COBRANCA_ATIVA && !estadoCarregado\)\)\)/);
+ assert.match(gate,/return destinoEmPreparacao \? null : <TelaCarregandoAcesso preparandoAcesso mensagem="Aguarde um instante\."/);
  assert.doesNotMatch(gate,/<main|avanta-loading-spinner|Carregando…/);
  assert.match(source,/precisaPaywallEmpresa\(estadoAcesso\) \|\| bloqueioWebPessoal/);
 });

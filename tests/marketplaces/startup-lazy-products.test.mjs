@@ -42,12 +42,14 @@ test('lista pesada só inicia após expandir; rerender e recolher não repetem a
 
 test('revalidar permissões preserva iframe do mesmo módulo/perfil; revogação e troca de perfil continuam efetivas',()=>{
   const code=callback('app/gestao/page.tsx','sincronizarModuloEmbutidoPelaUrl');
-  const original={id:'marketplaces',nome:'Anúncios',href:'/marketplaces?empresaId=one&__avctx=visual'};let current=original;
+  const original={id:'marketplaces',nome:'Anúncios',href:'/marketplaces?empresaId=one&__avctx=visual'};let current=original,visivel=original.href;
   const env={window:{location:{origin:'https://avantalab.com.br',search:'?modulo=marketplaces'}},empresaId:'one',modulosLiberados:['marketplaces'],URL,URLSearchParams,encodeURIComponent,
+    MENSAGEM_TROCA_MODULO:'avantalab:troca-modulo',setHrefModuloVisivel:href=>{visivel=href;},
+    criarRotaTrocaModulo:({destino,empresaId})=>{assert.equal(destino,'marketplaces');return `/marketplaces?empresaId=${encodeURIComponent(empresaId)}`;},
     obterRegistroModulo:()=>({id:'marketplaces',nome:'Anúncios',navegacao:{modo:'pagina_total',rota:'/marketplaces'}}),setModuloEmbutido:v=>current=typeof v==='function'?v(current):v};
   const sync=bind(code,env);sync();sync();assert.equal(current,original,'não muda objeto/href/key após confirmar acesso');
   env.empresaId='two';sync();assert.equal(current.href,'/marketplaces?empresaId=two');
-  env.modulosLiberados=[];sync();assert.equal(current,null,'concessão revogada fecha o módulo');
+  env.modulosLiberados=[];sync();assert.equal(current,null,'concessão revogada fecha o módulo');assert.equal(visivel,'');
 });
 
 test('preparar anúncio alinha título após DOM e após preparar, sem refresh global de listas',()=>{

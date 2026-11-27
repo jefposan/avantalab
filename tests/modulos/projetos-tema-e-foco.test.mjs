@@ -153,7 +153,7 @@ test('conta reúne projetos compartilhados de empresas diferentes sem liberar o 
   assert.match(listarModulos, /projetosCompartilhados = \(await listarProjetosCompartilhados\(acesso\.db, acesso\.usuario\.id\)\)\.length/);
   assert.match(gestao, /!modulosAtivos\.includes\('projetos'\) && modulosLiberados\.includes\('projetos'\) && projetosCompartilhados > 0/);
   assert.match(gestao, />Compartilhado<\/span>/);
-  assert.match(cliente, /if \(!accessResponse\.ok && projects\.length > 0\) \{ setSharedOnly\(true\); return; \}/);
+  assert.match(cliente, /if \(!accessResponse\.ok\) \{\s*if \(projects\.length > 0\) setSharedOnly\(true\);\s*else setError\(/);
   assert.match(cliente, /sharedAccessOnly/);
   assert.match(inicioProjetos, /shared:\$\{project\.companyId\}:\$\{project\.projectId\}/);
   assert.match(inicioProjetos, /project\.companyName/);

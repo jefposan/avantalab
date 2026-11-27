@@ -58,10 +58,14 @@ test('indicadores aplicam o retrato confirmado sem liberar a operação ou aguar
  }
 });
 test('atualizar catálogo após estoque preserva a interface e ignora retorno de outro perfil',async()=>{
- const start=source.indexOf('    if(somenteDados){');const end=source.indexOf('    if (!perfilId) return;',start);const code=source.slice(start,end);
+ const start=source.indexOf('  const carregarCatalogo = useCallback(');
+ const end=source.indexOf('\n  useEffect(',start);
+ assert.ok(start>=0&&end>start);
  const response=deferred(),catalogs=[];
- const context={exports:{},URLSearchParams,activeCompanyRef:{current:'company'},supabase:{auth:{getSession:async()=>({data:{session:{access_token:'session'}}})}},fetch:()=>response.promise,setCatalogo:value=>catalogs.push(value)};
- vm.runInNewContext(compile('exports.refresh=async(perfilId,somenteDados)=>{'+code+'};'),context);
+ const context={exports:{},URLSearchParams,AbortSignal,useCallback:fn=>fn,catalogoGenerationRef:{current:0},
+  activeCompanyRef:{current:'company'},supabase:{auth:{getSession:async()=>({data:{session:{access_token:'session'}}})}},
+  fetch:()=>response.promise,setCatalogo:value=>catalogs.push(value),setErroCatalogo(){}};
+ vm.runInNewContext(compile(source.slice(start,end)+'\nexports.refresh=carregarCatalogo;'),context);
  const running=context.exports.refresh('company',true);await new Promise(setImmediate);assert.deepEqual(catalogs,[],'não limpa o catálogo durante a consulta');
  response.resolve({ok:true,json:async()=>({catalogo:{items:['new']}})});await running;assert.equal(catalogs.length,1);
  context.activeCompanyRef.current='other';await context.exports.refresh('company',true);assert.equal(catalogs.length,1);

@@ -55,7 +55,7 @@ test('eventos automáticos não propagam refreshKey às listas; popup continua n
   assert.doesNotMatch(handler, /setRefreshKey|setSalesLoading|setSalesSnapshot|scrollIntoView/);
   assert.match(handler, /setBackgroundRefresh/);
   assert.match(client, /salesInPeriod\(salesSnapshot, salesPeriod\)/);
-  assert.match(client, /onLatest: data => setSales/);
+  assert.match(client, /onLatest: data => \{\s*setSales\(/);
   assert.match(client, /onVisible: data => \{ setSalesSnapshot/);
   assert.match(client, /setInventorySnapshot\(\{companyId, feed: detail.feed\}\)/);
   assert.match(client, /<MarketplaceLiveMonitor key=\{companyId\}/);
