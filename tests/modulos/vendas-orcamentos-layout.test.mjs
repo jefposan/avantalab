@@ -4,17 +4,18 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import React from 'react';
+import {normalizePaymentSettings,paymentFilterOptions,paymentMethodKey} from '../../app/vendas/lib/payment-methods.mjs';
 import {orderFinancialStatus} from '../../app/vendas/lib/order-financial-status.mjs';
 import {renderToStaticMarkup} from 'react-dom/server';
 const source=readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx','utf8');
 const sales=source.slice(source.indexOf('function SalesView('),source.indexOf('\nfunction ServicesView('));
 function render(created, period = { start: '', end: '' }){
- const context={exports:{},React,orderFinancialStatus,CampoBusca:props=>React.createElement('input',{'aria-label':'Pesquisar vendas',value:props.value,onChange:()=>{}}),monthPeriod:()=>({start:'2026-11-01',end:'2026-11-30'}),useState:value=>[value && typeof value === 'object' && 'start' in value ? period : value,()=>{}],useMemo:fn=>fn(),useRef:value=>({current:value}),useEffect(){},useContext:()=>({can:()=>true}),PermissionContext:{},money:value=>String(value),normalizeSearch:value=>String(value).toLowerCase(),commercialRecords:[],documentLabel:value=>value,
+ const context={exports:{},React,orderFinancialStatus,paymentFilterOptions,paymentMethodKey,CampoBusca:props=>React.createElement('input',{'aria-label':'Pesquisar vendas',value:props.value,onChange:()=>{}}),monthPeriod:()=>({start:'2026-11-01',end:'2026-11-30'}),useState:value=>[value && typeof value === 'object' && 'start' in value ? period : value,()=>{}],useMemo:fn=>fn(),useRef:value=>({current:value}),useEffect(){},useContext:()=>({can:()=>true}),PermissionContext:{},money:value=>String(value),normalizeSearch:value=>String(value).toLowerCase(),commercialRecords:[],documentLabel:value=>value,
  SalesPeriodFilter:()=>React.createElement('span',null,'Período das vendas'),BotaoAcaoCompacto:({children,onClick})=>React.createElement('button',{onClick},children),PageHeading:({action})=>React.createElement('header',null,action),Metric:()=>null,Panel:({title,children})=>React.createElement('section',null,React.createElement('h2',null,title),children),Badge:({children})=>React.createElement('span',null,children),
  Table:({children})=>React.createElement('table',null,React.createElement('tbody',null,children)),SearchToolbar:({children})=>React.createElement('div',null,React.createElement('input',{'aria-label':'Pesquisar vendas'}),children),
  Icon:()=>null,EmptyState:({title})=>React.createElement('p',null,title),QuoteActions:()=>React.createElement('button',null,'Compartilhar orçamento'),CommercialRecordIndicators:()=>null,CommercialRecordActions:()=>React.createElement('button',null,'Ações da venda'),OrderDetailsDialog:()=>null,OrderLifecycleDialog:()=>null,OrderStockDialog:()=>null,OrderToolsDialog:()=>null};
  vm.runInNewContext(ts.transpileModule(`${sales}\nexports.Component=SalesView;`,{compilerOptions:{jsx:ts.JsxEmit.React,target:ts.ScriptTarget.ES2022},fileName:'vendas.tsx'}).outputText,context);
- return renderToStaticMarkup(React.createElement(context.exports.Component,{created,company:{name:'Empresa fictícia',document:'teste'},clients:[],connected:true,fiscalDrafts:[],fiscalPrepareState:{},onNew:()=>{}}));
+ return renderToStaticMarkup(React.createElement(context.exports.Component,{created,payments:normalizePaymentSettings(),company:{name:'Empresa fictícia',document:'teste'},clients:[],connected:true,fiscalDrafts:[],fiscalPrepareState:{},onNew:()=>{}}));
 }
 const order={id:'PED-1',type:'pedido',client:'Cliente sintético',createdAt:'2026-11-19T12:00:00Z',total:100,status:'Confirmado',order:{fiscalDocument:'nenhum'}};
 const quote={id:'ORC-1',type:'orcamento',client:'Cliente sintético',createdAt:'2026-11-19T12:00:00Z',total:80,quote:{source:'vendas'}};

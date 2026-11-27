@@ -20,7 +20,9 @@ test('formatadores extraídos preservam o contrato da tela de Vendas e Serviços
   assert.equal(formatDuration(60), '1h');
   assert.equal(formatDuration(95), '1h35');
   assert.equal(paymentMethodLabel('pix'), 'PIX');
-  assert.equal(paymentMethodLabel('dinheiro'), 'dinheiro');
+  assert.equal(paymentMethodLabel('dinheiro'), 'Dinheiro');
+  assert.equal(paymentMethodLabel('consignado'), 'Consignado');
+  assert.equal(paymentMethodLabel('Vale Presente'), 'Vale Presente');
 });
 
 test('armazenamento continua isolado por empresa e detecta somente a ponte integrada', () => {

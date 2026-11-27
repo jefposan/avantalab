@@ -12,7 +12,7 @@ test('cadastro completo salva sem exigir CFOP ou outros assuntos do módulo',()=
 test('cadastro continua exigindo seus campos obrigatórios',()=>{
  for(const key of ['name','legalName','document','city','cityCode','cep','street','number','district','taxRegime']) assert.equal(validateCompanyProfile({...company,[key]:''}).ready,false,key);
 });
-test('tela de empresa usa validador de cadastro; preferências fiscais têm validador próprio e demais áreas preservam validação completa',async()=>{
+test('tela de empresa usa validador de cadastro; fiscal e pagamentos têm validação própria e demais áreas preservam validação completa',async()=>{
  const source=await readFile(new URL('../../app/vendas/sistema/VendasServicosPrototype.tsx',import.meta.url),'utf8');
- assert.match(source,/section === 'empresa' \? validateCompanyProfile\(normalized.company\) : section === 'fiscal' \? validateFiscalSettingsForm\(normalized\) : validateModuleSettings\(normalized\)/);
+ assert.match(source,/section === 'empresa' \? validateCompanyProfile\(normalized.company\) : section === 'fiscal' \? validateFiscalSettingsForm\(normalized\) : section === 'pagamentos' \? \{ ready: Number\.isInteger\(draft\.payments\.firstDueDays\).*?\} : validateModuleSettings\(normalized\)/);
 });
