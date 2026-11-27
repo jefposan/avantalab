@@ -5,61 +5,100 @@ import ts from 'typescript';
 import {readFileSync} from 'node:fs';
 const parent=readFileSync('app/vendas/VendasIntegrado.tsx','utf8');
 const child=readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx','utf8');
-const defer=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
+const defer=()=>{let resolve,reject;const promise=new Promise((ok,fail)=>{resolve=ok;reject=fail;});return {promise,resolve,reject};};
 const tick=()=>new Promise(setImmediate);
 function run(code,env){vm.runInNewContext(ts.transpileModule(code,{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,env);}
-function loader({failCatalog=false}={}){
- const catalog=defer(),permission=defer(),state={};
- const env={exports:{},Error,URLSearchParams,Date,activeCompanyRef:{current:'company'},useCallback:fn=>fn,supabase:{auth:{getSession:async()=>({data:{session:{access_token:'synthetic'}}})}},aguardarComLimite:p=>p,
- fetch:async url=>url.includes('/perfil?')?{ok:true,json:async()=>({tipoPerfil:'empresa',cadastro:{empresa_id:'company'}})}:failCatalog?Promise.reject(Error('Catálogo indisponível')):catalog.promise};
- for(const key of ['Erro','Catalogo','LogoUrl','PerfilCadastro','CorPrimaria','DadosProntosEmpresa','ApresentacaoEmpresa'])env['set'+key]=v=>state[key]=typeof v==='function'?v(state[key]):v;
- for(const name of ['DocumentosFiscais','RegrasFiscais','PerfilFiscal','Recebimentos','Estoque','Clientes','Fornecedores','Operacoes'])env['carregar'+name]=async()=>{};
- env.carregarPermissoes=()=>{state.permissionStarted=true;return permission.promise;};
- env.carregarResumo=()=>permission.promise;
- const start=parent.indexOf('  const carregarCatalogo = useCallback('),end=parent.indexOf('\n  useEffect(',start);
+function catalogLoader() {
+ const deferred = defer();
+ const state = {};
+ const env = { exports:{}, Error, URLSearchParams, AbortSignal,
+   catalogoGenerationRef:{current:0}, activeCompanyRef:{current:'company'}, useCallback:fn=>fn,
+   supabase:{auth:{getSession:async()=>({data:{session:{access_token:'synthetic'}}})}},
+   fetch:()=>deferred.promise, setCatalogo:value=>{state.catalog=value;},
+   setErroCatalogo:value=>{state.error=value;},
+ };
+ const start=parent.indexOf('  const carregarCatalogo = useCallback('), end=parent.indexOf('\n  useEffect(',start);
  run(parent.slice(start,end)+'\nexports.load=carregarCatalogo;',env);
- return {state,catalog,permission,load:env.exports.load};
+ return { state, deferred, load:env.exports.load, activeCompany:env.activeCompanyRef };
 }
-test('catálogo e permissões lentos mantêm a preparação; catálogo vazio válido conclui',async()=>{
- const h=loader(),pending=h.load('company');await tick();assert.equal(h.state.DadosProntosEmpresa,'');
- h.catalog.resolve({ok:true,json:async()=>({catalogo:{itens:[]}})});await tick();
- assert.equal(h.state.DadosProntosEmpresa,'','não revelar totais enquanto permissões/dados estão pendentes');
- h.permission.resolve(true);await pending;assert.equal(h.state.DadosProntosEmpresa,'company');assert.equal(h.state.Erro,'');
+
+test('resposta lenta do catálogo não precisa de permissões nem altera o perfil que está aberto', async () => {
+ const h = catalogLoader(), pending = h.load('company');
+ await tick();
+ assert.equal(h.state.catalog, undefined);
+ const result={itens:[]};
+ h.deferred.resolve({ok:true,json:async()=>({catalogo:result})});
+ await pending;
+ assert.equal(h.state.catalog, result);
+ assert.equal(h.state.error, '');
 });
-test('falha real no catálogo encerra a espera e permite a tela de erro',async()=>{
- const h=loader({failCatalog:true});await h.load('company');assert.equal(h.state.DadosProntosEmpresa,'company');assert.equal(h.state.Erro,'Catálogo indisponível');assert.equal(h.state.PerfilCadastro.empresa_id,'company','ajustes continuam acessíveis com perfil confirmado');h.permission.resolve(false);
-});
-test('apresentação aguarda acesso e dois frames; certificado em consulta não bloqueia a Visão geral',()=>{
- const start=child.indexOf("  useEffect(() => {\n    if ((!overviewSummary&&!overviewError) || !presentationVersion || !integratedManagementRuntime || !managementCatalogBridge?.companyId"),end=child.indexOf('  const sidebarFiscalStatus',start);
- assert.ok(start>0&&end>start);
- for(const scenario of ['requestPending','accessPending','certificatePending','denied','ready']){
-  const frames=[],messages=[];
-  const env={overviewSummary:{start:'2026-11-01'},overviewError:'',presentationVersion:scenario==='requestPending'?0:1,integratedManagementRuntime:true,managementCatalogBridge:{companyId:'company'},managementProfileReady:true,accessBridgeState:{integrated:true,loading:scenario==='accessPending',available:scenario==='ready'},fiscalCertificateBridgeState:{integrated:true,loading:scenario==='certificatePending'},managementBridgeOrigin:'http://localhost:3000',useEffect:fn=>fn(),requestAnimationFrame:fn=>(frames.push(fn),frames.length),cancelAnimationFrame:()=>{},window:{parent:{postMessage:(message,origin)=>messages.push({message,origin})}}};
-  run(child.slice(start,end),env);assert.equal(messages.length,0);
-  if(scenario==='requestPending'||scenario==='accessPending')assert.equal(frames.length,0);
-  else {frames.shift()();assert.equal(messages.length,0);frames.shift()();assert.equal(messages[0].message.settled,true);assert.equal(messages[0].message.companyId,'company');assert.equal(messages[0].origin,'http://localhost:3000');assert.equal(env.accessBridgeState.available,scenario==='ready');}
+
+test('erro de catálogo fica local e atualização em segundo plano não apaga o retrato anterior', async () => {
+ for (const somenteDados of [false,true]) {
+   const h=catalogLoader(), pending=h.load('company', somenteDados);
+   await tick();
+   h.deferred.reject(new Error('Catálogo indisponível'));
+   await pending;
+   assert.equal(h.state.error, somenteDados ? undefined : 'Catálogo indisponível');
+   assert.equal(h.state.catalog, undefined);
  }
 });
-test('confirmação de apresentação rejeita origem, janela e empresa diferentes',()=>{
- const start=parent.indexOf('    const receber = (event: MessageEvent) => {'),end=parent.indexOf("      if (event.data?.type === 'AVANTALAB_VENDAS_CATALOGO_READY_V1')",start);
- const sender={},received=[];const env={exports:{},origemPrototipo:'http://localhost:3000',iframeRef:{current:{contentWindow:sender}},empresaId:'company',RETURN_TO_MANAGEMENT_MESSAGE_TYPE:'return',retornarParaGestao:()=>{},setApresentacaoEmpresa:id=>received.push(id)};
+
+test('catálogo tardio não repõe dados de uma empresa anterior', async () => {
+ const h=catalogLoader(), pending=h.load('company');
+ h.activeCompany.current='other-company';
+ h.deferred.resolve({ok:true,json:async()=>({catalogo:{itens:[1]}})});
+ await pending;
+ assert.equal(h.state.catalog, undefined);
+});
+
+test('Vendas prepara a Visão geral escondida e carrega complementos só após a abertura', () => {
+ assert.match(parent, /className=\{`absolute.*mostrarVendas/);
+ assert.match(parent, /!mostrarVendas && <TransicaoNavegacaoInterna/);
+ assert.match(parent, /perfilComAplicativo = mostrarVendas && permissoes\?\.snapshot.available === true/);
+ assert.match(parent, /if \(!empresaId\) return;\s*void carregarPermissoes\(empresaId\)/);
+ assert.doesNotMatch(parent, /iframePronto\) void carregarPermissoes/);
+});
+
+test('a hero só sinaliza após perfil, permissões e resumo, ou uma resposta de erro utilizável', () => {
+ const start=child.indexOf('  const primeiraHeroConcluida');
+ const end=child.indexOf('  const consultarComplementosFiscais',start);
+ assert.ok(start > 0 && end > start);
+ for (const [profile, accessSettled, granted, overview, error, ready] of [
+   [false,true,true,{},'',false],
+   [true,false,true,{},'',false],
+   [true,true,true,null,'',false],
+   [true,true,true,{},'',true],
+   [true,true,true,null,'Consulta indisponível',true],
+   [true,true,false,null,'',true],
+ ]) {
+   const sent=[];
+   run(child.slice(start,end),{exports:{},managementProfileReady:profile,accessBridgeState:{integrated:true,loading:!accessSettled},managementAccessReady:granted,
+    overviewSummary:overview,overviewError:error,integratedManagementRuntime:true,empresaDaHero:'company',managementBridgeOrigin:'http://localhost:3000',
+    MENSAGEM_VENDAS_HERO_PRONTA:'ready',useEffect:fn=>fn(),window:{parent:{postMessage:msg=>sent.push(msg)}},
+   });
+   assert.equal(sent.length,ready?1:0);
+   if(ready)assert.equal(sent[0].empresaId,'company');
+ }
+});
+
+test('troca encaminhada pelo iframe exige origem, janela e empresa atuais', () => {
+ const start=parent.indexOf('    const receber = (event: MessageEvent) => {');
+ const end=parent.indexOf('      if (event.data?.type === RETURN_TO_MANAGEMENT_MESSAGE_TYPE)',start);
+ const sender={}, forwarded=[], revealed=[];
+ const env={exports:{},origemPrototipo:'http://localhost:3000',iframeRef:{current:{contentWindow:sender}},empresaId:'company',
+  MENSAGEM_VENDAS_HERO_PRONTA:'ready',setHeroPronta:value=>revealed.push(value),MENSAGEM_TROCA_MODULO:'switch', criarRotaTrocaModulo:()=>'/custos', solicitarTrocaAoHospedeiro:data=>{forwarded.push(data.destino);return true;},
+ };
  run(parent.slice(start,end)+'\n};exports.receive=receber;',env);
- const valid={origin:env.origemPrototipo,source:sender,data:{type:'AVANTALAB_VENDAS_PRESENTATION_V1',companyId:'company',settled:true}};
- for(const event of [{...valid,origin:'https://other.invalid'},{...valid,source:{}},{...valid,data:{...valid.data,companyId:'other'}},{...valid,data:{...valid.data,settled:false}}])env.exports.receive(event);
- assert.equal(received.length,0);env.exports.receive(valid);assert.deepEqual(received,['company']);
-});
-
-test('históricos lentos de outras abas não bloqueiam a Visão geral',async()=>{
- const h=loader(),pending=h.load('company');h.catalog.resolve({ok:true,json:async()=>({catalogo:{itens:[]}})});h.permission.resolve(true);await pending;
- assert.equal(h.state.DadosProntosEmpresa,'company');
- const start=parent.indexOf('const dadosIniciais ='),end=parent.indexOf('const parametros =',start);
- assert.doesNotMatch(parent.slice(start,end),/carregarEstoque|carregarClientes|carregarFornecedores|carregarDocumentosFiscais|carregarPerfilFiscal/);
-});
-
-test('permissões e resumos começam antes de o catálogo responder, sem abrir a página antes deles',async()=>{
- const h=loader(),pending=h.load('company');await tick();
- assert.equal(h.state.permissionStarted,true,'permissões iniciadas enquanto o catálogo está pendente');
- assert.equal(h.state.DadosProntosEmpresa,'');
- h.permission.resolve(true);await tick();assert.equal(h.state.DadosProntosEmpresa,'','catálogo ainda pendente');
- h.catalog.resolve({ok:true,json:async()=>({catalogo:{itens:[]}})});await pending;assert.equal(h.state.DadosProntosEmpresa,'company');
+ const valid={origin:env.origemPrototipo,source:sender,data:{type:'switch',empresaId:'company',destino:'custos'}};
+ for(const event of [{...valid,origin:'https://other.invalid'},{...valid,source:{}},{...valid,data:{...valid.data,empresaId:'other'}}])env.exports.receive(event);
+ assert.deepEqual(forwarded,[]);
+ env.exports.receive(valid);
+ assert.deepEqual(forwarded,['custos']);
+ const ready={...valid,data:{type:'ready',empresaId:'company'}};
+ env.exports.receive({...ready,source:{}});
+ env.exports.receive({...ready,data:{type:'ready',empresaId:'other'}});
+ assert.deepEqual(revealed,[]);
+ env.exports.receive(ready);
+ assert.deepEqual(revealed,[true]);
 });

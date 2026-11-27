@@ -21,6 +21,7 @@ export async function validarSessaoDoDispositivo(empresaId: string, acao: 'entra
   if (!token) return { ok: false, ativa: false, expirada: true, mensagem: 'Sua sessão expirou.' };
   const resposta = await fetch('/api/cobranca/sessoes', {
     method: 'POST',
+    signal: AbortSignal.timeout(12_000),
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ empresaId, dispositivoId: obterIdDispositivo(), acao }),
   }).catch(() => null);

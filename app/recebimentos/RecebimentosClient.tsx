@@ -22,6 +22,7 @@ type Props = {
   rascunhoEscopo?: string;
   onAviso?: AbrirAvisoFn;
   onConfirmacao?: AbrirConfirmacaoFn;
+  onAberturaConcluida?: (pronta: boolean) => void;
   onBusyChange?: (ocupado: boolean) => void;
 };
 
@@ -35,6 +36,7 @@ export default function RecebimentosClient({
   mostrarLinkColaboradores = false,
   rascunhoEscopo = 'preview',
   onBusyChange,
+  onAberturaConcluida,
   onAviso,
   onConfirmacao,
 }: Props) {
@@ -48,6 +50,7 @@ export default function RecebimentosClient({
   const [carregando, setCarregando] = useState(true);
   const [processando, setProcessando] = useState(false);
   const [erro, setErro] = useState('');
+  useEffect(() => { if (!carregando) onAberturaConcluida?.(true); }, [carregando, onAberturaConcluida]);
   useEffect(() => { onBusyChange?.(processando); }, [onBusyChange, processando]);
 
   const carregar = useCallback(async (silencioso = false) => {
@@ -122,7 +125,7 @@ export default function RecebimentosClient({
   const painel = (
     <>
       {erro && <div className={styles.aviso} role="alert" style={{ marginBottom: 12 }}>{erro}</div>}
-      <div className={styles.painelDados} aria-hidden={carregando || undefined} inert={carregando || undefined}>
+      <div className={styles.painelDados} hidden={carregando}>
         <PainelAdministrativo
           perfil={perfil}
           darkMode={darkMode}
@@ -175,7 +178,7 @@ export default function RecebimentosClient({
           onConcluirAgendamentoServico={(id) => executar(() => repoAtual.concluirAgendamentoServico(id))}
         />
       </div>
-      <CarregamentoDadosModulo ativo={carregando} titulo="Preparando Operações de Campo" mensagem="Carregando os dados do módulo…" corPrimaria={corPrimaria} temaEscuro={darkMode} />
+      <CarregamentoDadosModulo ativo={carregando} variante="local" esqueletos titulo="Operações de Campo" mensagem="Carregando operações…" corPrimaria={corPrimaria} temaEscuro={darkMode} />
     </>
   );
 

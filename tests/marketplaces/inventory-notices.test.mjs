@@ -201,14 +201,9 @@ test('alerta no header inicia fechado e mostra somente quantidade real, sem card
   assert.equal(inventoryNoticeCount({...feed([]),noticesUnavailable:true}),0);
   assert.match(render({...feed([]),pendingStock:4}),/aguardando detalhamento/);
   const client=readFileSync(resolve(root,'app/marketplaces/MarketplacesClient.tsx'),'utf8');
-  assert.equal((client.match(/<InventoryNotices /g)||[]).length,1);assert.match(client,/notices=\{<InventoryNotices/);
-  const filters=readFileSync(resolve(root,'app/marketplaces/SalesFilters.tsx'),'utf8');
-  assert.ok(filters.indexOf('{notices}')<filters.indexOf('<FiltroCompetencia'));
-  assert.match(filters, /notices && <div className={styles.headerPeriodNotices}>{notices}<\/div>/);
+  assert.equal((client.match(/<InventoryNotices /g)||[]).length,1);
+  assert.match(client, /<div className=\{styles.headerActionButtons\}>[^]*<InventoryNotices/);
   const css=readFileSync(resolve(root,'app/marketplaces/marketplaces.module.css'),'utf8');
-  assert.match(css,/\.headerPeriodWithNotices > \.headerGroupLabel \{ grid-column: 2; grid-row: 1;/);
-  assert.match(css,/\.headerPeriodWithNotices > \.salesDateFilters \{ grid-column: 2; grid-row: 2;/);
-  assert.match(css,/\.headerPeriodNotices \{ grid-column: 1; grid-row: 2;/);
   assert.match(css,/\.inventoryAlertButton \{[^}]*min-height:var\(--header-control-height,44px\);height:var\(--header-control-height,44px\)/);
   assert.match(css,/\.inventoryAlertButton::after \{[^}]*height:var\(--header-touch-height,44px\)/);
 });

@@ -25,14 +25,14 @@ test('contrato distingue Vendas da Gestão do Vendas Mobile', async () => {
   assert.match(manifesto, /estado: 'disponivel'/);
 });
 
-test('cabeçalho integrado mantém somente Início, marca e Ajustes', async () => {
+test('cabeçalho integrado mantém navegação, marca e ações locais', async () => {
   const [integracao, sistema] = await Promise.all([
     readFile('app/vendas/VendasIntegrado.tsx', 'utf8'),
     readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8'),
   ]);
   assert.doesNotMatch(integracao, /vendas-perfil|vendas-lab-tabela|Origem do catálogo|Atualizar catálogo/);
   assert.match(integracao, /companyId=\$\{encodeURIComponent\(empresaId\)\}/);
-  assert.match(integracao, /className="block h-full w-full border-0 bg-white"/);
+  assert.match(integracao, /absolute inset-0 block h-full w-full border-0 bg-white/);
   assert.match(sistema, /<header ref={topbarRef} className="topbar">[\s\S]*className="module-exit"[\s\S]*className="module-brand"[\s\S]*className="topbar-actions"[\s\S]*module-settings-button/);
   assert.match(sistema, /const gestaoHref = managementCatalogBridge\?\.companyId/);
   assert.doesNotMatch(sistema, /AccessSessionSwitcher|Usuário em teste|prototype-pill|Protótipo local/);
@@ -336,11 +336,12 @@ test('cancelamento da NF-e autorizada exige justificativa e confirmação explí
 });
 
 test('menu Novo inclui cadastros úteis e oculta números técnicos das notas', async () => {
-  const [vendas, custosPage, custosClient, custosWorkspace] = await Promise.all([
+  const [vendas, custosPage, custosClient, custosWorkspace, navegacao] = await Promise.all([
     readFile('app/vendas/sistema/VendasServicosPrototype.tsx', 'utf8'),
     readFile('app/custos/page.tsx', 'utf8'),
     readFile('app/custos/CustosClient.tsx', 'utf8'),
     readFile('app/custos/CustosWorkspace.tsx', 'utf8'),
+    readFile('app/lib/navegacao-modulos.ts', 'utf8'),
   ]);
   assert.match(vendas, /type: 'cliente', title: 'Cliente'/);
   assert.match(vendas, /type: 'fornecedor', title: 'Fornecedor'/);
@@ -349,8 +350,9 @@ test('menu Novo inclui cadastros úteis e oculta números técnicos das notas', 
   assert.match(vendas, /setSupplierCreateOpen\(true\)/);
   assert.match(vendas, /SUPPLIER_STORAGE_KEY/);
   assert.match(vendas, /stock-suppliers/);
-  assert.match(vendas, /\/custos\?empresaId=.*&novo=produto/);
-  assert.match(vendas, /&retorno=vendas/);
+  assert.match(vendas, /destino: 'custos', produto: \{ novo: newProduct, id: productId \}/);
+  assert.match(navegacao, /new URLSearchParams\(\{ retorno: 'vendas' \}\)/);
+  assert.match(navegacao, /params.set\('novo', 'produto'\)/);
   assert.match(vendas, /onOpenCosts=\{\(\) => openCosts\(\)\}/);
   assert.doesNotMatch(vendas, /A abertura direta de Custos e Precificação será habilitada/);
   assert.match(vendas, /new-selection-backdrop/);

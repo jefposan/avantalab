@@ -402,7 +402,8 @@ test('a conta de publicação continua própria, independente do filtro de conta
 
 test('connections load from the persisted company records and OAuth returns without replacing the module page', () => {
   assert.match(client, /const refreshConnections = useCallback/);
-  assert.match(client, /if \(accessState !== 'ready'\) return;\s*let active = true;\s*queueMicrotask\(\(\) => \{\s*if \(!active\) return/);
+  assert.match(client, /const podeConsultarContas = podeConsultarPrimeiraTela && \(!voltandoDeAutorizacao \|\| acessoConfirmado\)/);
+  assert.match(client, /if \(!podeConsultarContas\) return;\s*let active = true;\s*queueMicrotask\(\(\) => \{\s*if \(!active\) return/);
   assert.match(client, /askIdentification \? completeNewConnection\(connectedAccountId\) : refreshConnections\(\)/);
   assert.match(client, /window\.open\('', target.popup/);
   assert.match(read('app/marketplaces/connection-target.ts'), /popup: 'avantalab-mercado-livre-oauth'/);

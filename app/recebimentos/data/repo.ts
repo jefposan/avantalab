@@ -281,21 +281,23 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       // A migration de recorrência pode ainda não ter sido aplicada em um
       // ambiente já publicado. Nesse intervalo, o módulo continua legível;
       // assim que a rotina existir, a sincronização volta a ser automática.
-      const { error: erroRecorrencia } = await cliente.rpc('recebimentos_sincronizar_recorrencias', { p_empresa_id: empresaId });
-      if (erroRecorrencia && erroRecorrencia.code !== 'PGRST202') {
-        throw new Error(erroMensagem(erroRecorrencia, 'Erro ao atualizar as cobranças recorrentes.'));
-      }
-      const { error: erroServicos } = await cliente.rpc('recebimentos_sincronizar_servicos', { p_empresa_id: empresaId });
-      if (erroServicos && !['PGRST202', 'PGRST205', '42P01'].includes(String(erroServicos.code ?? ''))) {
-        throw new Error(erroMensagem(erroServicos, 'Erro ao atualizar a programação de serviços.'));
-      }
-      const [empresas, subempresas, colaboradores, recebimentos, comprovantes, servicos] = await Promise.all([
+      const carregarLancamentosSincronizados = async () => {
+        const { error: erroRecorrencia } = await cliente.rpc('recebimentos_sincronizar_recorrencias', { p_empresa_id: empresaId });
+        if (erroRecorrencia && erroRecorrencia.code !== 'PGRST202') {
+          throw new Error(erroMensagem(erroRecorrencia, 'Erro ao atualizar as cobranças recorrentes.'));
+        }
+        const { error: erroServicos } = await cliente.rpc('recebimentos_sincronizar_servicos', { p_empresa_id: empresaId });
+        if (erroServicos && !['PGRST202', 'PGRST205', '42P01'].includes(String(erroServicos.code ?? ''))) {
+          throw new Error(erroMensagem(erroServicos, 'Erro ao atualizar a programação de serviços.'));
+        }
+        return Promise.all([carregarTodosRecebimentos(), carregarTodosServicos()]);
+      };
+      const [empresas, subempresas, colaboradores, comprovantes, [recebimentos, servicos]] = await Promise.all([
         exigir(cliente.from('recebimentos_empresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar empresas.'),
         exigir(cliente.from('recebimentos_subempresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar subempresas.'),
         exigir(cliente.from('recebimentos_colaboradores').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar colaboradores.'),
-        carregarTodosRecebimentos(),
         cliente.from('recebimentos_comprovantes').select('lancamento_id').eq('empresa_id', empresaId),
-        carregarTodosServicos(),
+        carregarLancamentosSincronizados(),
       ]);
       if (comprovantes.error && !['PGRST205', '42P01'].includes(String(comprovantes.error.code ?? ''))) {
         throw new Error(erroMensagem(comprovantes.error, 'Erro ao carregar os comprovantes.'));

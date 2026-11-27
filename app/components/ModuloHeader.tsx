@@ -147,8 +147,8 @@ export function AdaptiveModuleLogo({ src, alt, className = styles.moduleLogo, fr
 /** Identificação e navegação compartilhadas pelos cabeçalhos dos módulos. */
 export function ModuleHeaderNavigation({ title, children, corPrimaria, darkMode = false }: { title: string; children: ReactNode; corPrimaria: string; darkMode?: boolean }) {
   return <div className={styles.moduleHeaderStart} style={{ '--brand': corPrimaria, '--text': darkMode ? '#e5edf2' : '#142538', '--surface': darkMode ? '#101b28' : '#fff', '--border': darkMode ? '#2a3d4c' : '#dce5eb' } as CSSProperties}>
-    <span className={styles.moduleHeaderTitle}>{title}</span>
     {children}
+    <span className={styles.moduleHeaderTitle} title={title}>{title}</span>
   </div>;
 }
 

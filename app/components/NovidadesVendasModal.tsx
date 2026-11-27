@@ -15,7 +15,7 @@ type Material = {
   miniatura_status: 'nao_aplicavel' | 'pendente' | 'processando' | 'pronta' | 'erro';
   arquivo_hash: string | null; tamanho_bytes: number | null; criado_em: string;
 };
-type Props = { aberto: boolean; empresaId: string | null; nomeEmpresa: string; darkMode: boolean; corPrimaria: string; onFechar: () => void; rotuloFechar?: string };
+type Props = { aberto: boolean; empresaId: string | null; nomeEmpresa: string; darkMode: boolean; corPrimaria: string; onFechar: () => void; rotuloFechar?: string; onAberturaConcluida?: (empresaId: string) => void };
 type ExclusaoPendente =
   | { tipo: 'novidade'; item: Novidade }
   | { tipo: 'material'; item: Material }
@@ -212,7 +212,7 @@ async function uploadCancelavel(caminho: string, arquivo: Blob, nomeArquivo: str
   });
 }
 
-export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, darkMode, corPrimaria, onFechar, rotuloFechar }: Props) {
+export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, darkMode, corPrimaria, onFechar, rotuloFechar, onAberturaConcluida }: Props) {
   const [aba, setAba] = useState<'novidades' | 'divulgacao' | 'produtos'>('divulgacao');
   const [tipo, setTipo] = useState('lancamento'); const [titulo, setTitulo] = useState(''); const [descricao, setDescricao] = useState('');
   const [novidades, setNovidades] = useState<Novidade[]>([]); const [pastas, setPastas] = useState<Pasta[]>([]); const [materiais, setMateriais] = useState<Material[]>([]);
@@ -273,16 +273,34 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
 
   const carregar = async () => {
     if (!empresaId) return;
-    setCarregando(true); setErro('');
-    const [novidadesRes, pastasRes, materiaisRes] = await Promise.all([
-      supabase.from('vendas_mobile_conteudos').select('id, tipo, titulo, descricao, criado_em').eq('empresa_id', empresaId).eq('pagina', 'novidades').order('criado_em', { ascending: false }),
+    const geracao = contextoOperacaoRef.current;
+    setCarregando(true);
+    setErro('');
+    const novidadesEmCurso = Promise.resolve(supabase.from('vendas_mobile_conteudos').select('id, tipo, titulo, descricao, criado_em').eq('empresa_id', empresaId).eq('pagina', 'novidades').order('criado_em', { ascending: false })).then(
+      resposta => ({ resposta }),
+      () => ({ resposta: null }),
+    );
+    try {
+      const [pastasRes, materiaisRes] = await Promise.all([
       supabase.from('vendas_mobile_divulgacao_pastas').select('id, pasta_pai_id, capa_material_id, capa_arquivo_path, capa_arquivo_url, nome, descricao, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
       supabase.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
-    ]);
+      ]);
+      if (geracao !== contextoOperacaoRef.current) return;
+      if (pastasRes.error || materiaisRes.error) setErro('Não foi possível carregar a Divulgação.');
+      else {
+        setPastas((pastasRes.data || []) as Pasta[]);
+        setMateriais((materiaisRes.data || []) as Material[]);
+      }
+    } catch {
+      if (geracao === contextoOperacaoRef.current) setErro('Não foi possível carregar a Divulgação.');
+    } finally {
+      if (geracao === contextoOperacaoRef.current) onAberturaConcluida?.(empresaId);
+    }
+    const { resposta } = await novidadesEmCurso;
+    if (geracao !== contextoOperacaoRef.current) return;
     setCarregando(false);
-    if (novidadesRes.error) setErro('Não foi possível carregar as novidades.'); else setNovidades((novidadesRes.data || []) as Novidade[]);
-    if (pastasRes.error || materiaisRes.error) setErro('A estrutura de Divulgação ainda precisa ser instalada no banco.');
-    else { setPastas((pastasRes.data || []) as Pasta[]); setMateriais((materiaisRes.data || []) as Material[]); }
+    if (!resposta || resposta.error) setErro(atual => atual || 'Não foi possível carregar as novidades.');
+    else setNovidades((resposta.data || []) as Novidade[]);
   };
 
   useEffect(() => {

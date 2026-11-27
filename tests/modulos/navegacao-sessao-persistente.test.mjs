@@ -24,10 +24,10 @@ test('contexto interno permanece na aba e é apagado no logout', () => {
   assert.match(gestao, /const handleLogout = async \(\) => \{\s*logoutManualEmCursoRef\.current = true;\s*limparNavegacaoModulos\(\)/);
 });
 
-test('retorno revela o Dashboard antes de sincronizar o histórico', () => {
+test('retorno preserva o Dashboard e remove o módulo da URL sem navegar o documento', () => {
   const retorno = gestao.match(/const fecharModuloEmbutido = useCallback\(\(\) => \{([\s\S]*?)\n  \}, \[\]\);/)?.[1] || '';
   assert.ok(retorno.indexOf('setModuloEmbutido(null)') >= 0);
-  assert.ok(retorno.indexOf('window.history.back()') > retorno.indexOf('setModuloEmbutido(null)'));
+  assert.ok(retorno.indexOf('window.history.pushState') > retorno.indexOf('setModuloEmbutido(null)'));
 });
 
 test('contexto visual preserva a aparência, mas não dispensa revalidação da concessão', () => {

@@ -1,4 +1,22 @@
-<!-- ava-version: 3.2.0.554 -->
+<!-- ava-version: 3.2.0.563 -->
+
+> Revisão 3.2.0.563: Em Vendas e Serviços, Imprimir pedido gera o documento compacto em A4 ou A5 conforme o ajuste Comercial. Os campos Recebido por e Data permanecem disponíveis para preenchimento.
+
+> Revisão 3.2.0.562: Sem impacto operacional. Ajuste no cabeçalho de Anúncios em marketplaces na Gestão Web.
+
+> Revisão 3.2.0.561: Ao abrir Vendas a partir do Dashboard, o mesmo card branco acompanha toda a preparação até a Visão geral estar pronta.
+
+> Revisão 3.2.0.560: Quando Vendas for o primeiro destino após login, a preparação segue a cena institucional. Nas trocas internas continua o card branco.
+
+> Revisão 3.2.0.559: A Gestão mostra um único Preparando Vendas e Serviços, sem Cancelar. A Visão geral é revelada pronta.
+
+> Revisão 3.2.0.558: A abertura de Vendas reproduz o mesmo fluxo da revisão anterior. A Gestão usa o mesmo tipo de transição nos demais módulos Web.
+
+> Revisão 3.2.0.557: Na entrada exibe apenas o card Preparando. A Visão geral abre com navegação, ações e indicadores prontos. Catálogo, históricos e configuração fiscal continuam em segundo plano.
+
+> Revisão 3.2.0.556: Navegar troca de módulo dentro da aba. As permissões e o perfil continuam protegendo a entrada. Resumos, catálogo e históricos chegam separadamente, e o retorno usa o Dashboard já aberto quando disponível.
+
+> Revisão 3.2.0.555: Navegar e nome do módulo alinhados na horizontal; sem impacto operacional.
 
 > Revisão 3.2.0.554: Sem impacto operacional nos aplicativos independentes; ajuste do cabeçalho restrito à Gestão Web.
 

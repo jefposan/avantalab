@@ -15,6 +15,22 @@ export async function GET(request: Request) {
     const params = new URL(request.url).searchParams;
     const { db, empresaId } = await authorizeMarketplace(request, params.get('empresaId'));
     const allAccounts = params.get('scope') === 'all';
+    const localOnly = params.get('localOnly') === '1';
+    const resumoInicial = localOnly && params.get('hero') === '1';
+    const vendasDiretasEmCurso = allAccounts
+      ? listDirectSales(db, empresaId).then(
+          data => ({ sales: data.map(directSaleAsMarketplace), failure: null }),
+          error => ({ sales: [], failure: { error } }),
+        )
+      : Promise.resolve({ sales: [] as Awaited<ReturnType<typeof listSales>>, failure: null });
+    const vendasDiretas = async (warnings: string[]) => {
+      const result = await vendasDiretasEmCurso;
+      if (!result.failure) return result.sales;
+      const { error } = result.failure;
+      if (!(error instanceof MarketplaceError) || error.code !== 'direct_sales_migration') throw error;
+      warnings.push('Vendas diretas indisponíveis até atualizar o banco. As vendas online foram mantidas.');
+      return result.sales;
+    };
     const ids: string[] = [];
     const magaluIds: string[] = [];
     const warnings: string[] = [];
@@ -27,18 +43,19 @@ export async function GET(request: Request) {
       const selected = await loadSalesProvider(db, empresaId, params.get('connectionId'));
       ids.push(selected.connection.id); if (selected.provider === 'magalu') magaluIds.push(selected.connection.id);
     }
-    let directSales: Awaited<ReturnType<typeof listSales>> = [];
-    if(allAccounts){
-      try{directSales=(await listDirectSales(db,empresaId)).map(directSaleAsMarketplace);}
-      catch(e){if(e instanceof MarketplaceError&&e.code==='direct_sales_migration')warnings.push('Vendas diretas indisponíveis até atualizar o banco. As vendas online foram mantidas.');else throw e;}
-    }
-    if (!ids.length) return NextResponse.json({ sales: directSales, awaitingUpdates: 0, warnings }, { headers: { 'Cache-Control': 'no-store' } });
+    if (!ids.length) return NextResponse.json({ sales: await vendasDiretas(warnings), awaitingUpdates: 0, warnings }, { headers: { 'Cache-Control': 'no-store' } });
     // Abertura rápida: dados já salvos, sem aguardar rede dos marketplaces.
-    if(params.get('localOnly')==='1'){
-      const [sales,pending]=await Promise.all([listSales(db,empresaId,ids),db.from('marketplace_sale_notifications').select('id',{count:'exact',head:true}).eq('empresa_id',empresaId).in('connection_id',ids).is('processed_at',null)]);
-      if(pending.error || pending.count==null)throw new MarketplaceError(503,'database','Não foi possível conferir as atualizações pendentes.');
-      return NextResponse.json({sales:[...sales,...directSales],awaitingUpdates:pending.count,warnings},{headers:{'Cache-Control':'no-store'}});
+    if (localOnly) {
+      const [sales, pending, directSales] = await Promise.all([
+        listSales(db, empresaId, ids, { resumoInicial }),
+        db.from('marketplace_sale_notifications').select('id', { count: 'exact', head: true })
+          .eq('empresa_id', empresaId).in('connection_id', ids).is('processed_at', null),
+        vendasDiretas(warnings),
+      ]);
+      if (pending.error || pending.count == null) throw new MarketplaceError(503, 'database', 'Não foi possível conferir as atualizações pendentes.');
+      return NextResponse.json({ sales: [...sales, ...directSales], awaitingUpdates: pending.count, warnings }, { headers: { 'Cache-Control': 'no-store' } });
     }
+    const directSales = await vendasDiretas(warnings);
     // Só relê contas que possuem eventos prontos. O total conta pedidos, nunca a fila.
     const { data: queued, error: queueError } = await db.from('marketplace_sale_notifications').select('connection_id').eq('empresa_id', empresaId).is('processed_at', null).lte('next_attempt_at', new Date().toISOString());
     if (queueError) throw new MarketplaceError(503, 'database', 'Não foi possível atualizar os avisos de vendas.');

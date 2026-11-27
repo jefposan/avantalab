@@ -1,6 +1,8 @@
 'use client';
 
 import { Fragment, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import { useRouter } from 'next/navigation';
+import { editorBloqueiaNavegacao, MENSAGEM_TROCA_MODULO, solicitarTrocaAoHospedeiro } from '@/app/lib/navegacao-modulos';
 import { createPortal } from 'react-dom';
 import { useAcessosNavegacao } from '@/app/hooks/useAcessosNavegacao';
 import { atualizarAcessosNavegacao } from '@/app/lib/navegacao-acessos-cliente';
@@ -8,7 +10,6 @@ import { validarSessaoDoDispositivo } from '@/app/lib/sessao-acesso-cliente';
 import { opcoesNavegacao } from '@/app/lib/seletor-modulos';
 import { Icon } from '@/app/projetos/components/Icon';
 import ModalConfirmacao from './ModalConfirmacao';
-import CarregamentoDadosModulo from './CarregamentoDadosModulo';
 import styles from './SeletorModulos.module.css';
 
 type Props = { compact?: boolean; empresaId: string; moduloAtual: string; darkMode?: boolean; corPrimaria?: string; ocupado?: boolean; alteracoesPendentes?: boolean; salvarAntesDeSair?: () => Promise<boolean>; descricaoPendencia?: string };
@@ -27,6 +28,7 @@ export function ListaDestinosNavegacao({ opcoes, moduloAtual, bloqueado, onSelec
 }
 
 export default function SeletorModulos({ compact = false, empresaId, moduloAtual, darkMode = false, corPrimaria = '#003E73', ocupado = false, alteracoesPendentes = false, salvarAntesDeSair, descricaoPendencia }: Props) {
+  const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
@@ -82,23 +84,24 @@ export default function SeletorModulos({ compact = false, empresaId, moduloAtual
     const sequencia = ++pedido.current;
     setAberto(false); setPendente('');
     setCarregando(true); setErro('');
-    let encaminhado = false;
     try {
       if (!usuarioId) throw new Error('Sua sessão não está disponível. Entre novamente.');
-      const perfis = await atualizarAcessosNavegacao(empresaId, usuarioId, true);
+      if (editorBloqueiaNavegacao()) throw new Error('Conclua ou feche o editor aberto antes de trocar de área.');
+      const [perfis, sessao] = await Promise.all([
+        atualizarAcessosNavegacao(empresaId, usuarioId, true),
+        validarSessaoDoDispositivo(empresaId, 'verificar'),
+      ]);
       const lista = opcoesNavegacao(perfis, empresaId);
       if (sequencia !== pedido.current) return;
       if (destino) {
         const opcao = lista.find(item => item.id === destino);
         if (!opcao) throw new Error('Este destino não está mais disponível para seu perfil.');
-        const sessao = await validarSessaoDoDispositivo(empresaId, 'entrar');
-        if (sequencia !== pedido.current) return;
         if (!sessao.ok || !sessao.ativa) throw new Error(sessao.mensagem || 'Não foi possível confirmar a sessão deste dispositivo.');
         if (ocupadoAtual.current && !salvoNestaConfirmacao) throw new Error('Aguarde a conclusão da operação antes de trocar de módulo.');
-        // Navegação de documento preserva beforeunload, inclusive dos editores em iframes.
-        // O destino é sempre derivado do registro oficial, nunca de uma URL recebida.
-        (window.top || window).location.assign(opcao.href);
-        encaminhado = true;
+        if (editorBloqueiaNavegacao()) throw new Error('Conclua ou feche o editor aberto antes de trocar de área.');
+        if (!solicitarTrocaAoHospedeiro({ type: MENSAGEM_TROCA_MODULO, empresaId, destino })) {
+          router.push(opcao.href);
+        }
       }
     } catch (error) {
       if (sequencia === pedido.current) {
@@ -106,8 +109,7 @@ export default function SeletorModulos({ compact = false, empresaId, moduloAtual
         setAberto(true);
       }
     } finally {
-      // Mantém a preparação até a troca do documento, sem piscar a tela de origem.
-      if (!encaminhado && sequencia === pedido.current) { navegacaoEmCurso.current = false; setCarregando(false); }
+      if (sequencia === pedido.current) { navegacaoEmCurso.current = false; setCarregando(false); }
     }
   }
 
@@ -134,8 +136,9 @@ export default function SeletorModulos({ compact = false, empresaId, moduloAtual
   }
 
   return <>
-    <button ref={botao} type="button" className={`${styles.trigger} ${compact ? styles.compact : ''} ${darkMode ? styles.dark : ''}`} style={tema} aria-label="Navegar" aria-expanded={aberto} aria-controls={aberto ? id : undefined} disabled={!empresaId || ocupado || carregando} title={ocupado ? 'Aguarde a conclusão da operação' : 'Navegar entre Dashboard e módulos'} onClick={() => { if (aberto) { pedido.current += 1; setAberto(false); } else { setErro(''); setAberto(true); } }}>
-      <Icon name="grid" size={18} /><span>Navegar</span><Icon name="chevron" size={14} />
+    <button ref={botao} type="button" data-module-navigation-trigger
+      className={`${styles.trigger} ${compact ? styles.compact : ''} ${darkMode ? styles.dark : ''}`} style={tema} aria-label="Navegar" aria-busy={carregando || undefined} aria-expanded={aberto} aria-controls={aberto ? id : undefined} disabled={!empresaId || ocupado || carregando} title={ocupado ? 'Aguarde a conclusão da operação' : 'Navegar entre Dashboard e módulos'} onClick={() => { if (aberto) { pedido.current += 1; setAberto(false); } else { setErro(''); setAberto(true); } }}>
+      <Icon name="grid" size={18} /><span>{carregando ? 'Abrindo…' : 'Navegar'}</span><Icon name="chevron" size={14} />
     </button>
     {aberto && createPortal(<nav data-product-focus-navigation id={id} ref={painel} tabIndex={-1} aria-label="Navegar para" className={`${styles.panel} ${darkMode ? styles.dark : ''}`} style={{ ...tema, ...posicao }}>
       <header><strong>Navegar para</strong></header>
@@ -144,7 +147,6 @@ export default function SeletorModulos({ compact = false, empresaId, moduloAtual
       {!carregando && !erro && !erroPreparacao && !opcoes.length && <p role="status">{perfil ? 'Nenhum destino disponível. Consulte o gestor.' : 'Preparando a lista de acessos em segundo plano…'}</p>}
       <ListaDestinosNavegacao opcoes={opcoes} moduloAtual={moduloAtual} bloqueado={carregando || ocupado} onSelecionar={destino => { if (alteracoesPendentes) setPendente(destino); else void consultar(destino); }} />
     </nav>, document.body)}
-    {carregando && createPortal(<CarregamentoDadosModulo ativo titulo={`Preparando ${opcoes.find(opcao => opcao.id === ultimoDestino.current)?.nome || 'destino'}`} mensagem="Carregando os dados do módulo…" corPrimaria={corPrimaria} temaEscuro={darkMode} />, document.body)}
     {pendente && createPortal(<ModalConfirmacao aberto={Boolean(pendente)} titulo="Sair desta tela?" variante="alerta" mensagem={descricaoPendencia || 'Existem alterações não salvas nesta tela. Sair sem salvar descarta essas alterações.'} textoCancelar="Cancelar" textoConfirmar={salvarAntesDeSair ? 'Salvar e sair' : 'Sair sem salvar'} carregando={salvando} mostrarProgresso corPrimaria={corPrimaria} darkMode={darkMode} aoCancelar={() => { if (!salvandoRef.current) setPendente(''); }} aoConfirmar={salvarAntesDeSair ? salvarENavegar : descartarENavegar} acaoAdicional={salvarAntesDeSair ? {texto:'Sair sem salvar',aoClicar:descartarENavegar} : undefined} />, document.body)}
   </>;
 }

@@ -11,5 +11,5 @@ export default async function VendasPage({ searchParams }: { searchParams: Promi
   const params = await searchParams;
   const empresaId = Array.isArray(params.empresaId) ? params.empresaId[0] : params.empresaId;
   const contextoVisual = lerContextoVisualModulo(Array.isArray(params.__avctx) ? params.__avctx[0] : params.__avctx, 'vendas', empresaId);
-  return <VendasIntegrado initialContext={contextoVisual} />;
+  return <VendasIntegrado key={empresaId || 'vendas'} initialCompanyId={empresaId} initialContext={contextoVisual} />;
 }

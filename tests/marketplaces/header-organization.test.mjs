@@ -11,17 +11,17 @@ test('Todas permanece no topo e situações seguem as contagens, sem mudar sele�
   assert.match(filters,/value=\{group\}/);
 });
 
-test('três grupos visíveis reutilizam os filtros e os handlers originais',()=>{
+test('cabeçalho mantém filtros e agrupa Consultar pendências depois de Atualizar',()=>{
   assert.match(client,/className=\{styles.headerToolbar\}/);
   assert.match(filters,/Período das vendas/);
   assert.match(filters,/label="Situação das vendas"/);
   assert.match(client,/Atualização e avisos/);
-  assert.match(filters,/todosLabel="Todo o período"/);
+  assert.match(filters,/<SalesPeriodFilter[^>]*showAll=\{false\}/);
   assert.match(filters,/Selecionar datas/);
   assert.match(client,/className=\{styles.headerButtonText\}>Atualizar/);
-  assert.match(client,/className=\{styles.headerButtonText\}>Ver vendas/);
-  assert.match(client,/setSalesExpanded\(true\); setSalesAccount\(''\)/);
-  assert.match(client,/\{pendingSalesTotal\} vendas nos filtros selecionados/);
+  const actions = client.slice(client.indexOf('<div className={styles.headerActionButtons}>'), client.indexOf('</ModuloHeader>'));
+  assert.match(actions, />Atualizar<[^]*<InventoryNotices/);
+  assert.doesNotMatch(actions, /Ver vendas/);
   assert.match(client,/updatesAvailable \|\| liveUnavailable/);
   assert.match(filters,/onPeriodChange\(draft\); setOpen\(false\)/);
   assert.match(filters,/onGroupChange\(value as SaleGroup \| ''\)/);
@@ -43,21 +43,27 @@ test('cabeçalho conserva alturas responsivas e alvos de toque sem fixar menus',
   assert.match(css,/grid-template-rows: 14px auto; gap: 3px/);
   assert.match(css,/inset: -6px 0/);
   assert.match(css,/height: 36px/);
-  assert.match(css,/min-width: 48px/);
+  assert.match(css,/--header-month-arrow-width: 33\.6px/);
   assert.match(css,/\.dark \.headerGroupLabel/);
   assert.match(css,/\.dark \.selectCount/);
   assert.match(filters,/tooltipPosition="bottom"/);
   assert.match(client,/Tooltip posicao="bottom" texto="Atualizar anuncios"/);
   assert.match(filters,/aria-haspopup="dialog" aria-expanded=\{open\}/);
 });
-test('paleta suave fica isolada no cabeçalho e contador de vendas permanece interno',()=>{
+test('setas são 30% menores e o botão de datas pode crescer com o intervalo selecionado',()=>{
+  assert.match(css, /--header-month-arrow-width: 30\.8px/);
+  assert.match(css, /button:is\(\[aria-label="Mês anterior"\], \[aria-label="Próximo mês"\]\) \{[^}]*width: var\(--header-month-arrow-width\)/);
+  assert.match(css, /button\[aria-label="Mês anterior"\]::after \{[^}]*width: var\(--header-touch-height\)/);
+  assert.match(css, /button\[aria-label="Próximo mês"\]::after \{[^}]*width: var\(--header-touch-height\)/);
+  assert.match(css, /\.headerToolbar \.headerDateButton \{[^}]*min-inline-size: 140px/);
+  assert.match(css, /\.headerToolbar \.headerDateButton > span \{ flex: none;/);
+  assert.doesNotMatch(css, /\.headerToolbar \.headerDateButton \{[^}]*\bwidth: \d+px/);
+});
+test('paleta suave fica isolada nos filtros do cabeçalho',()=>{
   assert.match(css,/\.headerToolbar \{ --header-filter-accent: #003e73/);
-  assert.match(css,/\.page \.headerToolbar \.salesNotification \{ color: #fff; border-color: var\(--brand\); background: var\(--brand\)/);
-  assert.match(css,/\.headerToolbar \.salesNotification b \{ position: static; flex: 0 0 auto/);
   assert.match(css,/\.page \.headerToolbar \.selectTrigger \{[^}]*background: var\(--header-filter-soft\)/);
   assert.match(css,/\.page \.headerToolbar \.salesDateFilters button\[aria-pressed="true"\] \{ border-color: var\(--header-filter-selected-border\)/);
   assert.match(css,/\.dark \.headerToolbar \{ --header-filter-text: #e2e8f0/);
-  assert.match(css,/\.salesNotification:hover:not\(:disabled\)/);
 });
 test('opções de situação ficam compactas em uma linha sem alterar outros seletores',()=>{
   assert.match(css,/\.headerToolbar \.salesStatusFilter \.selectList \{[^}]*width: max-content;[^}]*max-width: calc\(100vw - 32px\)/);

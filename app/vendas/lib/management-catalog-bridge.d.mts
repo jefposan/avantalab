@@ -6,6 +6,7 @@ export type ManagementCatalogBridge = {
   items: ManagementCatalogItem[];
   companyId: string;
   catalogAvailable: boolean;
+  catalogLoading?: boolean;
   message: string;
   primaryColor: string;
   logoUrl: string;

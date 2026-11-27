@@ -188,15 +188,16 @@ export async function processSaleNotifications(db: SupabaseClient, connection: S
   }
 }
 
-export async function listSales(db: SupabaseClient, companyId: string, connectionIds: string[]) {
+export async function listSales(db: SupabaseClient, companyId: string, connectionIds: string[], { resumoInicial = false } = {}) {
   if (!connectionIds.length) return [];
   const sales: MarketplaceSale[] = [];
   const eanDeadline=Date.now()+5000;
   for (let offset = 0; ; offset += 500) {
     const { data, error } = await db.from('marketplace_sales').select('*').eq('empresa_id', companyId).in('connection_id', connectionIds).order('updated_at', { ascending: false }).order('id').range(offset, offset + 499);
     if (error) throw new MarketplaceError(503, 'database', 'Não foi possível carregar as vendas.');
-    sales.push(...await withSaleItemEans(db,companyId,(data || []).map((row) => publicSale(row as Record<string, unknown>)),Math.max(0,eanDeadline-Date.now())));
-    if (!data || data.length < 500) return attachFiscalHistory(db, companyId, sales);
+    const page = (data || []).map(row => publicSale(row as Record<string, unknown>));
+    sales.push(...(resumoInicial ? page : await withSaleItemEans(db, companyId, page, Math.max(0, eanDeadline - Date.now()))));
+    if (!data || data.length < 500) return resumoInicial ? sales : attachFiscalHistory(db, companyId, sales);
   }
 }
 

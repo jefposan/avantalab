@@ -10,6 +10,8 @@ import { stockMinimumNotices } from '../lib/stock-minimum-notices.mjs';
 import { SalesPeriodFilter, monthPeriod } from '@/app/marketplaces/SalesFilters';
 import type { SalePeriod } from '@/app/modules/marketplaces/sales-status';
 import CommercialReports from './relatorios/CommercialReports';
+import { useRouter } from 'next/navigation';
+import { criarRotaTrocaModulo, MENSAGEM_TROCA_MODULO, MENSAGEM_VENDAS_HERO_PRONTA, solicitarTrocaAoHospedeiro } from '@/app/lib/navegacao-modulos';
 import SeletorModulos from '@/app/components/SeletorModulos';
 import {buildOrderPdf, copyOrderPdf, orderContactLink, orderMessage, orderStatusActions} from '../lib/order-tools';
 import {prepareOrderLogo,printOrderPdf} from '../lib/order-print';
@@ -40,7 +42,7 @@ import CampoSelecaoPesquisavel from '@/app/components/CampoSelecaoPesquisavel';
 import {opcoesClientePedido,clienteDoRegistro} from '../lib/customer-selection';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { AdaptiveModuleLogo } from '@/app/components/ModuloHeader';
+import { AdaptiveModuleLogo, ModuleHeaderNavigation } from '@/app/components/ModuloHeader';
 import Tooltip from '@/app/components/Tooltip';
 import ChaveAtivacao from '@/app/components/ChaveAtivacao';
 import BotaoExpandirCard from '@/app/components/BotaoExpandirCard';
@@ -2636,7 +2638,7 @@ function QuoteView({ source, clientRecords, catalogRecords, settings, connected,
   </>;
 }
 
-function Dashboard({ stockControlEnabled = true, brand = '#003e73', onNew, onNavigate, connected, created, receivableRecords, catalogRecords, summary, summaryError, onSummaryPeriod }: { summary:CommercialOverview|null; summaryError:string; onSummaryPeriod:(period:SalePeriod)=>void; stockControlEnabled?:boolean; brand?: string; onNew: (type: NewActionType) => void; onNavigate: (view: View) => void; connected: boolean; created: CreatedRecord[]; receivableRecords: ReceivableRecord[]; catalogRecords: CatalogItem[] }) {
+function Dashboard({ stockControlEnabled = true, brand = '#003e73', catalogAvailable = true, onNew, onNavigate, connected, created, receivableRecords, catalogRecords, summary, summaryError, onSummaryPeriod }: { summary:CommercialOverview|null; summaryError:string; onSummaryPeriod:(period:SalePeriod)=>void; stockControlEnabled?:boolean; catalogAvailable?:boolean; brand?: string; onNew: (type: NewActionType) => void; onNavigate: (view: View) => void; connected: boolean; created: CreatedRecord[]; receivableRecords: ReceivableRecord[]; catalogRecords: CatalogItem[] }) {
   const {can}=useContext(PermissionContext);
   const [period, setPeriod] = useState<SalePeriod>(monthPeriod(new Date().getFullYear(), new Date().getMonth()));
   useEffect(() => {
@@ -2645,20 +2647,27 @@ function Dashboard({ stockControlEnabled = true, brand = '#003e73', onNew, onNav
   const periodOperations = created.filter(record => (!period.start || (record.order?.orderDate || record.createdAt).slice(0, 10) >= period.start) && (!period.end || (record.order?.orderDate || record.createdAt).slice(0, 10) <= period.end));
   const periodReceivables = receivableRecords.filter(record => (!period.start || (record.orderDate || record.createdAt).slice(0, 10) >= period.start) && (!period.end || (record.orderDate || record.createdAt).slice(0, 10) <= period.end));
   if (connected) {
-    const heading=<PageHeading view="painel" action={<div className="heading-actions commercial-period-actions"><SalesPeriodFilter period={period} onPeriodChange={setPeriod} brand={brand} dark={false} showAll={false}/><button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button></div>}/>;
-    if(!summary||summary.start!==period.start||summary.end!==period.end)return <>{heading}{summaryError?<AvisoFormulario titulo="Resumos indisponíveis" mensagem={summaryError} idMensagem="overview-error"><button className="button secondary" type="button" onClick={()=>onSummaryPeriod(period)}>Tentar novamente</button></AvisoFormulario>:<CarregamentoDadosModulo ativo variante="local" titulo="Atualizando resumos" mensagem="Consultando o período…"/>}</>;
-    const snapshot={...summary,stockLowItems:catalogRecords.filter(item=>item.trackStock&&stockStatus(item.available,item.minimum)!=='normal').length};
-    const integratedQuickActions = dashboardNewOptions.filter((option) => option.type !== 'venda');
-    return <>
-      <PageHeading view="painel" action={<div className="heading-actions commercial-period-actions"><SalesPeriodFilter period={period} onPeriodChange={setPeriod} brand={brand} dark={false} showAll={false}/><button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button></div>}/>
+    const heading = <PageHeading view="painel" action={<div className="heading-actions commercial-period-actions"><SalesPeriodFilter period={period} onPeriodChange={setPeriod} brand={brand} dark={false} showAll={false}/><button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button></div>}/>;
+    const integratedQuickActions = dashboardNewOptions.filter(option => option.type !== 'venda');
+    const quickActions = <section className="quick-actions" aria-label="Ações rápidas">{integratedQuickActions.map((option) => <button type="button" key={option.type} onClick={() => onNew(option.type)}><span><Icon name={option.icon}/></span><div><strong>{option.type === 'nfe' ? 'Nova nota fiscal' : `Novo ${option.title.toLocaleLowerCase('pt-BR')}`}</strong><small>{option.description}</small></div><Icon name="chevron" size={17}/></button>)}</section>;
+    if (!summary || summary.start !== period.start || summary.end !== period.end) {
+      return <>{heading}
+        {summaryError
+          ? <AvisoFormulario titulo="Resumos indisponíveis" mensagem={summaryError} idMensagem="overview-error"><button className="button secondary" type="button" onClick={() => onSummaryPeriod(period)}>Tentar novamente</button></AvisoFormulario>
+          : <CarregamentoDadosModulo ativo variante="local" esqueletos titulo="Atualizando resumos" mensagem="Consultando o período…" />}
+        {quickActions}
+      </>;
+    }
+    const snapshot = { ...summary, stockLowItems: catalogRecords.filter(item => item.trackStock && stockStatus(item.available, item.minimum) !== 'normal').length };
+    return <>{heading}
       <div className="metric-grid dashboard-financial-summary">
         <Metric label="Total vendido" value={money(snapshot.revenue)} note="Operações concluídas"/>
         <Metric label="A receber" value={money(snapshot.openReceivables)} note={snapshot.overdueReceivables ? `${money(snapshot.overdueReceivables)} em atraso` : 'Sem valores em atraso'} tone="cyan"/>
         <Metric label="Receita recebida" value={money(snapshot.receivedNet)} note="Recebimentos líquidos"/>
         {can('catalog.view_cost') && <Metric label="Custos" value={money(snapshot.cost||0)} note="Das operações concluídas"/>}
       </div>
-      <section className="quick-actions" aria-label="Ações rápidas">{integratedQuickActions.map((option) => <button type="button" key={option.type} onClick={() => onNew(option.type)}><span><Icon name={option.icon}/></span><div><strong>{option.type === 'nfe' ? 'Nova nota fiscal' : `Novo ${option.title.toLocaleLowerCase('pt-BR')}`}</strong><small>{option.description}</small></div><Icon name="chevron" size={17}/></button>)}</section>
-      <div className="dashboard-grid"><Panel title="Operação comercial" subtitle="Registros persistidos no perfil"><div className="pipeline">{[['Orçamentos',summary.counts.quotes],['Pedidos',summary.counts.orders],['Serviços',summary.counts.services],['Faturados',summary.counts.invoiced]].map(([label, count], index) => <div key={String(label)}><span className={`pipeline-icon pipeline-${index}`}><Icon name={index === 0 ? 'document' : index === 2 ? 'service' : 'sale'} size={18}/></span><div><strong>{label}</strong><small>Perfil empresarial</small></div><b>{count}</b></div>)}</div></Panel><Panel title="Atenção necessária" subtitle="Prioridades atuais"><div className="attention-list">{stockControlEnabled&&<button type="button" onClick={() => onNavigate('estoque')}><i className="dot warning"/><span><strong>{snapshot.stockLowItems} itens com atenção</strong><small>Saldo disponível e estoque mínimo</small></span><Badge tone="warning">Estoque</Badge></button>}<button type="button" onClick={() => onNavigate('recebimentos')}><i className="dot warning"/><span><strong>{money(snapshot.overdueReceivables)} em atraso</strong><small>Parcelas vencidas do perfil</small></span><Badge tone="warning">Cobrança</Badge></button></div></Panel></div>
+      {quickActions}
+      <div className="dashboard-grid"><Panel title="Operação comercial" subtitle="Registros persistidos no perfil"><div className="pipeline">{[['Orçamentos',summary.counts.quotes],['Pedidos',summary.counts.orders],['Serviços',summary.counts.services],['Faturados',summary.counts.invoiced]].map(([label, count], index) => <div key={String(label)}><span className={`pipeline-icon pipeline-${index}`}><Icon name={index === 0 ? 'document' : index === 2 ? 'service' : 'sale'} size={18}/></span><div><strong>{label}</strong><small>Perfil empresarial</small></div><b>{count}</b></div>)}</div></Panel><Panel title="Atenção necessária" subtitle="Prioridades atuais"><div className="attention-list">{stockControlEnabled&&<button type="button" onClick={() => onNavigate('estoque')}><i className="dot warning"/><span><strong>{catalogAvailable ? `${snapshot.stockLowItems} itens com atenção` : 'Consultar estoque'}</strong><small>Saldo disponível e estoque mínimo</small></span><Badge tone="warning">Estoque</Badge></button>}<button type="button" onClick={() => onNavigate('recebimentos')}><i className="dot warning"/><span><strong>{money(snapshot.overdueReceivables)} em atraso</strong><small>Parcelas vencidas do perfil</small></span><Badge tone="warning">Cobrança</Badge></button></div></Panel></div>
     </>;
   }
   const maxRevenue = Math.max(...monthlyRevenue.map(([, value]) => value));
@@ -6079,6 +6088,7 @@ function SettingsView({ stockControlContext,fiscalDefaultsContext,settings, conn
 }
 
 export function VendasServicosPrototype({ integratedManagementRuntime = false }: { integratedManagementRuntime?: boolean }) {
+  const moduleRouter = useRouter();
   const [view, setView] = useState<View>('painel');
   const commercialRootRef=useRef<HTMLDivElement>(null);
   const topbarRef=useRef<HTMLElement>(null);
@@ -6111,7 +6121,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [serviceSku, setServiceSku] = useState('');
   const [serviceReturnView, setServiceReturnView] = useState<'servicos' | 'clientes' | 'catalogo'>('servicos');
   const [fiscalOrigin, setFiscalOrigin] = useState<FiscalOrigin | null>(null);
-  const [fiscalDraftRecords, setFiscalDraftRecords] = useState<FiscalDraftRecord[]>(() => [createAuthorizedCancellationDemoDraft(), createRejectedNcmDemoDraft()]);
+  const [fiscalDraftRecords, setFiscalDraftRecords] = useState<FiscalDraftRecord[]>(() => integratedManagementRuntime ? [] : [createAuthorizedCancellationDemoDraft(), createRejectedNcmDemoDraft()]);
   const syncFiscalIndicatorStatuses=useCallback((statuses:Record<string,FiscalEmissionStatus>)=>{
     setFiscalDraftRecords(current=>mergeFiscalIndicatorStatuses(current,statuses));
   },[]);
@@ -6127,11 +6137,10 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [fiscalResumeId, setFiscalResumeId] = useState('');
   const [fiscalResultRequest, setFiscalResultRequest] = useState<{draftId:string;requestId:string}>();
   const [created, setCreated] = useState<CreatedRecord[]>([]);
-  const [clientRecords, setClientRecords] = useState<ClientRecord[]>(clients);
+  const [clientRecords, setClientRecords] = useState<ClientRecord[]>(integratedManagementRuntime ? [] : clients);
   const [supplierRecords, setSupplierRecords] = useState<SupplierRecord[]>([]);
-  const [catalogRecords, setCatalogRecords] = useState<CatalogItem[]>(() => inventory.map((item) => normalizeCatalogTaxProfile(item) as CatalogItem));
+  const [catalogRecords, setCatalogRecords] = useState<CatalogItem[]>(() => integratedManagementRuntime ? [] : inventory.map((item) => normalizeCatalogTaxProfile(item) as CatalogItem));
   const [managementCatalogBridge, setManagementCatalogBridge] = useState<ManagementCatalogBridge | null>(null);
-  const [presentationVersion, setPresentationVersion] = useState(0);
   const [overviewSummary,setOverviewSummary]=useState<CommercialOverview|null>(null);
   const [overviewError,setOverviewError]=useState('');
   const [managementBridgeOrigin, setManagementBridgeOrigin] = useState('');
@@ -6144,8 +6153,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [stockNoticesOpen,setStockNoticesOpen]=useState(false);
   const [stockAlertTarget,setStockAlertTarget]=useState<{sku:string;requestId:string}|null>(null);
   useEffect(()=>{setStockControls({enabled:true,disabledProductIds:[]});setStockNoticesOpen(false);setStockAlertTarget(null);},[managementCatalogBridge?.companyId]);
-  const [stockMovementRecords, setStockMovementRecords] = useState<StockMovementRecord[]>(stockMoves);
-  const [receivableRecords, setReceivableRecords] = useState<ReceivableRecord[]>(initialReceivables);
+  const [stockMovementRecords, setStockMovementRecords] = useState<StockMovementRecord[]>(integratedManagementRuntime ? [] : stockMoves);
+  const [receivableRecords, setReceivableRecords] = useState<ReceivableRecord[]>(integratedManagementRuntime ? [] : initialReceivables);
   const confirmedPaymentsRef=useRef(new Map<string,Parameters<typeof applyConfirmedOperationPayment>[1]>());
   const [financialState,setFinancialState]=useState<'loading'|'ready'|'error'>(integratedManagementRuntime?'loading':'ready');
   const [moduleSettings, setModuleSettings] = useState<ModuleSettings>(defaultModuleSettings);
@@ -6153,7 +6162,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const [editorError,setEditorError]=useState('');
   const editorGenerationRef=useRef(0);
   const loadRealFiscalEditor=useCallback(async()=>{const generation=++editorGenerationRef.current;const companyId=managementCatalogBridge?.companyId;if(!companyId||!managementBridgeOrigin)return;setEditorError('');try{const response=await requestFiscalEditor({companyId,origin:managementBridgeOrigin});if(generation!==editorGenerationRef.current)return;const config=response.editor as FiscalNoteEditorOptions;setRealFiscalEditor({...config,primaryColor:managementCatalogBridge.primaryColor,canManageMessages:response.canManage===true,onCreateMessage:async(message)=>{const result=await requestFiscalEditor({companyId,origin:managementBridgeOrigin,action:'create-message',message});if(generation!==editorGenerationRef.current)throw Error('O perfil foi alterado. Abra novamente as mensagens.');setRealFiscalEditor(current=>current?{...current,messages:[...(current.messages||[]).filter(item=>item.id!==result.message.id),result.message]}:current);return result.message;}});}catch(error){if(generation===editorGenerationRef.current)setEditorError(error instanceof Error?error.message:'Não foi possível carregar as opções da emissão.');}},[managementCatalogBridge?.companyId,managementBridgeOrigin,managementCatalogBridge?.primaryColor]);
-  useEffect(()=>{setRealFiscalEditor(undefined);void loadRealFiscalEditor();return()=>{editorGenerationRef.current++;};},[loadRealFiscalEditor]);
   const [fiscalNumberingLedger, setFiscalNumberingLedger] = useState<FiscalNumberingLedger>(() => createFiscalNumberingLedger({ nfe: defaultModuleSettings.fiscal.nfeSeries, nfce: defaultModuleSettings.fiscal.nfceSeries, nfse: defaultModuleSettings.fiscal.nfseSeries }));
   const [fiscalHomologationPlan, setFiscalHomologationPlan] = useState<FiscalHomologationPlan>(() => ({
     ...createDefaultFiscalHomologationPlan(defaultModuleSettings.company),
@@ -6191,19 +6199,33 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
   const managementProfileReady = !integratedManagementRuntime || Boolean(managementCatalogBridge?.company);
   const managementAccessReady = !integratedManagementRuntime || accessBridgeState.available;
   const managementContextReady = managementProfileReady && managementAccessReady;
+  const empresaDaHero = managementCatalogBridge?.companyId;
+  const primeiraHeroConcluida = managementProfileReady && accessBridgeState.integrated
+    && !accessBridgeState.loading && (!managementAccessReady || Boolean(overviewSummary || overviewError));
+  useEffect(() => {
+    // O React já aplicou o cabeçalho, os comandos autorizados e o resumo ao DOM.
+    if (!integratedManagementRuntime || !empresaDaHero || !managementBridgeOrigin || !primeiraHeroConcluida) return;
+    window.parent.postMessage({ type: MENSAGEM_VENDAS_HERO_PRONTA, empresaId: empresaDaHero }, managementBridgeOrigin);
+  }, [integratedManagementRuntime, empresaDaHero, managementBridgeOrigin, primeiraHeroConcluida]);
+  const consultarComplementosFiscais = integratedManagementRuntime && primeiraHeroConcluida && managementAccessReady;
+  useEffect(() => {
+    if (!consultarComplementosFiscais || !managementBridgeOrigin) return;
+    setRealFiscalEditor(undefined);
+    void loadRealFiscalEditor();
+    const request = createFiscalCertificateStatusRequest({ requestId: `certificate-status:${Date.now()}` });
+    if (request) window.parent.postMessage(request, managementBridgeOrigin);
+    return () => { editorGenerationRef.current++; };
+  }, [consultarComplementosFiscais, loadRealFiscalEditor, managementBridgeOrigin]);
+
+  const catalogLoading = managementCatalogBridge?.catalogLoading === true;
+  const viewNeedsCatalog = ['catalogo', 'estoque', 'novo_pedido', 'novo_orcamento', 'nova_ordem_servico', 'relatorios'].includes(view);
+  const catalogSectionLoading = catalogLoading && viewNeedsCatalog;
   const requestOverview=useCallback((period:SalePeriod)=>{
     if(managementBridgeOrigin&&managementCatalogBridge?.companyId)window.parent.postMessage({type:'AVANTALAB_VENDAS_OVERVIEW_REQUEST_V1',companyId:managementCatalogBridge.companyId,start:period.start,end:period.end},managementBridgeOrigin);
   },[managementBridgeOrigin,managementCatalogBridge?.companyId]);
   useEffect(()=>{if(view==='painel'&&overviewSummary)requestOverview({mode:'range',start:overviewSummary.start,end:overviewSummary.end} as SalePeriod);},[view]);
 
-  useEffect(() => {
-    if ((!overviewSummary&&!overviewError) || !presentationVersion || !integratedManagementRuntime || !managementCatalogBridge?.companyId || !managementProfileReady || !accessBridgeState.integrated || accessBridgeState.loading || !managementBridgeOrigin) return;
-    let paint = 0;
-    const frame = requestAnimationFrame(() => { paint = requestAnimationFrame(() => {
-      window.parent.postMessage({ type: 'AVANTALAB_VENDAS_PRESENTATION_V1', companyId: managementCatalogBridge.companyId, settled: true }, managementBridgeOrigin);
-    }); });
-    return () => { cancelAnimationFrame(frame); cancelAnimationFrame(paint); };
-  }, [overviewSummary, overviewError, presentationVersion, integratedManagementRuntime, managementCatalogBridge, managementProfileReady, accessBridgeState.integrated, accessBridgeState.loading, managementBridgeOrigin]);
+
   const sidebarFiscalStatus = useMemo(() => {
     if (integratedManagementRuntime && (!fiscalCertificateBridgeState.integrated || fiscalCertificateBridgeState.loading)) return null;
     if (currentFiscalConfig.certificateValid && fiscalCertificateBridgeState.execution?.productionTransmissionAllowed) return null;
@@ -6798,10 +6820,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         setFiscalDraftRecords((current) => [...persisted, ...current.filter((draft) => draft.persistenceSource !== 'server' && !persisted.some((record) => record.originId === draft.originId && record.documentType === draft.documentType && record.sourceLabel === draft.sourceLabel))]);
         return;
       }
-      if (event.data?.type === 'AVANTALAB_VENDAS_PRESENTATION_REQUEST_V1' && event.data.companyId === new URLSearchParams(window.location.search).get('companyId')) {
-        setPresentationVersion((current) => current + 1);
-        return;
-      }
       if(event.data?.type==='AVANTALAB_VENDAS_OVERVIEW_V1'&&event.data.companyId===new URLSearchParams(window.location.search).get('companyId')){
         const summary=event.data.summary;
         if(summary&&/^\d{4}-\d{2}-\d{2}$/.test(summary.start)&&/^\d{4}-\d{2}-\d{2}$/.test(summary.end)&&['revenue','openReceivables','receivedNet','overdueReceivables'].every(key=>typeof summary[key]==='number'&&Number.isFinite(summary[key]))&&summary.counts){setOverviewSummary(summary);setOverviewError('');}
@@ -6809,7 +6827,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         return;
       }
       const connected = parseManagementCatalogMessage(event.data);
-      if (!connected) return;
+      if (!connected || connected.companyId !== new URLSearchParams(window.location.search).get('companyId')) return;
       setManagementCatalogBridge(connected);
       setCatalogRecords(connected.items.map((item) => normalizeCatalogTaxProfile(item) as CatalogItem));
       if (connected.company) setFiscalIssuerRegistry(createFiscalIssuerRegistry(connected.company));
@@ -6818,7 +6836,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         ...(connected.company ? { company: { ...current.company, ...connected.company } } : {}),
         commercial: { ...current.commercial, reserveStockDefault: false },
       }));
-      if (!connected.catalogAvailable) setToast(connected.message || 'O catálogo de Custos está indisponível para este perfil.');
+      if (!connected.catalogAvailable && !connected.catalogLoading) setToast(connected.message || 'O catálogo de Custos está indisponível para este perfil.');
     };
     window.addEventListener('message', receive);
     window.parent.postMessage({ type: MANAGEMENT_CATALOG_READY_TYPE }, parentOrigin);
@@ -6830,8 +6848,6 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     window.parent.postMessage({ type: CUSTOMER_READY_TYPE }, parentOrigin);
     window.parent.postMessage({ type: SUPPLIER_READY_TYPE }, parentOrigin);
     window.parent.postMessage({ type: OPERATION_READY_TYPE }, parentOrigin);
-    const certificateRequest = createFiscalCertificateStatusRequest({ requestId: `certificate-status:${Date.now()}` });
-    if (certificateRequest) window.parent.postMessage(certificateRequest, parentOrigin);
     return () => {
       window.removeEventListener('message', receive);
       setManagementBridgeOrigin('');
@@ -7643,8 +7659,9 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       setToast('Selecione um perfil empresarial na Gestão antes de abrir Custos e Precificação.');
       return;
     }
-    const destination = `/custos?empresaId=${encodeURIComponent(companyId)}${newProduct ? '&novo=produto' : ''}${productId ? `&produtoId=${encodeURIComponent(productId)}` : ''}&retorno=vendas`;
-    window.top?.location.assign(destination);
+    const troca = { type: MENSAGEM_TROCA_MODULO, empresaId: companyId, destino: 'custos', produto: { novo: newProduct, id: productId } } as const;
+    const rota = criarRotaTrocaModulo(troca);
+    if (rota && !solicitarTrocaAoHospedeiro(troca)) moduleRouter.push(rota);
   };
   const resolveFiscalIssue = (draft: FiscalDraftRecord, key: string, productTarget = '') => {
     const action = fiscalCorrectionAction(key);
@@ -8567,14 +8584,15 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       window.parent.postMessage({ type: 'AVANTALAB_VENDAS_RETURN_TO_MANAGEMENT_V1' }, window.location.origin);
       return;
     }
-    window.location.assign(gestaoHref);
+    moduleRouter.push(gestaoHref);
   };
 
   return <PermissionContext.Provider value={{ can, user: activeUser, role: activeRole }}><div ref={commercialRootRef} className={`commercial-app${reportResult ? ' report-result-open' : ''}`} style={{ '--av-profile-primary': profileColor, '--av-profile-on-primary': corEhClara(profileColor) ? '#0f172a' : '#ffffff' } as CSSProperties}>
     <header ref={topbarRef} className="topbar">
       <div className="topbar-start">
-        <span className="module-header-title">Vendas e Serviços</span>
-        {managementContextReady && managementCatalogBridge?.companyId ? <SeletorModulos compact empresaId={managementCatalogBridge.companyId} moduloAtual="vendas" corPrimaria={profileColor} ocupado={editorSaving} alteracoesPendentes={view === 'novo_pedido'} descricaoPendencia={standaloneFiscal ? 'Existe uma nota fiscal não salva. Sair sem salvar perde os dados não salvos; Salvar e sair guarda o rascunho sem emitir.' : 'Existe um pedido não salvo. Sair sem salvar perde os dados não salvos; Salvar e sair guarda o rascunho sem confirmar o pedido.'} salvarAntesDeSair={async () => (await editorNavigationRef.current?.save()) === true} /> : <button type="button" onClick={retornarGestao} className="module-exit" aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16}/> Início</button>}
+        <ModuleHeaderNavigation title="Vendas e Serviços" corPrimaria={profileColor}>
+        {managementCatalogBridge?.companyId ? <SeletorModulos compact empresaId={managementCatalogBridge.companyId} moduloAtual="vendas" corPrimaria={profileColor} ocupado={editorSaving} alteracoesPendentes={view === 'novo_pedido'} descricaoPendencia={standaloneFiscal ? 'Existe uma nota fiscal não salva. Sair sem salvar perde os dados não salvos; Salvar e sair guarda o rascunho sem emitir.' : 'Existe um pedido não salvo. Sair sem salvar perde os dados não salvos; Salvar e sair guarda o rascunho sem confirmar o pedido.'} salvarAntesDeSair={async () => (await editorNavigationRef.current?.save()) === true} /> : <button type="button" onClick={retornarGestao} className="module-exit" aria-label="Voltar ao início do AvantaLab"><Icon name="back" size={16}/> Início</button>}
+        </ModuleHeaderNavigation>
         <button type="button" className="mobile-menu-button" onClick={() => setMobileMenu(true)} aria-label="Abrir menu"><Icon name="menu"/></button>
       </div>
       <div className="module-brand">
@@ -8601,10 +8619,14 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
       {managementContextReady && activeUser?.active && <BotaoProximoScroll acao="voltar-topo"/>}
       <main className="main-content">
         {!managementProfileReady && <section className="access-blocked-state"><span><Icon name="clock" size={24}/></span><h1>Carregando perfil empresarial</h1><p>Os dados comerciais permanecem ocultos até a Gestão confirmar o perfil selecionado.</p></section>}
-        {managementProfileReady && !managementAccessReady && <section className="access-blocked-state"><span><Icon name={accessBridgeState.loading ? 'clock' : 'warning'} size={24}/></span><h1>{accessBridgeState.loading ? 'Confirmando seu acesso' : 'Acesso não confirmado'}</h1><p>{accessBridgeState.message || 'A Gestão precisa confirmar seu vínculo e suas permissões antes de liberar os dados comerciais.'}</p></section>}
+        {managementProfileReady && !managementAccessReady && <section className="access-blocked-state"><span><Icon name={accessBridgeState.loading ? 'clock' : 'warning'} size={24}/></span><h1>{accessBridgeState.loading ? 'Confirmando seu acesso' : 'Acesso não confirmado'}</h1><p>{accessBridgeState.message || 'A Gestão precisa confirmar seu vínculo e suas permissões antes de liberar os dados comerciais.'}</p>{!accessBridgeState.loading && <button type="button" className="button secondary" onClick={() => {
+          setAccessBridgeState(current => ({ ...current, loading: true }));
+          window.parent.postMessage({ type: 'AVANTALAB_VENDAS_RETRY_ACCESS_V1' }, window.location.origin);
+        }}>Tentar novamente</button>}</section>}
         {managementContextReady && !activeUser?.active && <section className="access-blocked-state"><span><Icon name="warning" size={24}/></span><h1>Acesso bloqueado</h1><p>{activeUser?.name ?? 'Este usuário'} não pode operar o sistema. Peça a reativação ao Gestor ou Administrador.</p></section>}
-        {managementContextReady && activeUser?.active && <>
-        {view === 'painel' && <Dashboard summary={overviewSummary} summaryError={overviewError} onSummaryPeriod={requestOverview} stockControlEnabled={stockControls.enabled} brand={profileColor} onNew={openNew} onNavigate={navigate} connected={Boolean(managementCatalogBridge)} created={created} receivableRecords={receivableRecords} catalogRecords={catalogRecords}/>}
+        {managementContextReady && activeUser?.active && catalogSectionLoading && <CarregamentoDadosModulo ativo variante="local" esqueletos titulo="Catálogo" mensagem="Carregando produtos e serviços…" corPrimaria={profileColor} />}
+        {managementContextReady && activeUser?.active && !catalogSectionLoading && <>
+        {view === 'painel' && <Dashboard catalogAvailable={managementCatalogBridge?.catalogAvailable !== false} summary={overviewSummary} summaryError={overviewError} onSummaryPeriod={requestOverview} stockControlEnabled={stockControls.enabled} brand={profileColor} onNew={openNew} onNavigate={navigate} connected={Boolean(managementCatalogBridge)} created={created} receivableRecords={receivableRecords} catalogRecords={catalogRecords}/>}
         {view === 'vendas' && <SalesView receivables={receivableRecords} financialState={financialState} stockControlEnabled={stockControls.enabled} brand={profileColor}
           companyLogoUrl={companyLogoUrl}
           paperSize={moduleSettings.commercial.orderPrintPaper||'A4'}

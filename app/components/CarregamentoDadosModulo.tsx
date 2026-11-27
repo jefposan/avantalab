@@ -12,13 +12,14 @@ type Props = {
   variante?: 'modulo' | 'local' | 'indicador';
   esqueletos?: boolean;
   escurecerFundo?: boolean;
+  fundoBranco?: boolean;
   onCancelar?: () => void;
   compacto?: boolean;
   mostrarMensagem?: boolean;
 };
 
 /** Indicador padrão para preparação do módulo ou espera localizada em um card. */
-export default function CarregamentoDadosModulo({ ativo, titulo, mensagem, corPrimaria = '#003e73', temaEscuro = false, variante = 'modulo', esqueletos = false, escurecerFundo = false, onCancelar, compacto = variante === 'indicador', mostrarMensagem = false }: Props) {
+export default function CarregamentoDadosModulo({ ativo, titulo, mensagem, corPrimaria = '#003e73', temaEscuro = false, variante = 'modulo', esqueletos = false, escurecerFundo = false, fundoBranco = false, onCancelar, compacto = variante === 'indicador', mostrarMensagem = false }: Props) {
   const [demorado, setDemorado] = useState(false);
   useEffect(() => {
     setDemorado(false);
@@ -37,7 +38,7 @@ export default function CarregamentoDadosModulo({ ativo, titulo, mensagem, corPr
       {esqueletos && <div aria-hidden="true" className="mt-5 grid gap-3">{[0,1,2].map(item => <div key={item} className={`flex items-center gap-3 rounded-xl p-3 motion-safe:animate-pulse ${temaEscuro ? 'bg-white/5' : 'bg-white/65'}`}><span className="size-10 shrink-0 rounded-lg bg-slate-400/20" /><span className="grid flex-1 gap-2"><span className="h-3 w-3/4 rounded bg-slate-400/20" /><span className="h-2 w-1/2 rounded bg-slate-400/15" /></span></div>)}</div>}
     </div>
   </div>;
-  return <div data-av-navigation-loading={escurecerFundo ? '' : undefined} className={`fixed inset-0 z-[4000] grid place-items-center p-5 text-center backdrop-blur-[2px] ${temaEscuro ? 'bg-slate-950/35' : escurecerFundo ? 'bg-slate-950/20' : 'bg-white/35'}`} role="status" aria-live="polite" aria-busy="true" aria-label={`${titulo}. ${mensagem}`}>
+  return <div data-av-navigation-loading={escurecerFundo ? '' : undefined} className={`fixed inset-0 z-[4000] grid place-items-center p-5 text-center backdrop-blur-[2px] ${fundoBranco ? 'bg-white' : temaEscuro ? 'bg-slate-950/35' : escurecerFundo ? 'bg-slate-950/20' : 'bg-white/35'}`} role="status" aria-live="polite" aria-busy="true" aria-label={`${titulo}. ${mensagem}`}>
     <div className={`w-full max-w-[330px] rounded-2xl border px-5 py-4 shadow-[0_10px_30px_rgba(16,42,61,.12)] ${temaEscuro ? 'border-slate-700 bg-slate-900' : 'border-slate-200/90 bg-white'}`}>
       {circulo}
       <strong className={`block text-[13px] font-semibold ${temaEscuro ? 'text-slate-100' : 'text-slate-800'}`}>{titulo}</strong>

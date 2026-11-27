@@ -1,3 +1,12 @@
+// Revisão 3.2.0.563: Vendas e Serviços imprime o pedido no modelo compacto A4/A5 com campos de recebimento, conforme Ajustes > Comercial.
+// Revisão 3.2.0.562: Marketplaces Web: Consultar pendências fica ao lado de Atualizar. O período é ajustado pelas setas de mês ou por Selecionar datas. As vendas são consultadas no card Vendas.
+// Revisão 3.2.0.561: o card branco de navegação permanece montado até a primeira tela estar pronta, inclusive ao atualizar a URL.
+// Revisão 3.2.0.560: um novo login sempre usa Preparando acesso, inclusive ao reentrar após sair do Dashboard.
+// Revisão 3.2.0.559: entrada institucional separada da navegação em card branco único e sem Cancelar.
+// Revisão 3.2.0.558: todos os módulos da Gestão Web exibem um único card Preparando e revelam a tela inicial pronta.
+// Revisão 3.2.0.557: Vendas exibe um único card Preparando até a Visão geral estar pronta; consultas complementares continuam em segundo plano.
+// Revisão 3.2.0.556: Navegar troca módulos sem recarregar a aba. A Gestão reaparece com a seleção anterior quando já está aberta, e em Vendas as consultas do catálogo e dos indicadores não bloqueiam a navegação.
+// Revisão 3.2.0.555: cabeçalho dos módulos horizontal; sem impacto operacional.
 // Revisão 3.2.0.530: importação de preços em grade compacta; regras operacionais preservadas.
 // Revisão 3.2.0.527: Visão geral de Vendas recebe totais calculados no servidor por período e permissões, com históricos em segundo plano.
 // Revisão 3.2.0.526: Estoque usa uma única chave Controlar estoque em Ajustes > Vendas e serviços > Estoque, válida para a empresa ativa. Desligar suspende novas movimentações, reservas, avisos e ações de estoque; não apaga saldos, mínimos, reservas ou histórico. Reativar reutiliza os mesmos dados. Não há mais chave por produto ou pedido nem seleção de locais na operação. Textos reduzidos; local principal aplicado internamente.

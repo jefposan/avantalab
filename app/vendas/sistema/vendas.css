@@ -2715,3 +2715,6 @@ button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }
   .commercial-period-actions > div:first-child { flex: 0 0 100%; width: 100%; }
   .commercial-period-actions > div:first-child > [role="group"] { width: 100%; }
 }
+
+/* Conjunto compartilhado Navegar + módulo, sem empilhar a identificação. */
+.topbar-start{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;min-width:0}

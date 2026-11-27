@@ -305,7 +305,7 @@ test('Dados próprios preservam composições, simulações e histórico', () =>
   assert.match(migracao, /public\.custos_pode_acessar_empresa/);
   assert.match(migracao, /public\.modulo_ativo_para_empresa\(p_empresa_id, 'custos'\)/);
   assert.match(migracao, /disponivel_catalogo = true/);
-  assert.match(repositorio, /carregarCustos\(empresaId: string, podeEditar: boolean\)/);
+  assert.match(repositorio, /carregarCustos\(empresaId: string, podeEditar: boolean, onVisaoPronta/);
   assert.match(repositorio, /eq\('revisao', revisaoEsperada\)/);
   assert.match(migracaoEndurecimento, /new\.atualizado_por := auth\.uid\(\)/);
   assert.match(migracaoEndurecimento, /revoke delete on public\.custos_documentos from authenticated/);
@@ -427,19 +427,19 @@ test('catálogos mantêm a origem e a publicação pode ser administrada em lote
 test('Gestão mantém o Dashboard montado e recebe o retorno seguro do módulo embutido', () => {
   assert.match(gestao, /prepararNavegacaoModulo\(/);
   assert.match(gestao, /criarHrefModuloEmbutido\(rota, contexto\)/);
-  assert.match(gestao, /router\.prefetch\(destino\)/);
+  assert.match(gestao, /MENSAGEM_MODULO_PRONTO/);
   assert.match(gestao, /const \[moduloEmbutido, setModuloEmbutido\]/);
   assert.match(gestao, /window\.history\.pushState\(/);
   assert.match(gestao, /<iframe[\s\S]*src=\{moduloEmbutido\.href\}/);
   assert.match(gestao, /event\.origin !== window\.location\.origin/);
   assert.match(gestao, /event\.source !== moduloEmbutidoRef\.current\?\.contentWindow/);
   assert.match(gestao, /MENSAGEM_RETORNO_MODULO_EMBUTIDO/);
-  assert.match(cliente, /consumirNavegacaoModulo\('custos', companyId\)/);
+  assert.match(cliente, /useState\(\(\) => initialContext \?\? null\)/);
   assert.match(cliente, /solicitarRetornoAoModuloHospedeiro\(\)/);
   assert.match(cliente, /router\.push\(returnTo === 'vendas' \? returnHref : destinoInicioModulo\(companyId\)\)/);
   assert.doesNotMatch(gestao, /consumirNavegacaoModulo\('gestao'\)/);
   assert.match(cliente, /\/api\/modulos\/acesso\?empresaId=/);
-  assert.match(transicao, /aria-busy="true"/);
+  assert.match(transicao, /<CarregamentoDadosModulo/);
   assert.match(navegacao, /Nunca concede\n \* acesso/);
   assert.match(navegacao, /sessionStorage/);
   assert.match(navegacao, /window\.parent\.postMessage\(/);
@@ -452,14 +452,14 @@ test('Gestão mantém o Dashboard montado e recebe o retorno seguro do módulo e
   assert.match(paginaVendas, /lerContextoVisualModulo\(/);
 });
 
-test('módulos mantêm a estrutura visível e cobrem apenas os dados até estarem prontos', () => {
+test('módulos revelam a primeira tela pronta e tratam atualizações na própria área', () => {
   assert.match(carregamentoDadosModulo, /role="status"/);
   assert.match(carregamentoDadosModulo, /aria-live="polite"/);
   assert.match(carregamentoDadosModulo, /fixed inset-0 z-\[4000\]/);
-  assert.match(workspace, /<CarregamentoDadosModulo ativo=\{carregando\}/);
+  assert.match(workspace, /<CarregamentoDadosModulo ativo=\{esperaAba\}/);
   assert.match(projetos, /<CarregamentoDadosModulo ativo=\{carregandoDados\}/);
   assert.match(recebimentosClient, /<CarregamentoDadosModulo ativo=\{carregando\}/);
-  assert.match(vendasIntegrado, /<CarregamentoDadosModulo ativo=\{!paginaPronta\}/);
+  assert.match(vendasIntegrado, /!mostrarVendas.*<TransicaoNavegacaoInterna/);
 });
 
 test('tipografia dos módulos usa tons neutros e preserva a cor de perfil para ações', () => {
@@ -520,15 +520,15 @@ test('todos os módulos em página total devolvem o controle à Gestão quando e
   assert.match(gestao, /navegarParaModulo\('projetos', '\/projetos', empresaId \|\| ''\)/);
   assert.match(gestao, /navegarParaModulo\('recebimentos_presencial', '\/recebimentos', empresaId \|\| ''\)/);
   assert.match(cliente, /router\.prefetch\(returnTo === 'vendas' \? returnHref : destinoInicioModulo\(companyId\)\)/);
-  assert.match(projetos, /consumirNavegacaoModulo\('projetos', companyId\)/);
+  assert.match(projetos, /useState\(\(\) => initialContext \?\? null\)/);
   assert.match(projetos, /solicitarRetornoAoModuloHospedeiro\(\)/);
   assert.match(projetos, /router\.push\(destino\)/);
-  assert.match(projetos, /Preparando Projetos/);
-  assert.match(recebimentos, /consumirNavegacaoModulo\('recebimentos_presencial', empresaId\)/);
+  assert.match(projetos, /<AberturaModulo[^>]*modulo="projetos"/);
+  assert.match(recebimentos, /useState\(\(\) => initialContext \?\? null\)/);
   assert.match(recebimentos, /router\.prefetch\(empresaId \? destinoInicioModulo\(empresaId\) : inicioHref\)/);
   assert.match(recebimentos, /solicitarRetornoAoModuloHospedeiro\(\)/);
   assert.match(recebimentos, /router\.push\(empresaId \? destinoInicioModulo\(empresaId\) : inicioHref\)/);
-  assert.match(vendasIntegrado, /consumirNavegacaoModulo\('vendas'\)/);
+  assert.match(vendasIntegrado, /consumirNavegacaoModulo\('vendas', initialCompanyId\)/);
   assert.match(vendasIntegrado, /solicitarRetornoAoModuloHospedeiro\(\)/);
   assert.match(vendasIntegrado, /RETURN_TO_MANAGEMENT_MESSAGE_TYPE/);
   assert.match(vendasSistema, /AVANTALAB_VENDAS_RETURN_TO_MANAGEMENT_V1/);

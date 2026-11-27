@@ -8,6 +8,8 @@ import { guardarPreviaModulos, lerPreviaModulos, limparPreviaModulos } from '@/a
 import { limparNavegacaoModulos, prepararNavegacaoModulo, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { REGISTRO_MODULOS } from '@/app/lib/modulos-registro';
 import TelaCarregandoAcesso from '@/app/components/TelaCarregandoAcesso';
+import { prepararDestinoAposLogin } from '@/app/lib/origem-preparacao';
+import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import SelecaoModulos from '@/app/components/SelecaoModulos';
 
 export type PerfilModulos = { empresa: { id: string; nome: string; corPrimaria: string; temaEscuro: boolean; logoUrl?: string; logoAdiada?: boolean }; nomeUsuario: string; perfil: string; dashboard: boolean; planoAtivo: boolean; modulos: Array<{ id: string; nome: string; descricao: string; icone: string }> };
@@ -42,7 +44,7 @@ export async function buscarAcessosUsuario(empresaId?: string, opcoes: { adiarLo
 }
 
 
-export default function MeusModulos() {
+export default function MeusModulos({ retornoInterno = false, entradaEmCurso = false }: { retornoInterno?: boolean; entradaEmCurso?: boolean }) {
   const router = useRouter();
   const [perfis, setPerfis] = useState<PerfilModulos[]>([]);
   const [perfil, setPerfil] = useState<PerfilModulos | null>(null);
@@ -78,7 +80,7 @@ export default function MeusModulos() {
       if (params.get('entrada') === '1' && escolhido) {
         const sessao = await validarSessaoDoDispositivo(escolhido.empresa.id, 'entrar');
         if (!sessao.ok || !sessao.ativa) throw new Error(sessao.mensagem || 'Não foi possível confirmar sua sessão.');
-        router.replace(destinoAposLogin(escolhido.empresa.id, escolhido.dashboard, escolhido.modulos.map(m => m.id)));
+        router.replace(prepararDestinoAposLogin(destinoAposLogin(escolhido.empresa.id, escolhido.dashboard, escolhido.modulos.map(m => m.id))));
       }
     } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível carregar os módulos.'); }
     finally { setLoading(false); }
@@ -106,7 +108,10 @@ export default function MeusModulos() {
         prepararNavegacaoModulo({ destino: id, empresaId: escolhido.empresa.id, empresa: escolhido.empresa, perfil: papel, podeEditar: Boolean(permissao && permissao !== 'visualizar'), podeGerenciarModulo: permissao === 'administrar' });
       }
       router.prefetch(`/modulos?empresaId=${encodeURIComponent(escolhido.empresa.id)}&retorno=1`);
-      router.push(id === 'dashboard' ? `/gestao?empresaId=${encodeURIComponent(escolhido.empresa.id)}` : hrefModulo(id, escolhido.empresa.id));
+      const destino = id === 'dashboard'
+        ? `/gestao?inicio=1&empresaId=${encodeURIComponent(escolhido.empresa.id)}`
+        : hrefModulo(id, escolhido.empresa.id);
+      router.push(entradaEmCurso ? prepararDestinoAposLogin(destino) : destino);
       // A navegação não aguarda rede. A política de dispositivos continua ativa;
       // dados e operações são autorizados pelos endpoints e pelas políticas RLS.
       void validarSessaoDoDispositivo(escolhido.empresa.id, 'entrar').then(sessao => {
@@ -115,8 +120,16 @@ export default function MeusModulos() {
     } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível abrir o módulo.'); setOpening(''); }
   }
   async function sair() { limparNavegacaoModulos(); await supabase.auth.signOut({ scope: 'local' }); router.replace('/gestao?entrar=1'); }
-  if (loading && !previa) return <TelaCarregandoAcesso titulo="Preparando seus módulos" mensagem="Confirmando suas liberações…" />;
+  if (loading && !previa) {
+    return retornoInterno
+      ? <TransicaoNavegacaoInterna destino="seus módulos" mensagem="Confirmando suas liberações…" />
+      : <TelaCarregandoAcesso preparandoAcesso mensagem="Confirmando suas liberações…" />;
+  }
   const perfilVisivel = loading ? previa : perfil;
   const perfisVisiveis = loading && previa ? lerPreviaModulos(previa.empresa.id)?.perfis || [previa] : perfis;
-  return <SelecaoModulos perfis={perfisVisiveis} perfil={perfilVisivel} error={error} opening={opening} onAbrir={id => void abrir(id)} onSelecionarPerfil={p => { setPerfil(p); router.replace(`/modulos?empresaId=${encodeURIComponent(p.empresa.id)}`); }} onTrocarPerfil={() => router.replace('/gestao')} onTentarNovamente={() => void carregar()} onSair={() => void sair()} />;
+  return <SelecaoModulos perfis={perfisVisiveis} perfil={perfilVisivel} error={error} opening={opening} onAbrir={id => void abrir(id)} onSelecionarPerfil={p => {
+    setPerfil(p);
+    const destino = `/modulos?empresaId=${encodeURIComponent(p.empresa.id)}${retornoInterno ? '&retorno=1' : ''}`;
+    router.replace(entradaEmCurso ? prepararDestinoAposLogin(destino) : destino);
+  }} onTrocarPerfil={() => router.replace('/gestao')} onTentarNovamente={() => void carregar()} onSair={() => void sair()} />;
 }

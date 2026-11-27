@@ -2,8 +2,8 @@
 import {localRevenueLabActive,revenueLabKey} from '../vendas/lib/local-revenue-overlay.mjs';
 
 import CampoBusca from '@/app/components/CampoBusca';
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback, useSyncExternalStore, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Calculadora from '@/app/components/Calculadora';
 import AcessosUsuarioCampos from '@/app/components/AcessosUsuarioCampos';
 import SeloPerfilEmUso from '@/app/components/SeloPerfilEmUso';
@@ -83,8 +83,10 @@ import {
   type SubAcaoGerenciarPerfil,
 } from '@/app/lib/perfis-quota';
 import { modulosPaginaTotalAtivos, obterRegistroModulo } from '@/app/lib/modulos-registro';
-import { consumirNavegacaoModulo, criarHrefModuloEmbutido, limparNavegacaoModulos, MENSAGEM_RETORNO_MODULO_EMBUTIDO, prepararNavegacaoModulo } from '@/app/lib/navegacao-modulos';
+import { consumirNavegacaoModulo, criarHrefModuloEmbutido, criarRotaTrocaModulo, limparNavegacaoModulos, MENSAGEM_MODULO_PRONTO, MENSAGEM_RETORNO_MODULO_EMBUTIDO, MENSAGEM_TROCA_MODULO, prepararNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type TrocaModulo } from '@/app/lib/navegacao-modulos';
+import { apagarMarcadoresDePreparacao, PARAMETRO_PREPARACAO_ACESSO, prepararDestinoAposLogin } from '@/app/lib/origem-preparacao';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
+import AberturaModulo, { useAvisarModuloPronto } from '@/app/components/AberturaModulo';
 import { resolverAcessoComercialModulo } from '@/app/lib/modulos-acesso-comercial';
 import { validarSessaoDoDispositivo } from '@/app/lib/sessao-acesso-cliente';
 import {
@@ -329,7 +331,46 @@ function descricaoComParcelamento(descricaoBase: string, parcelaAtual: number, t
   return base ? `${base} (${parcelaAtual}/${totalParcelas})` : `(${parcelaAtual}/${totalParcelas})`;
 }
 
+function destinoDeNavegacaoGestao(params: Pick<URLSearchParams, 'get'>) {
+  if (params.get(PARAMETRO_PREPARACAO_ACESSO) === '1' || params.get('entrar') === '1') return '';
+  const modulo = obterRegistroModulo(params.get('areaModulo') || params.get('modulo') || '');
+  if (modulo) return modulo.nome;
+  return params.get('inicio') === '1' ? 'Dashboard' : '';
+}
+
+const observarBuscaInicial = () => () => {};
+const obterBuscaInicial = () => window.location.search;
+const buscaInicialServidor = () => null;
+
 export default function AppGestao() {
+  const busca = useSyncExternalStore(observarBuscaInicial, obterBuscaInicial, buscaInicialServidor);
+  const [moduloEmPreparacao, definirModuloEmPreparacao] = useState<string>();
+  // A espera pertence à janela principal, inclusive enquanto o roteador
+  // suspende o conteúdo ou uma rota interna está sendo retomada.
+  const destino = moduloEmPreparacao ?? (busca === null ? '' : destinoDeNavegacaoGestao(new URLSearchParams(busca)));
+
+  return <>
+    {destino ? <div className="fixed inset-0 z-[10001]" data-avanta-transicao-modulo="">
+      <TransicaoNavegacaoInterna destino={destino} somenteInterna />
+    </div> : null}
+    <Suspense fallback={busca !== null && moduloEmPreparacao === undefined && !destino
+      ? <TelaCarregandoAcesso preparandoAcesso mensagem="Confirmando acesso…" />
+      : null}>
+      <GestaoRoteada definirModuloEmPreparacao={definirModuloEmPreparacao} />
+    </Suspense>
+  </>;
+}
+
+type ControladorPreparacaoModulo = { definirModuloEmPreparacao: (nome: string) => void };
+
+function GestaoRoteada({ definirModuloEmPreparacao }: ControladorPreparacaoModulo) {
+  const params = useSearchParams();
+  const area = params.get('areaModulo');
+  const chave = area === 'ponto' || area === 'vendas_mobile' ? `${area}:${params.get('empresaId') || ''}` : 'dashboard';
+  return <GestaoConteudo key={chave} destinoInterno={destinoDeNavegacaoGestao(params)} definirModuloEmPreparacao={definirModuloEmPreparacao} />;
+}
+
+function GestaoConteudo({ destinoInterno, definirModuloEmPreparacao }: { destinoInterno: string } & ControladorPreparacaoModulo) {
   const router = useRouter();
   const [mostrarEditEmpresaSenha, setMostrarEditEmpresaSenha] = useState(false);
   const [mostrarEditUsuarioConfirmarSenha, setMostrarEditUsuarioConfirmarSenha] = useState(false);
@@ -468,6 +509,8 @@ export default function AppGestao() {
   const [modulosLiberados, setModulosLiberados] = useState<string[]>([]);
   const [perfisDashboardLiberados, setPerfisDashboardLiberados] = useState<string[]>([]);
   const [areaIntegradaRestrita, setAreaIntegradaRestrita] = useState<string | null>(null);
+  const [falhaArea, setFalhaArea] = useState<{ destino: string; empresaId: string; mensagem: string } | null>(null);
+  useAvisarModuloPronto(falhaArea?.destino || '', falhaArea?.empresaId, Boolean(falhaArea));
   useEffect(() => {
     if (!areaIntegradaRestrita || !empresaId) return;
     if (areaIntegradaRestrita === 'ponto') abrirPontoIntegrado();
@@ -585,6 +628,17 @@ const [mounted, setMounted] = useState(false);
 const [erroPreparacaoAcesso, setErroPreparacaoAcesso] = useState('');
 const [moduloEmbutido, setModuloEmbutido] = useState<{ id: string; nome: string; href: string } | null>(null);
 const moduloEmbutidoRef = useRef<HTMLIFrameElement | null>(null);
+const [hrefModuloVisivel, setHrefModuloVisivel] = useState('');
+const [aberturaModuloExpirada, setAberturaModuloExpirada] = useState(false);
+const [tentativaAbrirModulo, setTentativaAbrirModulo] = useState(0);
+
+const aguardandoModulo = Boolean(moduloEmbutido && hrefModuloVisivel !== moduloEmbutido.href && !aberturaModuloExpirada);
+useEffect(() => {
+  setAberturaModuloExpirada(false);
+  if (!moduloEmbutido || hrefModuloVisivel === moduloEmbutido.href) return;
+  const timer = window.setTimeout(() => setAberturaModuloExpirada(true), 90_000);
+  return () => window.clearTimeout(timer);
+}, [moduloEmbutido, hrefModuloVisivel, tentativaAbrirModulo]);
 const [isTelaMobile, setIsTelaMobile] = useState(false);
 const [darkMode, setDarkMode] = useState(false);
 const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
@@ -604,51 +658,44 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     const params = new URLSearchParams(window.location.search);
     const moduloId = params.get('modulo');
     const modulo = moduloId ? obterRegistroModulo(moduloId) : null;
-    if (!moduloId || !modulo || !modulosLiberados.includes(moduloId) || modulo.navegacao.modo !== 'pagina_total' || !modulo.navegacao.rota || !empresaId) {
+    if (!moduloId || !modulo || !modulosLiberados.includes(moduloId) || !empresaId) {
       setModuloEmbutido(null);
+      setHrefModuloVisivel('');
       return;
     }
+    const href = criarRotaTrocaModulo({ type: MENSAGEM_TROCA_MODULO, empresaId, destino: moduloId });
+    if (!href) return;
     setModuloEmbutido(atual => {
       // Revalidar concessões não deve remover o contexto da URL e remontar o iframe.
       // A validação de acesso acima continua fechando módulos revogados.
       if (atual?.id === modulo.id) {
         const destinoAtual = new URL(atual.href, window.location.origin);
-        if (destinoAtual.pathname === modulo.navegacao.rota && destinoAtual.searchParams.get('empresaId') === empresaId) return atual;
+        if (destinoAtual.searchParams.get('empresaId') === empresaId) return atual;
       }
       return {
       id: modulo.id,
       nome: modulo.nome,
-      href: `${modulo.navegacao.rota}?empresaId=${encodeURIComponent(empresaId)}`,
+      href,
       };
     });
   }, [empresaId, modulosLiberados]);
 
   const fecharModuloEmbutido = useCallback(() => {
-    const params = new URLSearchParams(window.location.search);
+    const url = new URL(window.location.href);
     setModuloEmbutido(null);
-    if (params.has('modulo')) {
-      window.history.back();
+    setHrefModuloVisivel('');
+    if (url.searchParams.has('modulo')) {
+      url.searchParams.delete('modulo');
+      window.history.pushState(null, '', url);
     }
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     sincronizarModuloEmbutidoPelaUrl();
     window.addEventListener('popstate', sincronizarModuloEmbutidoPelaUrl);
     return () => window.removeEventListener('popstate', sincronizarModuloEmbutidoPelaUrl);
   }, [sincronizarModuloEmbutidoPelaUrl]);
 
-  useEffect(() => {
-    const receberRetornoDoModulo = (event: MessageEvent) => {
-      if (
-        event.origin !== window.location.origin
-        || event.source !== moduloEmbutidoRef.current?.contentWindow
-        || event.data?.type !== MENSAGEM_RETORNO_MODULO_EMBUTIDO
-      ) return;
-      fecharModuloEmbutido();
-    };
-    window.addEventListener('message', receberRetornoDoModulo);
-    return () => window.removeEventListener('message', receberRetornoDoModulo);
-  }, [fecharModuloEmbutido]);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<SubAcaoGerenciarPerfil>(null);
   const criandoPerfilAdicional = ehCriacaoDePerfilAdicional(
@@ -1054,6 +1101,8 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [relatorioInicialPonto, setRelatorioInicialPonto] = useState<{ funcionarioUserId: string; data: string } | null>(null);
   const [pontoFuncionarios, setPontoFuncionarios] = useState<FuncionarioPonto[]>([]);
   const [pontoFuncCarregando, setPontoFuncCarregando] = useState(false);
+  const [pontoProntoEmpresa, setPontoProntoEmpresa] = useState('');
+  const [conteudoProntoEmpresa, setConteudoProntoEmpresa] = useState('');
   const [pontoConfig, setPontoConfig] = useState<PontoConfig>(null);
   const [pontoFuncionariosFacial, setPontoFuncionariosFacial] = useState<FuncionarioFacialPonto[]>([]);
   const [pontoCobrancaFacial, setPontoCobrancaFacial] = useState<EstadoCobrancaFacial | null>(null);
@@ -1900,7 +1949,9 @@ const carregarEmpresaSelecionada = async (empresa: EmpresaUsuarioResumo) => {
       return;
     }
     const retorno = new URLSearchParams(window.location.search).get('inicio') === '1';
-    router.replace(retorno ? `/modulos?empresaId=${encodeURIComponent(empresa.id)}` : destinoAposLogin(empresa.id, false, acesso.modulos.map(m => m.id)));
+    router.replace(retorno
+      ? `/modulos?empresaId=${encodeURIComponent(empresa.id)}&retorno=1`
+      : prepararDestinoAposLogin(destinoAposLogin(empresa.id, false, acesso.modulos.map(m => m.id))));
     return;
   }
   try {
@@ -2147,22 +2198,31 @@ useEffect(() => {
       };
       const data = await validarSessaoEntrada(supabase.auth);
       if (!entradaAtiva) return;
-      if (!data.session) { setCarregandoSistema(false); return; }
+      if (!data.session) {
+        setFalhaArea({ destino: areaInterna, empresaId: empresaInterna, mensagem: 'Sua sessão não está disponível. Entre novamente para usar este módulo.' });
+        setCarregandoSistema(false);
+        return;
+      }
       // Prévia somente visual; dados e operações continuam protegidos por API/RLS.
-      if (previa) aplicar(previa);
+      if (previa) {
+        setCorPrimaria(previa.empresa.corPrimaria);
+        setDarkMode(previa.empresa.temaEscuro);
+        setNomeEmpresaAtual(previa.empresa.nome);
+      }
       try {
         const lista = await buscarAcessosUsuario(empresaInterna);
         if (!entradaAtiva) return;
         const acesso = lista.find(p => p.empresa.id === empresaInterna);
         if (!acesso?.modulos.some(m => m.id === areaInterna)) {
-          router.replace(`/modulos?empresaId=${encodeURIComponent(empresaInterna)}&retorno=1`);
+          setFalhaArea({ destino: areaInterna, empresaId: empresaInterna, mensagem: 'Este módulo não está liberado para o perfil atual.' });
+          setCarregandoSistema(false);
           return;
         }
         aplicar(acesso);
       } catch {
         if (!entradaAtiva) return;
-        // Falha de rede não é expiração de sessão. Oferece recuperação sem logout.
-        router.replace(`/modulos?empresaId=${encodeURIComponent(empresaInterna)}&retorno=1`);
+        setFalhaArea({ destino: areaInterna, empresaId: empresaInterna, mensagem: 'Não foi possível confirmar o acesso a este módulo.' });
+        setCarregandoSistema(false);
       }
       return;
     }
@@ -3295,13 +3355,13 @@ useEffect(() => {
     if (moduloId === 'ponto') {
       if (!podeGerenciarPonto) { abrirAviso('Acesso não permitido', 'Seu usuário não tem permissão para gerenciar o Controle de Ponto.'); return; }
       setModalModulos(false);
-      abrirPontoIntegrado();
+      navegarParaModulo(moduloId, '/gestao?areaModulo=ponto', empresaId);
       return;
     }
     if (moduloId === 'vendas_mobile') {
       if (!podeAcessarVendasMobileWeb) { abrirAviso('Acesso não permitido', 'Seu usuário não tem permissão para acessar o Conteúdo AvantaVendas.'); return; }
       setModalModulos(false);
-      abrirConteudoVendasIntegrado();
+      navegarParaModulo(moduloId, '/gestao?areaModulo=vendas_mobile', empresaId);
       return;
     }
     const modulo = obterRegistroModulo(moduloId);
@@ -3333,6 +3393,8 @@ useEffect(() => {
 
   function navegarParaModulo(moduloId: string, rota: string, empresaAtualId: string) {
     if (!modulosLiberados.includes(moduloId)) { abrirAviso('Acesso não liberado', 'Este módulo não foi liberado para seu usuário.'); return; }
+    setAjustesAberto(false);
+    setMenuAjuste(null);
     const contexto = {
       destino: moduloId,
       empresaId: empresaAtualId,
@@ -3343,13 +3405,25 @@ useEffect(() => {
     };
     prepararNavegacaoModulo(contexto);
     const destino = criarHrefModuloEmbutido(rota, contexto);
-    router.prefetch(destino);
     const modulo = obterRegistroModulo(moduloId);
-    setModuloEmbutido({ id: moduloId, nome: modulo?.nome || 'Módulo', href: destino });
+    const nome = modulo?.nome || 'Módulo';
+    definirModuloEmPreparacao(nome);
+    setModuloEmbutido({ id: moduloId, nome, href: destino });
     const url = new URL(window.location.href);
     url.searchParams.set('empresaId', empresaAtualId);
     url.searchParams.set('modulo', moduloId);
-    window.history.pushState({ ...window.history.state, avantaModuloEmbutido: moduloId }, '', url);
+    window.history.pushState(null, '', url);
+  }
+
+  function trocarModuloPeloNavegador(troca: TrocaModulo) {
+    if (!empresaId || troca.empresaId !== empresaId || (troca.produto && moduloEmbutido?.id !== 'vendas')) return;
+    const rota = criarRotaTrocaModulo(troca);
+    if (!rota) return;
+    if (troca.destino === 'dashboard') {
+      if (dashboardLiberada && acessoLiberado) fecharModuloEmbutido();
+      return;
+    }
+    navegarParaModulo(troca.destino, rota, empresaId);
   }
 
   async function desinstalarModulo(moduloId: string) {
@@ -3434,6 +3508,7 @@ useEffect(() => {
       console.error('Erro inesperado ao carregar funcionários de ponto:', e);
     }
     setPontoFuncCarregando(false);
+    setPontoProntoEmpresa(empresaId);
   }
 
   function diaNaoUtilPontoNaData(iso: string, lista: PontoDiaNaoUtil[] = pontoDiasNaoUteis) {
@@ -7724,6 +7799,7 @@ const sairDaSelecaoEmpresa = async () => {
 const handleLogout = async () => {
   logoutManualEmCursoRef.current = true;
   limparNavegacaoModulos();
+  apagarMarcadoresDePreparacao('inicio', 'modulo', PARAMETRO_PREPARACAO_ACESSO);
   try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
 
   localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
@@ -8171,6 +8247,57 @@ useEffect(() => {
   return () => { ativo = false; clearInterval(intervalo); window.removeEventListener('focus', foco); };
 }, [empresaId, acessoLiberado, dashboardLiberada, areaIntegradaRestrita, router]);
 
+useEffect(() => {
+  const receberNavegacao = (event: MessageEvent) => {
+    if (event.origin !== window.location.origin || event.source !== moduloEmbutidoRef.current?.contentWindow) return;
+    if (event.data?.type === MENSAGEM_RETORNO_MODULO_EMBUTIDO) fecharModuloEmbutido();
+    if (event.data?.type === MENSAGEM_MODULO_PRONTO
+      && moduloEmbutido && event.data.destino === moduloEmbutido.id
+      && empresaId && event.data.empresaId === empresaId && acessoLiberado && dashboardLiberada) {
+      setHrefModuloVisivel(moduloEmbutido.href);
+    }
+    if (event.data?.type === MENSAGEM_TROCA_MODULO && acessoLiberado && dashboardLiberada) {
+      trocarModuloPeloNavegador(event.data as TrocaModulo);
+    }
+  };
+  window.addEventListener('message', receberNavegacao);
+  return () => window.removeEventListener('message', receberNavegacao);
+});
+
+function fecharAreaRestrita() {
+  if (!solicitarRetornoAoModuloHospedeiro()) {
+    router.push(`/modulos?empresaId=${encodeURIComponent(empresaId || '')}&retorno=1`);
+  }
+}
+
+useEffect(() => {
+  const iframe = moduloEmbutidoRef.current;
+  if (!iframe || !moduloEmbutido || !empresaId || !acessoLiberado || !dashboardLiberada) return;
+  let observer: MutationObserver | undefined;
+  function observarPrimeiraTela() {
+    observer?.disconnect();
+    const documento = iframe?.contentDocument;
+    if (!documento?.documentElement) return;
+    const conferir = () => {
+      const pronta = Array.from(documento.querySelectorAll<HTMLElement>('[data-av-modulo-pronto]')).some(elemento =>
+        elemento.dataset.avModuloPronto === moduloEmbutido?.id && elemento.dataset.avEmpresaModulo === empresaId);
+      if (pronta) {
+        setHrefModuloVisivel(moduloEmbutido?.href || '');
+        observer?.disconnect();
+      }
+      return pronta;
+    };
+    if (conferir()) return;
+    observer = new MutationObserver(conferir);
+    observer.observe(documento.documentElement, {
+      childList: true, subtree: true, attributes: true, attributeFilter: ['data-av-modulo-pronto', 'data-av-empresa-modulo'],
+    });
+  }
+  iframe.addEventListener('load', observarPrimeiraTela);
+  observarPrimeiraTela();
+  return () => { iframe.removeEventListener('load', observarPrimeiraTela); observer?.disconnect(); };
+}, [moduloEmbutido, empresaId, acessoLiberado, dashboardLiberada, tentativaAbrirModulo]);
+
 const renderizarAviso = () => (modalAvisoAberto && (
   <div
     className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
@@ -8220,6 +8347,13 @@ const renderizarAviso = () => (modalAvisoAberto && (
     </DraggableModalCard>
   </div>
 ));
+useEffect(() => {
+  if (acessoLiberado && empresaId && !areaIntegradaRestrita && !carregandoSistema && !authLoading
+    && cadastroPerfilCarregado && (!COBRANCA_ATIVA || estadoCarregado)) {
+    apagarMarcadoresDePreparacao(PARAMETRO_PREPARACAO_ACESSO);
+  }
+}, [acessoLiberado, empresaId, areaIntegradaRestrita, carregandoSistema, authLoading, cadastroPerfilCarregado, estadoCarregado]);
+
 const renderizarPonto = () => (<PontoAdminModal
   rotuloFechar={areaIntegradaRestrita ? 'Início' : undefined}
   key={`${abaInicialPontoAdmin}-${instanciaPontoAdmin}`}
@@ -8227,7 +8361,7 @@ const renderizarPonto = () => (<PontoAdminModal
   rascunhoEscopo={`${acessoUsuarioAtualId || 'acesso'}:${empresaId || 'perfil'}`}
   abaInicial={abaInicialPontoAdmin}
   relatorioInicial={relatorioInicialPonto}
-  onFechar={() => areaIntegradaRestrita ? router.push(`/modulos?empresaId=${encodeURIComponent(empresaId || '')}&retorno=1`) : setModalPontoAdmin(false)}
+  onFechar={() => areaIntegradaRestrita ? fecharAreaRestrita() : setModalPontoAdmin(false)}
   funcionarios={pontoFuncionarios}
   carregando={pontoFuncCarregando}
   onCriar={criarFuncionarioPonto}
@@ -8259,14 +8393,35 @@ const renderizarPonto = () => (<PontoAdminModal
 const renderizarConteudoVendas = () => (<NovidadesVendasModal
   rotuloFechar={areaIntegradaRestrita ? 'Início' : undefined}
   aberto={modalNovidadesVendas}
+  onAberturaConcluida={setConteudoProntoEmpresa}
   empresaId={empresaId}
   nomeEmpresa={nomeEmpresaAtual}
   darkMode={darkMode}
   corPrimaria={corPrimaria}
-  onFechar={() => areaIntegradaRestrita ? router.push(`/modulos?empresaId=${encodeURIComponent(empresaId || '')}&retorno=1`) : setModalNovidadesVendas(false)}
+  onFechar={() => areaIntegradaRestrita ? fecharAreaRestrita() : setModalNovidadesVendas(false)}
 />
 );
+function iniciarLoginPelaGestao<T extends unknown[]>(entrar: (...args: T) => Promise<void>) {
+  return (...args: T) => {
+    apagarMarcadoresDePreparacao('inicio', 'modulo');
+    return entrar(...args);
+  };
+}
+
 const loginSocialEmAndamento = Boolean(loginSocialPendente);
+const preparandoGestao = !mounted || carregandoSistema || authLoading || loginSocialEmAndamento;
+const preparandoCadastroPerfil = Boolean(acessoLiberado && empresaId && (!cadastroPerfilCarregado || (COBRANCA_ATIVA && !estadoCarregado)));
+let destinoEmPreparacao = '';
+if (!erroPreparacaoAcesso && !falhaArea && !loginSocialEmAndamento) {
+  if (aguardandoModulo && acessoLiberado && dashboardLiberada) {
+    destinoEmPreparacao = moduloEmbutido?.nome || '';
+  } else if (preparandoGestao || preparandoCadastroPerfil) {
+    destinoEmPreparacao = destinoInterno;
+  }
+}
+useLayoutEffect(() => {
+  definirModuloEmPreparacao(destinoEmPreparacao);
+}, [definirModuloEmPreparacao, destinoEmPreparacao]);
 
 if (erroPreparacaoAcesso) return <TelaCarregandoAcesso mensagem={erroPreparacaoAcesso} erro={erroPreparacaoAcesso} onTentarNovamente={() => window.location.reload()} onEntrarNovamente={() => {
   try {
@@ -8275,8 +8430,16 @@ if (erroPreparacaoAcesso) return <TelaCarregandoAcesso mensagem={erroPreparacaoA
   } catch { setErroPreparacaoAcesso('Não foi possível reiniciar o acesso neste navegador. Verifique se o armazenamento do site está permitido e tente novamente.'); }
 }} />;
 
-if (!mounted || carregandoSistema || authLoading || loginSocialEmAndamento) {
-  if (areaIntegradaRestrita && !loginSocialEmAndamento) return <TransicaoNavegacaoInterna destino={areaIntegradaRestrita === 'ponto' ? 'Controle de Ponto' : 'Conteúdo AvantaVendas'} />;
+if (falhaArea) return <main className="grid min-h-dvh place-items-center bg-white p-6 text-center">
+  <div role="alert">
+    <h1 className="text-xl font-semibold">Módulo indisponível</h1>
+    <p className="my-4 text-sm">{falhaArea.mensagem}</p>
+    <BotaoAcaoCompacto variante="secundario" onClick={fecharAreaRestrita}>Voltar</BotaoAcaoCompacto>
+  </div>
+</main>;
+
+if (preparandoGestao) {
+  if (destinoEmPreparacao) return null;
   return (
     <TelaCarregandoAcesso
       preparandoAcesso
@@ -8299,15 +8462,23 @@ if (!mounted || carregandoSistema || authLoading || loginSocialEmAndamento) {
 }
 
 if (areaIntegradaRestrita && acessoLiberado) {
-  return <main className={`min-h-dvh ${darkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
-    <ModuloHeader moduleTitle={areaIntegradaRestrita === 'ponto' ? 'Controle de Ponto' : 'Conteúdo AvantaVendas'} navigation={empresaId ? <SeletorModulos compact empresaId={empresaId} moduloAtual={areaIntegradaRestrita} corPrimaria={corPrimaria} darkMode={darkMode} /> : undefined} empresa={{ nome: nomeEmpresaAtual, corPrimaria, temaEscuro: darkMode, logoUrl }} onBack={() => router.push(`/modulos?empresaId=${encodeURIComponent(empresaId || '')}&retorno=1`)} returnAriaLabel="Voltar para Meus módulos" />
+  const tituloModulo = areaIntegradaRestrita === 'ponto' ? 'Controle de Ponto' : 'Conteúdo AvantaVendas';
+  const dadosIniciaisProntos = areaIntegradaRestrita === 'ponto'
+    ? modalPontoAdmin && pontoProntoEmpresa === empresaId
+    : modalNovidadesVendas && conteudoProntoEmpresa === empresaId;
+  return <AberturaModulo key={`${areaIntegradaRestrita}:${empresaId}`} modulo={areaIntegradaRestrita}
+    titulo={tituloModulo} empresaId={empresaId || ''}
+    pronta={dadosIniciaisProntos}>
+    <main className={`min-h-dvh ${darkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+    <ModuloHeader moduleTitle={areaIntegradaRestrita === 'ponto' ? 'Controle de Ponto' : 'Conteúdo AvantaVendas'} navigation={empresaId ? <SeletorModulos compact empresaId={empresaId} moduloAtual={areaIntegradaRestrita} corPrimaria={corPrimaria} darkMode={darkMode} /> : undefined} empresa={{ nome: nomeEmpresaAtual, corPrimaria, temaEscuro: darkMode, logoUrl }} onBack={fecharAreaRestrita} returnAriaLabel="Voltar para Meus módulos" />
     {areaIntegradaRestrita === 'ponto' ? renderizarPonto() : renderizarConteudoVendas()}
     {renderizarAviso()}
     <ModalConfirmacao aberto={modalConfirmacaoAberto} titulo={tituloConfirmacao} mensagem={mensagemConfirmacao} textoConfirmar={textoConfirmarConfirmacao} variante={varianteConfirmacao} carregando={confirmacaoCarregando} textoCancelar={textoCancelarConfirmacao} corPrimaria={corPrimaria} textoSobreCorPrimaria={textoSobreCorPrimaria} aoCancelar={fecharConfirmacao} aoConfirmar={confirmarAcao} />
-  </main>;
+    </main>
+  </AberturaModulo>;
 }
 
-if (acessoLiberado && empresaId && !dashboardLiberada) return <TelaCarregandoAcesso titulo="Preparando seus módulos" mensagem="Encaminhando para sua área de acesso…" />;
+if (acessoLiberado && empresaId && !dashboardLiberada) return <TransicaoNavegacaoInterna destino="seus módulos" mensagem="Confirmando suas liberações…" />;
 
 if (emailConfirmado) {
   return (
@@ -8928,10 +9099,10 @@ if (validacaoTelefoneObrigatoria) {
         setTipoPerfilInicial={setTipoPerfilInicial}
         inicioEmpresaModo={inicioEmpresaModo}
         setInicioEmpresaModo={setInicioEmpresaModo}
-        handleLogin={handleLogin}
+        handleLogin={iniciarLoginPelaGestao(handleLogin)}
         handleCadastroTeste={handleCadastroTeste}
-        handleGoogleLogin={handleGoogleLogin}
-        handleAppleLogin={handleAppleLogin}
+        handleGoogleLogin={iniciarLoginPelaGestao(handleGoogleLogin)}
+        handleAppleLogin={iniciarLoginPelaGestao(handleAppleLogin)}
         handleRecuperarSenha={handleRecuperarSenha}
         handleAtualizarSenha={handleAtualizarSenha}
         reenviarCodigoSmsCadastro={reenviarCodigoSmsCadastro}
@@ -8942,8 +9113,8 @@ if (validacaoTelefoneObrigatoria) {
 
   // Cobrança: enquanto o estado de acesso não for conhecido, não renderiza o app
   // (evita o flash do conteúdo antes de o paywall bloquear).
-  if (acessoLiberado && empresaId && (!cadastroPerfilCarregado || (COBRANCA_ATIVA && !estadoCarregado))) {
-    return <TelaCarregandoAcesso preparandoAcesso mensagem="Aguarde um instante." />;
+  if (preparandoCadastroPerfil) {
+    return destinoEmPreparacao ? null : <TelaCarregandoAcesso preparandoAcesso mensagem="Aguarde um instante." />;
   }
 
   // Cobrança: Empresa sem assinatura e Pessoal grátis não acessam a Gestão Web.
@@ -11658,7 +11829,7 @@ if (validacaoTelefoneObrigatoria) {
           ...(modulosAtivos.includes('ponto') && modulosLiberados.includes('ponto') && podeGerenciarPonto ? [{ id: 'ponto', nome: 'Ponto', botao: (
           <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="right" wrapperClassName="w-full">
             <button disabled={Boolean(menuAjuste)}
-              onClick={abrirPontoIntegrado}
+              onClick={() => acessarModuloInstalado('ponto')}
               className="av-menu-gestao-atalho flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: '#64748b' }}
             >
@@ -11689,7 +11860,7 @@ if (validacaoTelefoneObrigatoria) {
           ...(modulosAtivos.includes('vendas_mobile') && modulosLiberados.includes('vendas_mobile') && podeAcessarVendasMobileWeb ? [{ id: 'vendas_mobile', nome: 'Conteúdo AvantaVendas', botao: (
           <Tooltip texto="Publique novidades, catálogo, fotos, vídeos e PDFs para a equipe do AvantaVendas." posicao="right" wrapperClassName="w-full">
             <button disabled={Boolean(menuAjuste)}
-              onClick={abrirConteudoVendasIntegrado}
+              onClick={() => acessarModuloInstalado('vendas_mobile')}
               className="av-menu-gestao-atalho flex min-h-8 [@media(pointer:coarse)]:min-h-11 w-full items-center gap-2 rounded-lg border bg-slate-800 px-3 py-1 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: '#64748b' }}
             >
@@ -13061,12 +13232,25 @@ if (validacaoTelefoneObrigatoria) {
 
       {moduloEmbutido && (
         <section className="fixed inset-0 z-[10000] bg-white" role="dialog" aria-modal="true" aria-label={moduloEmbutido.nome}>
+          {hrefModuloVisivel !== moduloEmbutido.href && aberturaModuloExpirada && <div className="grid h-full place-items-center p-6 text-center">
+                <div role="alert">
+                  <h2 className="text-lg font-semibold">A abertura está demorando mais que o esperado</h2>
+                  <div className="mt-4 flex flex-wrap justify-center gap-3">
+                    <BotaoAcaoCompacto variante="secundario" onClick={fecharModuloEmbutido}>Voltar</BotaoAcaoCompacto>
+                    <BotaoAcaoCompacto onClick={() => {
+                      definirModuloEmPreparacao(moduloEmbutido.nome);
+                      setAberturaModuloExpirada(false);
+                      setTentativaAbrirModulo(tentativa => tentativa + 1);
+                    }}>Tentar novamente</BotaoAcaoCompacto>
+                  </div>
+                </div>
+              </div>}
           <iframe
             ref={moduloEmbutidoRef}
-            key={moduloEmbutido.href}
+            key={`${moduloEmbutido.href}:${tentativaAbrirModulo}`}
             src={moduloEmbutido.href}
             title={moduloEmbutido.nome}
-            className="block h-full w-full border-0 bg-white"
+            className={`absolute inset-0 h-full w-full border-0 bg-white ${hrefModuloVisivel === moduloEmbutido.href ? '' : 'invisible'}`}
           />
         </section>
       )}

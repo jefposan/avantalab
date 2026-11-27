@@ -106,6 +106,7 @@ export function parseManagementCatalogMessage(data) {
     items,
     companyId,
     catalogAvailable: data.catalogoDisponivel !== false,
+    catalogLoading: data.catalogoCarregando === true,
     message: text(data.mensagem).slice(0, 240),
     primaryColor: color(data.corPrimaria),
     logoUrl: imageUrl(data.logoUrl),

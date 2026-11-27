@@ -52,12 +52,16 @@ async function consultarProdutosCustos(catalogoIds: string[]) {
   return supabase.from('vendas_mobile_catalogo_produtos').select(campos).in('catalogo_id', catalogoIds).order('nome');
 }
 
-export async function carregarCustos(empresaId: string, podeEditar: boolean) {
-  const tabelaPadrao = await supabase.rpc('custos_garantir_tabela_padrao_rpc', { p_empresa_id: empresaId });
-  if (tabelaPadrao.error && podeEditar) throw new Error('Não foi possível preparar a tabela de preços padrão.');
-  const catalogosResultado = await supabase.from('vendas_mobile_catalogos')
-    .select('id,empresa_id,nome,codigo,origem,ativo,publicado_avantavendas,padrao,atualizado_em,excluido_em').eq('empresa_id', empresaId)
-    .order('padrao', { ascending: false }).order('ativo', { ascending: false }).order('nome');
+type VisaoGeralCustos = { catalogoId: string; catalogos: CatalogoEmpresa[]; produtos: ProdutoCustos[]; documento: DocumentoCustos; revisao: number };
+
+export async function carregarCustos(empresaId: string, podeEditar: boolean, onVisaoPronta?: (dados: VisaoGeralCustos) => void) {
+  const [catalogosResultado, documentoResultado] = await Promise.all([
+    supabase.from('vendas_mobile_catalogos')
+      .select('id,empresa_id,nome,codigo,origem,ativo,publicado_avantavendas,padrao,atualizado_em,excluido_em').eq('empresa_id', empresaId)
+      .order('padrao', { ascending: false }).order('ativo', { ascending: false }).order('nome'),
+    supabase.from('custos_documentos').select('documento,revisao').eq('empresa_id', empresaId).maybeSingle(),
+  ]);
+  if (documentoResultado.error) throw new Error('Não foi possível carregar composições e simulações.');
   if (catalogosResultado.error) throw new Error('Não foi possível carregar os catálogos desta empresa.');
   const todosCatalogos = ((catalogosResultado.data || []) as unknown as Record<string, unknown>[]);
   if (podeEditar && !todosCatalogos.some((item) => !item.excluido_em)) {
@@ -75,17 +79,10 @@ export async function carregarCustos(empresaId: string, podeEditar: boolean) {
   // manutenção dos cadastros no módulo de Custos.
   const catalogoAtual = catalogos.find((item) => item.padrao) || catalogos[0];
 
-  const [produtosResultado, documentoResultado, tabelasResultado, perfilResultado] = await Promise.all([
-    todosCatalogos.length ? consultarProdutosCustos(todosCatalogos.map((item) => String(item.id))) : Promise.resolve({ data: [], error: null }),
-    supabase.from('custos_documentos').select('documento,revisao').eq('empresa_id', empresaId).maybeSingle(),
-    supabase.from('custos_tabelas_preco').select('id,empresa_id,codigo,nome,descricao,padrao,ativo,atualizado_em').eq('empresa_id', empresaId).order('padrao', { ascending: false }).order('nome'),
-    supabase.from('cadastros_perfil').select('regime_tributario,configuracao_fiscal').eq('empresa_id', empresaId).maybeSingle(),
-  ]);
+  const produtosResultado = todosCatalogos.length
+    ? await consultarProdutosCustos(todosCatalogos.map((item) => String(item.id)))
+    : { data: [], error: null };
   if (produtosResultado.error) throw new Error('A atualização de banco do módulo ainda não foi aplicada neste ambiente.');
-  if (perfilResultado.error) throw new Error('Não foi possível consultar os padrões fiscais desta empresa.');
-  if (documentoResultado.error) throw new Error('Não foi possível carregar composições e simulações.');
-  if (tabelasResultado.error) throw new Error('Não foi possível carregar as tabelas de preços.');
-  const precosTabela = await consultarPrecosCustos(supabase, (tabelasResultado.data || []).map(tabela => String(tabela.id)));
 
   let documento = normalizarDocumento(documentoResultado.data?.documento);
   let revisao = Number(documentoResultado.data?.revisao) || 0;
@@ -96,16 +93,30 @@ export async function carregarCustos(empresaId: string, podeEditar: boolean) {
     documento = normalizarDocumento(criado.data?.documento);
     revisao = Number(criado.data?.revisao) || 1;
   }
-  return {
-    perfilFiscal: perfilResultado.data || {},
+  const visao: VisaoGeralCustos = {
     catalogoId: catalogoAtual?.id || '',
     catalogos,
     produtos: ((produtosResultado.data || []) as unknown as Record<string, unknown>[]).map(mapearProduto),
-    tabelasPreco: ((tabelasResultado.data || []) as unknown as TabelaPreco[]).map((tabela) => ({ ...tabela, descricao: tabela.descricao || '' })),
-    precosTabela,
     documento,
     revisao,
   };
+  onVisaoPronta?.(visao);
+
+  const [tabelaPadrao, perfilResultado] = await Promise.all([
+    supabase.rpc('custos_garantir_tabela_padrao_rpc', { p_empresa_id: empresaId }),
+    supabase.from('cadastros_perfil').select('regime_tributario,configuracao_fiscal').eq('empresa_id', empresaId).maybeSingle(),
+  ]);
+  if (tabelaPadrao.error && podeEditar) throw new Error('Não foi possível preparar a tabela de preços padrão.');
+  if (perfilResultado.error) throw new Error('Não foi possível consultar os padrões fiscais desta empresa.');
+  const tabelasResultado = await supabase.from('custos_tabelas_preco')
+    .select('id,empresa_id,codigo,nome,descricao,padrao,ativo,atualizado_em')
+    .eq('empresa_id', empresaId).order('padrao', { ascending: false }).order('nome');
+  if (tabelasResultado.error) throw new Error('Não foi possível carregar as tabelas de preços.');
+
+  const tabelasPreco = ((tabelasResultado.data || []) as unknown as TabelaPreco[])
+    .map(tabela => ({ ...tabela, descricao: tabela.descricao || '' }));
+  const precosTabela = await consultarPrecosCustos(supabase, tabelasPreco.map(tabela => String(tabela.id)));
+  return { ...visao, perfilFiscal: perfilResultado.data || {}, tabelasPreco, precosTabela };
 }
 
 export async function excluirCatalogoEmpresa(empresaId: string, catalogoId: string) {

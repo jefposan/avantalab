@@ -1,11 +1,6 @@
 {
-  "baseDeploymentId": "dpl_2WcGitPW9UQS9h8rsATcYGNa6bGD",
-  "version": "3.2.0.554",
-  "scope": "Gestão: cabeçalho fixo, faixa mensal compacta e confirmação de despesas programadas",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261127140000_despesas_parceladas_confirmacao.sql",
-      "sha256": "b4598a52757a12834c7cafc0b0b06bce04956e9b7439cb6d4c480cc4059f200c"
-    }
-  ]
+  "baseDeploymentId": "dpl_EXdemR3orKWZSzbUUe9iA3PZnEYs",
+  "version": "3.2.0.563",
+  "scope": "Gestão, Marketplaces e Vendas: navegação contínua, cabeçalho compacto e impressão de pedidos",
+  "migrations": []
 }

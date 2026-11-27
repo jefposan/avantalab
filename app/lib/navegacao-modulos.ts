@@ -1,3 +1,5 @@
+import { hrefModulo } from './acessos-usuario';
+import { obterRegistroModulo } from './modulos-registro';
 import { limparPreviaModulos } from './retorno-modulos';
 
 export type ContextoNavegacaoModulo = {
@@ -127,4 +129,39 @@ export function solicitarRetornoAoModuloHospedeiro() {
   if (typeof window === 'undefined' || window.parent === window) return false;
   window.parent.postMessage({ type: MENSAGEM_RETORNO_MODULO_EMBUTIDO }, window.location.origin);
   return true;
+}
+
+export const MENSAGEM_MODULO_PRONTO = 'AVANTALAB_MODULO_PRONTO_V1';
+export const MENSAGEM_VENDAS_HERO_PRONTA = 'AVANTALAB_VENDAS_HERO_PRONTA_V1';
+
+export const MENSAGEM_TROCA_MODULO = 'AVANTALAB_TROCA_MODULO_V1';
+
+export type TrocaModulo = {
+  type: typeof MENSAGEM_TROCA_MODULO;
+  empresaId: string;
+  destino: string;
+  produto?: { novo: boolean; id?: string };
+};
+
+export function criarRotaTrocaModulo(troca: TrocaModulo): string | null {
+  if (typeof troca.empresaId !== 'string' || !troca.empresaId) return null;
+  if (troca.destino === 'dashboard') return `/gestao?inicio=1&empresaId=${encodeURIComponent(troca.empresaId)}`;
+  if (!obterRegistroModulo(troca.destino)) return null;
+  const rota = hrefModulo(troca.destino, troca.empresaId);
+  if (troca.destino !== 'custos' || !troca.produto) return rota;
+  const params = new URLSearchParams({ retorno: 'vendas' });
+  if (troca.produto.novo === true) params.set('novo', 'produto');
+  if (typeof troca.produto.id === 'string' && troca.produto.id.length <= 120) params.set('produtoId', troca.produto.id);
+  return `${rota}&${params}`;
+}
+
+export function solicitarTrocaAoHospedeiro(troca: TrocaModulo) {
+  if (typeof window === 'undefined' || window.parent === window) return false;
+  window.parent.postMessage(troca, window.location.origin);
+  return true;
+}
+
+/** Alguns editores ainda protegem o rascunho com beforeunload. */
+export function editorBloqueiaNavegacao() {
+  return !window.dispatchEvent(new Event('beforeunload', { cancelable: true }));
 }

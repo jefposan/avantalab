@@ -33,6 +33,7 @@ test('resposta atrasada de perfil anterior não altera destino nem concessões d
     buscarAcessosUsuario: id => new Promise(resolve => pendentes.set(id, resolve)),
     validarSessaoDoDispositivo: async () => ({ ok: true, ativa: true }),
     destinoAposLogin: id => `/modulos?empresaId=${id}`,
+    prepararDestinoAposLogin: href => `${href}&acessoInicial=1`,
     router: { replace: href => efeitos.push(['destino', href]) },
   };
   for (const nome of new Set(perfil.match(/\bset[A-Z]\w+/g))) contexto[nome] = value => efeitos.push([nome, value]);
@@ -45,7 +46,7 @@ test('resposta atrasada de perfil anterior não altera destino nem concessões d
   pendentes.get('antigo')([{ empresa: { id: 'antigo' }, dashboard: false, modulos: [{ id: 'custos' }] }]);
   await antigo;
   assert.equal(efeitos.length, quantidade);
-  assert.equal(efeitos.filter(e => e[0] === 'destino').at(-1)[1], '/modulos?empresaId=novo');
+  assert.equal(efeitos.filter(e => e[0] === 'destino').at(-1)[1], '/modulos?empresaId=novo&acessoInicial=1');
 });
 
 test('falha de configuração encerra busy, mantém dados limpos e oferece erro regional', async () => {

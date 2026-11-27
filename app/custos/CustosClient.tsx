@@ -3,11 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
 import { useEffect, useState } from 'react';
+import AberturaModulo, { useAvisarModuloPronto } from '@/app/components/AberturaModulo';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
 import ModuloHeader from '@/app/components/ModuloHeader';
 import SeletorModulos from '@/app/components/SeletorModulos';
-import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
+import { solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
 import { Icon } from '@/app/projetos/components/Icon';
 import { Modal } from '@/app/projetos/components/Modal';
@@ -26,7 +27,7 @@ export default function CustosClient({ companyId, initialNewType, initialProduct
   const [edicaoPendente, setEdicaoPendente] = useState(false);
   const [gravandoProduto, setGravandoProduto] = useState(false);
   const returnHref = returnTo === 'vendas' && companyId ? `/vendas?empresaId=${encodeURIComponent(companyId)}` : companyId ? `/gestao?inicio=1&empresaId=${encodeURIComponent(companyId)}` : '/gestao';
-  const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('custos', companyId));
+  const [contextoInicial] = useState(() => initialContext ?? null);
   const [access, setAccess] = useState<CustosAccess | null>(() => contextoInicial ? {
     empresa: { id: contextoInicial.empresaId, ...contextoInicial.empresa },
     perfil: contextoInicial.perfil,
@@ -34,6 +35,9 @@ export default function CustosClient({ companyId, initialNewType, initialProduct
     podeGerenciarModulo: contextoInicial.podeGerenciarModulo,
   } : null);
   const [error, setError] = useState('');
+  const [acessoConfirmado, setAcessoConfirmado] = useState(false);
+  const [dadosIniciaisProntos, setDadosIniciaisProntos] = useState(false);
+  useAvisarModuloPronto('custos', companyId, !embeddedProduct && Boolean(error));
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
   const [atualizandoTema, setAtualizandoTema] = useState(false);
   const [mensagem, setMensagem] = useState('');
@@ -53,8 +57,9 @@ export default function CustosClient({ companyId, initialNewType, initialProduct
       if (!ativo) return;
       if (!resposta.ok) { setError(json.mensagem || 'Não foi possível abrir este módulo.'); return; }
       setAccess(json as CustosAccess);
+      setAcessoConfirmado(true);
     };
-    void verificar();
+    void verificar().catch(() => { if (ativo) setError('Não foi possível consultar o acesso a Custos.'); });
     return () => { ativo = false; };
   }, [companyId, contextoInicial, router]);
 
@@ -70,7 +75,7 @@ export default function CustosClient({ companyId, initialNewType, initialProduct
 
   if (error) return <main className={styles.accessState}><div><span aria-hidden="true">◇</span><h1>Custos e Precificação</h1><p>{error}</p><button type="button" onClick={() => router.push('/gestao')}>‹ Início</button></div></main>;
   if (!access) {
-    return <TransicaoNavegacaoInterna destino="Custos e Precificação" empresa={contextoInicial?.empresa} />;
+    return <TransicaoNavegacaoInterna destino="Custos e Precificação" />;
   }
 
   const alterarTema = async () => {
@@ -107,12 +112,13 @@ export default function CustosClient({ companyId, initialNewType, initialProduct
     <CustosWorkspace companyId={companyId} access={access} initialNewType={initialNewType} initialProductId={initialProductId} embeddedProduct onProductSaved={onProductSaved} onProductCancel={onProductCancel} onProductDirtyChange={onProductDirtyChange} onProductBusyChange={onProductBusyChange}/>
   </main>;
 
-  return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{ '--custos-brand': access.empresa.corPrimaria } as React.CSSProperties}>
+  return <AberturaModulo key={companyId} modulo="custos" titulo="Custos e Precificação" empresaId={companyId} pronta={acessoConfirmado && dadosIniciaisProntos}>
+    <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.dark : ''} typography-system`} style={{ '--custos-brand': access.empresa.corPrimaria } as React.CSSProperties}>
     <ModuloHeader moduleTitle="Custos e Precificação" empresa={access.empresa} onBack={voltar} returnLabel={returnLabel} returnAriaLabel={returnAriaLabel} navigation={<SeletorModulos compact empresaId={companyId} moduloAtual="custos" corPrimaria={access.empresa.corPrimaria} darkMode={access.empresa.temaEscuro} alteracoesPendentes={edicaoPendente} ocupado={gravandoProduto || atualizandoTema} />}>
         {access.podeGerenciarModulo && <button type="button" className={styles.moduleSettingsButton} onClick={() => setAjustesAbertos(true)} aria-label="Abrir ajustes de Custos e Precificação" title="Ajustes"><Icon name="settings" size={18} /></button>}
         {!access.podeEditar && <span className={styles.readOnlyBadge}>Somente visualização</span>}
     </ModuloHeader>
-    <CustosWorkspace initialProductId={initialProductId} companyId={companyId} access={access} initialNewType={initialNewType} onProductDirtyChange={setEdicaoPendente} onProductBusyChange={setGravandoProduto} />
+    <CustosWorkspace onAberturaConcluida={setDadosIniciaisProntos} initialProductId={initialProductId} companyId={companyId} access={access} initialNewType={initialNewType} onProductDirtyChange={setEdicaoPendente} onProductBusyChange={setGravandoProduto} />
     <RodapeAvanta darkMode={access.empresa.temaEscuro} />
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes de Custos e Precificação" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
       <section className={styles.settingsSection} aria-label="Ajustes visuais">
@@ -123,5 +129,6 @@ export default function CustosClient({ companyId, initialNewType, initialProduct
       </section>
     </Modal>
     {mensagem && <div className={styles.themeToast} role="status" aria-live="polite">{mensagem}</div>}
-  </main>;
+  </main>
+  </AberturaModulo>;
 }

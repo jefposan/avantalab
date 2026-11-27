@@ -7,10 +7,11 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
+import AberturaModulo, { useAvisarModuloPronto } from '@/app/components/AberturaModulo';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
 import { AdaptiveModuleLogo, ModuleHeaderNavigation } from '@/app/components/ModuloHeader';
-import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
+import { solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { useProjectCollection } from './hooks/useProjectCollection';
 import { SupabaseProjectRepository } from './services/supabase-repository';
 import styles from './projetos.module.css';
@@ -62,18 +63,19 @@ function ProjectModuleHeader({ companyName, companyLogoUrl = '', returnCompanyId
   </header>;
 }
 
-function ProjectApp({ companyId, returnCompanyId, initialProjectId, access, onAccessChange, sharedProjects, sharedProjectsState }: {
+function ProjectApp({ companyId, returnCompanyId, initialProjectId, access, acessoConfirmado, onAccessChange, sharedProjects, sharedProjectsState }: {
   companyId: string;
   returnCompanyId: string;
   initialProjectId: string;
   access: ModuleAccess;
+  acessoConfirmado: boolean;
   onAccessChange: (next: ModuleAccess) => void;
   sharedProjects: SharedProjectSummary[];
   sharedProjectsState: SharedProjectsState;
 }) {
   const router = useRouter();
   const repository = useMemo(() => new SupabaseProjectRepository(), []);
-  const { collection, setCollection, loaded, saveState, message, setMessage, undo, redo, canUndo, canRedo } = useProjectCollection(companyId, repository, access.podeEditar);
+  const { collection, setCollection, loaded, saveState, message, setMessage, undo, redo, canUndo, canRedo } = useProjectCollection(companyId, repository, acessoConfirmado && access.podeEditar);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(initialProjectId || null);
   const [mapaEmFoco, setMapaEmFoco] = useState(false);
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
@@ -82,7 +84,7 @@ function ProjectApp({ companyId, returnCompanyId, initialProjectId, access, onAc
   const effectiveReturnCompanyId = returnCompanyId || access.retornoEmpresaId || companyId;
   const activeSharedAccess = access.compartilhamentos?.find((item) => item.projetoId === activeProjectId)?.acesso;
   const activeProjectReadOnly = access.compartilhado ? activeSharedAccess !== 'editor' : !access.podeEditar;
-  const carregandoDados = !loaded || sharedProjectsState === 'loading';
+  const carregandoDados = !loaded;
 
   useEffect(() => {
     if (!message) return;
@@ -138,13 +140,14 @@ function ProjectApp({ companyId, returnCompanyId, initialProjectId, access, onAc
     } finally { setAtualizandoTema(false); }
   };
 
-  return <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.darkTheme : ''} ${mapaEmFoco ? styles.mapFocusMode : ''} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
-    <ProjectModuleHeader companyName={access.empresa.nome} companyLogoUrl={access.empresa.logoUrl} darkMode={access.empresa.temaEscuro} corPrimaria={access.empresa.corPrimaria} returnCompanyId={effectiveReturnCompanyId} navigationBlocked={access.podeEditar && (!loaded || ['saving', 'error', 'offline'].includes(saveState))} onReturn={retornarInicio} showSettings={access.podeGerenciarModulo} onSettings={() => setAjustesAbertos(true)} badge={activeProject ? activeProjectReadOnly ? 'Somente visualização' : access.compartilhado ? 'Projeto compartilhado' : undefined : access.compartilhado ? 'Acesso compartilhado' : !access.podeEditar ? 'Somente visualização' : undefined} />
+  return <AberturaModulo key={companyId} modulo="projetos" titulo="Projetos" empresaId={companyId} pronta={acessoConfirmado && loaded}>
+    <main className={`${styles.root} ${access.empresa.temaEscuro ? styles.darkTheme : ''} ${mapaEmFoco ? styles.mapFocusMode : ''} typography-system`} style={{ '--project-profile-color': access.empresa.corPrimaria } as React.CSSProperties}>
+    <ProjectModuleHeader companyName={access.empresa.nome} companyLogoUrl={access.empresa.logoUrl} darkMode={access.empresa.temaEscuro} corPrimaria={access.empresa.corPrimaria} returnCompanyId={effectiveReturnCompanyId} navigationBlocked={access.podeEditar && loaded && ['saving', 'error', 'offline'].includes(saveState)} onReturn={retornarInicio} showSettings={access.podeGerenciarModulo} onSettings={() => setAjustesAbertos(true)} badge={activeProject ? activeProjectReadOnly ? 'Somente visualização' : access.compartilhado ? 'Projeto compartilhado' : undefined : access.compartilhado ? 'Acesso compartilhado' : !access.podeEditar ? 'Somente visualização' : undefined} />
     <div className={styles.moduleContent}>
-      <div aria-hidden={carregandoDados || undefined} inert={carregandoDados || undefined}>
+      <div hidden={carregandoDados}>
         {activeProject ? <ProjectWorkspace readOnly={activeProjectReadOnly} project={activeProject} people={collection.people} saveState={saveState} onBack={voltarParaProjetos} onChange={(next) => setCollection((current) => ({ ...current, projects: current.projects.map((project) => project.id === next.id ? next : project) }))} onUndo={() => { if (!undo()) setMessage('Não há alterações para desfazer.'); }} onRedo={() => { if (!redo()) setMessage('Não há alterações para refazer.'); }} canUndo={!activeProjectReadOnly && canUndo} canRedo={!activeProjectReadOnly && canRedo} onMessage={setMessage} mapaEmFoco={mapaEmFoco} onMapaEmFocoChange={setMapaEmFoco} /> : <ProjectHome readOnly={!access.podeEditar || access.compartilhado === true} collection={collection} onChange={(next) => setCollection(next)} onOpen={setActiveProjectId} onMessage={setMessage} sharedProjects={sharedProjects} sharedProjectsState={sharedProjectsState} onOpenShared={openSharedProject} sharedAccessOnly={access.compartilhado === true} />}
       </div>
-      <CarregamentoDadosModulo ativo={carregandoDados} titulo="Preparando Projetos" mensagem="Carregando os dados do módulo…" corPrimaria={access.empresa.corPrimaria} temaEscuro={access.empresa.temaEscuro} />
+      <CarregamentoDadosModulo ativo={carregandoDados} variante="local" esqueletos titulo="Projetos" mensagem="Carregando projetos…" corPrimaria={access.empresa.corPrimaria} temaEscuro={access.empresa.temaEscuro} />
     </div>
     {!mapaEmFoco && <RodapeAvanta darkMode={access.empresa.temaEscuro} />}
     <Modal open={ajustesAbertos} onClose={() => setAjustesAbertos(false)} title="Ajustes do AvantaProjetos" description="Preferências do perfil que também orientam a aparência no AvantaLab.">
@@ -156,7 +159,8 @@ function ProjectApp({ companyId, returnCompanyId, initialProjectId, access, onAc
       </section>
     </Modal>
     {message && <div className={styles.toast} role="status" aria-live="polite">{message}</div>}
-  </main>;
+  </main>
+  </AberturaModulo>;
 }
 
 function SharedProjectsHub({ companyId, context, projects, state }: { companyId: string; context: SharedContext; projects: SharedProjectSummary[]; state: SharedProjectsState }) {
@@ -182,7 +186,7 @@ function SharedProjectsHub({ companyId, context, projects, state }: { companyId:
 }
 
 export default function ProjetosClient({ companyId, initialProjectId = '', returnCompanyId = '', initialContext }: { companyId: string; initialProjectId?: string; returnCompanyId?: string; initialContext?: ContextoNavegacaoModulo | null }) {
-  const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('projetos', companyId));
+  const [contextoInicial] = useState(() => initialContext ?? null);
   const [access, setAccess] = useState<ModuleAccess | null>(() => contextoInicial ? {
     empresa: { id: contextoInicial.empresaId, ...contextoInicial.empresa },
     perfil: contextoInicial.perfil,
@@ -195,6 +199,8 @@ export default function ProjetosClient({ companyId, initialProjectId = '', retur
   const [sharedProjectsState, setSharedProjectsState] = useState<SharedProjectsState>('loading');
   const [sharedContext, setSharedContext] = useState<SharedContext>({ id: companyId, nome: 'Projetos compartilhados', corPrimaria: '#003E73', temaEscuro: false });
   const [error, setError] = useState('');
+  const [acessoConfirmado, setAcessoConfirmado] = useState(false);
+  useAvisarModuloPronto('projetos', companyId, Boolean(error) || sharedOnly);
 
   useEffect(() => {
     let active = true;
@@ -208,33 +214,35 @@ export default function ProjetosClient({ companyId, initialProjectId = '', retur
       const token = data.session?.access_token;
       if (!token) { setError('Sua sessão não está disponível. Volte ao AvantaLab e entre novamente.'); return; }
       const headers = { Authorization: `Bearer ${token}` };
-      const [accessResponse, sharedResponse] = await Promise.all([
-        fetch(`/api/modulos/acesso?empresaId=${encodeURIComponent(companyId)}&moduloId=projetos`, { headers }),
-        fetch(`/api/modulos/projetos/compartilhados?empresaId=${encodeURIComponent(returnCompanyId || companyId)}`, { headers, cache: 'no-store' }),
-      ]);
-      const [accessJson, sharedJson] = await Promise.all([accessResponse.json().catch(() => ({})), sharedResponse.json().catch(() => ({}))]);
+      const compartilhadosEmCurso = fetch(`/api/modulos/projetos/compartilhados?empresaId=${encodeURIComponent(returnCompanyId || companyId)}`, { headers, cache: 'no-store', signal: AbortSignal.timeout(15_000) })
+        .then(async resposta => resposta.ok ? resposta.json() : null)
+        .catch(() => null);
+      const accessResponse = await fetch(`/api/modulos/acesso?empresaId=${encodeURIComponent(companyId)}&moduloId=projetos`, { headers, signal: AbortSignal.timeout(15_000) });
+      const accessJson = await accessResponse.json().catch(() => ({}));
       if (!active) return;
-      if (sharedResponse.ok) {
-        const projects = Array.isArray(sharedJson.projetos) ? sharedJson.projetos as SharedProjectSummary[] : [];
-        setSharedProjects(projects);
-        setSharedContext(sharedJson.contexto || { id: companyId, nome: 'Projetos compartilhados', corPrimaria: '#003E73', temaEscuro: false });
-        setSharedProjectsState('ready');
-        if (!accessResponse.ok && projects.length > 0) { setSharedOnly(true); return; }
-      } else {
-        setSharedProjects([]);
-        setSharedProjectsState('error');
+      if (accessResponse.ok) {
+        setAccess(accessJson as ModuleAccess);
+        setAcessoConfirmado(true);
       }
-      if (!accessResponse.ok) { setError(accessJson.mensagem || 'Não foi possível abrir este módulo.'); return; }
-      setAccess(accessJson as ModuleAccess);
+      const sharedJson = await compartilhadosEmCurso;
+      if (!active) return;
+      const projects = Array.isArray(sharedJson?.projetos) ? sharedJson.projetos as SharedProjectSummary[] : [];
+      setSharedProjects(projects);
+      setSharedProjectsState(sharedJson ? 'ready' : 'error');
+      if (sharedJson?.contexto) setSharedContext(sharedJson.contexto);
+      if (!accessResponse.ok) {
+        if (projects.length > 0) setSharedOnly(true);
+        else setError(accessJson.mensagem || 'Não foi possível abrir este módulo.');
+      }
     };
-    void verify();
+    void verify().catch(() => { if (active) setError('Não foi possível consultar o acesso a Projetos.'); });
     return () => { active = false; };
   }, [companyId, contextoInicial, returnCompanyId]);
 
   if (error) return <main className={styles.accessState}><div><span aria-hidden="true">◇</span><h1>AvantaProjetos</h1><p>{error}</p><Link href={`/gestao?inicio=1&empresaId=${encodeURIComponent(returnCompanyId || companyId)}`}>‹ Início</Link></div></main>;
   if (sharedOnly) return <SharedProjectsHub companyId={returnCompanyId || companyId} context={sharedContext} projects={sharedProjects} state={sharedProjectsState} />;
   if (!access) {
-    return <TransicaoNavegacaoInterna destino="Projetos" empresa={contextoInicial?.empresa} />;
+    return <TransicaoNavegacaoInterna destino="Projetos" />;
   }
-  return <ProjectApp companyId={companyId} returnCompanyId={returnCompanyId} initialProjectId={initialProjectId} access={access} onAccessChange={setAccess} sharedProjects={sharedProjects} sharedProjectsState={sharedProjectsState} />;
+  return <ProjectApp companyId={companyId} returnCompanyId={returnCompanyId} initialProjectId={initialProjectId} access={access} acessoConfirmado={acessoConfirmado} onAccessChange={setAccess} sharedProjects={sharedProjects} sharedProjectsState={sharedProjectsState} />;
 }

@@ -6,6 +6,7 @@ import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import AberturaModulo, { useAvisarModuloPronto } from '@/app/components/AberturaModulo';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
 import { watchMarketplaceNoticeOpening, cancelMarketplaceNoticeOpening } from './notice-opening';
@@ -21,7 +22,7 @@ import Tooltip from '@/app/components/Tooltip';
 import AuthorizationRenewal from './AuthorizationRenewal';
 import usePanelOrder from './usePanelOrder';
 import type { MarketplaceId } from '@/app/modules/marketplaces/types';
-import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
+import { solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
 import styles from './marketplaces.module.css';
 import AccountCleanup from './AccountCleanup';
@@ -88,10 +89,15 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const pageRef = useRef<HTMLElement>(null);
   const productSearchRef = useRef<ProductSearchHandle>(null);
   const panelOrder = usePanelOrder(companyId);
-  const [context] = useState(() => initialContext ?? consumirNavegacaoModulo('marketplaces', companyId));
+  const [context] = useState(() => initialContext ?? null);
   const [empresa, setEmpresa] = useState(() => context?.empresa ?? { nome: 'Perfil empresarial', corPrimaria: '#003E73', temaEscuro: false, logoUrl: '' });
   const [accessState, setAccessState] = useState<'loading' | 'ready' | 'error'>(() => context ? 'ready' : 'loading');
   const [accessError, setAccessError] = useState('');
+  const [acessoConfirmado, setAcessoConfirmado] = useState(false);
+  const podeConsultarPrimeiraTela = Boolean(companyId && accessState !== 'error');
+  const voltandoDeAutorizacao = connectionStatus === 'connected';
+  const [empresaComResumo, setEmpresaComResumo] = useState('');
+  useAvisarModuloPronto('marketplaces', companyId, accessState === 'error');
   const [marketplace, setMarketplace] = useState<MarketplaceId>('mercado_livre');
   const [canManage, setCanManage] = useState(() => context
     ? ['gestor_master', 'administrador', 'operador_completo'].includes(context.perfil)
@@ -110,6 +116,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }, [companyId]);
   const readAccounts = useMemo(() => createAccountReader(signal => marketplaceClientRequest(`conexoes?empresaId=${encodeURIComponent(companyId)}`, undefined, signal) as Promise<MarketplaceAccountsResult>), [companyId]);
   const accountsLoading = accountsRead.companyId !== companyId || !accountsRead.settled || accountsRead.pending > 0;
+  const aberturaPronta = acessoConfirmado && accountsRead.companyId === companyId && accountsRead.settled && empresaComResumo === companyId;
   const [selectedAccount, setSelectedAccount] = useState('');
   const [accounts, setAccounts] = useState<MarketplaceAccount[]>([]);
   const [connectedAccountsExpanded, setConnectedAccountsExpanded] = useState(false);
@@ -456,7 +463,6 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   const summary = useMemo(() => salesSummary(salesByView(periodSales, salesView), salesGroup), [periodSales, salesGroup, salesView]);
   const accountSalesSummary = useMemo(() => salesSummary(salesByMarketplaces(salesByView(periodSales, salesView), selectedSalesMarketplaces).filter(sale => !salesAccount || sale.connectionId === salesAccount), ''), [periodSales, salesAccount, selectedSalesMarketplaces, salesView]);
   const pendingSales = summary.byConnection;
-  const pendingSalesTotal = summary.filteredTotal;
   const visibleSales = useMemo(() => salesByMarketplaces(salesByView(salesInPeriod(salesSnapshot, salesPeriod), salesView), selectedSalesMarketplaces).filter((sale) => (!salesGroup || saleGroup(sale) === salesGroup) && (!salesAccount || sale.connectionId === salesAccount)), [salesSnapshot, salesPeriod, salesGroup, salesAccount, selectedSalesMarketplaces, salesView]);
 
   useEffect(() => {
@@ -481,28 +487,44 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }, [accessState]);
 
   useEffect(() => {
-    if (accessState !== 'ready') return;
-    let firstSalesRead=true;
+    if (!podeConsultarPrimeiraTela) return;
+    let leiturasVendas = 0;
     const reader = createPassiveRefresh<SalesData>({
       backgroundVisible: () => salesViewRef.current === 'online',
-      read: signal => {const localOnly=firstSalesRead;firstSalesRead=false;return marketplaceClientRequest(`vendas?empresaId=${encodeURIComponent(companyId)}&scope=all${localOnly?'&localOnly=1':''}`, undefined, signal);},
-      onLatest: data => setSales(previous=>JSON.stringify(previous)===JSON.stringify(data.sales||[]) ? previous : data.sales || []),
+      read: signal => {
+        const fase = leiturasVendas++;
+        const params = new URLSearchParams({ empresaId: companyId, scope: 'all' });
+        if (fase < 2) params.set('localOnly', '1');
+        if (fase === 0) params.set('hero', '1');
+        return marketplaceClientRequest(`vendas?${params}`, undefined, AbortSignal.any([signal, AbortSignal.timeout(20_000)]));
+      },
+      onLatest: data => {
+        setSales(previous => JSON.stringify(previous) === JSON.stringify(data.sales || []) ? previous : data.sales || []);
+        setEmpresaComResumo(companyId);
+      },
       onVisible: data => { setSalesSnapshot(previous=>JSON.stringify(previous)===JSON.stringify(data.sales||[]) ? previous : data.sales || []); setAwaitingUpdates(data.awaitingUpdates || 0); setSalesWarnings(data.warnings || []); },
       onLoading: loading => { setSalesLoading(loading); if (loading) setSalesError(''); },
-      onError: error => setSalesError(error instanceof Error ? error.message : 'Não foi possível carregar as vendas.'),
+      onError: error => {
+        setSalesError(error instanceof Error ? error.message : 'Não foi possível carregar as vendas.');
+        setEmpresaComResumo(companyId);
+      },
     });
     salesReader.current = reader;
     void reader.manual();
     return () => { reader.stop(); if (salesReader.current === reader) salesReader.current = null; };
-  }, [accessState, companyId]);
+  }, [podeConsultarPrimeiraTela, companyId]);
+  useEffect(() => {
+    if (aberturaPronta) void salesReader.current?.background();
+  }, [aberturaPronta]);
+
   useEffect(() => {const previous=consumedSalesRefresh.current;if(previous.refreshKey===refreshKey&&previous.salesRefresh===salesRefresh)return;consumedSalesRefresh.current={refreshKey,salesRefresh};void salesReader.current?.manual();}, [refreshKey, salesRefresh]);
   useEffect(()=>{
-    if(accessState!=='ready')return;
+    if(accessState!=='ready'||!aberturaPronta)return;
     const sync=createStartupAccountSync(companyId,marketplaceClientRequest,(connectionId,message)=>setStartupSyncError(previous=>({companyId,issues:{...(previous.companyId===companyId?previous.issues:{}),[connectionId]:message}})));
     startupSync.current=sync;
     return()=>{sync.stop();if(startupSync.current===sync)startupSync.current=null;};
-  },[accessState,companyId]);
-  useEffect(()=>{if(accessState==='ready')startupSync.current?.update(accounts);},[accessState,companyId,accounts]);
+  },[accessState,companyId,aberturaPronta]);
+  useEffect(()=>{if(aberturaPronta)startupSync.current?.update(accounts);},[aberturaPronta,accounts]);
   useEffect(()=>{
     const changed=(event:Event)=>{
       const detail=(event as CustomEvent).detail;if(detail?.companyId!==companyId)return;
@@ -551,6 +573,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
         setEmpresa(payload.empresa);
         setCanManage(['gestor_master', 'administrador', 'operador_completo'].includes(payload.perfil));
         setAccessState('ready');
+        setAcessoConfirmado(true);
       } catch (error) {
         if (controller.signal.aborted) return;
         // A prévia evita a espera inicial, mas uma concessão revogada ainda
@@ -563,8 +586,9 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     return () => controller.abort();
   }, [companyId, context]);
 
+  const podeConsultarContas = podeConsultarPrimeiraTela && (!voltandoDeAutorizacao || acessoConfirmado);
   useEffect(() => {
-    if (accessState !== 'ready') return;
+    if (!podeConsultarContas) return;
     let active = true;
     queueMicrotask(() => {
       if (!active) return;
@@ -576,7 +600,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
       }).finally(() => { if (active && askIdentification) setConnecting(false); });
     });
     return () => { active = false; };
-  }, [accessState, refreshConnections, completeNewConnection, connectionStatus, connectedAccountId]);
+  }, [podeConsultarContas, refreshConnections, completeNewConnection, connectionStatus, connectedAccountId]);
 
   useEffect(() => {
     const receiveAuthorization = (event: MessageEvent<unknown>) => {
@@ -686,7 +710,7 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
   }
 
   if (accessState === 'loading') {
-    return <TransicaoNavegacaoInterna destino="Anúncios em marketplaces" empresa={context?.empresa} />;
+    return <TransicaoNavegacaoInterna destino="Anúncios em marketplaces" />;
   }
 
   if (accessState === 'error') {
@@ -713,37 +737,35 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     });
   };
   const productContext = { accounts, publicationAccounts: marketplaceAccounts, percentages: priceSettings.settings?.percentages ?? null, preparationLocked: publicationBusy || accountSelectionLocked || !selectedProvider.available, onPrepare: prepareLocalProduct };
-  return <QualityCacheProvider companyId={companyId} request={marketplaceClientRequest}><main className={`${styles.page} ${effectiveDark ? styles.dark : ''}`} style={{ '--marketplace-brand': empresa.corPrimaria } as CSSProperties} ref={pageRef} onClickCapture={event => { captureMarketplaceDetailNavigation(companyId, event); captureMarketplacePanelExpansion(event); }}>
+  return <AberturaModulo key={companyId} modulo="marketplaces" titulo="Anúncios em marketplaces" empresaId={companyId} pronta={aberturaPronta}>
+    <QualityCacheProvider companyId={companyId} request={marketplaceClientRequest}><main className={`${styles.page} ${effectiveDark ? styles.dark : ''}`} style={{ '--marketplace-brand': empresa.corPrimaria } as CSSProperties} ref={pageRef} onClickCapture={event => { captureMarketplaceDetailNavigation(companyId, event); captureMarketplacePanelExpansion(event); }}>
     <CarregamentoDadosModulo ativo={noticeOpening} escurecerFundo titulo={noticeTarget?.origin==='announced'?'Abrindo produto':'Abrindo pendência'} mensagem="Localizando e preparando o item…" corPrimaria={empresa.corPrimaria} temaEscuro={effectiveDark} onCancelar={cancelNoticeOpening} />
     <MarketplaceLiveMonitor key={companyId} companyId={companyId} brand={empresa.corPrimaria} dark={effectiveDark} onOpenSale={openAlertSale} />
     <ModuloHeader moduleTitle="Anúncios em marketplaces" empresa={{ ...empresa, temaEscuro: effectiveDark }} onBack={voltar} productFocusNavigation className={styles.salesHeader} returnTooltip="Voltar à Gestão" returnTooltipPosition="bottom" navigation={<SeletorModulos compact empresaId={companyId} moduloAtual="marketplaces" corPrimaria={empresa.corPrimaria} darkMode={effectiveDark} ocupado={publicationBusy || accountSelectionLocked || connecting || disconnecting || priceLotReading} />}>
       <div className={styles.headerToolbar}>
-      <SalesFilters period={salesPeriod} onPeriodChange={period => selectSalesFromHeader({ period })} group={salesGroup} onGroupChange={group => selectSalesFromHeader({ group })} counts={summary.byGroup} total={summary.total} dark={effectiveDark} brand={empresa.corPrimaria}
-        notices={<InventoryNotices key={companyId} companyId={companyId} canManage={canManage} feed={inventorySnapshot?.companyId===companyId ? inventorySnapshot.feed : null} unavailable={liveUnavailable} dark={effectiveDark} brand={empresa.corPrimaria} onAdjust={notice=>void adjustNotice(notice)} onDismiss={async notice=>{
-          const result = await marketplaceClientRequest('avisos', {
-            empresaId: companyId, action: 'dismiss_inventory_notice', noticeId: notice.id, code: notice.code,
-          }, AbortSignal.timeout(20_000));
-          if (result.ok !== true) throw new Error('Não foi possível confirmar a dispensa do aviso. Atualize a lista.');
-        }} />} />
-      {noticeNavigationError&&<div role="alert"><p className={styles.connectionMessage}>{noticeNavigationError}</p>{!noticeOpening&&(lastAdjustedNotice.current||lastViewedStockProduct.current)&&<BotaoAcaoCompacto onClick={()=>{if(lastAdjustedNotice.current)void adjustNotice(lastAdjustedNotice.current);else if(lastViewedStockProduct.current)viewProductInStock(lastViewedStockProduct.current);}}>Tentar novamente</BotaoAcaoCompacto>}</div>}
-      <div className={styles.headerActionGroup} role="group" aria-labelledby="header-actions-heading">
-        <span id="header-actions-heading" className={styles.headerGroupLabel}>Atualização e avisos</span>
-        <div className={styles.headerActionButtons}>
-      <Tooltip posicao="bottom" texto="Atualizar anuncios">
-        <button type="button" className={`${styles.settingsButton} ${styles.backgroundUpdateControl} ${styles.headerTextAction}`} disabled={salesLoading || accountSelectionLocked || publicationBusy} aria-label={updatesAvailable || liveUnavailable ? 'Atualizar novidades de anúncios e vendas' : 'Atualizar listas de anúncios e vendas'} onClick={() => { setUpdatesAvailable(false); setRefreshKey(value => value + 1); }}>
-          <Icon name="refresh" size={20} />
-          <span className={styles.headerButtonText}>Atualizar</span>
-          {(updatesAvailable || liveUnavailable) && <span className={styles.backgroundUpdateDot} aria-hidden="true" />}
-        </button>
-      </Tooltip>
-      <Tooltip texto="Ver vendas do período selecionado" posicao="bottom"><button type="button" className={`${styles.salesNotification} ${styles.headerTextAction}`} onClick={() => { setSalesExpanded(true); setSalesAccount(''); setSalesMarketplaces([]); setSalesSnapshot(sales); scrollToSales(); }} aria-label={`${pendingSalesTotal} vendas nos filtros selecionados. Ver todas as contas e marketplaces.`} aria-busy={salesLoading}>
-        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg><span className={styles.headerButtonText}>Ver vendas</span>{pendingSalesTotal > 0 && <b>{pendingSalesTotal}</b>}
-      </button></Tooltip>
+        <SalesFilters period={salesPeriod} onPeriodChange={period => selectSalesFromHeader({ period })} group={salesGroup} onGroupChange={group => selectSalesFromHeader({ group })} counts={summary.byGroup} total={summary.total} dark={effectiveDark} brand={empresa.corPrimaria} />
+        <div className={styles.headerActionGroup} role="group" aria-labelledby="header-actions-heading">
+          <span id="header-actions-heading" className={styles.headerGroupLabel}>Atualização e avisos</span>
+          <div className={styles.headerActionButtons}>
+            <Tooltip posicao="bottom" texto="Atualizar anuncios">
+              <button type="button" className={`${styles.settingsButton} ${styles.backgroundUpdateControl} ${styles.headerTextAction}`} disabled={salesLoading || accountSelectionLocked || publicationBusy} aria-label={updatesAvailable || liveUnavailable ? 'Atualizar novidades de anúncios e vendas' : 'Atualizar listas de anúncios e vendas'} onClick={() => { setUpdatesAvailable(false); setRefreshKey(value => value + 1); }}>
+                <Icon name="refresh" size={20} />
+                <span className={styles.headerButtonText}>Atualizar</span>
+                {(updatesAvailable || liveUnavailable) && <span className={styles.backgroundUpdateDot} aria-hidden="true" />}
+              </button>
+            </Tooltip>
+            <InventoryNotices key={companyId} companyId={companyId} canManage={canManage} feed={inventorySnapshot?.companyId===companyId ? inventorySnapshot.feed : null} unavailable={liveUnavailable} dark={effectiveDark} brand={empresa.corPrimaria} onAdjust={notice=>void adjustNotice(notice)} onDismiss={async notice=>{
+              const result = await marketplaceClientRequest('avisos', {
+                empresaId: companyId, action: 'dismiss_inventory_notice', noticeId: notice.id, code: notice.code,
+              }, AbortSignal.timeout(20_000));
+              if (result.ok !== true) throw new Error('Não foi possível confirmar a dispensa do aviso. Atualize a lista.');
+            }} />
+          </div>
         </div>
-      </div>
       </div>
     </ModuloHeader>
     <div className={styles.content}>
+    {noticeNavigationError&&<div role="alert"><p className={styles.connectionMessage}>{noticeNavigationError}</p>{!noticeOpening&&(lastAdjustedNotice.current||lastViewedStockProduct.current)&&<BotaoAcaoCompacto onClick={()=>{if(lastAdjustedNotice.current)void adjustNotice(lastAdjustedNotice.current);else if(lastViewedStockProduct.current)viewProductInStock(lastViewedStockProduct.current);}}>Tentar novamente</BotaoAcaoCompacto>}</div>}
     <section className={styles.hero} aria-labelledby="module-title">
       <div><h1 id="module-title" tabIndex={-1}>Anúncios em marketplaces</h1></div>
       <PriceToolsActions brand={empresa.corPrimaria} canManage={canManage} reading={priceLotReading} canManageConnections={canManageConnections} copyStatus={priceLinkStatus}
@@ -889,5 +911,6 @@ export default function MarketplacesClient({ companyId, initialContext, connecti
     <ModalConfirmacao aberto={!!disconnectAccount} titulo="Desconectar conta?" mensagem={disconnectAccount ? `${accountDisplayName(disconnectAccount)}. O AvantaLab apagará os tokens desta conexão. Os anúncios na plataforma não serão alterados.` : ''} textoConfirmar="Desconectar" carregando={disconnecting} darkMode={effectiveDark} corPrimaria={empresa.corPrimaria} variante="destrutiva" aoCancelar={() => { if (!disconnecting) setDisconnectAccount(null); }} aoConfirmar={() => void confirmDisconnectAccount()} />
     </div>
     <RodapeAvanta darkMode={effectiveDark} />
-  </main></QualityCacheProvider>;
+  </main></QualityCacheProvider>
+  </AberturaModulo>;
 }

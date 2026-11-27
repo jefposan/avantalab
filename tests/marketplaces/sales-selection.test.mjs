@@ -142,5 +142,4 @@ test('rolagem aguarda a renderização e usa o card de Vendas; desmontagem não 
   scroll(); assert.equal(moved.length, 0); frames.shift()(); assert.deepEqual(moved, [card]);
   scroll(); card.isConnected = false; frames.shift()(); assert.equal(moved.length, 1);
   scroll(); active = false; frames.shift()(); assert.equal(moved.length, 1);
-  assert.match(client, /setSalesSnapshot\(sales\); scrollToSales\(\);/);
 });

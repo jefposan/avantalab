@@ -56,7 +56,7 @@ test('storage de outra janela substitui memória local; login de outro usuário 
   assert.equal(r.lerPreviaModulos('nova', 'v').perfil.empresa.id, 'nova');
 });
 
-function componente({ fresco = [perfil('e')], sessaoAtiva = true, aberto = false } = {}) {
+function componente({ fresco = [perfil('e')], sessaoAtiva = true, aberto = false, hospedeiro = false, editorAberto = false } = {}) {
   const chamadas = [], mudancas = [];
   const estados = [aberto, false, '', '', { top: 0, right: 8 }]; let indice = 0;
   const react = { ...React, useEffect() {}, useId: () => 'teste', useRef: value => ({ current: value }), useState: initial => {
@@ -68,9 +68,18 @@ function componente({ fresco = [perfil('e')], sessaoAtiva = true, aberto = false
   const window = { location: { assign: href => chamadas.push(['navegar', href]) } };
   const { default: Seletor } = carregar('app/components/SeletorModulos.tsx', {
     react, 'react/jsx-runtime': jsx, 'react-dom': { createPortal: elemento => elemento },
+    'next/navigation': { useRouter: () => ({ push: (...args) => chamadas.push(['navegar', ...args]) }) },
+    '@/app/lib/navegacao-modulos': {
+      MENSAGEM_TROCA_MODULO: 'trocar',
+      editorBloqueiaNavegacao: () => editorAberto,
+      solicitarTrocaAoHospedeiro: troca => {
+        if (hospedeiro) chamadas.push(['hospedeiro', troca.destino, troca.empresaId]);
+        return hospedeiro;
+      },
+    },
     '@/app/hooks/useAcessosNavegacao': { useAcessosNavegacao: () => ({ perfil: perfil('e'), usuarioId: 'u', atualizar() {}, erro: '' }) },
     '@/app/lib/navegacao-acessos-cliente': { atualizarAcessosNavegacao: async (...args) => { chamadas.push(['validar', ...args]); return fresco; } },
-    '@/app/lib/sessao-acesso-cliente': { validarSessaoDoDispositivo: async () => ({ ok: sessaoAtiva, ativa: sessaoAtiva }) },
+    '@/app/lib/sessao-acesso-cliente': { validarSessaoDoDispositivo: async (...args) => { chamadas.push(['sessao', ...args]); return { ok: sessaoAtiva, ativa: sessaoAtiva }; } },
     '@/app/lib/seletor-modulos': dominio, '@/app/projetos/components/Icon': { Icon: () => null },
     './ModalConfirmacao': { default: () => null }, './SeletorModulos.module.css': { default: {} },
   }, { window, document: { body: {} } });
@@ -167,7 +176,7 @@ test('fluxos confirmados notificam mudança, sem conceder direitos pelo broadcas
 });
 
 
-test('selecionar fecha Navegar antes da rede e conserva preparação até a troca de documento', async () => {
+test('seleção valida acesso e dispositivo juntos, sem recarregar o documento', async () => {
   let liberar;
   const fresco = new Promise(resolve => { liberar = resolve; });
   const c = componente({ aberto: true, fresco });
@@ -175,10 +184,11 @@ test('selecionar fecha Navegar antes da rede e conserva preparação até a troc
   assert.ok(c.mudancas.some(([indice, valor]) => indice === 0 && valor === false));
   assert.ok(c.mudancas.some(([indice, valor]) => indice === 1 && valor === true));
   assert.ok(!c.chamadas.some(item => item[0] === 'navegar'));
+  assert.ok(c.chamadas.some(item => item[0] === 'sessao' && item[2] === 'verificar'));
   liberar([perfil('e')]);
   await selecao;
   assert.deepEqual(c.chamadas.at(-1), ['navegar', '/custos?empresaId=e']);
-  assert.ok(!c.mudancas.some(([indice, valor]) => indice === 1 && valor === false));
+  assert.ok(c.mudancas.some(([indice, valor]) => indice === 1 && valor === false));
 });
 test('recusa restaura a lista com erro e encerra a preparação', async () => {
   const c = componente({ aberto: true, fresco: [] }); await selecionar(c, 'custos');
@@ -186,6 +196,20 @@ test('recusa restaura a lista com erro e encerra a preparação', async () => {
   assert.ok(c.mudancas.some(([indice, valor]) => indice === 1 && valor === false));
   const source = readFileSync('app/components/SeletorModulos.tsx', 'utf8');
   assert.doesNotMatch(source, /Validando acesso/);
-  assert.match(source, /createPortal\(<CarregamentoDadosModulo ativo/);
+  assert.doesNotMatch(source, /createPortal\(<CarregamentoDadosModulo ativo/);
   assert.match(source, /addEventListener\('pageshow', retomar\)/);
+});
+
+test('módulo embutido entrega a troca ao hospedeiro, sem navegar no próprio iframe', async () => {
+  const c = componente({ aberto: true, hospedeiro: true });
+  await selecionar(c, 'dashboard');
+  assert.deepEqual(c.chamadas.at(-1), ['hospedeiro', 'dashboard', 'e']);
+  assert.equal(c.chamadas.some(item => item[0] === 'navegar'), false);
+});
+
+test('proteção de editor legado impede troca de documento e de rota', async () => {
+  const c = componente({ aberto: true, editorAberto: true });
+  await selecionar(c, 'custos');
+  assert.deepEqual(c.chamadas, []);
+  assert.ok(c.mudancas.some(([indice, valor]) => indice === 2 && /editor aberto/.test(valor)));
 });

@@ -1,3 +1,44 @@
+# 3.2.0.563 — Gestão, Marketplaces e Vendas: navegação, cabeçalho e impressão de pedidos
+
+- Reúne a navegação interna com card único e o cabeçalho simplificado de Anúncios em marketplaces.
+- O PDF de pedido compacta cabeçalho, itens e totais, amplia a coluna de descrição e retira o divisor acima de Recebido por e Data.
+
+# 3.2.0.562 — Marketplaces: simplificar o cabeçalho
+
+- Retira Todo o período e Ver vendas do cabeçalho, move Consultar pendências para junto de Atualizar e compacta a navegação por mês e intervalo de datas.
+
+# 3.2.0.561 — Gestão: transição contínua ao abrir módulos
+
+- O card branco permanece montado durante toda a abertura interna, mesmo quando o roteador atualiza a página. Ao retomar a rota de um módulo, o sistema mantém a preparação interna. A tela institucional continua reservada à entrada.
+
+# 3.2.0.560 — Gestão: preparação institucional ao fazer login novamente
+
+- Sair limpa a indicação de navegação anterior. O login e a preparação do primeiro destino usam fundo e logo oficiais, inclusive para perfis liberados somente para um módulo.
+
+# 3.2.0.559 — Gestão: um único card branco entre áreas
+
+- Entrada do sistema preserva fundo e logo institucionais. Trocas internas usam o card branco com loading oficial e sem Cancelar.
+- A janela principal apresenta o card, e só revela o destino quando recebe a confirmação da primeira tela.
+
+# 3.2.0.558 — Módulos: abertura unificada com a primeira tela pronta
+
+- Custos, Projetos, Operações de Campo, Marketplaces, Ponto e Conteúdo AvantaVendas usam a mesma transição de Vendas na Gestão Web.
+- A Gestão revela cada módulo após a primeira tela responder. Projetos compartilhados, novidades e sincronizações de marketplace não atrasam o painel inicial.
+
+# 3.2.0.557 — Vendas e Serviços: entrada com a Visão geral pronta
+
+- A Gestão exibe só o card oficial de preparação enquanto Vendas monta a primeira tela. Troca na mesma aba, com cancelamento e recuperação de falhas.
+- Perfil, permissões e indicadores iniciam em paralelo. Catálogo, históricos e consultas fiscais complementares não atrasam a abertura.
+
+# 3.2.0.556 — Módulos: navegação interna e carregamento por área
+
+- Navegar usa a rota interna ou a Gestão já montada, com concessão e sessão de dispositivo verificadas em paralelo e confirmação dos editores preservada.
+- A estrutura das páginas aparece antes das consultas secundárias. Vendas carrega catálogo, indicadores e históricos de forma independente; Custos, Projetos e Operações de Campo exibem espera localizada.
+
+# 3.2.0.555 — Módulos: navegação e identificação na horizontal
+
+- Navegar à esquerda do nome do módulo, em conjunto único, preservando logo, ajustes, temas e navegação. Prévia local, sem publicação.
+
 # 3.2.0.554 — Gestão: cabeçalho fixo, faixa mensal e confirmação de despesas
 
 - Setas laterais do seletor mensal mais estreitas, liberando espaço central sem mudar a largura total.

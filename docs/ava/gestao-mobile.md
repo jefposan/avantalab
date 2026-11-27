@@ -1,4 +1,22 @@
-<!-- ava-version: 3.2.0.554 -->
+<!-- ava-version: 3.2.0.563 -->
+
+> Revisão 3.2.0.563: Sem impacto operacional. Alterações no cabeçalho, na navegação e no documento do pedido da Gestão Web.
+
+> Revisão 3.2.0.562: Sem impacto operacional. Ajuste no cabeçalho de Anúncios em marketplaces na Gestão Web.
+
+> Revisão 3.2.0.561: Sem impacto operacional. Ajuste de apresentação na navegação da Web.
+
+> Revisão 3.2.0.560: Sem impacto operacional. Ajuste de apresentação da entrada Web.
+
+> Revisão 3.2.0.559: Sem impacto operacional. A revisão trata da transição entre módulos da Gestão Web.
+
+> Revisão 3.2.0.558: Sem impacto operacional. A revisão padroniza a abertura dos módulos da Gestão Web.
+
+> Revisão 3.2.0.557: Sem impacto operacional. O ajuste de transição entre módulos é da Gestão Web.
+
+> Revisão 3.2.0.556: Sem impacto operacional no aplicativo móvel. A revisão trata da navegação entre módulos na Web.
+
+> Revisão 3.2.0.555: Navegar e nome do módulo alinhados na horizontal; sem impacto operacional.
 
 > Revisão 3.2.0.554: Sem impacto operacional nos aplicativos independentes; ajuste do cabeçalho restrito à Gestão Web.
 

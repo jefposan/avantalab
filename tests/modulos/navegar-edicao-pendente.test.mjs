@@ -8,8 +8,11 @@ const source=readFileSync('app/components/SeletorModulos.tsx','utf8');
 function fixture(save=async()=>true,{allowed=true,busy=false}={}) {
  const states=[],refs=[],calls=[],locations=[];let stateIndex=0,refIndex=0;
  const hooks={useState(initial){const i=stateIndex++;if(!(i in states))states[i]=typeof initial==='function'?initial():initial;return[states[i],value=>{states[i]=typeof value==='function'?value(states[i]):value;}];},useRef(initial){const i=refIndex++;return refs[i]||= {current:initial};},useEffect(){},useId:()=> 'nav-test'};
- const win={location:{assign:href=>locations.push(href)}};win.top=win;
- const imports={react:hooks,'react/jsx-runtime':require('react/jsx-runtime'),'react-dom':{createPortal:node=>node},'@/app/hooks/useAcessosNavegacao':{useAcessosNavegacao:()=>({perfil:{},usuarioId:'user',atualizar(){}})},'@/app/lib/navegacao-acessos-cliente':{atualizarAcessosNavegacao:async()=>{calls.push('access');return allowed?[{}]:[];}},'@/app/lib/sessao-acesso-cliente':{validarSessaoDoDispositivo:async()=>{calls.push('session');return {ok:true,ativa:true};}},'@/app/lib/seletor-modulos':{opcoesNavegacao:perfis=>perfis.length?[{id:'custos',href:'/custos?empresaId=empresa',nome:'Custos'}]:[]},'@/app/projetos/components/Icon':{Icon:()=>null},'./ModalConfirmacao':{default:()=>null},'./SeletorModulos.module.css':{default:{}}};
+ const win={};
+ const imports={
+ 'next/navigation':{useRouter:()=>({push:href=>locations.push(href)})},
+ '@/app/lib/navegacao-modulos':{editorBloqueiaNavegacao:()=>false,solicitarTrocaAoHospedeiro:()=>false},
+ react:hooks,'react/jsx-runtime':require('react/jsx-runtime'),'react-dom':{createPortal:node=>node},'@/app/hooks/useAcessosNavegacao':{useAcessosNavegacao:()=>({perfil:{},usuarioId:'user',atualizar(){}})},'@/app/lib/navegacao-acessos-cliente':{atualizarAcessosNavegacao:async()=>{calls.push('access');return allowed?[{}]:[];}},'@/app/lib/sessao-acesso-cliente':{validarSessaoDoDispositivo:async()=>{calls.push('session');return {ok:true,ativa:true};}},'@/app/lib/seletor-modulos':{opcoesNavegacao:perfis=>perfis.length?[{id:'custos',href:'/custos?empresaId=empresa',nome:'Custos'}]:[]},'@/app/projetos/components/Icon':{Icon:()=>null},'./ModalConfirmacao':{default:()=>null},'./SeletorModulos.module.css':{default:{}}};
  const module={exports:{}};
  const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
  new Function('require','module','exports','document','window',code)(id=>imports[id],module,module.exports,{body:{}},win);
@@ -38,7 +41,7 @@ test('falha/validação mantém formulário e não tenta navegar',async()=>{
  const broken=fixture(async()=>{throw Error('rede');});await broken.open().aoConfirmar();assert.deepEqual(broken.locations,[]);assert.deepEqual(broken.calls,['save']);
 });
 test('perda de acesso após salvar nunca autoriza troca e ocupado real continua protegido',async()=>{
- const f=fixture(async()=>true,{allowed:false});await f.open().aoConfirmar();assert.deepEqual(f.calls,['save','access']);assert.deepEqual(f.locations,[]);
+ const f=fixture(async()=>true,{allowed:false});await f.open().aoConfirmar();assert.deepEqual(f.calls,['save','access','session']);assert.deepEqual(f.locations,[]);
  const busy=fixture(async()=>true,{busy:true});assert.equal(busy.render()[0].props.disabled,true);
 });
 test('consumidor conecta gravação real de rascunho, não confirmação nem emissão',()=>{

@@ -1,4 +1,22 @@
-<!-- ava-version: 3.2.0.554 -->
+<!-- ava-version: 3.2.0.563 -->
+
+> Revisão 3.2.0.563: A impressão de pedidos de Vendas e Serviços usa o layout compacto. As orientações para navegar entre módulos e consultar pendências de Marketplaces seguem as revisões anteriores.
+
+> Revisão 3.2.0.562: No cabeçalho de Anúncios em marketplaces, use Consultar pendências ao lado de Atualizar. Selecione o período pelas setas de mês ou por Selecionar datas. Para ver pedidos, abra o card Vendas.
+
+> Revisão 3.2.0.561: O card branco permanece visível durante toda a mudança interna, inclusive enquanto a URL é atualizada. A tela institucional é usada para acesso.
+
+> Revisão 3.2.0.560: Novo login sempre usa Preparando acesso com fundo e marca. Sair limpa a indicação de retorno, e a transição branca é reservada à navegação interna.
+
+> Revisão 3.2.0.559: A entrada usa a tela institucional. A navegação entre módulos e Dashboard usa só um card em fundo branco, sem Cancelar, até o destino estar pronto.
+
+> Revisão 3.2.0.558: Todos os módulos da Gestão exibem o mesmo card Preparando até a tela inicial estar pronta. A troca preserva a aba e o retorno ao Dashboard já aberto.
+
+> Revisão 3.2.0.557: Ao abrir Vendas na mesma aba, a Gestão exibe um único card Preparando até a primeira tela do módulo estar pronta. O cancelamento devolve o controle ao Dashboard já aberto.
+
+> Revisão 3.2.0.556: Navegar troca de módulo sem recarregar a aba. Ao voltar de um módulo aberto dentro da Gestão, o Dashboard reaparece com o estado anterior.
+
+> Revisão 3.2.0.555: Navegar e nome do módulo alinhados na horizontal; sem impacto operacional.
 
 > Revisão 3.2.0.554: Cabeçalho da Gestão Web permanece fixo no topo; somente o conteúdo abaixo rola. Espaço do cabeçalho acompanha tamanho de tela e zoom.
 

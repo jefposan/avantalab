@@ -48,7 +48,7 @@ const acoesLoteCatalogo: Array<{ valor: AcaoLoteCatalogo; rotulo: string; descri
   { valor: 'inativar', rotulo: 'Inativar cadastro', descricao: 'Torna os cadastros indisponíveis para uso, preservando dados e histórico.', confirmacao: 'Os cadastros selecionados ficarão indisponíveis no Catálogo e em Custos. Preços, imagens, estoque, composições e histórico serão preservados.' },
 ];
 
-export default function CustosWorkspace({ companyId, access, initialNewType, initialProductId, embeddedProduct = false, onProductSaved, onProductCancel, onProductDirtyChange, onProductBusyChange }: { companyId: string; access: CustosAccess; initialNewType?: 'produto'; initialProductId?: string; embeddedProduct?: boolean; onProductSaved?: (produto: ProdutoCustos) => void; onProductCancel?:()=>void; onProductDirtyChange?:(dirty:boolean)=>void; onProductBusyChange?:(busy:boolean)=>void }) {
+export default function CustosWorkspace({ companyId, access, initialNewType, initialProductId, embeddedProduct = false, onAberturaConcluida, onProductSaved, onProductCancel, onProductDirtyChange, onProductBusyChange }: { companyId: string; access: CustosAccess; initialNewType?: 'produto'; initialProductId?: string; embeddedProduct?: boolean; onAberturaConcluida?: (pronta: boolean) => void; onProductSaved?: (produto: ProdutoCustos) => void; onProductCancel?:()=>void; onProductDirtyChange?:(dirty:boolean)=>void; onProductBusyChange?:(busy:boolean)=>void }) {
   const [aba, setAba] = useState<Aba>(initialNewType || initialProductId ? 'produtos' : 'visao');
   const [catalogoId, setCatalogoId] = useState('');
   const [catalogoFiltroId, setCatalogoFiltroId] = useState('');
@@ -61,6 +61,9 @@ export default function CustosWorkspace({ companyId, access, initialNewType, ini
   const [documento, setDocumento] = useState<DocumentoCustos>(documentoVazio);
   const [produtoAtivoId, setProdutoAtivoId] = useState(initialProductId || '');
   const [carregando, setCarregando] = useState(true);
+  const [visaoPronta, setVisaoPronta] = useState(false);
+  const esperaAba = carregando && (aba !== 'visao' || !visaoPronta);
+  useEffect(() => { if (!esperaAba) onAberturaConcluida?.(true); }, [esperaAba, onAberturaConcluida]);
   const [erro, setErro] = useState('');
   const [edicaoPendente, setEdicaoPendente] = useState(false);
   useEffect(()=>onProductDirtyChange?.(edicaoPendente),[edicaoPendente,onProductDirtyChange]);
@@ -76,19 +79,24 @@ export default function CustosWorkspace({ companyId, access, initialNewType, ini
     if (!silencioso) setCarregando(true);
     setErro('');
     try {
-      const dados = await carregarCustos(companyId, access.podeEditar);
+      const dados = await carregarCustos(companyId, access.podeEditar, visao => {
+        if (chamada !== carregamentoRef.current) return;
+        setCatalogoId(visao.catalogoId);
+        setCatalogos(visao.catalogos);
+        setProdutos(visao.produtos);
+        setDocumento(visao.documento);
+        revisaoRef.current = visao.revisao;
+        const disponiveis = visao.produtos.filter(produto => !produto.excluido_em);
+        if (initialProductId && !disponiveis.some(produto => produto.id === initialProductId)) {
+          setErro('O produto solicitado não está disponível neste perfil.');
+        }
+        setProdutoAtivoId(atual => disponiveis.some(produto => produto.id === atual) ? atual : disponiveis[0]?.id || '');
+        setVisaoPronta(true);
+      });
       if (chamada !== carregamentoRef.current) return;
-      setCatalogoId(dados.catalogoId);
-      setCatalogos(dados.catalogos);
-      setProdutos(dados.produtos);
       setPerfilFiscal(dados.perfilFiscal);
       setTabelasPreco(dados.tabelasPreco);
       setPrecosTabela(dados.precosTabela);
-      setDocumento(dados.documento);
-      revisaoRef.current = dados.revisao;
-      const disponiveis = dados.produtos.filter((produto) => !produto.excluido_em);
-      if (initialProductId && !disponiveis.some((produto) => produto.id === initialProductId)) setErro('O produto solicitado não está disponível neste perfil.');
-      setProdutoAtivoId((atual) => disponiveis.some((produto) => produto.id === atual) ? atual : disponiveis[0]?.id || '');
     } catch (falha) { setErro(erroTexto(falha)); }
     finally { if (chamada === carregamentoRef.current) { empresaProntaRef.current = companyId; setCarregando(false); } }
   }, [access.podeEditar, companyId, initialProductId]);
@@ -151,7 +159,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType, ini
 
   if (embeddedProduct && !initialNewType && !carregando && !produtosDisponiveis.some(produto=>produto.id===initialProductId)) return <div role="alert" className={styles.error}>Produto não localizado neste perfil ou indisponível para edição.</div>;
   return <div className={`${styles.workspace} ${embeddedProduct ? styles.embeddedWorkspace : ''}`}>
-    <div className={styles.workspaceContent} aria-hidden={carregando || undefined} inert={carregando || undefined}>
+    <div className={styles.workspaceContent} hidden={esperaAba}>
     {!embeddedProduct && <aside className={styles.sidebar} aria-label="Áreas de Custos e Precificação">
       <nav>{navegacao.map((item) => <button key={item.id} type="button" className={aba === item.id ? styles.navActive : ''} onClick={() => abrirAba(item.id)}><span aria-hidden="true">{item.icone}</span>{item.rotulo}</button>)}</nav>
       <div className={styles.sharedNote}><strong>Catálogos da empresa</strong><p>Cada catálogo pode abastecer Vendas e Serviços, AvantaVendas, ambos ou nenhum destino. Desativar um destino não apaga pedidos já registrados.</p></div>
@@ -169,7 +177,7 @@ export default function CustosWorkspace({ companyId, access, initialNewType, ini
       {aba === 'historico' && <HistoricoView produtos={produtos} documento={documento} produtoAtivoId={produtoAtivoId} onSelecionar={selecionarProduto} />}
     </section>
     </div>
-    <CarregamentoDadosModulo ativo={carregando} titulo="Preparando Custos e Precificação" mensagem="Carregando os dados do módulo…" corPrimaria="var(--brand)" temaEscuro={access.empresa.temaEscuro} />
+    <CarregamentoDadosModulo ativo={esperaAba} variante="local" esqueletos titulo="Custos e Precificação" mensagem="Carregando custos e produtos…" corPrimaria="var(--brand)" temaEscuro={access.empresa.temaEscuro} />
     <ModalConfirmacao aberto={Boolean(abaPendente)} titulo="Descartar alterações?" mensagem="Há alterações não salvas neste produto ou serviço. Se continuar, elas serão perdidas." textoCancelar="Continuar editando" textoConfirmar="Descartar e sair" corPrimaria="var(--custos-brand)" variante="alerta" aoCancelar={() => setAbaPendente(null)} aoConfirmar={descartarAoNavegar} />
   </div>;
 }

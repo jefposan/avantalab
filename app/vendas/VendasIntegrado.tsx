@@ -12,9 +12,9 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/app/lib/supabase';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
+import { apagarMarcadoresDePreparacao, PARAMETRO_PREPARACAO_ACESSO } from '@/app/lib/origem-preparacao';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
-import CarregamentoDadosModulo from '@/app/components/CarregamentoDadosModulo';
-import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
+import { consumirNavegacaoModulo, criarRotaTrocaModulo, MENSAGEM_MODULO_PRONTO, MENSAGEM_TROCA_MODULO, MENSAGEM_VENDAS_HERO_PRONTA, solicitarRetornoAoModuloHospedeiro, solicitarTrocaAoHospedeiro, type ContextoNavegacaoModulo, type TrocaModulo } from '@/app/lib/navegacao-modulos';
 import type { CatalogoVendasDTO } from '@/app/modules/vendas/types';
 import { CODIGOS_PERMISSOES_VENDAS } from '@/app/modules/vendas/permissions';
 import { RECEIVABLE_MOVE_REQUEST_TYPE, RECEIVABLE_MOVE_RESPONSE_TYPE, RECEIVABLE_READY_TYPE, RECEIVABLE_SNAPSHOT_TYPE, parseReceivableSnapshot } from '@/app/vendas/lib/commercial-receivable-bridge.mjs';
@@ -197,12 +197,12 @@ function analisarPublicacaoRegrasFiscais(data: any) {
   };
 }
 
-export default function VendasIntegrado({ initialContext }: { initialContext?: ContextoNavegacaoModulo | null }) {
+export default function VendasIntegrado({ initialContext, initialCompanyId }: { initialContext?: ContextoNavegacaoModulo | null; initialCompanyId?: string }) {
   const router = useRouter();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const recebimentosGenerationRef = useRef(0);
-  const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('vendas'));
-  const [empresaId, setEmpresaId] = useState(() => contextoInicial?.empresaId || '');
+  const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('vendas', initialCompanyId));
+  const [empresaId, setEmpresaId] = useState(() => initialCompanyId && UUID_PATTERN.test(initialCompanyId) ? initialCompanyId : contextoInicial?.empresaId || '');
   const activeCompanyRef=useRef(empresaId);
   activeCompanyRef.current=empresaId;
   const [catalogo, setCatalogo] = useState<CatalogoVendasDTO | null>(null);
@@ -212,8 +212,15 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   const [documentosFiscais, setDocumentosFiscais] = useState<unknown[]>([]);
   const [erro, setErro] = useState('');
   const [iframePronto, setIframePronto] = useState(false);
-  const [dadosProntosEmpresa, setDadosProntosEmpresa] = useState('');
-  const [apresentacaoEmpresa, setApresentacaoEmpresa] = useState('');
+  const [heroPronta, setHeroPronta] = useState(false);
+  const [hospedado, setHospedado] = useState(false);
+  const [permissoes, setPermissoes] = useState<{ empresaId: string; snapshot: Record<string, unknown> } | null>(null);
+  const [expirouAbertura, setExpirouAbertura] = useState(false);
+  const permissoesGenerationRef = useRef(0);
+  useEffect(() => { setHospedado(window.parent !== window); }, []);
+  const [erroCatalogo, setErroCatalogo] = useState('');
+  const [tentativaInicial, setTentativaInicial] = useState(0);
+  const catalogoGenerationRef = useRef(0);
   const complementaresEmpresaRef = useRef('');
   const resumoGenerationRef = useRef(0);
   const [resumo, setResumo] = useState<{companyId:string;summary:CommercialOverview|null;message:string}|null>(null);
@@ -227,7 +234,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   }, [contextoInicial, empresaId, router]);
 
   const enviarCatalogo = useCallback(() => {
-    if (!perfilCadastro || !empresaId || !iframePronto || !iframeRef.current?.contentWindow || (!catalogo && !erro)) return;
+    if (String(perfilCadastro?.empresa_id || '') !== empresaId || !perfilCadastro || !empresaId || !iframePronto || !iframeRef.current?.contentWindow) return;
     const catalogoDoPerfil: CatalogoVendasDTO = catalogo ?? {
       versao: 1,
       origem: 'custos_precificacao',
@@ -247,9 +254,10 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       corPrimaria,
       logoUrl,
       catalogoDisponivel: Boolean(catalogo),
-      mensagem: catalogo ? '' : erro,
+      catalogoCarregando: !catalogo && !erroCatalogo,
+      mensagem: catalogo ? '' : erroCatalogo,
     }, origemPrototipo);
-  }, [catalogo, corPrimaria, empresaId, erro, iframePronto, logoUrl, origemPrototipo, perfilCadastro]);
+  }, [catalogo, corPrimaria, empresaId, erroCatalogo, iframePronto, logoUrl, origemPrototipo, perfilCadastro]);
 
   const enviarDocumentosFiscais = useCallback(() => {
     if (!iframePronto || !iframeRef.current?.contentWindow || !UUID_PATTERN.test(empresaId)) return;
@@ -271,16 +279,20 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   }, []);
 
   const carregarPermissoes = useCallback(async (perfilId: string) => {
-    const destination = iframeRef.current?.contentWindow;
-    if (!destination || !UUID_PATTERN.test(perfilId)) return false;
-    const send = (snapshot: Record<string, unknown>) => destination.postMessage({ type: ACCESS_SNAPSHOT_MESSAGE_TYPE, snapshot }, origemPrototipo);
+    if (!UUID_PATTERN.test(perfilId)) return false;
+    const generation = ++permissoesGenerationRef.current;
+    const send = (snapshot: Record<string, unknown>) => {
+      if (generation === permissoesGenerationRef.current && activeCompanyRef.current === perfilId) {
+        setPermissoes({ empresaId: perfilId, snapshot });
+      }
+    };
     try {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       const authenticatedUserId = data.session?.user.id;
       if (!token || !authenticatedUserId) { send({ available: false, writable: false, message: 'Confirme novamente sua sessão na Gestão.' }); return false; }
       const params = new URLSearchParams({ empresaId: perfilId, moduloId: 'vendas' });
-      const response = await fetch(`/api/modulos/permissoes?${params}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+      const response = await fetch(`/api/modulos/permissoes?${params}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', signal: AbortSignal.timeout(15_000) });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || payload.ok !== true) {
         send({ available: false, writable: false, message: payload.mensagem || 'A matriz protegida ainda não está disponível neste perfil.' });
@@ -292,7 +304,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
       send({ available: false, writable: false, message: 'Não foi possível consultar as permissões na Gestão.' });
       return false;
     }
-  }, [origemPrototipo]);
+  }, []);
 
   const carregarRegrasFiscais = useCallback(async (perfilId: string) => {
     const destination = iframeRef.current?.contentWindow;
@@ -407,7 +419,7 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
     try {
     const {data}=await supabase.auth.getSession();
     if(!data.session?.access_token)throw Error('Confirme sua sessão.');
-    const response=await fetch(`/api/modulos/vendas/commercial/overview?${new URLSearchParams({companyId,start:from,end:to})}`,{headers:{Authorization:`Bearer ${data.session.access_token}`},cache:'no-store'});
+    const response=await fetch(`/api/modulos/vendas/commercial/overview?${new URLSearchParams({companyId,start:from,end:to})}`,{headers:{Authorization:`Bearer ${data.session.access_token}`},cache:'no-store',signal:AbortSignal.timeout(30_000)});
     const payload=await response.json();
     if(generation!==resumoGenerationRef.current||activeCompanyRef.current!==companyId)return;
     if(!response.ok||payload.ok!==true){setResumo({companyId,summary:null,message:payload.message||'Não foi possível calcular os resumos.'});if(response.status!==403)throw Error(payload.message||'Não foi possível calcular os resumos.');return;}
@@ -419,64 +431,27 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   },[]);
 
   const carregarCatalogo = useCallback(async (perfilId: string, somenteDados = false) => {
-    if(somenteDados){
-      if(!perfilId)return;
-      try{
-        const {data}=await supabase.auth.getSession();const token=data.session?.access_token;
-        if(!token)return;
-        const response=await fetch(`/api/modulos/vendas/catalogo?${new URLSearchParams({empresaId:perfilId})}`,{headers:{Authorization:`Bearer ${token}`},cache:'no-store'});
-        const payload=await response.json().catch(()=>({}));
-        if(response.ok&&payload.catalogo&&activeCompanyRef.current===perfilId)setCatalogo(payload.catalogo as CatalogoVendasDTO);
-      }catch{/* Preservar o catálogo atual quando a atualização em segundo plano falhar. */}
-      return;
-    }
     if (!perfilId) return;
-    setErro('');
-    setDadosProntosEmpresa('');
-    setApresentacaoEmpresa('');
-    setCatalogo(null);
-    setLogoUrl('');
-    setPerfilCadastro((current) => String(current?.empresa_id || '') === perfilId ? current : null);
+    const generation = ++catalogoGenerationRef.current;
     try {
-      const { data } = await aguardarComLimite(supabase.auth.getSession(), 10_000, 'A confirmação da sessão demorou mais que o esperado. Tente novamente.');
-      const token = data.session?.access_token;
-      if (!token) throw new Error('Entre na Gestão para utilizar o laboratório integrado.');
-      // Cada API valida o acesso: iniciar leituras independentes em paralelo, sem liberar a tela antecipadamente.
-      const dadosIniciais = Promise.all([
-        carregarPermissoes(perfilId), carregarResumo(perfilId),
-      ]).then(() => ({error:null as Error|null}), error => ({error:error instanceof Error?error:new Error('Falha nos resumos.')}));
-      const parametros = new URLSearchParams({ empresaId: perfilId });
-      const [profileResult, catalogResult] = await Promise.allSettled([
-        aguardarComLimite(fetch(`/api/modulos/vendas/perfil?${parametros}`, {
-          headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
-        }), 20_000, 'A confirmação do perfil demorou mais que o esperado. Tente novamente.'),
-        aguardarComLimite(fetch(`/api/modulos/vendas/catalogo?${parametros}`, {
-          headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
-        }), 30_000, 'O catálogo demorou mais que o esperado. Tente novamente.'),
-      ]);
-      if(profileResult.status==='rejected')throw profileResult.reason;
-      const respostaPerfil=profileResult.value;
-      const perfil=await respostaPerfil.json().catch(()=>({}));
-      if (!respostaPerfil.ok || perfil.tipoPerfil !== 'empresa' || !perfil.cadastro) {
-        throw new Error(perfil.mensagem || 'Complete o cadastro do perfil empresarial antes de usar o módulo.');
-      }
-      setPerfilCadastro(perfil.cadastro);
-      setLogoUrl(String(perfil.logoUrl || ''));
-      setCorPrimaria(typeof perfil.corPrimaria === 'string' && /^#[0-9a-f]{6}$/i.test(perfil.corPrimaria) ? perfil.corPrimaria : '#003e73');
-      if(catalogResult.status==='rejected')throw catalogResult.reason;
-      const resposta=catalogResult.value;
-      const json=await resposta.json().catch(()=>({}));
-      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível carregar o catálogo de Custos.');
-      const proximo = json.catalogo as CatalogoVendasDTO;
-      setCatalogo(proximo);
-      const initial=await aguardarComLimite(dadosIniciais, 30_000, 'O carregamento inicial demorou mais que o esperado. Tente novamente.');
-      if(initial.error)throw initial.error;
-    } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : 'Não foi possível carregar o catálogo de Custos.');
-    } finally {
-      if (activeCompanyRef.current === perfilId) setDadosProntosEmpresa(perfilId);
+      const { data } = await supabase.auth.getSession();
+      if (!data.session?.access_token) throw new Error('Confirme sua sessão.');
+      const params = new URLSearchParams({ empresaId: perfilId });
+      const response = await fetch(`/api/modulos/vendas/catalogo?${params}`, {
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(30_000),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.catalogo) throw new Error(payload.mensagem || 'Não foi possível carregar o catálogo de Custos.');
+      if (generation !== catalogoGenerationRef.current || activeCompanyRef.current !== perfilId) return;
+      setCatalogo(payload.catalogo as CatalogoVendasDTO);
+      setErroCatalogo('');
+    } catch (error) {
+      if (somenteDados || generation !== catalogoGenerationRef.current || activeCompanyRef.current !== perfilId) return;
+      setErroCatalogo(error instanceof Error ? error.message : 'Não foi possível carregar o catálogo de Custos.');
     }
-  }, [carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, carregarResumo]);
+  }, []);
 
   useEffect(() => {
     const refresh = (event: MessageEvent) => {
@@ -488,53 +463,85 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
   },[carregarCatalogo,empresaId,origemPrototipo]);
 
   useEffect(() => {
-    let ativo = true;
+    const controller = new AbortController();
     const iniciar = async () => {
-      const { data } = await aguardarComLimite(supabase.auth.getSession(), 10_000, 'A confirmação da sessão demorou mais que o esperado. Tente novamente.');
-      if (!data.session?.user) {
-        if (ativo) setErro('Entre na Gestão para utilizar o laboratório integrado.');
-        return;
+      setErro('');
+      try {
+        const solicitado = initialCompanyId || '';
+        if (!UUID_PATTERN.test(solicitado)) throw new Error('Abra o módulo a partir do perfil empresarial selecionado na Gestão.');
+        const { data } = await aguardarComLimite(supabase.auth.getSession(), 10_000, 'A confirmação da sessão demorou mais que o esperado. Tente novamente.');
+        if (!data.session?.user || !data.session.access_token) throw new Error('Entre na Gestão para utilizar o módulo.');
+        if (controller.signal.aborted) return;
+        setEmpresaId(solicitado);
+        const params = new URLSearchParams({ empresaId: solicitado });
+        const response = await aguardarComLimite(fetch(`/api/modulos/vendas/perfil?${params}`, {
+          headers: { Authorization: `Bearer ${data.session.access_token}` },
+          cache: 'no-store',
+          signal: controller.signal,
+        }), 20_000, 'A confirmação do perfil demorou mais que o esperado. Tente novamente.');
+        const perfil = await response.json().catch(() => ({}));
+        if (!response.ok || perfil.tipoPerfil !== 'empresa' || !perfil.cadastro) {
+          throw new Error(perfil.mensagem || 'Complete o cadastro do perfil empresarial antes de usar o módulo.');
+        }
+        if (controller.signal.aborted) return;
+        setPerfilCadastro(perfil.cadastro);
+        setLogoUrl(String(perfil.logoUrl || ''));
+        setCorPrimaria(typeof perfil.corPrimaria === 'string' && /^#[0-9a-f]{6}$/i.test(perfil.corPrimaria) ? perfil.corPrimaria : '#003e73');
+      } catch (error) {
+        if (!controller.signal.aborted) setErro(error instanceof Error ? error.message : 'Não foi possível carregar o perfil empresarial.');
       }
-      const solicitado = new URLSearchParams(window.location.search).get('empresaId') || '';
-      if (!UUID_PATTERN.test(solicitado)) {
-        if (ativo) setErro('Abra o módulo a partir do perfil empresarial selecionado na Gestão.');
-        return;
-      }
-      if (!ativo) return;
-      setEmpresaId(solicitado);
-      if (!iframePronto) return;
-      await carregarCatalogo(solicitado);
     };
     void iniciar();
-    return () => { ativo = false; };
-  }, [carregarCatalogo, iframePronto]);
+    return () => controller.abort();
+  }, [initialCompanyId, tentativaInicial]);
+
+  useEffect(() => {
+    if (empresaId) void carregarResumo(empresaId).catch(() => {});
+  }, [empresaId, carregarResumo]);
+
+  useEffect(() => {
+    if (!empresaId) return;
+    void carregarPermissoes(empresaId);
+  }, [empresaId, tentativaInicial, carregarPermissoes]);
+
+  useEffect(() => {
+    if (!iframePronto || !permissoes || permissoes.empresaId !== empresaId) return;
+    iframeRef.current?.contentWindow?.postMessage({ type: ACCESS_SNAPSHOT_MESSAGE_TYPE, snapshot: permissoes.snapshot }, origemPrototipo);
+  }, [iframePronto, permissoes, empresaId, origemPrototipo]);
 
   useEffect(() => { enviarCatalogo(); }, [enviarCatalogo]);
   useEffect(() => { enviarDocumentosFiscais(); }, [enviarDocumentosFiscais]);
   useEffect(() => {
     if(resumo&&resumo.companyId===empresaId&&iframePronto)iframeRef.current?.contentWindow?.postMessage({type:'AVANTALAB_VENDAS_OVERVIEW_V1',...resumo},origemPrototipo);
   },[resumo,empresaId,iframePronto,origemPrototipo]);
-  useEffect(() => {
-    if (!empresaId || dadosProntosEmpresa !== empresaId || !iframePronto) return;
-    iframeRef.current?.contentWindow?.postMessage({ type: 'AVANTALAB_VENDAS_PRESENTATION_REQUEST_V1', companyId: empresaId }, origemPrototipo);
-  }, [empresaId, dadosProntosEmpresa, iframePronto, origemPrototipo]);
 
   useEffect(() => {
     const receber = (event: MessageEvent) => {
       if (event.origin !== origemPrototipo || event.source !== iframeRef.current?.contentWindow) return;
+      if (event.data?.type === MENSAGEM_VENDAS_HERO_PRONTA) {
+        if (empresaId && event.data.empresaId === empresaId) setHeroPronta(true);
+        return;
+      }
+      if (event.data?.type === MENSAGEM_TROCA_MODULO) {
+        const troca = event.data as TrocaModulo;
+        if (!empresaId || troca.empresaId !== empresaId) return;
+        const rota = criarRotaTrocaModulo(troca);
+        if (rota && !solicitarTrocaAoHospedeiro(troca)) router.push(rota);
+        return;
+      }
       if (event.data?.type === RETURN_TO_MANAGEMENT_MESSAGE_TYPE) { retornarParaGestao(); return; }
       if(event.data?.type==='AVANTALAB_VENDAS_OVERVIEW_REQUEST_V1'){
         if(event.data.companyId===empresaId&&validOverviewPeriod(event.data.start,event.data.end))void carregarResumo(empresaId,event.data.start,event.data.end).catch(()=>{});
         return;
       }
-      if (event.data?.type === 'AVANTALAB_VENDAS_PRESENTATION_V1') {
-        if (event.data.companyId === empresaId && event.data.settled === true) setApresentacaoEmpresa(empresaId);
+      if (event.data?.type === 'AVANTALAB_VENDAS_CATALOGO_READY_V1') {
+        setIframePronto(true);
         return;
       }
-      if (event.data?.type === 'AVANTALAB_VENDAS_CATALOGO_READY_V1') { setIframePronto(true); return; }
-      // O handshake inicial já dispara a carga centralizada; não duplicar os mesmos históricos.
-      if (dadosProntosEmpresa !== empresaId && [ACCESS_READY_MESSAGE_TYPE, FISCAL_RULES_READY_TYPE, FISCAL_PROFILE_READY_TYPE, RECEIVABLE_READY_TYPE, STOCK_READY_TYPE, CUSTOMER_READY_TYPE, SUPPLIER_READY_TYPE, OPERATION_READY_TYPE].includes(event.data?.type)) return;
-      if (event.data?.type === ACCESS_READY_MESSAGE_TYPE) { void carregarPermissoes(empresaId); return; }
+      // A montagem já inicia os retratos. Só repetir permissões quando solicitado.
+      if (event.data?.type === 'AVANTALAB_VENDAS_RETRY_ACCESS_V1') { void carregarPermissoes(empresaId); return; }
+      if (event.data?.type === ACCESS_READY_MESSAGE_TYPE) return;
+      if (complementaresEmpresaRef.current !== empresaId && [FISCAL_RULES_READY_TYPE, FISCAL_PROFILE_READY_TYPE, RECEIVABLE_READY_TYPE, STOCK_READY_TYPE, CUSTOMER_READY_TYPE, SUPPLIER_READY_TYPE, OPERATION_READY_TYPE].includes(event.data?.type)) return;
       if (event.data?.type === FISCAL_RULES_READY_TYPE) { void carregarRegrasFiscais(empresaId); return; }
       if (event.data?.type === FISCAL_PROFILE_READY_TYPE) { void carregarPerfilFiscal(empresaId); return; }
       if (event.data?.type === RECEIVABLE_READY_TYPE) { void carregarRecebimentos(empresaId); return; }
@@ -1189,32 +1196,67 @@ export default function VendasIntegrado({ initialContext }: { initialContext?: C
     };
     window.addEventListener('message', receber);
     return () => window.removeEventListener('message', receber);
-  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, carregarResumo, dadosProntosEmpresa, empresaId, origemPrototipo, retornarParaGestao]);
+  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, carregarResumo, empresaId, origemPrototipo, retornarParaGestao, router]);
 
   const perfilPronto = Boolean(empresaId && perfilCadastro);
-  const paginaPronta = perfilPronto && iframePronto && dadosProntosEmpresa === empresaId && apresentacaoEmpresa === empresaId;
+  const falhaAbertura = (erro && !perfilPronto ? erro : '') || (expirouAbertura ? 'A primeira tela está demorando mais que o esperado.' : '');
+  const mostrarVendas = heroPronta && perfilPronto;
   useEffect(() => {
-    if (!paginaPronta || complementaresEmpresaRef.current === empresaId) return;
-    complementaresEmpresaRef.current = empresaId;
+    if (mostrarVendas && window.parent === window) apagarMarcadoresDePreparacao(PARAMETRO_PREPARACAO_ACESSO);
+  }, [mostrarVendas]);
+  useEffect(() => {
+    if (!empresaId || mostrarVendas || falhaAbertura) return;
+    const timer = window.setTimeout(() => setExpirouAbertura(true), 65_000);
+    return () => window.clearTimeout(timer);
+  }, [empresaId, mostrarVendas, falhaAbertura, tentativaInicial]);
+
+  useEffect(() => {
+    if (!hospedado || !empresaId || (!mostrarVendas && !falhaAbertura)) return;
+    window.parent.postMessage({ type: MENSAGEM_MODULO_PRONTO, destino: 'vendas', empresaId }, origemPrototipo);
+  }, [hospedado, empresaId, mostrarVendas, falhaAbertura, origemPrototipo]);
+
+  const perfilComAplicativo = mostrarVendas && permissoes?.snapshot.available === true;
+  useEffect(() => {
+    if (!perfilComAplicativo || complementaresEmpresaRef.current === empresaId) return;
     let ativo = true;
     void (async () => {
       const { data } = await supabase.auth.getSession();
       if (!ativo || !data.session?.access_token || activeCompanyRef.current !== empresaId) return;
+      complementaresEmpresaRef.current = empresaId;
       await Promise.allSettled([
-        carregarDocumentosFiscais(empresaId, data.session.access_token), carregarRegrasFiscais(empresaId), carregarPerfilFiscal(empresaId),
+        carregarCatalogo(empresaId), carregarDocumentosFiscais(empresaId, data.session.access_token), carregarRegrasFiscais(empresaId), carregarPerfilFiscal(empresaId),
         carregarEstoque(empresaId), carregarClientes(empresaId), carregarFornecedores(empresaId), carregarRecebimentos(empresaId), carregarOperacoes(empresaId),
       ]);
     })();
     return () => { ativo = false; };
-  }, [paginaPronta, empresaId, carregarDocumentosFiscais, carregarRegrasFiscais, carregarPerfilFiscal, carregarEstoque, carregarClientes, carregarFornecedores, carregarRecebimentos, carregarOperacoes]);
+  }, [perfilComAplicativo, empresaId, carregarCatalogo, carregarDocumentosFiscais, carregarRegrasFiscais, carregarPerfilFiscal, carregarEstoque, carregarClientes, carregarFornecedores, carregarRecebimentos, carregarOperacoes]);
 
 
   return <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-slate-100 text-slate-800">
-    <section className="relative min-h-0 flex-1" aria-label="Vendas e Serviços">
-      {!empresaId ? erro ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <TransicaoNavegacaoInterna destino="Vendas e Serviços" empresa={contextoInicial?.empresa} /> : erro && !perfilPronto ? <div className="grid min-h-screen place-items-center bg-white p-6 text-center"><div><h2 className="text-lg font-semibold">Módulo indisponível</h2><p className="mt-2 max-w-xl text-sm text-slate-600">{erro}</p><div className="mt-5 flex flex-wrap justify-center gap-3"><button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-11 items-center rounded-xl bg-[#003E73] px-5 text-sm font-semibold text-white">Tentar novamente</button><button type="button" onClick={retornarParaGestao} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-[#003E73]">Abrir Gestão</button></div></div></div> : <>
-        <div className="absolute inset-0" aria-hidden={!paginaPronta || undefined} inert={!paginaPronta || undefined}><iframe ref={iframeRef} src={`/vendas/sistema?bridge=gestao&companyId=${encodeURIComponent(empresaId)}`} title="Vendas e Serviços" className="block h-full w-full border-0 bg-white" onLoad={() => setIframePronto(true)} /></div>
-        {!paginaPronta && <div className="absolute inset-0 z-10 bg-slate-100" aria-hidden="true" />}
-        <CarregamentoDadosModulo ativo={!paginaPronta} titulo="Preparando Vendas e Serviços" mensagem="Carregando os dados do módulo…" corPrimaria={corPrimaria} temaEscuro={contextoInicial?.empresa.temaEscuro} />
+    <section className="relative min-h-0 flex-1" aria-label="Vendas e Serviços"
+      data-av-modulo-pronto={mostrarVendas || falhaAbertura ? 'vendas' : undefined}
+      data-av-empresa-modulo={mostrarVendas || falhaAbertura ? empresaId : undefined}>
+      {falhaAbertura ? (
+        <div className="grid min-h-full place-items-center p-6 text-center">
+          <div role="alert">
+            <h2 className="text-lg font-semibold">Módulo indisponível</h2>
+            <p className="mt-2 max-w-xl text-sm">{falhaAbertura}</p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <button type="button" className="min-h-11 rounded-xl bg-[#003E73] px-5 font-semibold text-white" onClick={() => {
+                setErro('');
+                setExpirouAbertura(false);
+                setHeroPronta(false);
+                setIframePronto(false);
+                setPermissoes(null);
+                setTentativaInicial(atual => atual + 1);
+              }}>Tentar novamente</button>
+              <button type="button" className="min-h-11 rounded-xl border border-slate-300 px-5 font-semibold" onClick={retornarParaGestao}>Voltar</button>
+            </div>
+          </div>
+        </div>
+      ) : <>
+        {!mostrarVendas && <TransicaoNavegacaoInterna destino="Vendas e Serviços" />}
+        {empresaId && <iframe key={`${empresaId}:${tentativaInicial}`} ref={iframeRef} src={`/vendas/sistema?bridge=gestao&companyId=${encodeURIComponent(empresaId)}`} title="Vendas e Serviços" className={`absolute inset-0 block h-full w-full border-0 bg-white ${mostrarVendas ? '' : 'invisible'}`} />}
       </>}
     </section>
     <RodapeAvanta className="shrink-0" />

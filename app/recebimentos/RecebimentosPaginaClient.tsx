@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation';
 import { destinoInicioModulo } from '@/app/lib/retorno-modulos';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import RodapeAvanta from '@/app/components/RodapeAvanta';
+import AberturaModulo, { useAvisarModuloPronto } from '@/app/components/AberturaModulo';
 import TransicaoNavegacaoInterna from '@/app/components/TransicaoNavegacaoInterna';
 import { AdaptiveModuleLogo, ModuleHeaderNavigation } from '@/app/components/ModuloHeader';
-import { consumirNavegacaoModulo, solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
+import { solicitarRetornoAoModuloHospedeiro, type ContextoNavegacaoModulo } from '@/app/lib/navegacao-modulos';
 import { supabase } from '@/app/lib/supabase';
 import { Icon } from '@/app/projetos/components/Icon';
 import { criarRepoSupabase } from './data/repo';
@@ -24,13 +25,16 @@ type AcessoRecebimentos = {
 
 export default function RecebimentosPaginaClient({ empresaId, initialContext }: { empresaId: string; initialContext?: ContextoNavegacaoModulo | null }) {
   const router = useRouter();
-  const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('recebimentos_presencial', empresaId));
+  const [contextoInicial] = useState(() => initialContext ?? null);
   const [acesso, setAcesso] = useState<AcessoRecebimentos | null>(() => contextoInicial?.podeGerenciarModulo ? {
     empresa: { id: contextoInicial.empresaId, ...contextoInicial.empresa },
     perfil: contextoInicial.perfil,
     podeGerenciarModulo: contextoInicial.podeGerenciarModulo,
   } : null);
   const [erro, setErro] = useState('');
+  const [acessoConfirmado, setAcessoConfirmado] = useState(false);
+  const [dadosIniciaisProntos, setDadosIniciaisProntos] = useState(false);
+  useAvisarModuloPronto('recebimentos_presencial', empresaId, Boolean(erro));
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
   const [operacaoEmAndamento, setOperacaoEmAndamento] = useState(false);
 
@@ -62,8 +66,9 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
         return;
       }
       setAcesso(dados as AcessoRecebimentos);
+      setAcessoConfirmado(true);
     }
-    void verificarAcesso();
+    void verificarAcesso().catch(() => { if (ativo) setErro('Não foi possível consultar o acesso a Operações de Campo.'); });
     return () => { ativo = false; };
   }, [contextoInicial, empresaId, router]);
 
@@ -86,7 +91,7 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
     </main>
   );
   if (!acesso || !repo) {
-    return <TransicaoNavegacaoInterna destino="Operações de Campo" empresa={contextoInicial?.empresa} />;
+    return <TransicaoNavegacaoInterna destino="Operações de Campo" />;
   }
 
   const retornarInicio = () => {
@@ -95,6 +100,7 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
   };
 
   return (
+    <AberturaModulo key={empresaId} modulo="recebimentos_presencial" titulo="Operações de Campo" empresaId={empresaId} pronta={acessoConfirmado && dadosIniciaisProntos}>
     <main
       className={`${styles.paginaModulo} ${acesso.empresa.temaEscuro ? styles.paginaModuloEscura : ''}`}
       style={{ '--cp': acesso.empresa.corPrimaria } as CSSProperties}
@@ -129,6 +135,7 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
             mostrarLinkColaboradores
             rascunhoEscopo={`pagina:${acesso.empresa.id}`}
             onBusyChange={setOperacaoEmAndamento}
+            onAberturaConcluida={setDadosIniciaisProntos}
           />
         </div>
       </section>
@@ -142,5 +149,6 @@ export default function RecebimentosPaginaClient({ empresaId, initialContext }: 
         onTemaAtualizado={(temaEscuro) => setAcesso((atual) => atual ? { ...atual, empresa: { ...atual.empresa, temaEscuro } } : atual)}
       />
     </main>
+    </AberturaModulo>
   );
 }

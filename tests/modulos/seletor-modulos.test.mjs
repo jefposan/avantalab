@@ -20,7 +20,7 @@ const perfil = (id, ids, papel = 'administrador', ativo = true) => ({ empresa: {
 test('acionador mantém rótulo Navegar, grade e seta independente do módulo atual', () => {
   const code = readFileSync('app/components/SeletorModulos.tsx', 'utf8');
   assert.match(code, /aria-label="Navegar"/);
-  assert.match(code, /<Icon name="grid" size=\{18\} \/><span>Navegar<\/span><Icon name="chevron"/);
+  assert.match(code, /<Icon name="grid" size=\{18\} \/><span>\{carregando \? 'Abrindo…' : 'Navegar'\}<\/span><Icon name="chevron"/);
   assert.doesNotMatch(code, /atual\?\.nome/);
   assert.match(code, /opcao.id === moduloAtual \? <b>Atual<\/b>/);
 });
@@ -48,11 +48,11 @@ test('troca revalida acesso, preserva beforeunload e não usa cache visual ou me
   assert.match(cliente, /cache: 'no-store'/);
   assert.match(code, /atualizarAcessosNavegacao\(empresaId, usuarioId, true\)/);
   assert.match(code, /void consultar\(destino\)/);
-  assert.match(code, /window.top \|\| window/);
-  assert.match(code, /location.assign\(opcao.href\)/);
+  assert.match(code, /solicitarTrocaAoHospedeiro/);
+  assert.match(code, /router.push\(opcao.href\)/);
   assert.match(code, /ocupadoAtual.current/);
   assert.match(code, /sequencia !== pedido.current/);
-  assert.doesNotMatch(code, /lerPreviaModulos|postMessage|<footer/);
+  assert.doesNotMatch(code, /lerPreviaModulos|location.assign|<footer/);
   assert.match(code, /event.key === 'Escape'/);
   assert.match(code, /aria-expanded/);
 });

@@ -155,7 +155,8 @@ test('cabeçalho de Marketplaces configura tooltip inferior em cada controle, se
   const client = read('app/marketplaces/MarketplacesClient.tsx');
   const header = client.slice(client.indexOf('<ModuloHeader'), client.indexOf('</ModuloHeader>'));
   assert.match(header, /returnTooltipPosition="bottom"/);
-  assert.equal((header.match(/posicao="bottom"/g) || []).length, 2);
+  const notices = read('app/marketplaces/InventoryNotices.tsx');
+  assert.match(notices, /<Tooltip texto=\{triggerLabel\} posicao="bottom">/);
   assert.match(header, /<Icon name="refresh" size=\{20\}/);
   assert.match(header, /<Tooltip posicao="bottom" texto="Atualizar anuncios">/);
   assert.doesNotMatch(header, /title=|M20 7v5h-5/);
@@ -399,8 +400,7 @@ test('abertura da página inicia contas, vendas, anúncios e produtos recolhidos
   for (const source of [client, announced, products]) assert.ok(!/localStorage\.(?:getItem|setItem)\([^\n]*(?:Expanded|expanded)/.test(source));
 });
 
-test('sino expande Vendas antes de levar ao bloco, sem alterar escopo da conta de anúncios', () => {
+test('Vendas continua expansível no próprio card', () => {
   const source = readFileSync(resolve(root, 'app/marketplaces/MarketplacesClient.tsx'), 'utf8');
-  assert.match(source, /setSalesExpanded\(true\); setSalesAccount\(''\); setSalesMarketplaces\(\[\]\); setSalesSnapshot\(sales\); scrollToSales\(\)/);
   assert.match(source, /expanded=\{salesExpanded\} onExpandedChange=\{setSalesExpanded\}/);
 });
