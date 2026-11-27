@@ -5,6 +5,7 @@ import CampoSelecaoPesquisavel from '@/app/components/CampoSelecaoPesquisavel';
 import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
 import {REPORT_AREAS,REPORT_TYPES,buildCommercialReport,freshReportFilters,reportFiltersSummary,validateReportFilters,type ReportDocument,type ReportFilters} from '../../lib/report-builder.mjs';
 import {formatReportCell} from '../../lib/report-export';
+import {paymentFilterOptions, type PaymentSettings} from '../../lib/payment-methods.mjs';
 import {normalizarTexto} from '@/app/lib/formatters';
 
 type Item=Record<string,any>;
@@ -24,7 +25,7 @@ function EntityFilter({label,value,options,onChange}:{label:string;value:string[
  </div>;
 }
 const unique=(list:Option[])=>[...new Map(list.filter(o=>o.value).map(o=>[o.value,o])).values()].sort((a,b)=>a.label.localeCompare(b.label,'pt-BR'));
-export default function CommercialReports({operations,clients,catalog,receivables,fiscalDrafts,company,can,overview,renderIcon,onResultChange}:{operations:Item[];clients:Item[];catalog:Item[];receivables:Item[];fiscalDrafts:Item[];company:{name:string;document?:string;color?:string;logoUrl?:string};can:(permission:string)=>boolean;overview:ReactNode;renderIcon:(icon:string)=>ReactNode;onResultChange:(active:boolean)=>void}){
+export default function CommercialReports({payments,operations,clients,catalog,receivables,fiscalDrafts,company,can,overview,renderIcon,onResultChange}:{payments:PaymentSettings;operations:Item[];clients:Item[];catalog:Item[];receivables:Item[];fiscalDrafts:Item[];company:{name:string;document?:string;color?:string;logoUrl?:string};can:(permission:string)=>boolean;overview:ReactNode;renderIcon:(icon:string)=>ReactNode;onResultChange:(active:boolean)=>void}){
  const [area,setArea]=useState('overview'),[id,setId]=useState(''),[configs,setConfigs]=useState<Record<string,ReportFilters>>({});
  const [document,setDocument]=useState<ReportDocument|null>(null),[result,setResult]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(''),[page,setPage]=useState(0);
  const mounted=useRef(true),exporting=useRef(false),session=useRef(`reports-${Date.now()}-${Math.random()}`),backButton=useRef<HTMLButtonElement>(null),generateButton=useRef<HTMLButtonElement>(null);
@@ -38,7 +39,6 @@ export default function CommercialReports({operations,clients,catalog,receivable
  const productOptions=useMemo(()=>unique([...catalog.filter(c=>c.kind!=='servico'&&c.category!=='Serviço').map(c=>({value:c.catalogItemId||c.sku,label:c.name})),...operations.flatMap(o=>(o.order?.lines||[]).filter((l:Item)=>l.kind!=='servico').map((l:Item)=>({value:l.catalogItemId||l.sku||l.name,label:l.name})))]),[catalog,operations]);
  const serviceOptions=useMemo(()=>unique([...catalog.filter(c=>c.kind==='servico'||c.category==='Serviço').map(c=>({value:c.catalogItemId||c.sku||c.name,label:c.name})),...operations.filter(o=>o.type==='ordem_servico').flatMap(o=>(o.serviceOrder?.lines||[]).map((l:Item)=>({value:l.catalogItemId||l.sku||l.name,label:l.name})))]),[catalog,operations]);
  const sellerOptions=unique(operations.map(o=>({value:o.order?.seller||o.serviceOrder?.technician||'Não informado',label:o.order?.seller||o.serviceOrder?.technician||'Não informado'})));
- const labels=Object.fromEntries([...clientOptions,...productOptions,...serviceOptions].map(o=>[o.value,o.label]));
  const change=(key:keyof ReportFilters,value:string|string[])=>{setConfigs(current=>({...current,[id]:{...(current[id]||freshReportFilters()),[key]:value}}));setError('');};
  const choose=(next:string)=>{setId(next);setError('');};
  const alignConfiguration=(event:SyntheticEvent<HTMLFormElement>)=>{
@@ -54,7 +54,8 @@ export default function CommercialReports({operations,clients,catalog,receivable
  const columnOptions=useMemo(()=>active?buildCommercialReport({...input,filters:freshReportFilters()}).columns:[],[id,Boolean(active),operations,clients,catalog,receivables,fiscalDrafts,can('catalog.view_cost'),can('reports.view_financial')]);
  const fixedBilled=['billing','products','client-products','clients-ranking','sellers','product-margin','services'].includes(id);
  const statuses=id==='receivables'?['Em aberto','Vence hoje','Atrasado','Recebido parcial','Recebido','Estornado']:id==='clients'?unique(clients.map(c=>({value:c.status,label:c.status}))).map(c=>c.value):id==='fiscal'?unique(fiscalDrafts.map(f=>({value:f.status,label:f.status}))).map(c=>c.value):['Rascunho','Confirmado','Em separação','Faturado','Cancelado','Devolvido','Concluído'];
- const methods=unique([...operations.map(o=>({value:o.order?.paymentMethod||o.serviceOrder?.paymentMethod,label:o.order?.paymentMethod||o.serviceOrder?.paymentMethod})),...receivables.map(r=>({value:r.method,label:r.method}))]);
+ const methods=paymentFilterOptions(payments, [...operations.map(o=>o.order?.paymentMethod||o.serviceOrder?.paymentMethod), ...receivables.map(r=>r.method)]);
+ const labels=Object.fromEntries([...clientOptions,...productOptions,...serviceOptions,...methods].map(o=>[o.value,o.label]));
  const generate=()=>{if(!active||!can('reports.view'))return;const message=validateReportFilters(filters);if(message){setError(message);return;}try{const snapshot=buildCommercialReport(input);setDocument(snapshot);setPage(0);setResult(true);setError('');const url=new URL(window.location.href);url.hash='relatorio-gerado';window.history.pushState({...window.history.state,avantaReportSession:session.current},'',url);onResultChange(true);window.scrollTo({top:0,behavior:'instant'});}catch(e){setError(e instanceof Error?e.message:'Não foi possível gerar o relatório.');}};
  const back=()=>{if(busy)return;if(window.history.state?.avantaReportSession===session.current)window.history.back();else{setResult(false);onResultChange(false);}setError('');};
  const exportFile=async(format:'pdf'|'xlsx')=>{

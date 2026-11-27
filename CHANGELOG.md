@@ -1,3 +1,7 @@
+# 3.2.0.564 — Vendas e Serviços: cadastro de formas de pagamento
+
+- Pagamentos permite ativar, desativar e adicionar formas por empresa. Pedidos mostram as formas ativas. Filtros de Vendas, Recebimentos e Relatórios incluem formas ativas e valores históricos. Consignado preserva o lançamento sem parcelas nem vencimento.
+
 # 3.2.0.563 — Gestão, Marketplaces e Vendas: navegação, cabeçalho e impressão de pedidos
 
 - Reúne a navegação interna com card único e o cabeçalho simplificado de Anúncios em marketplaces.

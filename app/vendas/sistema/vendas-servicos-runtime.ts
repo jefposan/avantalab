@@ -90,6 +90,4 @@ export function isoAfterDays(days: number) {
   return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
 }
 
-export function paymentMethodLabel(value: string) {
-  return ({ pix: 'PIX', consignado: 'Consignado', boleto: 'Boleto', cartao: 'Cartão', prazo: 'A prazo' } as Record<string, string>)[value] ?? value;
-}
+export { paymentMethodLabel } from '../lib/payment-methods.mjs';

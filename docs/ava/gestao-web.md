@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.563 -->
+<!-- ava-version: 3.2.0.564 -->
+
+> Revisão 3.2.0.564: Em Vendas e Serviços → Ajustes → Pagamentos, adicione uma forma ou altere sua chave e salve. Novos pedidos usam as formas ativas. Filtros também encontram formas inativas usadas no histórico. Consignado fica sem parcelas e vencimento.
 
 > Revisão 3.2.0.563: A impressão de pedidos de Vendas e Serviços usa o layout compacto. As orientações para navegar entre módulos e consultar pendências de Marketplaces seguem as revisões anteriores.
 

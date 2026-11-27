@@ -1,3 +1,4 @@
+// Revisão 3.2.0.564: Ajustes > Pagamentos em Vendas e Serviços permite cadastrar e ativar formas por empresa. Formas inativas continuam nos filtros quando usadas no histórico.
 // Revisão 3.2.0.563: Vendas e Serviços imprime o pedido no modelo compacto A4/A5 com campos de recebimento, conforme Ajustes > Comercial.
 // Revisão 3.2.0.562: Marketplaces Web: Consultar pendências fica ao lado de Atualizar. O período é ajustado pelas setas de mês ou por Selecionar datas. As vendas são consultadas no card Vendas.
 // Revisão 3.2.0.561: o card branco de navegação permanece montado até a primeira tela estar pronta, inclusive ao atualizar a URL.

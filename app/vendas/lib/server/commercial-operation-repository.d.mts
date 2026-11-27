@@ -14,6 +14,7 @@ export type CommercialOperationRecord = {
 export function createPostgresCommercialOperationRepository(options?: { pool?: any }): {
   id: string; configured: true;
   create(operation: Record<string, any>): Promise<{ operation: CommercialOperationRecord; reused: boolean }>;
+  create(operation: Record<string, any>, options: { existingOnly: boolean }): Promise<{ operation: CommercialOperationRecord; reused: boolean } | null>;
   update(input: Record<string, any>): Promise<CommercialOperationRecord>;
   convertQuoteToOrder(input: Record<string, any>): Promise<{ operation: CommercialOperationRecord; reused: boolean }>;
   get(input: { companyId: string; operationId: string; channel?: string }): Promise<CommercialOperationRecord | null>;

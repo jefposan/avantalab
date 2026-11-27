@@ -1,4 +1,6 @@
 'use client';
+
+import { BASE_PAYMENT_METHODS, PAYMENT_METHOD_MAX_LENGTH, addCustomPaymentMethod, normalizePaymentSettings, paymentFilterOptions, paymentMethodKey, type PaymentSettings } from '../lib/payment-methods.mjs';
 import FinanceRevenueSettings from '../components/FinanceRevenueSettings';
 import {mergeConfirmedReceivables,applyConfirmedOperationPayment,reconcileConfirmedOperationSnapshot} from '../lib/confirmed-receivable-snapshot.mjs';
 import {matchesCommercialListPeriod} from '../lib/commercial-list-period.mjs';
@@ -760,7 +762,6 @@ type OrderLine = {
 
 type StockControlState = {enabled:boolean;disabledProductIds:string[]};
 type CatalogItem = CatalogItemRecord & CatalogTaxProfile & { catalogItemId?: string; stockLocationId?: string; allowNegativeStock?: boolean };
-type PaymentMethod = 'pix' | 'boleto' | 'cartao' | 'prazo' | 'consignado';
 type CompanyProfile = typeof activeCompany & {
   stateRegistration: string; municipalRegistration: string; taxRegime: string; cityCode: string; cep: string; street: string; number: string; complement: string; district: string; email: string; phone: string;
 };
@@ -784,7 +785,7 @@ type ModuleSettings = {
   version: 8;
   company: CompanyProfile;
   commercial: { sellers: string[]; defaultSeller: string; quoteValidityDays: number; reserveStockDefault: boolean; defaultFiscalDocument: 'nenhum' | 'nfe' | 'nfce' | 'nfse'; maxDiscountPercent: number; orderPrintPaper?: 'A4'|'A5' };
-  payments: { enabledMethods: PaymentMethod[]; defaultMethod: PaymentMethod; defaultInstallments: number; firstDueDays: number };
+  payments: PaymentSettings;
   services: { technicians: string[]; defaultTechnician: string; defaultDurationMinutes: number };
   fiscal: {
     environment: 'homologacao';
@@ -867,7 +868,7 @@ const defaultModuleSettings: ModuleSettings = {
   version: 8,
   company: { ...activeCompany, stateRegistration: '110.042.490.114', municipalRegistration: '', taxRegime: 'Simples Nacional', cityCode: '3550308', cep: '01001-000', street: 'Praça da Sé', number: '100', complement: '', district: 'Sé', email: 'contato@empresa.com.br', phone: '(11) 4000-0000' },
   commercial: { sellers: ['Marina', 'Caio', 'Paulo'], defaultSeller: 'Marina', quoteValidityDays: 10, reserveStockDefault: true, defaultFiscalDocument: 'nfe', maxDiscountPercent: 15, orderPrintPaper:'A4' },
-  payments: { enabledMethods: ['pix', 'boleto', 'cartao', 'prazo'], defaultMethod: 'pix', defaultInstallments: 1, firstDueDays: 0 },
+  payments: normalizePaymentSettings(),
   services: { technicians: ['Rafael', 'Marina', 'Caio', 'Paulo'], defaultTechnician: 'Rafael', defaultDurationMinutes: 60 },
   fiscal: { environment: 'homologacao', documentScope: ['nfe', 'nfce', 'nfse'], fiscalResponsible: '', taxReviewConfirmed: false, taxReformReviewConfirmed: false, providerMode: 'Não definido', certificateMode: 'Não definido', nfseAuthorityMode: 'Não definido', contingencyPlan: 'Não definido', nfeSeries: '1', nfceSeries: '1', nfseSeries: '90001', matrix: createDefaultFiscalMatrix() },
   stock: {
@@ -1389,7 +1390,11 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
     const initialItem = catalogRecords.find((item) => item.sku === initialSku);
     return initialItem ? [orderLineFromCatalog({...initialItem,price:pricing?priceFromTable(initialItem,pricing.priceTables.find(table=>table.id===noteFields.priceTableId)):initialItem.price})] : [];
   });
-  const [paymentMethod, setPaymentMethod] = useState<string>(() => correction ? (/^pix$/i.test(correction.draft.paymentMethod) ? '' : correction.draft.paymentMethod) : fiscalEditor ? (initialOrder?.paymentMethod || '') : ((initialOrder?.paymentMethod === 'consignado' || settings.payments.enabledMethods.includes(initialOrder?.paymentMethod as PaymentMethod)) ? initialOrder?.paymentMethod : settings.payments.defaultMethod) || '');
+  const [paymentMethod, setPaymentMethod] = useState<string>(() => correction ? (/^pix$/i.test(correction.draft.paymentMethod) ? '' : correction.draft.paymentMethod) : fiscalEditor ? (initialOrder?.paymentMethod || '') : (initialOrder?.paymentMethod && (initialRecord?.persistence || settings.payments.enabledMethods.includes(initialOrder.paymentMethod)) ? initialOrder.paymentMethod : settings.payments.defaultMethod));
+  useEffect(() => {
+    if (correction || fiscalEditor || initialRecord?.persistence) return;
+    setPaymentMethod(current => settings.payments.enabledMethods.includes(current) ? current : settings.payments.defaultMethod);
+  }, [correction, fiscalEditor, initialRecord?.persistence, settings.payments]);
   const consigned = !fiscalOnly && !correction && !fiscalEditor && paymentMethod === 'consignado';
   const [paymentDetails, setPaymentDetails] = useState(correction?.draft.paymentDetails || initialOrder?.paymentDetails || {integrationType:'',institutionDocument:'',authorizationCode:''});
   const [insurance, setInsurance] = useState(formatLineNumber(initialOrder?.commercialTotals.insurance ?? 0,true));
@@ -1689,7 +1694,10 @@ function NewOrderView({ navigationRef, onBusyChange, companyId = '', fiscalEdito
           <header><div><h2 id="order-conditions-title">{fiscalOnly ? 'Totais e pagamento' : 'Condições comerciais'}</h2><p>{fiscalOnly ? 'Valores e condições que constarão no documento fiscal.' : 'Pagamento, descontos, entrega e observações do pedido.'}</p></div></header>
           <div className="order-card-body order-form-grid">
             {fiscalEditor&&<label className="field"><span>Condição de pagamento</span><select value={installments==='1'?'cash':'installments'} onChange={event=>setInstallments(event.target.value==='cash'?'1':'2')}><option value="cash">À vista</option><option value="installments">Parcelado</option></select></label>}
-            <label className="field"><span>Forma de pagamento *</span><select name="paymentMethod" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}>{(correction || fiscalEditor) ? <><option value="">Selecione o meio utilizado</option>{['PIX estático','PIX dinâmico','Dinheiro','Boleto','Transferência bancária','Cartão de crédito','Cartão de débito','Sem pagamento'].map(method=><option value={method} key={method}>{method==='PIX estático'?'PIX — chave ou QR Code fixo':method==='PIX dinâmico'?'PIX — cobrança com QR Code dinâmico':method}</option>)}</> : [...new Set([...settings.payments.enabledMethods, ...(!fiscalOnly ? ['consignado' as PaymentMethod] : [])])].map((method) => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}</select></label>
+            <label className="field"><span>Forma de pagamento *</span><select name="paymentMethod" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>{(correction || fiscalEditor) ? <><option value="">Selecione o meio utilizado</option>{['PIX estático','PIX dinâmico','Dinheiro','Boleto','Transferência bancária','Cartão de crédito','Cartão de débito','Sem pagamento'].map(method=><option value={method} key={method}>{method==='PIX estático'?'PIX — chave ou QR Code fixo':method==='PIX dinâmico'?'PIX — cobrança com QR Code dinâmico':method}</option>)}</> : <>
+              {initialOrder?.paymentMethod && !settings.payments.enabledMethods.includes(initialOrder.paymentMethod) && <option value={initialOrder.paymentMethod} disabled>{paymentMethodLabel(initialOrder.paymentMethod)} (histórico)</option>}
+              {settings.payments.enabledMethods.filter(method => !fiscalOnly || method !== 'consignado').map(method => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}
+            </>}</select></label>
             {(correction || fiscalEditor) && ['PIX dinâmico','Cartão de crédito','Cartão de débito'].includes(paymentMethod) && <><label className="field"><span>Integração do pagamento</span><select name="integrationType" value={paymentDetails.integrationType} onChange={event=>setPaymentDetails(current=>({...current,integrationType:event.target.value}))}><option value="">Selecione</option><option value="1">Integrado ao sistema da empresa</option><option value="2">Pagamento externo, sem integração</option></select></label><label className="field"><span>CNPJ da instituição de pagamento</span><input name="institutionDocument" value={formatCnpj(paymentDetails.institutionDocument)} inputMode="text" autoCapitalize="characters" maxLength={18} placeholder="00.000.000/0000-00" onChange={event=>setPaymentDetails(current=>({...current,institutionDocument:sanitizarCnpj(event.target.value).slice(0,14)}))}/></label><label className="field"><span>{paymentMethod==='PIX dinâmico'?'Identificador da transação PIX (EndToEndId)':'Código de autorização do pagamento'}</span><input name="authorizationCode" value={paymentDetails.authorizationCode} placeholder={paymentDetails.integrationType==='2'?'Opcional':undefined} maxLength={128} onChange={event=>setPaymentDetails(current=>({...current,authorizationCode:event.target.value}))}/></label></>}
             <label className="field"><span>Parcelas</span><select name="installments" disabled={consigned} value={consigned ? '0' : installments} onChange={(event) => setInstallments(event.target.value)}>{consigned && <option value="0">Não se aplica</option>}<option value="1">1 parcela</option><option value="2">2 parcelas</option><option value="3">3 parcelas</option><option value="6">6 parcelas</option>{![1,2,3,6].includes(Number(installments))&&<option value={installments}>{installments} parcelas</option>}</select></label>
             <label className="field"><span>Primeiro vencimento</span><input type="date" name="firstDueDate" disabled={consigned} value={consigned ? '' : firstDueDate} onChange={(event) => setFirstDueDate(event.target.value)}/></label>
@@ -2059,7 +2067,8 @@ function NewServiceOrderView({ clientRecords, catalogRecords, settings, issuerRe
     const initialItem = catalogRecords.find((item) => item.sku === initialSku && item.category === 'Serviço');
     return initialItem ? [orderLineFromCatalog(initialItem)] : [];
   });
-  const [paymentMethod, setPaymentMethod] = useState(settings.payments.defaultMethod);
+  const servicePaymentMethods = settings.payments.enabledMethods.filter(method => method !== 'consignado');
+  const [paymentMethod, setPaymentMethod] = useState(() => servicePaymentMethods.includes(settings.payments.defaultMethod) ? settings.payments.defaultMethod : servicePaymentMethods[0] || '');
   const [installments, setInstallments] = useState(String(settings.payments.defaultInstallments));
   const [firstDueDate, setFirstDueDate] = useState(() => isoAfterDays(settings.payments.firstDueDays));
   const nfseEnabled = settings.fiscal.documentScope.includes('nfse');
@@ -2180,7 +2189,7 @@ function NewServiceOrderView({ clientRecords, catalogRecords, settings, issuerRe
           })}</div>}
         </div></section>
         <section className="order-card"><header><div><h2>Condições e preparação fiscal</h2><p>Defina cobrança, documento previsto e instruções da equipe.</p></div></header><div className="order-card-body order-form-grid">
-          <label className="field"><span>Forma de pagamento *</span><select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}>{settings.payments.enabledMethods.map((method) => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}</select></label>
+          <label className="field"><span>Forma de pagamento *</span><select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>{!paymentMethod && <option value="" disabled>Selecione a forma de pagamento</option>}{servicePaymentMethods.map((method) => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}</select></label>
           <label className="field"><span>Parcelas</span><select value={installments} onChange={(event) => setInstallments(event.target.value)}><option value="1">1 parcela</option><option value="2">2 parcelas</option><option value="3">3 parcelas</option><option value="6">6 parcelas</option></select></label>
           <label className="field"><span>Primeiro vencimento</span><input type="date" value={firstDueDate} onChange={(event) => setFirstDueDate(event.target.value)}/></label>
           <label className="field"><span>Documento fiscal previsto</span><select value={fiscalDocument} onChange={(event) => setFiscalDocument(event.target.value as typeof fiscalDocument)}>{nfseEnabled && <option value="nfse">NFS-e após conclusão</option>}<option value="nenhum">Não definido</option></select>{!nfseEnabled && <small className="field-message">A NFS-e pode ser ativada em Ajustes → Empresa e notas → Dados para emissão.</small>}</label>
@@ -2749,12 +2758,13 @@ function CommercialRecordIndicators({ record, onFiscal, onStock, onBilling, stoc
   })}</span>;
 }
 
-function SalesView({ receivables = [], financialState = 'ready', stockControlEnabled = true, brand = '#003e73', companyLogoUrl = '', paperSize = 'A4', company, clients, onCopy, created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle, onStockLaunch, onStockReverse, onRestoreOrder }: { receivables?:ReceivableRecord[]; financialState?:'loading'|'ready'|'error'; stockControlEnabled?:boolean; brand?: string; companyLogoUrl?:string; paperSize?:'A4'|'A5'; company:CompanyProfile; clients:ClientRecord[]; onCopy:(record:CreatedRecord)=>void; created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void; onStockLaunch:(record:CreatedRecord)=>Promise<ConfirmedSave>; onStockReverse:(record:CreatedRecord)=>Promise<ConfirmedSave>; onRestoreOrder:(record:CreatedRecord)=>Promise<ConfirmedSave> }) {
+function SalesView({ payments, receivables = [], financialState = 'ready', stockControlEnabled = true, brand = '#003e73', companyLogoUrl = '', paperSize = 'A4', company, clients, onCopy, created, connected, fiscalDrafts, fiscalPrepareState, onNew, onNotify, onNavigate, onFiscalStart, onFiscalPrepare, onReceivables, onContinueOrder, onLifecycle, onStockLaunch, onStockReverse, onRestoreOrder }: { payments: PaymentSettings; receivables?:ReceivableRecord[]; financialState?:'loading'|'ready'|'error'; stockControlEnabled?:boolean; brand?: string; companyLogoUrl?:string; paperSize?:'A4'|'A5'; company:CompanyProfile; clients:ClientRecord[]; onCopy:(record:CreatedRecord)=>void; created: CreatedRecord[]; connected: boolean; fiscalDrafts: FiscalDraftRecord[]; fiscalPrepareState: Record<string, { loading: boolean; message: string }>; onNew: (type: DocumentType) => void; onNotify: (message: string) => void; onNavigate: (view: View) => void; onFiscalStart: (origin: FiscalOrigin) => void; onFiscalPrepare: (draft: FiscalDraftRecord) => void; onReceivables: (origin: string) => void; onContinueOrder: (record: CreatedRecord) => void; onLifecycle: (record: CreatedRecord, action: OrderLifecycleAction) => void; onStockLaunch:(record:CreatedRecord)=>Promise<ConfirmedSave>; onStockReverse:(record:CreatedRecord)=>Promise<ConfirmedSave>; onRestoreOrder:(record:CreatedRecord)=>Promise<ConfirmedSave> }) {
   const [period, setPeriod] = useState<SalePeriod>(monthPeriod(new Date().getFullYear(), new Date().getMonth()));
   const inPeriod = (record: CreatedRecord) => (!period.start || (record.order?.orderDate || record.createdAt).slice(0, 10) >= period.start) && (!period.end || (record.order?.orderDate || record.createdAt).slice(0, 10) <= period.end);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todas as situações');
   const [financialFilter,setFinancialFilter]=useState('Todos');
+  const [paymentFilter, setPaymentFilter] = useState('');
   const [detailRecord, setDetailRecord] = useState<CreatedRecord | null>(null);
   const [lifecycleRequest, setLifecycleRequest] = useState<{ record: CreatedRecord; action: OrderConfirmationAction } | null>(null);
   const [stockReverseRequest,setStockReverseRequest]=useState<CreatedRecord|null>(null);
@@ -2779,6 +2789,7 @@ function SalesView({ receivables = [], financialState = 'ready', stockControlEna
   const financialById=useMemo(()=>new Map(created.map(record=>[record.id,orderFinancialStatus(record,receivables,{ready:financialState==='ready',failed:financialState==='error',allowed:canViewFinancial})])),[created,receivables,financialState,canViewFinancial]);
   const localQuotes = created.filter((item) => item.type === 'orcamento' && item.quote && inPeriod(item));
   const localOperations = created.filter((item) => ['pedido', 'venda'].includes(item.type) && inPeriod(item));
+  const orderPaymentOptions = paymentFilterOptions(payments, created.flatMap(record => record.order?.paymentMethod || []));
   const records = useMemo<CommercialOperationRecord[]>(() => {
     const localRows: CommercialOperationRecord[] = localOperations.map((record) => {
       const fiscalDraft = fiscalDrafts.find((draft) => draft.originId === record.id);
@@ -2796,20 +2807,22 @@ function SalesView({ receivables = [], financialState = 'ready', stockControlEna
         fiscalDraft,
       };
     });
-    return [...localRows, ...(connected ? [] : commercialRecords)].filter((record) => {
+    const allRows: CommercialOperationRecord[] = [...localRows, ...(connected ? [] : commercialRecords)];
+    return allRows.filter((record) => {
       const matchesQuery = normalizeSearch(`${record.id} ${record.client} ${record.status} ${record.type}`).includes(normalizeSearch(query));
       const recordDate = record.date.split('/').reverse().join('-');
       const matchesRecordPeriod = (!period.start || recordDate >= period.start) && (!period.end || recordDate <= period.end);
       const matchesStatus = statusFilter === 'Todas as situações' || record.status === statusFilter;
-      return matchesQuery && matchesStatus && matchesRecordPeriod && (financialFilter==='Todos'||financialById.get(record.id)===financialFilter);
+      const matchesPayment = !paymentFilter || paymentMethodKey(record.localRecord?.order?.paymentMethod) === paymentFilter;
+      return matchesQuery && matchesStatus && matchesRecordPeriod && matchesPayment && (financialFilter==='Todos'||financialById.get(record.id)===financialFilter);
     });
-  }, [connected, localOperations, fiscalDrafts, query, statusFilter, period, financialFilter, financialById]);
+  }, [connected, localOperations, fiscalDrafts, query, statusFilter, period, financialFilter, financialById, paymentFilter]);
   const awaitingBilling = localOperations.filter((record) => ['Confirmado', 'Em separação'].includes(record.status ?? '')).reduce((sum, record) => sum + record.total, 0);
   return <>
     <PageHeading view="vendas" action={<div className="heading-actions commercial-period-actions"><SalesPeriodFilter period={period} onPeriodChange={setPeriod} brand={brand} dark={false} showAll={false}/><button type="button" className="button secondary" onClick={() => onNew('orcamento')}>Novo orçamento</button><button type="button" className="button primary" onClick={() => onNew('pedido')}><Icon name="plus" size={18}/> Novo pedido</button></div>}/>
     <div className="metric-grid sales-financial-summary"><Metric label="Total vendido" value={money(localOperations.filter(record => record.status === 'Faturado').reduce((sum, record) => sum + record.total, 0))} note="Pedidos faturados"/><Metric label="Pedidos" value={String(localOperations.length)} note="Registros do perfil"/><Metric label="Ticket médio" value={money(localOperations.length ? localOperations.reduce((sum, item) => sum + item.total, 0) / localOperations.length : 0)} note="Pedidos registrados" tone="cyan"/><Metric label="Orçamentos" value={String(localQuotes.length)} note="Propostas salvas" tone="success"/><Metric label="Aguardando faturar" value={money(awaitingBilling)} note="Pedidos confirmados" tone="warning"/></div>
     <Panel>
-      <div className="receivable-filters" role="group" aria-label="Filtros de pedidos"><label className="field"><span>Buscar</span><CampoBusca value={query} onChange={setQuery} placeholder="Cliente ou número do pedido"/></label><label className="field"><span>Situação</span><select aria-label="Situação" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>Todas as situações</option><option>Rascunho</option><option>Confirmado</option><option>Em separação</option><option>Faturado</option><option>Cancelado</option><option>Devolvido</option><option>Enviado</option></select></label><label className="field"><span>Financeiro</span><select value={financialFilter} onChange={event=>setFinancialFilter(event.target.value)} disabled={!canViewFinancial}><option>Todos</option><option>Em aberto</option><option>Parcialmente pago</option><option>Pago</option><option>Bonificado</option></select></label></div>
+      <div className="receivable-filters sales-payment-filters" role="group" aria-label="Filtros de pedidos"><label className="field"><span>Buscar</span><CampoBusca value={query} onChange={setQuery} placeholder="Cliente ou número do pedido"/></label><label className="field"><span>Situação</span><select aria-label="Situação" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>Todas as situações</option><option>Rascunho</option><option>Confirmado</option><option>Em separação</option><option>Faturado</option><option>Cancelado</option><option>Devolvido</option><option>Enviado</option></select></label><label className="field"><span>Financeiro</span><select value={financialFilter} onChange={event=>setFinancialFilter(event.target.value)} disabled={!canViewFinancial}><option>Todos</option><option>Em aberto</option><option>Parcialmente pago</option><option>Pago</option><option>Bonificado</option></select></label><label className="field"><span>Forma de pagamento</span><select value={paymentFilter} onChange={event => setPaymentFilter(event.target.value)}><option value="">Todas as formas</option>{orderPaymentOptions.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}</select></label></div>
       <Table headers={['Número', 'Data', 'Cliente', 'Situação', 'Total', 'Financeiro', 'Ações']} minWidth={0} className="commercial-operations-table"><>{records.map((record) => <tr key={record.id}>
         <td data-label="Número"><button type="button" className="row-link" onClick={() => record.localRecord && setDetailRecord(record.localRecord)}>{record.id}</button><small className="commercial-record-type">{record.type}</small></td>
         <td data-label="Data">{record.date}</td>
@@ -5245,11 +5258,13 @@ function ReceivableOperationDialog({ mode, records, initialId, connected, onClos
 }
 
 type ReceivableTermsInput={id:string;method:string;installments:number;firstDueDate:string;expectedVersions:Array<{id:string;version:number}>;idempotencyKey:string};
-function ReceivableTermsDialog({record,records,onClose,onSave}:{record:ReceivableRecord;records:ReceivableRecord[];onClose:()=>void;onSave:(input:ReceivableTermsInput)=>Promise<ConfirmedSave>}){
+function ReceivableTermsDialog({payments,record,records,onClose,onSave}:{payments:PaymentSettings;record:ReceivableRecord;records:ReceivableRecord[];onClose:()=>void;onSave:(input:ReceivableTermsInput)=>Promise<ConfirmedSave>}){
  const [group]=useState(()=>records.filter(r=>r.persistence?.operationId===record.persistence?.operationId).sort((a,b)=>Number(a.installment.split('/')[0])-Number(b.installment.split('/')[0])));
  const active=group.filter(r=>!['cancelado','estornado'].includes(r.status||''));
  const hasMovements=group.some(r=>r.received>0||r.refunded>0);
- const [method,setMethod]=useState(()=>{const value=normalizeSearch(record.method);return value.startsWith('cartao')?'cartao':value==='a prazo'?'a_prazo':['pix','boleto','transferencia','dinheiro','consignado'].find(m=>value.includes(m))||'outro';});
+ const historical = payments.enabledMethods.find(value => paymentMethodKey(value) === paymentMethodKey(record.method)) || record.method;
+ const [method,setMethod]=useState(historical);
+ const options = [...new Set([...payments.enabledMethods,historical])].filter(Boolean);
  const [count,setCount]=useState(String(active.length));
  const [due,setDue]=useState(active[0]?.dueDate||record.dueDate);
  const consigned=method==='consignado';
@@ -5257,7 +5272,7 @@ function ReceivableTermsDialog({record,records,onClose,onSave}:{record:Receivabl
  const [saving,setSaving]=useState(false),[error,setError]=useState('');const lock=useRef(false);
  const submit=async()=>{if(lock.current)return;lock.current=true;setSaving(true);setError('');try{const result=await onSave({id:record.id,method,installments:consigned?0:Number(count),firstDueDate:consigned?'':due,expectedVersions:group.map(r=>({id:r.id,version:r.persistence?.version||0})),idempotencyKey:key});if(result.ok)onClose();else setError(result.message||'Não foi possível alterar o pagamento.');}catch{setError('Não foi possível confirmar a alteração. Tente novamente com os mesmos dados.');}finally{lock.current=false;setSaving(false);}};
  return <Dialog open title="Alterar pagamento e parcelas" eyebrow="" description="" onClose={()=>{if(!lock.current)onClose();}}><div className="dialog-body">
-  <div className="form-grid receivable-terms-grid"><label className="field"><span>Forma de pagamento</span><select value={method} disabled={saving} onChange={e=>setMethod(e.target.value)}><option value="pix">PIX</option><option value="boleto">Boleto</option><option value="cartao">Cartão</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option><option value="a_prazo">A prazo</option><option value="consignado">Consignado</option><option value="outro">Outro</option></select></label>
+  <div className="form-grid receivable-terms-grid"><label className="field"><span>Forma de pagamento</span><select value={method} disabled={saving} onChange={e=>setMethod(e.target.value)}>{options.map(option => <option key={option} value={option} disabled={!payments.enabledMethods.includes(option)}>{paymentMethodLabel(option)}</option>)}</select></label>
   <div className="field"><LineNumberEditor notApplicable={consigned} label="Parcelas" caption="Parcelas" value={Number(count)||1} onChange={value=>setCount(String(value))} min={1} max={120} integer compact showSteppers disabled={saving||hasMovements}/></div>
   <label className="field"><span>Primeiro vencimento</span><input type={consigned?'text':'date'} value={consigned?'':due} disabled={saving||hasMovements||consigned} onChange={e=>setDue(e.target.value)}/></label></div>
   {hasMovements&&<p>{consigned?'Há recebimentos registrados. A conversão para consignado não está disponível para preservar esse histórico.':'Há recebimentos registrados. Somente a forma prevista do saldo pendente será alterada.'}</p>}
@@ -5278,7 +5293,7 @@ function ReceivableRecordActions({ record, onDetails, onOperation, onReverseBill
   return <RecordActionsDialog title={`Ações ${/^Pedido /i.test(record.origin)?'do pedido '+record.origin.replace(/^Pedido /i,''):'de '+record.origin} - ${record.client}`} description="" actions={actions} triggerLabel={`Ações de ${record.origin} - ${record.client}`}/>;
 }
 
-function ReceivablesView({ records, initialOrigin, connected, onReceive, onRefund, onReverseBilling, onChangeTerms }: { records: ReceivableRecord[]; initialOrigin: string; connected: boolean; onChangeTerms:(input:ReceivableTermsInput)=>Promise<ConfirmedSave>; onReverseBilling: (record:ReceivableRecord)=>Promise<ConfirmedSave>; onReceive: (input: ReceivableOperationInput) => Promise<ConfirmedSave>; onRefund: (input: ReceivableOperationInput) => Promise<ConfirmedSave> }) {
+function ReceivablesView({ payments, records, initialOrigin, connected, onReceive, onRefund, onReverseBilling, onChangeTerms }: { payments: PaymentSettings; records: ReceivableRecord[]; initialOrigin: string; connected: boolean; onChangeTerms:(input:ReceivableTermsInput)=>Promise<ConfirmedSave>; onReverseBilling: (record:ReceivableRecord)=>Promise<ConfirmedSave>; onReceive: (input: ReceivableOperationInput) => Promise<ConfirmedSave>; onRefund: (input: ReceivableOperationInput) => Promise<ConfirmedSave> }) {
   const { can } = useContext(PermissionContext);
   const [query, setQuery] = useState(initialOrigin);
   const [termsRecord,setTermsRecord]=useState<ReceivableRecord|null>(null);
@@ -5294,8 +5309,8 @@ function ReceivablesView({ records, initialOrigin, connected, onReceive, onRefun
   const today = todayIso();
   const normalizedQuery = normalizeSearch(query);
   const rows = records.map((record) => ({ record, status: receivableStatus(record, today), balance: receivableBalance(record), netReceived: Math.max(0, record.received - record.refunded) })).filter(({record,status})=>(status==='Consignado'||record.status!=='cancelado'||status==='Estorno pendente')&&status!=='Estornado');
-  const filtered = rows.filter(({ record, status, balance }) => (paymentFilter === 'Todas as formas' || normalizeSearch(record.method) === paymentFilter) && (!normalizedQuery || normalizeSearch(`${record.id} ${record.client} ${record.origin} ${record.method} ${status}`).includes(normalizedQuery)) && (statusFilter === 'Todas as situações' || (statusFilter === 'Em aberto' ? balance > 0 : status === statusFilter)));
-  const paymentMethods = [...new Map(['PIX','Boleto','Cartão','Transferência','Dinheiro','A prazo','Consignado','Outro',...rows.map(({record})=>record.method)].filter(Boolean).map(method=>[normalizeSearch(method),method])).entries()].sort((a,b)=>a[1].localeCompare(b[1],'pt-BR'));
+  const filtered = rows.filter(({ record, status, balance }) => (paymentFilter === 'Todas as formas' || paymentMethodKey(record.method) === paymentFilter) && (!normalizedQuery || normalizeSearch(`${record.id} ${record.client} ${record.origin} ${record.method} ${status}`).includes(normalizedQuery)) && (statusFilter === 'Todas as situações' || (statusFilter === 'Em aberto' ? balance > 0 : status === statusFilter)));
+  const paymentMethods = paymentFilterOptions(payments, records.map(record => record.method));
   const openRows = rows.filter(({ balance }) => balance > 0);
   const openTotal = openRows.reduce((sum, row) => sum + row.balance, 0);
   const netReceivedTotal = rows.reduce((sum, row) => sum + row.netReceived, 0);
@@ -5306,12 +5321,12 @@ function ReceivablesView({ records, initialOrigin, connected, onReceive, onRefun
     <PageHeading view="recebimentos" action={<button type="button" className="button primary" onClick={() => openRows[0] && setOperation({ mode: 'receber', id: openRows[0].record.id })} disabled={!openRows.length || !can('receivables.receive')}><Icon name="plus" size={17}/> Registrar recebimento</button>}/>
     {initialOrigin && <div className="receivable-origin-banner" role="status"><span><Icon name="sale" size={19}/></span><div><strong>Contas vinculadas a {initialOrigin}</strong><p>A busca foi aplicada a partir das ações da operação comercial.</p></div><button type="button" className="button secondary" onClick={() => setQuery('')}>Mostrar todas</button></div>}
     <div className="metric-grid module-financial-summary"><Metric label="A receber" value={money(openTotal)} note={`${openRows.length} ${openRows.length === 1 ? 'parcela' : 'parcelas'}`}/><Metric label="Recebido líquido" value={money(netReceivedTotal)} note={connected ? 'No perfil empresarial' : 'Nos registros locais'} tone="cyan"/><Metric label="Vence hoje" value={money(dueTodayRows.reduce((sum, row) => sum + row.balance, 0))} note={`${dueTodayRows.length} ${dueTodayRows.length === 1 ? 'parcela' : 'parcelas'}`} tone="warning"/><Metric label="Em atraso" value={money(overdueRows.reduce((sum, row) => sum + row.balance, 0))} note={`${overdueRows.length} ${overdueRows.length === 1 ? 'parcela' : 'parcelas'}`} tone="warning"/></div>
-    <Panel title="Parcelas comerciais" subtitle={`${filtered.length} de ${rows.length} registros · a origem comercial nunca é perdida`}><div className="receivable-filters" role="group" aria-label="Filtros de recebimentos"><label className="field"><span>Buscar</span><CampoBusca value={query} onChange={setQuery} placeholder="Cliente, pedido ou recebimento"/></label><label className="field"><span>Situação</span><select aria-label="Situação financeira" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>Todas as situações</option><option>Em aberto</option><option>Vence hoje</option><option>Atrasado</option><option>Recebido parcial</option><option>Recebido</option><option>Consignado</option></select></label><label className="field"><span>Forma de pagamento</span><select value={paymentFilter} onChange={event=>setPaymentFilter(event.target.value)}><option>Todas as formas</option>{paymentMethods.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label></div><Table headers={['Data do pedido', 'Cliente e origem', 'Vencimento', 'Condição', 'Valor', 'Recebido', 'Saldo', 'Situação', 'Ações']} minWidth={0} className="receivables-table"><>{filtered.map(({ record, status, balance, netReceived }) => <tr key={record.id}><td data-label="Data do pedido">{record.orderDate ? displayIsoDate(record.orderDate) : '—'}</td><td data-label="Cliente e origem"><div className="receivable-party"><strong>{record.client}</strong><small>{record.origin}</small></div></td><td data-label="Vencimento">{normalizeSearch(record.method)==='consignado'?'—':displayIsoDate(record.dueDate)}</td><td data-label="Condição"><div className="receivable-condition"><strong>{record.method}</strong><small>{normalizeSearch(record.method)==='consignado'?'—':record.installment}</small></div></td><td data-label="Valor" className="numeric"><strong>{money(record.value)}</strong></td><td data-label="Recebido" className="numeric">{money(netReceived)}</td><td data-label="Saldo" className="numeric"><strong>{money(balance)}</strong></td><td data-label="Situação"><Badge tone={financialTone(status)}>{status}</Badge></td><td data-label="Ações" className="receivable-actions-cell"><ReceivableRecordActions record={record} onChangeTerms={()=>setTermsRecord(record)} onReverseBilling={record.operationType==='pedido'||/^Pedido /i.test(record.origin)||!record.persistence?()=>{setBillingError('');setBillingReversal(record);}:undefined} onDetails={() => setDetailRecord(record)} onOperation={(mode) => setOperation({ mode, id: record.id })}/></td></tr>)}</></Table>{!filtered.length && <EmptyState title="Nenhuma parcela encontrada" description="Ajuste a busca ou a situação para consultar outros recebimentos."/>}</Panel>
+    <Panel title="Parcelas comerciais" subtitle={`${filtered.length} de ${rows.length} registros · a origem comercial nunca é perdida`}><div className="receivable-filters" role="group" aria-label="Filtros de recebimentos"><label className="field"><span>Buscar</span><CampoBusca value={query} onChange={setQuery} placeholder="Cliente, pedido ou recebimento"/></label><label className="field"><span>Situação</span><select aria-label="Situação financeira" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option>Todas as situações</option><option>Em aberto</option><option>Vence hoje</option><option>Atrasado</option><option>Recebido parcial</option><option>Recebido</option><option>Consignado</option></select></label><label className="field"><span>Forma de pagamento</span><select value={paymentFilter} onChange={event=>setPaymentFilter(event.target.value)}><option>Todas as formas</option>{paymentMethods.map(({value,label})=><option key={value} value={value}>{label}</option>)}</select></label></div><Table headers={['Data do pedido', 'Cliente e origem', 'Vencimento', 'Condição', 'Valor', 'Recebido', 'Saldo', 'Situação', 'Ações']} minWidth={0} className="receivables-table"><>{filtered.map(({ record, status, balance, netReceived }) => <tr key={record.id}><td data-label="Data do pedido">{record.orderDate ? displayIsoDate(record.orderDate) : '—'}</td><td data-label="Cliente e origem"><div className="receivable-party"><strong>{record.client}</strong><small>{record.origin}</small></div></td><td data-label="Vencimento">{normalizeSearch(record.method)==='consignado'?'—':displayIsoDate(record.dueDate)}</td><td data-label="Condição"><div className="receivable-condition"><strong>{record.method}</strong><small>{normalizeSearch(record.method)==='consignado'?'—':record.installment}</small></div></td><td data-label="Valor" className="numeric"><strong>{money(record.value)}</strong></td><td data-label="Recebido" className="numeric">{money(netReceived)}</td><td data-label="Saldo" className="numeric"><strong>{money(balance)}</strong></td><td data-label="Situação"><Badge tone={financialTone(status)}>{status}</Badge></td><td data-label="Ações" className="receivable-actions-cell"><ReceivableRecordActions record={record} onChangeTerms={()=>setTermsRecord(record)} onReverseBilling={record.operationType==='pedido'||/^Pedido /i.test(record.origin)||!record.persistence?()=>{setBillingError('');setBillingReversal(record);}:undefined} onDetails={() => setDetailRecord(record)} onOperation={(mode) => setOperation({ mode, id: record.id })}/></td></tr>)}</></Table>{!filtered.length && <EmptyState title="Nenhuma parcela encontrada" description="Ajuste a busca ou a situação para consultar outros recebimentos."/>}</Panel>
     <Dialog open={Boolean(billingReversal)} title="Estornar faturamento" description={billingReversal ? `${billingReversal.client} · ${billingReversal.origin}` : ''} onClose={()=>{if(!reversingBillingRef.current)setBillingReversal(null);}}>
       <div className="dialog-body"><p>Todas as parcelas serão estornadas e o pedido ficará pendente de faturamento. Estoque e nota fiscal serão mantidos.</p>{billingError&&<AvisoFormulario idMensagem="billing-reversal-error" titulo="Não foi possível estornar" mensagem={billingError}/>}</div>
       <footer className="dialog-footer"><BotaoAcaoCompacto disabled={reversingBilling} onClick={()=>setBillingReversal(null)}>Cancelar</BotaoAcaoCompacto><BotaoAcaoCompacto variante="destrutivo" disabled={reversingBilling} onClick={async()=>{if(!billingReversal||reversingBillingRef.current)return;reversingBillingRef.current=true;setReversingBilling(true);setBillingError('');try{const result=await onReverseBilling(billingReversal);if(result.ok)setBillingReversal(null);else setBillingError(result.message||'Não foi possível estornar o faturamento.');}catch{setBillingError('Não foi possível confirmar o estorno. Confira a lista antes de repetir.');}finally{reversingBillingRef.current=false;setReversingBilling(false);}}}>{reversingBilling?'Estornando…':'Estornar faturamento'}</BotaoAcaoCompacto></footer>
     </Dialog>
-    {termsRecord&&<ReceivableTermsDialog key={termsRecord.id} record={termsRecord} records={records} onClose={()=>setTermsRecord(null)} onSave={onChangeTerms}/>}
+    {termsRecord&&<ReceivableTermsDialog payments={payments} key={termsRecord.id} record={termsRecord} records={records} onClose={()=>setTermsRecord(null)} onSave={onChangeTerms}/>}
     <ReceivableDetailsDialog record={detailRecord} onClose={() => setDetailRecord(null)}/>
     {operation && <ReceivableOperationDialog key={`${operation.mode}-${operation.id}`} mode={operation.mode} records={rows.map(row=>row.record)} initialId={operation.id} connected={connected} onClose={() => setOperation(null)} onSave={saveOperation}/>}
   </>;
@@ -5402,7 +5417,7 @@ function splitTeam(value: string) {
 
 type FiscalDefaultsContext={companyId:string;origin:string;onSaved?:()=>void};
 
-function SettingsDialog({ stockControlContext, fiscalDefaultsContext,section, settings, onClose, onSave, onSaveCompany, onOpenNumbering, onOpenRules, suspended = false }: { stockControlContext?:{enabled:boolean;canEdit:boolean;save:(enabled:boolean)=>Promise<ConfirmedSave>}; fiscalDefaultsContext?:FiscalDefaultsContext;section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany?: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onOpenNumbering?: () => void; onOpenRules?:()=>void; suspended?: boolean }) {
+function SettingsDialog({ stockControlContext, fiscalDefaultsContext,section, settings, onClose, onSave, onSaveCompany, onOpenNumbering, onOpenRules, suspended = false }: { stockControlContext?:{enabled:boolean;canEdit:boolean;save:(enabled:boolean)=>Promise<ConfirmedSave>}; fiscalDefaultsContext?:FiscalDefaultsContext;section: SettingsSection | null; settings: ModuleSettings; onClose: () => void; onSave: (settings: ModuleSettings, section?: SettingsSection) => Promise<boolean>; onSaveCompany?: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onOpenNumbering?: () => void; onOpenRules?:()=>void; suspended?: boolean }) {
   const [stockControlBusy,setStockControlBusy]=useState(false);
   const [stockControlError,setStockControlError]=useState('');
   const [draft, setDraft] = useState(settings);
@@ -5422,6 +5437,10 @@ function SettingsDialog({ stockControlContext, fiscalDefaultsContext,section, se
     }
     setDraft(settings); setError(''); setLookup(null); setSearching(null);
   }, [section, settings, suspended]);
+  const [paymentName, setPaymentName] = useState('');
+  const [paymentNameError, setPaymentNameError] = useState('');
+  const paymentNameInput = useRef<HTMLInputElement>(null);
+  useEffect(() => { setPaymentName(''); setPaymentNameError(''); }, [section]);
   if (!section) return null;
   const titles: Record<SettingsSection, [string, string]> = {
     empresa: ['Dados da empresa ativa', 'Estas informações identificam o emitente e aparecem nos novos PDFs do módulo.'],
@@ -5490,6 +5509,22 @@ function SettingsDialog({ stockControlContext, fiscalDefaultsContext,section, se
   };
   const updateCommercial = (patch: Partial<ModuleSettings['commercial']>) => setDraft((current) => ({ ...current, commercial: { ...current.commercial, ...patch } }));
   const updatePayments = (patch: Partial<ModuleSettings['payments']>) => setDraft((current) => ({ ...current, payments: { ...current.payments, ...patch } }));
+  const addPayment = () => {
+    try {
+      updatePayments(addCustomPaymentMethod(draft.payments, paymentName));
+      setPaymentName('');
+      setPaymentNameError('');
+    } catch (cause) {
+      setPaymentNameError(cause instanceof Error ? cause.message : 'Revise o nome da forma de pagamento.');
+    }
+    paymentNameInput.current?.focus();
+  };
+  const togglePayment = (method: string, active: boolean) => setDraft(current => {
+    const list = current.payments.enabledMethods;
+    if (!active && list.length === 1) return current;
+    const enabledMethods = active ? [...list, method] : list.filter(value => value !== method);
+    return { ...current, payments: { ...current.payments, enabledMethods, defaultMethod: enabledMethods.includes(current.payments.defaultMethod) ? current.payments.defaultMethod : enabledMethods[0] } };
+  });
   const updateServices = (patch: Partial<ModuleSettings['services']>) => setDraft((current) => ({ ...current, services: { ...current.services, ...patch } }));
   const updateStock = (patch: Partial<ModuleSettings['stock']>) => setDraft((current) => ({ ...current, stock: { ...current.stock, ...patch } }));
   const updateFiscal = (patch: Partial<ModuleSettings['fiscal']>) => setDraft((current) => ({ ...current, fiscal: { ...current.fiscal, ...patch } }));
@@ -5511,7 +5546,7 @@ function SettingsDialog({ stockControlContext, fiscalDefaultsContext,section, se
   const save = async () => {
     if (saving) return;
     const normalized = normalizeModuleSettings(draft, defaultModuleSettings) as ModuleSettings;
-    const validation = section === 'empresa' ? validateCompanyProfile(normalized.company) : section === 'fiscal' ? validateFiscalSettingsForm(normalized) : validateModuleSettings(normalized);
+    const validation = section === 'empresa' ? validateCompanyProfile(normalized.company) : section === 'fiscal' ? validateFiscalSettingsForm(normalized) : section === 'pagamentos' ? { ready: Number.isInteger(draft.payments.firstDueDays) && draft.payments.firstDueDays >= 0 && draft.payments.firstDueDays <= 365, errors: ['Informe o primeiro vencimento entre 0 e 365 dias.'] } : validateModuleSettings(normalized);
     if (!validation.ready) { setError(validation.errors[0]); return; }
     if (section === 'empresa' && onSaveCompany) {
       setSaving(true); setError('');
@@ -5525,7 +5560,7 @@ function SettingsDialog({ stockControlContext, fiscalDefaultsContext,section, se
     }
     setSaving(true); setError('');
     try {
-      if (await onSave(normalized)) onClose();
+      if (await onSave(normalized, section)) onClose();
       else setError('Não foi possível confirmar a gravação. Confira e tente novamente.');
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível salvar as configurações.'); }
     finally { setSaving(false); }
@@ -5560,8 +5595,22 @@ function SettingsDialog({ stockControlContext, fiscalDefaultsContext,section, se
         <label className="field"><span>Documento fiscal padrão</span><select value={draft.commercial.defaultFiscalDocument} onChange={(event) => updateCommercial({ defaultFiscalDocument: event.target.value as ModuleSettings['commercial']['defaultFiscalDocument'] })}><option value="nenhum">Não definido</option>{draft.fiscal.documentScope.includes('nfe') && <option value="nfe">NF-e</option>}{draft.fiscal.documentScope.includes('nfce') && <option value="nfce">NFC-e</option>}{draft.fiscal.documentScope.includes('nfse') && <option value="nfse">NFS-e</option>}</select></label>
         <label className="field"><span>Limite de desconto (%)</span><input type="number" min="0" max="100" value={draft.commercial.maxDiscountPercent} onChange={(event) => updateCommercial({ maxDiscountPercent: Number(event.target.value) })}/></label>
       </div>}
-      {section === 'pagamentos' && <div className="settings-form-stack"><fieldset className="settings-checkset"><legend>Formas disponíveis</legend>{(['pix', 'boleto', 'cartao', 'prazo'] as PaymentMethod[]).map((method) => <label key={method}><input type="checkbox" checked={draft.payments.enabledMethods.includes(method)} onChange={(event) => updatePayments({ enabledMethods: event.target.checked ? [...draft.payments.enabledMethods, method] : draft.payments.enabledMethods.filter((item) => item !== method) })}/><span>{paymentMethodLabel(method)}</span></label>)}</fieldset><div className="form-grid">
-        <label className="field"><span>Forma padrão</span><select value={draft.payments.defaultMethod} onChange={(event) => updatePayments({ defaultMethod: event.target.value as PaymentMethod })}>{draft.payments.enabledMethods.map((method) => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}</select></label>
+      {section === 'pagamentos' && <div className="settings-form-stack">
+        <fieldset className="settings-checkset payment-methods-grid">
+          <legend>Formas de pagamento</legend>
+          {[...Object.keys(BASE_PAYMENT_METHODS), ...draft.payments.customMethods].map(method => {
+            const active = draft.payments.enabledMethods.includes(method);
+            const label = paymentMethodLabel(method);
+            return <div className="payment-method-row" key={method}><strong>{label}</strong><ChaveAtivacao aria-label={label} checked={active} disabled={active && draft.payments.enabledMethods.length === 1} onChange={next => togglePayment(method, next)}/></div>;
+          })}
+        </fieldset>
+        <div className="payment-method-add">
+          <label className="field"><span>Nova forma de pagamento</span><input ref={paymentNameInput} value={paymentName} maxLength={PAYMENT_METHOD_MAX_LENGTH} aria-invalid={Boolean(paymentNameError)} aria-describedby={paymentNameError ? 'payment-method-error' : undefined} onChange={event => { setPaymentName(event.target.value); setPaymentNameError(''); }} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addPayment(); } }}/></label>
+          <BotaoAcaoCompacto variante="secundario" disabled={!paymentName.trim()} onClick={addPayment}>Adicionar forma</BotaoAcaoCompacto>
+        </div>
+        {paymentNameError && <p className="form-error" id="payment-method-error" role="alert">{paymentNameError}</p>}
+        <div className="form-grid">
+        <label className="field"><span>Forma padrão</span><select value={draft.payments.defaultMethod} onChange={event => updatePayments({ defaultMethod: event.target.value })}>{draft.payments.enabledMethods.map(method => <option value={method} key={method}>{paymentMethodLabel(method)}</option>)}</select></label>
         <label className="field"><span>Parcelas padrão</span><select value={draft.payments.defaultInstallments} onChange={(event) => updatePayments({ defaultInstallments: Number(event.target.value) })}><option value={1}>1 parcela</option><option value={2}>2 parcelas</option><option value={3}>3 parcelas</option><option value={6}>6 parcelas</option></select></label>
         <label className="field"><span>Primeiro vencimento (dias)</span><input type="number" min="0" max="365" value={draft.payments.firstDueDays} onChange={(event) => updatePayments({ firstDueDays: Number(event.target.value) })}/></label>
       </div></div>}
@@ -6018,7 +6067,7 @@ type SettingsTarget = SettingsSection | 'acessos' | 'matriz' | 'certificado' | '
 type SettingsGroupId = 'empresa-notas' | 'operacao' | 'equipe-acessos' | 'integracoes';
 type SettingsItem = { title: string; description: string; icon: IconName; status: string; target: SettingsTarget };
 
-function SettingsView({ stockControlContext,fiscalDefaultsContext,settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onSaveCompany, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate, onOpenNumbering, numberingOpen = false }: { stockControlContext?:{enabled:boolean;canEdit:boolean;save:(enabled:boolean)=>Promise<ConfirmedSave>}; fiscalDefaultsContext?:FiscalDefaultsContext;settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings) => Promise<boolean>; onSaveCompany: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void; onOpenNumbering?: () => void; numberingOpen?: boolean }) {
+function SettingsView({ stockControlContext,fiscalDefaultsContext,settings, connected, canEdit, canViewAccess, canManageAccess, canConfigureFiscal, accessBridge, fiscalRulesBridge, certificateBridge, onSave, onOpenPayments, onSaveCompany, onSaveAccess, onSaveFiscalMatrix, onOpenCertificate, onOpenNumbering, numberingOpen = false }: { stockControlContext?:{enabled:boolean;canEdit:boolean;save:(enabled:boolean)=>Promise<ConfirmedSave>}; fiscalDefaultsContext?:FiscalDefaultsContext;settings: ModuleSettings; connected: boolean; canEdit: boolean; canViewAccess: boolean; canManageAccess: boolean; canConfigureFiscal: boolean; accessBridge: AccessBridgeState; fiscalRulesBridge: FiscalRulesBridgeState; certificateBridge: FiscalCertificateBridgeState; onSave: (settings: ModuleSettings, section?: SettingsSection) => Promise<boolean>; onOpenPayments?: () => void; onSaveCompany: (company: CompanyProfile) => Promise<{ok:boolean;message:string}>; onSaveAccess: (settings: ModuleSettings) => void; onSaveFiscalMatrix: (input: FiscalMatrixSaveInput) => void; onOpenCertificate: () => void; onOpenNumbering?: () => void; numberingOpen?: boolean }) {
   const [section, setSection] = useState<SettingsSection | null>(null);
   const [accessOpen, setAccessOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
@@ -6064,7 +6113,10 @@ function SettingsView({ stockControlContext,fiscalDefaultsContext,settings, conn
     else if (target === 'acessos') setAccessOpen(true);
     else if (target === 'matriz') setMatrixOpen(true);
     else if (target === 'certificado') onOpenCertificate();
-    else if (target) setSection(target);
+    else if (target) {
+      if (target === 'pagamentos') onOpenPayments?.();
+      setSection(target);
+    }
   };
 
   return <>
@@ -7093,8 +7145,49 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
     void requestFiscalEditor({companyId:managementCatalogBridge.companyId,origin:managementBridgeOrigin,action:'load-policy'}).then(result=>{if(active){commercialPolicyVersion.current=result.policy.version;setModuleSettings(current=>({...current,commercial:{...current.commercial,maxDiscountPercent:result.policy.maxDiscountPercent}}));}}).catch(()=>{});
     return()=>{active=false;};
   },[managementBridgeOrigin,managementCatalogBridge?.companyId]);
-  const saveModuleSettings = async (next: ModuleSettings): Promise<boolean> => {
+  const paymentConfig = useRef<{ companyId: string; version: number } | null>(null);
+  const paymentRequest = useRef(0);
+  const loadPaymentSettings = useCallback(async (companyId: string, origin: string) => {
+    const request = ++paymentRequest.current;
+    const remote = await requestFiscalEditor({ companyId, origin, action: 'load-payments' });
+    if (paymentRequest.current !== request || (paymentConfig.current?.companyId === companyId && paymentConfig.current.version > remote.version)) return;
+    paymentConfig.current = { companyId, version: remote.version };
+    if (remote.payments) {
+      const payments = normalizePaymentSettings(remote.payments);
+      setModuleSettings(current => JSON.stringify(current.payments) === JSON.stringify(payments) ? current : { ...current, payments });
+    }
+  }, []);
+  const refreshPaymentSettings = useCallback(() => {
+    const companyId = managementCatalogBridge?.companyId;
+    if (managementBridgeOrigin && companyId) void loadPaymentSettings(companyId, managementBridgeOrigin).catch(() => {});
+  }, [loadPaymentSettings, managementBridgeOrigin, managementCatalogBridge?.companyId]);
+  useEffect(() => {
+    refreshPaymentSettings();
+    return () => { paymentRequest.current++; paymentConfig.current = null; };
+  }, [refreshPaymentSettings]);
+  const saveModuleSettings = async (next: ModuleSettings, section?: SettingsSection): Promise<boolean> => {
     if (!authorize('settings.edit', 'editar as configurações do sistema')) return false;
+    if (section === 'pagamentos') {
+      let payments = next.payments;
+      const companyId = managementCatalogBridge?.companyId;
+      if (managementBridgeOrigin && companyId) {
+        const config = paymentConfig.current;
+        if (config?.companyId !== companyId) {
+          await loadPaymentSettings(companyId, managementBridgeOrigin);
+          throw Error('Reabra Pagamentos para conferir as opções do perfil antes de salvar.');
+        }
+        const saved = await requestFiscalEditor({ companyId, origin: managementBridgeOrigin, action: 'save-payments', paymentSettings: { settings: payments, version: config.version } });
+        payments = normalizePaymentSettings(saved.payments);
+        paymentConfig.current = { companyId, version: saved.version };
+      }
+      const settings = { ...moduleSettings, payments };
+      if (!managementBridgeOrigin) {
+        writeCompanyStorage(SETTINGS_STORAGE_KEY, JSON.stringify({ version: 8, companyId: settings.company.document.replace(/[.\/\-\s]/g, '').toUpperCase(), module: 'vendas-servicos', settings }));
+      }
+      setModuleSettings(current => ({ ...current, payments }));
+      setToast('Formas de pagamento salvas.');
+      return true;
+    }
     if(next.commercial.maxDiscountPercent!==moduleSettings.commercial.maxDiscountPercent&&managementBridgeOrigin&&managementCatalogBridge?.companyId){
       try{const saved=await requestFiscalEditor({companyId:managementCatalogBridge.companyId,origin:managementBridgeOrigin,action:'save-policy',policy:{maxDiscountPercent:next.commercial.maxDiscountPercent,version:commercialPolicyVersion.current}});commercialPolicyVersion.current=saved.policy.version;}
       catch(cause){setToast(cause instanceof Error?cause.message:'Não foi possível salvar o limite comercial.');return false;}
@@ -8627,7 +8720,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
         {managementContextReady && activeUser?.active && catalogSectionLoading && <CarregamentoDadosModulo ativo variante="local" esqueletos titulo="Catálogo" mensagem="Carregando produtos e serviços…" corPrimaria={profileColor} />}
         {managementContextReady && activeUser?.active && !catalogSectionLoading && <>
         {view === 'painel' && <Dashboard catalogAvailable={managementCatalogBridge?.catalogAvailable !== false} summary={overviewSummary} summaryError={overviewError} onSummaryPeriod={requestOverview} stockControlEnabled={stockControls.enabled} brand={profileColor} onNew={openNew} onNavigate={navigate} connected={Boolean(managementCatalogBridge)} created={created} receivableRecords={receivableRecords} catalogRecords={catalogRecords}/>}
-        {view === 'vendas' && <SalesView receivables={receivableRecords} financialState={financialState} stockControlEnabled={stockControls.enabled} brand={profileColor}
+        {view === 'vendas' && <SalesView payments={moduleSettings.payments} receivables={receivableRecords} financialState={financialState} stockControlEnabled={stockControls.enabled} brand={profileColor}
           companyLogoUrl={companyLogoUrl}
           paperSize={moduleSettings.commercial.orderPrintPaper||'A4'}
           company={moduleSettings.company}
@@ -8706,8 +8799,8 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             setStandaloneFiscal(true);setCommercialReturnView('fiscal');setView('novo_pedido');
           }}
         />}
-        {view === 'recebimentos' && <ReceivablesView onChangeTerms={changeReceivableTerms} onReverseBilling={reverseOrderBilling} records={receivableRecords} initialOrigin={receivableOrigin} connected={Boolean(managementCatalogBridge)} onReceive={receiveInstallment} onRefund={refundInstallment}/>}
-        {view === 'relatorios' && <CommercialReports key={`${managementCatalogBridge?.companyId||'local'}:${reportEntry}`} operations={created} clients={clientRecords} catalog={catalogRecords} receivables={receivableRecords} fiscalDrafts={fiscalDraftRecords} company={{name:moduleSettings.company.name,document:moduleSettings.company.document,color:profileColor,logoUrl:companyLogoUrl}} can={can} onResultChange={setReportResult} renderIcon={name=><Icon name={name as IconName}/>} overview={<ReportsOverview created={created} catalogRecords={catalogRecords} movementRecords={stockMovementRecords} receivableRecords={receivableRecords} fiscalDrafts={fiscalDraftRecords}/>}/>}
+        {view === 'recebimentos' && <ReceivablesView payments={moduleSettings.payments} onChangeTerms={changeReceivableTerms} onReverseBilling={reverseOrderBilling} records={receivableRecords} initialOrigin={receivableOrigin} connected={Boolean(managementCatalogBridge)} onReceive={receiveInstallment} onRefund={refundInstallment}/>}
+        {view === 'relatorios' && <CommercialReports payments={moduleSettings.payments} key={`${managementCatalogBridge?.companyId||'local'}:${reportEntry}`} operations={created} clients={clientRecords} catalog={catalogRecords} receivables={receivableRecords} fiscalDrafts={fiscalDraftRecords} company={{name:moduleSettings.company.name,document:moduleSettings.company.document,color:profileColor,logoUrl:companyLogoUrl}} can={can} onResultChange={setReportResult} renderIcon={name=><Icon name={name as IconName}/>} overview={<ReportsOverview created={created} catalogRecords={catalogRecords} movementRecords={stockMovementRecords} receivableRecords={receivableRecords} fiscalDrafts={fiscalDraftRecords}/>}/>}
         {view === 'configuracoes' && (
           <SettingsView stockControlContext={{enabled:stockControls.enabled,canEdit:can('settings.edit')&&can('stock.adjust'),save:saveStockControl}} fiscalDefaultsContext={{companyId:managementCatalogBridge?.companyId||'',origin:managementBridgeOrigin||'',onSaved:()=>void loadRealFiscalEditor()}}
             settings={moduleSettings}
@@ -8722,6 +8815,7 @@ export function VendasServicosPrototype({ integratedManagementRuntime = false }:
             numberingOpen={fiscalNumberingOpen}
             onSaveCompany={saveCompanyRegistration}
             onSave={saveModuleSettings}
+            onOpenPayments={refreshPaymentSettings}
             onSaveAccess={saveAccessSettings}
             onSaveFiscalMatrix={saveFiscalMatrix}
             onOpenNumbering={managementCatalogBridge?openRemoteFiscalNumbering:undefined}
@@ -8754,7 +8848,7 @@ export function FiscalNoteLayoutPreview() {
   const [color,setColor]=useState('#00aaa7');
   if(process.env.NODE_ENV!=='development')return null;
   const company={...defaultModuleSettings.company,name:'Empresa demonstrativa',legalName:'Empresa demonstrativa Ltda',document:'12.345.678/0001-95'};
-  const settings={...defaultModuleSettings,company,commercial:{...defaultModuleSettings.commercial,sellers:['Equipe comercial'],defaultSeller:'Equipe comercial'},payments:{...defaultModuleSettings.payments,enabledMethods:['pix','boleto','prazo'] as PaymentMethod[]}};
+  const settings={...defaultModuleSettings,company,commercial:{...defaultModuleSettings.commercial,sellers:['Equipe comercial'],defaultSeller:'Equipe comercial'},payments:{...defaultModuleSettings.payments,enabledMethods:['pix','boleto','prazo']}};
   const issuer=createFiscalIssuerRegistry(company);issuer.establishments[0].documents.nfe.registrationStatus='Homologação';
   const demoClients=clients.slice(0,2).map((client,index)=>({...client,id:`preview-client-${index}`,name:index?'Cliente parceiro':'Cliente demonstrativo',legalName:index?'Cliente parceiro':'Cliente demonstrativo',document:index?'11.222.333/0001-81':'111.444.777-35',status:'Ativo' as const,profile:index?'Pessoa jurídica' as const:'Pessoa física' as const,fiscal:index?'Contribuinte isento' as const:'Não contribuinte' as const,consumerFinal:!index,stateRegistration:index?client.stateRegistration:''}));
   const demoCatalog:CatalogItem[]=[{sku:'DEMO-001',name:'CONDICIONADOR CRONO 200ml',price:16.5,ncm:'33059000'},{sku:'DEMO-002',name:'OXIGENADA 10 volumes',price:20.83,ncm:'28470000'},{sku:'DEMO-003',name:'PÓ DESCOLORANTE',price:50.58,ncm:'33059000'}].map((product,index)=>({...inventory[0],...product,catalogItemId:`preview-product-${index}`,description:product.name,category:'Produto acabado' as const,unit:'UN',fiscal:'Completo',available:100,current:100,reserved:0,icmsCode:'102',pisCst:'49',cofinsCst:'49',cfopInternal:'5102',cfopInterstate:'6102',icmsRate:0})).map(item=>normalizeCatalogTaxProfile(item) as CatalogItem);

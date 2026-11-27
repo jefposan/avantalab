@@ -1,3 +1,4 @@
+import {paymentMethodKey, paymentMethodLabel} from './payment-methods.mjs';
 import {receivableBalance, receivableStatus} from './domain.mjs';
 
 export const REPORT_AREAS = [
@@ -24,7 +25,6 @@ const cents=v=>Math.round(num(v)*100);
 const round=v=>Math.round((num(v)+Number.EPSILON)*100)/100;
 const day=v=>/^\d{4}-\d{2}-\d{2}/.test(text(v))?text(v).slice(0,10):'';
 const selected=(values,value)=>!values?.length||values.includes(text(value));
-const paymentLabel=v=>({pix:'PIX',boleto:'Boleto',cartao:'Cartão',prazo:'A prazo',consignado:'Consignado'})[v]||v;
 const column=(id,label,format='text')=>({id,label,format});
 export const freshReportFilters=()=>({from:'',to:'',clients:[],products:[],sellers:[],statuses:[],methods:[],sort:'date-desc',group:'none',columns:[]});
 export function validateReportFilters(f){
@@ -52,18 +52,20 @@ export function buildCommercialReport({id,filters=freshReportFilters(),operation
  const productKey=l=>text(l.catalogItemId||l.sku||l.name);
  const productReports=['products','client-products','product-margin'];
  const billedIds=['billing','products','client-products','clients-ranking','sellers','product-margin'];
+ const paymentKeys = new Set(filters.methods.map(paymentMethodKey));
+ const matchesPayment = value => !paymentKeys.size || paymentKeys.has(paymentMethodKey(value));
  const source=operations.filter(o=>{
   const lines=o.order?.lines||o.quote?.items||o.serviceOrder?.lines||[];
   if(id==='quotes'?o.type!=='orcamento':id==='services'?o.type!=='ordem_servico':!['pedido','venda'].includes(o.type))return false;
   const billed=o.status==='Faturado'||o.type==='venda'&&o.status==='Concluído';
   if(billedIds.includes(id)&&!billed)return false;
   if(id==='services'&&o.status!=='Concluído')return false;
-  return matchesDate(reportDate(o,id))&&selected(filters.clients,clientKey(o))&&selected(filters.sellers,o.order?.seller||o.serviceOrder?.technician||'Não informado')&&selected(filters.statuses,o.status||'Rascunho')&&selected(filters.methods,o.order?.paymentMethod||o.serviceOrder?.paymentMethod||'')&&(!filters.products.length||lines.some(l=>filters.products.includes(productKey(l))));
+  return matchesDate(reportDate(o,id))&&selected(filters.clients,clientKey(o))&&selected(filters.sellers,o.order?.seller||o.serviceOrder?.technician||'Não informado')&&selected(filters.statuses,o.status||'Rascunho')&&matchesPayment(o.order?.paymentMethod||o.serviceOrder?.paymentMethod)&&(!filters.products.length||lines.some(l=>filters.products.includes(productKey(l))));
  });
  let columns=[],rows=[],totals={};
  if(['orders','quotes','billing','services'].includes(id)){
   columns=[column('date',id==='billing'?'Data do faturamento':id==='services'?'Data da operação':id==='quotes'?'Data do orçamento':'Data do pedido','date'),column('order','Registro'),column('client','Cliente'),column('seller','Vendedor'),column('status','Situação'),column('method','Pagamento'),column('value','Valor total','currency')];
-  rows=source.map(o=>({date:reportDate(o,id),order:o.id,client:o.client,seller:o.order?.seller||o.serviceOrder?.technician||'Não informado',status:o.status||'Rascunho',method:paymentLabel(o.order?.paymentMethod||o.serviceOrder?.paymentMethod||''),value:round(o.total)}));
+  rows=source.map(o=>({date:reportDate(o,id),order:o.id,client:o.client,seller:o.order?.seller||o.serviceOrder?.technician||'Não informado',status:o.status||'Rascunho',method:paymentMethodLabel(o.order?.paymentMethod||o.serviceOrder?.paymentMethod||''),value:round(o.total)}));
   totals={records:rows.length,value:round(rows.reduce((n,r)=>n+r.value,0))};
  }else if(productReports.includes(id)){
   const map=new Map();
@@ -100,7 +102,7 @@ export function buildCommercialReport({id,filters=freshReportFilters(),operation
   rows=fiscalDrafts.filter(f=>matchesDate(day(f.createdAt))&&selected(filters.statuses,f.status)&&(!filters.clients.length||operations.some(o=>o.id===f.originId&&selected(filters.clients,clientKey(o))))).map(f=>({date:day(f.createdAt),order:f.originId,client:f.client,document:f.documentType.toUpperCase(),status:f.remoteState||f.status,value:num(f.total)}));totals={records:rows.length,value:round(rows.reduce((n,r)=>n+r.value,0))};
  }else if(id==='receivables'){
   columns=[column('date','Data do pedido','date'),column('client','Cliente'),column('order','Origem'),column('due','Vencimento','date'),column('status','Situação'),column('value','Valor original','currency'),column('received','Recebido líquido','currency'),column('balance','Saldo','currency')];
-  rows=receivables.filter(r=>matchesDate(day(r.orderDate||r.createdAt))&&selected(filters.methods,r.method)&&(!filters.clients.length||operations.some(o=>(o.id===r.origin||o.persistence?.operationId===r.persistence?.operationId)&&selected(filters.clients,clientKey(o))))&&(!filters.statuses.length||filters.statuses.some(status=>status==='Em aberto'?receivableBalance(r)>0:receivableStatus(r,today)===status))).map(r=>({date:day(r.orderDate),client:r.client,order:r.origin,due:r.dueDate,status:receivableStatus(r,today),value:num(r.value)-num(r.reversed),received:Math.max(0,num(r.received)-num(r.refunded)),balance:receivableBalance(r)}));totals={records:rows.length,value:round(rows.reduce((n,r)=>n+r.value,0)),balance:round(rows.reduce((n,r)=>n+r.balance,0))};
+  rows=receivables.filter(r=>matchesDate(day(r.orderDate||r.createdAt))&&matchesPayment(r.method)&&(!filters.clients.length||operations.some(o=>(o.id===r.origin||o.persistence?.operationId===r.persistence?.operationId)&&selected(filters.clients,clientKey(o))))&&(!filters.statuses.length||filters.statuses.some(status=>status==='Em aberto'?receivableBalance(r)>0:receivableStatus(r,today)===status))).map(r=>({date:day(r.orderDate),client:r.client,order:r.origin,due:r.dueDate,status:receivableStatus(r,today),value:num(r.value)-num(r.reversed),received:Math.max(0,num(r.received)-num(r.refunded)),balance:receivableBalance(r)}));totals={records:rows.length,value:round(rows.reduce((n,r)=>n+r.value,0)),balance:round(rows.reduce((n,r)=>n+r.balance,0))};
  }
  const sort=filters.sort||'date-desc';
  rows.sort((a,b)=>sort==='value-desc'?num(b.value)-num(a.value):sort==='quantity-desc'?num(b.quantity)-num(a.quantity):sort==='name'?text(a.client||a.label||a.product).localeCompare(text(b.client||b.label||b.product),'pt-BR'):text(b.date||b.lastDate).localeCompare(text(a.date||a.lastDate)));

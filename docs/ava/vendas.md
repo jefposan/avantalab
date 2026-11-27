@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.563 -->
+<!-- ava-version: 3.2.0.564 -->
+
+> Revisão 3.2.0.564: Em Vendas e Serviços → Ajustes → Pagamentos, adicione uma forma ou altere sua chave e salve. Novos pedidos usam as formas ativas. Filtros também encontram formas inativas usadas no histórico. Consignado fica sem parcelas e vencimento.
 
 > Revisão 3.2.0.563: Em Vendas e Serviços, Imprimir pedido gera o documento compacto em A4 ou A5 conforme o ajuste Comercial. Os campos Recebido por e Data permanecem disponíveis para preenchimento.
 

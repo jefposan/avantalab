@@ -2,6 +2,7 @@ import {sanitizarCnpj,validarCnpj,formatarCnpjParaExibicao} from '../../../lib/c
 import { fiscalOperationCfop, fiscalIbsCbsRequired } from './fiscal-item-presentation.mjs';
 import { normalizeFiscalMatrix, validateFiscalMatrix } from './fiscal-matrix.mjs';
 import { resolveMunicipalityCode } from './municipality.mjs';
+import { normalizePaymentSettings } from './payment-methods.mjs';
 
 export const DOCUMENT_TYPES = ['orcamento', 'pedido', 'venda', 'ordem_servico', 'nfe', 'nfce', 'nfse'];
 
@@ -218,7 +219,7 @@ export function normalizeModuleSettings(input, defaults) {
   company.cityCode = resolveMunicipalityCode({ city: company.city, cep: company.cep, currentCode: company.cityCode });
   const commercial = { ...defaults.commercial, ...(source.commercial && typeof source.commercial === 'object' ? source.commercial : {}) };
   commercial.orderPrintPaper = commercial.orderPrintPaper === 'A5' ? 'A5' : 'A4';
-  const payments = { ...defaults.payments, ...(source.payments && typeof source.payments === 'object' ? source.payments : {}) };
+  const payments = normalizePaymentSettings({ ...defaults.payments, ...(source.payments && typeof source.payments === 'object' ? source.payments : {}), customMethods: source.payments?.customMethods });
   const services = { ...defaults.services, ...(source.services && typeof source.services === 'object' ? source.services : {}) };
   const fiscal = { ...defaults.fiscal, ...(source.fiscal && typeof source.fiscal === 'object' ? source.fiscal : {}) };
   const defaultDocumentScope = Array.isArray(defaults.fiscal.documentScope) && defaults.fiscal.documentScope.length ? defaults.fiscal.documentScope : ['nfe', 'nfce', 'nfse'];
@@ -233,9 +234,6 @@ export function normalizeModuleSettings(input, defaults) {
   commercial.sellers = cleanList(commercial.sellers, defaults.commercial.sellers);
   if (!commercial.sellers.includes(commercial.defaultSeller)) commercial.defaultSeller = commercial.sellers[0] || defaults.commercial.defaultSeller;
   if (commercial.defaultFiscalDocument !== 'nenhum' && !fiscal.documentScope.includes(commercial.defaultFiscalDocument)) commercial.defaultFiscalDocument = 'nenhum';
-  payments.enabledMethods = cleanList(payments.enabledMethods, defaults.payments.enabledMethods).filter((method) => ['pix', 'boleto', 'cartao', 'prazo'].includes(method));
-  if (!payments.enabledMethods.length) payments.enabledMethods = [...defaults.payments.enabledMethods];
-  if (!payments.enabledMethods.includes(payments.defaultMethod)) payments.defaultMethod = payments.enabledMethods[0];
   services.technicians = cleanList(services.technicians, defaults.services.technicians);
   if (!services.technicians.includes(services.defaultTechnician)) services.defaultTechnician = services.technicians[0] || defaults.services.defaultTechnician;
   stock.locations = cleanList(stock.locations, defaults.stock.locations);

@@ -1,3 +1,4 @@
+import { BASE_PAYMENT_METHODS, PAYMENT_METHOD_MAX_LENGTH, paymentMethodKey } from '../payment-methods.mjs';
 import { protectCommercialService } from './commercial-visibility.mjs';
 import { createHash } from 'node:crypto';
 
@@ -79,10 +80,13 @@ function accessError(context, permission) {
 
 function normalizePayment(input = {}) {
   const installments = Math.min(120, Math.max(1, Number.parseInt(input.installments, 10) || 1));
+  const rawMethod = text(input.method, PAYMENT_METHOD_MAX_LENGTH);
+  const key = paymentMethodKey(rawMethod);
+  const method = Object.hasOwn(BASE_PAYMENT_METHODS, key) ? key : rawMethod;
   return {
-    method: text(input.method, 40).toLowerCase(),
-    installments: text(input.method, 40).toLowerCase() === 'consignado' ? 0 : installments,
-    firstDueDate: text(input.method, 40).toLowerCase() !== 'consignado' && validDate(input.firstDueDate) ? text(input.firstDueDate, 10) : '',
+    method,
+    installments: method === 'consignado' ? 0 : installments,
+    firstDueDate: method !== 'consignado' && validDate(input.firstDueDate) ? text(input.firstDueDate, 10) : '',
     notes: text(input.notes, 500),
   };
 }
@@ -285,9 +289,26 @@ export async function prepareOperation({ input, context, customerResolver, catal
   return { operation, errors, warnings };
 }
 
-export function createCommercialOperationService({ repository, customerResolver, catalogResolver, policyResolver = async () => ({maxDiscountPercent:15}) } = {}) {
+export function createCommercialOperationService({ repository, customerResolver, catalogResolver, paymentSettingsResolver = async () => null, policyResolver = async () => ({maxDiscountPercent:15}) } = {}) {
   if (!repository || typeof repository.create !== 'function' || typeof repository.update !== 'function' || typeof repository.convertQuoteToOrder !== 'function') throw new TypeError('Informe o repositório server-side de operações.');
   if (typeof customerResolver !== 'function' || typeof catalogResolver !== 'function') throw new TypeError('Informe os resolvedores server-side de cliente e catálogo.');
+  async function paymentAvailability(operation, operationId) {
+    if (!['pedido', 'venda'].includes(operation.type) || !operation.paymentSnapshot.method) return null;
+    let settings;
+    try {
+      settings = await paymentSettingsResolver(operation.companyId);
+    } catch (cause) {
+      if (cause.code === '42P01') return null; // Compatible while the additive migration is pending.
+      throw cause;
+    }
+    const key = paymentMethodKey(operation.paymentSnapshot.method);
+    if (!settings || settings.enabledMethods.some(method => paymentMethodKey(method) === key)) return null;
+    if (operationId) {
+      const current = await repository.get({ companyId: operation.companyId, operationId, channel: operation.channel });
+      if (paymentMethodKey(current?.paymentSnapshot?.method) === key) return null;
+    }
+    return error('AV-COMMERCIAL-PAYMENT-INACTIVE', 'payment.method', 'Esta forma de pagamento está inativa. Selecione uma forma ativa.');
+  }
   return protectCommercialService({
     async create({ context, input } = {}) {
       const channel = text(input?.channel || 'vendas', 20).toLowerCase();
@@ -307,7 +328,11 @@ export function createCommercialOperationService({ repository, customerResolver,
           if((excess||itemExcess)&&context.effectivePermissions?.["sales.approve_discount"]!==true) prepared.errors.push(error("AV-COMMERCIAL-DISCOUNT-PERMISSION","generalDiscount",`O desconto ultrapassa o limite de ${limit}%. Solicite a aprovação de um usuário autorizado.`));
         }
         if (prepared.errors.length) return { ok: false, errors: prepared.errors, warnings: prepared.warnings };
-        const result = await repository.create(prepared.operation);
+        const paymentError = await paymentAvailability(prepared.operation);
+        const result = paymentError
+          ? await repository.create(prepared.operation, { existingOnly: true })
+          : await repository.create(prepared.operation);
+        if (!result) return { ok: false, errors: [paymentError], warnings: prepared.warnings };
         return { ok: true, operation: result.operation, reused: result.reused, errors: [], warnings: prepared.warnings };
       } catch (cause) {
         return { ok: false, errors: [repositoryError(cause)], warnings: [] };
@@ -332,6 +357,8 @@ export function createCommercialOperationService({ repository, customerResolver,
           if((excess||itemExcess)&&context.effectivePermissions?.["sales.approve_discount"]!==true) prepared.errors.push(error("AV-COMMERCIAL-DISCOUNT-PERMISSION","generalDiscount",`O desconto ultrapassa o limite de ${limit}%. Solicite a aprovação de um usuário autorizado.`));
         }
         if (prepared.errors.length) return { ok: false, errors: prepared.errors, warnings: prepared.warnings };
+        const paymentError = await paymentAvailability(prepared.operation, operationId);
+        if (paymentError) return { ok: false, errors: [paymentError], warnings: prepared.warnings };
         const operation = await repository.update({ operationId, expectedVersion, operation: prepared.operation });
         return { ok: true, operation, errors: [], warnings: prepared.warnings };
       } catch (cause) {

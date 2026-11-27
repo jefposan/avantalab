@@ -370,8 +370,10 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
     const operationRepository = createPostgresCommercialOperationRepository({ pool });
     const customerService = createCommercialCustomerService({ repository: customerRepository });
     const commercialPolicyRepository = createCommercialPolicyRepository({pool});
+    const paymentSettingsResolver = async (companyId) => (await commercialPolicyRepository.loadPayments(companyId)).payments;
     const operationService = createCommercialOperationService({
       policyResolver: ({companyId}) => commercialPolicyRepository.load(companyId),
+      paymentSettingsResolver,
       repository: operationRepository,
       customerResolver: ({ companyId, customerId }) => customerRepository.get({ companyId, customerId }),
       catalogResolver: createPostgresCommercialCatalogResolver({ pool }),
@@ -505,7 +507,7 @@ export async function createFiscalStatusRuntimeFromEnvironment(environment = pro
         issuerResolver,
       }),
       serviceOrderService,
-      receivableService: createCommercialReceivableService({ repository: createPostgresCommercialReceivableRepository({ pool }) }),
+      receivableService: createCommercialReceivableService({ repository: createPostgresCommercialReceivableRepository({ pool }), paymentSettingsResolver }),
       commercialRevenueRepository:createCommercialRevenueRepository({pool}),
       stockService: createCommercialStockService({ repository: createPostgresCommercialStockRepository({ pool }) }),
       supplierService: createCommercialSupplierService({ repository: createPostgresCommercialSupplierRepository({ pool }) }),

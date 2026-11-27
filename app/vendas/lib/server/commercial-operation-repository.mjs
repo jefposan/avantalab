@@ -177,7 +177,7 @@ export function createPostgresCommercialOperationRepository({ pool } = {}) {
     id: 'avantalab-commercial-operation-postgres-v1',
     configured: true,
 
-    async create(operation) {
+    async create(operation, { existingOnly = false } = {}) {
       return runSerializable(pool, async (client) => {
         await client.query('select pg_advisory_xact_lock(hashtextextended($1,0))', [`vendas:operacao:idempotencia:${operation.companyId}:${operation.idempotencyKey}`]);
         const existing = await client.query('select id,conteudo_hash from public.vendas_operacoes where empresa_id=$1 and chave_idempotencia=$2', [operation.companyId, operation.idempotencyKey]);
@@ -185,6 +185,7 @@ export function createPostgresCommercialOperationRepository({ pool } = {}) {
           if (existing.rows[0].conteudo_hash !== operation.contentHash) throw operationError('AV-COMMERCIAL-OPERATION-IDEMPOTENCY', 'Chave reutilizada com conteúdo diferente.');
           return { operation: await loadOperation(client, operation.companyId, existing.rows[0].id), reused: true };
         }
+        if (existingOnly) return null;
         const operationId = await insertOperation(client, operation);
         const created = await loadOperation(client, operation.companyId, operationId);
         await appendEvent(client, {

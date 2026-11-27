@@ -1,3 +1,4 @@
+import { BASE_PAYMENT_METHODS, PAYMENT_METHOD_MAX_LENGTH, paymentMethodKey } from '../payment-methods.mjs';
 import {changeReceivableTerms,paymentSchedule} from './commercial-receivable-terms.mjs';
 export const COMMERCIAL_RECEIVABLE_REFERENCE = '2026-09-06';
 
@@ -24,6 +25,7 @@ function publicError(error){const known={
   'AV-RECEIVABLE-PAID':['installments','Há recebimentos registrados. Preserve as parcelas existentes e altere apenas a forma de pagamento do saldo pendente.'],
   'AV-RECEIVABLE-PERMISSION':['permission','Seu acesso não permite alterar esta cobrança.'],
   'AV-RECEIVABLE-INPUT':['payment','Revise forma de pagamento, parcelas e primeiro vencimento.'],
+  'AV-RECEIVABLE-PAYMENT-INACTIVE':['payment','Selecione uma forma ativa ou mantenha a forma já registrada.'],
   'AV-RECEIVABLE-NOT-FOUND':['receivable','Parcela não localizada neste perfil empresarial.'],
   'AV-RECEIVABLE-CONFLICT':['version','A parcela foi alterada por outra pessoa. Atualize antes de continuar.'],
   'AV-RECEIVABLE-AMOUNT':['amount','O valor precisa ser maior que zero e não pode ultrapassar o saldo permitido.'],
@@ -61,7 +63,7 @@ export function createPostgresCommercialReceivableRepository({pool}={}){
   });
 }
 
-export function createCommercialReceivableService({repository}={}){
+export function createCommercialReceivableService({repository,paymentSettingsResolver=async()=>null}={}){
   if(!repository?.list||!repository?.move)throw new TypeError('Informe o repositório server-side de recebimentos.');
   return Object.freeze({
     async list({context,query='',status='',limit=100,offset=0}={}){const denied=access(context,'receivables.view');if(denied)return {ok:false,receivables:[],errors:[denied]};try{return {ok:true,receivables:await repository.list({companyId:context.companyId,query:clean(query,120),status:clean(status,30),limit:Math.min(200,Math.max(1,Number(limit)||100)),offset:Math.max(0,Number(offset)||0)}),errors:[]};}catch(error){return {ok:false,receivables:[],errors:[publicError(error)]};}},
@@ -70,9 +72,15 @@ export function createCommercialReceivableService({repository}={}){
       const allowedTypes=[...(context.effectivePermissions?.['sales.edit']===true?['pedido']:[]),...(context.effectivePermissions?.['services.edit']===true?['ordem_servico']:[])];
       if(!allowedTypes.length)return {ok:false,errors:[issue('AV-RECEIVABLE-PERMISSION','permission','Seu acesso não permite alterar cobranças.') ]};
       try{
-        if(!UUID.test(clean(receivableId))||!KEY.test(clean(idempotencyKey))||!['pix','boleto','cartao','transferencia','dinheiro','outro','a_prazo','consignado'].includes(method)||!Array.isArray(expectedVersions)||!expectedVersions.length||expectedVersions.length>500||new Set(expectedVersions.map(r=>r.id)).size!==expectedVersions.length||expectedVersions.some(r=>!UUID.test(r.id)||!Number.isInteger(r.version)||r.version<1))throw coded('AV-RECEIVABLE-INPUT');
-        if(method==='consignado'){if(installments!==0||firstDueDate!=='')throw coded('AV-RECEIVABLE-INPUT');}else paymentSchedule(1000000,installments,firstDueDate);
-        const result=await repository.changeTerms({companyId:context.companyId,actorId:context.actorId,receivableId,idempotencyKey,method,installments,firstDueDate,expectedVersions,allowedTypes});
+        if(!UUID.test(clean(receivableId))||!KEY.test(clean(idempotencyKey))||(typeof method!=='string'||!method.trim()||method.length>PAYMENT_METHOD_MAX_LENGTH)||!Array.isArray(expectedVersions)||!expectedVersions.length||expectedVersions.length>500||new Set(expectedVersions.map(r=>r.id)).size!==expectedVersions.length||expectedVersions.some(r=>!UUID.test(r.id)||!Number.isInteger(r.version)||r.version<1))throw coded('AV-RECEIVABLE-INPUT');
+        const paymentKey=paymentMethodKey(method);
+        if(paymentKey==='consignado'){if(installments!==0||firstDueDate!=='')throw coded('AV-RECEIVABLE-INPUT');}else paymentSchedule(1000000,installments,firstDueDate);
+        let settings=null;
+        try { settings=await paymentSettingsResolver(context.companyId); }
+        catch(cause){ if(cause.code!=='42P01')throw cause; }
+        const preserveMethod=settings ? !settings.enabledMethods.some(value=>paymentMethodKey(value)===paymentKey) : !Object.hasOwn(BASE_PAYMENT_METHODS,paymentKey);
+        if(paymentKey==='consignado')method='consignado';
+        const result=await repository.changeTerms({companyId:context.companyId,actorId:context.actorId,receivableId,idempotencyKey,method,installments,firstDueDate,expectedVersions,allowedTypes,preserveMethod});
         return context.effectivePermissions?.['receivables.view']===true?{ok:true,...result,errors:[]}:{ok:true,receivable:{id:result.receivable.id},reused:result.reused,errors:[]};
       }catch(error){return {ok:false,errors:[publicError(error)]};}
     },

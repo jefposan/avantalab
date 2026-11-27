@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {paymentMethodKey} from '../payment-methods.mjs';
 
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 export function paymentSchedule(totalCents,count,firstDueDate){
@@ -16,7 +17,7 @@ export function paymentSchedule(totalCents,count,firstDueDate){
 }
 
 /** Called inside the same serializable transaction as the existing receipt repository. */
-export async function changeReceivableTerms(client,{companyId,actorId,receivableId,idempotencyKey,method,installments,firstDueDate,expectedVersions,allowedTypes}){
+export async function changeReceivableTerms(client,{companyId,actorId,receivableId,idempotencyKey,method,installments,firstDueDate,expectedVersions,allowedTypes,preserveMethod=false}){
   const fingerprint=createHash('sha256').update(JSON.stringify({receivableId,method,installments,firstDueDate,expectedVersions:[...expectedVersions].sort((a,b)=>a.id.localeCompare(b.id))})).digest('hex');
   const replay=await client.query('select recurso_id,metadados from public.vendas_eventos where empresa_id=$1 and chave_idempotencia=$2',[companyId,idempotencyKey]);
   if(replay.rows[0]){
@@ -33,6 +34,7 @@ export async function changeReceivableTerms(client,{companyId,actorId,receivable
   const versions=new Map(expectedVersions.map(r=>[r.id,r.version]));
   if(versions.size!==all.length||all.some(r=>versions.get(r.id)!==Number(r.versao)))fail('AV-RECEIVABLE-CONFLICT');
   if(!active.some(r=>r.id===receivableId)||!active.some(r=>Number(r.saldo_aberto)>0))fail('AV-RECEIVABLE-STATE');
+  if(preserveMethod&&!active.some(row=>row.id===receivableId&&paymentMethodKey(row.meio_pagamento)===paymentMethodKey(method)))fail('AV-RECEIVABLE-PAYMENT-INACTIVE');
   const hasMovements=all.some(r=>Number(r.valor_recebido)>0||Number(r.valor_estornado)>0);
   const consigned=method==='consignado';
   const reschedule=installments!==active.length||firstDueDate!==String(active[0].vencimento instanceof Date?active[0].vencimento.toISOString().slice(0,10):active[0].vencimento).slice(0,10);
