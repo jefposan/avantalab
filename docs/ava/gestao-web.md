@@ -1,6 +1,6 @@
 <!-- ava-version: 3.2.0.565 -->
 
-> Revisão 3.2.0.565: Ao digitar no campo Cliente de um pedido antes de a lista chegar, aguarde o aviso Carregando clientes. A busca preserva o texto e mostra os resultados quando a lista chega. Em caso de falha, use Tentar novamente. Em Vendas e Serviços → Ajustes → Estoque, a chave Controlar estoque salva a configuração do perfil e informa se a gravação falhar.
+> Revisão 3.2.0.565: Ao digitar no campo Cliente de um pedido antes de a lista chegar, aguarde o aviso Carregando clientes. A busca preserva o texto e mostra os resultados quando a lista chega. Em caso de falha, use Tentar novamente. Em Vendas e Serviços → Ajustes → Estoque, a chave Controlar estoque salva a configuração do perfil e informa se a gravação falhar. O menu de Custos e Precificação fica fixo durante a rolagem em telas largas.
 
 > Revisão 3.2.0.564: Em Vendas e Serviços → Ajustes → Pagamentos, adicione ou ative formas por empresa e salve. Novos pedidos usam as formas ativas e os filtros incluem valores do histórico. Consignado fica sem parcelas e vencimento. Parcelas padrão oferece de 1 a 10. Ao trocar a tabela de preços durante o pedido, confirme a atualização dos itens se algum preço mudar. Manter preços atuais aplica a nova tabela somente aos próximos itens. Em Anúncios em marketplaces → Avisos, use Conferir anúncio para um código identificado ou Conferir conta para abrir a lista filtrada.
 

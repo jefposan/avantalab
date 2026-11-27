@@ -1,6 +1,6 @@
 <!-- ava-version: 3.2.0.565 -->
 
-> Revisão 3.2.0.565: Sem impacto operacional na Gestão Mobile.
+> Revisão 3.2.0.565: Sem impacto operacional na Gestão Mobile. Alteração visual do menu de Custos e Precificação sem impacto operacional neste ambiente.
 
 > Revisão 3.2.0.564: Sem impacto operacional na Gestão Mobile.
 
