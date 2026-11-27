@@ -1,3 +1,4 @@
+import { COMMERCIAL_CUSTOMER_PAGE_SIZE } from '../commercial-pages.mjs';
 import {sanitizarCnpj,validarCnpj} from '../../../../lib/consultas/validators/cnpj.ts';
 export const COMMERCIAL_CUSTOMER_SERVICE_REFERENCE = '2026-09-03';
 
@@ -120,7 +121,7 @@ export function validateCommercialCustomerInput(input = {}) {
 }
 
 function normalizeListInput(input = {}) {
-  const limit = Math.min(100, Math.max(1, Number.isInteger(Number(input.limit)) ? Number(input.limit) : 50));
+  const limit = Math.min(COMMERCIAL_CUSTOMER_PAGE_SIZE, Math.max(1, Number.isInteger(Number(input.limit)) ? Number(input.limit) : 50));
   const offset = Math.max(0, Number.isInteger(Number(input.offset)) ? Number(input.offset) : 0);
   const status = text(input.status, 30).toLowerCase();
   return { query: text(input.query, 120), status: ALLOWED_STATUSES.has(status) ? status : '', limit, offset };

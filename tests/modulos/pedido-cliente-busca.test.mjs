@@ -43,7 +43,7 @@ function component(options=opcoesClientePedido(clientes),extra={}){
  const CampoBusca=p=>{input=p;const{inputRef,...rest}=p;return createElement('input',rest);};
  const C=load('app/components/CampoSelecaoPesquisavel.tsx',{'react':hooks,'react/jsx-runtime':jsx,'react-dom':{createPortal:node=>node},'./CampoBusca':{default:CampoBusca},'../lib/selecao-pesquisavel':search,'./CampoSelecaoPesquisavel.module.css':{default:{root:'root',list:'list'}}}).default;
  const render=()=>{cursor=0;return renderToStaticMarkup(C(props));};
- return{render,chosen,get input(){return input;}};
+ return{render,chosen,update:next=>Object.assign(props,next),get input(){return input;}};
 }
 test('componente real não abre lista ao focar; digitar encontra e selecionar exibe apenas razão social',()=>{
  const c=component();c.render();c.input.onFocus();assert.doesNotMatch(c.render(),/role="listbox"/);
@@ -55,4 +55,37 @@ test('resultado é limitado a 20 e consumidores anteriores continuam abrindo ao 
  const options=Array.from({length:1000},(_,i)=>({value:String(i),label:`Cliente ${i}`}));
  const c=component(options);c.render();c.input.onChange('Cliente');const html=c.render();assert.equal((html.match(/role="option"/g)||[]).length,20);assert.match(html,/refinar a busca/);
  const old=component(options.slice(0,2),{searchOnTypeOnly:false});old.render();old.input.onFocus();assert.match(old.render(),/role="listbox"/);
+});
+
+test('busca iniciada antes da carga mantém o termo e exibe os clientes quando chegam', () => {
+ const c=component([],{estadoOpcoes:{tipo:'carregando',mensagem:'Carregando clientes…'}});
+ c.render();
+ c.input.onFocus();
+ assert.doesNotMatch(c.render(),/Carregando clientes/);
+ c.input.onChange('ser');
+ const loading=c.render();
+ assert.match(loading,/aria-busy="true"/);
+ assert.match(loading,/Carregando clientes/);
+ assert.doesNotMatch(loading,/Nenhuma opção encontrada/);
+
+ c.update({options:opcoesClientePedido(clientes),estadoOpcoes:undefined});
+ const ready=c.render();
+ assert.equal(c.input.value,'ser');
+ assert.match(ready,/Sérgio Exemplo/);
+ assert.doesNotMatch(ready,/Carregando clientes/);
+ c.input.onChange('sem resultado');
+ assert.match(c.render(),/Nenhuma opção encontrada/);
+});
+
+test('falha da lista permite tentar novamente sem apagar o início do nome', () => {
+ let tentativas=0;
+ const c=component([],{estadoOpcoes:{tipo:'erro',mensagem:'Não foi possível carregar os clientes.',aoTentarNovamente:()=>{tentativas++;}}});
+ c.render();
+ c.input.onChange('ser');
+ const erro=c.render();
+ assert.match(erro,/Não foi possível carregar os clientes/);
+ assert.match(erro,/Tentar novamente/);
+ c.input.onKeyDown({key:'Enter',preventDefault(){}});
+ assert.equal(tentativas,1);
+ assert.equal(c.input.value,'ser');
 });

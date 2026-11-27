@@ -1,4 +1,4 @@
-export const CUSTOMER_READY_TYPE: string;
+export const CUSTOMER_RETRY_TYPE: string;
 export const CUSTOMER_SNAPSHOT_TYPE: string;
 export const CUSTOMER_SAVE_REQUEST_TYPE: string;
 export const CUSTOMER_SAVE_RESPONSE_TYPE: string;

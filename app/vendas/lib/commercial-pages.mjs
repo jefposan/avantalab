@@ -1,3 +1,5 @@
+export const COMMERCIAL_CUSTOMER_PAGE_SIZE = 250;
+
 // Uma carga só é publicada na tela após todas as páginas terem sido confirmadas.
 // Falhas nunca transformam uma carga parcial em histórico completo.
 export async function fetchCommercialPages({url,key,token,fetcher=fetch,pageSize=100}) {

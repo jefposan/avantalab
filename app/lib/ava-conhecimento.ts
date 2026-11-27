@@ -3227,3 +3227,5 @@ GUIAS['gestao-web'] += ' Em Vendas e Serviços → Ajustes → Pagamentos, selec
 GUIAS['gestao-web'] += ' Ao alterar a tabela de preços durante um pedido, a confirmação aparece somente se o preço de algum item mudar. Aplicar a todos os itens atualiza os preços do pedido. Manter preços atuais usa a nova tabela para os próximos itens.';
 
 GUIAS['gestao-web'] += ' Em Anúncios em marketplaces, abra Avisos. Conferir anúncio abre o anúncio na conta indicada. Conferir conta abre Anunciados com a conta filtrada. Conferir pedido abre a pendência de venda correspondente.';
+
+GUIAS['gestao-web'] += ' Ao digitar no campo Cliente de um pedido antes de a lista chegar, aguarde o aviso Carregando clientes. A busca preserva o texto e mostra os resultados quando a lista chega. Em caso de falha, use Tentar novamente.';

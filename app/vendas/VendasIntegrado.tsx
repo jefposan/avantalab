@@ -2,7 +2,7 @@
 import {CUSTOMER_IMPORT_REQUEST} from '@/app/vendas/lib/customer-excel-contract.mjs';
 import type {CommercialOverview} from './lib/server/commercial-overview.mjs';
 import {validOverviewPeriod} from './lib/commercial-overview-period.mjs';
-import {fetchCommercialPages} from './lib/commercial-pages.mjs';
+import {COMMERCIAL_CUSTOMER_PAGE_SIZE, fetchCommercialPages} from './lib/commercial-pages.mjs';
 import { COMPANY_PROFILE_SAVE_REQUEST, COMPANY_PROFILE_SAVE_RESPONSE, saveCompanyProfile } from './lib/company-profile-save.mjs';
 
 import { FISCAL_CHECKOUT_REQUEST_TYPE, FISCAL_CHECKOUT_RESPONSE_TYPE } from './lib/fiscal-checkout.mjs';
@@ -22,7 +22,7 @@ import { STOCK_MOVE_REQUEST_TYPE, STOCK_MOVE_RESPONSE_TYPE, STOCK_READY_TYPE, ST
 import { COMMERCIAL_SERVICE_WORKFLOW_REQUEST_TYPE, COMMERCIAL_SERVICE_WORKFLOW_RESPONSE_TYPE } from '@/app/vendas/lib/commercial-service-workflow-bridge.mjs';
 import { COMMERCIAL_ORDER_WORKFLOW_REQUEST_TYPE, COMMERCIAL_ORDER_WORKFLOW_RESPONSE_TYPE, createCommercialOrderWorkflowRequest } from '@/app/vendas/lib/commercial-order-bridge.mjs';
 import { SERVICE_ATTACHMENT_OPEN_REQUEST_TYPE, SERVICE_ATTACHMENT_OPEN_RESPONSE_TYPE, SERVICE_ATTACHMENT_UPLOAD_REQUEST_TYPE, SERVICE_ATTACHMENT_UPLOAD_RESPONSE_TYPE } from '@/app/vendas/lib/commercial-service-attachment-bridge.mjs';
-import { CUSTOMER_READY_TYPE, CUSTOMER_SAVE_REQUEST_TYPE, CUSTOMER_SAVE_RESPONSE_TYPE, CUSTOMER_SNAPSHOT_TYPE, OPERATION_READY_TYPE, OPERATION_SAVE_REQUEST_TYPE, OPERATION_SAVE_RESPONSE_TYPE, OPERATION_SNAPSHOT_TYPE, SUPPLIER_READY_TYPE, SUPPLIER_SAVE_REQUEST_TYPE, SUPPLIER_SAVE_RESPONSE_TYPE, SUPPLIER_SNAPSHOT_TYPE } from '@/app/vendas/lib/commercial-party-bridge.mjs';
+import { CUSTOMER_RETRY_TYPE, CUSTOMER_SAVE_REQUEST_TYPE, CUSTOMER_SAVE_RESPONSE_TYPE, CUSTOMER_SNAPSHOT_TYPE, OPERATION_READY_TYPE, OPERATION_SAVE_REQUEST_TYPE, OPERATION_SAVE_RESPONSE_TYPE, OPERATION_SNAPSHOT_TYPE, SUPPLIER_READY_TYPE, SUPPLIER_SAVE_REQUEST_TYPE, SUPPLIER_SAVE_RESPONSE_TYPE, SUPPLIER_SNAPSHOT_TYPE } from '@/app/vendas/lib/commercial-party-bridge.mjs';
 import { FISCAL_PROFILE_READY_TYPE, FISCAL_PROFILE_SAVE_REQUEST_TYPE, FISCAL_PROFILE_SAVE_RESPONSE_TYPE, FISCAL_PROFILE_SNAPSHOT_TYPE } from '@/app/vendas/lib/fiscal-profile-bridge.mjs';
 import { STANDALONE_FISCAL_SAVE_REQUEST_TYPE, STANDALONE_FISCAL_SAVE_RESPONSE_TYPE } from '@/app/vendas/lib/fiscal-documents-bridge.mjs';
 
@@ -197,10 +197,17 @@ function analisarPublicacaoRegrasFiscais(data: any) {
   };
 }
 
+type ClientesCarga = {
+  empresaId: string;
+  controller: AbortController;
+  resultado: Promise<{ ok: boolean; customers: Record<string, unknown>[]; message?: string }>;
+};
+
 export default function VendasIntegrado({ initialContext, initialCompanyId }: { initialContext?: ContextoNavegacaoModulo | null; initialCompanyId?: string }) {
   const router = useRouter();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const recebimentosGenerationRef = useRef(0);
+  const clientesCargaRef = useRef<ClientesCarga | null>(null);
   const [contextoInicial] = useState(() => initialContext ?? consumirNavegacaoModulo('vendas', initialCompanyId));
   const [empresaId, setEmpresaId] = useState(() => initialCompanyId && UUID_PATTERN.test(initialCompanyId) ? initialCompanyId : contextoInicial?.empresaId || '');
   const activeCompanyRef=useRef(empresaId);
@@ -369,20 +376,50 @@ export default function VendasIntegrado({ initialContext, initialCompanyId }: { 
     try{const {data}=await supabase.auth.getSession();const token=data.session?.access_token;if(!token){send(false,[],'Confirme novamente sua sessão na Gestão.');return false;}const records=await fetchCommercialPages({url:`/api/modulos/vendas/commercial/stock?companyId=${perfilId}`,key:'movements',token});const response=await fetch(`/api/modulos/vendas/commercial/stock?companyId=${perfilId}&limit=1`,{headers:{Authorization:`Bearer ${token}`},cache:'no-store'});const payload=await response.json();if(!response.ok||!payload.ok)throw Error('stock-controls');if(activeCompanyRef.current===perfilId)destination.postMessage({type:STOCK_SNAPSHOT_TYPE,ok:true,movements:records,controls:payload.controls||{enabled:true,disabledProductIds:[]}},origemPrototipo);return true;}catch{send(false,[],'A conexão com o estoque está indisponível.');return false;}
   },[origemPrototipo]);
 
-  const carregarClientes = useCallback(async (perfilId: string) => {
+  const carregarClientes = useCallback((perfilId: string, renovar = false) => {
+    if (!UUID_PATTERN.test(perfilId) || activeCompanyRef.current !== perfilId) return null;
+    const anterior = clientesCargaRef.current;
+    if (anterior?.empresaId === perfilId && !renovar) return anterior;
+    anterior?.controller.abort();
+    const controller = new AbortController();
+    const resultado = (async () => {
+      const prazo = window.setTimeout(() => controller.abort(), 60_000);
+      try {
+        const { data } = await aguardarComLimite(supabase.auth.getSession(), 10_000, 'Sessão indisponível.');
+        const token = data.session?.access_token;
+        if (!token) return { ok: false, customers: [], message: 'Confirme novamente sua sessão na Gestão.' };
+        const records = await fetchCommercialPages({
+          url: `/api/modulos/vendas/commercial/customers?companyId=${perfilId}`,
+          key: 'customers',
+          token,
+          pageSize: COMMERCIAL_CUSTOMER_PAGE_SIZE,
+          fetcher: (url, options) => fetch(url, {
+            ...options,
+            priority: 'low',
+            signal: controller.signal,
+          }),
+        });
+        return { ok: true, customers: records };
+      } catch {
+        return { ok: false, customers: [], message: 'Não foi possível carregar os clientes.' };
+      } finally {
+        window.clearTimeout(prazo);
+      }
+    })();
+    const carga = { empresaId: perfilId, controller, resultado };
+    clientesCargaRef.current = carga;
+    return carga;
+  }, []);
+
+  const enviarClientes = useCallback(async (perfilId: string, renovar = false) => {
     const destination = iframeRef.current?.contentWindow;
-    if (!destination || !UUID_PATTERN.test(perfilId)) return false;
-    const send = (ok: boolean, customers: unknown[], message = '') => activeCompanyRef.current===perfilId && destination.postMessage({ type: CUSTOMER_SNAPSHOT_TYPE, ok, customers, message }, origemPrototipo);
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) { send(false, [], 'Confirme novamente sua sessão na Gestão.'); return false; }
-      const records=await fetchCommercialPages({url:`/api/modulos/vendas/commercial/customers?companyId=${perfilId}`,key:'customers',token});
-      const payload={customers:records};
-      send(true, payload.customers.map(clienteParaTela));
-      return true;
-    } catch { send(false, [], 'A conexão com os clientes está indisponível.'); return false; }
-  }, [origemPrototipo]);
+    if (!destination) return;
+    const carga = carregarClientes(perfilId, renovar);
+    if (!carga) return;
+    const snapshot = await carga.resultado;
+    if (clientesCargaRef.current !== carga || activeCompanyRef.current !== perfilId || destination !== iframeRef.current?.contentWindow) return;
+    destination.postMessage({ ...snapshot, type: CUSTOMER_SNAPSHOT_TYPE, companyId: perfilId, customers: snapshot.customers.map(clienteParaTela) }, origemPrototipo);
+  }, [carregarClientes, origemPrototipo]);
 
   const carregarFornecedores = useCallback(async (perfilId: string) => {
     const destination = iframeRef.current?.contentWindow;
@@ -541,12 +578,16 @@ export default function VendasIntegrado({ initialContext, initialCompanyId }: { 
       // A montagem já inicia os retratos. Só repetir permissões quando solicitado.
       if (event.data?.type === 'AVANTALAB_VENDAS_RETRY_ACCESS_V1') { void carregarPermissoes(empresaId); return; }
       if (event.data?.type === ACCESS_READY_MESSAGE_TYPE) return;
-      if (complementaresEmpresaRef.current !== empresaId && [FISCAL_RULES_READY_TYPE, FISCAL_PROFILE_READY_TYPE, RECEIVABLE_READY_TYPE, STOCK_READY_TYPE, CUSTOMER_READY_TYPE, SUPPLIER_READY_TYPE, OPERATION_READY_TYPE].includes(event.data?.type)) return;
+      if (complementaresEmpresaRef.current !== empresaId && [FISCAL_RULES_READY_TYPE, FISCAL_PROFILE_READY_TYPE, RECEIVABLE_READY_TYPE, STOCK_READY_TYPE, SUPPLIER_READY_TYPE, OPERATION_READY_TYPE].includes(event.data?.type)) return;
       if (event.data?.type === FISCAL_RULES_READY_TYPE) { void carregarRegrasFiscais(empresaId); return; }
       if (event.data?.type === FISCAL_PROFILE_READY_TYPE) { void carregarPerfilFiscal(empresaId); return; }
       if (event.data?.type === RECEIVABLE_READY_TYPE) { void carregarRecebimentos(empresaId); return; }
       if (event.data?.type === STOCK_READY_TYPE) { void carregarEstoque(empresaId); return; }
-      if (event.data?.type === CUSTOMER_READY_TYPE) { void carregarClientes(empresaId); return; }
+      if (event.data?.type === CUSTOMER_RETRY_TYPE) {
+        if (permissoes?.empresaId === empresaId && permissoes.snapshot.available === true) void enviarClientes(empresaId, true);
+        else void carregarPermissoes(empresaId);
+        return;
+      }
       if (event.data?.type === CUSTOMER_IMPORT_REQUEST) {
         const port=event.ports?.[0],requestId=String(event.data.requestId||'');
         if(!port||event.data.companyId!==empresaId||!/^[-0-9a-f]{36}$/i.test(requestId))return;
@@ -561,7 +602,7 @@ export default function VendasIntegrado({ initialContext, initialCompanyId }: { 
             const response=await fetch(`/api/modulos/vendas/commercial/customers/import?companyId=${encodeURIComponent(empresaId)}`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body,cache:'no-store'});
             const result=await response.json().catch(()=>({}));
             if(activeCompanyRef.current!==empresaId)throw Error('O perfil foi alterado. Confira os clientes no perfil de origem.');
-            if(result.ok)void carregarClientes(empresaId);
+            if(result.ok)void enviarClientes(empresaId, true);
             port.postMessage({...result,ok:response.ok&&result.ok===true,companyId:empresaId,requestId});
           }catch(error){port.postMessage({ok:false,message:error instanceof Error?error.message:'Não foi possível importar os clientes.',companyId:empresaId,requestId});}
           finally{port.close();}
@@ -675,7 +716,7 @@ export default function VendasIntegrado({ initialContext, initialCompanyId }: { 
             if (!response.ok || payload.ok !== true || !payload.customer) { respond(false, payload.message || 'Não foi possível salvar o cliente.'); return; }
             const mapped = clienteParaTela(payload.customer);
             respond(true, integrated ? 'Cliente atualizado no perfil empresarial.' : 'Cliente cadastrado no perfil empresarial.', mapped);
-            await carregarClientes(empresaId);
+            await enviarClientes(empresaId, true);
           } catch { respond(false, 'A conexão com os clientes foi interrompida. Tente novamente.'); }
         };
         void save(); return;
@@ -1196,7 +1237,7 @@ export default function VendasIntegrado({ initialContext, initialCompanyId }: { 
     };
     window.addEventListener('message', receber);
     return () => window.removeEventListener('message', receber);
-  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, carregarClientes, carregarFornecedores, carregarOperacoes, carregarResumo, empresaId, origemPrototipo, retornarParaGestao, router]);
+  }, [carregarCatalogo, carregarDocumentosFiscais, carregarPermissoes, carregarRegrasFiscais, carregarPerfilFiscal, carregarRecebimentos, carregarEstoque, enviarClientes, carregarFornecedores, carregarOperacoes, carregarResumo, empresaId, origemPrototipo, permissoes, retornarParaGestao, router]);
 
   const perfilPronto = Boolean(empresaId && perfilCadastro);
   const falhaAbertura = (erro && !perfilPronto ? erro : '') || (expirouAbertura ? 'A primeira tela está demorando mais que o esperado.' : '');
@@ -1215,6 +1256,28 @@ export default function VendasIntegrado({ initialContext, initialCompanyId }: { 
     window.parent.postMessage({ type: MENSAGEM_MODULO_PRONTO, destino: 'vendas', empresaId }, origemPrototipo);
   }, [hospedado, empresaId, mostrarVendas, falhaAbertura, origemPrototipo]);
 
+  useEffect(() => () => {
+    clientesCargaRef.current?.controller.abort();
+    clientesCargaRef.current = null;
+  }, [empresaId, tentativaInicial]);
+
+  const permissoesDoPerfil = permissoes?.empresaId === empresaId ? permissoes.snapshot : null;
+  useEffect(() => {
+    if (!permissoesDoPerfil) return;
+    if (permissoesDoPerfil.available !== true) {
+      clientesCargaRef.current?.controller.abort();
+      clientesCargaRef.current = null;
+      if (iframePronto) iframeRef.current?.contentWindow?.postMessage({
+        type: CUSTOMER_SNAPSHOT_TYPE, companyId: empresaId, ok: false,
+        message: 'Não foi possível confirmar o acesso aos clientes.',
+      }, origemPrototipo);
+      return;
+    }
+    // O iframe recebe a mesma consulta iniciada em segundo plano.
+    if (iframePronto && mostrarVendas) void enviarClientes(empresaId);
+    else carregarClientes(empresaId);
+  }, [carregarClientes, empresaId, enviarClientes, iframePronto, mostrarVendas, origemPrototipo, permissoesDoPerfil]);
+
   const perfilComAplicativo = mostrarVendas && permissoes?.snapshot.available === true;
   useEffect(() => {
     if (!perfilComAplicativo || complementaresEmpresaRef.current === empresaId) return;
@@ -1225,11 +1288,11 @@ export default function VendasIntegrado({ initialContext, initialCompanyId }: { 
       complementaresEmpresaRef.current = empresaId;
       await Promise.allSettled([
         carregarCatalogo(empresaId), carregarDocumentosFiscais(empresaId, data.session.access_token), carregarRegrasFiscais(empresaId), carregarPerfilFiscal(empresaId),
-        carregarEstoque(empresaId), carregarClientes(empresaId), carregarFornecedores(empresaId), carregarRecebimentos(empresaId), carregarOperacoes(empresaId),
+        carregarEstoque(empresaId), carregarFornecedores(empresaId), carregarRecebimentos(empresaId), carregarOperacoes(empresaId),
       ]);
     })();
     return () => { ativo = false; };
-  }, [perfilComAplicativo, empresaId, carregarCatalogo, carregarDocumentosFiscais, carregarRegrasFiscais, carregarPerfilFiscal, carregarEstoque, carregarClientes, carregarFornecedores, carregarRecebimentos, carregarOperacoes]);
+  }, [perfilComAplicativo, empresaId, carregarCatalogo, carregarDocumentosFiscais, carregarRegrasFiscais, carregarPerfilFiscal, carregarEstoque, carregarFornecedores, carregarRecebimentos, carregarOperacoes]);
 
 
   return <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-slate-100 text-slate-800">

@@ -3,11 +3,11 @@ import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import {createCommercialOperationService} from '../../app/vendas/lib/server/commercial-operation-service.mjs';
 import {commercialResponse} from '../../app/vendas/lib/server/commercial-visibility.mjs';
-import {fetchCommercialPages} from '../../app/vendas/lib/commercial-pages.mjs';
+import {COMMERCIAL_CUSTOMER_PAGE_SIZE,fetchCommercialPages} from '../../app/vendas/lib/commercial-pages.mjs';
 import {emitterTaxOptions} from '../../app/vendas/lib/fiscal-emitter-capabilities.mjs';
 import {lookupCompanyCnpj} from '../../app/vendas/lib/company-cnpj-lookup.mjs';
 import {formatCnpj,isValidCnpj} from '../../app/vendas/lib/domain.mjs';
-import {normalizeCommercialCustomerInput} from '../../app/vendas/lib/server/commercial-customer-service.mjs';
+import {createCommercialCustomerService,normalizeCommercialCustomerInput} from '../../app/vendas/lib/server/commercial-customer-service.mjs';
 import {companyProfilePatch} from '../../app/vendas/lib/company-profile-save.mjs';
 const companyId='11111111-1111-4111-8111-111111111111',actorId='22222222-2222-4222-8222-222222222222',customerId='33333333-3333-4333-8333-333333333333',productId='55555555-5555-4555-8555-555555555555';
 const context={companyId,actorId,moduleId:'vendas',active:true,moduleActive:true,effectivePermissions:{'sales.view':true,'sales.create':true,'sales.edit':true}};
@@ -61,4 +61,26 @@ test('política HTTP nega acesso sem sessão/permissão e não grava em outro pe
   const response=await handleCommercialPolicy({request:req(),runtime:{accessResolver:{resolve:async()=>access},commercialPolicyRepository:{save:async()=>{writes++;}}}});assert.ok([401,403].includes(response.status));
  }
  assert.equal(writes,0);
+});
+
+test('carga comercial de clientes usa páginas maiores sem truncar a última página', async () => {
+ const customers=Array.from({length:620},(_,i)=>({id:String(i)}));
+ const pages=[];
+ const clientContext={...context,effectivePermissions:{'clients.view':true}};
+ const customerService=createCommercialCustomerService({repository:{
+  create:async()=>{},update:async()=>{},list:async({companyId:company,offset,limit})=>{
+   assert.equal(company,companyId);
+   pages.push([offset,limit]);
+   return customers.slice(offset,offset+limit);
+  },
+ }});
+ const records=await fetchCommercialPages({
+  url:'/customers',key:'customers',token:'ficticio',pageSize:COMMERCIAL_CUSTOMER_PAGE_SIZE,
+  fetcher:async url=>{
+   const params=new URL(url,'https://local.test').searchParams;
+   return Response.json(await customerService.list({context:clientContext,limit:Number(params.get('limit')),offset:Number(params.get('offset'))}));
+  },
+ });
+ assert.deepEqual(pages,[[0,250],[250,250],[500,250]]);
+ assert.deepEqual(records,customers);
 });

@@ -102,3 +102,40 @@ test('troca encaminhada pelo iframe exige origem, janela e empresa atuais', () =
  env.exports.receive(ready);
  assert.deepEqual(revealed,[true]);
 });
+
+test('clientes são pré-carregados com prioridade baixa e entregues pela mesma consulta sem bloquear a primeira tela', async () => {
+ const deferred=defer();
+ const calls=[], snapshots=[];
+ const activeCompanyRef={current:'company'};
+ const destination={postMessage:message=>snapshots.push(message)};
+ const env={exports:{},useCallback:fn=>fn,AbortController,window:{setTimeout,clearTimeout},
+  UUID_PATTERN:{test:()=>true},activeCompanyRef,clientesCargaRef:{current:null},
+  iframeRef:{current:null},origemPrototipo:'http://localhost:3000',CUSTOMER_SNAPSHOT_TYPE:'clientes',
+  COMMERCIAL_CUSTOMER_PAGE_SIZE:250,clienteParaTela:record=>record,
+  aguardarComLimite:result=>result,supabase:{auth:{getSession:async()=>({data:{session:{access_token:'sintetico'}}})}},
+  fetchCommercialPages:input=>input.fetcher(input.url,{}),
+  fetch:(url,options)=>{calls.push({url,priority:options.priority});return deferred.promise;},
+ };
+ const start=parent.indexOf('  const carregarClientes = useCallback(');
+ const end=parent.indexOf('  const carregarFornecedores =',start);
+ run(parent.slice(start,end)+'\nexports.load=carregarClientes;exports.send=enviarClientes;',env);
+ const preloaded=env.exports.load('company');
+ await tick();
+ assert.equal(calls.length,1);
+ assert.equal(calls[0].priority,'low');
+ assert.equal(snapshots.length,0);
+ env.iframeRef.current={contentWindow:destination};
+ const pending=env.exports.send('company');
+ assert.equal(env.clientesCargaRef.current,preloaded);
+ deferred.resolve([{id:'cliente-ficticio'}]);
+ await pending;
+ assert.equal(calls.length,1);
+ assert.equal(snapshots[0].customers[0].id,'cliente-ficticio');
+
+ const stale=env.exports.send('company',true);
+ activeCompanyRef.current='another-company';
+ await stale;
+ assert.equal(snapshots.length,1);
+ assert.match(parent,/if \(iframePronto && mostrarVendas\) void enviarClientes\(empresaId\);\s*else carregarClientes\(empresaId\)/);
+ assert.match(parent,/const mostrarVendas = heroPronta && perfilPronto;/);
+});

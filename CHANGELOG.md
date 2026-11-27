@@ -1,3 +1,7 @@
+# 3.2.0.565 — Vendas e Serviços: carregar clientes em segundo plano
+
+- Antecipa a consulta de clientes com páginas maiores e prioridade baixa. O seletor do pedido indica a espera, preserva o termo digitado e permite tentar novamente se a consulta falhar.
+
 # 3.2.0.564 — Vendas e Serviços e Marketplaces: formas de pagamento, troca de tabela de preços e avisos de anúncios
 
 - Em Pagamentos, permite cadastrar formas por empresa e ativar ou desativar todas as opções, inclusive Consignado. Pedidos mostram as formas ativas e os filtros incluem valores do histórico. Consignado permanece sem parcelas e vencimento.
