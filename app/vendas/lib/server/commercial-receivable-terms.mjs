@@ -41,7 +41,7 @@ export async function changeReceivableTerms(client,{companyId,actorId,receivable
   let schedule=[];
   if(consigned){
     if(installments!==0||firstDueDate!=='')fail('AV-RECEIVABLE-INPUT');
-    await client.query("update public.vendas_contas_receber set situacao='cancelado',meio_pagamento='consignado',atualizado_por=$3 where empresa_id=$1 and operacao_id=$2 and situacao not in ('cancelado','estornado')",[companyId,operation.id,actorId]);
+    await client.query("update public.vendas_contas_receber set situacao='aberto',meio_pagamento='consignado',atualizado_por=$3 where empresa_id=$1 and operacao_id=$2 and situacao not in ('cancelado','estornado')",[companyId,operation.id,actorId]);
   }else if(!reschedule){
     await client.query('update public.vendas_contas_receber set meio_pagamento=$3,atualizado_por=$4 where empresa_id=$1 and operacao_id=$2 and saldo_aberto>0 and situacao not in (\'cancelado\',\'estornado\')',[companyId,operation.id,method,actorId]);
   }else{

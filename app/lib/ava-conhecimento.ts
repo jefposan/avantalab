@@ -3166,3 +3166,21 @@ GUIAS['gestao-web'] += ' Revisão local 3.2.0.540: em Consignado, os campos não
 // Revisão 3.2.0.541: sem impacto operacional nos três ambientes; janela de alteração de pagamento em Recebimentos Web com textos introdutórios retirados.
 
 // Revisão 3.2.0.542: sem impacto operacional nos três ambientes; campos de parcelas e vencimento do consignado desativados em cinza claro, vazios e sem placeholder na edição de Recebimentos Web.
+
+GUIAS['gestao-web'] += ' Revisão 3.2.0.543: consignados permanecem visíveis em Recebimentos, inclusive após conversão, com filtro Consignado. Não possuem parcelas, vencimento, saldo cobrável ou atraso; histórico preservado.';
+
+GUIAS['gestao-web'] += ' Revisão 3.2.0.544: o saldo existente de recebimentos consignados permanece disponível para pagamentos parciais e totais. Consignado não vence nem atrasa. A forma efetiva do recebimento (PIX, dinheiro etc.) é registrada separada da condição consignada. Não cria parcelas para novos pedidos consignados.';
+
+GUIAS['gestao-web'] += ' Revisão 3.2.0.545: em Recebimentos, combine Buscar, Situação e Forma de pagamento. Todas as formas remove apenas o recorte por forma; Todas as situações remove apenas o recorte financeiro. Os filtros não alteram lançamentos ou totais do painel.';
+
+GUIAS['gestao-web'] += ' Revisão 3.2.0.546: em Vendas, Situação informa o andamento e Financeiro informa Em aberto, Parcialmente pago, Pago ou Bonificado. Combine Buscar, Situação e Financeiro com o período já existente no topo. Cancelados e não faturados mostram traço. Consultando ou Não disponível não significam quitação; bonificação exige identificação explícita.';
+
+// Revisão 3.2.0.547: sem impacto operacional; retirado cabeçalho redundante da lista de Vendas Web.
+
+GUIAS['gestao-web'] += ' Revisão 3.2.0.548: após rolar Vendas e Serviços, o botão circular Voltar ao topo aparece no canto inferior esquerdo. Ele retorna ao início sem limpar filtros ou alterar dados; fica oculto no topo e durante modais.';
+
+GUIAS['gestao-web'] += ' Revisão 3.2.0.549: Voltar ao topo fica no canto inferior direito, sem borda e com maior transparência; funcionamento preservado.';
+
+GUIAS['gestao-web'] += ' Revisão 3.2.0.550: Serviços e Notas Fiscais têm setas de mês e Selecionar datas no topo, sem Todo o período. O intervalo inclui os dois limites. Em Serviços vale o agendamento; em Notas, a data exibida na lista. Os resumos acompanham o período; filtros não emitem nem reservam número.';
+
+// Revisão 3.2.0.551: sem impacto operacional; largura estável dos seletores mensais compartilhados.

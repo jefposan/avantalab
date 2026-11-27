@@ -203,7 +203,7 @@ test('perfil integrado mantém indicadores reais nas páginas e menu sem contado
     readFile(new URL('../../app/vendas/sistema/page.tsx', import.meta.url), 'utf8'),
   ]);
   assert.doesNotMatch(source, /const displayCount|const salesRecordCount|const serviceRecordCount|const fiscalDocumentCount/);
-  assert.match(source, /<Metric label="Documentos" value=\{String\(drafts.length\)\}/);
+  assert.match(source, /<Metric label="Documentos" value=\{String\(periodDrafts.length\)\}/);
   assert.match(source, /<Metric label="Receita recebida" value=\{money\(snapshot.receivedNet\)\}/);
   assert.match(source, /connected \? 0 : 9360/);
   assert.match(source, /connected \? 0 : 2260/);

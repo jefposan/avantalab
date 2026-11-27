@@ -1,4 +1,22 @@
-<!-- ava-version: 3.2.0.542 -->
+<!-- ava-version: 3.2.0.551 -->
+
+> Revisão 3.2.0.551: sem impacto operacional; seletores mensais compartilhados mantêm largura constante ao mudar mês ou ano, inclusive na variante compacta.
+
+> Revisão 3.2.0.550: sem impacto operacional no aplicativo mobile; seletores de período adicionados a Serviços e Notas Fiscais Web.
+
+> Revisão 3.2.0.549: sem impacto operacional; Voltar ao topo em Vendas e Serviços Web passa ao canto inferior direito, sem borda e mais transparente.
+
+> Revisão 3.2.0.548: sem impacto operacional no aplicativo mobile; retorno ao topo adicionado ao módulo Vendas e Serviços Web.
+
+> Revisão 3.2.0.547: sem impacto operacional; removidos título Vendas repetido e descrição introdutória acima dos filtros da lista Web.
+
+> Revisão 3.2.0.546: sem impacto operacional no mobile; coluna financeira na lista de pedidos do módulo Web.
+
+> Revisão 3.2.0.545: sem impacto operacional no mobile; filtros de Recebimentos Web refinados.
+
+> Revisão 3.2.0.544: sem impacto operacional no mobile; recebimento de saldo consignado existente ajustado no módulo Web.
+
+> Revisão 3.2.0.543: sem impacto operacional no mobile; corrigida visibilidade de consignados em Recebimentos Web.
 
 > Revisão 3.2.0.542: sem impacto operacional; Parcelas e vencimento do consignado vazios, sem placeholder e desativados em cinza claro na edição de Recebimentos Web.
 

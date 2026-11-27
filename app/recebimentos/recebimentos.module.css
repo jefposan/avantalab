@@ -467,7 +467,10 @@
   align-items: center;
   gap: 4px;
   padding: 0 10px;
-  min-width: 84px;
+  box-sizing: border-box;
+  flex: 0 0 100px;
+  width: 100px;
+  min-width: 100px;
   justify-content: center;
   font-size: 12px;
   font-weight: 800;
@@ -487,7 +490,9 @@
 }
 .mesSeletorColaborador .mesSeletorBtn { padding-inline: 4px; }
 .mesSeletorColaborador .mesSeletorLabel {
-  min-width: 68px;
+  flex-basis: 80px;
+  width: 80px;
+  min-width: 80px;
   padding-inline: 4px;
   font-size: 11px;
 }

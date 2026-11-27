@@ -1,3 +1,47 @@
+# 3.2.0.551 — Seletores: manter largura na troca do mês
+
+- Largura fixa da área de mês/ano no estilo compartilhado e na variante compacta, evitando deslocamento das setas e dos campos vizinhos.
+
+# 3.2.0.550 — Vendas: período em Serviços e Notas Fiscais
+
+- Seletor mensal e intervalo personalizado no topo das duas páginas, com componente oficial e sem Todo o período.
+- Listas e resumos respeitam datas inclusivas; Serviços usa agendamento, Notas usa a data da lista.
+
+# 3.2.0.549 — Vendas: refinar botão Voltar ao topo
+
+- Movido ao canto inferior direito, sem borda e com maior transparência.
+
+# 3.2.0.548 — Vendas: botão flutuante Voltar ao topo
+
+- Variante do botão oficial, maior e translúcida, com seta para cima no canto inferior esquerdo após rolar a página.
+- Retorno suave, respeito a movimento reduzido, áreas seguras e bloqueio durante modais.
+
+# 3.2.0.547 — Vendas: remover cabeçalho repetido da lista
+
+- Retirados o título Vendas e a descrição acima dos filtros; título principal da página preservado.
+
+# 3.2.0.546 — Vendas: coluna Financeiro e filtros identificados
+
+- Situação preservada e nova coluna Financeiro calculada pelos recebimentos e estornos vinculados ao pedido.
+- Buscar, Situação e Financeiro com títulos acima, sem duplicar o período.
+- Respeita permissões, carregamento e falha da consulta financeira; valor zero não implica bonificação ou pagamento.
+
+# 3.2.0.545 — Recebimentos: filtros de situação e forma de pagamento
+
+- Busca, situação e forma de pagamento combinadas na mesma linha, com títulos acima de cada campo e empilhamento no celular.
+- Reutilizado CampoBusca oficial; filtros preservam os registros e totais financeiros.
+
+# 3.2.0.544 — Recebimentos: permitir pagamento de saldos consignados existentes
+
+- Saldo consignado preservado para recebimentos parciais, totais e estornos, sem vencimento ou atraso.
+- Migração auditada e idempotente para recuperar somente cobranças suspensas pela conversão antiga; preserva cancelamentos posteriores.
+- Resumos no servidor carregam a forma de pagamento para respeitar a isenção de atraso.
+
+# 3.2.0.543 — Recebimentos: manter consignados visíveis
+
+- Corrigida a exclusão dos consignados na lista, com filtro próprio e sem exibir parcelas ou vencimento históricos como cobrança atual.
+- Preservados saldo zero, ausência de atraso e histórico financeiro.
+
 ## 3.2.0.542 — Vendas e Custos: preços completos e condições de recebimento
 
 - Entrega reúne revisão de importação com nome de produto e ordenação; leitura completa dos preços e aplicação da tabela selecionada; edição de pagamento/parcelas com auditoria e consignado sem prazo; menu Notas Fiscais sem contador.

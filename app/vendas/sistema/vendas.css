@@ -446,9 +446,10 @@ td strong { color: #293c4e; font-size: 10.7px; }
 .commercial-operations-table th:nth-child(1) { width: 12%; }
 .commercial-operations-table th:nth-child(2) { width: 10%; }
 .commercial-operations-table th:nth-child(3) { width: auto; }
-.commercial-operations-table th:nth-child(4) { width: 16%; }
-.commercial-operations-table th:nth-child(5) { width: 16%; text-align: right; padding-right: 18px; }
-.commercial-operations-table th:nth-child(6) { width: 152px; text-align: right; padding-right: 10px; }
+.commercial-operations-table th:nth-child(4) { width: 12%; }
+.commercial-operations-table th:nth-child(5) { width: 12%; text-align: right; padding-right: 18px; }
+.commercial-operations-table th:nth-child(6) { width: 154px; }
+.commercial-operations-table th:nth-child(7) { width: 152px; text-align: right; padding-right: 10px; }
 .commercial-operations-table td { min-width: 0; text-overflow: ellipsis; white-space: nowrap; }
 .commercial-operations-table td:nth-child(3) { white-space: normal; overflow-wrap: anywhere; }
 .commercial-operations-table td.numeric { min-width: 0; padding-right: 18px; }
@@ -1854,7 +1855,7 @@ td strong { color: #293c4e; font-size: 10.7px; }
   .commercial-operations-table table, .commercial-operations-table tbody { display: block; width: 100%; }
   .commercial-operations-table thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .commercial-operations-table tbody { display: grid; gap: 10px; }
-  .commercial-operations-table tbody tr { display: grid; grid-template-columns: minmax(110px,.65fr) minmax(0,1.2fr) minmax(152px,.8fr); grid-template-areas: "number client status" "date total actions"; gap: 9px 14px; min-width: 0; padding: 13px 14px; background: #f7fafc; border-radius: 11px; }
+  .commercial-operations-table tbody tr { display: grid; grid-template-columns: minmax(110px,.65fr) minmax(0,1.2fr) minmax(152px,.8fr); grid-template-areas: "number client status" "date client financial" "total total actions"; gap: 9px 14px; min-width: 0; padding: 13px 14px; background: #f7fafc; border-radius: 11px; }
   .commercial-operations-table tbody tr:hover td { background: transparent; }
   .commercial-operations-table td { display: grid; align-content: start; gap: 4px; min-width: 0; width: auto; height: auto; padding: 0; overflow: visible; border: 0; text-align: left; white-space: normal; }
   .commercial-operations-table td::before { content: attr(data-label); color: #7b8a98; font-size: 8px; font-weight: 850; letter-spacing: .045em; line-height: 1.2; text-transform: uppercase; }
@@ -1863,8 +1864,9 @@ td strong { color: #293c4e; font-size: 10.7px; }
   .commercial-operations-table td:nth-child(3) { grid-area: client; }
   .commercial-operations-table td:nth-child(4) { grid-area: status; }
   .commercial-operations-table td:nth-child(5) { grid-area: total; }
-  .commercial-operations-table td:nth-child(6) { grid-area: actions; align-self: end; }
-  .commercial-operations-table td:nth-child(1)::before, .commercial-operations-table td:nth-child(6)::before { display: none; }
+  .commercial-operations-table td:nth-child(6) { grid-area: financial; }
+  .commercial-operations-table td:nth-child(7) { grid-area: actions; align-self: end; }
+  .commercial-operations-table td:nth-child(1)::before, .commercial-operations-table td:nth-child(7)::before { display: none; }
   .commercial-operations-table td.numeric { min-width: 0; text-align: left; }
   .commercial-operations-table .commercial-actions-cell .row-action { width: 44px; height: 44px; }
   .service-orders-table { overflow: visible; }
@@ -2087,7 +2089,7 @@ td strong { color: #293c4e; font-size: 10.7px; }
   .client-report-footer .button { flex: 1 1 150px; }
   .client-table tbody tr { grid-template-columns: minmax(0,1fr) 44px; grid-template-areas: "name actions" "document document" "contact contact" "fiscal fiscal" "history status"; gap: 11px 12px; padding: 13px; }
   .catalog-table tbody tr { grid-template-columns: minmax(0,1fr) 44px; grid-template-areas: "item actions" "values values" "operation operation" "fiscal fiscal" "sync status"; gap: 11px 12px; padding: 13px; }
-  .commercial-operations-table tbody tr { grid-template-columns: minmax(0,1fr) minmax(152px,1fr); grid-template-areas: "number status" "client client" "date date" "total actions"; gap: 11px 12px; padding: 13px; }
+  .commercial-operations-table tbody tr { grid-template-columns: minmax(0,1fr) minmax(152px,1fr); grid-template-areas: "number status" "client client" "date financial" "total actions"; gap: 11px 12px; padding: 13px; }
   .service-orders-table tbody tr { grid-template-columns: minmax(0,1fr) 44px; grid-template-areas: "service-id actions" "client client" "status fiscal" "schedule schedule" "description description" "technician total"; gap: 11px 12px; padding: 13px; }
   .receivables-table tbody tr { grid-template-columns: minmax(0,1fr) 44px; grid-template-areas: "parcel actions" "party party" "status due" "condition condition" "value received" "balance balance"; gap: 11px 12px; padding: 13px; }
   .receivable-origin-banner { grid-template-columns: 40px minmax(0,1fr); }
@@ -2198,7 +2200,7 @@ td strong { color: #293c4e; font-size: 10.7px; }
   .catalog-tax-checks > div { grid-template-columns: 28px minmax(0,1fr); }
   .catalog-tax-checks > div > .badge { grid-column: 2; width: max-content; }
   .catalog-table tbody tr { grid-template-areas: "item actions" "values values" "operation operation" "fiscal fiscal" "sync sync" "status status"; }
-  .commercial-operations-table tbody tr { grid-template-columns: minmax(0,1fr) minmax(152px,1fr); grid-template-areas: "number number" "client client" "date status" "total actions"; }
+  .commercial-operations-table tbody tr { grid-template-columns: minmax(0,1fr) minmax(152px,1fr); grid-template-areas: "number number" "client client" "date status" "financial financial" "total actions"; }
   .service-orders-table tbody tr { grid-template-areas: "service-id actions" "client client" "status status" "fiscal fiscal" "schedule schedule" "description description" "technician technician" "total total"; }
   .receivables-table tbody tr { grid-template-areas: "parcel actions" "party party" "status status" "due due" "condition condition" "value value" "received received" "balance balance"; }
   .receivable-detail-summary, .receivable-definition-list { grid-template-columns: 1fr; }
@@ -2695,4 +2697,21 @@ button.commercial-indicator-target[aria-disabled="true"] { cursor: default; }
   color: var(--av-muted);
   border-color: var(--av-border);
   cursor: not-allowed;
+}
+
+/* Filtros de Recebimentos: títulos visíveis e campos alinhados. */
+.receivable-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, .45fr) minmax(190px, .5fr); align-items: end; gap: 14px; margin-bottom: 16px; }
+.receivable-filters .avanta-campo-busca { min-width: 0; }
+@media (max-width: 760px) {
+  .receivable-filters { grid-template-columns: minmax(0, 1fr); }
+}
+
+.commercial-financial-cell { white-space: normal !important; overflow-wrap: anywhere; }
+.commercial-financial-cell .badge { white-space: normal; }
+
+.commercial-period-actions > div:first-child { flex: 0 0 auto; }
+@media (max-width: 760px) {
+  .page-heading:has(.commercial-period-actions) { align-items: stretch; }
+  .commercial-period-actions > div:first-child { flex: 0 0 100%; width: 100%; }
+  .commercial-period-actions > div:first-child > [role="group"] { width: 100%; }
 }

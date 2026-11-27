@@ -29,8 +29,8 @@ export async function GET(request:Request){
   const permissions=resolveModuleEffectivePermissions({profile:access.vinculo.perfil,roleOverrides:decisions(roles.data||[]),userOverrides:decisions(users.data||[])});
   if(!permissions['dashboard.view'])return reply(403,'Sem permissão para visualizar o painel.');
   const [operations,receivables]=await Promise.all([
-   pages(()=>db.from('vendas_operacoes').select('id,tipo,canal,situacao,total,criado_em,entrega_retrato').eq('empresa_id',companyId).order('id')),
-   permissions['receivables.view']?pages(()=>db.from('vendas_contas_receber').select('id,operacao_id,vencimento,situacao,valor_original,valor_recebido,valor_estornado').eq('empresa_id',companyId).order('id')):[],
+   pages(()=>db.from('vendas_operacoes').select('id,tipo,canal,situacao,total,criado_em,entrega_retrato,pagamento_retrato').eq('empresa_id',companyId).order('id')),
+   permissions['receivables.view']?pages(()=>db.from('vendas_contas_receber').select('id,operacao_id,vencimento,situacao,meio_pagamento,valor_original,valor_recebido,valor_estornado').eq('empresa_id',companyId).order('id')):[],
   ]);
   const ids=operations.filter(row=>['faturado','concluido'].includes(row.situacao)).map(row=>row.id);
   const batches=Array.from({length:Math.ceil(ids.length/100)},(_,i)=>ids.slice(i*100,i*100+100));

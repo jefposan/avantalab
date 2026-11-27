@@ -1,0 +1,2 @@
+export type OrderFinancialStatus = '—'|'Consultando…'|'Não disponível'|'Em aberto'|'Parcialmente pago'|'Pago'|'Bonificado';
+export function orderFinancialStatus(order:{id:string;status?:string;total:number;persistence?:{operationId:string};order?:{operationNature?:string;paymentMethod?:string}}|undefined,receivables?:Array<{origin:string;status?:string;value:number;received:number;refunded:number;reversed:number;persistence?:{operationId:string}}>,options?:{ready?:boolean;failed?:boolean;allowed?:boolean}):OrderFinancialStatus;

@@ -534,7 +534,7 @@ export function calculateCommercialReport({ operations = [], receivables = [], c
     const received = Math.max(0, (Number(record?.received) || 0) - (Number(record?.refunded) || 0));
     openReceivables += balance;
     receivedNet += received;
-    if (balance > 0 && todayIso && String(record?.dueDate || '') < todayIso) overdueReceivables += balance;
+    if (balance > 0 && todayIso && ['Atrasado','Recebido parcial'].includes(receivableStatus(record,todayIso)) && record?.dueDate && record.dueDate < todayIso) overdueReceivables += balance;
     const createdAt = new Date(record?.createdAt || '');
     const dueAt = new Date(`${record?.dueDate || ''}T12:00:00`);
     if (!Number.isNaN(createdAt.getTime()) && !Number.isNaN(dueAt.getTime())) {
@@ -676,7 +676,6 @@ export function createReceivableSchedule({ total, installments, firstDueDate }) 
 }
 
 export function receivableBalance(record) {
-  if(String(record?.method||'').trim().toLowerCase()==='consignado')return 0;
   const principal = Math.max(0, roundCurrency((Number(record?.value) || 0) - (Number(record?.reversed) || 0)));
   const netReceived = Math.max(0, roundCurrency((Number(record?.received) || 0) - (Number(record?.refunded) || 0)));
   return roundCurrency(Math.max(0, principal - netReceived));
@@ -689,8 +688,8 @@ export function receivableStatus(record, todayIso) {
   const balance = receivableBalance(record);
   if (reversed >= value && netReceived <= 0) return 'Estornado';
   if (reversed >= value && netReceived > 0) return 'Estorno pendente';
-  if(String(record?.method||'').trim().toLowerCase()==='consignado')return 'Consignado';
   if (balance <= 0 && value > 0) return 'Recebido';
+  if(String(record?.method||'').trim().toLowerCase()==='consignado')return 'Consignado';
   if (netReceived > 0) return 'Recebido parcial';
   if (record?.dueDate && todayIso && record.dueDate < todayIso) return 'Atrasado';
   if (record?.dueDate && todayIso && record.dueDate === todayIso) return 'Vence hoje';

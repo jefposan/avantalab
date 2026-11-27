@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {PGlite} from '@electric-sql/pglite';
-import {receivableBalance,receivableStatus} from '../../app/vendas/lib/domain.mjs';
+import {receivableBalance,receivableStatus,applyReceivablePayment,calculateCommercialReport} from '../../app/vendas/lib/domain.mjs';
 import {paymentSchedule} from '../../app/vendas/lib/server/commercial-receivable-terms.mjs';
 import {createPostgresCommercialReceivableRepository,createCommercialReceivableService} from '../../app/vendas/lib/server/commercial-receivable-service.mjs';
 import {handleCommercialReceivableRequest} from '../../app/vendas/lib/server/commercial-receivable-http.mjs';
@@ -12,6 +12,7 @@ test('SQL real: altera condições, preserva total/histórico, idempotência, co
  await db.exec(sql.slice(sql.indexOf('create table public.vendas_contas_receber ('),sql.indexOf('create table public.vendas_fiscal_configuracoes (')));
  await db.exec(sql.slice(sql.indexOf('create table public.vendas_eventos ('),sql.indexOf('create index vendas_clientes_busca_idx')));
  await db.exec(`create function touch() returns trigger language plpgsql as $$begin new.versao=old.versao+1;new.atualizado_em=now();return new;end$$;create trigger touch before update on vendas_contas_receber for each row execute function touch();insert into vendas_contas_receber(id,empresa_id,operacao_id,parcela,total_parcelas,vencimento,valor_original,saldo_aberto,meio_pagamento,chave_idempotencia) values('${rid}','${company}','${op}',1,1,'2027-01-31',100.01,100.01,'pix','original');`);
+ await db.exec('alter table vendas_contas_receber_eventos add column data_movimentacao date');
  const pool={query:(...a)=>db.query(...a),connect:async()=>({query:(...a)=>db.query(...a),release(){}})},repo=createPostgresCommercialReceivableRepository({pool});
  const rows=async()=>(await db.query('select * from vendas_contas_receber order by parcela')).rows;
  const input=async(key,extra={})=>({companyId:company,actorId:actor,receivableId:rid,idempotencyKey:key,method:'boleto',installments:3,firstDueDate:'2027-01-31',expectedVersions:(await rows()).map(r=>({id:r.id,version:r.versao})),allowedTypes:['pedido'],...extra});
@@ -30,9 +31,35 @@ test('SQL real: altera condições, preserva total/histórico, idempotência, co
  await assert.rejects(repo.changeTerms(await input('terms:consigned-paid',{method:'consignado',installments:0,firstDueDate:''})),e=>e.code==='AV-RECEIVABLE-PAID');
  await db.exec('update vendas_contas_receber set valor_recebido=0,valor_estornado=0,saldo_aberto=valor_original');
  const consigned=await input('terms:consigned',{method:'consignado',installments:0,firstDueDate:''});await repo.changeTerms(consigned);
- assert.ok((await rows()).every(r=>r.situacao==='cancelado'));
+ assert.equal((await rows()).filter(r=>r.meio_pagamento==='consignado'&&r.situacao==='aberto').length,2);
+ assert.equal((await rows())[2].situacao,'cancelado');
  const payment=(await db.query('select pagamento_retrato from vendas_operacoes')).rows[0].pagamento_retrato;
  assert.deepEqual(payment,{method:'consignado',installments:0,firstDueDate:''});assert.equal((await repo.changeTerms(consigned)).reused,true);
+ // Simula exatamente o efeito da versão anterior, com o mesmo timestamp da auditoria.
+ await db.exec('begin');
+ await db.exec("update vendas_contas_receber set situacao='cancelado' where meio_pagamento='consignado'");
+ await db.exec("update vendas_eventos set criado_em=now() where chave_idempotencia='terms:consigned'");
+ await db.exec('commit');
+ const recovery=readFileSync('supabase/migrations/20261127010000_vendas_consignado_saldo_recebivel.sql','utf8');
+ await db.exec(recovery);
+ assert.equal((await rows()).filter(r=>r.situacao==='aberto').length,2);
+ assert.equal((await rows())[2].situacao,'cancelado');
+ const recoveredVersions=(await rows()).map(r=>r.versao);
+ await db.exec(recovery);
+ assert.deepEqual((await rows()).map(r=>r.versao),recoveredVersions);
+ // Um cancelamento real posterior não pode ser reaberto pela reaplicação.
+ await db.exec("update vendas_contas_receber set situacao='cancelado' where parcela=2");
+ await db.exec(recovery);
+ assert.equal((await rows())[1].situacao,'cancelado');
+ const move=async(key,type,amount)=>repo.move({companyId:company,actorId:actor,receivableId:rid,expectedVersion:(await rows())[0].versao,idempotencyKey:key,type,amount,date:'2026-11-26',method:'PIX',account:'Caixa',description:'Teste sintético'});
+ const partial=await move('consigned:partial','recebimento',10);
+ assert.equal(partial.receivable.balance,40);
+ assert.equal((await move('consigned:partial','recebimento',10)).reused,true);
+ await assert.rejects(move('consigned:excess','recebimento',41),e=>e.code==='AV-RECEIVABLE-AMOUNT');
+ assert.equal((await move('consigned:full','recebimento',40)).receivable.balance,0);
+ assert.equal((await move('consigned:refund','estorno_recebimento',5)).receivable.balance,5);
+ assert.equal((await rows())[2].situacao,'cancelado');
+
  }finally{await db.close();}
 });
 test('servidor recusa alteração sem permissão e corpo inválido antes de escrever',async()=>{
@@ -41,4 +68,18 @@ test('servidor recusa alteração sem permissão e corpo inválido antes de escr
  const input={context,receivableId:rid,idempotencyKey:'terms:test',method:'boleto',installments:2,firstDueDate:'2027-01-01',expectedVersions:[{id:rid,version:1}]};assert.equal((await service.changeTerms(input)).ok,false);context.effectivePermissions['sales.edit']=true;assert.equal((await service.changeTerms({...input,installments:0})).ok,false);assert.equal(writes,0);assert.equal((await service.changeTerms(input)).ok,true);assert.equal(writes,1);assert.equal((await service.changeTerms({...input,method:'consignado',installments:0,firstDueDate:''})).ok,true);assert.equal(writes,2);
 });
 
-test('consignado nunca gera saldo vencido nem é apresentado como recebido',()=>{const r={method:'Consignado',value:109,received:0,refunded:0,reversed:0,dueDate:'2020-01-01'};assert.equal(receivableBalance(r),0);assert.equal(receivableStatus(r,'2026-11-26'),'Consignado');});
+test('saldo pendente consignado não vence nem é apresentado como recebido',()=>{const r={method:'Consignado',value:109,received:0,refunded:0,reversed:0,dueDate:'2020-01-01'};assert.equal(receivableBalance(r),109);assert.equal(receivableStatus(r,'2026-11-26'),'Consignado');});
+
+
+test('saldos consignados aceitam parcial e total sem vencer ou atrasar nos resumos',()=>{
+ const base={method:'Consignado',value:109,received:0,refunded:0,reversed:0,dueDate:'2020-01-01'};
+ assert.equal(applyReceivablePayment(base,40).valid,true);
+ assert.equal(receivableBalance({...base,received:40}),69);
+ assert.equal(receivableStatus({...base,received:40},'2026-11-26'),'Consignado');
+ assert.equal(receivableStatus({...base,received:109},'2026-11-26'),'Recebido');
+ assert.equal(applyReceivablePayment({...base,received:109},1).valid,false);
+ assert.equal(applyReceivablePayment(base,110).valid,false);
+ const report=calculateCommercialReport({receivables:[base],todayIso:'2026-11-26'});
+ assert.equal(report.openReceivables,109);
+ assert.equal(report.overdueReceivables,0);
+});

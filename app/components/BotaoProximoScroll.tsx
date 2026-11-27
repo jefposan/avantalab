@@ -12,6 +12,7 @@ import { createPortal } from 'react-dom';
 import styles from './BotaoProximoScroll.module.css';
 
 type BotaoProximoScrollProps = {
+  acao?: 'avancar' | 'voltar-topo';
   scrollContainerRef?: RefObject<HTMLElement | null>;
   modo?: 'pagina' | 'container';
   destinos?: readonly string[];
@@ -59,6 +60,7 @@ function avancoNoTrecho(trecho: HTMLElement, distanciaInferior: number, topoFixo
 }
 
 export default function BotaoProximoScroll({
+  acao = 'avancar',
   scrollContainerRef,
   modo = 'pagina',
   destinos = [],
@@ -80,11 +82,18 @@ export default function BotaoProximoScroll({
     () => true,
     () => false
   );
-  const emContainer = modo === 'container';
-  const acompanhaArea = emContainer || Boolean(trechoPaginaId);
+  const voltarAoTopo = acao === 'voltar-topo';
+  const emContainer = !voltarAoTopo && modo === 'container';
+  const acompanhaArea = !voltarAoTopo && (emContainer || Boolean(trechoPaginaId));
   const distanciaInferior = distanciaInferiorInformada ?? (emContainer ? 28 : 20);
 
   const atualizarVisibilidade = useCallback(() => {
+    if (voltarAoTopo) {
+      const bloqueada = document.body.style.overflowY === 'hidden' || document.documentElement.style.overflowY === 'hidden'
+        || Boolean(document.querySelector('[role="dialog"][aria-modal="true"], dialog[open]'));
+      setVisivel(!bloqueada && elementoRolagemPagina().scrollTop > 160);
+      return;
+    }
     const container = trechoPaginaId ? document.getElementById(trechoPaginaId) : scrollContainerRef?.current;
     if (acompanhaArea) {
       if (!container) {
@@ -125,7 +134,7 @@ export default function BotaoProximoScroll({
 
     const pagina = elementoRolagemPagina();
     setVisivel(pagina.scrollHeight - pagina.scrollTop - pagina.clientHeight > LIMIAR_FIM_PX);
-  }, [acompanhaArea, distanciaInferior, scrollContainerRef, topoFixo, trechoPaginaId]);
+  }, [acompanhaArea, distanciaInferior, scrollContainerRef, topoFixo, trechoPaginaId, voltarAoTopo]);
 
   useEffect(() => {
     const container = scrollContainerRef?.current;
@@ -162,7 +171,7 @@ export default function BotaoProximoScroll({
       childList: true, subtree: true,
       ...(trechoPaginaId && { attributes: true, attributeFilter: ['hidden', 'inert'] }),
     });
-    const bloqueio = trechoPaginaId && typeof MutationObserver !== 'undefined'
+    const bloqueio = (trechoPaginaId || voltarAoTopo) && typeof MutationObserver !== 'undefined'
       ? new MutationObserver(agendarAtualizacao)
       : null;
     bloqueio?.observe(document.body, { attributes: true, attributeFilter: ['style'] });
@@ -181,9 +190,13 @@ export default function BotaoProximoScroll({
       mutacoes?.disconnect();
       bloqueio?.disconnect();
     };
-  }, [atualizarVisibilidade, scrollContainerRef, trechoPaginaId]);
+  }, [atualizarVisibilidade, scrollContainerRef, trechoPaginaId, voltarAoTopo]);
 
   const avancar = () => {
+    if (voltarAoTopo) {
+      window.scrollTo({ top: 0, left: 0, behavior: movimentoReduzido() ? 'instant' : 'smooth' });
+      return;
+    }
     const behavior: ScrollBehavior = movimentoReduzido() ? 'auto' : 'smooth';
     if (trechoPaginaId) {
       const trecho = document.getElementById(trechoPaginaId);
@@ -241,7 +254,7 @@ export default function BotaoProximoScroll({
 
   const conteudo = (
     <div
-      className={`${styles.root} ${acompanhaArea ? styles.container : styles.pagina} ${visivel ? styles.visivel : ''} ${temaEscuro ? styles.escuro : ''} ${className}`}
+      className={`${styles.root} ${voltarAoTopo ? styles.topo : ''} ${acompanhaArea ? styles.container : styles.pagina} ${visivel ? styles.visivel : ''} ${temaEscuro ? styles.escuro : ''} ${className}`}
       style={{
         '--av-scroll-next-bottom': `${distanciaInferior}px`,
         '--av-scroll-next-left': `${posicaoContainer.left}px`,
@@ -253,14 +266,14 @@ export default function BotaoProximoScroll({
         type="button"
         className={styles.botao}
         onClick={avancar}
-        aria-label={ariaLabel}
+        aria-label={voltarAoTopo ? 'Voltar ao topo' : ariaLabel}
         aria-controls={trechoPaginaId}
-        title={title}
+        title={voltarAoTopo ? 'Voltar ao topo' : title}
         tabIndex={visivel ? 0 : -1}
       >
         <span className={styles.circulo}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.25" d="M12 5v14m0 0l-6-6m6 6l6-6" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.25" d={voltarAoTopo ? 'M12 19V5m0 0l-6 6m6-6l6 6' : 'M12 5v14m0 0l-6-6m6 6l6-6'} />
           </svg>
         </span>
       </button>

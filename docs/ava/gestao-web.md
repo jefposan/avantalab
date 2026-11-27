@@ -1,4 +1,22 @@
-<!-- ava-version: 3.2.0.542 -->
+<!-- ava-version: 3.2.0.551 -->
+
+> Revisão 3.2.0.551: sem impacto operacional; seletores mensais compartilhados mantêm largura constante ao mudar mês ou ano, inclusive na variante compacta.
+
+> Revisão 3.2.0.550: Serviços e Notas Fiscais Web recebem seletor mensal e Selecionar datas no topo, sem Todo o período. Serviços filtra agendamento; notas filtra a data da lista. Limites inclusivos e resumos acompanham o período, sem alterar documentos ou transmissões.
+
+> Revisão 3.2.0.549: sem impacto operacional; Voltar ao topo em Vendas e Serviços Web passa ao canto inferior direito, sem borda e mais transparente.
+
+> Revisão 3.2.0.548: Vendas e Serviços Web oferece Voltar ao topo no canto inferior esquerdo após rolar a página. Círculo translúcido com seta para cima; desaparece no topo e durante modais, sem alterar dados ou filtros.
+
+> Revisão 3.2.0.547: sem impacto operacional; removidos título Vendas repetido e descrição introdutória acima dos filtros da lista Web.
+
+> Revisão 3.2.0.546: Vendas Web mantém Situação e adiciona Financeiro (Em aberto, Parcialmente pago, Pago ou Bonificado). Busca, Situação e Financeiro têm títulos acima; o período permanece somente no topo. Financeiro considera parcelas e estornos vinculados ao pedido, respeita acesso a recebimentos e não interpreta faturamento ou valor zero como pagamento.
+
+> Revisão 3.2.0.545: Recebimentos Web permite combinar busca, situação e forma de pagamento, com títulos acima dos campos; no desktop ficam na mesma linha e no celular se empilham. Os filtros recortam a lista, sem alterar os totais ou os recebimentos.
+
+> Revisão 3.2.0.544: Recebimentos Web permite lançar pagamentos parciais e totais em saldos consignados existentes. Consignado continua sem parcelas apresentadas, vencimento ou atraso. Não cria cobrança de novos pedidos consignados. Cancelamentos e estornos reais permanecem protegidos.
+
+> Revisão 3.2.0.543: Recebimentos Web mantém consignados visíveis, com filtro Consignado, sem parcelas, vencimento, saldo cobrável ou atraso.
 
 > Revisão 3.2.0.542: sem impacto operacional; Parcelas e vencimento do consignado vazios, sem placeholder e desativados em cinza claro na edição de Recebimentos Web.
 

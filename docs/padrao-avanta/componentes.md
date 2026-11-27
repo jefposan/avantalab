@@ -298,3 +298,5 @@ testes. Esta seção resume apenas a face dos controles.
 
 - CampoSelecaoPesquisavel aceita `disabled` opcional por opção. Opções indisponíveis mantêm descrição e valor já selecionado, mas não podem ser escolhidas por mouse ou teclado. Consumidores anteriores permanecem inalterados.
 - Revisão 3.2.0.506: opções podem fornecer `selectedLabel` (valor confirmado) e `searchText` (termos auxiliares, incluindo documento sem máscara). `searchOnTypeOnly` abre resultados somente após digitação; `maxResults` limita a lista com orientação para refinar. Ambos são opt-in; o comportamento padrão permanece. `inputId`, `inputRef` e `invalid` integram foco e validação do formulário.
+
+- `BotaoProximoScroll` aceita `acao="voltar-topo"` optativa: círculo translúcido de 56px, seta para cima, canto inferior direito com área segura, sem borda e com maior transparência; aparece após 160px de rolagem e se oculta no topo ou durante modal/bloqueio. Mantém animação e acessibilidade oficiais, respeita movimento reduzido e não aparece na impressão. Demais usos continuam avançando como antes.
