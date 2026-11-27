@@ -1,4 +1,28 @@
-<!-- ava-version: 3.2.0.530 -->
+<!-- ava-version: 3.2.0.542 -->
+
+> Revisão 3.2.0.542: sem impacto operacional; Parcelas e vencimento do consignado vazios, sem placeholder e desativados em cinza claro na edição de Recebimentos Web.
+
+> Revisão 3.2.0.541: sem impacto operacional; retirados textos introdutórios da janela de alteração de pagamento em Recebimentos Web.
+
+> Revisão 3.2.0.540: No consignado, os campos permanecem na mesma linha. Parcelas mostra o placeholder Não se aplica, com botões e digitação desativados; vencimento fica vazio e desativado. Continua sem gerar parcelas ou atraso.
+
+> Revisão 3.2.0.539: sem impacto operacional; campos das condições de Recebimentos alinhados em uma linha no desktop.
+
+> Revisão 3.2.0.538: Em Alterar pagamento e parcelas, use − e + ao lado do número ou digite a quantidade; limite de 1 a 120. Em Consignado, não há campo de parcelas nem vencimento.
+
+> Revisão 3.2.0.537: Consignado não tem parcelas, vencimento ou atraso. Ao converter cobrança sem recebimentos para consignado, as parcelas abertas deixam de ser cobradas e seus registros são preservados. Não muda total da venda, estoque ou nota. Se houver recebimentos ou estornos já registrados, a conversão fica protegida para preservar esse histórico.
+
+> Revisão 3.2.0.536: Alterar pagamento e parcelas em Recebimentos inclui Consignado. A escolha não baixa parcelas nem modifica recebimentos já registrados.
+
+> Revisão 3.2.0.535: Recebimentos > Ações > Alterar pagamento e parcelas altera forma prevista, quantidade e primeiro vencimento de toda a operação, preservando o total. Se já houve recebimentos ou estornos, somente a forma do saldo pendente pode ser alterada; quantidade e vencimentos ficam protegidos. Exige permissão de recebimento e edição da origem (venda ou serviço), confirmação do servidor e auditoria. Não movimenta dinheiro, estoque nem emite nota. Menu Notas Fiscais não mostra contagem.
+
+> Revisão 3.2.0.534: Tabela explícita indisponível exige nova seleção; não deve ser trocada silenciosamente pela padrão. Preço específico zero é preservado. A lista vinculada ao cliente vale no pedido; trocar com itens solicita recalcular ou aplicar somente aos novos. Retratos já salvos permanecem preservados. Identificação do preço fiscal prioriza o ID do produto.
+
+> Revisão 3.2.0.533: Custos carrega todos os preços específicos antes de exibir valores; ausência em um lote não significa herança do padrão. Falha na leitura completa exige tentar novamente, sem apresentar dados parciais.
+
+> Revisão 3.2.0.532: Revisão da importação de preços exibe Código e Produto; o nome atual do cadastro pode ser ordenado pelo cabeçalho Produto. Sem gravação ao ordenar.
+
+> Revisão 3.2.0.531: Na revisão da importação de preços, clique no cabeçalho Código, Tabela, Atual ou Novo para alternar crescente/decrescente. A linha completa acompanha a ordenação; o resumo repetido de mapeamentos foi removido. Ordenar não importa nem altera preços.
 
 > Revisão 3.2.0.530: Importar preços usa duas tabelas por linha no desktop e uma no celular; chave e seletor compactos na mesma linha. Sem mudança nas regras de importação.
 

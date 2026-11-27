@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useId,useRef,useState} from 'react';
+import {useEffect,useId,useMemo,useRef,useState} from 'react';
 import {Modal} from '@/app/projetos/components/Modal';
 import ChaveAtivacao from '@/app/components/ChaveAtivacao';
 import BotaoAcaoCompacto from '@/app/components/BotaoAcaoCompacto';
@@ -8,6 +8,7 @@ import {formatarMoeda} from '@/app/lib/formatters';
 import {lerArquivoPrecos,montarPrecos,sugerirOrigem,type ArquivoPrecos,type PrecoImportado} from './importacao-precos';
 import {importarSomentePrecos,type RevisaoPrecosImportados} from './repository';
 import type {ProdutoCustos,TabelaPreco} from './types';
+import {ordenarMudancas,type ColunaRevisao} from './ordenacao-revisao-precos';
 import styles from './custos.module.css';
 export default function ImportarPrecosModal({arquivo,companyId,produtos,tabelas,podeEditar,onClose,onRecarregar,executarImportacao=importarSomentePrecos}:{arquivo:File;companyId:string;produtos:ProdutoCustos[];tabelas:TabelaPreco[];podeEditar:boolean;onClose:()=>void;onRecarregar:()=>Promise<void>;executarImportacao?:typeof importarSomentePrecos}){
  const erroId=useId();
@@ -15,6 +16,12 @@ export default function ImportarPrecosModal({arquivo,companyId,produtos,tabelas,
  const [ativas,setAtivas]=useState<Record<string,boolean>>({}),[origens,setOrigens]=useState<Record<string,string>>({});
  const [erro,setErro]=useState(''),[ocupado,setOcupado]=useState(false),[revisao,setRevisao]=useState<RevisaoPrecosImportados|null>(null);
  const [payload,setPayload]=useState<PrecoImportado[]>([]),[aplicado,setAplicado]=useState(false);
+ const [ordem,setOrdem]=useState<{coluna:ColunaRevisao;direcao:'asc'|'desc'}|null>(null);
+ const mudancas=useMemo(()=>{
+  const nomes=new Map(produtos.map(p=>[p.id,p.nome]));
+  return ordenarMudancas((revisao?.mudancas||[]).map(m=>({...m,nome:nomes.get(m.produto_id)||'Produto indisponível'})),ordem);
+ },[revisao,ordem,produtos]);
+ const ordenar=(coluna:ColunaRevisao)=>setOrdem(atual=>({coluna,direcao:atual?.coluna===coluna&&atual.direcao==='asc'?'desc':'asc'}));
  const trava=useRef(false),geracao=useRef(0),produtosRef=useRef(produtos);
  const elegiveis=tabelas.filter(t=>t.ativo||t.padrao),aba=livro?.abas[abaIndex];
  useEffect(()=>{
@@ -34,7 +41,7 @@ export default function ImportarPrecosModal({arquivo,companyId,produtos,tabelas,
   try{
    const lista=montarPrecos(aba,elegiveis.filter(t=>ativas[t.codigo]).map(t=>({destino:t.codigo,origem:origens[t.codigo]||''})));
    const resultado=await executarImportacao(companyId,arquivo.name,lista);
-   setPayload(lista);setRevisao(resultado);
+   setPayload(lista);setOrdem(null);setRevisao(resultado);
   }catch(e){setErro(e instanceof Error?e.message:'Não foi possível revisar.');}
   finally{trava.current=false;setOcupado(false);}
  };
@@ -66,8 +73,7 @@ export default function ImportarPrecosModal({arquivo,companyId,produtos,tabelas,
    </>}
    {revisao&&<>
     <div className={styles.importPriceSummary}><p><strong>{revisao.produtos}</strong> produtos identificados · <strong>{revisao.alterados}</strong> preços {aplicado?'atualizados':'a alterar'} · <strong>{revisao.preservados}</strong> valores preservados</p></div>
-    <div className={styles.tableWrap}><table><thead><tr><th>Tabela</th><th>Coluna do Excel</th></tr></thead><tbody>{elegiveis.filter(t=>ativas[t.codigo]).map(t=><tr key={t.id}><td>{t.nome}</td><td>{origens[t.codigo]}</td></tr>)}</tbody></table></div>
-    <div className={styles.importPriceReview}><table><thead><tr><th>Código</th><th>Tabela</th><th>Atual</th><th>Novo</th></tr></thead><tbody>{revisao.mudancas.map(m=><tr key={`${m.produto_id}:${m.tabela_id}`}><td>{m.sku}</td><td>{m.tabela}</td><td>{formatarMoeda(m.anterior)}</td><td>{formatarMoeda(m.novo)}</td></tr>)}</tbody></table></div>
+    <div className={styles.importPriceReview}><table><thead><tr>{([{coluna:'sku',titulo:'Código'},{coluna:'nome',titulo:'Produto'},{coluna:'tabela',titulo:'Tabela'},{coluna:'anterior',titulo:'Atual'},{coluna:'novo',titulo:'Novo'}] as const).map(({coluna,titulo})=><th key={coluna} scope="col" aria-sort={ordem?.coluna===coluna?(ordem.direcao==='asc'?'ascending':'descending'):'none'}><button type="button" className={styles.importPriceSort} onClick={()=>ordenar(coluna)} aria-label={`Ordenar por ${titulo}, ${ordem?.coluna===coluna&&ordem.direcao==='asc'?'decrescente':'crescente'}`}>{titulo}<span aria-hidden="true">{ordem?.coluna===coluna?(ordem.direcao==='asc'?'↑':'↓'):'↕'}</span></button></th>)}</tr></thead><tbody>{mudancas.map(m=><tr key={`${m.produto_id}:${m.tabela_id}`}><td>{m.sku}</td><td>{m.nome}</td><td>{m.tabela}</td><td>{formatarMoeda(m.anterior)}</td><td>{formatarMoeda(m.novo)}</td></tr>)}</tbody></table></div>
     <p>Preços vazios e iguais ao atual são preservados. Zero informado substitui o preço. Dados cadastrais não são alterados.</p>
    </>}
    <footer className={styles.importPriceFooter}><p role="status">{ocupado?(livro?'Conferindo preços…':'Lendo arquivo…'):aplicado?'Importação aplicada.':'Nenhuma alteração aplicada.'}</p><div>

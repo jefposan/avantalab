@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
+import {consultarPrecosCustos} from '../../app/custos/consulta-precos.ts';
 
 test('catálogo inicial é local, idempotente e privado; preserva fontes desativadas e excluídas',async()=>{
  const db=new PGlite(),company='10000000-0000-4000-8000-000000000001',other='10000000-0000-4000-8000-000000000002';
@@ -40,7 +41,7 @@ test('carregamento seleciona catálogo retornado e não tenta criar quando já e
    const response=table==='vendas_mobile_catalogos'?{data:scenario==='existente'?[{...catalog,ativo:false}]:[],error:null}:table==='custos_documentos'?{data:{documento:{},revisao:1},error:null}:table==='cadastros_perfil'?{data:{},error:null}:{data:[],error:null};
    const chain={then:resolve=>Promise.resolve(response).then(resolve)};for(const method of ['select','eq','in','order','maybeSingle'])chain[method]=()=>chain;return chain;
   }};
-  const scope={exports:{},require:name=>name.includes('supabase')?{supabase}:name==='./types'?{normalizarDocumento:value=>value,documentoVazio:()=>({})}:{}};
+  const scope={exports:{},require:name=>name.includes('supabase')?{supabase}:name==='./consulta-precos'?{consultarPrecosCustos}:name==='./types'?{normalizarDocumento:value=>value,documentoVazio:()=>({})}:{}};
   vm.runInNewContext(ts.default.transpileModule(source,{compilerOptions:{module:ts.default.ModuleKind.CommonJS,target:ts.default.ScriptTarget.ES2022}}).outputText,scope);
   if(scenario==='falha')await assert.rejects(scope.exports.carregarCustos(company,true),/iniciar o catálogo local/);
   else{const result=await scope.exports.carregarCustos(company,scenario!=='leitura');assert.equal(result.catalogoId,scenario==='leitura'?'':'local-id');if(scenario!=='leitura')assert.equal(result.catalogos[0].publicado_avantavendas,false);}

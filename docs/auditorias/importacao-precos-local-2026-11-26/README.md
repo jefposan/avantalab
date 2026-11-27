@@ -50,3 +50,39 @@ Evidência final: `/Users/JEFF/avantalab/output/previas/importacao-precos/grade-
 Em 26/11/2026, após a autorização “publique”, a migração 20261126223000 foi aplicada e registrada no Supabase oficial qzewxhdkwettnlmkjoqd. Antes da execução, rotina inexistente e registro ausente; depois, rotina presente, migração registrada, execução concedida a authenticated e negada a anon. Nenhum preço ou cadastro de produto alterado na aplicação desta migração. Registro e criação da rotina realizados na mesma transação.
 
 Pacote usa como base a produção 3.2.0.527, deployment dpl_53YJrFMiWrrwnTw5mVbLLHV4Meys, conferido no alias oficial. Publicação contém somente a importação de preços e seus refinamentos; a impressão compacta de pedidos continua preservada no checkout anterior.
+
+
+## Revisão local 3.2.0.534 — aplicação da tabela selecionada
+
+Inventário dos consumidores: Custos (listagem/edição/exportação/reajuste), catálogo de Vendas por PostgREST, catálogo comercial PostgreSQL, resolvedor da gravação comercial e opções/recálculo do editor fiscal. AvantaVendas possui catálogo/preços próprios e não expõe seletor destas tabelas de Custos.
+
+A consulta de Custos passa a ler todas as páginas (500 por lote), ordenadas por tabela/produto e restritas aos IDs das tabelas da empresa. Erro de página recusa o conjunto incompleto. Os caminhos de Vendas já paginados ou PostgreSQL sem LIMIT foram revisados; seleção explícita indisponível passa a ser recusada, sem substituição por outra lista. Editor fiscal prioriza ID do produto na precificação; compatibilidade por SKU preservada para respostas antigas. Pedido comum utiliza opções comerciais separadas das funções fiscais, aplica a lista vinculada ao cliente e preserva seu ID no salvamento e recarga. Troca com itens mantém confirmação de recálculo. Novos itens não usam o preço base enquanto a lista do cliente está indisponível.
+
+Leitura direta de produção confirmou T016: preço padrão 109,00 e NEILTON 80,00. Na interface localhost, NEILTON exibiu 80,00 no catálogo, item adicionado e subtotal; troca confirmada para padrão produziu 109,00 e retorno confirmado à NEILTON restaurou 80,00. Ensaio cancelado sem salvar documento nem preço, sem reserva, assinatura ou transmissão fiscal.
+
+Validação: TypeScript, PADRÃO AVANTA e Ava aprovados. Regressão ampla: 3.314 testes, 3.306 aprovados, 6 ignorados e duas falhas de harness desatualizado (import da consulta e extração da inicialização do editor). Os dois harness foram ajustados para executar as dependências reais; repetição dos 48 testes afetados e relacionados terminou com 48 aprovados e zero falhas. Testes novos cobrem mais de mil preços, isolamento entre tabelas, preço zero, T016 a 80,00, herança legítima, SKU repetido com ID distinto, revisão preservada e recusa de tabela indisponível. Nenhuma publicação nesta revisão.
+
+
+## Revisão local 3.2.0.535 — Recebimentos e navegação
+
+Botão Notas Fiscais sem badge nem contagem no nome acessível. Ações em Recebimentos exibem Alterar pagamento e parcelas. Conferido no localhost com cobrança real do pedido 2026/5: janela aberta, Boleto e três parcelas selecionados apenas no formulário, depois Cancelar; linha permaneceu PIX, 1/1, R$ 132,05. Nenhuma gravação real.
+
+Servidor: transação serializável, travas na operação e parcelas, comparação das versões de todo o grupo, idempotência em vendas_eventos, histórico imutável preservado e cancelamento de excedentes sem exclusão. Alteração somente de método preserva inclusive valores e vencimentos personalizados. Recebimentos/estornos existentes impedem reparticionamento; método do saldo aberto continua editável. Total exato em centavos; nota, estoque e movimentações financeiras anteriores não são alterados. Usa estruturas existentes, sem migração nova.
+
+48 testes de Recebimentos, integração e menu aprovados; teste adicional da preservação de valores desiguais aprovado. TypeScript, PADRÃO AVANTA e Ava aprovados. Publicação não solicitada.
+
+
+## Revisões locais 3.2.0.537 e 3.2.0.538 — consignado e controle de parcelas
+
+Consignado envia parcelas=0 e primeiro vencimento vazio; oculta ambos os campos. Conversão de cobrança sem recebimentos/estornos cancela a cobrança das parcelas existentes, sem excluir seus registros, alterar o total da operação, estoque ou nota. Auditoria e idempotência preservadas. Com movimentos financeiros anteriores, conversão é protegida; não desfaz recebimentos. Modelo de saldo/status e resumo do servidor não contam consignado como dívida vencida.
+
+Controle de Parcelas reutiliza LineNumberEditor, com menos à esquerda, quantidade digitável e mais à direita, inteiro de 1 a 120, sem alterar os limites dos consumidores existentes. Conferência no localhost mostrou 1 → 2 → 1; selecionar Consignado removeu campos de parcelas e vencimento. Cancelar manteve cobrança real do pedido 2026/5 intacta (PIX, 1/1 e 132,05).
+
+51 testes direcionados aprovados, incluindo SQL real isolado, proteção de recebimentos anteriores, conversão idempotente a consignado, ausência de atraso, controle de quantidade e regressão de novo pedido/estoque/resumos/filtros. TypeScript, PADRÃO AVANTA e Ava aprovados. Sem publicação ou alteração de dados reais.
+
+
+## Publicação autorizada — entrega 3.2.0.542
+
+O responsável autorizou publicar os ajustes acumulados de Custos e Vendas e Serviços. Base remota main confirmada em 7d493839a7371b5da026c8b2eb9c4eac48387c03; domínio oficial na produção dpl_Gx6YLb8oQjqKvqE64mP7b4sAJi99 (3.2.0.530). Diff e arquivos novos preservados separadamente antes da integração. Sem migração nova nesta entrega e sem inclusão do trabalho de impressão de pedidos preservado em outro checkout.
+
+Segurança: 1.078 testes aprovados, zero falhas ou ignorados, 204 arquivos em dois processos locais; suíte em 58,7 s. Testes direcionados de preços, recebimentos, consignado e componentes registrados acima. Build completo será executado obrigatoriamente pela Vercel, com promoção automática condicionada à aprovação. Recibo e confirmação final do domínio ficam no output/pipeline do checkout canônico, sem modificar seus trabalhos de desenvolvimento. Nenhuma cobrança real foi alterada para testar a entrega e nenhuma transmissão fiscal foi executada.

@@ -43,6 +43,7 @@ export function createPostgresCommercialCatalogResolver({ pool } = {}) {
         where empresa_id=$1 and id=$2 and ativo=true limit 1
       `, [companyId, priceTableId]);
       priceTable = tableResult.rows?.[0] || null;
+      if (!priceTable) throw new Error('A tabela de preços selecionada não está disponível nesta empresa.');
       if (priceTable && priceTable.padrao !== true) {
         const priceResult = await pool.query(`
           select produto_id,preco from public.custos_tabela_preco_itens

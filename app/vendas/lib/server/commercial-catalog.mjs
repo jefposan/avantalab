@@ -55,6 +55,7 @@ export function createPostgresCommercialCatalogRepository({ pool } = {}) {
       const catalogIds = (catalogResult.rows || []).map((row) => clean(row.id, 36));
       if (!catalogIds.length) return null;
       const tables = (tableResult.rows || []).map((row) => Object.freeze({ id: clean(row.id, 36), nome: clean(row.nome, 120), padrao: row.padrao === true }));
+      if (priceTableId && !tables.some(row => row.id === priceTableId)) throw new Error('A tabela de preços selecionada não está disponível nesta empresa.');
       const table = tables.find((row) => row.id === priceTableId) || tables.find((row) => row.padrao) || tables[0] || null;
       const products = await pool.query(`
         select id,sku,tipo_item,nome,categoria,descricao,preco_venda,unidade,codigo_barras,

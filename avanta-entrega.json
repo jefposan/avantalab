@@ -1,11 +1,6 @@
 {
-  "baseDeploymentId": "dpl_53YJrFMiWrrwnTw5mVbLLHV4Meys",
-  "migrations": [
-    {
-      "path": "supabase/migrations/20261126223000_custos_importar_somente_precos.sql",
-      "sha256": "5748563118ff58b9511e5f53482f8b26e2387d0b2d5b7afc83603cde2f2c5001"
-    }
-  ],
-  "version": "3.2.0.530",
-  "scope": "Custos: importação seletiva de preços com chaves por tabela e grade compacta"
+  "baseDeploymentId": "dpl_Gx6YLb8oQjqKvqE64mP7b4sAJi99",
+  "migrations": [],
+  "version": "3.2.0.542",
+  "scope": "Vendas e Custos: preços completos, revisão ordenável e edição de pagamento com consignado"
 }

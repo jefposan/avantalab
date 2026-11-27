@@ -41,6 +41,7 @@ export async function carregarCatalogoCustosParaVendas({
     nome: String(tabela.nome || 'Tabela de preços'),
     padrao: tabela.padrao === true,
   }));
+  if (tabelaPrecoId && !tabelasAtivas.some(item => item.id === tabelaPrecoId)) throw new ErroCatalogoVendas('A tabela de preços selecionada não está disponível nesta empresa.', 409);
   const tabela = tabelasAtivas.find((item) => item.id === tabelaPrecoId)
     || tabelasAtivas.find((item) => item.padrao)
     || tabelasAtivas[0]

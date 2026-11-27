@@ -1,4 +1,28 @@
-<!-- ava-version: 3.2.0.530 -->
+<!-- ava-version: 3.2.0.542 -->
+
+> Revisão 3.2.0.542: sem impacto operacional; Parcelas e vencimento do consignado vazios, sem placeholder e desativados em cinza claro na edição de Recebimentos Web.
+
+> Revisão 3.2.0.541: sem impacto operacional; retirados textos introdutórios da janela de alteração de pagamento em Recebimentos Web.
+
+> Revisão 3.2.0.540: Sem impacto operacional; apresentação dos campos no consignado de Vendas e Serviços Web refinada.
+
+> Revisão 3.2.0.539: sem impacto operacional; campos das condições de Recebimentos alinhados em uma linha no desktop.
+
+> Revisão 3.2.0.538: Sem impacto operacional; controle de parcelas refinado em Recebimentos do módulo Vendas e Serviços Web.
+
+> Revisão 3.2.0.537: Sem impacto operacional; regra de consignado sem parcelas e atraso aplicada em Vendas e Serviços Web.
+
+> Revisão 3.2.0.536: Sem impacto operacional; opção Consignado incluída na edição de cobrança de Vendas e Serviços Web.
+
+> Revisão 3.2.0.535: Sem impacto operacional; edição de condições de cobrança e remoção da contagem do menu restritas a Vendas e Serviços Web.
+
+> Revisão 3.2.0.534: Sem impacto operacional; correções de tabelas em Custos e Vendas e Serviços Web, sem alterar os dados de vendas ou aplicativo AvantaVendas.
+
+> Revisão 3.2.0.533: Sem impacto operacional; correção de consulta de preços no módulo Custos Web.
+
+> Revisão 3.2.0.532: Sem impacto operacional; nome do produto acrescentado na revisão de preços de Custos Web.
+
+> Revisão 3.2.0.531: Sem impacto operacional; refinamento restrito à revisão da importação de preços em Custos Web.
 
 > Revisão 3.2.0.530: Sem impacto operacional; compactação visual da importação de preços no módulo Custos Web.
 

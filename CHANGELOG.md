@@ -1,3 +1,69 @@
+## 3.2.0.542 — Vendas e Custos: preços completos e condições de recebimento
+
+- Entrega reúne revisão de importação com nome de produto e ordenação; leitura completa dos preços e aplicação da tabela selecionada; edição de pagamento/parcelas com auditoria e consignado sem prazo; menu Notas Fiscais sem contador.
+- Refinamentos da janela: campos na mesma linha, quantidade com −/+, consignado com campos vazios e desativados em cinza claro, sem textos extras.
+- Sem migração nova, reprecificação histórica ou transmissão fiscal.
+
+- Parcelas e vencimento do consignado permanecem vazios, sem placeholder, desativados e com superfície cinza clara. Sem mudança das regras. Somente local.
+
+## 3.2.0.541 — Recebimentos: limpar textos da edição de pagamento
+
+- Retirados o rótulo do módulo, identificação de cliente/pedido e textos explicativos geral e de consignado da janela Alterar pagamento e parcelas. Título, campos e regras preservados. Somente local.
+
+## 3.2.0.540 — Recebimentos: manter campos no consignado
+
+- Consignado conserva a linha de campos: quantidade desativada com placeholder Não se aplica, botões −/+ desativados e vencimento vazio desativado. Sem alteração na regra de zero parcelas, sem prazo ou atraso. Somente local.
+
+## 3.2.0.539 — Recebimentos: condições na mesma linha
+
+- Forma de pagamento, Parcelas e Primeiro vencimento alinhados na mesma linha no desktop, com adaptação para telas pequenas. Sem mudança nas regras. Somente local.
+
+## 3.2.0.538 — Recebimentos: ajustar parcelas com menos e mais
+
+- Campo Parcelas reutiliza o controle de quantidade com botão − à esquerda e + à direita, edição direta e limites de 1 a 120. Consignado mantém o campo oculto. Somente local.
+
+## 3.2.0.537 — Recebimentos: consignado sem parcelas ou atraso
+
+- Consignado oculta parcelas e vencimento e envia quantidade zero e data vazia, seguindo a criação do pedido.
+- Conversão sem recebimentos cancela a cobrança das parcelas abertas, preservando os registros e a auditoria; operação passa a consignado sem mudar total, estoque ou nota. Recebimentos/estornos existentes protegem a conversão.
+- Consignado não compõe saldo vencido nem recebe situação de atraso nos cálculos Web e resumos do servidor. Validação somente local, sem publicação ou alteração de cobranças reais.
+
+## 3.2.0.536 — Recebimentos: opção Consignado
+
+- Consignado disponível na edição de pagamento e aceito pelo servidor. Preservadas as parcelas e proteções de recebimentos existentes. Somente local.
+
+## 3.2.0.535 — Vendas: alterar pagamento e parcelas em Recebimentos
+
+- Ações da cobrança incluem Alterar pagamento e parcelas, com forma prevista, quantidade e primeiro vencimento para toda a operação. Total preservado em centavos; parcelas excedentes permanecem canceladas, sem exclusão de histórico.
+- Com recebimentos ou estornos registrados, mantém valores, quantidade e vencimentos; permite somente alterar a forma prevista do saldo pendente.
+- Gravação no servidor em transação, com permissões, empresa, versões de todas as parcelas, idempotência e auditoria. Não altera estoque nem documentos fiscais. Sem migração nova.
+- Removida a contagem do botão Notas Fiscais na navegação. Indicadores internos preservados.
+- Validação local, sem alteração de cobranças reais e sem publicação.
+
+## 3.2.0.534 — Vendas e Custos: respeitar a tabela selecionada
+
+- Consultas comerciais rejeitam tabela explícita indisponível em vez de trocar silenciosamente para a padrão. Preços específicos zero e herança somente na ausência de preço próprio preservados.
+- Opções fiscais e recálculo identificam o produto pelo ID, evitando mistura de preços de SKUs repetidos entre catálogos.
+- Pedido comercial aplica a lista vinculada ao cliente também fora da nota avulsa, preserva a escolha ao salvar/reabrir e mantém a confirmação para recalcular itens existentes.
+- Validação local, sem alterar preços de produção, reservar numeração ou transmitir notas. Sem publicação.
+
+## 3.2.0.533 — Custos: carregar todos os preços específicos
+
+- Corrigida consulta sem paginação que truncava preços específicos e fazia a tela, exportação e prévias locais recorrerem indevidamente ao preço padrão. Consulta paginada, ordenada e restrita às tabelas da empresa; falha não entrega resultado parcial.
+- Conferência de leitura no banco: T016, NEILTON R$ 80,00 e padrão R$ 109,00. Correção somente local, sem mudar preços salvos nem publicar.
+
+## 3.2.0.532 — Custos: identificar produto na revisão de preços
+
+- Transferidos 64 px de Código para Produto, preservando a distribuição de Tabela, Atual e Novo.
+
+- Revisão mostra Código e Produto, com o nome atual do cadastro associado pelo ID e ordenação crescente/decrescente por nome. Sem alteração de preços ou banco; somente local.
+
+## 3.2.0.531 — Custos: revisão de preços compacta e ordenável
+
+- Retirado o resumo repetido de tabelas e colunas do Excel da etapa de revisão.
+- Cabeçalhos Código, Tabela, Atual e Novo alternam ordenação crescente/decrescente da linha completa; preços ordenados numericamente e códigos em ordem natural. Não altera o payload de importação.
+- Validação somente local; publicação não solicitada.
+
 ## 3.2.0.530 — Custos: importação seletiva de preços em grade compacta
 
 - Migração 20261126223000 aplicada e registrada no Supabase oficial, sem alterar preços ou cadastros existentes.

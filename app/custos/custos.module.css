@@ -127,3 +127,16 @@
 .importPriceScope .importPriceHint{font-size:11px}
 @media(max-width:650px){.importPriceGrid{grid-template-columns:minmax(0,1fr)}}
 @media(pointer:coarse){.importPriceMapping select{height:44px}.importPriceMapping{min-height:48px}}
+
+.importPriceReview th:has(.importPriceSort){padding:0 8px}
+.importPriceScope .importPriceSort{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:8px 0;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer}
+.importPriceScope .importPriceSort:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+.importPriceSort span{color:var(--muted)}
+
+/* Transfere 64px de Código para Produto; preserva a distribuição das demais colunas. */
+.importPriceReview table{table-layout:fixed;min-width:700px}
+.importPriceReview :is(th,td):nth-child(1){width:10.9928%}
+.importPriceReview :is(th,td):nth-child(2){width:32.9571%}
+.importPriceReview :is(th,td):nth-child(3){width:18.4618%}
+.importPriceReview :is(th,td):nth-child(4){width:17.7705%}
+.importPriceReview :is(th,td):nth-child(5){width:19.8178%}

@@ -3133,3 +3133,36 @@ GUIAS['gestao-web'] += ' ATUALIZAÇÃO 3.2.0.514: Vendas e Serviços → pedido 
 // Revisão 3.2.0.526: Vendas abre com acesso, catálogo e resumos prontos; estoque, clientes, fornecedores e detalhes fiscais carregam depois, em segundo plano.
 
 // Revisão 3.2.0.526: consultas independentes da abertura de Vendas em paralelo; mesmas validações de acesso e resumos confirmados antes de abrir.
+
+GUIAS['gestao-web'] += ' Revisão local 3.2.0.531: revisão de importação de preços sem resumo repetido de mapeamentos; clicar em Código, Tabela, Atual ou Novo alterna crescente/decrescente, mantendo a linha inteira vinculada. Ordenar não grava preços; confirmação continua explícita.';
+// Revisão 3.2.0.531: sem impacto operacional em Gestão Mobile e AvantaVendas.
+
+GUIAS['gestao-web'] += ' Revisão local 3.2.0.532: a revisão de importação mostra Código e Produto, com nome do cadastro atual vinculado pelo ID. Clicar em Produto alterna ordem crescente/decrescente sem gravar preços.';
+// Revisão 3.2.0.532: sem impacto operacional nos demais ambientes.
+
+GUIAS['gestao-web'] += ' Revisão local 3.2.0.533: Custos consulta todos os preços específicos por paginação, antes de aplicar a herança do padrão. Falha de página não entrega consulta parcial. O preço padrão pode diferir do preço específico; conferir a tabela selecionada. Sem alteração dos preços salvos.';
+// Revisão 3.2.0.533: sem impacto operacional nos demais ambientes.
+
+GUIAS['gestao-web'] += ' Revisão local 3.2.0.534: tabela indisponível não é substituída silenciosamente pela padrão; preço específico zero é válido. Pedido comercial também aplica a lista do cliente, preserva tabela ao salvar e solicita confirmação para recalcular itens existentes. Fiscal resolve preço pela identidade do produto, preservando compatibilidade por SKU. Históricos não são reprecificados automaticamente.';
+// Revisão 3.2.0.534: sem impacto operacional no aplicativo Gestão e AvantaVendas.
+
+GUIAS['gestao-web'] += ' Revisão local 3.2.0.535: Recebimentos > Ações > Alterar pagamento e parcelas ajusta a forma prevista e, sem recebimentos/estornos anteriores, quantidade e primeiro vencimento de toda a operação. Total e histórico preservados, gravação confirmada no servidor com permissão e versões. Havendo movimentos anteriores, só a forma do saldo pendente muda. Estoque e notas não mudam. Menu Notas Fiscais sem contador.';
+// Revisão 3.2.0.535: sem impacto operacional no aplicativo Gestão e AvantaVendas.
+
+GUIAS['gestao-web'] += ' Revisão local 3.2.0.536: Alterar pagamento e parcelas em Recebimentos inclui Consignado; escolher essa forma não baixa parcelas nem altera recebimentos anteriores.';
+// Revisão 3.2.0.536: sem impacto operacional no aplicativo Gestão e AvantaVendas.
+
+GUIAS['gestao-web'] += ' Revisão local 3.2.0.537: Consignado é sem parcelas, sem vencimento e sem atraso. Converter uma cobrança sem recebimentos para consignado cancela a cobrança das parcelas abertas, preservando registros e auditoria. Total da venda, estoque e nota não mudam. Recebimentos/estornos anteriores protegem a conversão.';
+// Revisão 3.2.0.537: sem impacto operacional no aplicativo Gestão e AvantaVendas.
+
+GUIAS['gestao-web'] += ' Revisão local 3.2.0.538: Recebimentos permite diminuir e aumentar parcelas pelos botões − e +, mantendo digitação direta e limites de 1 a 120. Em Consignado, parcelas e vencimento permanecem ocultos.';
+// Revisão 3.2.0.538: sem impacto operacional no aplicativo Gestão e AvantaVendas.
+
+// Revisão 3.2.0.539: sem impacto operacional nos três ambientes; alinhamento visual de forma, parcelas e vencimento no desktop de Recebimentos Web.
+
+GUIAS['gestao-web'] += ' Revisão local 3.2.0.540: em Consignado, os campos não desaparecem. Parcelas mostra Não se aplica, desativado junto com −/+. Vencimento fica vazio/desativado; segue sem gerar parcelas ou atraso.';
+// Revisão 3.2.0.540: sem impacto operacional no aplicativo Gestão e AvantaVendas.
+
+// Revisão 3.2.0.541: sem impacto operacional nos três ambientes; janela de alteração de pagamento em Recebimentos Web com textos introdutórios retirados.
+
+// Revisão 3.2.0.542: sem impacto operacional nos três ambientes; campos de parcelas e vencimento do consignado desativados em cinza claro, vazios e sem placeholder na edição de Recebimentos Web.

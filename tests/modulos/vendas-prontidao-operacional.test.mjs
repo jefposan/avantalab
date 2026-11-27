@@ -208,7 +208,7 @@ test('perfil integrado mantém indicadores reais nas páginas e menu sem contado
   assert.match(source, /connected \? 0 : 9360/);
   assert.match(source, /connected \? 0 : 2260/);
   const nav = source.match(/<nav aria-label="Navegação comercial">[\s\S]*?<\/nav>/)?.[0];
-  assert.ok(nav);assert.doesNotMatch(nav, /displayCount/);assert.match(nav,/id === 'fiscal' && <small/);
+  assert.ok(nav);assert.doesNotMatch(nav, /displayCount/);assert.doesNotMatch(nav,/<small/);
   assert.match(source, /connected\.company\) setFiscalIssuerRegistry\(createFiscalIssuerRegistry\(connected\.company\)\)/);
   assert.match(source, /integratedQuickActions = dashboardNewOptions\.filter\(\(option\) => option\.type !== 'venda'\)/);
   assert.match(source, /!managementCatalogBridge \|\| !\['venda', 'nfce', 'nfse'\]\.includes\(option\.type\)/);

@@ -201,18 +201,20 @@ export function createReceivableSchedule(input: {
   items: Array<{ installment: string; dueDate: string; value: number }>;
 };
 export function receivableBalance(record: {
+  method?: string;
   value: number;
   received: number;
   reversed: number;
   refunded: number;
 }): number;
 export function receivableStatus(record: {
+  method?: string;
   value: number;
   received: number;
   reversed: number;
   refunded: number;
   dueDate: string;
-}, todayIso: string): 'Em aberto' | 'Vence hoje' | 'Atrasado' | 'Recebido parcial' | 'Recebido' | 'Estorno pendente' | 'Estornado';
+}, todayIso: string): 'Em aberto' | 'Vence hoje' | 'Atrasado' | 'Recebido parcial' | 'Recebido' | 'Estorno pendente' | 'Estornado' | 'Consignado';
 export function applyReceivablePayment(record: {
   value: number;
   received: number;

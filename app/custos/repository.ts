@@ -1,3 +1,4 @@
+import {consultarPrecosCustos} from './consulta-precos';
 import { usaFiscalEmpresa } from '@/app/lib/fiscal-produto.mjs';
 import { supabase } from '@/app/lib/supabase';
 import type { ProdutoImportadoCatalogo } from './importacao-catalogo';
@@ -74,17 +75,17 @@ export async function carregarCustos(empresaId: string, podeEditar: boolean) {
   // manutenção dos cadastros no módulo de Custos.
   const catalogoAtual = catalogos.find((item) => item.padrao) || catalogos[0];
 
-  const [produtosResultado, documentoResultado, tabelasResultado, precosResultado, perfilResultado] = await Promise.all([
+  const [produtosResultado, documentoResultado, tabelasResultado, perfilResultado] = await Promise.all([
     todosCatalogos.length ? consultarProdutosCustos(todosCatalogos.map((item) => String(item.id))) : Promise.resolve({ data: [], error: null }),
     supabase.from('custos_documentos').select('documento,revisao').eq('empresa_id', empresaId).maybeSingle(),
     supabase.from('custos_tabelas_preco').select('id,empresa_id,codigo,nome,descricao,padrao,ativo,atualizado_em').eq('empresa_id', empresaId).order('padrao', { ascending: false }).order('nome'),
-    supabase.from('custos_tabela_preco_itens').select('tabela_preco_id,produto_id,preco,atualizado_em'),
     supabase.from('cadastros_perfil').select('regime_tributario,configuracao_fiscal').eq('empresa_id', empresaId).maybeSingle(),
   ]);
   if (produtosResultado.error) throw new Error('A atualização de banco do módulo ainda não foi aplicada neste ambiente.');
   if (perfilResultado.error) throw new Error('Não foi possível consultar os padrões fiscais desta empresa.');
   if (documentoResultado.error) throw new Error('Não foi possível carregar composições e simulações.');
-  if (tabelasResultado.error || precosResultado.error) throw new Error('Não foi possível carregar as tabelas de preços.');
+  if (tabelasResultado.error) throw new Error('Não foi possível carregar as tabelas de preços.');
+  const precosTabela = await consultarPrecosCustos(supabase, (tabelasResultado.data || []).map(tabela => String(tabela.id)));
 
   let documento = normalizarDocumento(documentoResultado.data?.documento);
   let revisao = Number(documentoResultado.data?.revisao) || 0;
@@ -101,7 +102,7 @@ export async function carregarCustos(empresaId: string, podeEditar: boolean) {
     catalogos,
     produtos: ((produtosResultado.data || []) as unknown as Record<string, unknown>[]).map(mapearProduto),
     tabelasPreco: ((tabelasResultado.data || []) as unknown as TabelaPreco[]).map((tabela) => ({ ...tabela, descricao: tabela.descricao || '' })),
-    precosTabela: ((precosResultado.data || []) as unknown as PrecoTabelaItem[]).map((item) => ({ ...item, preco: Number(item.preco) || 0 })),
+    precosTabela,
     documento,
     revisao,
   };

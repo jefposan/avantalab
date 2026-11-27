@@ -25,5 +25,7 @@ test('controle reutilizado oferece menos à esquerda, edição manual e mais à 
  minus.props.onClick();plus.props.onClick();input.props.onChange({target:{value:'2,5'}});assert.deepEqual(changed,[1,3,2.5]);
  assert.equal(render(0)[1].props.disabled,true);render(0.25)[1].props.onClick();assert.equal(changed.at(-1),0);
  render(1,0.5)[3].props.onClick();assert.equal(changed.at(-1),1.5);
+ const parcelas=value=>sandbox.exports.render({label:'Parcelas',caption:'Parcelas',value,min:1,max:120,integer:true,compact:true,showSteppers:true,onChange:value=>changed.push(value)}).props.children[1].props.children;
+ assert.equal(parcelas(1)[1].props.disabled,true);assert.equal(parcelas(120)[3].props.disabled,true);parcelas(1)[3].props.onClick();assert.equal(changed.at(-1),2);parcelas(2)[1].props.onClick();assert.equal(changed.at(-1),1);parcelas(2)[2].props.onChange({target:{value:'12'}});assert.equal(changed.at(-1),12);
  assert.equal(render(2,1,true)[1].props.disabled,true);assert.equal(render(2,1,true)[3].props.disabled,true);
 });

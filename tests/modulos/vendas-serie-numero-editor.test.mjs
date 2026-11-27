@@ -53,12 +53,13 @@ test('retomada sem reserva mostra série 1 e próximo número 2; reserva real ma
  const {newFiscalNoteFields,updateFiscalNoteFields}=await import('../../app/vendas/lib/fiscal-note-editor.mjs');
  const source=readFileSync('app/vendas/sistema/VendasServicosPrototype.tsx','utf8'),ast=ts.createSourceFile('view.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
  const fn=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='NewOrderView');
+ const pricing=fn.body.statements.find(n=>ts.isVariableStatement(n)&&n.declarationList.declarations.some(d=>d.name.getText(ast)==='pricing'));
  const reserved=fn.body.statements.find(n=>ts.isVariableStatement(n)&&n.declarationList.declarations.some(d=>d.name.getText(ast)==='noteNumberReserved'));
  const state=fn.body.statements.find(n=>ts.isVariableStatement(n)&&n.getText(ast).includes('[noteFields,setNoteFields]'));
  const effect=fn.body.statements.find(n=>ts.isExpressionStatement(n)&&n.getText(ast).startsWith('useEffect(')&&n.getText(ast).includes('syncFiscalNoteNumbering'));
  for(const [number,series,expected]of [[0,'','2'],[8,'1','8']]){
-  let value,update;const scope={exports:{},Number,Boolean,String,newFiscalNoteFields,updateFiscalNoteFields,syncFiscalNoteNumbering,correction:{status:{series,number}},fiscalEditor:{series:'1',number:'2',clientPriceTables:{}},clientRecords:[],initialClient:'',initialRecord:{order:{fiscalForm:{series:'1',number:'1'}}},seriesEditedRef:{current:true},useState:fn=>{value=fn();return[value,next=>{value=next(value);}];},useEffect:fn=>update=fn};
-  vm.runInNewContext(ts.transpileModule(reserved.getText(ast)+'\n'+state.getText(ast)+'\n'+effect.getText(ast),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,scope);
+  let value,update;const scope={exports:{},Number,Boolean,String,newFiscalNoteFields,updateFiscalNoteFields,syncFiscalNoteNumbering,correction:{status:{series,number}},fiscalEditor:{series:'1',number:'2',clientPriceTables:{}},commercialPricing:undefined,clientRecords:[],initialClient:'',initialRecord:{order:{fiscalForm:{series:'1',number:'1'}}},seriesEditedRef:{current:true},useState:fn=>{value=fn();return[value,next=>{value=next(value);}];},useEffect:fn=>update=fn};
+  vm.runInNewContext(ts.transpileModule(pricing.getText(ast)+'\n'+reserved.getText(ast)+'\n'+state.getText(ast)+'\n'+effect.getText(ast),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,scope);
   assert.equal(value.series,'1');assert.equal(value.number,expected);
   scope.fiscalEditor.number='9';update();assert.equal(value.number,number?'8':'9');
  }
