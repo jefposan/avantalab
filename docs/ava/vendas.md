@@ -1,5 +1,7 @@
 <!-- ava-version: 3.2.0.567 -->
 
+> Solicitação por Voz: a interpretação no AvantaVendas usa GPT-6 Luna sem raciocínio. O microfone, a confirmação obrigatória antes de gravar e os passos de uso não mudam por causa da troca de modelo.
+
 > Revisão 3.2.0.567-av217: Em Solicitação por Voz do AvantaVendas, confirme produto ou cliente quando houver correspondência incerta, inclusive uma única sugestão. Confira pesos, volumes, quantidades e descontos. Após falha de conexão o aplicativo tenta localizar a operação original; se não confirmar, confira o histórico ou tente novamente na mesma solicitação, sem abrir outro lançamento. A voz não grava sem confirmação. A consulta de vendas percorre todas as páginas.
 
 > Revisão 3.2.0.566-av216: No AvantaVendas, ao editar um consignado ativo, use Atualizar preços ao lado do X. Consulta a tabela atual da conta pela internet. Sem diferenças, informa Sem preços para atualizar; havendo diferenças, pede confirmação. A confirmação altera somente o rascunho: grave em Salvar pedido ou descarte ao cancelar. Preserva quantidades, bonificações, data e ordem original; itens sem correspondência única ou preço válido são informados e mantidos. Demoras de leitura em segundo plano indicam atualização pendente, sem aviso vermelho de lançamento; erros reais de acesso, consulta explícita e gravação continuam visíveis.

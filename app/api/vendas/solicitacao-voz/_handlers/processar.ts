@@ -54,14 +54,14 @@ function mergeSelection(selections: VoiceEntitySelection[], current: VoiceEntity
 }
 
 export function POST(request: Request) {
-  return processarSolicitacaoVoz(request);
+  return processarSolicitacaoVoz(request, 'gpt-6-luna');
 }
 
 export function processarVozNoLaboratorio(request: Request) {
   return processarSolicitacaoVoz(request, 'gpt-6-luna');
 }
 
-async function processarSolicitacaoVoz(request: Request, modelOverride?: 'gpt-6-luna') {
+async function processarSolicitacaoVoz(request: Request, modelOverride: 'gpt-6-luna') {
   const requestStartedAt = performance.now();
   let userId = '';
   let accountId = '';

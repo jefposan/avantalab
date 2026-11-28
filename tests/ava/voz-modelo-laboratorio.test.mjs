@@ -3,13 +3,14 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const read = (path) => readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
-test('somente a rota de laboratório seleciona Luna; o corpo não controla o modelo', () => {
+test('AvantaVendas e laboratório selecionam Luna no servidor; o corpo e os demais módulos não escolhem esse modelo', () => {
   assert.match(read('app/api/teste/solicitacao-voz/processar/route.ts'), /processarVozNoLaboratorio as POST/);
   assert.match(read('app/api/vendas/solicitacao-voz/processar/route.ts'), /export \{ POST \}/);
   const handler = read('app/api/vendas/solicitacao-voz/_handlers/processar.ts');
-  assert.match(handler, /function POST\(request: Request\) \{\s+return processarSolicitacaoVoz\(request\);/);
+  assert.match(handler, /function POST\(request: Request\) \{\s+return processarSolicitacaoVoz\(request, 'gpt-6-luna'\);/);
   assert.match(handler, /function processarVozNoLaboratorio\(request: Request\) \{\s+return processarSolicitacaoVoz\(request, 'gpt-6-luna'\);/);
   assert.doesNotMatch(handler, /body\??\.(?:model|modelOverride)\b/);
+  assert.doesNotMatch(read('app/recebimentos/voice/interpreter.ts'), /gpt-6-luna/);
 });
 
 test('Luna usa o formato avaliado sem mudar parâmetros do interpretador padrão', () => {
