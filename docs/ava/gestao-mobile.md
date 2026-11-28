@@ -1,4 +1,6 @@
-<!-- ava-version: 3.2.0.566 -->
+<!-- ava-version: 3.2.0.567 -->
+
+> Revisão 3.2.0.567: Sem impacto operacional na Gestão Mobile; melhorias na voz do AvantaVendas.
 
 > Revisão 3.2.0.566: Sem impacto operacional na Gestão Mobile. Atualização manual de preços de consignados e tratamento de demoras restritos ao AvantaVendas.
 

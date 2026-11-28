@@ -24,6 +24,8 @@ Regras:
 - Entenda formulações naturais equivalentes: “faz”, “cria”, “lança”, “manda”, “separa” ou “deixa” podem indicar pedido quando vierem com cliente e produtos; “recebi”, “baixar”, “dar baixa”, “pagamento” ou “quitou” podem indicar register_payment quando vierem com valor. Sem produto ou quantidade, mantenha o rascunho e deixe a aplicação perguntar o dado ausente.
 - Não corrija silenciosamente um nome de cliente ou produto: mantenha a referência falada, mesmo se a dicção parecer próxima de outro nome. O resolvedor seguro do catálogo decide se é único ou pede uma escolha.
 - Preserve e complete o rascunho anterior quando a fala for uma resposta curta de esclarecimento.
+- Ao complementar um item, não confunda a quantidade comprada com peso ou volume. “Duas máscaras de brilho de 150 gramas” é 2 unidades de “máscaras de brilho de 150 gramas”, inclusive quando a pergunta anterior foi apenas pelos produtos. Preserve o número e a unidade dentro do nome falado.
+- Ao corrigir um rascunho mantenha intactos os itens, cliente e margens de desconto que não foram mencionados. Não converta um desconto percentual em reais. Uma fala explicitamente sobre “outro pedido” inicia um rascunho novo; não leve itens nem descontos do anterior.
 - Quando existir previous_draft, trate pedidos como “adicione”, “retire”, “troque”, “mude”, “corrija”, “aplique desconto” ou “altere a forma” como edição do rascunho ainda não confirmado, mantendo cliente e campos não mencionados. Não classifique essa continuação como unsupported.
 - Se houver candidatos anteriores, use a nova fala para tornar a referência mais específica, sem copiar IDs.
 - Para create_order e create_consignment, mantenha todos os itens já informados, acrescente os novos, atualize quantidades pedidas e retire somente um item explicitamente removido.
@@ -40,13 +42,14 @@ type InterpretVoiceInput = {
   transcription: string;
   previousDraft?: VoiceIntentPayload | null;
   candidates?: VoiceEntityCandidate[];
+  modelOverride?: 'gpt-6-luna';
 };
 
-export async function interpretVoiceCommand({ transcription, previousDraft, candidates = [] }: InterpretVoiceInput) {
+export async function interpretVoiceCommand({ transcription, previousDraft, candidates = [], modelOverride }: InterpretVoiceInput) {
   const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_AVA || '';
   if (!apiKey) throw new Error('A integração da OpenAI não está configurada no servidor.');
   const startedAt = performance.now();
-  const model = process.env.OPENAI_VOICE_COMMAND_MODEL || 'gpt-4o-mini';
+  const model = modelOverride || process.env.OPENAI_VOICE_COMMAND_MODEL || 'gpt-4o-mini';
   const compactContext = {
     reference_date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
     previous_draft: previousDraft || null,
@@ -62,8 +65,9 @@ export async function interpretVoiceCommand({ transcription, previousDraft, cand
     },
     body: JSON.stringify({
       model,
-      temperature: 0,
-      max_tokens: 500,
+      ...(model === 'gpt-6-luna'
+        ? { reasoning_effort: 'none', max_completion_tokens: 500, store: false }
+        : { temperature: 0, max_tokens: 500 }),
       response_format: { type: 'json_schema', json_schema: VOICE_INTENT_JSON_SCHEMA },
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },

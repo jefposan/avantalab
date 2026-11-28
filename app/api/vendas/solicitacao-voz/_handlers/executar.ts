@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { canOperateVoiceSales, getVoiceSalesContext, isVoiceCommandEnabled } from '@/app/lib/vendas-voice/auth';
 import { customerBalance } from '@/app/lib/vendas-voice/data';
@@ -59,6 +59,50 @@ function confirmedDiscount(action: VoiceConfirmationAction, base: number) {
   return Math.min(Math.max(0, Math.round(requested * 100) / 100), Math.max(0, Math.round(base * 100) / 100));
 }
 
+async function findConfirmedVoiceRecord(db: SupabaseClient, action: VoiceConfirmationAction, userId: string) {
+  const payment = action.intent === 'register_payment';
+  const appointment = action.intent === 'create_appointment';
+  const consignment = action.intent === 'create_consignment';
+  const table = payment ? 'vendas_mobile_pagamentos' : appointment ? 'vendas_mobile_agenda' : 'vendas_mobile_pedidos';
+  const fields = payment ? 'valor,desconto,tipo,forma_pagamento,data_pagamento'
+    : appointment ? 'tipo,data,horario,observacoes,status'
+      : 'total,desconto,forma_pagamento,status,itens:vendas_mobile_pedido_itens(produto_id,quantidade)';
+  const { data, error } = await db.from(table).select('id,cliente_id,criado_em,' + fields)
+    .eq('conta_id', action.accountId).eq('user_id', userId).eq('id', action.operationId).maybeSingle();
+  if (error) throw new Error('Não foi possível conferir a operação original. Consulte o histórico antes de tentar novamente.');
+  if (!data) return null;
+  const row = data as unknown as Record<string, unknown>;
+  const itemsKey = (items: Array<[string, number]>) => JSON.stringify(items.map(([id, qty]) => [id, Math.round(qty * 1000)]).sort());
+  const orderItems = Array.isArray(row.itens) ? row.itens : [];
+  const matches = row.cliente_id === action.customerId
+    && !['cancelada', 'cancelado'].includes(String(row.status || '')) && (payment
+    ? row.tipo === 'pagamento' && row.forma_pagamento === action.paymentMethod
+      && moneyCents(row.valor) === moneyCents(action.amount)
+      && moneyCents(row.desconto) === moneyCents(action.discountAmount)
+    : appointment
+      ? row.tipo === action.appointmentType && row.data === action.scheduledDate
+        && (String(row.horario || '').slice(0, 5) || null) === (action.scheduledTime || null)
+        && (row.observacoes || null) === (action.appointmentNotes || null)
+      : row.forma_pagamento === (consignment ? 'Consignado' : 'Venda')
+        && moneyCents(row.total) === moneyCents(action.expectedTotal)
+        && moneyCents(row.desconto) === moneyCents(action.discountAmount)
+        && itemsKey(orderItems.map((item) => [String(item.produto_id), Number(item.quantidade)]))
+          === itemsKey(action.items.map((item) => [item.productId, Number(item.quantity)])));
+  if (!matches) return { conflict: true as const };
+  const recordType = payment ? 'Pagamento' : appointment ? 'Agendamento' : consignment ? 'Consignado' : 'Pedido';
+  return { conflict: false as const, result: {
+    title: `${recordType} confirmado`,
+    message: 'A operação original foi localizada. Nenhum lançamento adicional foi criado.',
+    recordId: action.operationId,
+    evidence: {
+      recordId: action.operationId, recordType, customerName: action.customerName,
+      ...(!appointment ? { amount: Number(payment ? row.valor : row.total) } : {}),
+      status: 'Registrado', createdAt: row.criado_em, verifiedAt: new Date().toISOString(),
+      verification: 'Operação original relida do banco',
+    },
+  } };
+}
+
 async function confirmVoiceLearnings(
   db: SupabaseClient,
   action: VoiceConfirmationAction,
@@ -77,7 +121,15 @@ async function confirmVoiceLearnings(
   if (error) console.warn('[voice-learning] O lançamento foi concluído, mas o aprendizado será tentado novamente.', error.message);
 }
 
-export async function POST(request: Request) {
+export function POST(request: Request) {
+  return processarOperacaoVoz(request, false);
+}
+
+export function conferirOperacaoVoz(request: Request) {
+  return processarOperacaoVoz(request, true);
+}
+
+async function processarOperacaoVoz(request: Request, somenteConferir: boolean) {
   let userId = '';
   let accountId = '';
   let intent = '';
@@ -92,6 +144,10 @@ export async function POST(request: Request) {
     if (!await isVoiceCommandEnabled(context)) return NextResponse.json({ message: 'A Solicitação por Voz está desativada nesta conta.' }, { status: 403 });
     userId = context.userId;
     if (!canOperateVoiceSales(context)) return NextResponse.json({ message: 'Seu acesso permite consultas, mas não lançamentos.' }, { status: 403 });
+    const existing = await findConfirmedVoiceRecord(context.db, action, userId);
+    if (existing?.conflict) return NextResponse.json({ message: 'A operação original diverge da confirmação. Confira o histórico; nenhum lançamento novo foi criado.' }, { status: 409 });
+    if (existing) return NextResponse.json(existing.result, { headers: { 'Cache-Control': 'no-store, private' } });
+    if (somenteConferir) return NextResponse.json({ status: 'not_found' }, { headers: { 'Cache-Control': 'no-store, private' } });
     const { data: customer, error: customerError } = await context.db.from('vendas_mobile_clientes')
       .select('id,nome,ativo').eq('conta_id', accountId).eq('id', action.customerId).eq('ativo', true).maybeSingle();
     if (customerError || !customer) return NextResponse.json({ message: 'O cliente não está mais disponível. Prepare a solicitação novamente.' }, { status: 409 });
@@ -126,7 +182,7 @@ export async function POST(request: Request) {
         || verifiedAppointment.tipo !== appointmentType) {
         throw new Error('O agendamento foi enviado, mas o servidor não conseguiu conferir sua gravação. Consulte a Agenda antes de tentar novamente.');
       }
-      await confirmVoiceLearnings(context.db, action);
+      after(() => confirmVoiceLearnings(context.db, action).catch(() => undefined));
       logVoiceLab({ event: 'executed', userId, accountId, intent, confirmed: true, success: true });
       return NextResponse.json({
         title: 'Agendamento criado com sucesso',
@@ -185,7 +241,7 @@ export async function POST(request: Request) {
         || verifiedOrder.itens.length !== items.length) {
         throw new Error('O pedido foi enviado, mas o servidor não conseguiu conferir sua gravação. Consulte os pedidos antes de tentar novamente.');
       }
-      await confirmVoiceLearnings(context.db, action, productIds);
+      after(() => confirmVoiceLearnings(context.db, action, productIds).catch(() => undefined));
       logVoiceLab({ event: 'executed', userId, accountId, intent, confirmed: true, success: true });
       return NextResponse.json({
         title: consignment ? 'Consignado criado com sucesso' : 'Pedido criado com sucesso',
@@ -231,7 +287,7 @@ export async function POST(request: Request) {
       || moneyCents(verifiedPayment.saldo_final) !== moneyCents(finalBalance)) {
       throw new Error('O pagamento foi enviado, mas o servidor não conseguiu conferir sua gravação. Consulte os pagamentos antes de tentar novamente.');
     }
-    await confirmVoiceLearnings(context.db, action);
+    after(() => confirmVoiceLearnings(context.db, action).catch(() => undefined));
     logVoiceLab({ event: 'executed', userId, accountId, intent, confirmed: true, success: true });
     return NextResponse.json({
       title: 'Pagamento registrado com sucesso',

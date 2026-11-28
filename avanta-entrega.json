@@ -1,7 +1,7 @@
 {
   "baseDeploymentId": null,
-  "version": "3.2.0.566",
-  "scope": "AvantaVendas: atualização manual de preços do consignado e avisos de leitura em segundo plano",
+  "version": "3.2.0.567",
+  "scope": "AvantaVendas: melhorias da Solicitação por Voz, atualização manual de preços do consignado e avisos de leitura",
   "migrations": [],
   "releaseStatus": "implementado localmente; não publicado; reconferir main, versão e produção antes de enviar"
 }

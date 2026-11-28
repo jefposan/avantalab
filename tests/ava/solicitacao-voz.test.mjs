@@ -70,6 +70,25 @@ test('schema de voz aceita somente intenções e valores previstos', () => {
   assert.equal(validateVoiceIntent({ ...appointment, scheduled_date: '08/09/2026' }), null);
 });
 
+test('um único produto não é confirmado se a apresentação falada não coincide', async () => {
+  const db = voiceResolverDb([{ id: UUIDS.influencerLitro, nome: 'Influencer 1 litro', ativo: true, preco: 120 }]);
+  const result = await resolveProduct(db, 'conta-variante-diferente', 'Influencer 300 ml');
+  assert.notEqual(result.status, 'resolved');
+  assert.equal(result.candidates[0]?.id, UUIDS.influencerLitro);
+});
+
+test('consulta de vendas agrega todas as páginas e não conta consignados, cancelados e bonificações', async () => {
+  const rows = Array.from({ length: 502 }, (_, i) => ({ id: String(i), total: 1, status: 'concluida', forma_pagamento: 'Venda' }));
+  rows.push({ id: 'consignado', total: 333, status: 'concluida', forma_pagamento: 'Consignado' }, { id: 'cancelado', total: 999, status: 'cancelada', forma_pagamento: 'Venda' });
+  rows.push({ id: 'bonus', total: 0, status: 'concluida', forma_pagamento: 'Venda', itens: [{ total: 0, desconto: 12, preco_unitario: 12, quantidade: 1 }] });
+  const result = await buildVoiceResponse({
+    db: voiceResolverDb(null, null, { vendas_mobile_pedidos: rows }), accountId: 'conta',
+    draft: validateVoiceIntent({ intent: 'query_sales', period: 'all' }), transcription: 'Quanto vendi ao todo?', metrics: {},
+  });
+  assert.equal(result.kind, 'answer');
+  assert.match(result.message, /502 pedidos.*502,00/);
+});
+
 test('busca de voz ignora acentos sem perder as referências humanas', () => {
   assert.equal(normalizeVoiceSearch('Máscara de Cronograma — 150 ml'), 'mascara de cronograma 150 ml');
   assert.equal(normalizeVoiceSearch('Luciána (Renata)'), 'luciana renata');
@@ -586,8 +605,8 @@ test('transcrição de voz usa modelo especializado sem enviar o catálogo da co
   assert.match(transcription, /OPENAI_VOICE_TRANSCRIPTION_MODEL \|\| 'gpt-transcribe'/);
   assert.match(transcription, /OPENAI_VOICE_TRANSCRIPTION_CONTEXT/);
   assert.match(transcription, /keywords\[\]/);
-  assert.match(transcription, /append\('language', 'pt'\)/);
-  assert.doesNotMatch(transcription, /languages\[\]/);
+  assert.match(transcription, /append\(contextualKeywords \? 'languages\[\]' : 'language', 'pt'\)/);
+  assert.match(transcription, /if \(contextualKeywords\)/);
   assert.match(source, /transcribeVoiceAudio/);
   assert.match(source, /audioSeconds/);
   assert.match(source, /Server-Timing/);
@@ -658,7 +677,7 @@ test('seleção manual só vira aprendizado depois da gravação oficial confirm
   assert.match(executor, /vendas_mobile_confirmar_aprendizado_busca_voz_rpc/);
   assert.match(resolver, /Number\(alias\.confirmacoes \|\| 0\) >= 2/);
   const verificationPosition = executor.indexOf('verifiedOrder');
-  const learningPosition = executor.indexOf('await confirmVoiceLearnings(context.db, action, productIds)');
+  const learningPosition = executor.indexOf('after(() => confirmVoiceLearnings(context.db, action, productIds)');
   assert.ok(verificationPosition >= 0 && learningPosition > verificationPosition);
 });
 

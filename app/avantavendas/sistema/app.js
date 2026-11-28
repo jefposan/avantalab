@@ -3150,6 +3150,7 @@ async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
   const token = await window.VendasDb?.getAccessToken?.();
   if (!contaId || !token) throw new Error('Sua sessão do Avanta Vendas expirou. Entre novamente.');
   const endpoint = `/api/vendas/solicitacao-voz/${operacao === 'transcribe' ? 'transcrever' : operacao === 'process' ? 'processar' : operacao === 'execute' ? 'executar' : operacao === 'catalog' ? 'catalogo' : 'log'}`;
+  const destino = operacao === 'checkExecution' ? '/api/vendas/solicitacao-voz/conferir' : endpoint;
   const controller = new AbortController();
   const signalExterno = payload?.signal;
   const abortarPorCancelamento = () => controller.abort();
@@ -3174,9 +3175,10 @@ async function requisitarSolicitacaoVozVendas(operacao, payload = {}) {
         signal: controller.signal,
       };
     }
-    const resposta = await fetch(endpoint, init);
+    const resposta = await fetch(destino, init);
     const resultado = await resposta.json().catch(() => ({ message: 'O servidor retornou uma resposta inválida.' }));
-    if (!resposta.ok) throw new Error(resultado?.message || 'Não foi possível concluir a solicitação.');
+    if (!resposta.ok) throw Object.assign(new Error(resultado?.message || 'Não foi possível concluir a solicitação.'), { status: resposta.status });
+    if (operacao === 'execute' && !resultado?.evidence && resultado?.status !== 'not_found') throw new Error('O servidor não confirmou a operação.');
     if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
       const elapsedMs = Math.round((window.performance?.now?.() || Date.now()) - startedAt);
       console.info('[solicitacao-voz:tempo]', {
@@ -3226,9 +3228,23 @@ async function abrirSolicitacaoVozVendas(acionador = null, pendenciaId = '') {
         id: state.contaVendasAtiva?.id || window.VendasDb?.contaAtivaId?.() || '',
         label: state.contaVendasAtiva?.nome || state.acessoVendas?.empresa_nome || 'Conta ativa',
       },
-      request: requisitarSolicitacaoVozVendas,
+      request: async (operacao, payload) => {
+        try {
+          return await requisitarSolicitacaoVozVendas(operacao, payload);
+        } catch (error) {
+          if (operacao !== 'execute' || (error?.status >= 400 && error.status < 500)) throw error;
+          let consulta;
+          try {
+            consulta = await requisitarSolicitacaoVozVendas('checkExecution', { action: payload.action });
+          } catch {
+            throw new Error('Ainda não foi possível confirmar a gravação. Confira o histórico ou tente novamente nesta mesma solicitação quando a conexão voltar.');
+          }
+          if (consulta?.evidence) return consulta;
+          throw new Error('O lançamento ainda não foi localizado. Confira o histórico ou tente novamente nesta mesma solicitação.');
+        }
+      },
       notify: (mensagem, opcoes) => toast(mensagem, opcoes),
-      afterExecute: async () => carregarDadosBackend(false),
+      afterExecute: async () => carregarDadosBackend(false, false, true, true),
       onPendingChange: atualizarPendenciasSolicitacaoVoz,
       shareReceipt: async (recordId, intent) => {
         if (intent === 'create_order' || intent === 'create_consignment') return compartilharPedido(recordId);

@@ -1,3 +1,12 @@
+# 3.2.0.567 — AvantaVendas: melhorar interpretação, busca e conferência das solicitações por voz
+
+## 3.2.0.567-av217 - Solicitação por voz
+
+- Envia idioma e vocabulário conforme o contrato do modelo de transcrição. Reforça unidades, descontos e limites do rascunho no interpretador. Luna continua exclusivo do laboratório.
+- Exige evidência mais forte para resolver candidatos e confirma divergências de embalagem. Consulta de vendas pagina todos os resultados e segue os critérios de vendas válidas do dashboard.
+- Após resposta incerta, confere a operação original em rota somente leitura; recupera a evidência existente sem novo envio automático. Demora de atualização da tela e aprendizado não mudam o resultado confirmado.
+- Preparação local, sem publicação nem migração.
+
 # 3.2.0.566 — AvantaVendas: atualizar preços de consignados sob confirmação e corrigir avisos de leitura
 
 ## 3.2.0.566-av216 - Atualização manual no consignado e avisos contextuais

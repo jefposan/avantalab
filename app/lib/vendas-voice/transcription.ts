@@ -38,8 +38,10 @@ export async function transcribeVoiceAudio({ audio, db, accountId }: { audio: Fi
   transcriptionForm.append('file', audio, audio.name || 'solicitacao-voz.webm');
   // Modelo especializado de alta precisão. O contexto é curto: não envia
   // clientes nem linhas do catálogo, somente poucos termos já validados.
-  transcriptionForm.append('model', process.env.OPENAI_VOICE_TRANSCRIPTION_MODEL || 'gpt-transcribe');
-  transcriptionForm.append('language', 'pt');
+  const model = process.env.OPENAI_VOICE_TRANSCRIPTION_MODEL || 'gpt-transcribe';
+  transcriptionForm.append('model', model);
+  const contextualKeywords = model === 'gpt-transcribe' || model.startsWith('gpt-transcribe-');
+  transcriptionForm.append(contextualKeywords ? 'languages[]' : 'language', 'pt');
   const hintsStartedAt = performance.now();
   const learnedHints = await listVoiceTranscriptionHints(db, accountId, 24).catch(() => [] as string[]);
   const hintsMs = Math.round(performance.now() - hintsStartedAt);
@@ -47,7 +49,8 @@ export async function transcribeVoiceAudio({ audio, db, accountId }: { audio: Fi
   transcriptionForm.append('prompt', learnedHints.length
     ? `${baseContext} Termos relevantes desta conta: ${learnedHints.join(', ')}.`
     : baseContext);
-  [...TRANSCRIPTION_KEYWORDS, ...learnedHints].slice(0, 40)
+  if (contextualKeywords) [...TRANSCRIPTION_KEYWORDS, ...learnedHints]
+    .filter((keyword) => !/[<>\r\n]/.test(keyword)).slice(0, 40)
     .forEach((keyword) => transcriptionForm.append('keywords[]', keyword));
   const startedAt = performance.now();
   const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {

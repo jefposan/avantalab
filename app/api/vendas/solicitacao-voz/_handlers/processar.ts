@@ -53,7 +53,15 @@ function mergeSelection(selections: VoiceEntitySelection[], current: VoiceEntity
   ].slice(-12);
 }
 
-export async function POST(request: Request) {
+export function POST(request: Request) {
+  return processarSolicitacaoVoz(request);
+}
+
+export function processarVozNoLaboratorio(request: Request) {
+  return processarSolicitacaoVoz(request, 'gpt-6-luna');
+}
+
+async function processarSolicitacaoVoz(request: Request, modelOverride?: 'gpt-6-luna') {
   const requestStartedAt = performance.now();
   let userId = '';
   let accountId = '';
@@ -94,6 +102,7 @@ export async function POST(request: Request) {
         transcription,
         previousDraft,
         candidates: validCandidates(body?.candidates),
+        modelOverride,
       });
       intent = interpreted.intent;
       metrics = interpreted.metrics;

@@ -361,6 +361,16 @@ function productCandidate(row: ProductRow): VoiceEntityCandidate {
   };
 }
 
+function productMeasurements(value: string) {
+  const text = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\bum litro\b/g, '1 litro');
+  return [...text.matchAll(/\b(\d+(?:[,.]\d+)?)\s*(mililitros?|ml|litros?|l|quilogramas?|kg|gramas?|g)\b/g)]
+    .map(([, quantity, unit]) => {
+      const base = Number(quantity.replace(',', '.'));
+      const liquid = /^(?:ml|mililitro|l|litro)/.test(unit);
+      return `${liquid ? 'ml' : 'g'}:${base * (/^(?:l$|litro|kg|quilograma)/.test(unit) ? 1000 : 1)}`;
+    });
+}
+
 async function fetchActiveProducts(db: SupabaseClient, accountId: string, maximum = 1500) {
   const key = `${accountId}:${maximum}`;
   const cached = productCatalogCache.get(key);
@@ -578,7 +588,9 @@ export async function resolveCustomer(db: SupabaseClient, accountId: string, ref
     : null;
   if (selected) return { status: 'resolved' as const, customer: selected, candidates };
   const tokenCount = searchTokens(reference).length;
-  const clearWinner = ranked.length === 1 || (tokenCount >= 2 && ranked[0].score >= 85 && ranked[0].score - (ranked[1]?.score || 0) >= 15);
+  const clearWinner = ranked.length === 1
+    ? ranked[0].score >= 95
+    : tokenCount >= 2 && ranked[0].score >= 100 && ranked[0].score - ranked[1].score >= 15;
   return clearWinner
     ? { status: 'resolved' as const, customer: ranked[0].row, candidates }
     : { status: 'ambiguous' as const, candidates };
@@ -639,11 +651,17 @@ export async function resolveProduct(db: SupabaseClient, accountId: string, refe
   const ranked = rank([...byId.values()]);
   const candidates = ranked.slice(0, 8).map(({ row }) => productCandidate(row));
   if (!ranked.length) return { status: 'missing' as const, candidates };
+  const requestedMeasurements = productMeasurements(reference);
+  const matchedMeasurements = productMeasurements(ranked[0].row.nome);
+  // Dados que só aparecem na descrição não provam a variante do item cadastrado.
+  if (!requestedMeasurements.every((measure) => matchedMeasurements.includes(measure))) {
+    return { status: 'ambiguous' as const, candidates };
+  }
   const tokenCount = searchTokens(reference).length;
-  const clearWinner = ranked.length === 1
+  const clearWinner = (ranked.length === 1 && ranked[0].score >= 105)
     || (ranked[0].score === 120 && (ranked[1]?.score || 0) < 100)
     || (ranked[0].score >= 122 && (ranked[1]?.score || 0) < 118)
-    || (tokenCount >= 2 && ranked[0].score >= 85 && ranked[0].score - (ranked[1]?.score || 0) >= 15);
+    || (ranked.length > 1 && tokenCount >= 2 && ranked[0].score >= 105 && ranked[0].score - ranked[1].score >= 15);
   return clearWinner
     ? { status: 'resolved' as const, product: ranked[0].row, candidates }
     : { status: 'ambiguous' as const, candidates };
@@ -735,7 +753,9 @@ async function resolveRequiredCustomer(
   const result = await resolveCustomer(db, accountId, draft.customerReference, selectedId, draft.intent === 'register_payment' ? 'payment' : 'default');
   const entity = { type: 'customer' as const, reference: draft.customerReference };
   if (result.status === 'missing') return { response: clarification(draft, transcription, metrics, `Não encontrei “${draft.customerReference}”. Pode dizer o nome de outra forma?`, [], entity, selections) };
-  if (result.status === 'ambiguous') return { response: clarification(draft, transcription, metrics, `Encontrei mais de um cliente para “${draft.customerReference}”. Qual deles?`, result.candidates, entity, selections) };
+  if (result.status === 'ambiguous') return { response: clarification(draft, transcription, metrics, result.candidates.length === 1
+    ? `Confirme se este é o cliente para “${draft.customerReference}”.`
+    : `Encontrei mais de um cliente para “${draft.customerReference}”. Qual deles?`, result.candidates, entity, selections) };
   return { customer: result.customer };
 }
 
@@ -743,7 +763,10 @@ function periodRange(period: VoiceIntentPayload['period']) {
   if (period === 'all') return null;
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
   const [year, month] = today.split('-').map(Number);
-  if (period === 'today') return { start: `${today}T00:00:00-03:00`, end: `${today}T23:59:59.999-03:00` };
+  if (period === 'today') {
+    const tomorrow = new Date(Date.UTC(year, month - 1, Number(today.slice(8, 10)) + 1)).toISOString().slice(0, 10);
+    return { start: `${today}T00:00:00-03:00`, end: `${tomorrow}T00:00:00-03:00` };
+  }
   const selected = period === 'last_month' ? new Date(year, month - 2, 1) : new Date(year, month - 1, 1);
   const next = new Date(selected.getFullYear(), selected.getMonth() + 1, 1);
   const date = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-01T00:00:00-03:00`;
@@ -766,14 +789,26 @@ export async function buildVoiceResponse(args: {
   if (draft.intent === 'query_sales') {
     const period = draft.period || 'this_month';
     const range = periodRange(period);
-    let query = db.from('vendas_mobile_pedidos').select('id,total,status,forma_pagamento,itens:vendas_mobile_pedido_itens(total,desconto,preco_unitario,quantidade)').eq('conta_id', accountId);
-    if (range) query = query.gte('criado_em', range.start).lt('criado_em', range.end);
-    const { data, error } = await query.order('criado_em', { ascending: false });
-    if (error) throw new Error('Não foi possível consultar as vendas.');
-    const sales = (data || []).filter((order) => order.status !== 'cancelada' && !normalizeVoiceSearch(order.forma_pagamento).includes('consign') && Number(order.total || 0) > 0);
-    const total = sales.reduce((sum, order) => sum + Number(order.total || 0), 0);
+    let count = 0, totalCents = 0;
+    const pageSize = 500;
+    for (let from = 0; ; from += pageSize) {
+      let query = db.from('vendas_mobile_pedidos').select('id,total,status,forma_pagamento,itens:vendas_mobile_pedido_itens(total,desconto,preco_unitario,quantidade)').eq('conta_id', accountId);
+      if (range) query = query.gte('criado_em', range.start).lt('criado_em', range.end);
+      const { data, error } = await query.order('criado_em', { ascending: false }).order('id', { ascending: false }).range(from, from + pageSize - 1);
+      if (error) throw new Error('Não foi possível consultar as vendas.');
+      for (const order of data || []) {
+        if (order.status === 'cancelada' || normalizeVoiceSearch(order.forma_pagamento).includes('consign')) continue;
+        const items = order.itens || [];
+        const allBonus = items.length && items.every((item) => Number(item.preco_unitario) > 0
+          && Number(item.total || 0) === 0 && Number(item.desconto || 0) >= Number(item.quantidade || 0) * Number(item.preco_unitario));
+        if (allBonus) continue;
+        count++;
+        totalCents += Math.round(Number(order.total || 0) * 100);
+      }
+      if ((data || []).length < pageSize) break;
+    }
     const labels = { today: 'hoje', this_month: 'neste mês', last_month: 'no mês passado', all: 'em todo o histórico' } as const;
-    return { kind: 'answer', title: 'Consulta concluída', message: `Você registrou ${sales.length} pedido${sales.length === 1 ? '' : 's'} ${labels[period]}, totalizando ${formatMoney(total)}.`, selections, draft, transcription, metrics };
+    return { kind: 'answer', title: 'Consulta concluída', message: `Você registrou ${count} pedido${count === 1 ? '' : 's'} ${labels[period]}, totalizando ${formatMoney(totalCents / 100)}.`, selections, draft, transcription, metrics };
   }
 
   const customerResult = await resolveRequiredCustomer(db, accountId, draft, transcription, metrics, selections);
@@ -859,7 +894,9 @@ export async function buildVoiceResponse(args: {
       entity,
       selections,
     );
-    if (result.status === 'ambiguous') return clarification(draft, transcription, metrics, `Encontrei mais de um produto para “${item.productReference}”. Qual deles?`, result.candidates, entity, selections);
+    if (result.status === 'ambiguous') return clarification(draft, transcription, metrics, result.candidates.length === 1
+      ? `Confirme se este é o produto para “${item.productReference}”.`
+      : `Encontrei mais de um produto para “${item.productReference}”. Qual deles?`, result.candidates, entity, selections);
     const product = result.product;
     const unitPrice = Number(product.preco || 0);
     resolvedItems.push({ productId: product.id, name: product.nome, sku: product.sku || null, quantity: item.quantity, unitPrice, lineTotal: Math.round(unitPrice * item.quantity * 100) / 100 });
